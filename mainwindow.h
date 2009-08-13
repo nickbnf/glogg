@@ -2,10 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "crawlerwidget.h"
 
 class QAction;
 class QLabel;
-class Crawler;
 
 class MainWindow : public QMainWindow
 {
@@ -16,11 +16,12 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event);
-    private slots:
+private slots:
     void open();
-    void about();
-
     void openRecentFile();
+    void about();
+    void aboutQt();
+
     void updateStatusBar();
 
 private:
@@ -29,18 +30,17 @@ private:
     void createContextMenu();
     void createToolBars();
     void createStatusBar();
+    void createCrawler();
     void readSettings();
     void writeSettings();
-    bool okToContinue();
     bool loadFile(const QString &fileName);
-    bool saveFile(const QString &fileName);
     void setCurrentFile(const QString &fileName);
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
 
-    Crawler *crawler;
+    CrawlerWidget *crawlerWidget;
     QStringList recentFiles;
-    QString curFile;
+    QString currentFile;
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];
@@ -48,11 +48,14 @@ private:
 
     QMenu *fileMenu;
     QMenu *editMenu;
+    QMenu *helpMenu;
 
     QToolBar *fileToolBar;
     QToolBar *editToolBar;
 
     QAction *openAction;
+    QAction *exitAction;
+    QAction *aboutAction;
     QAction *aboutQtAction;
 };
 

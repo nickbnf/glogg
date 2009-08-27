@@ -1,9 +1,11 @@
 #ifndef LOGMAINVIEW_H
 #define LOGMAINVIEW_H
 
-#include <QTextEdit>
+#include <QWidget>
 
-class LogMainView : public QTextEdit
+#include "logdata.h"
+
+class LogMainView : public QWidget
 {
     Q_OBJECT
 
@@ -11,6 +13,16 @@ class LogMainView : public QTextEdit
         LogMainView(QWidget *parent=0);
 
         bool readFile(const QString &fileName);
+
+    protected:
+        virtual void paintEvent(QPaintEvent* paintEvent);
+
+    private:
+        LogData* logData;
+        int firstLine;
+        int lastLine;
+
+        int getNbVisibleLines();
 };
 
 #endif

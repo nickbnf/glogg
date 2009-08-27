@@ -1,11 +1,20 @@
 #ifndef CRAWLERWIDGET_H
 #define CRAWLERWIDGET_H
 
-#include <QTextEdit>
+#include <QLabel>
+#include <QSplitter>
 
-class CrawlerWidget : public QTextEdit
+#include "logmainview.h"
+// #include "searchwindow.h"
+
+class CrawlerWidget : public QSplitter
 {
     Q_OBJECT
+
+    private:
+        LogMainView* logMainView;
+  //      SearchWindow* searchWindow;
+        QLabel* searchWindow;
 
     public:
         CrawlerWidget(QWidget *parent=0);

@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "log.h"
+
 #include "logdata.h"
 
 LogData::LogData(const QByteArray &byteArray)
@@ -13,7 +15,7 @@ LogData::LogData(const QByteArray &byteArray)
     while (( j = data->indexOf("\n", j)) != -1) {
         nbLines++; j++;
     }
-    std::cout << "Found " << nbLines << " lines." << std::endl;
+    LOG(logDEBUG) << "Found " << nbLines << " lines.";
 }
 
 int LogData::getNbLine()
@@ -31,11 +33,11 @@ QString LogData::getLineString(int line)
 
     int end = data->indexOf("\n", pos);
 
-    std::cout << "line " << line << " pos: " << pos << " end: " << end << std::endl;
+    LOG(logDEBUG2) << "line " << line << " pos: " << pos << " end: " << end;
 
     QString string = QString(data->mid(pos, end-pos));
 
-    std::cout << string.toStdString() << std::endl;
+    LOG(logDEBUG2) << string.toStdString();
 
     return string;
 }

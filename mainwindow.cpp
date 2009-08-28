@@ -1,4 +1,7 @@
+#include <iostream>
 #include <QtGui>
+
+#include "log.h"
 
 #include "mainwindow.h"
 
@@ -130,10 +133,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 bool MainWindow::loadFile(const QString &fileName)
 {
     if (crawlerWidget->readFile(fileName)) {
+        LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
         setCurrentFile(fileName);
         return true;
     }
     else {
+        LOG(logWARNING) << "Cannot load file " << fileName.toStdString();
         return false;
     }
 }

@@ -14,8 +14,11 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 
 bool CrawlerWidget::readFile(const QString &fileName)
 {
-    logMainView->readFile(fileName);
-    searchWindow->setText(fileName);
+    bool success = logMainView->readFile(fileName);
+    if (success)
+        searchWindow->setText(fileName);
+
+    return success;
 }
 #if 0
 CrawlerWidget::CrawlerWidget(QWidget *parent) : QTextEdit(parent)

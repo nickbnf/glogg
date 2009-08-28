@@ -6,6 +6,8 @@
 #include <QPainter>
 #include <QFontMetrics>
 
+#include "log.h"
+
 #include "common.h"
 #include "logmainview.h"
 

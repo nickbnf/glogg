@@ -5,15 +5,42 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QFontMetrics>
+#include <QScrollBar>
 
 #include "log.h"
 
 #include "common.h"
 #include "logmainview.h"
 
-LogMainView::LogMainView(QWidget* parent) : QWidget(parent)
+LogMainView::LogMainView(QWidget* parent) : QAbstractScrollArea(parent)
 {
     logData = NULL;
+    // Create the viewport QWidget
+    setViewport(0);
+}
+
+void LogMainView::resizeEvent(QResizeEvent* resizeEvent)
+{
+    if ( logData == NULL )
+        return;
+
+    LOG(logDEBUG) << "resizeEvent received";
+
+    // Calculate the index of the last line shown
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+
+    // Update the scroll bars
+    verticalScrollBar()->setPageStep( getNbVisibleLines() );
+}
+
+void LogMainView::scrollContentsBy( int dx, int dy )
+{
+    LOG(logDEBUG) << "scrollContentsBy received";
+
+    firstLine -= dy;
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+
+    update();
 }
 
 void LogMainView::paintEvent(QPaintEvent* paintEvent)
@@ -22,12 +49,14 @@ void LogMainView::paintEvent(QPaintEvent* paintEvent)
     if ( (invalidRect.isEmpty()) || (logData == NULL) )
         return;
 
-    int lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    LOG(logDEBUG) << "paintEvent received, firstLine=" << firstLine
+        << " lastLine=" << lastLine;
 
     {
-        QPainter painter(this);
+        // Repaint the viewport
+        QPainter painter(viewport());
         int fontHeight = painter.fontMetrics().height();
-        painter.fillRect(invalidRect, Qt::white);
+        // painter.fillRect(invalidRect, Qt::white); // useless...
         painter.setPen( Qt::black );
         for (int i = firstLine; i < lastLine; i++) {
             int yPos = (i-firstLine + 1) * fontHeight;
@@ -35,7 +64,6 @@ void LogMainView::paintEvent(QPaintEvent* paintEvent)
         }
     }
 
-    std::cout << "paintEvent!" << std::endl;
 }
 
 int LogMainView::getNbVisibleLines()
@@ -54,8 +82,14 @@ bool LogMainView::readFile(const QString &fileName)
             delete logData;
         logData = new LogData(file.readAll());
 
+        // Adapt the view to the new content
+        LOG(logDEBUG) << "Now adapting the content";
+        verticalScrollBar()->setValue( 0 );
+        verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
         firstLine = 0;
+        lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
         update();
+
         return true;
     }
     else

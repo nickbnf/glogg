@@ -5,6 +5,9 @@
 #include <string>
 #include <stdio.h>
 
+// Modify here!
+#define FILELOG_MAX_LEVEL logDEBUG
+
 inline std::string NowTime();
 
 enum TLogLevel {logERROR, logWARNING, logINFO, logDEBUG, logDEBUG1, logDEBUG2, logDEBUG3, logDEBUG4};

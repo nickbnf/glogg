@@ -8,4 +8,6 @@ moc_*.cpp
 .*.sw?
 Makefile
 logcrawler
+logcrawler_tests
+massif.out*
 core.*

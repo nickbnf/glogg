@@ -72,26 +72,16 @@ int LogMainView::getNbVisibleLines()
     return height()/fm.height() + 1;
 }
 
-bool LogMainView::readFile(const QString &fileName)
+void LogMainView::updateData(const LogData* newLogData)
 {
-    QFile file(fileName);
+    // Save the new data
+    logData = newLogData;
 
-    if (file.open(QFile::ReadOnly | QFile::Text))
-    {
-        if (logData)
-            delete logData;
-        logData = new LogData(file.readAll());
-
-        // Adapt the view to the new content
-        LOG(logDEBUG) << "Now adapting the content";
-        verticalScrollBar()->setValue( 0 );
-        verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
-        firstLine = 0;
-        lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
-        update();
-
-        return true;
-    }
-    else
-        return false;
+    // Adapt the view to the new content
+    LOG(logDEBUG) << "Now adapting the content";
+    verticalScrollBar()->setValue( 0 );
+    verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
+    firstLine = 0;
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    update();
 }

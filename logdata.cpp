@@ -18,12 +18,12 @@ LogData::LogData(const QByteArray &byteArray)
     LOG(logDEBUG) << "Found " << nbLines << " lines.";
 }
 
-int LogData::getNbLine()
+int LogData::getNbLine() const
 {
     return nbLines;
 }
 
-QString LogData::getLineString(int line)
+QString LogData::getLineString(int line) const
 {
     int pos = 0;
 
@@ -40,4 +40,11 @@ QString LogData::getLineString(int line)
     LOG(logDEBUG2) << string.toStdString();
 
     return string;
+}
+
+LogFilteredData* LogData::getNewFilteredData(QRegExp& regExp) const
+{
+    LogFilteredData* newObject = new LogFilteredData(data, regExp);
+
+    return newObject;
 }

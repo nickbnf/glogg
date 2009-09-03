@@ -12,7 +12,7 @@ class LogMainView : public QAbstractScrollArea
     public:
         LogMainView(QWidget *parent=0);
 
-        bool readFile(const QString &fileName);
+        void updateData(const LogData* newLogData);
 
     protected:
         virtual void paintEvent(QPaintEvent* paintEvent);
@@ -20,7 +20,7 @@ class LogMainView : public QAbstractScrollArea
         virtual void scrollContentsBy(int dx, int dy);
 
     private:
-        LogData* logData;
+        const LogData* logData;
         int firstLine;
         int lastLine;
 

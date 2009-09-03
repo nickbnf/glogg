@@ -1,5 +1,5 @@
-#ifndef LOGDATAVIEW_H
-#define LOGDATAVIEW_H
+#ifndef LOGFILTEREDDATA_H
+#define LOGFILTEREDDATA_H
 
 #include <QByteArray>
 #include <QList>
@@ -9,11 +9,10 @@
 class LogFilteredData {
     public:
         LogFilteredData(QByteArray* logData, QRegExp regExp);
-        QString getLineString(int line);
-        int getNbLine();
+        QString getLineString(int line) const;
+        int getNbLine() const;
 
     private:
-        QByteArray* data;
         QList<QString> lineList;
 };
 

@@ -11,6 +11,7 @@ SOURCES += main.cpp\
         crawlerwidget.cpp\
         logmainview.cpp\
         logdata.cpp\
+        logfiltereddata.cpp\
         filteredview.cpp
 
 HEADERS  += version.h\
@@ -18,6 +19,7 @@ HEADERS  += version.h\
         crawlerwidget.h\
         logmainview.h\
         logdata.h\
+        logfiltereddata.h\
         log.h\
         filteredview.h
 

@@ -3,18 +3,26 @@
 
 #include <QLabel>
 #include <QSplitter>
+#include <QLineEdit>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 #include "logmainview.h"
-// #include "searchwindow.h"
+#include "filteredview.h"
 
 class CrawlerWidget : public QSplitter
 {
     Q_OBJECT
 
     private:
-        LogMainView* logMainView;
-  //      SearchWindow* searchWindow;
-        QLabel* searchWindow;
+        LogMainView*    logMainView;
+        QWidget*        bottomWindow;
+        QLabel*         searchLabel;
+        QLineEdit*      searchLineEdit;
+        FilteredView*   filteredView;
+
+        QVBoxLayout*    bottomMainLayout;
+        QHBoxLayout*    searchLineLayout;
 
     public:
         CrawlerWidget(QWidget *parent=0);

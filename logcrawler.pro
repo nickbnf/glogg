@@ -5,6 +5,8 @@
 TARGET = logcrawler
 TEMPLATE = app
 
+CONFIG += console
+
 # Input
 SOURCES += main.cpp\
         mainwindow.cpp\

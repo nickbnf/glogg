@@ -27,19 +27,7 @@ MainWindow::MainWindow()
 
 void MainWindow::createCrawler()
 {
-    QFont font;
-    font.setFamily("Courier");
-    font.setFixedPitch(true);
-    font.setPointSize(10);
-
     crawlerWidget = new CrawlerWidget;
-    crawlerWidget->setFont(font);
-
-    /*
-    QFile file("../mainwindow.cpp");
-    if (file.open(QFile::ReadOnly | QFile::Text))
-        crawlerWidget->setPlainText(file.readAll());
-    */
 }
 
 void MainWindow::createActions()

@@ -11,6 +11,9 @@
 #include "logmainview.h"
 #include "filteredview.h"
 
+#include "logdata.h"
+#include "logfiltereddata.h"
+
 class CrawlerWidget : public QSplitter
 {
     Q_OBJECT

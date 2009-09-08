@@ -4,16 +4,19 @@
 #include <QByteArray>
 #include <QString>
 
+#include "abstractlogdata.h"
 #include "logfiltereddata.h"
 
-class LogData {
+class LogData : public AbstractLogData {
     public:
-        LogData(const QByteArray &byteArray);
-        QString getLineString(int line) const;
-        int getNbLine() const;
+        LogData(const QByteArray& byteArray);
+
         LogFilteredData* getNewFilteredData(QRegExp& regExp) const;
 
     private:
+        QString doGetLineString(int line) const;
+        int doGetNbLine() const;
+
         QByteArray* data;
         int nbLines;
 };

@@ -4,7 +4,7 @@
 
 #include "logdata.h"
 
-LogData::LogData(const QByteArray &byteArray)
+LogData::LogData(const QByteArray &byteArray) : AbstractLogData()
 {
     int j = 0;
 
@@ -18,12 +18,12 @@ LogData::LogData(const QByteArray &byteArray)
     LOG(logDEBUG) << "Found " << nbLines << " lines.";
 }
 
-int LogData::getNbLine() const
+int LogData::doGetNbLine() const
 {
     return nbLines;
 }
 
-QString LogData::getLineString(int line) const
+QString LogData::doGetLineString(int line) const
 {
     int pos = 0;
 

@@ -2,18 +2,18 @@
 
 #include "logfiltereddata.h"
 
-LogFilteredData::LogFilteredData(QByteArray* logData, QRegExp regExp)
+LogFilteredData::LogFilteredData(QByteArray* logData, QRegExp regExp) : AbstractLogData()
 {
 }
 
-QString LogFilteredData::getLineString(int line) const
+QString LogFilteredData::doGetLineString(int line) const
 {
     QString string(line);
 
     return string;
 }
 
-int LogFilteredData::getNbLine() const
+int LogFilteredData::doGetNbLine() const
 {
     return 4;
 }

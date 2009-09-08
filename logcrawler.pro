@@ -12,9 +12,11 @@ SOURCES += main.cpp\
         mainwindow.cpp\
         crawlerwidget.cpp\
         logmainview.cpp\
+        abstractlogdata.cpp\
         logdata.cpp\
         logfiltereddata.cpp\
-        filteredview.cpp
+        filteredview.cpp\
+        abstractlogview.cpp
 
 HEADERS  += version.h\
         mainwindow.h\
@@ -23,7 +25,8 @@ HEADERS  += version.h\
         logdata.h\
         logfiltereddata.h\
         log.h\
-        filteredview.h
+        filteredview.h\
+        abstractlogview.h
 
 QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date +'\"%a_%b_%d,_%Y\"'`\\\"
 QMAKE_CXXFLAGS += -DLCRAWLER_VERSION=\\\"`git describe`\\\"

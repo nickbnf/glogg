@@ -7,6 +7,7 @@
 
 #include "version.h"
 #include "crawlerwidget.h"
+#include "optionsdialog.h"
 
 MainWindow::MainWindow()
 {
@@ -18,8 +19,10 @@ MainWindow::MainWindow()
     // createStatusBar();
     createCrawler();
 
+    connect(this, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
     setCurrentFile("");
     readSettings();
+    emit optionsChanged();
 
     setWindowIcon(QIcon(":/images/icon.png"));
     setCentralWidget(crawlerWidget);
@@ -49,6 +52,15 @@ void MainWindow::createActions()
     exitAction->setStatusTip(tr("Exit the application"));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
 
+    copyAction = new QAction(tr("&Copy"), this);
+    copyAction->setShortcut(QKeySequence::Copy);
+    copyAction->setStatusTip(tr("Copy the selected line"));
+    connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
+
+    optionsAction = new QAction(tr("&Options..."), this);
+    optionsAction->setStatusTip(tr("Show the Options box"));
+    connect(optionsAction, SIGNAL(triggered()), this, SLOT(options()));
+
     aboutAction = new QAction(tr("&About"), this);
     aboutAction->setStatusTip(tr("Show the About box"));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
@@ -67,6 +79,12 @@ void MainWindow::createMenus()
         fileMenu->addAction(recentFileActions[i]);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
+
+    editMenu = menuBar()->addMenu(tr("&Edit"));
+    editMenu->addAction(copyAction);
+
+    toolsMenu = menuBar()->addMenu(tr("&Tools"));
+    toolsMenu->addAction(optionsAction);
 
     menuBar()->addSeparator();
 
@@ -90,6 +108,17 @@ void MainWindow::openRecentFile()
     QAction* action = qobject_cast<QAction*>(sender());
     if (action)
         loadFile(action->data().toString());
+}
+
+void MainWindow::copy()
+{
+}
+
+void MainWindow::options()
+{
+    OptionsDialog dialog(this);
+    connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
+    dialog.exec();
 }
 
 void MainWindow::about()
@@ -179,8 +208,11 @@ void MainWindow::writeSettings()
     QSettings settings("LogCrawler", "LogCrawler");
 
     settings.setValue("geometry", saveGeometry());
+    settings.setValue("crawlerWidget", crawlerWidget->saveState());
     settings.setValue("currentFile", currentFile);
     settings.setValue("recentFiles", recentFiles);
+
+    Config().write(settings);
 }
 
 void MainWindow::readSettings()
@@ -188,6 +220,7 @@ void MainWindow::readSettings()
     QSettings settings("LogCrawler", "LogCrawler");
 
     restoreGeometry(settings.value("geometry").toByteArray());
+    crawlerWidget->restoreState(settings.value("crawlerWidget").toByteArray());
 
     recentFiles = settings.value("recentFiles").toStringList();
     QString curFile = settings.value("currentFile").toString();
@@ -195,4 +228,6 @@ void MainWindow::readSettings()
         loadFile(curFile);
 
     updateRecentFileActions();
+
+    Config().read(settings);
 }

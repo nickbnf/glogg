@@ -5,6 +5,8 @@
 
 #include "crawlerwidget.h"
 
+#include "configuration.h"
+
 CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 {
     setOrientation(Qt::Vertical);
@@ -37,11 +39,14 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     addWidget(bottomWindow);
 
     // Initialize internal data
-    logData = NULL;
+    logData         = NULL;
+    logFilteredData = NULL;
 
     // Connect the signals
     connect(searchLineEdit, SIGNAL(textChanged(const QString&)),
             this, SLOT(enableSearchButton(const QString&)));
+    connect(searchLineEdit, SIGNAL(returnPressed()),
+            searchButton, SIGNAL(clicked()));
     connect(searchButton, SIGNAL(clicked()),
             this, SLOT(searchClicked()));
 }
@@ -49,6 +54,9 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 void CrawlerWidget::searchClicked()
 {
     LOG(logDEBUG) << "searchClicked received";
+
+    if (logFilteredData)
+        delete logFilteredData;
 
     QString text = searchLineEdit->text();
     QRegExp regexp(text);
@@ -59,6 +67,19 @@ void CrawlerWidget::searchClicked()
 void CrawlerWidget::enableSearchButton(const QString& text)
 {
     searchButton->setEnabled(!text.isEmpty());
+}
+
+void CrawlerWidget::applyConfiguration()
+{
+    QFont font = Config().mainFont();
+
+    LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
+
+    logMainView->setFont(font);
+    filteredView->setFont(font);
+
+    logMainView->update();
+    filteredView->update();
 }
 
 bool CrawlerWidget::readFile(const QString &fileName)

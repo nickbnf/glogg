@@ -16,13 +16,20 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event);
+
 private slots:
     void open();
     void openRecentFile();
+    void copy();
+    void options();
     void about();
     void aboutQt();
 
     void updateStatusBar();
+
+signals:
+    /// Is emitted when new settings must be used
+    void optionsChanged();
 
 private:
     void createActions();
@@ -48,13 +55,13 @@ private:
 
     QMenu *fileMenu;
     QMenu *editMenu;
+    QMenu *toolsMenu;
     QMenu *helpMenu;
-
-    QToolBar *fileToolBar;
-    QToolBar *editToolBar;
 
     QAction *openAction;
     QAction *exitAction;
+    QAction *copyAction;
+    QAction *optionsAction;
     QAction *aboutAction;
     QAction *aboutQtAction;
 };

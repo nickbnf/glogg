@@ -6,16 +6,13 @@
 #endif
 
 static const int NB_LINES = 9999;
+static const int LINE_PER_PAGE = 70;
 
 void TestLogData::simpleLoad()
 {
-    char* line="LOGDATA is a part of LogCrawler, we are going to test it thoroughly, this is line 000000\n";
+    QByteArray array = generateData();
 
-    LogData* logData;
-    QByteArray array = QByteArray(line);
-
-    for (int i = 1; i < NB_LINES; i++)
-        array += line;
+    LogData* logData = new LogData(array);
 
     QBENCHMARK {
         logData = new LogData(array);
@@ -23,13 +20,60 @@ void TestLogData::simpleLoad()
     QVERIFY(logData != NULL);
     QVERIFY(logData->getNbLine() == NB_LINES);
 
+    delete logData;
+}
+
+void TestLogData::sequentialRead()
+{
+    QByteArray array = generateData();
+
+    LogData* logData = new LogData(array);
+
     // Read all lines sequentially
     QString s;
     QBENCHMARK {
         for (int i = 0; i < NB_LINES; i++)
             s = logData->getLineString(i);
     }
-    QVERIFY(s == QString(line));
+    QVERIFY(s.length() > 0);
 
     delete logData;
+}
+
+void TestLogData::randomPageRead()
+{
+    QByteArray array = generateData();
+
+    LogData* logData = new LogData(array);
+
+    // Read page by page from the beginning and the end
+    QString s;
+    QBENCHMARK {
+        for (int page = 0; page < (NB_LINES/LINE_PER_PAGE); page++)
+        {
+            for (int i = page*LINE_PER_PAGE; i < ((page+1)*LINE_PER_PAGE); i++)
+                s = logData->getLineString(i);
+            int page_from_end = (NB_LINES/LINE_PER_PAGE) - page;
+            for (int i = page_from_end*LINE_PER_PAGE; i < ((page_from_end+1)*LINE_PER_PAGE); i++)
+                s = logData->getLineString(i);
+        }
+    }
+    QVERIFY(s.length() > 0);
+
+    delete logData;
+}
+
+QByteArray TestLogData::generateData()
+{
+    const char* line="LOGDATA is a part of LogCrawler, we are going to test it thoroughly, this is line %5d\n";
+    char newLine[90];
+
+    QByteArray array = QByteArray();
+
+    for (int i = 0; i < NB_LINES; i++) {
+        sprintf(newLine, line, i);
+        array += line;
+    }
+
+    return array;
 }

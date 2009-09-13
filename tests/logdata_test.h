@@ -5,8 +5,8 @@ class TestLogData: public QObject
 {
     Q_OBJECT
     private slots:
-        void simpleLoad();
-        void sequentialRead();
+        // void simpleLoad();
+        // void sequentialRead();
         void randomPageRead();
 
     private:

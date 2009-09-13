@@ -8,6 +8,7 @@
 static const int NB_LINES = 99999;
 static const int LINE_PER_PAGE = 70;
 
+#if 0
 void TestLogData::simpleLoad()
 {
     QByteArray array = generateData();
@@ -42,6 +43,7 @@ void TestLogData::sequentialRead()
 
     delete logData;
 }
+#endif
 
 void TestLogData::randomPageRead()
 {

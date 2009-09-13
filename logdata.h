@@ -3,9 +3,13 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QStringList>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
+
+//#define LEGACY
+#define QLISTSTRING
 
 class LogData : public AbstractLogData {
     public:
@@ -17,7 +21,11 @@ class LogData : public AbstractLogData {
         QString doGetLineString(int line) const;
         int doGetNbLine() const;
 
+#ifdef LEGACY
         QByteArray* data;
+#elif defined(QLISTSTRING)
+        QStringList* list;
+#endif
         int nbLines;
 };
 

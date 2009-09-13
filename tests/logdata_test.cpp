@@ -5,14 +5,14 @@
 #define QBENCHMARK
 #endif
 
-static const int NB_LINES = 9999;
+static const int NB_LINES = 99999;
 static const int LINE_PER_PAGE = 70;
 
 void TestLogData::simpleLoad()
 {
     QByteArray array = generateData();
 
-    LogData* logData = new LogData(array);
+    LogData* logData;
 
     QBENCHMARK {
         logData = new LogData(array);
@@ -25,9 +25,12 @@ void TestLogData::simpleLoad()
 
 void TestLogData::sequentialRead()
 {
-    QByteArray array = generateData();
+    LogData* logData;
 
-    LogData* logData = new LogData(array);
+    {
+        QByteArray array = generateData();
+        logData = new LogData(array);
+    }
 
     // Read all lines sequentially
     QString s;
@@ -42,18 +45,21 @@ void TestLogData::sequentialRead()
 
 void TestLogData::randomPageRead()
 {
-    QByteArray array = generateData();
+    LogData* logData;
 
-    LogData* logData = new LogData(array);
+    {
+        QByteArray array = generateData();
+        logData = new LogData(array);
+    }
 
     // Read page by page from the beginning and the end
     QString s;
     QBENCHMARK {
-        for (int page = 0; page < (NB_LINES/LINE_PER_PAGE); page++)
+        for (int page = 0; page < (NB_LINES/LINE_PER_PAGE)-1; page++)
         {
             for (int i = page*LINE_PER_PAGE; i < ((page+1)*LINE_PER_PAGE); i++)
                 s = logData->getLineString(i);
-            int page_from_end = (NB_LINES/LINE_PER_PAGE) - page;
+            int page_from_end = (NB_LINES/LINE_PER_PAGE) - page - 1;
             for (int i = page_from_end*LINE_PER_PAGE; i < ((page_from_end+1)*LINE_PER_PAGE); i++)
                 s = logData->getLineString(i);
         }

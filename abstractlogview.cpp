@@ -116,12 +116,8 @@ void AbstractLogView::displayLine( int line )
 {
     LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
 
-    firstLine = line;
     selectedLine = line;
-    //verticalScrollBar()->setValue( line );
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
-
-    update();
+    verticalScrollBar()->setValue( line );
 }
 
 /*

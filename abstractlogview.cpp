@@ -20,6 +20,21 @@ AbstractLogView::AbstractLogView(QWidget* parent) : QAbstractScrollArea(parent)
     setViewport(0);
 }
 
+/*
+ * Received events
+ */
+void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
+{
+    // Selection implementation
+    if ( mouseEvent->button() == Qt::LeftButton )
+    {
+        int line = convertCoordToLine(mouseEvent->y());
+        selectedLine = line;
+
+        emit newSelection( line );
+    }
+}
+
 void AbstractLogView::resizeEvent(QResizeEvent* resizeEvent)
 {
     if ( logData == NULL )
@@ -57,22 +72,30 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         // Repaint the viewport
         QPainter painter(viewport());
         int fontHeight = painter.fontMetrics().height();
-        // painter.fillRect(invalidRect, Qt::white); // useless...
-        painter.setPen( Qt::black );
+        int fontAscent = painter.fontMetrics().ascent();
+
+        painter.fillRect(invalidRect, palette().color(QPalette::Window)); // Check if necessary
+        painter.setPen( palette().color(QPalette::Text) );
         for (int i = firstLine; i < lastLine; i++) {
-            int yPos = (i-firstLine + 1) * fontHeight;
-            painter.drawText(0, yPos, logData->getLineString(i));
+            int yPos = (i-firstLine) * fontHeight;
+            if ( i == selectedLine )
+            {
+                painter.fillRect( 0, yPos, viewport()->width(), fontHeight,
+                        palette().color(QPalette::Highlight) );
+                painter.setPen( palette().color(QPalette::HighlightedText) );
+                painter.drawText( 0, yPos + fontAscent, logData->getLineString(i) );
+                painter.setPen( palette().color(QPalette::Text) );
+            }
+            else
+                painter.drawText( 0, yPos + fontAscent, logData->getLineString(i) );
         }
     }
 
 }
 
-int AbstractLogView::getNbVisibleLines()
-{
-    QFontMetrics fm = fontMetrics();
-    return height()/fm.height() + 1;
-}
-
+/*
+ * Public functions
+ */
 void AbstractLogView::updateData(const AbstractLogData* newLogData)
 {
     // Save the new data
@@ -84,5 +107,37 @@ void AbstractLogView::updateData(const AbstractLogData* newLogData)
     verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
     firstLine = 0;
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    selectedLine = -1;
     update();
+}
+
+/// @brief Display the particular line passed at the top of the display
+void AbstractLogView::displayLine( int line )
+{
+    LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
+
+    firstLine = line;
+    selectedLine = line;
+    //verticalScrollBar()->setValue( line );
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+
+    update();
+}
+
+/*
+ * Private functions
+ */
+int AbstractLogView::getNbVisibleLines()
+{
+    QFontMetrics fm = fontMetrics();
+    return height()/fm.height() + 1;
+}
+
+/// @brief Convert the x, y coordinates to the line number in the file
+int AbstractLogView::convertCoordToLine(int yPos)
+{
+    QFontMetrics fm = fontMetrics();
+    int line = firstLine + yPos/fm.height();
+
+    return line;
 }

@@ -20,16 +20,26 @@ class AbstractLogView : public QAbstractScrollArea
         void updateData(const AbstractLogData* newLogData);
 
     protected:
+        void mousePressEvent( QMouseEvent* mouseEvent );
         void paintEvent(QPaintEvent* paintEvent);
         void resizeEvent(QResizeEvent* resizeEvent);
         void scrollContentsBy(int dx, int dy);
+
+    signals:
+        void newSelection( int line );
+
+    public slots:
+        void displayLine( int line );
 
     private:
         const AbstractLogData* logData;
         int firstLine;
         int lastLine;
+        /// @brief Line number currently selected, or -1 if none selected
+        int selectedLine;
 
         int getNbVisibleLines();
+        int convertCoordToLine(int yPos);
 };
 
 #endif

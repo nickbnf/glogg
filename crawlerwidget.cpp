@@ -47,8 +47,14 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
             this, SLOT(enableSearchButton(const QString&)));
     connect(searchLineEdit, SIGNAL(returnPressed()),
             searchButton, SIGNAL(clicked()));
-    connect(searchButton, SIGNAL(clicked()),
-            this, SLOT(searchClicked()));
+    connect(searchButton, SIGNAL( clicked() ),
+            this, SLOT( searchClicked() ) );
+    connect(filteredView, SIGNAL( newSelection( int ) ),
+            logMainView, SLOT( displayLine( int ) ) );
+    connect(logMainView, SIGNAL( newSelection( int ) ),
+            logMainView, SLOT( update() ) );
+    connect(filteredView, SIGNAL( newSelection( int ) ),
+            filteredView, SLOT( update() ) );
 }
 
 void CrawlerWidget::searchClicked()

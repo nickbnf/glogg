@@ -4,6 +4,7 @@
 
 #include "logfiltereddata.h"
 
+// Deprecated following QListString implementation
 LogFilteredData::LogFilteredData(QByteArray* logData, QRegExp regExp) : AbstractLogData()
 {
     LOG(logDEBUG) << "Entering LogFilteredData constructor";
@@ -15,6 +16,15 @@ LogFilteredData::LogFilteredData(QByteArray* logData, QRegExp regExp) : Abstract
         if ( regExp.indexIn(string) != -1 )
             lineList.append(string);
     }
+
+    LOG(logDEBUG) << "End LogFilteredData";
+}
+
+LogFilteredData::LogFilteredData(QStringList* logData, QRegExp regExp) : AbstractLogData()
+{
+    LOG(logDEBUG) << "Entering LogFilteredData constructor";
+
+    lineList = logData->filter(regExp);
 
     LOG(logDEBUG) << "End LogFilteredData";
 }

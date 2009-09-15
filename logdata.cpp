@@ -32,4 +32,7 @@ QString LogData::doGetLineString(int line) const
 
 LogFilteredData* LogData::getNewFilteredData(QRegExp& regExp) const
 {
+    LogFilteredData* newFilteredData = new LogFilteredData(list, regExp);
+
+    return newFilteredData;
 }

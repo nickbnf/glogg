@@ -9,7 +9,10 @@ LogData::LogData(const QByteArray &byteArray) : AbstractLogData()
     list = new QStringList();
     int pos=0, end=0;
     while ( (end = byteArray.indexOf("\n", pos)) != -1 ) {
-        const QString string = QString(byteArray.mid(pos, end-pos));
+        const int length = end-pos;
+        const QString string = QString(byteArray.mid(pos, length));
+        if ( length > maxLength)
+            maxLength = length;
         pos = end+1;
         list->append(string);
     }

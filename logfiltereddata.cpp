@@ -24,7 +24,15 @@ LogFilteredData::LogFilteredData(QStringList* logData, QRegExp regExp) : Abstrac
 {
     LOG(logDEBUG) << "Entering LogFilteredData constructor";
 
-    lineList = logData->filter(regExp);
+    QStringList::iterator i;
+    for ( i = logData->begin(); i != logData->end(); ++i ) {
+        if ( regExp.indexIn( *i ) != -1 ) {
+            const int length = i->length();
+            if ( length > maxLength )
+                maxLength = length;
+            lineList.append( *i );
+        }
+    }
 
     LOG(logDEBUG) << "End LogFilteredData";
 }

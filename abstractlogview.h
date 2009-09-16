@@ -35,11 +35,13 @@ class AbstractLogView : public QAbstractScrollArea
         const AbstractLogData* logData;
         int firstLine;
         int lastLine;
+        int firstCol;
         /// @brief Line number currently selected, or -1 if none selected
         int selectedLine;
 
-        int getNbVisibleLines();
-        int convertCoordToLine(int yPos);
+        int getNbVisibleLines() const;
+        int getNbVisibleCols() const;
+        int convertCoordToLine(int yPos) const;
 };
 
 #endif

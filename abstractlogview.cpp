@@ -47,6 +47,13 @@ void AbstractLogView::resizeEvent(QResizeEvent* resizeEvent)
 
     // Update the scroll bars
     verticalScrollBar()->setPageStep( getNbVisibleLines() );
+
+    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
+    LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
+    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
+    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
 }
 
 void AbstractLogView::scrollContentsBy( int dx, int dy )
@@ -54,6 +61,7 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
     LOG(logDEBUG) << "scrollContentsBy received";
 
     firstLine -= dy;
+    firstCol  -= dx;
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
     update();
@@ -71,23 +79,26 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
     {
         // Repaint the viewport
         QPainter painter(viewport());
-        int fontHeight = painter.fontMetrics().height();
-        int fontAscent = painter.fontMetrics().ascent();
+        const int fontHeight = painter.fontMetrics().height();
+        const int fontAscent = painter.fontMetrics().ascent();
+        const int nbCols = getNbVisibleCols();
 
         painter.fillRect(invalidRect, palette().color(QPalette::Window)); // Check if necessary
         painter.setPen( palette().color(QPalette::Text) );
         for (int i = firstLine; i < lastLine; i++) {
-            int yPos = (i-firstLine) * fontHeight;
+            const int yPos = (i-firstLine) * fontHeight;
+            const QString cutLine = logData->getLineString( i ).mid( firstCol, firstCol+nbCols );
+
             if ( i == selectedLine )
             {
                 painter.fillRect( 0, yPos, viewport()->width(), fontHeight,
                         palette().color(QPalette::Highlight) );
                 painter.setPen( palette().color(QPalette::HighlightedText) );
-                painter.drawText( 0, yPos + fontAscent, logData->getLineString(i) );
+                painter.drawText( 0, yPos + fontAscent, cutLine );
                 painter.setPen( palette().color(QPalette::Text) );
             }
             else
-                painter.drawText( 0, yPos + fontAscent, logData->getLineString(i) );
+                painter.drawText( 0, yPos + fontAscent, cutLine );
         }
     }
 
@@ -105,8 +116,17 @@ void AbstractLogView::updateData(const AbstractLogData* newLogData)
     LOG(logDEBUG) << "Now adapting the content";
     verticalScrollBar()->setValue( 0 );
     verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
+    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
+    LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
+    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
+    horizontalScrollBar()->setValue( 0 );
+    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
+
     firstLine = 0;
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    firstCol = 0;
     selectedLine = -1;
     update();
 }
@@ -123,14 +143,20 @@ void AbstractLogView::displayLine( int line )
 /*
  * Private functions
  */
-int AbstractLogView::getNbVisibleLines()
+int AbstractLogView::getNbVisibleLines() const
 {
     QFontMetrics fm = fontMetrics();
-    return height()/fm.height() + 1;
+    return viewport()->height()/fm.height() + 1;
+}
+
+int AbstractLogView::getNbVisibleCols() const
+{
+    QFontMetrics fm = fontMetrics();
+    return viewport()->width()/fm.width('w') + 1;
 }
 
 /// @brief Convert the x, y coordinates to the line number in the file
-int AbstractLogView::convertCoordToLine(int yPos)
+int AbstractLogView::convertCoordToLine(int yPos) const
 {
     QFontMetrics fm = fontMetrics();
     int line = firstLine + yPos/fm.height();

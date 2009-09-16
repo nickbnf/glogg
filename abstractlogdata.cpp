@@ -1,5 +1,10 @@
 #include "abstractlogdata.h"
 
+AbstractLogData::AbstractLogData()
+{
+    maxLength = 0;
+}
+
 // Simple wrapper in order to use a clean Template Method
 QString AbstractLogData::getLineString(int line) const
 {
@@ -12,3 +17,7 @@ int AbstractLogData::getNbLine() const
     return doGetNbLine();
 }
 
+int AbstractLogData::getMaxLength() const
+{
+    return maxLength;
+}

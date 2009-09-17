@@ -6,7 +6,7 @@
 class FilteredView : public AbstractLogView
 {
     public:
-        FilteredView(QWidget* parent = 0);
+        FilteredView(const AbstractLogData* newLogData, QWidget* parent = 0);
 };
 
 #endif

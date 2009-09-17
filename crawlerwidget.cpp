@@ -14,9 +14,13 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 {
     setOrientation(Qt::Vertical);
 
-    logMainView =  new LogMainView;
+    // Initialize internal data
+    logData         = &emptyLogData;
+    logFilteredData = &emptyLogFilteredData;
+
+    logMainView =  new LogMainView( logData );
     bottomWindow = new QWidget;
-    filteredView = new FilteredView;
+    filteredView = new FilteredView( logFilteredData );
 
     // Construct the Search Info line
     searchInfoLine = new QLabel();
@@ -46,10 +50,6 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 
     addWidget(logMainView);
     addWidget(bottomWindow);
-
-    // Initialize internal data
-    logData         = &emptyLogData;
-    logFilteredData = &emptyLogFilteredData;
 
     // Connect the signals
     connect(searchLineEdit, SIGNAL(returnPressed()),

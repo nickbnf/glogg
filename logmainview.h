@@ -6,7 +6,7 @@
 class LogMainView : public AbstractLogView
 {
     public:
-        LogMainView(QWidget* parent = 0);
+        LogMainView(const AbstractLogData* newLogData, QWidget* parent = 0);
 };
 
 #endif

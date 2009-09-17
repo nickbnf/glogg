@@ -1,6 +1,7 @@
 #include "filteredview.h"
 
-FilteredView::FilteredView(QWidget* parent) : AbstractLogView(parent)
+FilteredView::FilteredView(const AbstractLogData* newLogData, QWidget* parent)
+    : AbstractLogView(newLogData, parent)
 {
 }
 

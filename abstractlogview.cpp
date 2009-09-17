@@ -13,11 +13,17 @@
 #include "common.h"
 #include "logmainview.h"
 
-AbstractLogView::AbstractLogView(QWidget* parent) : QAbstractScrollArea(parent)
+AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
+       QWidget* parent) : QAbstractScrollArea(parent)
 {
-    logData = NULL;
+    logData = newLogData;
     // Create the viewport QWidget
     setViewport(0);
+
+    firstLine = 0;
+    lastLine = 0;
+    firstCol = 0;
+    selectedLine = -1;
 }
 
 /*

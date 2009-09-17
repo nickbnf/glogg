@@ -15,7 +15,7 @@ class AbstractLogView : public QAbstractScrollArea
     Q_OBJECT
 
     public:
-        AbstractLogView(QWidget *parent=0);
+        AbstractLogView(const AbstractLogData* newLogData, QWidget *parent=0);
 
         void updateData(const AbstractLogData* newLogData);
 

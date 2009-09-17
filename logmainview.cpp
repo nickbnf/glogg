@@ -1,6 +1,7 @@
 #include "logmainview.h"
 
-LogMainView::LogMainView(QWidget* parent) : AbstractLogView(parent)
+LogMainView::LogMainView(const AbstractLogData* newLogData, QWidget* parent)
+    : AbstractLogView(newLogData, parent)
 {
 }
 

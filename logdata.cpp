@@ -4,6 +4,12 @@
 
 #include "logdata.h"
 
+LogData::LogData() : AbstractLogData()
+{
+    list = NULL;
+    nbLines = 0;
+}
+
 LogData::LogData(const QByteArray &byteArray) : AbstractLogData()
 {
     list = new QStringList();
@@ -16,7 +22,7 @@ LogData::LogData(const QByteArray &byteArray) : AbstractLogData()
         pos = end+1;
         list->append(string);
     }
-    nbLines = list->length();
+    nbLines = list->size();
 
     LOG(logDEBUG) << "Found " << nbLines << " lines.";
 }

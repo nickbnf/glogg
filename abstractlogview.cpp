@@ -28,10 +28,11 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     // Selection implementation
     if ( mouseEvent->button() == Qt::LeftButton )
     {
-        int line = convertCoordToLine(mouseEvent->y());
-        selectedLine = line;
-
-        emit newSelection( line );
+        int line = convertCoordToLine( mouseEvent->y() );
+        if ( line < logData->getNbLine() ) {
+            selectedLine = line;
+            emit newSelection( line );
+        }
     }
 }
 
@@ -128,6 +129,7 @@ void AbstractLogView::updateData(const AbstractLogData* newLogData)
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
     firstCol = 0;
     selectedLine = -1;
+
     update();
 }
 

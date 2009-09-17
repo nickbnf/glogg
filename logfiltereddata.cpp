@@ -4,6 +4,11 @@
 
 #include "logfiltereddata.h"
 
+LogFilteredData::LogFilteredData() : AbstractLogData()
+{
+    lineList = QStringList();
+}
+
 // Deprecated following QListString implementation
 LogFilteredData::LogFilteredData(QByteArray* logData, QRegExp regExp) : AbstractLogData()
 {
@@ -22,11 +27,19 @@ LogFilteredData::LogFilteredData(QByteArray* logData, QRegExp regExp) : Abstract
 
 LogFilteredData::LogFilteredData(QStringList* logData, QRegExp regExp) : AbstractLogData()
 {
-    LOG(logDEBUG) << "Entering LogFilteredData constructor";
+    sourceLogData = logData;
+    currentRegExp = regExp;
+
+    searchDone = false;
+}
+
+void LogFilteredData::runSearch()
+{
+    LOG(logDEBUG) << "Entering runSearch";
 
     QStringList::iterator i;
-    for ( i = logData->begin(); i != logData->end(); ++i ) {
-        if ( regExp.indexIn( *i ) != -1 ) {
+    for ( i = sourceLogData->begin(); i != sourceLogData->end(); ++i ) {
+        if ( currentRegExp.indexIn( *i ) != -1 ) {
             const int length = i->length();
             if ( length > maxLength )
                 maxLength = length;
@@ -34,7 +47,10 @@ LogFilteredData::LogFilteredData(QStringList* logData, QRegExp regExp) : Abstrac
         }
     }
 
-    LOG(logDEBUG) << "End LogFilteredData";
+    searchDone = true;
+    emit newDataAvailable();
+
+    LOG(logDEBUG) << "End runSearch";
 }
 
 QString LogFilteredData::doGetLineString(int line) const
@@ -46,5 +62,5 @@ QString LogFilteredData::doGetLineString(int line) const
 
 int LogFilteredData::doGetNbLine() const
 {
-    return lineList.length();
+    return lineList.size();
 }

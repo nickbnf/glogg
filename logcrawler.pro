@@ -11,12 +11,12 @@ CONFIG += console
 SOURCES += main.cpp\
         mainwindow.cpp\
         crawlerwidget.cpp\
-        logmainview.cpp\
         abstractlogdata.cpp\
         logdata.cpp\
         logfiltereddata.cpp\
-        filteredview.cpp\
         abstractlogview.cpp\
+        logmainview.cpp\
+        filteredview.cpp\
         optionsdialog.cpp\
         configuration.cpp
 
@@ -24,10 +24,11 @@ HEADERS  += version.h\
         mainwindow.h\
         crawlerwidget.h\
         logmainview.h\
-        logdata.h\
-        logfiltereddata.h\
         log.h\
         filteredview.h\
+        abstractlogdata.h\
+        logdata.h\
+        logfiltereddata.h\
         abstractlogview.h\
         optionsdialog.h\
         configuration.h

@@ -25,8 +25,8 @@ class CrawlerWidget : public QSplitter
 
     private slots:
         void searchClicked();
-        void enableSearchButton(const QString& text);
         void applyConfiguration();
+        void updateFilteredView();
 
     private:
         LogMainView*    logMainView;
@@ -35,9 +35,13 @@ class CrawlerWidget : public QSplitter
         QLineEdit*      searchLineEdit;
         QPushButton*    searchButton;
         FilteredView*   filteredView;
+        QLabel*         searchInfoLine;
 
         QVBoxLayout*    bottomMainLayout;
         QHBoxLayout*    searchLineLayout;
+
+        static LogData  emptyLogData;
+        static LogFilteredData  emptyLogFilteredData;
 
         LogData*        logData;
         LogFilteredData* logFilteredData;

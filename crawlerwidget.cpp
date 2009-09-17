@@ -7,6 +7,9 @@
 
 #include "configuration.h"
 
+LogData         CrawlerWidget::emptyLogData;
+LogFilteredData CrawlerWidget::emptyLogFilteredData;
+
 CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 {
     setOrientation(Qt::Vertical);
@@ -14,6 +17,11 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     logMainView =  new LogMainView;
     bottomWindow = new QWidget;
     filteredView = new FilteredView;
+
+    // Construct the Search Info line
+    searchInfoLine = new QLabel();
+    searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
+    searchInfoLine->setLineWidth( 1 );
 
     // Construct the Search line
     searchLabel =  new QLabel(tr("&Text: "));
@@ -26,25 +34,24 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     searchLineLayout->addWidget(searchLabel);
     searchLineLayout->addWidget(searchLineEdit);
     searchLineLayout->addWidget(searchButton);
-    searchLineLayout->setContentsMargins(8, 0, 8, 0);
+    searchLineLayout->setContentsMargins(6, 0, 6, 0);
 
     // Construct the bottom window
     QVBoxLayout* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout(searchLineLayout);
+    bottomMainLayout->addWidget(searchInfoLine);
     bottomMainLayout->addWidget(filteredView);
-    bottomMainLayout->setContentsMargins(0, 0, 0, 0);
+    bottomMainLayout->setContentsMargins(2, 1, 2, 1);
     bottomWindow->setLayout(bottomMainLayout);
 
     addWidget(logMainView);
     addWidget(bottomWindow);
 
     // Initialize internal data
-    logData         = NULL;
-    logFilteredData = NULL;
+    logData         = &emptyLogData;
+    logFilteredData = &emptyLogFilteredData;
 
     // Connect the signals
-    connect(searchLineEdit, SIGNAL(textChanged(const QString&)),
-            this, SLOT(enableSearchButton(const QString&)));
     connect(searchLineEdit, SIGNAL(returnPressed()),
             searchButton, SIGNAL(clicked()));
     connect(searchButton, SIGNAL( clicked() ),
@@ -57,22 +64,43 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
             filteredView, SLOT( update() ) );
 }
 
+/*
+ * Slots
+ */
 void CrawlerWidget::searchClicked()
 {
     LOG(logDEBUG) << "searchClicked received";
 
-    if (logFilteredData)
+    // Delete (and disconnect the object)
+    if ( logFilteredData != &emptyLogFilteredData )
         delete logFilteredData;
 
     QString text = searchLineEdit->text();
     QRegExp regexp(text);
-    logFilteredData = logData->getNewFilteredData(regexp);
-    filteredView->updateData(logFilteredData);
+
+    // Create the new LogFilteredData
+    if ( !text.isEmpty() ) {
+        logFilteredData = logData->getNewFilteredData(regexp);
+        connect( logFilteredData, SIGNAL( newDataAvailable() ),
+                this, SLOT( updateFilteredView() ) );
+        logFilteredData->runSearch();
+    }
+    else {
+        logFilteredData = &emptyLogFilteredData;
+        // We won't receive an event from the emptyLogFilteredData
+        searchInfoLine->setText( "" );
+        filteredView->updateData( logFilteredData );
+    }
 }
 
-void CrawlerWidget::enableSearchButton(const QString& text)
+void CrawlerWidget::updateFilteredView()
 {
-    searchButton->setEnabled(!text.isEmpty());
+    LOG(logDEBUG) << "updateFilteredView received.";
+
+    searchInfoLine->setText( tr("Found %1 match%2.")
+            .arg( logFilteredData->getNbLine() )
+            .arg( logFilteredData->getNbLine() > 1 ? "es" : "" ) );
+    filteredView->updateData(logFilteredData);
 }
 
 void CrawlerWidget::applyConfiguration()

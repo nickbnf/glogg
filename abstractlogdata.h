@@ -1,10 +1,13 @@
 #ifndef ABSTRACTLOGDATA_H
 #define ABSTRACTLOGDATA_H
 
+#include <QObject>
 #include <QByteArray>
 #include <QString>
 
-class AbstractLogData {
+class AbstractLogData : public QObject {
+    Q_OBJECT
+
     public:
         AbstractLogData();
 

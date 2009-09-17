@@ -10,6 +10,9 @@
 
 class LogData : public AbstractLogData {
     public:
+        /// @brief Create an empty LogData
+        LogData();
+        /// @brief Create a log data from the data chunk passed
         LogData(const QByteArray& byteArray);
 
         LogFilteredData* getNewFilteredData(QRegExp& regExp) const;

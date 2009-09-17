@@ -126,7 +126,7 @@ bool CrawlerWidget::readFile(const QString &fileName)
 
         logMainView->updateData(logData);
 
-        if (oldLogData)
+        if (oldLogData != &emptyLogData)
             delete oldLogData;
 
         return true;

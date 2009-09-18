@@ -27,6 +27,7 @@ class CrawlerWidget : public QSplitter
         void searchClicked();
         void applyConfiguration();
         void updateFilteredView();
+        void filteredViewSelection( int lineNb );
 
     private:
         LogMainView*    logMainView;

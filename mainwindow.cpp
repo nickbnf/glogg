@@ -125,9 +125,10 @@ void MainWindow::about()
 {
     QMessageBox::about(this, tr("About LogCrawler"),
             tr("<h2>LogCrawler " LCRAWLER_VERSION "</h2>"
-                "<p>Copyright &copy; 2009 Nicolas Bonnefon"
                 "<p>A fast, advanced log explorer."
-                "<p>Built " LCRAWLER_DATE));
+                "<p>Built " LCRAWLER_DATE " from " LCRAWLER_COMMIT
+                "<p>Copyright &copy; 2009 Nicolas Bonnefon and other contributors"
+                "<p>You may modify and redistribute the program under the terms of the GPL (version 2 or later)." ) );
 }
 
 void MainWindow::aboutQt()

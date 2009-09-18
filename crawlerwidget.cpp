@@ -56,10 +56,10 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
             searchButton, SIGNAL(clicked()));
     connect(searchButton, SIGNAL( clicked() ),
             this, SLOT( searchClicked() ) );
-    connect(filteredView, SIGNAL( newSelection( int ) ),
-            logMainView, SLOT( displayLine( int ) ) );
     connect(logMainView, SIGNAL( newSelection( int ) ),
             logMainView, SLOT( update() ) );
+    connect(filteredView, SIGNAL( newSelection( int ) ),
+            this, SLOT( filteredViewSelection( int ) ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
 }
@@ -101,6 +101,13 @@ void CrawlerWidget::updateFilteredView()
             .arg( logFilteredData->getNbLine() )
             .arg( logFilteredData->getNbLine() > 1 ? "es" : "" ) );
     filteredView->updateData(logFilteredData);
+}
+
+/// @brief Slot called when the user select a line in the filtered view
+void CrawlerWidget::filteredViewSelection( int lineNb )
+{
+    int mainViewLine = logFilteredData->getMatchingLineNumber( lineNb );
+    logMainView->displayLine( mainViewLine );  // FIXME: should be done with a signal.
 }
 
 void CrawlerWidget::applyConfiguration()

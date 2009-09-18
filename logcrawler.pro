@@ -5,7 +5,7 @@
 TARGET = logcrawler
 TEMPLATE = app
 
-CONFIG += console debug
+CONFIG += console
 
 # Input
 SOURCES += main.cpp\
@@ -33,5 +33,6 @@ HEADERS  += version.h\
         optionsdialog.h\
         configuration.h
 
-QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date +'\"%a_%b_%d,_%Y\"'`\\\"
+QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date +'\"%F\"'`\\\"
 QMAKE_CXXFLAGS += -DLCRAWLER_VERSION=\\\"`git describe`\\\"
+QMAKE_CXXFLAGS += -DLCRAWLER_COMMIT=\\\"`git rev-parse HEAD`\\\"

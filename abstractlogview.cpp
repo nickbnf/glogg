@@ -89,9 +89,10 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         const int fontHeight = painter.fontMetrics().height();
         const int fontAscent = painter.fontMetrics().ascent();
         const int nbCols = getNbVisibleCols();
+        const QPalette& palette = viewport()->palette();
 
-        painter.fillRect(invalidRect, palette().color(QPalette::Window)); // Check if necessary
-        painter.setPen( palette().color(QPalette::Text) );
+        painter.fillRect(invalidRect, palette.color(QPalette::Base)); // Check if necessary
+        painter.setPen( palette.color(QPalette::Text) );
         for (int i = firstLine; i < lastLine; i++) {
             const int yPos = (i-firstLine) * fontHeight;
             const QString cutLine = logData->getLineString( i ).mid( firstCol, firstCol+nbCols );
@@ -99,10 +100,10 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
             if ( i == selectedLine )
             {
                 painter.fillRect( 0, yPos, viewport()->width(), fontHeight,
-                        palette().color(QPalette::Highlight) );
-                painter.setPen( palette().color(QPalette::HighlightedText) );
+                        palette.color(QPalette::Highlight) );
+                painter.setPen( palette.color(QPalette::HighlightedText) );
                 painter.drawText( 0, yPos + fontAscent, cutLine );
-                painter.setPen( palette().color(QPalette::Text) );
+                painter.setPen( palette.color(QPalette::Text) );
             }
             else
                 painter.drawText( 0, yPos + fontAscent, cutLine );

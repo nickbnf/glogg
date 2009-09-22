@@ -33,6 +33,12 @@ HEADERS  += version.h\
         optionsdialog.h\
         configuration.h
 
+debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
+release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
+
+debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
+release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
+
 QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date +'\"%F\"'`\\\"
 QMAKE_CXXFLAGS += -DLCRAWLER_VERSION=\\\"`git describe`\\\"
 QMAKE_CXXFLAGS += -DLCRAWLER_COMMIT=\\\"`git rev-parse HEAD`\\\"

@@ -42,10 +42,16 @@ LogFilteredData::LogFilteredData( QStringList* logData, QRegExp regExp )
     : AbstractLogData()
 {
     matchingLineList = QList<matchingLine>();
-    sourceLogData = logData;
-    currentRegExp = regExp;
 
-    searchDone_ = false;
+    if ( logData != NULL ) {
+        sourceLogData = logData;
+        currentRegExp = regExp;
+
+        searchDone_ = false;
+    } else {
+        // Empty set
+        searchDone_ = true;
+    }
 }
 
 // Run the search and send newDataAvailable() signals.

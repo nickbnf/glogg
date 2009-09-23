@@ -17,50 +17,58 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements LogData, the content of a log file.
+
 #include <iostream>
 
 #include "log.h"
 
 #include "logdata.h"
 
+// Constructs an empty log file.
+// It must be displayed without error.
 LogData::LogData() : AbstractLogData()
 {
-    list = NULL;
-    nbLines = 0;
+    list_ = NULL;
+    nbLines_ = 0;
 }
 
-LogData::LogData(const QByteArray &byteArray) : AbstractLogData()
+// Constructs from a data chunk.
+LogData::LogData( const QByteArray &byteArray ) : AbstractLogData()
 {
-    list = new QStringList();
+    list_ = new QStringList();
     int pos=0, end=0;
     while ( (end = byteArray.indexOf("\n", pos)) != -1 ) {
         const int length = end-pos;
-        const QString string = QString(byteArray.mid(pos, length));
+        const QString string = QString( byteArray.mid(pos, length) );
         if ( length > maxLength)
             maxLength = length;
         pos = end+1;
-        list->append(string);
+        list_->append( string );
     }
-    nbLines = list->size();
+    nbLines_ = list_->size();
 
-    LOG(logDEBUG) << "Found " << nbLines << " lines.";
+    LOG(logDEBUG) << "Found " << nbLines_ << " lines.";
 }
 
 int LogData::doGetNbLine() const
 {
-    return nbLines;
+    return nbLines_;
 }
 
 QString LogData::doGetLineString(int line) const
 {
-    QString string = list->at(line);
+    if ( line >= nbLines_ ) { /* exception? */ }
+
+    QString string = list_->at( line );
 
     return string;
 }
 
-LogFilteredData* LogData::getNewFilteredData(QRegExp& regExp) const
+// Return an initialized LogFilteredData. The search is not started.
+LogFilteredData* LogData::getNewFilteredData( QRegExp& regExp ) const
 {
-    LogFilteredData* newFilteredData = new LogFilteredData(list, regExp);
+    LogFilteredData* newFilteredData = new LogFilteredData( list_, regExp );
 
     return newFilteredData;
 }

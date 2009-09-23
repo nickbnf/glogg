@@ -24,43 +24,46 @@
 
 #include "abstractlogdata.h"
 
-/**
- * @brief Base class representing the log view widget.
- *
- * It can be either the top (full) or bottom (filtered) view.
- */
+// Base class representing the log view widget.
+// It can be either the top (full) or bottom (filtered) view.
 class AbstractLogView : public QAbstractScrollArea
 {
-    Q_OBJECT
+  Q_OBJECT
 
-    public:
-        AbstractLogView(const AbstractLogData* newLogData, QWidget *parent=0);
+  public:
+    AbstractLogView(const AbstractLogData* newLogData, QWidget *parent=0);
 
-        void updateData(const AbstractLogData* newLogData);
+    // Makes the widget use the new data set passed,
+    // reconfigure itself and then redraw itself.
+    // The called retains ownership of the data set.
+    void updateData(const AbstractLogData* newLogData);
 
-    protected:
-        void mousePressEvent( QMouseEvent* mouseEvent );
-        void paintEvent(QPaintEvent* paintEvent);
-        void resizeEvent(QResizeEvent* resizeEvent);
-        void scrollContentsBy(int dx, int dy);
+  protected:
+    void mousePressEvent(QMouseEvent* mouseEvent);
+    void paintEvent(QPaintEvent* paintEvent);
+    void resizeEvent(QResizeEvent* resizeEvent);
+    void scrollContentsBy(int dx, int dy);
 
-    signals:
-        void newSelection( int line );
+  signals:
+    // Sent when a new line has been selected by the user.
+    void newSelection(int line);
 
-    public slots:
-        void displayLine( int line );
+  public slots:
+    // Makes the widget adjust itself to display the passed line.
+    // Doing so, it will throw itself a scrollContents event.
+    void displayLine(int line);
 
-    private:
-        const AbstractLogData* logData;
-        int firstLine;
-        int lastLine;
-        int firstCol;
-        /// @brief Line number currently selected, or -1 if none selected
-        int selectedLine;
+  private:
+    const AbstractLogData* logData;
+    int firstLine;
+    int lastLine;
+    int firstCol;
+    // Line number currently selected, or -1 if none selected
+    int selectedLine;
 
-        int getNbVisibleLines() const;
-        int getNbVisibleCols() const;
-        int convertCoordToLine(int yPos) const;
+    int getNbVisibleLines() const;
+    int getNbVisibleCols() const;
+    int convertCoordToLine(int yPos) const;
 };
 
 #endif

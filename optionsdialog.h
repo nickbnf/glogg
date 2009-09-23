@@ -25,34 +25,39 @@
 
 #include "configuration.h"
 
+// Implements the main option dialog box
 class OptionsDialog : public QDialog
 {
     Q_OBJECT
 
-    public:
-        OptionsDialog(QWidget* parent = 0);
+  public:
+    OptionsDialog(QWidget* parent = 0);
 
-    signals:
-        /// Is emitted when new settings must be used
-        void optionsChanged();
+  signals:
+    // Is emitted when new settings must be used
+    void optionsChanged();
 
-    private slots:
-        /*
-        void applyClicked();
-        */
-        void updateFontSize(const QString& text);
-        void updateConfigFromDialog();
+  private slots:
+    /*
+    void applyClicked();
+    */
+    // Clears and updates the font size box with the sizes allowed
+    // by the passed font family.
+    void updateFontSize(const QString& fontFamily);
+    // Update the content of the global Config() using parameters
+    // from the dialog box.
+    void updateConfigFromDialog();
 
-    private:
-        QPushButton* okButton;
-        QPushButton* cancelButton;
-        QPushButton* applyButton;
+  private:
+    QPushButton* okButton;
+    QPushButton* cancelButton;
+    QPushButton* applyButton;
 
-        QComboBox*   fontFamilyBox;
-        QComboBox*   fontSizeBox;
+    QComboBox*   fontFamilyBox;
+    QComboBox*   fontSizeBox;
 
-        void setupFontList();
-        void updateDialogFromConfig();
+    void setupFontList();
+    void updateDialogFromConfig();
 };
 
 #endif

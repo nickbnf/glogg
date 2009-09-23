@@ -26,17 +26,19 @@
 class QAction;
 class QLabel;
 
+// Main window of the application, creates menus, toolbar and
+// the CrawlerWidget
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
+  public:
     MainWindow();
 
-protected:
-    void closeEvent(QCloseEvent *event);
+  protected:
+    void closeEvent( QCloseEvent *event );
 
-private slots:
+  private slots:
     void open();
     void openRecentFile();
     void copy();
@@ -46,11 +48,11 @@ private slots:
 
     void updateStatusBar();
 
-signals:
-    /// Is emitted when new settings must be used
+  signals:
+    // Is emitted when new settings must be used
     void optionsChanged();
 
-private:
+  private:
     void createActions();
     void createMenus();
     void createContextMenu();

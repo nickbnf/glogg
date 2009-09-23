@@ -17,6 +17,10 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements the LogMainView concrete class.
+// Most of the actual drawing and event management is done in AbstractLogView
+// Only behaviour specific to the main (top) view is implemented here.
+
 #include "logmainview.h"
 
 LogMainView::LogMainView(const AbstractLogData* newLogData, QWidget* parent)

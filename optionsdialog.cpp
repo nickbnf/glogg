@@ -23,6 +23,7 @@
 
 #include "optionsdialog.h"
 
+// Constructor
 OptionsDialog::OptionsDialog(QWidget* parent) : QDialog(parent)
 {
     QGroupBox* fontBox  = new QGroupBox( tr("Font") );
@@ -67,7 +68,11 @@ OptionsDialog::OptionsDialog(QWidget* parent) : QDialog(parent)
     updateDialogFromConfig();
 }
 
+//
 // Private functions
+//
+
+// Creates the two font ComboBoxes and populates the 'family' one
 void OptionsDialog::setupFontList()
 {
     QFontDatabase database;
@@ -78,6 +83,7 @@ void OptionsDialog::setupFontList()
     fontSizeBox = new QComboBox();
 }
 
+// Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
     // Main font
@@ -92,12 +98,15 @@ void OptionsDialog::updateDialogFromConfig()
         fontSizeBox->setCurrentIndex( sizeIndex );
 }
 
+//
 // Slots
-void OptionsDialog::updateFontSize(const QString& text)
+//
+
+void OptionsDialog::updateFontSize(const QString& fontFamily)
 {
     QFontDatabase database;
     QString oldFontSize = fontSizeBox->currentText();
-    QList<int> sizes = database.pointSizes( text, "" );
+    QList<int> sizes = database.pointSizes( fontFamily, "" );
 
     fontSizeBox->clear();
     foreach (int size, sizes) {
@@ -111,8 +120,6 @@ void OptionsDialog::updateFontSize(const QString& text)
 
 void OptionsDialog::updateConfigFromDialog()
 {
-    LOG(logDEBUG) << "updateConfigFromDialog";
-
     QFont font = QFont(
             fontFamilyBox->currentText(),
             (fontSizeBox->currentText()).toInt() );

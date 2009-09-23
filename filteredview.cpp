@@ -17,6 +17,10 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements the FilteredView concrete class.
+// Most of the actual drawing and event management is done in AbstractLogView
+// Only behaviour specific to the filtered (bottom) view is implemented here.
+
 #include "filteredview.h"
 
 FilteredView::FilteredView(const AbstractLogData* newLogData, QWidget* parent)

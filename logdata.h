@@ -27,21 +27,25 @@
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
 
+// Represents a complete set of data to be displayed (ie. a log file content)
+// An object of this class is immutable.
 class LogData : public AbstractLogData {
-    public:
-        /// @brief Create an empty LogData
-        LogData();
-        /// @brief Create a log data from the data chunk passed
-        LogData(const QByteArray& byteArray);
+  public:
+    // Creates an empty LogData
+    LogData();
+    // Creates a log data from the data chunk passed
+    LogData( const QByteArray& byteArray );
 
-        LogFilteredData* getNewFilteredData(QRegExp& regExp) const;
+    // Creates a new filtered data using the passed regexp
+    // ownership is passed to the caller
+    LogFilteredData* getNewFilteredData( QRegExp& regExp ) const;
 
-    private:
-        QString doGetLineString(int line) const;
-        int doGetNbLine() const;
+  private:
+    QString doGetLineString( int line ) const;
+    int doGetNbLine() const;
 
-        QStringList* list;
-        int nbLines;
+    QStringList* list_;
+    int nbLines_;
 };
 
 #endif

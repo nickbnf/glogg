@@ -24,23 +24,30 @@
 #include <QByteArray>
 #include <QString>
 
+// Base class representing a set of data.
+// It can be either a full set or a filtered set.
 class AbstractLogData : public QObject {
-    Q_OBJECT
+  Q_OBJECT
 
-    public:
-        AbstractLogData();
+  public:
+    AbstractLogData();
 
-        QString getLineString(int line) const;
-        int getNbLine() const;
-        int getMaxLength() const;
+    // Returns the line passed as a QString
+    QString getLineString(int line) const;
+    // Returns the total number of lines
+    int getNbLine() const;
+    // Returns the length of the longest line
+    int getMaxLength() const;
 
-    protected:
-        virtual QString doGetLineString(int line) const = 0;
-        virtual int doGetNbLine() const = 0;
+  protected:
+    // Internal function called to get a given line
+    virtual QString doGetLineString(int line) const = 0;
+    // Internal function called to get the number of lines
+    virtual int doGetNbLine() const = 0;
 
-        ~AbstractLogData() {};      // Don't allow polymorphic destruction
+    ~AbstractLogData() {};      // Don't allow polymorphic destruction
 
-        int maxLength;
+    int maxLength;
 };
 
 #endif

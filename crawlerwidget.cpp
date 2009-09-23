@@ -17,6 +17,11 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements the CrawlerWidget class.
+// It is responsible for creating and managing the two views and all
+// the UI elements.  It implements the connection between the UI elements.
+// It also owns the sets of data (full and filtered).
+
 #include "log.h"
 
 #include <Qt>
@@ -26,9 +31,11 @@
 
 #include "configuration.h"
 
+// Construct an empty set of data, and of filtered data to use as a default
 LogData         CrawlerWidget::emptyLogData;
 LogFilteredData CrawlerWidget::emptyLogFilteredData;
 
+// Constructor makes all the child widgets and set up connections.
 CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
 {
     setOrientation(Qt::Vertical);
@@ -74,75 +81,16 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     connect(searchLineEdit, SIGNAL(returnPressed()),
             searchButton, SIGNAL(clicked()));
     connect(searchButton, SIGNAL( clicked() ),
-            this, SLOT( searchClicked() ) );
+            this, SLOT( createNewSearch() ) );
     connect(logMainView, SIGNAL( newSelection( int ) ),
             logMainView, SLOT( update() ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
-            this, SLOT( filteredViewSelection( int ) ) );
+            this, SLOT( jumpToMatchingLine( int ) ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
 }
 
-/*
- * Slots
- */
-void CrawlerWidget::searchClicked()
-{
-    LOG(logDEBUG) << "searchClicked received";
-
-    // Delete (and disconnect the object)
-    if ( logFilteredData != &emptyLogFilteredData )
-        delete logFilteredData;
-
-    QString text = searchLineEdit->text();
-    QRegExp regexp(text);
-
-    // Create the new LogFilteredData
-    if ( !text.isEmpty() ) {
-        logFilteredData = logData->getNewFilteredData(regexp);
-        connect( logFilteredData, SIGNAL( newDataAvailable() ),
-                this, SLOT( updateFilteredView() ) );
-        logFilteredData->runSearch();
-    }
-    else {
-        logFilteredData = &emptyLogFilteredData;
-        // We won't receive an event from the emptyLogFilteredData
-        searchInfoLine->setText( "" );
-        filteredView->updateData( logFilteredData );
-    }
-}
-
-void CrawlerWidget::updateFilteredView()
-{
-    LOG(logDEBUG) << "updateFilteredView received.";
-
-    searchInfoLine->setText( tr("Found %1 match%2.")
-            .arg( logFilteredData->getNbLine() )
-            .arg( logFilteredData->getNbLine() > 1 ? "es" : "" ) );
-    filteredView->updateData(logFilteredData);
-}
-
-/// @brief Slot called when the user select a line in the filtered view
-void CrawlerWidget::filteredViewSelection( int lineNb )
-{
-    int mainViewLine = logFilteredData->getMatchingLineNumber( lineNb );
-    logMainView->displayLine( mainViewLine );  // FIXME: should be done with a signal.
-}
-
-void CrawlerWidget::applyConfiguration()
-{
-    QFont font = Config().mainFont();
-
-    LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
-
-    logMainView->setFont(font);
-    filteredView->setFont(font);
-
-    logMainView->update();
-    filteredView->update();
-}
-
-bool CrawlerWidget::readFile(const QString &fileName)
+bool CrawlerWidget::readFile(const QString& fileName)
 {
     QFile file(fileName);
 
@@ -160,4 +108,61 @@ bool CrawlerWidget::readFile(const QString &fileName)
     else {
         return false;
     }
+}
+
+//
+// Slots
+//
+
+void CrawlerWidget::createNewSearch()
+{
+    // Delete (and disconnect the object)
+    if ( logFilteredData != &emptyLogFilteredData )
+        delete logFilteredData;
+
+    QString text = searchLineEdit->text();
+    QRegExp regexp(text);
+
+    if ( !text.isEmpty() ) {
+        // Create the new LogFilteredData...
+        logFilteredData = logData->getNewFilteredData(regexp);
+        // ... and arrange to receive notification of updates
+        connect( logFilteredData, SIGNAL( newDataAvailable() ),
+                this, SLOT( updateFilteredView() ) );
+        logFilteredData->runSearch();
+    } else {
+        logFilteredData = &emptyLogFilteredData;
+        // We won't receive an event from the emptyLogFilteredData
+        searchInfoLine->setText("");
+        filteredView->updateData(logFilteredData);
+    }
+}
+
+void CrawlerWidget::updateFilteredView()
+{
+    LOG(logDEBUG) << "updateFilteredView received.";
+
+    searchInfoLine->setText( tr("Found %1 match%2.")
+            .arg( logFilteredData->getNbLine() )
+            .arg( logFilteredData->getNbLine() > 1 ? "es" : "" ) );
+    filteredView->updateData(logFilteredData);
+}
+
+void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
+{
+    int mainViewLine = logFilteredData->getMatchingLineNumber(filteredLineNb);
+    logMainView->displayLine(mainViewLine);  // FIXME: should be done with a signal.
+}
+
+void CrawlerWidget::applyConfiguration()
+{
+    QFont font = Config().mainFont();
+
+    LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
+
+    logMainView->setFont(font);
+    filteredView->setFont(font);
+
+    logMainView->update();
+    filteredView->update();
 }

@@ -5,7 +5,9 @@
 TARGET = logcrawler
 TEMPLATE = app
 
-CONFIG += console
+win32:debug {
+    CONFIG += console
+}
 
 # Input
 SOURCES += main.cpp\

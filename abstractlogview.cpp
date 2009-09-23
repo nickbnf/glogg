@@ -17,6 +17,12 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements the AbstractLogView base class.
+// Most of the actual drawing and event management common to the two views
+// is implemented in this class.  The class only calls protected virtual
+// functions when view specific behaviour is desired, using the template
+// pattern.
+
 #include <iostream>
 
 #include <QFile>
@@ -35,6 +41,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
        QWidget* parent) : QAbstractScrollArea(parent)
 {
     logData = newLogData;
+
     // Create the viewport QWidget
     setViewport(0);
 
@@ -44,9 +51,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     selectedLine = -1;
 }
 
-/*
- * Received events
- */
+//
+// Received events
+//
+
 void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
     // Selection implementation
@@ -110,79 +118,85 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         const QPalette& palette = viewport()->palette();
 
         painter.fillRect(invalidRect, palette.color(QPalette::Base)); // Check if necessary
-        painter.setPen( palette.color(QPalette::Text) );
+        painter.setPen(palette.color(QPalette::Text));
         for (int i = firstLine; i < lastLine; i++) {
+            // y position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
-            const QString cutLine = logData->getLineString( i ).mid( firstCol, firstCol+nbCols );
+            // string to print, cut to fit the length and position of the view
+            const QString cutLine = logData->getLineString(i).mid(firstCol, firstCol+nbCols);
 
-            if ( i == selectedLine )
-            {
-                painter.fillRect( 0, yPos, viewport()->width(), fontHeight,
-                        palette.color(QPalette::Highlight) );
-                painter.setPen( palette.color(QPalette::HighlightedText) );
-                painter.drawText( 0, yPos + fontAscent, cutLine );
-                painter.setPen( palette.color(QPalette::Text) );
+            if ( i == selectedLine ) {
+                // Reverse the selected line
+                painter.fillRect(0, yPos, viewport()->width(), fontHeight,
+                        palette.color(QPalette::Highlight));
+                painter.setPen(palette.color(QPalette::HighlightedText));
+                painter.drawText(0, yPos + fontAscent, cutLine);
+                painter.setPen(palette.color(QPalette::Text));
+            } else {
+                painter.drawText(0, yPos + fontAscent, cutLine);
             }
-            else
-                painter.drawText( 0, yPos + fontAscent, cutLine );
         }
     }
 
 }
 
-/*
- * Public functions
- */
+//
+// Public functions
+//
+
 void AbstractLogView::updateData(const AbstractLogData* newLogData)
 {
     // Save the new data
     logData = newLogData;
 
-    // Adapt the view to the new content
-    LOG(logDEBUG) << "Now adapting the content";
-    verticalScrollBar()->setValue( 0 );
-    verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
+    // Adapt the scroll bars to the new content
+    verticalScrollBar()->setValue(0);
+    verticalScrollBar()->setRange(0, logData->getNbLine()-1);
     const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
         ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
-    LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
-    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
-    horizontalScrollBar()->setValue( 0 );
-    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
+    horizontalScrollBar()->setValue(0);
+    horizontalScrollBar()->setRange(0, hScrollMaxValue);
 
+    // Unselect any line and show front the upper left corner
     firstLine = 0;
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    lastLine = min2(logData->getNbLine(), firstLine + getNbVisibleLines());
     firstCol = 0;
     selectedLine = -1;
 
+    // Repaint!
     update();
 }
 
-/// @brief Display the particular line passed at the top of the display
-void AbstractLogView::displayLine( int line )
+// Puts the passed line at the top of the display.
+void AbstractLogView::displayLine(int line)
 {
     LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
 
     selectedLine = line;
-    verticalScrollBar()->setValue( line );
+    //
+    // This will trigger a scrollContents event
+    verticalScrollBar()->setValue(line);
 }
 
-/*
- * Private functions
- */
+//
+// Private functions
+//
+
+// Returns the number of lines visible in the viewport
 int AbstractLogView::getNbVisibleLines() const
 {
     QFontMetrics fm = fontMetrics();
     return viewport()->height()/fm.height() + 1;
 }
 
+// Returns the number of columns visible in the viewport
 int AbstractLogView::getNbVisibleCols() const
 {
     QFontMetrics fm = fontMetrics();
     return viewport()->width()/fm.width('w') + 1;
 }
 
-/// @brief Convert the x, y coordinates to the line number in the file
+// Converts the mouse x, y coordinates to the line number in the file
 int AbstractLogView::convertCoordToLine(int yPos) const
 {
     QFontMetrics fm = fontMetrics();

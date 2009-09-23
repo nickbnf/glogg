@@ -17,6 +17,10 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements MainWindow. It is responsible for creating and
+// managing the menus, the toolbar, and the CrawlerWidget. It also
+// load/save the settings on opening/closing of the app
+
 #include <iostream>
 #include <QtGui>
 
@@ -30,7 +34,6 @@
 
 MainWindow::MainWindow()
 {
-
     createActions();
     createMenus();
     // createContextMenu();
@@ -52,6 +55,7 @@ void MainWindow::createCrawler()
     crawlerWidget = new CrawlerWidget;
 }
 
+// Menu actions
 void MainWindow::createActions()
 {
     openAction = new QAction(tr("&Open..."), this);
@@ -59,6 +63,7 @@ void MainWindow::createActions()
     openAction->setStatusTip(tr("Open a file"));
     connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
 
+    // Recent files
     for (int i = 0; i < MaxRecentFiles; ++i) {
         recentFileActions[i] = new QAction(this);
         recentFileActions[i]->setVisible(false);
@@ -111,9 +116,11 @@ void MainWindow::createMenus()
     helpMenu->addAction(aboutAction);
 }
 
-/*
- * Slots
- */
+//
+// Slots
+//
+
+// Opens the file selection dialog to select a new log file
 void MainWindow::open()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
@@ -122,6 +129,7 @@ void MainWindow::open()
         loadFile(fileName);
 }
 
+// Opens a log file from the recent files list
 void MainWindow::openRecentFile()
 {
     QAction* action = qobject_cast<QAction*>(sender());
@@ -129,10 +137,12 @@ void MainWindow::openRecentFile()
         loadFile(action->data().toString());
 }
 
+// Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
 }
 
+// Opens the 'Options' modal dialog box
 void MainWindow::options()
 {
     OptionsDialog dialog(this);
@@ -140,6 +150,7 @@ void MainWindow::options()
     dialog.exec();
 }
 
+// Opens the 'About' dialog box.
 void MainWindow::about()
 {
     QMessageBox::about(this, tr("About LogCrawler"),
@@ -150,6 +161,7 @@ void MainWindow::about()
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 2 or later)." ) );
 }
 
+// Opens the 'About Qt' dialog box.
 void MainWindow::aboutQt()
 {
 }
@@ -158,20 +170,23 @@ void MainWindow::updateStatusBar()
 {
 }
 
+// Closes the application
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
     event->accept();
 }
 
-/*
- * Private functions
- */
-bool MainWindow::loadFile(const QString &fileName)
+//
+// Private functions
+//
+
+// Loads the passed file into the CrawlerWidget and update the title bar.
+bool MainWindow::loadFile( const QString& fileName )
 {
-    if (crawlerWidget->readFile(fileName)) {
+    if ( crawlerWidget->readFile( fileName ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
-        setCurrentFile(fileName);
+        setCurrentFile( fileName );
         return true;
     }
     else {
@@ -180,12 +195,14 @@ bool MainWindow::loadFile(const QString &fileName)
     }
 }
 
-QString MainWindow::strippedName(const QString &fullFileName)
+// Strips the passed filename from its directory part.
+QString MainWindow::strippedName( const QString& fullFileName )
 {
-    return QFileInfo(fullFileName).fileName();
+    return QFileInfo( fullFileName ).fileName();
 }
 
-void MainWindow::setCurrentFile(const QString &fileName)
+// Add the filename to the recent files list and update the title bar.
+void MainWindow::setCurrentFile( const QString& fileName )
 {
     currentFile = fileName;
     QString shownName = tr("Untitled");
@@ -199,48 +216,58 @@ void MainWindow::setCurrentFile(const QString &fileName)
     setWindowTitle(tr("%1 - %2").arg(shownName).arg(tr("LogCrawler")));
 }
 
+// Trims the recent file lists and updates the actions.
+// Must be called after having added a new name to the list.
 void MainWindow::updateRecentFileActions()
 {
     // First remove non existent files
     QMutableStringListIterator i(recentFiles);
-    while (i.hasNext()) {
-        if (!QFile::exists(i.next()))
+    while ( i.hasNext() ) {
+        if ( !QFile::exists(i.next()) )
             i.remove();
     }
 
-    for (int j = 0; j < MaxRecentFiles; ++j) {
-        if (j < recentFiles.count()) {
+    for ( int j = 0; j < MaxRecentFiles; ++j ) {
+        if ( j < recentFiles.count() ) {
             QString text = tr("&%1 %2").arg(j + 1).arg(strippedName(recentFiles[j]));
-            recentFileActions[j]->setText(text);
-            recentFileActions[j]->setData(recentFiles[j]);
-            recentFileActions[j]->setVisible(true);
+            recentFileActions[j]->setText( text );
+            recentFileActions[j]->setData( recentFiles[j] );
+            recentFileActions[j]->setVisible( true );
         }
         else {
-            recentFileActions[j]->setVisible(false);
+            recentFileActions[j]->setVisible( false );
         }
     }
 
     // separatorAction->setVisible(!recentFiles.isEmpty());
 }
 
+// Write settings to permanent storage
+// It uses Qt settings storage.
 void MainWindow::writeSettings()
 {
-    QSettings settings("LogCrawler", "LogCrawler");
+    QSettings settings( "LogCrawler", "LogCrawler" );
 
-    settings.setValue("geometry", saveGeometry());
-    settings.setValue("crawlerWidget", crawlerWidget->saveState());
-    settings.setValue("currentFile", currentFile);
-    settings.setValue("recentFiles", recentFiles);
+    // Geometry of us and crawlerWidget (splitter pos, etc...)
+    settings.setValue( "geometry", saveGeometry() );
+    settings.setValue( "crawlerWidget", crawlerWidget->saveState() );
 
-    Config().write(settings);
+    // Current file and history
+    settings.setValue( "currentFile", currentFile );
+    settings.setValue( "recentFiles", recentFiles );
+
+    // User settings
+    Config().writeToSettings( settings );
 }
 
+// Read settings from permanent storage
+// It uses Qt settings storage.
 void MainWindow::readSettings()
 {
-    QSettings settings("LogCrawler", "LogCrawler");
+    QSettings settings( "LogCrawler", "LogCrawler" );
 
-    restoreGeometry(settings.value("geometry").toByteArray());
-    crawlerWidget->restoreState(settings.value("crawlerWidget").toByteArray());
+    restoreGeometry( settings.value("geometry").toByteArray() );
+    crawlerWidget->restoreState( settings.value("crawlerWidget").toByteArray() );
 
     recentFiles = settings.value("recentFiles").toStringList();
     QString curFile = settings.value("currentFile").toString();
@@ -249,5 +276,5 @@ void MainWindow::readSettings()
 
     updateRecentFileActions();
 
-    Config().read(settings);
+    Config().readFromSettings( settings );
 }

@@ -17,6 +17,12 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements AbstractLogData.
+// This base class is primarily an interface class and should not
+// implement anything.
+// It exists so that AbstractLogView can manipulate an abtract set of data
+// (either full or filtered).
+
 #include "abstractlogdata.h"
 
 AbstractLogData::AbstractLogData()

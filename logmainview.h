@@ -22,6 +22,7 @@
 
 #include "abstractlogview.h"
 
+// Class implementing the main (top) view widget.
 class LogMainView : public AbstractLogView
 {
     public:

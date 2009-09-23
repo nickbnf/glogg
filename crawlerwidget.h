@@ -33,38 +33,47 @@
 #include "logdata.h"
 #include "logfiltereddata.h"
 
+// Implements the central widget of the application.
+// It includes both windows, the search line, the info
+// lines and various buttons.
 class CrawlerWidget : public QSplitter
 {
-    Q_OBJECT
+  Q_OBJECT
 
-    public:
-        CrawlerWidget(QWidget *parent=0);
+  public:
+    CrawlerWidget(QWidget *parent=0);
 
-        bool readFile(const QString &fileName);
+    // Loads the passed file and reports success.
+    bool readFile(const QString& fileName);
 
-    private slots:
-        void searchClicked();
-        void applyConfiguration();
-        void updateFilteredView();
-        void filteredViewSelection( int lineNb );
+  private slots:
+    // Instructs the widget to start a search using the current search line.
+    void createNewSearch();
+    // Instructs the widget to reconfigure itself because Config() has changed.
+    void applyConfiguration();
+    // Called when new data must be displayed in the filtered window.
+    void updateFilteredView();
+    // Called when a new line has been selected in the filtered view,
+    // to instruct the main view to jump to the matching line.
+    void jumpToMatchingLine(int filteredLineNb);
 
-    private:
-        LogMainView*    logMainView;
-        QWidget*        bottomWindow;
-        QLabel*         searchLabel;
-        QLineEdit*      searchLineEdit;
-        QPushButton*    searchButton;
-        FilteredView*   filteredView;
-        QLabel*         searchInfoLine;
+  private:
+    LogMainView*    logMainView;
+    QWidget*        bottomWindow;
+    QLabel*         searchLabel;
+    QLineEdit*      searchLineEdit;
+    QPushButton*    searchButton;
+    FilteredView*   filteredView;
+    QLabel*         searchInfoLine;
 
-        QVBoxLayout*    bottomMainLayout;
-        QHBoxLayout*    searchLineLayout;
+    QVBoxLayout*    bottomMainLayout;
+    QHBoxLayout*    searchLineLayout;
 
-        static LogData  emptyLogData;
-        static LogFilteredData  emptyLogFilteredData;
+    static LogData  emptyLogData;
+    static LogFilteredData  emptyLogFilteredData;
 
-        LogData*        logData;
-        LogFilteredData* logFilteredData;
+    LogData*        logData;
+    LogFilteredData* logFilteredData;
 };
 
 #endif

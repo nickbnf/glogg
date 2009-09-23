@@ -22,6 +22,7 @@
 
 #include "abstractlogview.h"
 
+// Class implementing the filtered (bottom) view widget.
 class FilteredView : public AbstractLogView
 {
     public:

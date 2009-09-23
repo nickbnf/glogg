@@ -23,21 +23,24 @@
 #include <QFont>
 #include <QSettings>
 
-/// Configuration class created as a singleton
+// Configuration class created as a singleton
+// Accessed with Config()
 class Configuration {
     public:
+        // Accesses the main font used for display
         QFont mainFont() const;
-        void setMainFont(QFont newFont);
+        void setMainFont( QFont newFont );
 
-        void read(QSettings& settings);
-        void write(QSettings& settings);
+        // Reads/writes the current config in the QSettings object passed
+        void readFromSettings( QSettings& settings );
+        void writeToSettings( QSettings& settings ) const;
 
     private:
         Configuration();
-        Configuration(const Configuration&);
+        Configuration( const Configuration& );
 
         // Configuration settings
-        QFont m_mainFont;
+        QFont mainFont_;
 
         // allow this function to create one instance
         friend Configuration& Config();

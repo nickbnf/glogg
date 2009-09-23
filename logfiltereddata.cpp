@@ -17,63 +17,79 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements LogFilteredData
+// It stores a pointer to the internal data of the LogData that created it,
+// so should ialways be destroyed before the LogData.
+// The implementation depends heavily on the implementation of LogData, that
+// should probably be fixed!
+
 #include "log.h"
 
 #include <QString>
 
 #include "logfiltereddata.h"
 
+// Creates an empty set. It must be possible to display it without error.
 LogFilteredData::LogFilteredData() : AbstractLogData()
 {
     matchingLineList = QList<matchingLine>();
+    /* Prevent any more searching */
+    searchDone_ = true;
 }
 
-LogFilteredData::LogFilteredData(QStringList* logData, QRegExp regExp) : AbstractLogData()
+// Usual constructor: just copy the data, the search is started by runSearch()
+LogFilteredData::LogFilteredData( QStringList* logData, QRegExp regExp )
+    : AbstractLogData()
 {
+    matchingLineList = QList<matchingLine>();
     sourceLogData = logData;
     currentRegExp = regExp;
 
-    searchDone = false;
+    searchDone_ = false;
 }
 
+// Run the search and send newDataAvailable() signals.
 void LogFilteredData::runSearch()
 {
     LOG(logDEBUG) << "Entering runSearch";
 
-    int lineNum = 0;
-    for ( QStringList::iterator i = sourceLogData->begin();
-          i != sourceLogData->end();
-          ++i, ++lineNum )
-    {
-        if ( currentRegExp.indexIn( *i ) != -1 ) {
-            const int length = i->length();
-            if ( length > maxLength )
-                maxLength = length;
-            matchingLine match( lineNum, *i );
-            matchingLineList.append( match );
+    if ( !searchDone_ ) {
+        int lineNum = 0;
+        for ( QStringList::iterator i = sourceLogData->begin();
+                i != sourceLogData->end();
+                ++i, ++lineNum ) {
+            if ( currentRegExp.indexIn( *i ) != -1 ) {
+                const int length = i->length();
+                if ( length > maxLength )
+                    maxLength = length;
+                matchingLine match( lineNum, *i );
+                matchingLineList.append( match );
+            }
         }
-    }
 
-    searchDone = true;
-    emit newDataAvailable();
+        searchDone_ = true;
+        emit newDataAvailable();
+    }
 
     LOG(logDEBUG) << "End runSearch";
 }
 
-int LogFilteredData::getMatchingLineNumber(int lineNum) const
+int LogFilteredData::getMatchingLineNumber( int lineNum ) const
 {
-    int matchingNb = matchingLineList[lineNum].lineNumber;
+    int matchingNb = matchingLineList[lineNum].lineNumber();
 
     return matchingNb;
 }
 
-QString LogFilteredData::doGetLineString(int lineNum) const
+// Implementation of the virtual function.
+QString LogFilteredData::doGetLineString( int lineNum ) const
 {
-    QString string = matchingLineList[lineNum].lineString;
+    QString string = matchingLineList[lineNum].lineContent();
 
     return string;
 }
 
+// Implementation of the virtual function.
 int LogFilteredData::doGetNbLine() const
 {
     return matchingLineList.size();

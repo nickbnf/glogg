@@ -32,24 +32,23 @@ Configuration& Config()
 // Accessor functions
 QFont Configuration::mainFont() const
 {
-    return m_mainFont;
+    return mainFont_;
 }
 
-void Configuration::setMainFont(QFont newFont)
+void Configuration::setMainFont( QFont newFont )
 {
-    m_mainFont = newFont;
+    mainFont_ = newFont;
 }
 
-// Read/Write functions
-void Configuration::read(QSettings& settings)
+void Configuration::readFromSettings( QSettings& settings )
 {
-    QString family = settings.value("mainFont.family").toString();
-    int size = settings.value("mainFont.size").toInt();
-    m_mainFont = QFont(family, size);
+    QString family = settings.value( "mainFont.family" ).toString();
+    int size = settings.value( "mainFont.size" ).toInt();
+    mainFont_ = QFont( family, size);
 }
 
-void Configuration::write(QSettings& settings)
+void Configuration::writeToSettings( QSettings& settings ) const
 {
-    settings.setValue("mainFont.family", m_mainFont.family());
-    settings.setValue("mainFont.size", m_mainFont.pointSize());
+    settings.setValue( "mainFont.family", mainFont_.family() );
+    settings.setValue( "mainFont.size", mainFont_.pointSize() );
 }

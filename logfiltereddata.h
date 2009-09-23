@@ -28,39 +28,54 @@
 
 #include "abstractlogdata.h"
 
-/// @brief Class encapsulating a matching line
+// Class encapsulating a single matching line
+// Contains the line number the line was found in and its content.
 class matchingLine {
-    public:
-        matchingLine( int line, QString str ) { lineNumber = line; lineString = str; };
+  public:
+    matchingLine( int line, QString str ) { lineNumber_ = line; lineString_ = str; };
 
-        int lineNumber;
-        QString lineString;
+    // Accessors
+    int lineNumber() const { return lineNumber_; }
+    QString lineContent() const { return lineString_; }
+
+  private:
+    int lineNumber_;
+    QString lineString_;
 };
 
+// A list of matches found in a LogData, it stores all the matching lines,
+// which can be accessed using the AbstractLogData interface, together with
+// the original line number where they were found.
+// Constructing such objet does not start the search.
+// This object should be constructed by a LogData, and is immutable.
 class LogFilteredData : public AbstractLogData {
     Q_OBJECT
 
     public:
-        /// @brief Create an empty LogData
+        // Creates an empty LogFilteredData
         LogFilteredData();
-        LogFilteredData(QByteArray* logData, QRegExp regExp);
-        LogFilteredData(QStringList* logData, QRegExp regExp);
+        // Constructor used by LogData
+        LogFilteredData( QStringList* logData, QRegExp regExp );
 
+        // Starts the search, sending newDataAvailable() when new data found
         void runSearch();
-        int getMatchingLineNumber(int lineNum) const;
+        // Returns the line number in the original LogData where the element
+        // 'index' was found.
+        int getMatchingLineNumber( int index ) const;
 
     signals:
+        // Sent when new data are available in this object
         void newDataAvailable();
 
     private:
-        QString doGetLineString(int line) const;
+        QString doGetLineString( int line ) const;
         int doGetNbLine() const;
 
         QList<matchingLine> matchingLineList;
 
         QStringList* sourceLogData;
         QRegExp currentRegExp;
-        bool searchDone;
+        bool searchDone_;
 };
 
 #endif

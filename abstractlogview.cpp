@@ -167,15 +167,27 @@ void AbstractLogView::updateData(const AbstractLogData* newLogData)
     update();
 }
 
-// Puts the passed line at the top of the display.
-void AbstractLogView::displayLine(int line)
+// Select the line and ensure it is visible on the screen, scrolling if not.
+void AbstractLogView::displayLine( int line )
 {
     LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
 
     selectedLine = line;
-    //
-    // This will trigger a scrollContents event
-    verticalScrollBar()->setValue(line);
+
+    // If the line is already the screen
+    if ( ( line >= firstLine ) &&
+         ( line < ( firstLine + getNbVisibleLines() ) ) ) {
+        // ... don't scroll and just repaint
+        update();
+    } else {
+        // Put the selected line in the middle if possible
+        int newTopLine = line - ( getNbVisibleLines() / 2 );
+        if ( newTopLine < 0 )
+            newTopLine = 0;
+
+        // This will also trigger a scrollContents event
+        verticalScrollBar()->setValue( newTopLine );
+    }
 }
 
 //

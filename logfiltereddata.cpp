@@ -34,6 +34,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 {
     matchingLineList = QList<matchingLine>();
     /* Prevent any more searching */
+    maxLength_ = 0;
     searchDone_ = true;
 }
 
@@ -42,6 +43,7 @@ LogFilteredData::LogFilteredData( QStringList* logData, QRegExp regExp )
     : AbstractLogData()
 {
     matchingLineList = QList<matchingLine>();
+    maxLength_ = 0;
 
     if ( logData != NULL ) {
         sourceLogData = logData;
@@ -66,8 +68,8 @@ void LogFilteredData::runSearch()
                 ++i, ++lineNum ) {
             if ( currentRegExp.indexIn( *i ) != -1 ) {
                 const int length = i->length();
-                if ( length > maxLength )
-                    maxLength = length;
+                if ( length > maxLength_ )
+                    maxLength_ = length;
                 matchingLine match( lineNum, *i );
                 matchingLineList.append( match );
             }
@@ -99,4 +101,10 @@ QString LogFilteredData::doGetLineString( int lineNum ) const
 int LogFilteredData::doGetNbLine() const
 {
     return matchingLineList.size();
+}
+
+// Implementation of the virtual function.
+int LogFilteredData::doGetMaxLength() const
+{
+    return maxLength_;
 }

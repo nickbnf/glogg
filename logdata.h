@@ -43,9 +43,11 @@ class LogData : public AbstractLogData {
   private:
     QString doGetLineString( int line ) const;
     int doGetNbLine() const;
+    int doGetMaxLength() const;
 
     QStringList* list_;
     int nbLines_;
+    int maxLength_;
 };
 
 #endif

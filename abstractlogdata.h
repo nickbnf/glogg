@@ -44,10 +44,10 @@ class AbstractLogData : public QObject {
     virtual QString doGetLineString(int line) const = 0;
     // Internal function called to get the number of lines
     virtual int doGetNbLine() const = 0;
+    // Internal function called to get the maximum length
+    virtual int doGetMaxLength() const = 0;
 
     ~AbstractLogData() {};      // Don't allow polymorphic destruction
-
-    int maxLength;
 };
 
 #endif

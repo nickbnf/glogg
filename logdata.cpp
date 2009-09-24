@@ -31,18 +31,21 @@ LogData::LogData() : AbstractLogData()
 {
     list_ = NULL;
     nbLines_ = 0;
+    maxLength_ = 0;
 }
 
 // Constructs from a data chunk.
 LogData::LogData( const QByteArray &byteArray ) : AbstractLogData()
 {
     list_ = new QStringList();
+    maxLength_ = 0;
+
     int pos=0, end=0;
     while ( (end = byteArray.indexOf("\n", pos)) != -1 ) {
         const int length = end-pos;
         const QString string = QString( byteArray.mid(pos, length) );
-        if ( length > maxLength)
-            maxLength = length;
+        if ( length > maxLength_ )
+            maxLength_ = length;
         pos = end+1;
         list_->append( string );
     }
@@ -54,6 +57,11 @@ LogData::LogData( const QByteArray &byteArray ) : AbstractLogData()
 int LogData::doGetNbLine() const
 {
     return nbLines_;
+}
+
+int LogData::doGetMaxLength() const
+{
+    return maxLength_;
 }
 
 QString LogData::doGetLineString(int line) const

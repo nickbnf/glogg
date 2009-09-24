@@ -49,33 +49,35 @@ class matchingLine {
 // Constructing such objet does not start the search.
 // This object should be constructed by a LogData, and is immutable.
 class LogFilteredData : public AbstractLogData {
-    Q_OBJECT
+  Q_OBJECT
 
-    public:
-        // Creates an empty LogFilteredData
-        LogFilteredData();
-        // Constructor used by LogData
-        LogFilteredData( QStringList* logData, QRegExp regExp );
+  public:
+    // Creates an empty LogFilteredData
+    LogFilteredData();
+    // Constructor used by LogData
+    LogFilteredData( QStringList* logData, QRegExp regExp );
 
-        // Starts the search, sending newDataAvailable() when new data found
-        void runSearch();
-        // Returns the line number in the original LogData where the element
-        // 'index' was found.
-        int getMatchingLineNumber( int index ) const;
+    // Starts the search, sending newDataAvailable() when new data found
+    void runSearch();
+    // Returns the line number in the original LogData where the element
+    // 'index' was found.
+    int getMatchingLineNumber( int index ) const;
 
-    signals:
-        // Sent when new data are available in this object
-        void newDataAvailable();
+  signals:
+    // Sent when new data are available in this object
+    void newDataAvailable();
 
-    private:
-        QString doGetLineString( int line ) const;
-        int doGetNbLine() const;
+  private:
+    QString doGetLineString( int line ) const;
+    int doGetNbLine() const;
+    int doGetMaxLength() const;
 
-        QList<matchingLine> matchingLineList;
+    QList<matchingLine> matchingLineList;
 
-        QStringList* sourceLogData;
-        QRegExp currentRegExp;
-        bool searchDone_;
+    QStringList* sourceLogData;
+    QRegExp currentRegExp;
+    bool searchDone_;
+    int maxLength_;
 };
 
 #endif

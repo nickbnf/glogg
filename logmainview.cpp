@@ -23,8 +23,24 @@
 
 #include "logmainview.h"
 
-LogMainView::LogMainView(const AbstractLogData* newLogData, QWidget* parent)
+LogMainView::LogMainView(const LogData* newLogData, QWidget* parent)
     : AbstractLogView(newLogData, parent)
 {
+    filteredData_ = NULL;
 }
 
+// Just update our internal record and redraw the view in case
+// there is any change in bullet colours.
+void LogMainView::useNewFiltering( LogFilteredData* filteredData )
+{
+    filteredData_ = filteredData;
+    update();
+}
+
+bool LogMainView::isLineMatching( int lineNumber )
+{
+    if ( filteredData_ != NULL )
+        return filteredData_->isLineInMatchingList( lineNumber );
+    else
+        return false;
+}

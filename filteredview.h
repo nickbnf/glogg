@@ -25,8 +25,11 @@
 // Class implementing the filtered (bottom) view widget.
 class FilteredView : public AbstractLogView
 {
-    public:
-        FilteredView(const AbstractLogData* newLogData, QWidget* parent = 0);
+  public:
+    FilteredView(const AbstractLogData* newLogData, QWidget* parent = 0);
+
+  protected:
+    bool isLineMatching( int lineNumber );
 };
 
 #endif

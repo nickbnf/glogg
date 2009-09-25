@@ -125,7 +125,7 @@ void CrawlerWidget::createNewSearch()
 
     if ( !text.isEmpty() ) {
         // Create the new LogFilteredData...
-        logFilteredData = logData->getNewFilteredData(regexp);
+        logFilteredData = logData->getNewFilteredData( regexp );
         // ... and arrange to receive notification of updates
         connect( logFilteredData, SIGNAL( newDataAvailable() ),
                 this, SLOT( updateFilteredView() ) );
@@ -133,9 +133,11 @@ void CrawlerWidget::createNewSearch()
     } else {
         logFilteredData = &emptyLogFilteredData;
         // We won't receive an event from the emptyLogFilteredData
-        searchInfoLine->setText("");
-        filteredView->updateData(logFilteredData);
+        searchInfoLine->setText( "" );
+        filteredView->updateData( logFilteredData );
     }
+    // Connect the search to the top view
+    logMainView->useNewFiltering( logFilteredData );
 }
 
 void CrawlerWidget::updateFilteredView()

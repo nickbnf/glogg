@@ -44,6 +44,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
 
     // Create the viewport QWidget
     setViewport(0);
+    setAttribute(Qt::WA_StaticContents);  // Does it work?
 
     firstLine = 0;
     lastLine = 0;
@@ -107,37 +108,68 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         return;
 
     LOG(logDEBUG) << "paintEvent received, firstLine=" << firstLine
-        << " lastLine=" << lastLine;
+        << " lastLine=" << lastLine <<
+        " rect: " << invalidRect.topLeft().x() <<
+        ", " << invalidRect.topLeft().y() <<
+        ", " <<invalidRect.bottomRight().x() <<
+        ", " << invalidRect.bottomRight().y();
 
     {
         // Repaint the viewport
-        QPainter painter(viewport());
+        QPainter painter( viewport() );
         const int fontHeight = painter.fontMetrics().height();
         const int fontAscent = painter.fontMetrics().ascent();
         const int nbCols = getNbVisibleCols();
         const QPalette& palette = viewport()->palette();
+        const QBrush normalBulletBrush = QBrush( Qt::white );
+        const QBrush matchBulletBrush = QBrush( Qt::red );
 
-        painter.fillRect(invalidRect, palette.color(QPalette::Base)); // Check if necessary
+        // Params
+        const int bulletLineX = 11;  // Looks better with an odd value
+
+        // First draw the bullet left margin
+        painter.setPen(palette.color(QPalette::Text));
+        painter.drawLine( bulletLineX, 0, bulletLineX, viewport()->height() );
+        painter.fillRect( 0, 0, bulletLineX, viewport()->height(), Qt::darkGray );
+        for ( int i = 0; i < (lastLine - firstLine); i++ ) {
+        }
+
+        painter.fillRect( bulletLineX + 1, 0,
+                viewport()->width(), viewport()->height(),
+                palette.color(QPalette::Base)); // Check if necessary
         painter.setPen(palette.color(QPalette::Text));
         for (int i = firstLine; i < lastLine; i++) {
-            // y position in pixel of the base line of the line to print
+            // Position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
+            const int xPos = bulletLineX + 2;
+
             // string to print, cut to fit the length and position of the view
             const QString cutLine = logData->getLineString(i).mid(firstCol, firstCol+nbCols);
 
             if ( i == selectedLine ) {
                 // Reverse the selected line
-                painter.fillRect(0, yPos, viewport()->width(), fontHeight,
+                painter.fillRect( xPos, yPos, viewport()->width(), fontHeight,
                         palette.color(QPalette::Highlight));
                 painter.setPen(palette.color(QPalette::HighlightedText));
-                painter.drawText(0, yPos + fontAscent, cutLine);
+                painter.drawText( xPos, yPos + fontAscent, cutLine);
                 painter.setPen(palette.color(QPalette::Text));
             } else {
-                painter.drawText(0, yPos + fontAscent, cutLine);
+                painter.drawText( xPos, yPos + fontAscent, cutLine);
             }
+
+            // Then draw the bullet
+            const int circleSize = 3;
+            const QPoint circleCenter =
+                QPoint( bulletLineX / 2, yPos + (fontHeight / 2) );
+
+            if ( isLineMatching( i ) )
+                painter.setBrush( matchBulletBrush );
+            else
+                painter.setBrush( normalBulletBrush );
+            painter.drawEllipse( circleCenter, circleSize, circleSize );
         }
     }
-
+    LOG(logDEBUG) << "End of repaint";
 }
 
 //

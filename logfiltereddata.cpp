@@ -32,7 +32,7 @@
 // Creates an empty set. It must be possible to display it without error.
 LogFilteredData::LogFilteredData() : AbstractLogData()
 {
-    matchingLineList = QList<matchingLine>();
+    matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
     maxLength_ = 0;
     searchDone_ = true;
@@ -42,7 +42,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 LogFilteredData::LogFilteredData( QStringList* logData, QRegExp regExp )
     : AbstractLogData()
 {
-    matchingLineList = QList<matchingLine>();
+    matchingLineList = QList<MatchingLine>();
     maxLength_ = 0;
 
     if ( logData != NULL ) {
@@ -70,7 +70,7 @@ void LogFilteredData::runSearch()
                 const int length = i->length();
                 if ( length > maxLength_ )
                     maxLength_ = length;
-                matchingLine match( lineNum, *i );
+                MatchingLine match( lineNum, *i );
                 matchingLineList.append( match );
             }
         }
@@ -87,6 +87,25 @@ int LogFilteredData::getMatchingLineNumber( int lineNum ) const
     int matchingNb = matchingLineList[lineNum].lineNumber();
 
     return matchingNb;
+}
+
+// Scan the list for the 'lineNumber' passed
+bool LogFilteredData::isLineInMatchingList( int lineNumber )
+{
+    int lastLine = -1;
+
+    // Test each element until we reach lineNumber or the end
+    for ( QList<MatchingLine>::const_iterator i =
+            matchingLineList.begin();
+            ( i != matchingLineList.end() ) && ( lastLine < lineNumber );
+            ++i ) {
+        lastLine = i->lineNumber();
+    }
+
+    if ( lastLine == lineNumber )
+        return true;
+    else
+        return false;
 }
 
 // Implementation of the virtual function.

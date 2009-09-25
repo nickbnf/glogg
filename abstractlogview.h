@@ -44,6 +44,10 @@ class AbstractLogView : public QAbstractScrollArea
     void resizeEvent(QResizeEvent* resizeEvent);
     void scrollContentsBy(int dx, int dy);
 
+    // Must be implemented to return weither the line number is
+    // a match or not (used for coloured bullets)
+    virtual bool isLineMatching( int lineNumber ) = 0;
+
   signals:
     // Sent when a new line has been selected by the user.
     void newSelection(int line);

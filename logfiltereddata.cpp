@@ -92,20 +92,29 @@ int LogFilteredData::getMatchingLineNumber( int lineNum ) const
 // Scan the list for the 'lineNumber' passed
 bool LogFilteredData::isLineInMatchingList( int lineNumber )
 {
-    int lastLine = -1;
+    // Use a bisection method to find the number
+    // (we know the list is sorted)
 
-    // Test each element until we reach lineNumber or the end
-    for ( QList<MatchingLine>::const_iterator i =
-            matchingLineList.begin();
-            ( i != matchingLineList.end() ) && ( lastLine < lineNumber );
-            ++i ) {
-        lastLine = i->lineNumber();
+    int minIndex = 0;
+    int maxIndex = matchingLineList.length() - 1;
+    // First we test the ends
+    if (  ( matchingLineList[minIndex].lineNumber() == lineNumber )
+       || ( matchingLineList[maxIndex].lineNumber() == lineNumber ) )
+        return true;
+    // Then we test the rest
+    while ( (maxIndex - minIndex) > 1 ) {
+        const int tryIndex = (minIndex + maxIndex) / 2;
+        const int currentMatchingNumber =
+            matchingLineList[tryIndex].lineNumber();
+        if ( currentMatchingNumber > lineNumber )
+            maxIndex = tryIndex;
+        else if ( currentMatchingNumber < lineNumber )
+            minIndex = tryIndex;
+        else if ( currentMatchingNumber == lineNumber )
+            return true;
     }
 
-    if ( lastLine == lineNumber )
-        return true;
-    else
-        return false;
+    return false;
 }
 
 // Implementation of the virtual function.

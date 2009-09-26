@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 # Take a debug log from logcrawler and output some perf statistics
+# Can be plotted by echo "plot [ ] [0:0.1] 'foo.data'; pause mouse key;" | gnuplot -
 
 while (<>) {
     strip;
@@ -13,7 +14,7 @@ while (<>) {
     elsif (/(\d\d\.\d\d\d) DEBUG: End/) {
         if ($beginning) {
             $time = $1 - $beginning;
-            print "Line $first_line, Time: $time\n";
+            print "$first_line $time\n";
         }
     }
 }

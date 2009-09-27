@@ -94,14 +94,20 @@ bool CrawlerWidget::readFile(const QString& fileName)
 {
     QFile file(fileName);
 
-    if (file.open(QFile::ReadOnly | QFile::Text)) {
+    if ( file.open(QFile::ReadOnly | QFile::Text) ) {
         LogData* oldLogData = logData;
-        logData = new LogData(file.readAll());
+        LogFilteredData* oldFilteredData = logFilteredData;
 
-        logMainView->updateData(logData);
+        logData = new LogData( file.readAll() );
+        logFilteredData = &emptyLogFilteredData;
+
+        logMainView->updateData( logData );
+        filteredView->updateData( logFilteredData );
 
         if (oldLogData != &emptyLogData)
             delete oldLogData;
+        if (oldFilteredData != &emptyLogFilteredData)
+            delete oldFilteredData;
 
         return true;
     }

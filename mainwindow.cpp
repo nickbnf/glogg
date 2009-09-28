@@ -30,6 +30,7 @@
 
 #include "version.h"
 #include "crawlerwidget.h"
+#include "filtersdialog.h"
 #include "optionsdialog.h"
 
 MainWindow::MainWindow()
@@ -81,6 +82,10 @@ void MainWindow::createActions()
     copyAction->setStatusTip(tr("Copy the selected line"));
     connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
 
+    filtersAction = new QAction(tr("&Filters..."), this);
+    filtersAction->setStatusTip(tr("Show the Filters box"));
+    connect(filtersAction, SIGNAL(triggered()), this, SLOT(filters()));
+
     optionsAction = new QAction(tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Show the Options box"));
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(options()));
@@ -96,24 +101,26 @@ void MainWindow::createActions()
 
 void MainWindow::createMenus()
 {
-    fileMenu = menuBar()->addMenu(tr("&File"));
-    fileMenu->addAction(openAction);
+    fileMenu = menuBar()->addMenu( tr("&File") );
+    fileMenu->addAction( openAction );
     fileMenu->addSeparator();
     for (int i = 0; i < MaxRecentFiles; ++i)
-        fileMenu->addAction(recentFileActions[i]);
+        fileMenu->addAction( recentFileActions[i] );
     fileMenu->addSeparator();
-    fileMenu->addAction(exitAction);
+    fileMenu->addAction( exitAction );
 
-    editMenu = menuBar()->addMenu(tr("&Edit"));
-    editMenu->addAction(copyAction);
+    editMenu = menuBar()->addMenu( tr("&Edit") );
+    editMenu->addAction( copyAction );
 
-    toolsMenu = menuBar()->addMenu(tr("&Tools"));
-    toolsMenu->addAction(optionsAction);
+    toolsMenu = menuBar()->addMenu( tr("&Tools") );
+    toolsMenu->addAction( filtersAction );
+    toolsMenu->addSeparator();
+    toolsMenu->addAction( optionsAction );
 
     menuBar()->addSeparator();
 
-    helpMenu = menuBar()->addMenu(tr("&Help"));
-    helpMenu->addAction(aboutAction);
+    helpMenu = menuBar()->addMenu( tr("&Help") );
+    helpMenu->addAction( aboutAction );
 }
 
 //
@@ -140,6 +147,14 @@ void MainWindow::openRecentFile()
 // Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
+}
+
+// Opens the 'Filters' dialog box
+void MainWindow::filters()
+{
+    FiltersDialog dialog(this);
+    // connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
+    dialog.exec();
 }
 
 // Opens the 'Options' modal dialog box

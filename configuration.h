@@ -23,27 +23,33 @@
 #include <QFont>
 #include <QSettings>
 
+#include "filterset.h"
+
 // Configuration class created as a singleton
 // Accessed with Config()
 class Configuration {
-    public:
-        // Accesses the main font used for display
-        QFont mainFont() const;
-        void setMainFont( QFont newFont );
+  public:
+    // Accesses the main font used for display
+    QFont mainFont() const;
+    void setMainFont( QFont newFont );
 
-        // Reads/writes the current config in the QSettings object passed
-        void readFromSettings( QSettings& settings );
-        void writeToSettings( QSettings& settings ) const;
+    // Accesses the (unique) filterSet
+    FilterSet& filterSet();
 
-    private:
-        Configuration();
-        Configuration( const Configuration& );
+    // Reads/writes the current config in the QSettings object passed
+    void readFromSettings( QSettings& settings );
+    void writeToSettings( QSettings& settings ) const;
 
-        // Configuration settings
-        QFont mainFont_;
+  private:
+    Configuration();
+    Configuration( const Configuration& );
 
-        // allow this function to create one instance
-        friend Configuration& Config();
+    // Configuration settings
+    QFont mainFont_;
+    FilterSet filterSet_;
+
+    // allow this function to create one instance
+    friend Configuration& Config();
 };
 
 Configuration& Config();

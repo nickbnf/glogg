@@ -17,7 +17,8 @@ SOURCES += main.cpp \
     filteredview.cpp \
     optionsdialog.cpp \
     configuration.cpp \
-    filtersdialog.cpp
+    filtersdialog.cpp \
+    filterset.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -31,7 +32,8 @@ HEADERS += version.h \
     abstractlogview.h \
     optionsdialog.h \
     configuration.h \
-    filtersdialog.h
+    filtersdialog.h \
+    filterset.h
 
 FORMS += filtersdialog.ui
 

@@ -19,6 +19,9 @@
 
 #include "log.h"
 
+#include "configuration.h"
+#include "filterset.h"
+
 #include "filtersdialog.h"
 
 FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
@@ -38,14 +41,35 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
         foreColorBox->addItem( *solidIcon, *i );
         backColorBox->addItem( *solidIcon, *i );
     }
+
+    populateFilterList();
 }
 
 void FiltersDialog::on_addFilterButton_clicked()
 {
     LOG(logDEBUG) << "on_addFilterButton_clicked()";
+
+    Filter newFilter = Filter( patternEdit->text(),
+            QColor( foreColorBox->currentText() ),
+            QColor( backColorBox->currentText() ) );
+    Config().filterSet().filterList << newFilter;
+
+    populateFilterList();
 }
 
 void FiltersDialog::on_removeFilterButton_clicked()
 {
     LOG(logDEBUG) << "on_removeFilterButton_clicked()";
+}
+
+//
+// Private functions
+//
+
+void FiltersDialog::populateFilterList()
+{
+    filterListWidget->clear();
+    foreach ( Filter filter, Config().filterSet().filterList ) {
+        filterListWidget->addItem( filter.pattern() );
+    }
 }

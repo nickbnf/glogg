@@ -17,26 +17,27 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTERSDIALOG_H
-#define FILTERSDIALOG_H
+#include "filterset.h"
 
-#include <QDialog>
-
-#include "ui_filtersdialog.h"
-
-class FiltersDialog : public QDialog, public Ui::FiltersDialog
+Filter::Filter( const QString& pattern,
+            const QColor& foreColor, const QColor& backColor ) :
+    regexp_( pattern ), foreColor_( foreColor ),
+    backColor_( backColor ), enabled_( true )
 {
-  Q_OBJECT
+}
 
-  public:
-    FiltersDialog( QWidget* parent = 0 );
+QString Filter::pattern() const
+{
+    return regexp_.pattern();
+}
 
-  private slots:
-    void on_addFilterButton_clicked();
-    void on_removeFilterButton_clicked();
+FilterSet::FilterSet()
+{
+}
 
-  private:
-    void populateFilterList();
-};
+bool FilterSet::matchLine( const QString& line,
+        QColor* foreColor, QColor* backColor )
+{
+    return false;
+}
 
-#endif

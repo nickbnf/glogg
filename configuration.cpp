@@ -21,6 +21,7 @@
 
 Configuration::Configuration()
 {
+    // Should have some sensible default values.
 }
 
 Configuration& Config()
@@ -38,6 +39,11 @@ QFont Configuration::mainFont() const
 void Configuration::setMainFont( QFont newFont )
 {
     mainFont_ = newFont;
+}
+
+FilterSet& Configuration::filterSet()
+{
+    return filterSet_;
 }
 
 void Configuration::readFromSettings( QSettings& settings )

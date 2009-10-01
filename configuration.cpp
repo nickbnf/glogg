@@ -17,11 +17,17 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "log.h"
+
 #include "configuration.h"
 
 Configuration::Configuration()
 {
     // Should have some sensible default values.
+
+    // Register the operators for serializable classes
+    qRegisterMetaTypeStreamOperators<Filter>( "Filter" );
+    qRegisterMetaTypeStreamOperators<FilterSet>( "FilterSet" );
 }
 
 Configuration& Config()
@@ -51,10 +57,13 @@ void Configuration::readFromSettings( QSettings& settings )
     QString family = settings.value( "mainFont.family" ).toString();
     int size = settings.value( "mainFont.size" ).toInt();
     mainFont_ = QFont( family, size);
+
+    filterSet_ = settings.value( "filterSet" ).value<FilterSet>();
 }
 
 void Configuration::writeToSettings( QSettings& settings ) const
 {
     settings.setValue( "mainFont.family", mainFont_.family() );
     settings.setValue( "mainFont.size", mainFont_.pointSize() );
+    settings.setValue( "filterSet", QVariant::fromValue( filterSet_ ) );
 }

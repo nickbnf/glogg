@@ -17,9 +17,15 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file implements classes Filter and FilterSet
+
 #include "log.h"
 
 #include "filterset.h"
+
+Filter::Filter()
+{
+}
 
 Filter::Filter( const QString& pattern,
             const QString& foreColorName, const QString& backColorName ) :
@@ -62,9 +68,33 @@ void Filter::setBackColor( const QString& backColorName )
     backColorName_ = backColorName;
 }
 
+//
+// Operators for serialization
+//
+
+QDataStream& operator<<( QDataStream& out, const Filter& object )
+{
+    LOG(logDEBUG) << "<<operator from Filter";
+    out << object.regexp_;
+    out << object.foreColorName_;
+    out << object.backColorName_;
+
+    return out;
+}
+
+QDataStream& operator>>( QDataStream& in, Filter& object )
+{
+    LOG(logDEBUG) << ">>operator from Filter";
+    in >> object.regexp_;
+    in >> object.foreColorName_;
+    in >> object.backColorName_;
+
+    return in;
+}
 
 
 
+// Default constructor
 FilterSet::FilterSet()
 {
 }
@@ -75,3 +105,20 @@ bool FilterSet::matchLine( const QString& line,
     return false;
 }
 
+//
+// Operators for serialization
+//
+
+QDataStream& operator<<( QDataStream& out, const FilterSet& object )
+{
+    out << object.filterList;
+
+    return out;
+}
+
+QDataStream& operator>>( QDataStream& in, FilterSet& object )
+{
+    in >> object.filterList;
+
+    return in;
+}

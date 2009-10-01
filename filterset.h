@@ -22,23 +22,29 @@
 
 #include <QRegexp>
 #include <QColor>
+#include <QMetaType>
 
 // Represents a filter, i.e. a regexp and the colors matching text
 // should be rendered in.
 class Filter
 {
   public:
+    // Construct an uninitialized Filter (when reading from a config file)
+    Filter();
     Filter( const QString& pattern,
             const QString& foreColor, const QString& backColor );
 
+    // Accessor functions
     QString pattern() const;
     void setPattern( const QString& pattern );
-    const QColor& foreColor() const;
     const QString& foreColorName() const;
     void setForeColor( const QString& foreColorName );
-    const QColor& backColor() const;
     const QString& backColorName() const;
     void setBackColor( const QString& backColorName );
+
+    // Operators for serialization
+    friend QDataStream& operator<<( QDataStream& out, const Filter& object );
+    friend QDataStream& operator>>( QDataStream& in, Filter& object );
 
   private:
     QRegExp regexp_;
@@ -60,6 +66,12 @@ class FilterSet
     bool matchLine( const QString& line,
             QColor* foreColor, QColor* backColor );
 
+    // Operators for serialization
+    friend QDataStream& operator<<(
+            QDataStream& out, const FilterSet& object );
+    friend QDataStream& operator>>(
+            QDataStream& in, FilterSet& object );
+
   private:
     QList<Filter> filterList;
 
@@ -67,5 +79,7 @@ class FilterSet
     // internal structure directly.
     friend class FiltersDialog;
 };
+
+Q_DECLARE_METATYPE(FilterSet)
 
 #endif

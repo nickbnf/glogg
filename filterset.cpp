@@ -17,19 +17,53 @@
  * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "log.h"
+
 #include "filterset.h"
 
 Filter::Filter( const QString& pattern,
-            const QColor& foreColor, const QColor& backColor ) :
-    regexp_( pattern ), foreColor_( foreColor ),
-    backColor_( backColor ), enabled_( true )
+            const QString& foreColorName, const QString& backColorName ) :
+    regexp_( pattern ), foreColorName_( foreColorName ),
+    backColorName_( backColorName ), enabled_( true )
 {
+    LOG(logDEBUG) << "New Filter, fore: " << foreColorName_.toStdString()
+        << " back: " << backColorName_.toStdString();
 }
 
 QString Filter::pattern() const
 {
     return regexp_.pattern();
 }
+
+void Filter::setPattern( const QString& pattern )
+{
+    regexp_.setPattern( pattern );
+}
+
+const QString& Filter::foreColorName() const
+{
+    LOG(logDEBUG) << "foreColorName(): " << foreColorName_.toStdString();
+    return foreColorName_;
+}
+
+void Filter::setForeColor( const QString& foreColorName )
+{
+    foreColorName_ = foreColorName;
+}
+
+const QString& Filter::backColorName() const
+{
+    LOG(logDEBUG) << "backColorName(): " << backColorName_.toStdString();
+    return backColorName_;
+}
+
+void Filter::setBackColor( const QString& backColorName )
+{
+    backColorName_ = backColorName;
+}
+
+
+
 
 FilterSet::FilterSet()
 {

@@ -22,6 +22,7 @@
 
 #include <QDialog>
 
+#include "filterset.h"
 #include "ui_filtersdialog.h"
 
 class FiltersDialog : public QDialog, public Ui::FiltersDialog
@@ -31,11 +32,25 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
   public:
     FiltersDialog( QWidget* parent = 0 );
 
+  signals:
+    // Is emitted when new settings must be used
+    void optionsChanged();
+
   private slots:
     void on_addFilterButton_clicked();
     void on_removeFilterButton_clicked();
+    void on_buttonBox_clicked( QAbstractButton* button );
+    // Update the property (pattern, color...) fields from the
+    // selected Filter.
+    void updatePropertyFields();
+    // Update the selected Filter from the values in the property fields.
+    void updateFilterProperties();
 
   private:
+    // Temporary filterset modified by the dialog
+    // it is copied from the one in Config()
+    FilterSet filterSet;
+
     void populateFilterList();
 };
 

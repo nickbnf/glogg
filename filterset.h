@@ -29,19 +29,21 @@ class Filter
 {
   public:
     Filter( const QString& pattern,
-            const QColor& foreColor, const QColor& backColor );
+            const QString& foreColor, const QString& backColor );
 
     QString pattern() const;
     void setPattern( const QString& pattern );
     const QColor& foreColor() const;
-    void setForeColor( const QColor& foreColor );
+    const QString& foreColorName() const;
+    void setForeColor( const QString& foreColorName );
     const QColor& backColor() const;
-    void setBackColor( const QColor& backColor );
+    const QString& backColorName() const;
+    void setBackColor( const QString& backColorName );
 
   private:
     QRegExp regexp_;
-    QColor foreColor_;
-    QColor backColor_;
+    QString foreColorName_;
+    QString backColorName_;
     bool enabled_;
 };
 

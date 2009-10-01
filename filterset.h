@@ -34,6 +34,10 @@ class Filter
     Filter( const QString& pattern,
             const QString& foreColor, const QString& backColor );
 
+    // Tests the string passed for a match, returns a value just like
+    // QRegExp::indexIn (i.e. -1 if no match)
+    int indexIn( const QString& string ) const;
+
     // Accessor functions
     QString pattern() const;
     void setPattern( const QString& pattern );
@@ -64,7 +68,7 @@ class FilterSet
     // if so, it returns the fore/back colors the line should use.
     // Ownership of the colors is transfered to the caller.
     bool matchLine( const QString& line,
-            QColor* foreColor, QColor* backColor );
+            QColor* foreColor, QColor* backColor ) const;
 
     // Operators for serialization
     friend QDataStream& operator<<(

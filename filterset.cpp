@@ -48,7 +48,6 @@ void Filter::setPattern( const QString& pattern )
 
 const QString& Filter::foreColorName() const
 {
-    LOG(logDEBUG) << "foreColorName(): " << foreColorName_.toStdString();
     return foreColorName_;
 }
 
@@ -59,13 +58,17 @@ void Filter::setForeColor( const QString& foreColorName )
 
 const QString& Filter::backColorName() const
 {
-    LOG(logDEBUG) << "backColorName(): " << backColorName_.toStdString();
     return backColorName_;
 }
 
 void Filter::setBackColor( const QString& backColorName )
 {
     backColorName_ = backColorName;
+}
+
+int Filter::indexIn( const QString& string ) const
+{
+    return regexp_.indexIn( string );
 }
 
 //
@@ -100,8 +103,17 @@ FilterSet::FilterSet()
 }
 
 bool FilterSet::matchLine( const QString& line,
-        QColor* foreColor, QColor* backColor )
+        QColor* foreColor, QColor* backColor ) const
 {
+    for ( QList<Filter>::const_iterator i = filterList.constBegin();
+          i != filterList.constEnd(); i++ ) {
+        if ( i->indexIn( line ) != -1 ) {
+            foreColor->setNamedColor( i->foreColorName() );
+            backColor->setNamedColor( i->backColorName() );
+            return true;
+        }
+    }
+
     return false;
 }
 

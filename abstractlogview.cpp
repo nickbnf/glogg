@@ -35,6 +35,7 @@
 #include "log.h"
 
 #include "common.h"
+#include "configuration.h"
 #include "logmainview.h"
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
@@ -116,9 +117,9 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         const int fontAscent = painter.fontMetrics().ascent();
         const int nbCols = getNbVisibleCols();
         const QPalette& palette = viewport()->palette();
+        const FilterSet& filterSet = Config().filterSet();
+        QColor foreColor, backColor;
 
-        painter.fillRect(invalidRect, palette.color(QPalette::Base)); // Check if necessary
-        painter.setPen(palette.color(QPalette::Text));
         for (int i = firstLine; i < lastLine; i++) {
             // y position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
@@ -127,14 +128,24 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
 
             if ( i == selectedLine ) {
                 // Reverse the selected line
-                painter.fillRect(0, yPos, viewport()->width(), fontHeight,
-                        palette.color(QPalette::Highlight));
-                painter.setPen(palette.color(QPalette::HighlightedText));
-                painter.drawText(0, yPos + fontAscent, cutLine);
+                foreColor = palette.color( QPalette::HighlightedText );
+                backColor = palette.color( QPalette::Highlight );
                 painter.setPen(palette.color(QPalette::Text));
-            } else {
-                painter.drawText(0, yPos + fontAscent, cutLine);
             }
+            else if ( filterSet.matchLine( logData->getLineString(i),
+                        &foreColor, &backColor ) ) {
+                // Apply a filter to the line
+            }
+            else {
+                // Use the default colors
+                foreColor = palette.color( QPalette::Text );
+                backColor = palette.color( QPalette::Base );
+            }
+
+            painter.fillRect( 0, yPos, viewport()->width(),
+                    fontHeight, backColor );
+            painter.setPen( foreColor );
+            painter.drawText( 0, yPos + fontAscent, cutLine );
         }
     }
 

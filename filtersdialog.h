@@ -51,6 +51,7 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     // it is copied from the one in Config()
     FilterSet filterSet;
 
+    void populateColors();
     void populateFilterList();
 };
 

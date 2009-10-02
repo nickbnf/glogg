@@ -21,12 +21,24 @@
 #define LOGMAINVIEW_H
 
 #include "abstractlogview.h"
+#include "logdata.h"
 
 // Class implementing the main (top) view widget.
 class LogMainView : public AbstractLogView
 {
-    public:
-        LogMainView(const AbstractLogData* newLogData, QWidget* parent = 0);
+  public:
+    LogMainView( const LogData* newLogData, QWidget* parent = 0 );
+
+    // Configure the view to use the passed fltered list
+    // (used for couloured bullets)
+    void useNewFiltering( LogFilteredData* filteredData );
+
+  protected:
+    // Implements the virtual function
+    bool isLineMatching( int lineNumber );
+
+  private:
+    LogFilteredData* filteredData_;
 };
 
 #endif

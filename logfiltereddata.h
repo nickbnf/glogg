@@ -30,9 +30,9 @@
 
 // Class encapsulating a single matching line
 // Contains the line number the line was found in and its content.
-class matchingLine {
+class MatchingLine {
   public:
-    matchingLine( int line, QString str ) { lineNumber_ = line; lineString_ = str; };
+    MatchingLine( int line, QString str ) { lineNumber_ = line; lineString_ = str; };
 
     // Accessors
     int lineNumber() const { return lineNumber_; }
@@ -62,6 +62,8 @@ class LogFilteredData : public AbstractLogData {
     // Returns the line number in the original LogData where the element
     // 'index' was found.
     int getMatchingLineNumber( int index ) const;
+    // Returns weither the line number passed is in our list of matching ones.
+    bool isLineInMatchingList( int lineNumber );
 
   signals:
     // Sent when new data are available in this object
@@ -72,7 +74,7 @@ class LogFilteredData : public AbstractLogData {
     int doGetNbLine() const;
     int doGetMaxLength() const;
 
-    QList<matchingLine> matchingLineList;
+    QList<MatchingLine> matchingLineList;
 
     QStringList* sourceLogData;
     QRegExp currentRegExp;

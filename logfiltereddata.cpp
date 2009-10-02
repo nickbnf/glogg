@@ -32,7 +32,7 @@
 // Creates an empty set. It must be possible to display it without error.
 LogFilteredData::LogFilteredData() : AbstractLogData()
 {
-    matchingLineList = QList<matchingLine>();
+    matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
     maxLength_ = 0;
     searchDone_ = true;
@@ -42,7 +42,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 LogFilteredData::LogFilteredData( QStringList* logData, QRegExp regExp )
     : AbstractLogData()
 {
-    matchingLineList = QList<matchingLine>();
+    matchingLineList = QList<MatchingLine>();
     maxLength_ = 0;
 
     if ( logData != NULL ) {
@@ -70,7 +70,7 @@ void LogFilteredData::runSearch()
                 const int length = i->length();
                 if ( length > maxLength_ )
                     maxLength_ = length;
-                matchingLine match( lineNum, *i );
+                MatchingLine match( lineNum, *i );
                 matchingLineList.append( match );
             }
         }
@@ -87,6 +87,34 @@ int LogFilteredData::getMatchingLineNumber( int lineNum ) const
     int matchingNb = matchingLineList[lineNum].lineNumber();
 
     return matchingNb;
+}
+
+// Scan the list for the 'lineNumber' passed
+bool LogFilteredData::isLineInMatchingList( int lineNumber )
+{
+    // Use a bisection method to find the number
+    // (we know the list is sorted)
+
+    int minIndex = 0;
+    int maxIndex = matchingLineList.length() - 1;
+    // First we test the ends
+    if (  ( matchingLineList[minIndex].lineNumber() == lineNumber )
+       || ( matchingLineList[maxIndex].lineNumber() == lineNumber ) )
+        return true;
+    // Then we test the rest
+    while ( (maxIndex - minIndex) > 1 ) {
+        const int tryIndex = (minIndex + maxIndex) / 2;
+        const int currentMatchingNumber =
+            matchingLineList[tryIndex].lineNumber();
+        if ( currentMatchingNumber > lineNumber )
+            maxIndex = tryIndex;
+        else if ( currentMatchingNumber < lineNumber )
+            minIndex = tryIndex;
+        else if ( currentMatchingNumber == lineNumber )
+            return true;
+    }
+
+    return false;
 }
 
 // Implementation of the virtual function.

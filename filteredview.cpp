@@ -28,3 +28,8 @@ FilteredView::FilteredView(const AbstractLogData* newLogData, QWidget* parent)
 {
 }
 
+// For the filtered view, a line is always matching!
+bool FilteredView::isLineMatching( int lineNumber )
+{
+    return true;
+}

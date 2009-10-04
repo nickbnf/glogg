@@ -20,7 +20,7 @@
 #ifndef FILTERSET_H
 #define FILTERSET_H
 
-#include <QRegexp>
+#include <QRegExp>
 #include <QColor>
 #include <QMetaType>
 

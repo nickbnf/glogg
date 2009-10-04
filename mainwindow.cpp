@@ -173,7 +173,7 @@ void MainWindow::about()
                 "<p>A fast, advanced log explorer."
                 "<p>Built " LCRAWLER_DATE " from " LCRAWLER_COMMIT
                 "<p>Copyright &copy; 2009 Nicolas Bonnefon and other contributors"
-                "<p>You may modify and redistribute the program under the terms of the GPL (version 2 or later)." ) );
+                "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
 }
 
 // Opens the 'About Qt' dialog box.

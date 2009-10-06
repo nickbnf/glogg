@@ -41,14 +41,14 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     setOrientation(Qt::Vertical);
 
     // Initialize internal data
-    logData         = &emptyLogData;
-    logFilteredData = &emptyLogFilteredData;
+    logData_         = &emptyLogData;
+    logFilteredData_ = &emptyLogFilteredData;
 
-    logFileSize_    = 0;
+    logFileSize_     = 0;
 
-    logMainView =  new LogMainView( logData );
+    logMainView  = new LogMainView( logData_ );
     bottomWindow = new QWidget;
-    filteredView = new FilteredView( logFilteredData );
+    filteredView = new FilteredView( logFilteredData_ );
 
     // Construct the Search Info line
     searchInfoLine = new QLabel();
@@ -60,7 +60,6 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     searchLineEdit = new QLineEdit;
     searchLabel->setBuddy(searchLineEdit);
     searchButton = new QPushButton(tr("&Search"));
-    searchButton->setEnabled(false);
 
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
@@ -83,7 +82,7 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     connect(searchLineEdit, SIGNAL(returnPressed()),
             searchButton, SIGNAL(clicked()));
     connect(searchButton, SIGNAL( clicked() ),
-            this, SLOT( createNewSearch() ) );
+            this, SLOT( startNewSearch() ) );
     connect(logMainView, SIGNAL( newSelection( int ) ),
             logMainView, SLOT( update() ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
@@ -97,14 +96,13 @@ bool CrawlerWidget::readFile(const QString& fileName)
     QFile file(fileName);
 
     if ( file.open(QFile::ReadOnly | QFile::Text) ) {
-        LogData* oldLogData = logData;
-        LogFilteredData* oldFilteredData = logFilteredData;
+        // Start an empty search (will use the empty LFD)
+        replaceCurrentSearch( "" );
 
-        logData = new LogData( file.readAll() );
-        logFilteredData = &emptyLogFilteredData;
+        LogData* oldLogData = logData_;
+        logData_ = new LogData( file.readAll() );
 
-        logMainView->updateData( logData );
-        filteredView->updateData( logFilteredData );
+        logMainView->updateData( logData_ );
 
         logFileSize_ = file.size();
 
@@ -112,8 +110,6 @@ bool CrawlerWidget::readFile(const QString& fileName)
 
         if (oldLogData != &emptyLogData)
             delete oldLogData;
-        if (oldFilteredData != &emptyLogFilteredData)
-            delete oldFilteredData;
 
         return true;
     }
@@ -125,37 +121,17 @@ bool CrawlerWidget::readFile(const QString& fileName)
 void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine )
 {
     *fileSize = logFileSize_;
-    *fileNbLine = logData->getNbLine();
+    *fileNbLine = logData_->getNbLine();
 }
 
 //
 // Slots
 //
 
-void CrawlerWidget::createNewSearch()
+void CrawlerWidget::startNewSearch()
 {
-    // Delete (and disconnect the object)
-    if ( logFilteredData != &emptyLogFilteredData )
-        delete logFilteredData;
-
-    QString text = searchLineEdit->text();
-    QRegExp regexp(text);
-
-    if ( !text.isEmpty() ) {
-        // Create the new LogFilteredData...
-        logFilteredData = logData->getNewFilteredData( regexp );
-        // ... and arrange to receive notification of updates
-        connect( logFilteredData, SIGNAL( newDataAvailable() ),
-                this, SLOT( updateFilteredView() ) );
-        logFilteredData->runSearch();
-    } else {
-        logFilteredData = &emptyLogFilteredData;
-        // We won't receive an event from the emptyLogFilteredData
-        searchInfoLine->setText( "" );
-        filteredView->updateData( logFilteredData );
-    }
-    // Connect the search to the top view
-    logMainView->useNewFiltering( logFilteredData );
+    // Call the private function to do the search
+    replaceCurrentSearch( searchLineEdit->text() );
 }
 
 void CrawlerWidget::updateFilteredView()
@@ -163,14 +139,14 @@ void CrawlerWidget::updateFilteredView()
     LOG(logDEBUG) << "updateFilteredView received.";
 
     searchInfoLine->setText( tr("Found %1 match%2.")
-            .arg( logFilteredData->getNbLine() )
-            .arg( logFilteredData->getNbLine() > 1 ? "es" : "" ) );
-    filteredView->updateData(logFilteredData);
+            .arg( logFilteredData_->getNbLine() )
+            .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
+    filteredView->updateData(logFilteredData_);
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
 {
-    int mainViewLine = logFilteredData->getMatchingLineNumber(filteredLineNb);
+    int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
     logMainView->displayLine(mainViewLine);  // FIXME: should be done with a signal.
 }
 
@@ -185,4 +161,34 @@ void CrawlerWidget::applyConfiguration()
 
     logMainView->update();
     filteredView->update();
+}
+
+//
+// Private functions
+//
+
+// Create a new search using the text passed, replace the currently
+// used one and destroy the old one.
+void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
+{
+    // Delete (and disconnect the object)
+    if ( logFilteredData_ != &emptyLogFilteredData )
+        delete logFilteredData_;
+
+    if ( !searchText.isEmpty() ) {
+        QRegExp regexp(searchText);
+        // Create the new LogFilteredData...
+        logFilteredData_ = logData_->getNewFilteredData( regexp );
+        // ... and arrange to receive notification of updates
+        connect( logFilteredData_, SIGNAL( newDataAvailable() ),
+                this, SLOT( updateFilteredView() ) );
+        logFilteredData_->runSearch();
+    } else {
+        logFilteredData_ = &emptyLogFilteredData;
+        // We won't receive an event from the emptyLogFilteredData
+        searchInfoLine->setText( "" );
+        filteredView->updateData( logFilteredData_ );
+    }
+    // Connect the search to the top view
+    logMainView->useNewFiltering( logFilteredData_ );
 }

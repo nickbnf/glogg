@@ -35,6 +35,8 @@ class LogData : public AbstractLogData {
     LogData();
     // Creates a log data from the data chunk passed
     LogData( const QByteArray& byteArray );
+    // Destroy an object
+    ~LogData();
 
     // Creates a new filtered data using the passed regexp
     // ownership is passed to the caller

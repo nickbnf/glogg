@@ -97,21 +97,24 @@ bool LogFilteredData::isLineInMatchingList( int lineNumber )
 
     int minIndex = 0;
     int maxIndex = matchingLineList.length() - 1;
-    // First we test the ends
-    if (  ( matchingLineList[minIndex].lineNumber() == lineNumber )
-       || ( matchingLineList[maxIndex].lineNumber() == lineNumber ) )
-        return true;
-    // Then we test the rest
-    while ( (maxIndex - minIndex) > 1 ) {
-        const int tryIndex = (minIndex + maxIndex) / 2;
-        const int currentMatchingNumber =
-            matchingLineList[tryIndex].lineNumber();
-        if ( currentMatchingNumber > lineNumber )
-            maxIndex = tryIndex;
-        else if ( currentMatchingNumber < lineNumber )
-            minIndex = tryIndex;
-        else if ( currentMatchingNumber == lineNumber )
+    // If the list is not empty
+    if ( maxIndex - minIndex >= 0 ) {
+        // First we test the ends
+        if (  ( matchingLineList[minIndex].lineNumber() == lineNumber )
+                || ( matchingLineList[maxIndex].lineNumber() == lineNumber ) )
             return true;
+        // Then we test the rest
+        while ( (maxIndex - minIndex) > 1 ) {
+            const int tryIndex = (minIndex + maxIndex) / 2;
+            const int currentMatchingNumber =
+                matchingLineList[tryIndex].lineNumber();
+            if ( currentMatchingNumber > lineNumber )
+                maxIndex = tryIndex;
+            else if ( currentMatchingNumber < lineNumber )
+                minIndex = tryIndex;
+            else if ( currentMatchingNumber == lineNumber )
+                return true;
+        }
     }
 
     return false;

@@ -50,7 +50,7 @@ class CrawlerWidget : public QSplitter
 
   private slots:
     // Instructs the widget to start a search using the current search line.
-    void createNewSearch();
+    void startNewSearch();
     // Instructs the widget to reconfigure itself because Config() has changed.
     void applyConfiguration();
     // Called when new data must be displayed in the filtered window.
@@ -60,6 +60,8 @@ class CrawlerWidget : public QSplitter
     void jumpToMatchingLine(int filteredLineNb);
 
   private:
+    void replaceCurrentSearch( const QString& searchText );
+
     LogMainView*    logMainView;
     QWidget*        bottomWindow;
     QLabel*         searchLabel;
@@ -74,8 +76,8 @@ class CrawlerWidget : public QSplitter
     static LogData  emptyLogData;
     static LogFilteredData  emptyLogFilteredData;
 
-    LogData*        logData;
-    LogFilteredData* logFilteredData;
+    LogData*        logData_;
+    LogFilteredData* logFilteredData_;
 
     qint64          logFileSize_;
 };

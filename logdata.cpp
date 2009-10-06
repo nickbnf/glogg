@@ -54,6 +54,11 @@ LogData::LogData( const QByteArray &byteArray ) : AbstractLogData()
     LOG(logDEBUG) << "Found " << nbLines_ << " lines.";
 }
 
+LogData::~LogData()
+{
+    delete list_;
+}
+
 int LogData::doGetNbLine() const
 {
     return nbLines_;

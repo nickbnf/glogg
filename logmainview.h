@@ -29,8 +29,9 @@ class LogMainView : public AbstractLogView
   public:
     LogMainView( const LogData* newLogData, QWidget* parent = 0 );
 
-    // Configure the view to use the passed fltered list
+    // Configure the view to use the passed filtered list
     // (used for couloured bullets)
+    // Should be NULL or the empty LFD if no filtering is used
     void useNewFiltering( LogFilteredData* filteredData );
 
   protected:

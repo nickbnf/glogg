@@ -199,7 +199,7 @@ void AbstractLogView::updateData(const AbstractLogData* newLogData)
     horizontalScrollBar()->setValue(0);
     horizontalScrollBar()->setRange(0, hScrollMaxValue);
 
-    // Unselect any line and show front the upper left corner
+    // Unselect any line and show the upper left corner
     firstLine = 0;
     lastLine = min2(logData->getNbLine(), firstLine + getNbVisibleLines());
     firstCol = 0;

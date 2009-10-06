@@ -31,6 +31,8 @@ class AbstractLogData : public QObject {
 
   public:
     AbstractLogData();
+    // Permit each child to have its destructor
+    virtual ~AbstractLogData() {};
 
     // Returns the line passed as a QString
     QString getLineString(int line) const;
@@ -46,8 +48,6 @@ class AbstractLogData : public QObject {
     virtual int doGetNbLine() const = 0;
     // Internal function called to get the maximum length
     virtual int doGetMaxLength() const = 0;
-
-    ~AbstractLogData() {};      // Don't allow polymorphic destruction
 };
 
 #endif

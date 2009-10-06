@@ -38,12 +38,12 @@ MainWindow::MainWindow()
     createActions();
     createMenus();
     // createContextMenu();
-    // createToolBars();
+    createToolBars();
     // createStatusBar();
     createCrawler();
 
     connect(this, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
-    setCurrentFile("");
+    setCurrentFile("", 0, 0);
     readSettings();
     emit optionsChanged();
 
@@ -61,6 +61,7 @@ void MainWindow::createActions()
 {
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
+    openAction->setIcon( QIcon(":/images/open16.png") );
     openAction->setStatusTip(tr("Open a file"));
     connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
 
@@ -81,6 +82,10 @@ void MainWindow::createActions()
     copyAction->setShortcut(QKeySequence::Copy);
     copyAction->setStatusTip(tr("Copy the selected line"));
     connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
+
+    reloadAction = new QAction( tr("&Reload"), this );
+    reloadAction->setIcon( QIcon(":/images/reload16.png") );
+    connect( reloadAction, SIGNAL(triggered()), this, SLOT(reload()) );
 
     filtersAction = new QAction(tr("&Filters..."), this);
     filtersAction->setStatusTip(tr("Show the Filters box"));
@@ -112,6 +117,9 @@ void MainWindow::createMenus()
     editMenu = menuBar()->addMenu( tr("&Edit") );
     editMenu->addAction( copyAction );
 
+    viewMenu = menuBar()->addMenu( tr("&View") );
+    viewMenu->addAction( reloadAction );
+
     toolsMenu = menuBar()->addMenu( tr("&Tools") );
     toolsMenu->addAction( filtersAction );
     toolsMenu->addSeparator();
@@ -121,6 +129,21 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu( tr("&Help") );
     helpMenu->addAction( aboutAction );
+}
+
+void MainWindow::createToolBars()
+{
+    infoLine = new QLabel();
+    infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
+    infoLine->setLineWidth( 0 );
+    infoLine->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed );
+
+    toolBar = addToolBar( tr("&Toolbar") );
+    toolBar->setIconSize( QSize( 16, 16 ) );
+    toolBar->setMovable( false );
+    toolBar->addAction( openAction );
+    toolBar->addAction( reloadAction );
+    toolBar->addWidget( infoLine );
 }
 
 //
@@ -147,6 +170,13 @@ void MainWindow::openRecentFile()
 // Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
+}
+
+// Reload the current log file
+void MainWindow::reload()
+{
+    if ( !currentFile.isEmpty() )
+        loadFile( currentFile );
 }
 
 // Opens the 'Filters' dialog box
@@ -201,7 +231,9 @@ bool MainWindow::loadFile( const QString& fileName )
 {
     if ( crawlerWidget->readFile( fileName ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
-        setCurrentFile( fileName );
+        int fileSize, fileNbLine;
+        crawlerWidget->getFileInfo( &fileSize, &fileNbLine );
+        setCurrentFile( fileName, fileSize, fileNbLine );
         return true;
     }
     else {
@@ -217,7 +249,8 @@ QString MainWindow::strippedName( const QString& fullFileName )
 }
 
 // Add the filename to the recent files list and update the title bar.
-void MainWindow::setCurrentFile( const QString& fileName )
+void MainWindow::setCurrentFile( const QString& fileName,
+        int fileSize, int fileNbLine )
 {
     currentFile = fileName;
     QString shownName = tr("Untitled");
@@ -226,6 +259,12 @@ void MainWindow::setCurrentFile( const QString& fileName )
         recentFiles.removeAll(currentFile);
         recentFiles.prepend(currentFile);
         updateRecentFileActions();
+
+        infoLine->setText( tr( "%1 (%2 KB - %3 lines)" )
+                    .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
+    }
+    else {
+        infoLine->setText( "" );
     }
 
     setWindowTitle(tr("%1 - %2").arg(shownName).arg(tr("LogCrawler")));

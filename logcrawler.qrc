@@ -1,5 +1,9 @@
 <RCC>
 <qresource>
-    <file>images/libcrawler.png</file>
+    <file>images/logcrawler.png</file>
+    <file>images/open16.png</file>
+    <file>images/open.xpm</file>
+    <file>images/reload.png</file>
+    <file>images/reload16.png</file>
 </qresource>
 </RCC>

@@ -44,6 +44,8 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     logData         = &emptyLogData;
     logFilteredData = &emptyLogFilteredData;
 
+    logFileSize_    = 0;
+
     logMainView =  new LogMainView( logData );
     bottomWindow = new QWidget;
     filteredView = new FilteredView( logFilteredData );
@@ -104,6 +106,10 @@ bool CrawlerWidget::readFile(const QString& fileName)
         logMainView->updateData( logData );
         filteredView->updateData( logFilteredData );
 
+        logFileSize_ = file.size();
+
+        file.close();
+
         if (oldLogData != &emptyLogData)
             delete oldLogData;
         if (oldFilteredData != &emptyLogFilteredData)
@@ -114,6 +120,12 @@ bool CrawlerWidget::readFile(const QString& fileName)
     else {
         return false;
     }
+}
+
+void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine )
+{
+    *fileSize = logFileSize_;
+    *fileNbLine = logData->getNbLine();
 }
 
 //

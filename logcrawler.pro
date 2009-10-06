@@ -37,6 +37,8 @@ HEADERS += version.h \
 
 FORMS += filtersdialog.ui
 
+RESOURCES = logcrawler.qrc
+
 debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
 release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
 debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared

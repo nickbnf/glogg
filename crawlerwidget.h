@@ -41,10 +41,12 @@ class CrawlerWidget : public QSplitter
   Q_OBJECT
 
   public:
-    CrawlerWidget(QWidget *parent=0);
+    CrawlerWidget( QWidget *parent=0 );
 
     // Loads the passed file and reports success.
-    bool readFile(const QString& fileName);
+    bool readFile( const QString& fileName );
+    // Get the size (in bytes) and number of lines in the current file.
+    void getFileInfo( int* fileSize, int* fileNbLine );
 
   private slots:
     // Instructs the widget to start a search using the current search line.
@@ -74,6 +76,8 @@ class CrawlerWidget : public QSplitter
 
     LogData*        logData;
     LogFilteredData* logFilteredData;
+
+    qint64          logFileSize_;
 };
 
 #endif

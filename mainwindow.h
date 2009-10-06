@@ -42,6 +42,7 @@ class MainWindow : public QMainWindow
     void open();
     void openRecentFile();
     void copy();
+    void reload();
     void filters();
     void options();
     void about();
@@ -63,7 +64,8 @@ class MainWindow : public QMainWindow
     void readSettings();
     void writeSettings();
     bool loadFile(const QString &fileName);
-    void setCurrentFile(const QString &fileName);
+    void setCurrentFile( const QString &fileName,
+            int fileSize, int fileNbLine );
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
 
@@ -77,12 +79,17 @@ class MainWindow : public QMainWindow
 
     QMenu *fileMenu;
     QMenu *editMenu;
+    QMenu *viewMenu;
     QMenu *toolsMenu;
     QMenu *helpMenu;
+
+    QLabel *infoLine;
+    QToolBar *toolBar;
 
     QAction *openAction;
     QAction *exitAction;
     QAction *copyAction;
+    QAction *reloadAction;
     QAction *filtersAction;
     QAction *optionsAction;
     QAction *aboutAction;

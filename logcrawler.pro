@@ -47,5 +47,5 @@ QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date \
 QMAKE_CXXFLAGS += -DLCRAWLER_VERSION=\\\"`git \
     describe`\\\"
 QMAKE_CXXFLAGS += -DLCRAWLER_COMMIT=\\\"`git \
-    rev-parse \
+    rev-parse --short \
     HEAD`\\\"

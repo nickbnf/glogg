@@ -20,6 +20,7 @@
 // This file implements MainWindow. It is responsible for creating and
 // managing the menus, the toolbar, and the CrawlerWidget. It also
 // load/save the settings on opening/closing of the app
+// It keeps track of the file on disk.
 
 #include <iostream>
 #include <QtGui>
@@ -33,7 +34,7 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 
-MainWindow::MainWindow()
+MainWindow::MainWindow() : fileWatcher( this )
 {
     createActions();
     createMenus();
@@ -42,12 +43,17 @@ MainWindow::MainWindow()
     // createStatusBar();
     createCrawler();
 
-    connect(this, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
+    // Initialize the file watcher
+    connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
+            this, SLOT( signalFileChanged( const QString& ) ) );
+
+    connect( this, SIGNAL( optionsChanged() ),
+            crawlerWidget, SLOT( applyConfiguration() ));
     setCurrentFile("", 0, 0);
     readSettings();
     emit optionsChanged();
 
-    setWindowIcon(QIcon(":/images/icon.png"));
+    setWindowIcon(QIcon(":/images/logcrawler.png"));
     setCentralWidget(crawlerWidget);
 }
 
@@ -211,8 +217,13 @@ void MainWindow::aboutQt()
 {
 }
 
-void MainWindow::updateStatusBar()
+void MainWindow::signalFileChanged( const QString& fileName )
 {
+    LOG(logDEBUG) << "signalFileChanged";
+    if ( !fileChangedOnDisk ) {
+        fileChangedOnDisk = true;
+        infoLine->setText( infoLine->text() + tr(" - file changed on disk") );
+    }
 }
 
 // Closes the application
@@ -252,16 +263,24 @@ QString MainWindow::strippedName( const QString& fullFileName )
 void MainWindow::setCurrentFile( const QString& fileName,
         int fileSize, int fileNbLine )
 {
+    // Remove the current file from the watch list
+    fileWatcher.removePath( currentFile );
+
+    // Change the current file
     currentFile = fileName;
-    QString shownName = tr("Untitled");
-    if (!currentFile.isEmpty()) {
-        shownName = strippedName(currentFile);
-        recentFiles.removeAll(currentFile);
-        recentFiles.prepend(currentFile);
+    QString shownName = tr( "Untitled" );
+    if ( !currentFile.isEmpty() ) {
+        shownName = strippedName( currentFile );
+        recentFiles.removeAll( currentFile );
+        recentFiles.prepend( currentFile );
         updateRecentFileActions();
 
         infoLine->setText( tr( "%1 (%2 KB - %3 lines)" )
                     .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
+
+        // Watch the new file on disk
+        fileChangedOnDisk = false;
+        fileWatcher.addPath( currentFile );
     }
     else {
         infoLine->setText( "" );

@@ -21,6 +21,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFileSystemWatcher>
 #include "crawlerwidget.h"
 
 class QAction;
@@ -48,7 +49,8 @@ class MainWindow : public QMainWindow
     void about();
     void aboutQt();
 
-    void updateStatusBar();
+    // Instructs the window to signal the user the file has been updated
+    void signalFileChanged( const QString& fileName );
 
   signals:
     // Is emitted when new settings must be used
@@ -72,6 +74,9 @@ class MainWindow : public QMainWindow
     CrawlerWidget *crawlerWidget;
     QStringList recentFiles;
     QString currentFile;
+
+    QFileSystemWatcher fileWatcher;
+    bool fileChangedOnDisk;
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];

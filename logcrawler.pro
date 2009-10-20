@@ -3,7 +3,8 @@
 # -------------------------------------------------
 TARGET = logcrawler
 TEMPLATE = app
-win32:debug:CONFIG += console
+
+win32:Debug:CONFIG += console
 
 # Input
 SOURCES += main.cpp \
@@ -43,6 +44,9 @@ debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
 release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
 debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
 release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
+
+Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
+Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
 
 QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date \
     +'\"%F\"'`\\\"

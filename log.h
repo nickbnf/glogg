@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 // Modify here!
-#define FILELOG_MAX_LEVEL logDEBUG
+//#define FILELOG_MAX_LEVEL logDEBUG
 
 inline std::string NowTime();
 

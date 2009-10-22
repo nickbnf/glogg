@@ -33,22 +33,13 @@ OptionsDialog::OptionsDialog(QWidget* parent) : QDialog(parent)
 
     setupFontList();
 
-    okButton     = new QPushButton( tr("OK") );
-    cancelButton = new QPushButton( tr("Cancel") );
-    applyButton  = new QPushButton( tr("Apply") );
-    okButton->setDefault(true);
+    buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok |
+            QDialogButtonBox::Cancel | QDialogButtonBox::Apply );
 
-    connect(okButton, SIGNAL(clicked()), this, SLOT(updateConfigFromDialog()));
-    connect(okButton, SIGNAL(clicked()), this, SLOT(close()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(close()));
-    connect(fontFamilyBox, SIGNAL(currentIndexChanged(const QString& )),
-            this, SLOT(updateFontSize(const QString& )));
-
-    QHBoxLayout* buttonsLayout = new QHBoxLayout;
-    buttonsLayout->addStretch();
-    buttonsLayout->addWidget(okButton);
-    buttonsLayout->addWidget(cancelButton);
-    buttonsLayout->addWidget(applyButton);
+    connect(buttonBox, SIGNAL( clicked( QAbstractButton* ) ),
+            this, SLOT( onButtonBoxClicked( QAbstractButton* ) ) );
+    connect(fontFamilyBox, SIGNAL( currentIndexChanged(const QString& ) ),
+            this, SLOT( updateFontSize( const QString& ) ));
 
     QHBoxLayout* fontLayout = new QHBoxLayout;
     fontLayout->addWidget(familyLabel);
@@ -59,7 +50,7 @@ OptionsDialog::OptionsDialog(QWidget* parent) : QDialog(parent)
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(fontBox);
-    mainLayout->addLayout(buttonsLayout);
+    mainLayout->addWidget(buttonBox);
 
     setLayout(mainLayout);
     setWindowTitle( tr("Options") );
@@ -126,4 +117,18 @@ void OptionsDialog::updateConfigFromDialog()
     Config().setMainFont(font);
 
     emit optionsChanged();
+}
+
+void OptionsDialog::onButtonBoxClicked( QAbstractButton* button )
+{
+    QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
+    if (   ( role == QDialogButtonBox::AcceptRole )
+        || ( role == QDialogButtonBox::ApplyRole ) ) {
+        updateConfigFromDialog();
+    }
+
+    if ( role == QDialogButtonBox::AcceptRole )
+        accept();
+    else if ( role == QDialogButtonBox::RejectRole )
+        reject();
 }

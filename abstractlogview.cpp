@@ -77,18 +77,7 @@ void AbstractLogView::resizeEvent(QResizeEvent* resizeEvent)
 
     LOG(logDEBUG) << "resizeEvent received";
 
-    // Calculate the index of the last line shown
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
-
-    // Update the scroll bars
-    verticalScrollBar()->setPageStep( getNbVisibleLines() );
-
-    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
-        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
-    LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
-    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
-    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
+    updateDisplaySize();
 }
 
 void AbstractLogView::scrollContentsBy( int dx, int dy )
@@ -207,6 +196,22 @@ void AbstractLogView::updateData(const AbstractLogData* newLogData)
 
     // Repaint!
     update();
+}
+
+void AbstractLogView::updateDisplaySize()
+{
+    // Calculate the index of the last line shown
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+
+    // Update the scroll bars
+    verticalScrollBar()->setPageStep( getNbVisibleLines() );
+
+    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
+    LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
+    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
+    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
 }
 
 // Select the line and ensure it is visible on the screen, scrolling if not.

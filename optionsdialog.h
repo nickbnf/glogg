@@ -22,6 +22,7 @@
 
 #include <QDialog>
 #include <QComboBox>
+#include <QDialogButtonBox>
 
 #include "configuration.h"
 
@@ -38,20 +39,17 @@ class OptionsDialog : public QDialog
     void optionsChanged();
 
   private slots:
-    /*
-    void applyClicked();
-    */
     // Clears and updates the font size box with the sizes allowed
     // by the passed font family.
     void updateFontSize(const QString& fontFamily);
     // Update the content of the global Config() using parameters
     // from the dialog box.
     void updateConfigFromDialog();
+    // Called when a ok/cancel/apply button is clicked.
+    void onButtonBoxClicked( QAbstractButton* button );
 
   private:
-    QPushButton* okButton;
-    QPushButton* cancelButton;
-    QPushButton* applyButton;
+    QDialogButtonBox* buttonBox;
 
     QComboBox*   fontFamilyBox;
     QComboBox*   fontSizeBox;

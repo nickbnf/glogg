@@ -189,7 +189,7 @@ void MainWindow::reload()
 void MainWindow::filters()
 {
     FiltersDialog dialog(this);
-    // connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
+    connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
     dialog.exec();
 }
 

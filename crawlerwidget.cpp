@@ -159,7 +159,9 @@ void CrawlerWidget::applyConfiguration()
     logMainView->setFont(font);
     filteredView->setFont(font);
 
+    logMainView->updateDisplaySize();
     logMainView->update();
+    filteredView->updateDisplaySize();
     filteredView->update();
 }
 

@@ -5,6 +5,7 @@
 *.[oa]
 *~
 moc_*.cpp
+ui_*.h
 .*.sw?
 Makefile
 logcrawler
@@ -22,5 +23,6 @@ LogCrawler.pro.user
 Makefile.Debug
 Makefile.Release
 debug/
+release/
 object_script.logcrawler.Debug
 object_script.logcrawler.Release

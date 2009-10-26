@@ -78,13 +78,13 @@ void OptionsDialog::setupFontList()
 void OptionsDialog::updateDialogFromConfig()
 {
     // Main font
-    QFont mainFont = Config().mainFont();
+    QFontInfo fontInfo = QFontInfo( Config().mainFont() );
 
-    int familyIndex = fontFamilyBox->findText( mainFont.family() );
+    int familyIndex = fontFamilyBox->findText( fontInfo.family() );
     if ( familyIndex != -1 )
         fontFamilyBox->setCurrentIndex( familyIndex );
 
-    int sizeIndex = fontSizeBox->findText( QString::number(mainFont.pointSize()) );
+    int sizeIndex = fontSizeBox->findText( QString::number(fontInfo.pointSize()) );
     if ( sizeIndex != -1 )
         fontSizeBox->setCurrentIndex( sizeIndex );
 }

@@ -24,6 +24,7 @@
 Configuration::Configuration()
 {
     // Should have some sensible default values.
+    mainFont_ = QFont("courier", 10);
 
     // Register the operators for serializable classes
     qRegisterMetaTypeStreamOperators<Filter>( "Filter" );

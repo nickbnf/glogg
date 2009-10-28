@@ -19,7 +19,8 @@ SOURCES += main.cpp \
     optionsdialog.cpp \
     configuration.cpp \
     filtersdialog.cpp \
-    filterset.cpp
+    filterset.cpp \
+    savedsearches.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -34,7 +35,8 @@ HEADERS += version.h \
     optionsdialog.h \
     configuration.h \
     filtersdialog.h \
-    filterset.h
+    filterset.h \
+    savedsearches.h
 
 FORMS += filtersdialog.ui
 

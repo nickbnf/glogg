@@ -1,0 +1,18 @@
+New features:
+- Line number
+- Status bar
+- vim style keyboard commands
+- quicksearch /
+- Matches overview (right bar)
+- 'Follow' file
+- Bookmarks
+- Multi files
+- Drag 'n drop
+- Savable search text
+- Multithreaded loading/searching
+
+Fixes:
+- Default font
+- Up/Down arrows in filters
+- Keep the search line between restart (drop down list)
+- Reload ends up on same line

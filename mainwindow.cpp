@@ -36,6 +36,9 @@
 
 MainWindow::MainWindow() : fileWatcher( this )
 {
+    // Register the operators for serializable classes
+    qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
+
     createActions();
     createMenus();
     // createContextMenu();
@@ -61,7 +64,10 @@ MainWindow::MainWindow() : fileWatcher( this )
 
 void MainWindow::createCrawler()
 {
-    crawlerWidget = new CrawlerWidget;
+    // First create the searches history
+    savedSearches = new SavedSearches();
+
+    crawlerWidget = new CrawlerWidget( savedSearches );
 }
 
 // Menu actions
@@ -228,6 +234,10 @@ void MainWindow::signalFileChanged( const QString& fileName )
     }
 }
 
+//
+// Events
+//
+
 // Closes the application
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -352,6 +362,9 @@ void MainWindow::writeSettings()
     settings.setValue( "currentFile", currentFile );
     settings.setValue( "recentFiles", recentFiles );
 
+    // Searches history
+    settings.setValue( "savedSearches", QVariant::fromValue( *savedSearches ) );
+
     // User settings
     Config().writeToSettings( settings );
 }
@@ -371,6 +384,9 @@ void MainWindow::readSettings()
         loadFile(curFile);
 
     updateRecentFileActions();
+
+    // Copy the searches from the config file to our list
+    *savedSearches = settings.value( "savedSearches" ).value<SavedSearches>();
 
     Config().readFromSettings( settings );
 }

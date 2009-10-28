@@ -26,6 +26,7 @@
 
 #include <Qt>
 #include <QFile>
+#include <QLineEdit>
 
 #include "crawlerwidget.h"
 
@@ -36,7 +37,8 @@ LogData         CrawlerWidget::emptyLogData;
 LogFilteredData CrawlerWidget::emptyLogFilteredData;
 
 // Constructor makes all the child widgets and set up connections.
-CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
+CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
+        : QSplitter(parent)
 {
     setOrientation(Qt::Vertical);
 
@@ -50,16 +52,21 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     bottomWindow = new QWidget;
     filteredView = new FilteredView( logFilteredData_ );
 
+    savedSearches = searches;
+
     // Construct the Search Info line
     searchInfoLine = new QLabel();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
 
     // Construct the Search line
-    searchLabel =  new QLabel(tr("&Text: "));
-    searchLineEdit = new QLineEdit;
-    searchLabel->setBuddy(searchLineEdit);
-    searchButton = new QPushButton(tr("&Search"));
+    searchLabel = new QLabel(tr("&Text: "));
+    searchLineEdit = new QComboBox;
+    searchLineEdit->setEditable( true );
+    searchLineEdit->addItems( savedSearches->recentSearches() );
+    searchLineEdit->setSizePolicy( QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Minimum ) );
+    searchLabel->setBuddy( searchLineEdit );
+    searchButton = new QPushButton( tr("&Search") );
 
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
@@ -79,8 +86,8 @@ CrawlerWidget::CrawlerWidget(QWidget *parent) : QSplitter(parent)
     addWidget(bottomWindow);
 
     // Connect the signals
-    connect(searchLineEdit, SIGNAL(returnPressed()),
-            searchButton, SIGNAL(clicked()));
+    connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),
+            searchButton, SIGNAL( clicked() ));
     connect(searchButton, SIGNAL( clicked() ),
             this, SLOT( startNewSearch() ) );
     connect(logMainView, SIGNAL( newSelection( int ) ),
@@ -130,8 +137,13 @@ void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine )
 
 void CrawlerWidget::startNewSearch()
 {
+    // Record the search line in the recent list
+    savedSearches->addRecent( searchLineEdit->currentText() );
+
+    // Update the SearchLine (history)
+    updateSearchCombo();
     // Call the private function to do the search
-    replaceCurrentSearch( searchLineEdit->text() );
+    replaceCurrentSearch( searchLineEdit->currentText() );
 }
 
 void CrawlerWidget::updateFilteredView()
@@ -163,6 +175,9 @@ void CrawlerWidget::applyConfiguration()
     logMainView->update();
     filteredView->updateDisplaySize();
     filteredView->update();
+
+    // Update the SearchLine (history)
+    updateSearchCombo();
 }
 
 //
@@ -193,4 +208,12 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     }
     // Connect the search to the top view
     logMainView->useNewFiltering( logFilteredData_ );
+}
+
+// Updates the content of the drop down list for the saved searches,
+// called when the SavedSearch has been changed.
+void CrawlerWidget::updateSearchCombo()
+{
+    searchLineEdit->clear();
+    searchLineEdit->addItems( savedSearches->recentSearches() );
 }

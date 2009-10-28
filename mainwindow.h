@@ -74,6 +74,7 @@ class MainWindow : public QMainWindow
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
 
+    SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;
     QStringList recentFiles;
     QString currentFile;

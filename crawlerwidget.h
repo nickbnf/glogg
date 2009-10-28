@@ -22,13 +22,14 @@
 
 #include <QLabel>
 #include <QSplitter>
-#include <QLineEdit>
+#include <QComboBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
 #include "logmainview.h"
 #include "filteredview.h"
+#include "savedsearches.h"
 
 #include "logdata.h"
 #include "logfiltereddata.h"
@@ -41,7 +42,7 @@ class CrawlerWidget : public QSplitter
   Q_OBJECT
 
   public:
-    CrawlerWidget( QWidget *parent=0 );
+    CrawlerWidget( SavedSearches* searches, QWidget *parent=0 );
 
     // Loads the passed file and reports success.
     bool readFile( const QString& fileName );
@@ -61,11 +62,12 @@ class CrawlerWidget : public QSplitter
 
   private:
     void replaceCurrentSearch( const QString& searchText );
+    void updateSearchCombo();
 
     LogMainView*    logMainView;
     QWidget*        bottomWindow;
     QLabel*         searchLabel;
-    QLineEdit*      searchLineEdit;
+    QComboBox*      searchLineEdit;
     QPushButton*    searchButton;
     FilteredView*   filteredView;
     QLabel*         searchInfoLine;
@@ -75,6 +77,8 @@ class CrawlerWidget : public QSplitter
 
     static LogData  emptyLogData;
     static LogFilteredData  emptyLogFilteredData;
+
+    SavedSearches*  savedSearches;
 
     LogData*        logData_;
     LogFilteredData* logFilteredData_;

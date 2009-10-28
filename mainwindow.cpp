@@ -43,6 +43,8 @@ MainWindow::MainWindow() : fileWatcher( this )
     // createStatusBar();
     createCrawler();
 
+    setAcceptDrops( true );
+
     // Initialize the file watcher
     connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
             this, SLOT( signalFileChanged( const QString& ) ) );
@@ -231,6 +233,27 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
     event->accept();
+}
+
+// Accepts the drag event if it looks like a filename
+void MainWindow::dragEnterEvent( QDragEnterEvent* event )
+{
+    if ( event->mimeData()->hasFormat( "text/uri-list" ) )
+        event->acceptProposedAction();
+}
+
+// Tries and loads the file if the URL dropped is local
+void MainWindow::dropEvent( QDropEvent* event )
+{
+    QList<QUrl> urls = event->mimeData()->urls();
+    if ( urls.isEmpty() )
+        return;
+
+    QString fileName = urls.first().toLocalFile();
+    if ( fileName.isEmpty() )
+        return;
+
+    loadFile( fileName );
 }
 
 //

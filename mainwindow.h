@@ -37,7 +37,10 @@ class MainWindow : public QMainWindow
     MainWindow();
 
   protected:
-    void closeEvent( QCloseEvent *event );
+    void closeEvent( QCloseEvent* event );
+    // Drag and drop support
+    void dragEnterEvent( QDragEnterEvent* event );
+    void dropEvent( QDropEvent* event );
 
   private slots:
     void open();

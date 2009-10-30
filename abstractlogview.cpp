@@ -175,22 +175,26 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
 // Public functions
 //
 
-void AbstractLogView::updateData(const AbstractLogData* newLogData)
+void AbstractLogView::updateData(const AbstractLogData* newLogData, int topLine)
 {
     // Save the new data
     logData = newLogData;
 
+    // Check the top Line is within range
+    if ( topLine >= logData->getNbLine() )
+        topLine = 0;
+
     // Adapt the scroll bars to the new content
-    verticalScrollBar()->setValue(0);
-    verticalScrollBar()->setRange(0, logData->getNbLine()-1);
+    verticalScrollBar()->setValue( topLine );
+    verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
     const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
         ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    horizontalScrollBar()->setValue(0);
-    horizontalScrollBar()->setRange(0, hScrollMaxValue);
+    horizontalScrollBar()->setValue( 0 );
+    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
     // Unselect any line and show the upper left corner
-    firstLine = 0;
-    lastLine = min2(logData->getNbLine(), firstLine + getNbVisibleLines());
+    firstLine = topLine;
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
     firstCol = 0;
     selectedLine = -1;
 
@@ -212,6 +216,11 @@ void AbstractLogView::updateDisplaySize()
     LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
     LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
     horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
+}
+
+int AbstractLogView::getTopLine() const
+{
+    return firstLine;
 }
 
 // Select the line and ensure it is visible on the screen, scrolling if not.

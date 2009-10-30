@@ -35,11 +35,13 @@ class AbstractLogView : public QAbstractScrollArea
 
     // Makes the widget use the new data set passed,
     // reconfigure itself and then redraw itself.
-    // The called retains ownership of the data set.
-    void updateData(const AbstractLogData* newLogData);
+    // The caller retains ownership of the data set.
+    void updateData(const AbstractLogData* newLogData, int topLine);
     // Instructs the widget to update it's content geometry,
     // used when the font is changed.
     void updateDisplaySize();
+    // Return the line number of the top line of the view
+    int getTopLine() const;
 
   protected:
     void mousePressEvent(QMouseEvent* mouseEvent);

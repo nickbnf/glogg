@@ -273,7 +273,14 @@ void MainWindow::dropEvent( QDropEvent* event )
 // Loads the passed file into the CrawlerWidget and update the title bar.
 bool MainWindow::loadFile( const QString& fileName )
 {
-    if ( crawlerWidget->readFile( fileName ) ) {
+    int topLine = 0;
+
+    // If we're loading the same file, put the same line on top.
+    if ( fileName == currentFile )
+        topLine = crawlerWidget->getTopLine();
+
+    // Load the file
+    if ( crawlerWidget->readFile( fileName, topLine ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
         int fileSize, fileNbLine;
         crawlerWidget->getFileInfo( &fileSize, &fileNbLine );

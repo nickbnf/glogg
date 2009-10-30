@@ -98,7 +98,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             filteredView, SLOT( update() ) );
 }
 
-bool CrawlerWidget::readFile(const QString& fileName)
+bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
     QFile file(fileName);
 
@@ -109,7 +109,7 @@ bool CrawlerWidget::readFile(const QString& fileName)
         LogData* oldLogData = logData_;
         logData_ = new LogData( file.readAll() );
 
-        logMainView->updateData( logData_ );
+        logMainView->updateData( logData_, topLine );
 
         logFileSize_ = file.size();
 
@@ -125,10 +125,16 @@ bool CrawlerWidget::readFile(const QString& fileName)
     }
 }
 
-void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine )
+void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine ) const
 {
     *fileSize = logFileSize_;
     *fileNbLine = logData_->getNbLine();
+}
+
+// The top line is first one on the main display
+int CrawlerWidget::getTopLine() const
+{
+    return logMainView->getTopLine();
 }
 
 //
@@ -153,7 +159,7 @@ void CrawlerWidget::updateFilteredView()
     searchInfoLine->setText( tr("Found %1 match%2.")
             .arg( logFilteredData_->getNbLine() )
             .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
-    filteredView->updateData(logFilteredData_);
+    filteredView->updateData(logFilteredData_, 0);
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
@@ -204,7 +210,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         logFilteredData_ = &emptyLogFilteredData;
         // We won't receive an event from the emptyLogFilteredData
         searchInfoLine->setText( "" );
-        filteredView->updateData( logFilteredData_ );
+        filteredView->updateData( logFilteredData_, 0 );
     }
     // Connect the search to the top view
     logMainView->useNewFiltering( logFilteredData_ );

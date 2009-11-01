@@ -38,7 +38,14 @@ HEADERS += version.h \
     filterset.h \
     savedsearches.h
 
-FORMS += filtersdialog.ui
+greaterThan(QT_VERSION, "4.4.0") {
+    FORMS += filtersdialog.ui
+}
+else {
+    message(Using old FiltersDialog)
+    FORMS += filtersdialog_old.ui
+}
+
 
 RESOURCES = logcrawler.qrc
 

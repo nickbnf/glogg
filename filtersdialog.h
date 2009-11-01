@@ -23,7 +23,11 @@
 #include <QDialog>
 
 #include "filterset.h"
+#if QT_VERSION > 0x040400
 #include "ui_filtersdialog.h"
+#else
+#include "ui_filtersdialog_old.h"
+#endif
 
 class FiltersDialog : public QDialog, public Ui::FiltersDialog
 {

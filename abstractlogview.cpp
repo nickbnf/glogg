@@ -157,15 +157,15 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
 
             // Then draw the bullet
             const int circleSize = 3;
-            const QPoint circleCenter =
-                QPoint( bulletLineX / 2, yPos + (fontHeight / 2) );
 
             if ( isLineMatching( i ) )
                 painter.setBrush( matchBulletBrush );
             else
                 painter.setBrush( normalBulletBrush );
             painter.setPen( palette.color( QPalette::Text ) );
-            painter.drawEllipse( circleCenter, circleSize, circleSize );
+            painter.drawEllipse( bulletLineX/2 - circleSize,
+                    yPos + (fontHeight / 2) - circleSize,
+                    circleSize * 2, circleSize * 2 );
         }
     }
     LOG(logDEBUG) << "End of repaint";

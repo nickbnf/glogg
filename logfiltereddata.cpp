@@ -96,7 +96,7 @@ bool LogFilteredData::isLineInMatchingList( int lineNumber )
     // (we know the list is sorted)
 
     int minIndex = 0;
-    int maxIndex = matchingLineList.length() - 1;
+    int maxIndex = matchingLineList.size() - 1;
     // If the list is not empty
     if ( maxIndex - minIndex >= 0 ) {
         // First we test the ends

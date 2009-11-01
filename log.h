@@ -22,7 +22,7 @@
 
 #include <sstream>
 #include <string>
-#include <stdio.h>
+#include <cstdio>
 
 // Modify here!
 //#define FILELOG_MAX_LEVEL logDEBUG

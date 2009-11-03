@@ -80,8 +80,10 @@ class MainWindow : public QMainWindow
     QString currentFile;
     QString previousFile;
 
+    enum MonitoredFileStatus { UNCHANGED, DATA_ADDED, TRUNCATED };
     QFileSystemWatcher fileWatcher;
-    bool fileChangedOnDisk;
+    MonitoredFileStatus fileChangedOnDisk_;
+    qint64 fileSize_;
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];

@@ -248,9 +248,17 @@ void MainWindow::aboutQt()
 void MainWindow::signalFileChanged( const QString& fileName )
 {
     LOG(logDEBUG) << "signalFileChanged";
-    if ( !fileChangedOnDisk ) {
-        fileChangedOnDisk = true;
-        infoLine->setText( infoLine->text() + tr(" - file changed on disk") );
+    if ( fileChangedOnDisk_ != TRUNCATED ) {
+        QFileInfo fileInfo( fileName );
+        if ( fileInfo.size() < fileSize_ ) {
+            fileChangedOnDisk_ = TRUNCATED;
+            infoLine->setText( infoLine->text() + tr(" - file truncated") );
+        }
+        else if ( fileChangedOnDisk_ != DATA_ADDED ) {
+            fileChangedOnDisk_ = DATA_ADDED;
+            infoLine->setText( infoLine->text() + tr(" - new data added on disk") );
+        }
+        fileSize_ = fileInfo.size();
     }
 }
 
@@ -259,7 +267,7 @@ void MainWindow::signalFileChanged( const QString& fileName )
 //
 
 // Closes the application
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent( QCloseEvent *event )
 {
     writeSettings();
     event->accept();
@@ -339,7 +347,8 @@ void MainWindow::setCurrentFile( const QString& fileName,
                     .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
 
         // Watch the new file on disk
-        fileChangedOnDisk = false;
+        fileChangedOnDisk_ = UNCHANGED;
+        fileSize_ = fileSize;
         fileWatcher.addPath( currentFile );
     }
     else {

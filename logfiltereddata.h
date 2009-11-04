@@ -28,6 +28,8 @@
 
 #include "abstractlogdata.h"
 
+class LogData;
+
 // Class encapsulating a single matching line
 // Contains the line number the line was found in and its content.
 class MatchingLine {
@@ -55,7 +57,7 @@ class LogFilteredData : public AbstractLogData {
     // Creates an empty LogFilteredData
     LogFilteredData();
     // Constructor used by LogData
-    LogFilteredData( QStringList* logData, QRegExp regExp );
+    LogFilteredData( const LogData* logData, const QRegExp& regExp );
 
     // Starts the search, sending newDataAvailable() when new data found
     void runSearch();
@@ -76,8 +78,8 @@ class LogFilteredData : public AbstractLogData {
 
     QList<MatchingLine> matchingLineList;
 
-    QStringList* sourceLogData;
-    QRegExp currentRegExp;
+    const LogData* sourceLogData;
+    const QRegExp currentRegExp;
     bool searchDone_;
     int maxLength_;
 };

@@ -54,9 +54,44 @@ LogData::LogData( const QByteArray &byteArray ) : AbstractLogData()
     LOG(logDEBUG) << "Found " << nbLines_ << " lines.";
 }
 
+// Constructs from a file.
+LogData::LogData( const QString& fileName ) : AbstractLogData(), linePosition_()
+{
+    file_ = new QFile( fileName );
+
+    if ( !file_->open( QIODevice::ReadOnly | QIODevice::Text ) )
+        LOG(logERROR) << "Cannot open file " << fileName.toStdString();
+
+    LOG(logDEBUG) << "Counting the lines...";
+
+    // Count the number of lines and max length
+    // (read big chunks to speed up reading from disk)
+    int line_number = 0;
+    while ( !file_->atEnd() ) {
+        // Read a chunk of 5MB
+        const qint64 block_beginning = file_->pos();
+        const QByteArray block = file_->read( 5*1024*1024 );
+
+        // Count the number of lines in each chunk
+        int end = 0, pos = 0;
+        while ( (end = block.indexOf("\n", pos)) != -1 ) {
+            const int length = end-pos;
+            const QString string = QString( block.mid(pos, length) );
+            if ( length > maxLength_ )
+                maxLength_ = length;
+            linePosition_.append( block_beginning + pos );
+            pos = end+1;
+            ++line_number;
+        }
+    }
+    nbLines_ = line_number;
+
+    LOG(logDEBUG) << "... found " << nbLines_;
+}
+
 LogData::~LogData()
 {
-    delete list_;
+    delete file_;
 }
 
 int LogData::doGetNbLine() const
@@ -71,9 +106,10 @@ int LogData::doGetMaxLength() const
 
 QString LogData::doGetLineString(int line) const
 {
-    if ( line >= nbLines_ ) { /* exception? */ }
+    if ( line >= nbLines_ ) { return ""; /* exception? */ }
 
-    QString string = list_->at( line );
+    file_->seek( linePosition_[line] );
+    QString string = QString( file_->readLine() );
 
     return string;
 }
@@ -81,7 +117,7 @@ QString LogData::doGetLineString(int line) const
 // Return an initialized LogFilteredData. The search is not started.
 LogFilteredData* LogData::getNewFilteredData( QRegExp& regExp ) const
 {
-    LogFilteredData* newFilteredData = new LogFilteredData( list_, regExp );
+    LogFilteredData* newFilteredData = new LogFilteredData( this, regExp );
 
     return newFilteredData;
 }

@@ -23,6 +23,9 @@
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
+#include <QFile>
+#include <QVector>
+#include <QVarLengthArray>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
@@ -35,6 +38,8 @@ class LogData : public AbstractLogData {
     LogData();
     // Creates a log data from the data chunk passed
     LogData( const QByteArray& byteArray );
+    // Creates a log data from the file passed
+    LogData( const QString& fileName);
     // Destroy an object
     ~LogData();
 
@@ -48,6 +53,8 @@ class LogData : public AbstractLogData {
     int doGetMaxLength() const;
 
     QStringList* list_;
+    QFile* file_;
+    QVarLengthArray<qint64> linePosition_;
     int nbLines_;
     int maxLength_;
 };

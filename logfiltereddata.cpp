@@ -27,6 +27,7 @@
 
 #include <QString>
 
+#include "logdata.h"
 #include "logfiltereddata.h"
 
 // Creates an empty set. It must be possible to display it without error.
@@ -39,21 +40,15 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 }
 
 // Usual constructor: just copy the data, the search is started by runSearch()
-LogFilteredData::LogFilteredData( QStringList* logData, QRegExp regExp )
-    : AbstractLogData()
+LogFilteredData::LogFilteredData( const LogData* logData, const QRegExp& regExp )
+    : AbstractLogData(), currentRegExp( regExp )
 {
     matchingLineList = QList<MatchingLine>();
     maxLength_ = 0;
 
-    if ( logData != NULL ) {
-        sourceLogData = logData;
-        currentRegExp = regExp;
+    sourceLogData = logData;
 
-        searchDone_ = false;
-    } else {
-        // Empty set
-        searchDone_ = true;
-    }
+    searchDone_ = false;
 }
 
 // Run the search and send newDataAvailable() signals.
@@ -62,15 +57,13 @@ void LogFilteredData::runSearch()
     LOG(logDEBUG) << "Entering runSearch";
 
     if ( !searchDone_ ) {
-        int lineNum = 0;
-        for ( QStringList::iterator i = sourceLogData->begin();
-                i != sourceLogData->end();
-                ++i, ++lineNum ) {
-            if ( currentRegExp.indexIn( *i ) != -1 ) {
-                const int length = i->length();
+        for ( int i = 0; i < sourceLogData->getNbLine(); i++ ) {
+            const QString line = sourceLogData->getLineString( i );
+            if ( currentRegExp.indexIn( line ) != -1 ) {
+                const int length = line.length();
                 if ( length > maxLength_ )
                     maxLength_ = length;
-                MatchingLine match( lineNum, *i );
+                MatchingLine match( i, line );
                 matchingLineList.append( match );
             }
         }

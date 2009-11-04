@@ -106,29 +106,20 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
-    QFile file(fileName);
-
-    if ( file.open(QFile::ReadOnly | QFile::Text) ) {
         // Start an empty search (will use the empty LFD)
         replaceCurrentSearch( "" );
 
         LogData* oldLogData = logData_;
-        logData_ = new LogData( file.readAll() );
+        logData_ = new LogData( fileName );
 
         logMainView->updateData( logData_, topLine );
 
-        logFileSize_ = file.size();
-
-        file.close();
+        logFileSize_ = 0;
 
         if (oldLogData != &emptyLogData)
             delete oldLogData;
 
         return true;
-    }
-    else {
-        return false;
-    }
 }
 
 void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine ) const

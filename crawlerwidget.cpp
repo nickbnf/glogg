@@ -106,11 +106,14 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
+    LogData* newLogData = new LogData;
+    if ( newLogData->attachFile( fileName ) == true )
+    {
         // Start an empty search (will use the empty LFD)
         replaceCurrentSearch( "" );
 
         LogData* oldLogData = logData_;
-        logData_ = new LogData( fileName );
+        logData_ = newLogData;
 
         logMainView->updateData( logData_, topLine );
 
@@ -120,11 +123,17 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
             delete oldLogData;
 
         return true;
+    }
+    else {
+        delete newLogData;
+
+        return false;
+    }
 }
 
 void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine ) const
 {
-    *fileSize = logFileSize_;
+    *fileSize = logData_->getFileSize();
     *fileNbLine = logData_->getNbLine();
 }
 

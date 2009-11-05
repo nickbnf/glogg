@@ -20,9 +20,7 @@
 #ifndef LOGDATA_H
 #define LOGDATA_H
 
-#include <QByteArray>
 #include <QString>
-#include <QStringList>
 #include <QFile>
 #include <QVector>
 #include <QVarLengthArray>
@@ -36,25 +34,25 @@ class LogData : public AbstractLogData {
   public:
     // Creates an empty LogData
     LogData();
-    // Creates a log data from the data chunk passed
-    LogData( const QByteArray& byteArray );
-    // Creates a log data from the file passed
-    LogData( const QString& fileName);
     // Destroy an object
     ~LogData();
 
+    // Attaches the LogData to a file on disk
+    bool attachFile( const QString& fileName );
     // Creates a new filtered data using the passed regexp
     // ownership is passed to the caller
     LogFilteredData* getNewFilteredData( QRegExp& regExp ) const;
+    // Returns the size if the file in bytes
+    qint64 getFileSize() const;
 
   private:
     QString doGetLineString( int line ) const;
     int doGetNbLine() const;
     int doGetMaxLength() const;
 
-    QStringList* list_;
     QFile* file_;
     QVarLengthArray<qint64> linePosition_;
+    qint64 fileSize_;
     int nbLines_;
     int maxLength_;
 };

@@ -23,77 +23,90 @@
 
 #include "log.h"
 
+#include "common.h"
 #include "logdata.h"
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData()
+LogData::LogData() : AbstractLogData(), linePosition_()
 {
-    list_ = NULL;
-    nbLines_ = 0;
+    file_      = NULL;
+    fileSize_  = 0;
+    nbLines_   = 0;
     maxLength_ = 0;
 }
 
-// Constructs from a data chunk.
-LogData::LogData( const QByteArray &byteArray ) : AbstractLogData()
+LogData::~LogData()
 {
-    list_ = new QStringList();
-    maxLength_ = 0;
-
-    int pos=0, end=0;
-    while ( (end = byteArray.indexOf("\n", pos)) != -1 ) {
-        const int length = end-pos;
-        const QString string = QString( byteArray.mid(pos, length) );
-        if ( length > maxLength_ )
-            maxLength_ = length;
-        pos = end+1;
-        list_->append( string );
-    }
-    nbLines_ = list_->size();
-
-    LOG(logDEBUG) << "Found " << nbLines_ << " lines.";
+    if ( file_ )
+        delete file_;
 }
 
-// Constructs from a file.
-LogData::LogData( const QString& fileName ) : AbstractLogData(), linePosition_()
+//
+// Public functions
+//
+
+bool LogData::attachFile( const QString& fileName )
 {
     file_ = new QFile( fileName );
 
-    if ( !file_->open( QIODevice::ReadOnly | QIODevice::Text ) )
+    if ( !file_->open( QIODevice::ReadOnly ) )
+    {
+        // TODO: Check that the file is seekable?
         LOG(logERROR) << "Cannot open file " << fileName.toStdString();
+        return false;
+    }
+
+    fileSize_ = file_->size();
 
     LOG(logDEBUG) << "Counting the lines...";
 
     // Count the number of lines and max length
     // (read big chunks to speed up reading from disk)
-    int line_number = 0;
+    int end = 0, pos = 0;
     while ( !file_->atEnd() ) {
         // Read a chunk of 5MB
         const qint64 block_beginning = file_->pos();
         const QByteArray block = file_->read( 5*1024*1024 );
 
         // Count the number of lines in each chunk
-        int end = 0, pos = 0;
-        while ( (end = block.indexOf("\n", pos)) != -1 ) {
-            const int length = end-pos;
-            const QString string = QString( block.mid(pos, length) );
-            if ( length > maxLength_ )
-                maxLength_ = length;
-            linePosition_.append( block_beginning + pos );
-            pos = end+1;
-            ++line_number;
+        qint64 next_lf = 0;
+        while ( next_lf != -1 ) {
+            const qint64 pos_within_block = max2( pos - block_beginning, 0LL);
+            next_lf = block.indexOf( "\n", pos_within_block );
+            if ( next_lf != -1 ) {
+                end = next_lf + block_beginning;
+                const int length = end-pos;
+                if ( length > maxLength_ )
+                    maxLength_ = length;
+                pos = end+1;
+                linePosition_.append( pos );
+            }
         }
     }
-    nbLines_ = line_number;
+    nbLines_ = linePosition_.size();
 
-    LOG(logDEBUG) << "... found " << nbLines_;
+    LOG(logDEBUG) << "... found " << nbLines_ << " lines.";
+
+    return true;
 }
 
-LogData::~LogData()
+qint64 LogData::getFileSize() const
 {
-    delete file_;
+    return fileSize_;
 }
 
+// Return an initialized LogFilteredData. The search is not started.
+LogFilteredData* LogData::getNewFilteredData( QRegExp& regExp ) const
+{
+    LogFilteredData* newFilteredData = new LogFilteredData( this, regExp );
+
+    return newFilteredData;
+}
+
+//
+// Implementation of virtual functions
+//
 int LogData::doGetNbLine() const
 {
     return nbLines_;
@@ -104,20 +117,14 @@ int LogData::doGetMaxLength() const
     return maxLength_;
 }
 
-QString LogData::doGetLineString(int line) const
+QString LogData::doGetLineString( int line ) const
 {
     if ( line >= nbLines_ ) { return ""; /* exception? */ }
 
     file_->seek( linePosition_[line] );
     QString string = QString( file_->readLine() );
+    string.chop( 1 );
 
     return string;
 }
 
-// Return an initialized LogFilteredData. The search is not started.
-LogFilteredData* LogData::getNewFilteredData( QRegExp& regExp ) const
-{
-    LogFilteredData* newFilteredData = new LogFilteredData( this, regExp );
-
-    return newFilteredData;
-}

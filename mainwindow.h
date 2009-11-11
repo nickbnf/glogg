@@ -103,6 +103,8 @@ class MainWindow : public QMainWindow
     QAction *optionsAction;
     QAction *aboutAction;
     QAction *aboutQtAction;
+
+    QIcon mainIcon_;
 };
 
 #endif

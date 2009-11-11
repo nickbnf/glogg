@@ -7,12 +7,13 @@ New features:
 - 'Follow' file
 - Bookmarks
 - Multi files
-- Drag 'n drop
 - Savable search text
 - Multithreaded loading/searching
+- Greater number of latest files
+- Save position with latest files
 
 Fixes:
-- Default font
 - Up/Down arrows in filters
-- Keep the search line between restart (drop down list)
-- Reload ends up on same line
+- Error in regexp
+- Yellow background for errors/file changed
+- Command line arguments

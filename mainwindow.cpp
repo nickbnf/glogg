@@ -34,7 +34,7 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 
-MainWindow::MainWindow() : fileWatcher( this )
+MainWindow::MainWindow() : fileWatcher( this ), mainIcon_()
 {
     // Register the operators for serializable classes
     qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
@@ -58,7 +58,12 @@ MainWindow::MainWindow() : fileWatcher( this )
     readSettings();
     emit optionsChanged();
 
-    setWindowIcon(QIcon(":/images/logcrawler.png"));
+    mainIcon_.addFile( ":/images/logcrawler16.png" );
+    mainIcon_.addFile( ":/images/logcrawler24.png" );
+    mainIcon_.addFile( ":/images/logcrawler32.png" );
+    mainIcon_.addFile( ":/images/logcrawler48.png" );
+
+    setWindowIcon( mainIcon_ );
     setCentralWidget(crawlerWidget);
 }
 

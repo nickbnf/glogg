@@ -1,0 +1,35 @@
+h1. LogCrawler - A fast, advanced log explorer
+
+LogCrawler is a multi-platform GUI application that helps browse and search
+through long and complex log files.  It is designed with programmers and
+system administrators in mind and can be seen as a graphical, interactive
+combination of grep and less.
+
+h2. Main features
+* Runs on Unix-like systems, Windows and Mac thanks to Qt
+* Provides a second window showing the result of the current search
+* Supports grep/egrep like regular expressions
+* Colorizes the log and search results
+* Displays a context view of where in the log the lines of interest are
+* Supports vim/less like keyboard commands to move around the file
+* Is open source, released under the GPL
+
+h2. Installation
+
+h3. Windows
+
+An up to date Windows installer is available at xxxx
+
+h3. Debian/Ubuntu packages
+
+h3. From source code
+
+For other platforms, you can build LogCrawler from source.  The source code is hosted on a git repository at xxxx
+
+<pre>
+<code>
+git clone xxxx
+</code>
+</pre>
+
+You need to have the Qt libraries installed (tested on version 4.3.0 and later).

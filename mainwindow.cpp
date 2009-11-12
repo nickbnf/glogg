@@ -34,7 +34,7 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 
-MainWindow::MainWindow() : fileWatcher( this ), mainIcon_()
+MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
 {
     // Register the operators for serializable classes
     qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
@@ -54,9 +54,16 @@ MainWindow::MainWindow() : fileWatcher( this ), mainIcon_()
 
     connect( this, SIGNAL( optionsChanged() ),
             crawlerWidget, SLOT( applyConfiguration() ));
-    setCurrentFile("", 0, 0);
+
+    // Is there a file passed as argument?
     readSettings();
     emit optionsChanged();
+    if ( !fileName.isEmpty() )
+        loadFile( fileName );
+    else if ( !previousFile.isEmpty() )
+        loadFile( previousFile );
+    else
+        setCurrentFile("", 0, 0);
 
     mainIcon_.addFile( ":/images/glogg16.png" );
     mainIcon_.addFile( ":/images/glogg24.png" );
@@ -391,9 +398,7 @@ void MainWindow::readSettings()
     crawlerWidget->restoreState( settings.value("crawlerWidget").toByteArray() );
 
     recentFiles = settings.value("recentFiles").toStringList();
-    QString curFile = settings.value("currentFile").toString();
-    if (!curFile.isEmpty())
-        loadFile(curFile);
+    previousFile = settings.value("currentFile").toString();
 
     updateRecentFileActions();
 

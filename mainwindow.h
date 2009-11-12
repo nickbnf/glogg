@@ -34,7 +34,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
   public:
-    MainWindow();
+    MainWindow( QString fileName );
 
   protected:
     void closeEvent( QCloseEvent* event );
@@ -78,6 +78,7 @@ class MainWindow : public QMainWindow
     CrawlerWidget *crawlerWidget;
     QStringList recentFiles;
     QString currentFile;
+    QString previousFile;
 
     QFileSystemWatcher fileWatcher;
     bool fileChangedOnDisk;

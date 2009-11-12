@@ -24,10 +24,18 @@
 
 int main(int argc, char *argv[])
 {
+    char* filename = "";
+
     QApplication app(argc, argv);
-    MainWindow mw;
+
+    if ( argc > 0 ) {
+        /* Filename provided as an argument */
+        filename = argv[1];
+    }
+
+    MainWindow* mw = new MainWindow( QString(filename) );
 
     LOG(logDEBUG) << "MainWindow created.";
-    mw.show();
+    mw->show();
     return app.exec();
 }

@@ -1,6 +1,6 @@
-h1. LogCrawler - A fast, advanced log explorer
+h1. glogg - A fast, advanced log explorer
 
-LogCrawler is a multi-platform GUI application that helps browse and search
+glogg is a multi-platform GUI application that helps browse and search
 through long and complex log files.  It is designed with programmers and
 system administrators in mind and can be seen as a graphical, interactive
 combination of grep and less.
@@ -24,7 +24,7 @@ h3. Debian/Ubuntu packages
 
 h3. From source code
 
-For other platforms, you can build LogCrawler from source.  The source code is hosted on a git repository at xxxx
+For other platforms, you can build glogg from source.  The source code is hosted on a git repository at xxxx
 
 <pre>
 <code>

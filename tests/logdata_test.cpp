@@ -73,7 +73,7 @@ void TestLogData::randomPageRead()
 
 QByteArray TestLogData::generateData()
 {
-    const char* line="LOGDATA is a part of LogCrawler, we are going to test it thoroughly, this is line %5d\n";
+    const char* line="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %5d\n";
     char newLine[90];
 
     QByteArray array = QByteArray();

@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2009 Nicolas Bonnefon and other contributors
  *
- * This file is part of LogCrawler.
+ * This file is part of glogg.
  *
- * LogCrawler is free software: you can redistribute it and/or modify
+ * glogg is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * LogCrawler is distributed in the hope that it will be useful,
+ * glogg is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LogCrawler.  If not, see <http://www.gnu.org/licenses/>.
+ * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 // This file implements MainWindow. It is responsible for creating and
@@ -58,10 +58,10 @@ MainWindow::MainWindow() : fileWatcher( this ), mainIcon_()
     readSettings();
     emit optionsChanged();
 
-    mainIcon_.addFile( ":/images/logcrawler16.png" );
-    mainIcon_.addFile( ":/images/logcrawler24.png" );
-    mainIcon_.addFile( ":/images/logcrawler32.png" );
-    mainIcon_.addFile( ":/images/logcrawler48.png" );
+    mainIcon_.addFile( ":/images/glogg16.png" );
+    mainIcon_.addFile( ":/images/glogg24.png" );
+    mainIcon_.addFile( ":/images/glogg32.png" );
+    mainIcon_.addFile( ":/images/glogg48.png" );
 
     setWindowIcon( mainIcon_ );
     setCentralWidget(crawlerWidget);
@@ -217,10 +217,10 @@ void MainWindow::options()
 // Opens the 'About' dialog box.
 void MainWindow::about()
 {
-    QMessageBox::about(this, tr("About LogCrawler"),
-            tr("<h2>LogCrawler " LCRAWLER_VERSION "</h2>"
+    QMessageBox::about(this, tr("About glogg"),
+            tr("<h2>glogg " GLOGG_VERSION "</h2>"
                 "<p>A fast, advanced log explorer."
-                "<p>Built " LCRAWLER_DATE " from " LCRAWLER_COMMIT
+                "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT
                 "<p>Copyright &copy; 2009 Nicolas Bonnefon and other contributors"
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
 }
@@ -331,7 +331,7 @@ void MainWindow::setCurrentFile( const QString& fileName,
         infoLine->setText( "" );
     }
 
-    setWindowTitle(tr("%1 - %2").arg(shownName).arg(tr("LogCrawler")));
+    setWindowTitle(tr("%1 - %2").arg(shownName).arg(tr("glogg")));
 }
 
 // Trims the recent file lists and updates the actions.
@@ -364,7 +364,7 @@ void MainWindow::updateRecentFileActions()
 // It uses Qt settings storage.
 void MainWindow::writeSettings()
 {
-    QSettings settings( "LogCrawler", "LogCrawler" );
+    QSettings settings( "glogg", "glogg" );
 
     // Geometry of us and crawlerWidget (splitter pos, etc...)
     settings.setValue( "geometry", saveGeometry() );
@@ -385,7 +385,7 @@ void MainWindow::writeSettings()
 // It uses Qt settings storage.
 void MainWindow::readSettings()
 {
-    QSettings settings( "LogCrawler", "LogCrawler" );
+    QSettings settings( "glogg", "glogg" );
 
     restoreGeometry( settings.value("geometry").toByteArray() );
     crawlerWidget->restoreState( settings.value("crawlerWidget").toByteArray() );

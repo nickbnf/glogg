@@ -1,7 +1,7 @@
 # -------------------------------------------------
-# LogCrawler
+# glogg
 # -------------------------------------------------
-TARGET = logcrawler
+TARGET = glogg
 TEMPLATE = app
 
 win32:Debug:CONFIG += console
@@ -47,7 +47,7 @@ else {
 }
 
 
-RESOURCES = logcrawler.qrc
+RESOURCES = glogg.qrc
 
 debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
 release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
@@ -57,10 +57,10 @@ release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
 Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
 Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
 
-QMAKE_CXXFLAGS += -DLCRAWLER_DATE=\\\"`date \
+QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date \
     +'\"%F\"'`\\\"
-QMAKE_CXXFLAGS += -DLCRAWLER_VERSION=\\\"`git \
+QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git \
     describe`\\\"
-QMAKE_CXXFLAGS += -DLCRAWLER_COMMIT=\\\"`git \
+QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git \
     rev-parse --short \
     HEAD`\\\"

@@ -7,6 +7,7 @@
 
 # Headers
 !include "MUI2.nsh"
+!include "FileAssociation.nsh"
 
 # General
 OutFile "glogg-${VERSION}-setup.exe"
@@ -29,10 +30,10 @@ Caption "glogg ${VERSION} Setup"
 
 # Pages
 !define MUI_WELCOMEPAGE_TITLE "Welcome to the glogg ${VERSION} Setup Wizard"
-!define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of logcrawer, a log browser.\
-$\r$\n$\r$\nglogg is blah.$\r$\n$\r$\n\
-glogg is released under the GPL, see http://www.fsf.org/licensing/licenses/gpl.html$\r$\n\
-Qt libraries are released under the GPL, see http://qt.nokia.com/products/licensing$\r$\n$\r$\n$_CLICK"
+!define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of glogg\
+, a fast, advanced log explorer.$\r$\n$\r$\n\
+glogg and the Qt libraries are released under the GPL, see \
+the COPYING file.$\r$\n$\r$\n$_CLICK"
 ; MUI_FINISHPAGE_LINK_LOCATION "http://nsis.sf.net/"
 
 !insertmacro MUI_PAGE_WELCOME
@@ -62,6 +63,19 @@ Section "glogg" glogg
     File COPYING
     File README.textile
 
+    ; Create the 'sendto' link
+    CreateShortCut "$SENDTO\glogg.lnk" "$INSTDIR\glogg,exe" "" "$INSTDIR\glogg.exe" 0
+
+    ; Register as an otion (but not main handler) for some files (.txt, .Log, .cap)
+    WriteRegStr HKCR "Applications\glogg.exe" "" ""
+    WriteRegStr HKCR "Applications\glogg.exe\shell" "" "open"
+    WriteRegStr HKCR "Applications\glogg.exe\shell\open" "FriendlyAppName" "glogg"
+    WriteRegStr HKCR "Applications\glogg.exe\shell\open\command" "" '"$INSTDIR\glogg.exe" "%1"'
+    WriteRegStr HKCR "*\OpenWithList\glogg.exe" "" ""
+    WriteRegStr HKCR ".txt\OpenWithList\glogg.exe" "" ""
+    WriteRegStr HKCR ".Log\OpenWithList\glogg.exe" "" ""
+    WriteRegStr HKCR ".cap\OpenWithList\glogg.exe" "" ""
+
     ; Register uninstaller
     WriteRegExpandStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\glogg"\
 "UninstallString" '"$INSTDIR\Uninstall.exe"'
@@ -82,11 +96,21 @@ Section "Qt4 Runtime libraries" qtlibs
     File release\QtGui4.dll
 SectionEnd
 
+Section "Create Start menu shortcut" shortcut
+    SetShellVarContext all
+    CreateShortCut "$SMPROGRAMS\glogg.lnk" "$INSTDIR\glogg.exe" "" "$INSTDIR\glogg.exe" 0
+SectionEnd
+
+Section /o "Associate with .log files" associate
+    ${registerExtension} "$INSTDIR\glogg.exe" ".log" "Log file"
+SectionEnd
+
 # Descriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${glogg} "The core files required to use glogg."
     !insertmacro MUI_DESCRIPTION_TEXT ${qtlibs} "Needed by glogg, you have to install these unless \
 you already have the Qt4 development kit installed."
+    !insertmacro MUI_DESCRIPTION_TEXT ${shortcut} "Create a shortcut in the Start menu for glogg."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 # Uninstaller
@@ -102,7 +126,21 @@ Section "Uninstall"
     RMDir "$INSTDIR"
 
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\glogg"
-    DeleteRegKey /ifempty HKCU "Software\glogg"
+
+    ; Remove settings
+    DeleteRegKey HKCU "Software\glogg"
+
+    ; Remove the file associations
+    ${unregisterExtension} ".log" "Log file"
+
+    DeleteRegKey HKCR "*\OpenWithList\glogg.exe"
+    DeleteRegKey HKCR ".txt\OpenWithList\glogg.exe"
+    DeleteRegKey HKCR ".Log\OpenWithList\glogg.exe"
+    DeleteRegKey HKCR ".cap\OpenWithList\glogg.exe"
+    DeleteRegKey HKCR "Applications\glogg.exe\shell\open\command"
+    DeleteRegKey HKCR "Applications\glogg.exe\shell\open"
+    DeleteRegKey HKCR "Applications\glogg.exe\shell"
+    DeleteRegKey HKCR "Applications\glogg.exe"
 
     ; Remove the shortcut, if any
     SetShellVarContext all

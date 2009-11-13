@@ -11,6 +11,7 @@ h2. Main features
 * Supports grep/egrep like regular expressions
 * Colorizes the log and search results
 * Displays a context view of where in the log the lines of interest are
+* Is fast and reads the file directly from disk, without loading it into memory
 * Supports vim/less like keyboard commands to move around the file
 * Is open source, released under the GPL
 
@@ -18,18 +19,21 @@ h2. Installation
 
 h3. Windows
 
-An up to date Windows installer is available at xxxx
-
-h3. Debian/Ubuntu packages
+An up to date Windows installer is available at http://groups.google.com/group/glogg-devel/web
 
 h3. From source code
 
-For other platforms, you can build glogg from source.  The source code is hosted on a git repository at xxxx
+For other platforms, you can build glogg from source.
+The source code is hosted on a git repository at git://github.com/nickbnf/glogg.git
+Building is to be done this way:
 
 <pre>
 <code>
-git clone xxxx
+git clone git://github.com/nickbnf/glogg.git
+cd glogg
+qmake (or qmake-qt4 on debian/ubuntu)
+make
 </code>
 </pre>
 
-You need to have the Qt libraries installed (tested on version 4.3.0 and later).
+You need to have the Qt development libraries installed (tested on version 4.3.0 and later).

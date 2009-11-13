@@ -46,6 +46,8 @@ else {
     FORMS += filtersdialog_old.ui
 }
 
+# For Windows icon
+RC_FILE = glogg.rc
 
 RESOURCES = glogg.qrc
 

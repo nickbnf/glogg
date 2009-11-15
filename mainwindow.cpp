@@ -65,10 +65,10 @@ MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
     else
         setCurrentFile("", 0, 0);
 
-    mainIcon_.addFile( ":/images/glogg16.png" );
-    mainIcon_.addFile( ":/images/glogg24.png" );
-    mainIcon_.addFile( ":/images/glogg32.png" );
-    mainIcon_.addFile( ":/images/glogg48.png" );
+    mainIcon_.addFile( ":/images/hicolor/16x16/glogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/24x24/glogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/32x32/glogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/48x48/glogg.png" );
 
     setWindowIcon( mainIcon_ );
     setCentralWidget(crawlerWidget);

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=glogg
+GenericName=Log file browser
+# %f because glogg supports only one file for now
+Exec=glogg %i %f
+Icon=glogg
+Type=Application
+DocPath=
+Comment=A fast, advanced log explorer.
+Terminal=false
+Categories=Qt;Utility

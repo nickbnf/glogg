@@ -51,8 +51,20 @@ RC_FILE = glogg.rc
 RESOURCES = glogg.qrc
 
 # Install (for unix)
+icon16.path  = $$PREFIX/share/icons/hicolor/16x16/apps
+icon16.files = images/hicolor/16x16/glogg.png
+
+icon32.path  = $$PREFIX/share/icons/hicolor/32x32/apps
+icon32.files = images/hicolor/32x32/glogg.png
+
+doc.path  = $$PREFIX/share/doc/glogg
+doc.files = README.textile COPYING
+
+desktop.path = $$PREFIX/share/applications
+desktop.path = glogg.desktop
+
 target.path = $$PREFIX/bin
-INSTALLS = target
+INSTALLS = target icon16 icon32 doc desktop
 
 # Build directories
 debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared

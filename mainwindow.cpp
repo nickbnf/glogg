@@ -227,7 +227,9 @@ void MainWindow::about()
     QMessageBox::about(this, tr("About glogg"),
             tr("<h2>glogg " GLOGG_VERSION "</h2>"
                 "<p>A fast, advanced log explorer."
+#ifdef GLOGG_COMMIT
                 "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT
+#endif
                 "<p>Copyright &copy; 2009 Nicolas Bonnefon and other contributors"
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
 }

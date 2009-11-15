@@ -48,9 +48,13 @@ else {
 
 # For Windows icon
 RC_FILE = glogg.rc
-
 RESOURCES = glogg.qrc
 
+# Install (for unix)
+target.path = $$PREFIX/bin
+INSTALLS = target
+
+# Build directories
 debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
 release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
 debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
@@ -59,10 +63,12 @@ release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
 Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
 Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
 
-QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date \
-    +'\"%F\"'`\\\"
-QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git \
-    describe`\\\"
-QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git \
-    rev-parse --short \
-    HEAD`\\\"
+# Official builds can be generated with `qmake VERSION="1.2.3"'
+isEmpty(VERSION) {
+    QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date +'\"%F\"'`\\\"
+    QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git describe`\\\"
+    QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git rev-parse --short HEAD`\\\"
+}
+else {
+    QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$$VERSION\\\"
+}

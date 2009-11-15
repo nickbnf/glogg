@@ -33,7 +33,17 @@ git clone git://github.com/nickbnf/glogg.git
 cd glogg
 qmake (or qmake-qt4 on debian/ubuntu)
 make
+make install INSTALL_ROOT=/usr/local (as root if needed)
 </code>
 </pre>
 
 You need to have the Qt development libraries installed (tested on version 4.3.0 and later).
+
+h2. Development
+
+glogg is mainly written and currently maintained by Nicolas Bonnefon
+(nicolas (at) bonnefon (dot) org).  Feel free to send him any suggestion,
+patch, bug report...
+
+glogg has a github project page to allow people to keep in touch with the
+development at http://wiki.github.com/nickbnf/glogg

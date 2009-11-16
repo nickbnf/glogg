@@ -48,6 +48,11 @@ MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
 
     setAcceptDrops( true );
 
+    // Default geometry
+    const QRect geometry = QApplication::desktop()->availableGeometry( this );
+    setGeometry( geometry.x() + 20, geometry.y() + 40,
+            geometry.width() - 140, geometry.height() - 140 );
+
     // Initialize the file watcher
     connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
             this, SLOT( signalFileChanged( const QString& ) ) );
@@ -55,9 +60,10 @@ MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
     connect( this, SIGNAL( optionsChanged() ),
             crawlerWidget, SLOT( applyConfiguration() ));
 
-    // Is there a file passed as argument?
     readSettings();
     emit optionsChanged();
+
+    // Is there a file passed as argument?
     if ( !fileName.isEmpty() )
         loadFile( fileName );
     else if ( !previousFile.isEmpty() )

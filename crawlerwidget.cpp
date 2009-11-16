@@ -85,6 +85,12 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     addWidget(logMainView);
     addWidget(bottomWindow);
 
+    // Default splitter position (usually overridden by the config file)
+    QList<int> splitterSizes;
+    splitterSizes += 400;
+    splitterSizes += 100;
+    setSizes( splitterSizes );
+
     // Connect the signals
     connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),
             searchButton, SIGNAL( clicked() ));

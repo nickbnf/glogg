@@ -68,8 +68,9 @@ class LogFilteredData : public AbstractLogData {
     bool isLineInMatchingList( int lineNumber );
 
   signals:
-    // Sent when new data are available in this object
-    void newDataAvailable();
+    // Sent when the search has progressed, give the number of matches (so far)
+    // and the percentage of completion
+    void searchProgressed( int nbMatches, int progress );
 
   private:
     QString doGetLineString( int line ) const;

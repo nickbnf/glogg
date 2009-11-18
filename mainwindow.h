@@ -23,9 +23,9 @@
 #include <QMainWindow>
 #include <QFileSystemWatcher>
 #include "crawlerwidget.h"
+#include "infoline.h"
 
 class QAction;
-class QLabel;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
@@ -54,6 +54,8 @@ class MainWindow : public QMainWindow
 
     // Instructs the window to signal the user the file has been updated
     void signalFileChanged( const QString& fileName );
+    // Instructs the widget to update the loading progress gauge
+    void updateLoadingProgress( int progress );
 
   signals:
     // Is emitted when new settings must be used
@@ -95,7 +97,7 @@ class MainWindow : public QMainWindow
     QMenu *toolsMenu;
     QMenu *helpMenu;
 
-    QLabel *infoLine;
+    InfoLine *infoLine;
     QToolBar *toolBar;
 
     QAction *openAction;

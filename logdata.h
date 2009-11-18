@@ -20,6 +20,7 @@
 #ifndef LOGDATA_H
 #define LOGDATA_H
 
+#include <QObject>
 #include <QString>
 #include <QFile>
 #include <QVector>
@@ -31,6 +32,8 @@
 // Represents a complete set of data to be displayed (ie. a log file content)
 // An object of this class is immutable.
 class LogData : public AbstractLogData {
+  Q_OBJECT
+
   public:
     // Creates an empty LogData
     LogData();
@@ -45,7 +48,14 @@ class LogData : public AbstractLogData {
     // Returns the size if the file in bytes
     qint64 getFileSize() const;
 
+  signals:
+    // Sent during the 'attach' process to signal progress
+    // percent being the percentage of completion.
+    void loadingProgressed( int percent );
+
   private:
+    static const int sizeChunk;
+
     QString doGetLineString( int line ) const;
     int doGetNbLine() const;
     int doGetMaxLength() const;

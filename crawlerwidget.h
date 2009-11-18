@@ -20,7 +20,6 @@
 #ifndef CRAWLERWIDGET_H
 #define CRAWLERWIDGET_H
 
-#include <QLabel>
 #include <QSplitter>
 #include <QComboBox>
 #include <QPushButton>
@@ -30,6 +29,7 @@
 #include "logmainview.h"
 #include "filteredview.h"
 #include "savedsearches.h"
+#include "infoline.h"
 
 #include "logdata.h"
 #include "logfiltereddata.h"
@@ -51,16 +51,19 @@ class CrawlerWidget : public QSplitter
     // Get the line number of the first line displayed.
     int getTopLine() const;
 
+  signals:
+    void loadingProgressed( int progress );
+
   private slots:
     // Instructs the widget to start a search using the current search line.
     void startNewSearch();
     // Instructs the widget to reconfigure itself because Config() has changed.
     void applyConfiguration();
     // Called when new data must be displayed in the filtered window.
-    void updateFilteredView();
+    void updateFilteredView( int nbMatches, int progress );
     // Called when a new line has been selected in the filtered view,
     // to instruct the main view to jump to the matching line.
-    void jumpToMatchingLine(int filteredLineNb);
+    void jumpToMatchingLine( int filteredLineNb );
 
   private:
     void replaceCurrentSearch( const QString& searchText );
@@ -72,7 +75,7 @@ class CrawlerWidget : public QSplitter
     QComboBox*      searchLineEdit;
     QPushButton*    searchButton;
     FilteredView*   filteredView;
-    QLabel*         searchInfoLine;
+    InfoLine*       searchInfoLine;
 
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;

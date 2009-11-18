@@ -26,6 +26,9 @@
 #include "common.h"
 #include "logdata.h"
 
+// Size of the chunk to read (5 MiB)
+const int LogData::sizeChunk = 5*1024*1024;
+
 // Constructs an empty log file.
 // It must be displayed without error.
 LogData::LogData() : AbstractLogData(), linePosition_()
@@ -63,11 +66,11 @@ bool LogData::attachFile( const QString& fileName )
 
     // Count the number of lines and max length
     // (read big chunks to speed up reading from disk)
-    int end = 0, pos = 0;
+    qint64 end = 0, pos = 0;
     while ( !file_->atEnd() ) {
         // Read a chunk of 5MB
         const qint64 block_beginning = file_->pos();
-        const QByteArray block = file_->read( 5*1024*1024 );
+        const QByteArray block = file_->read( sizeChunk );
 
         // Count the number of lines in each chunk
         qint64 next_lf = 0;
@@ -83,6 +86,9 @@ bool LogData::attachFile( const QString& fileName )
                 linePosition_.append( pos );
             }
         }
+
+        // Update the caller for progress indication
+        emit loadingProgressed( pos*100 / fileSize_ );
     }
     nbLines_ = linePosition_.size();
 

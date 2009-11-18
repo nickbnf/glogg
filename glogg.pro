@@ -20,7 +20,8 @@ SOURCES += main.cpp \
     configuration.cpp \
     filtersdialog.cpp \
     filterset.cpp \
-    savedsearches.cpp
+    savedsearches.cpp \
+    infoline.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -36,7 +37,8 @@ HEADERS += version.h \
     configuration.h \
     filtersdialog.h \
     filterset.h \
-    savedsearches.h
+    savedsearches.h \
+    infoline.cpp
 
 greaterThan(QT_VERSION, "4.4.0") {
     FORMS += filtersdialog.ui

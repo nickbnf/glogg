@@ -25,6 +25,7 @@
 #include "log.h"
 
 #include <Qt>
+#include <QApplication>
 #include <QFile>
 #include <QLineEdit>
 
@@ -55,7 +56,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     savedSearches = searches;
 
     // Construct the Search Info line
-    searchInfoLine = new QLabel();
+    searchInfoLine = new InfoLine();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
 
@@ -107,8 +108,15 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
     LogData* newLogData = new LogData;
+
+    // Forward the signal up to the main window
+    connect( newLogData, SIGNAL( loadingProgressed( int ) ),
+            this, SIGNAL( loadingProgressed( int ) ) );
+
     if ( newLogData->attachFile( fileName ) == true )
     {
+        disconnect( newLogData, SIGNAL( loadingProgressed ), 0, 0 );
+
         // Start an empty search (will use the empty LFD)
         replaceCurrentSearch( "" );
 
@@ -158,14 +166,20 @@ void CrawlerWidget::startNewSearch()
     replaceCurrentSearch( searchLineEdit->currentText() );
 }
 
-void CrawlerWidget::updateFilteredView()
+// When receiving the 'newDataAvailable' signal from LogFilteredData
+void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
 {
     LOG(logDEBUG) << "updateFilteredView received.";
 
-    searchInfoLine->setText( tr("Found %1 match%2.")
-            .arg( logFilteredData_->getNbLine() )
-            .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
+    searchInfoLine->setText(
+            tr("Search in progress (%1 %)... %2 match%3 found so far.")
+            .arg( progress )
+            .arg( nbMatches )
+            .arg( nbMatches > 1 ? "es" : "" ) );
+    searchInfoLine->displayGauge( progress );
     filteredView->updateData(logFilteredData_, 0);
+
+    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
@@ -209,8 +223,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         // Create the new LogFilteredData...
         logFilteredData_ = logData_->getNewFilteredData( regexp );
         // ... and arrange to receive notification of updates
-        connect( logFilteredData_, SIGNAL( newDataAvailable() ),
-                this, SLOT( updateFilteredView() ) );
+        connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
+                this, SLOT( updateFilteredView( int, int ) ) );
         logFilteredData_->runSearch();
     } else {
         logFilteredData_ = &emptyLogFilteredData;
@@ -220,6 +234,11 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     }
     // Connect the search to the top view
     logMainView->useNewFiltering( logFilteredData_ );
+    // Write the permanent info line
+    searchInfoLine->hideGauge();
+    searchInfoLine->setText( tr("Found %1 match%2.")
+            .arg( logFilteredData_->getNbLine() )
+            .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
 }
 
 // Updates the content of the drop down list for the saved searches,

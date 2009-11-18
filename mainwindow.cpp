@@ -165,10 +165,9 @@ void MainWindow::createMenus()
 
 void MainWindow::createToolBars()
 {
-    infoLine = new QLabel();
+    infoLine = new InfoLine();
     infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     infoLine->setLineWidth( 0 );
-    infoLine->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed );
 
     toolBar = addToolBar( tr("&Toolbar") );
     toolBar->setIconSize( QSize( 16, 16 ) );
@@ -262,6 +261,14 @@ void MainWindow::signalFileChanged( const QString& fileName )
     }
 }
 
+void MainWindow::updateLoadingProgress( int progress )
+{
+    LOG(logDEBUG) << "Loading progress: " << progress;
+    infoLine->setText( tr( "Indexing lines... (%1 %)" ).arg( progress ) );
+    infoLine->displayGauge( progress );
+    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+}
+
 //
 // Events
 //
@@ -307,16 +314,25 @@ bool MainWindow::loadFile( const QString& fileName )
     if ( fileName == currentFile )
         topLine = crawlerWidget->getTopLine();
 
+    // Register for progress status bar
+    connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
+            this, SLOT( updateLoadingProgress( int ) ) );
+
     // Load the file
+    updateLoadingProgress( 0 );
     if ( crawlerWidget->readFile( fileName, topLine ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
         int fileSize, fileNbLine;
         crawlerWidget->getFileInfo( &fileSize, &fileNbLine );
         setCurrentFile( fileName, fileSize, fileNbLine );
+        disconnect( crawlerWidget, SIGNAL( loadingProgressed( int ) ), 0, 0 );
+        infoLine->hideGauge();
         return true;
     }
     else {
         LOG(logWARNING) << "Cannot load file " << fileName.toStdString();
+        disconnect( crawlerWidget, SIGNAL( loadingProgressed( int ) ), 0, 0 );
+        infoLine->hideGauge();
         return false;
     }
 }

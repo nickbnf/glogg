@@ -66,10 +66,15 @@ void LogFilteredData::runSearch()
                 MatchingLine match( i, line );
                 matchingLineList.append( match );
             }
+
+            // Every once in a while, update the status of the search
+            if ( !( i % 5000 ) )
+                emit searchProgressed( matchingLineList.size(),
+                        i * 100 / sourceLogData->getNbLine() );
         }
 
         searchDone_ = true;
-        emit newDataAvailable();
+        emit searchProgressed( matchingLineList.size(), 100 );
     }
 
     LOG(logDEBUG) << "End runSearch";

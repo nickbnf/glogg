@@ -18,10 +18,8 @@
  */
 
 // This file implements LogFilteredData
-// It stores a pointer to the internal data of the LogData that created it,
-// so should ialways be destroyed before the LogData.
-// The implementation depends heavily on the implementation of LogData, that
-// should probably be fixed!
+// It stores a pointer to the LogData that created it,
+// so should always be destroyed before the LogData.
 
 #include "log.h"
 
@@ -40,8 +38,8 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 }
 
 // Usual constructor: just copy the data, the search is started by runSearch()
-LogFilteredData::LogFilteredData( const LogData* logData, const QRegExp& regExp )
-    : AbstractLogData(), currentRegExp( regExp )
+LogFilteredData::LogFilteredData( const LogData* logData )
+    : AbstractLogData(), currentRegExp_()
 {
     matchingLineList = QList<MatchingLine>();
     maxLength_ = 0;
@@ -52,32 +50,43 @@ LogFilteredData::LogFilteredData( const LogData* logData, const QRegExp& regExp 
 }
 
 // Run the search and send newDataAvailable() signals.
-void LogFilteredData::runSearch()
+void LogFilteredData::runSearch( const QRegExp& regExp )
 {
     LOG(logDEBUG) << "Entering runSearch";
 
-    if ( !searchDone_ ) {
-        for ( int i = 0; i < sourceLogData->getNbLine(); i++ ) {
-            const QString line = sourceLogData->getLineString( i );
-            if ( currentRegExp.indexIn( line ) != -1 ) {
-                const int length = line.length();
-                if ( length > maxLength_ )
-                    maxLength_ = length;
-                MatchingLine match( i, line );
-                matchingLineList.append( match );
-            }
+    // Reset the search
+    currentRegExp_ = regExp;
+    matchingLineList.clear();
+    maxLength_ = 0;
 
-            // Every once in a while, update the status of the search
-            if ( !( i % 5000 ) )
-                emit searchProgressed( matchingLineList.size(),
-                        i * 100 / sourceLogData->getNbLine() );
+    // And search!
+    for ( int i = 0; i < sourceLogData->getNbLine(); i++ ) {
+        const QString line = sourceLogData->getLineString( i );
+        if ( currentRegExp_.indexIn( line ) != -1 ) {
+            const int length = line.length();
+            if ( length > maxLength_ )
+                maxLength_ = length;
+            MatchingLine match( i, line );
+            matchingLineList.append( match );
         }
 
-        searchDone_ = true;
-        emit searchProgressed( matchingLineList.size(), 100 );
+        // Every once in a while, update the status of the search
+        if ( !( i % 5000 ) )
+            emit searchProgressed( matchingLineList.size(),
+                    i * 100 / sourceLogData->getNbLine() );
     }
 
+    searchDone_ = true;
+    emit searchProgressed( matchingLineList.size(), 100 );
+
     LOG(logDEBUG) << "End runSearch";
+}
+
+void LogFilteredData::clearSearch()
+{
+    currentRegExp_ = QRegExp();
+    matchingLineList.clear();
+    maxLength_ = 0;
 }
 
 int LogFilteredData::getMatchingLineNumber( int lineNum ) const

@@ -27,6 +27,10 @@ SavedSearches::SavedSearches() : savedSearches_()
 
 void SavedSearches::addRecent( const QString& text )
 {
+    // We're not interrested in blank lines
+    if ( text.isEmpty() )
+        return;
+
     // Remove any copy of the about to be added text
     savedSearches_.removeAll( text );
 

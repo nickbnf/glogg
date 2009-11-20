@@ -31,12 +31,13 @@ const int LogData::sizeChunk = 5*1024*1024;
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), linePosition_()
+LogData::LogData() : AbstractLogData()
 {
-    file_      = NULL;
-    fileSize_  = 0;
-    nbLines_   = 0;
-    maxLength_ = 0;
+    file_         = NULL;
+    linePosition_ = NULL;
+    fileSize_     = 0;
+    nbLines_      = 0;
+    maxLength_    = 0;
 }
 
 LogData::~LogData()
@@ -51,8 +52,12 @@ LogData::~LogData()
 
 bool LogData::attachFile( const QString& fileName )
 {
-    file_ = new QFile( fileName );
+    // Close the file if one is already open
+    if ( file_ )
+        delete file_;
 
+    // Open the new file
+    file_ = new QFile( fileName );
     if ( !file_->open( QIODevice::ReadOnly ) )
     {
         // TODO: Check that the file is seekable?
@@ -60,12 +65,14 @@ bool LogData::attachFile( const QString& fileName )
         return false;
     }
 
-    fileSize_ = file_->size();
+    // Create a new line end cache
+    QVarLengthArray<qint64>* newLinePosition = new QVarLengthArray<qint64>;
 
-    LOG(logDEBUG) << "Counting the lines...";
+    fileSize_ = file_->size();
 
     // Count the number of lines and max length
     // (read big chunks to speed up reading from disk)
+    LOG(logDEBUG) << "Counting the lines...";
     qint64 end = 0, pos = 0;
     while ( !file_->atEnd() ) {
         // Read a chunk of 5MB
@@ -83,14 +90,19 @@ bool LogData::attachFile( const QString& fileName )
                 if ( length > maxLength_ )
                     maxLength_ = length;
                 pos = end+1;
-                linePosition_.append( pos );
+                newLinePosition->append( pos );
             }
         }
 
         // Update the caller for progress indication
         emit loadingProgressed( pos*100 / fileSize_ );
     }
-    nbLines_ = linePosition_.size();
+
+    // Everything is well, we use the newly created file data
+    if (linePosition_)
+        delete linePosition_;
+    linePosition_ = newLinePosition;
+    nbLines_ = linePosition_->size();
 
     LOG(logDEBUG) << "... found " << nbLines_ << " lines.";
 
@@ -103,9 +115,9 @@ qint64 LogData::getFileSize() const
 }
 
 // Return an initialized LogFilteredData. The search is not started.
-LogFilteredData* LogData::getNewFilteredData( QRegExp& regExp ) const
+LogFilteredData* LogData::getNewFilteredData() const
 {
-    LogFilteredData* newFilteredData = new LogFilteredData( this, regExp );
+    LogFilteredData* newFilteredData = new LogFilteredData( this );
 
     return newFilteredData;
 }
@@ -127,7 +139,7 @@ QString LogData::doGetLineString( int line ) const
 {
     if ( line >= nbLines_ ) { return ""; /* exception? */ }
 
-    file_->seek( linePosition_[line] );
+    file_->seek( (*linePosition_)[line] );
     QString string = QString( file_->readLine() );
     string.chop( 1 );
 

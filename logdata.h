@@ -30,7 +30,6 @@
 #include "logfiltereddata.h"
 
 // Represents a complete set of data to be displayed (ie. a log file content)
-// An object of this class is immutable.
 class LogData : public AbstractLogData {
   Q_OBJECT
 
@@ -40,11 +39,11 @@ class LogData : public AbstractLogData {
     // Destroy an object
     ~LogData();
 
-    // Attaches the LogData to a file on disk
+    // Attaches (or reattaches) the LogData to a file on disk
     bool attachFile( const QString& fileName );
     // Creates a new filtered data using the passed regexp
     // ownership is passed to the caller
-    LogFilteredData* getNewFilteredData( QRegExp& regExp ) const;
+    LogFilteredData* getNewFilteredData() const;
     // Returns the size if the file in bytes
     qint64 getFileSize() const;
 
@@ -61,7 +60,7 @@ class LogData : public AbstractLogData {
     int doGetMaxLength() const;
 
     QFile* file_;
-    QVarLengthArray<qint64> linePosition_;
+    QVarLengthArray<qint64>* linePosition_;
     qint64 fileSize_;
     int nbLines_;
     int maxLength_;

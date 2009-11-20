@@ -49,7 +49,7 @@ class MatchingLine {
 // which can be accessed using the AbstractLogData interface, together with
 // the original line number where they were found.
 // Constructing such objet does not start the search.
-// This object should be constructed by a LogData, and is immutable.
+// This object should be constructed by a LogData.
 class LogFilteredData : public AbstractLogData {
   Q_OBJECT
 
@@ -57,10 +57,12 @@ class LogFilteredData : public AbstractLogData {
     // Creates an empty LogFilteredData
     LogFilteredData();
     // Constructor used by LogData
-    LogFilteredData( const LogData* logData, const QRegExp& regExp );
+    LogFilteredData( const LogData* logData );
 
     // Starts the search, sending newDataAvailable() when new data found
-    void runSearch();
+    void runSearch( const QRegExp& regExp );
+    // Clear the search and the list of results.
+    void clearSearch();
     // Returns the line number in the original LogData where the element
     // 'index' was found.
     int getMatchingLineNumber( int index ) const;
@@ -80,7 +82,7 @@ class LogFilteredData : public AbstractLogData {
     QList<MatchingLine> matchingLineList;
 
     const LogData* sourceLogData;
-    const QRegExp currentRegExp;
+    QRegExp currentRegExp_;
     bool searchDone_;
     int maxLength_;
 };

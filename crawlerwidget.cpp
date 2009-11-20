@@ -33,19 +33,15 @@
 
 #include "configuration.h"
 
-// Construct an empty set of data, and of filtered data to use as a default
-LogData         CrawlerWidget::emptyLogData;
-LogFilteredData CrawlerWidget::emptyLogFilteredData;
-
 // Constructor makes all the child widgets and set up connections.
 CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
         : QSplitter(parent)
 {
     setOrientation(Qt::Vertical);
 
-    // Initialize internal data
-    logData_         = &emptyLogData;
-    logFilteredData_ = &emptyLogFilteredData;
+    // Initialize internal data (with empty file and search)
+    logData_         = new LogData();
+    logFilteredData_ = logData_->getNewFilteredData();
 
     logFileSize_     = 0;
 
@@ -103,38 +99,30 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SLOT( jumpToMatchingLine( int ) ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
+    connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
+            this, SLOT( updateFilteredView( int, int ) ) );
 }
 
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
-    LogData* newLogData = new LogData;
-
     // Forward the signal up to the main window
-    connect( newLogData, SIGNAL( loadingProgressed( int ) ),
+    connect( logData_, SIGNAL( loadingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
 
-    if ( newLogData->attachFile( fileName ) == true )
+    if ( logData_->attachFile( fileName ) == true )
     {
-        disconnect( newLogData, SIGNAL( loadingProgressed ), 0, 0 );
+        disconnect( logData_, SIGNAL( loadingProgressed( int ) ), 0, 0 );
 
         // Start an empty search (will use the empty LFD)
         replaceCurrentSearch( "" );
-
-        LogData* oldLogData = logData_;
-        logData_ = newLogData;
 
         logMainView->updateData( logData_, topLine );
 
         logFileSize_ = 0;
 
-        if (oldLogData != &emptyLogData)
-            delete oldLogData;
-
         return true;
     }
     else {
-        delete newLogData;
-
         return false;
     }
 }
@@ -214,31 +202,22 @@ void CrawlerWidget::applyConfiguration()
 // used one and destroy the old one.
 void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 {
-    // Delete (and disconnect the object)
-    if ( logFilteredData_ != &emptyLogFilteredData )
-        delete logFilteredData_;
-
     if ( !searchText.isEmpty() ) {
-        QRegExp regexp(searchText);
-        // Create the new LogFilteredData...
-        logFilteredData_ = logData_->getNewFilteredData( regexp );
-        // ... and arrange to receive notification of updates
-        connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
-                this, SLOT( updateFilteredView( int, int ) ) );
-        logFilteredData_->runSearch();
+        QRegExp regexp( searchText );
+        // Update the LogFilteredData...
+        logFilteredData_->runSearch( regexp );
+        // Write the permanent info line
+        searchInfoLine->hideGauge();
+        searchInfoLine->setText( tr("Found %1 match%2.")
+                .arg( logFilteredData_->getNbLine() )
+                .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
     } else {
-        logFilteredData_ = &emptyLogFilteredData;
-        // We won't receive an event from the emptyLogFilteredData
+        logFilteredData_->clearSearch();
         searchInfoLine->setText( "" );
         filteredView->updateData( logFilteredData_, 0 );
     }
     // Connect the search to the top view
     logMainView->useNewFiltering( logFilteredData_ );
-    // Write the permanent info line
-    searchInfoLine->hideGauge();
-    searchInfoLine->setText( tr("Found %1 match%2.")
-            .arg( logFilteredData_->getNbLine() )
-            .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
 }
 
 // Updates the content of the drop down list for the saved searches,

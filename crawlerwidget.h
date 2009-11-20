@@ -52,6 +52,8 @@ class CrawlerWidget : public QSplitter
     int getTopLine() const;
 
   signals:
+    // Sent to signal the client load has progressed,
+    // passing the completion percentage.
     void loadingProgressed( int progress );
 
   private slots:
@@ -79,9 +81,6 @@ class CrawlerWidget : public QSplitter
 
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;
-
-    static LogData  emptyLogData;
-    static LogFilteredData  emptyLogFilteredData;
 
     SavedSearches*  savedSearches;
 

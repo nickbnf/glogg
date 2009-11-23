@@ -21,7 +21,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QFileSystemWatcher>
 #include "crawlerwidget.h"
 #include "infoline.h"
 
@@ -52,8 +51,6 @@ class MainWindow : public QMainWindow
     void about();
     void aboutQt();
 
-    // Instructs the window to signal the user the file has been updated
-    void signalFileChanged( const QString& fileName );
     // Instructs the widget to update the loading progress gauge
     void updateLoadingProgress( int progress );
 
@@ -81,11 +78,6 @@ class MainWindow : public QMainWindow
     QStringList recentFiles;
     QString currentFile;
     QString previousFile;
-
-    enum MonitoredFileStatus { UNCHANGED, DATA_ADDED, TRUNCATED };
-    QFileSystemWatcher fileWatcher;
-    MonitoredFileStatus fileChangedOnDisk_;
-    qint64 fileSize_;
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];

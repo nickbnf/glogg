@@ -25,6 +25,7 @@
 #include <QFile>
 #include <QVector>
 #include <QVarLengthArray>
+#include <QFileSystemWatcher>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
@@ -52,8 +53,16 @@ class LogData : public AbstractLogData {
     // percent being the percentage of completion.
     void loadingProgressed( int percent );
 
+  private slots:
+    // Consider reloading the file when it changes on disk updated
+    void fileChangedOnDisk();
+
   private:
     static const int sizeChunk;
+
+    enum MonitoredFileStatus { UNCHANGED, DATA_ADDED, TRUNCATED };
+    QFileSystemWatcher fileWatcher;
+    MonitoredFileStatus fileChangedOnDisk_;
 
     QString doGetLineString( int line ) const;
     int doGetNbLine() const;

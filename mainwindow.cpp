@@ -20,7 +20,6 @@
 // This file implements MainWindow. It is responsible for creating and
 // managing the menus, the toolbar, and the CrawlerWidget. It also
 // load/save the settings on opening/closing of the app
-// It keeps track of the file on disk.
 
 #include <iostream>
 #include <QtGui>
@@ -34,7 +33,7 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 
-MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
+MainWindow::MainWindow( QString fileName ) : mainIcon_()
 {
     // Register the operators for serializable classes
     qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
@@ -54,10 +53,6 @@ MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
     const QRect geometry = QApplication::desktop()->availableGeometry( this );
     setGeometry( geometry.x() + 20, geometry.y() + 40,
             geometry.width() - 140, geometry.height() - 140 );
-
-    // Initialize the file watcher
-    connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
-            this, SLOT( signalFileChanged( const QString& ) ) );
 
     connect( this, SIGNAL( optionsChanged() ),
             crawlerWidget, SLOT( applyConfiguration() ));
@@ -246,23 +241,6 @@ void MainWindow::aboutQt()
 {
 }
 
-void MainWindow::signalFileChanged( const QString& fileName )
-{
-    LOG(logDEBUG) << "signalFileChanged";
-    if ( fileChangedOnDisk_ != TRUNCATED ) {
-        QFileInfo fileInfo( fileName );
-        if ( fileInfo.size() < fileSize_ ) {
-            fileChangedOnDisk_ = TRUNCATED;
-            infoLine->setText( infoLine->text() + tr(" - file truncated") );
-        }
-        else if ( fileChangedOnDisk_ != DATA_ADDED ) {
-            fileChangedOnDisk_ = DATA_ADDED;
-            infoLine->setText( infoLine->text() + tr(" - new data added on disk") );
-        }
-        fileSize_ = fileInfo.size();
-    }
-}
-
 void MainWindow::updateLoadingProgress( int progress )
 {
     LOG(logDEBUG) << "Loading progress: " << progress;
@@ -349,9 +327,6 @@ QString MainWindow::strippedName( const QString& fullFileName )
 void MainWindow::setCurrentFile( const QString& fileName,
         int fileSize, int fileNbLine )
 {
-    // Remove the current file from the watch list
-    fileWatcher.removePath( currentFile );
-
     // Change the current file
     currentFile = fileName;
     QString shownName = tr( "Untitled" );
@@ -363,11 +338,6 @@ void MainWindow::setCurrentFile( const QString& fileName,
 
         infoLine->setText( tr( "%1 (%2 KB - %3 lines)" )
                     .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
-
-        // Watch the new file on disk
-        fileChangedOnDisk_ = UNCHANGED;
-        fileSize_ = fileSize;
-        fileWatcher.addPath( currentFile );
     }
     else {
         infoLine->setText( "" );

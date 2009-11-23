@@ -31,13 +31,18 @@ const int LogData::sizeChunk = 5*1024*1024;
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData()
+LogData::LogData() : AbstractLogData(), fileWatcher( this )
 {
+    // Start with an "empty" log
     file_         = NULL;
     linePosition_ = NULL;
     fileSize_     = 0;
     nbLines_      = 0;
     maxLength_    = 0;
+
+    // Initialise the file watcher
+    connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
+            this, SLOT( fileChangedOnDisk() ) );
 }
 
 LogData::~LogData()
@@ -52,12 +57,18 @@ LogData::~LogData()
 
 bool LogData::attachFile( const QString& fileName )
 {
-    // Close the file if one is already open
-    if ( file_ )
-        delete file_;
+    if ( file_ ) {
+        // Remove the current file from the watch list
+        fileWatcher.removePath( file_->fileName() );
+        // And use the new filename
+        file_->close();
+        file_->setFileName( fileName );
+    }
+    else {
+        file_ = new QFile( fileName );
+    }
 
     // Open the new file
-    file_ = new QFile( fileName );
     if ( !file_->open( QIODevice::ReadOnly ) )
     {
         // TODO: Check that the file is seekable?
@@ -98,13 +109,17 @@ bool LogData::attachFile( const QString& fileName )
         emit loadingProgressed( pos*100 / fileSize_ );
     }
 
+    LOG(logDEBUG) << "... found " << newLinePosition->size() << " lines.";
+
     // Everything is well, we use the newly created file data
     if (linePosition_)
         delete linePosition_;
     linePosition_ = newLinePosition;
     nbLines_ = linePosition_->size();
 
-    LOG(logDEBUG) << "... found " << nbLines_ << " lines.";
+    // And we watch the file for updates
+    fileChangedOnDisk_ = UNCHANGED;
+    fileWatcher.addPath( file_->fileName() );
 
     return true;
 }
@@ -120,6 +135,28 @@ LogFilteredData* LogData::getNewFilteredData() const
     LogFilteredData* newFilteredData = new LogFilteredData( this );
 
     return newFilteredData;
+}
+
+//
+// Slots
+//
+
+void LogData::fileChangedOnDisk()
+{
+    LOG(logDEBUG) << "signalFileChanged";
+    if ( fileChangedOnDisk_ != TRUNCATED ) {
+        if ( file_->size() < fileSize_ ) {
+            fileChangedOnDisk_ = TRUNCATED;
+            LOG(logINFO) << "File truncated";
+            // infoLine->setText( infoLine->text() + tr(" - file truncated") );
+        }
+        else if ( fileChangedOnDisk_ != DATA_ADDED ) {
+            fileChangedOnDisk_ = DATA_ADDED;
+            LOG(logINFO) << "New data on disk";
+            // infoLine->setText( infoLine->text() + tr(" - new data added on disk") );
+        }
+        fileSize_ = file_->size();
+    }
 }
 
 //

@@ -33,7 +33,10 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
   public:
-    MainWindow( QString fileName );
+    MainWindow();
+
+    // Loads the initial file (parameter passed or from config file)
+    void loadInitialFile( QString fileName );
 
   protected:
     void closeEvent( QCloseEvent* event );

@@ -33,7 +33,7 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 
-MainWindow::MainWindow( QString fileName ) : mainIcon_()
+MainWindow::MainWindow() : mainIcon_()
 {
     // Register the operators for serializable classes
     qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
@@ -60,13 +60,8 @@ MainWindow::MainWindow( QString fileName ) : mainIcon_()
     readSettings();
     emit optionsChanged();
 
-    // Is there a file passed as argument?
-    if ( !fileName.isEmpty() )
-        loadFile( fileName );
-    else if ( !previousFile.isEmpty() )
-        loadFile( previousFile );
-    else
-        setCurrentFile("", 0, 0);
+    // We start with the empty file
+    setCurrentFile("", 0, 0);
 
     mainIcon_.addFile( ":/images/hicolor/16x16/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/24x24/glogg.png" );
@@ -76,6 +71,19 @@ MainWindow::MainWindow( QString fileName ) : mainIcon_()
     setWindowIcon( mainIcon_ );
     setCentralWidget(crawlerWidget);
 }
+
+void MainWindow::loadInitialFile( QString fileName )
+{
+    // Is there a file passed as argument?
+    if ( !fileName.isEmpty() )
+        loadFile( fileName );
+    else if ( !previousFile.isEmpty() )
+        loadFile( previousFile );
+}
+
+//
+// Private functions
+//
 
 void MainWindow::createCrawler()
 {

@@ -24,7 +24,7 @@
 
 int main(int argc, char *argv[])
 {
-    char* filename = "";
+    const char* filename = "";
 
     QApplication app(argc, argv);
 
@@ -33,9 +33,10 @@ int main(int argc, char *argv[])
         filename = argv[1];
     }
 
-    MainWindow* mw = new MainWindow( QString(filename) );
+    MainWindow* mw = new MainWindow();
 
     LOG(logDEBUG) << "MainWindow created.";
     mw->show();
+    mw->loadInitialFile( QString(filename) );
     return app.exec();
 }

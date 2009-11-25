@@ -39,11 +39,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 {
     setOrientation(Qt::Vertical);
 
-    // Initialize internal data (with empty file and search)
+    // Initialise internal data (with empty file and search)
     logData_         = new LogData();
     logFilteredData_ = logData_->getNewFilteredData();
-
-    logFileSize_     = 0;
 
     logMainView  = new LogMainView( logData_ );
     bottomWindow = new QWidget;
@@ -101,25 +99,22 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             filteredView, SLOT( update() ) );
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
-}
-
-bool CrawlerWidget::readFile( const QString& fileName, int topLine )
-{
-    // Forward the signal up to the main window
+    // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
+    connect( logData_, SIGNAL( loadingFinished() ),
+            this, SLOT( loadingFinishedHandler() ) );
+}
 
+// Start the asynchronous loading of a file.
+bool CrawlerWidget::readFile( const QString& fileName, int topLine )
+{
     if ( logData_->attachFile( fileName ) == true )
     {
-        disconnect( logData_, SIGNAL( loadingProgressed( int ) ), 0, 0 );
-
-        // Start an empty search (will use the empty LFD)
+        // Means the file exist, so we invalidate the search
+        // and redraw the screen.
         replaceCurrentSearch( "" );
-
-        logMainView->updateData( logData_, topLine );
-
-        logFileSize_ = 0;
-
+        logMainView->updateData( logData_, 0 );
         return true;
     }
     else {
@@ -192,6 +187,15 @@ void CrawlerWidget::applyConfiguration()
 
     // Update the SearchLine (history)
     updateSearchCombo();
+}
+
+void CrawlerWidget::loadingFinishedHandler()
+{
+    // FIXME, handle topLine
+    // logMainView->updateData( logData_, topLine );
+    logMainView->updateData( logData_, 0 );
+
+    emit loadingFinished();
 }
 
 //

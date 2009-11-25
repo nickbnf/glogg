@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     filtersdialog.cpp \
     filterset.cpp \
     savedsearches.cpp \
-    infoline.cpp
+    infoline.cpp \
+    logdataworkerthread.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -38,7 +39,8 @@ HEADERS += version.h \
     filtersdialog.h \
     filterset.h \
     savedsearches.h \
-    infoline.cpp
+    infoline.h \
+    logdataworkerthread.h
 
 greaterThan(QT_VERSION, "4.4.0") {
     FORMS += filtersdialog.ui

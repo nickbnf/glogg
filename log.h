@@ -182,9 +182,8 @@ inline std::string NowTime()
     char buffer[11];
     time_t t;
     time(&t);
-    //tm r = {0};
     tm r;
-    strftime(buffer, sizeof(buffer), "%X", localtime_r(&t, &r));
+    strftime(buffer, sizeof(buffer), "%T", localtime_r(&t, &r));
     struct timeval tv;
     gettimeofday(&tv, 0);
     char result[100] = {0};

@@ -56,6 +56,9 @@ class MainWindow : public QMainWindow
 
     // Instructs the widget to update the loading progress gauge
     void updateLoadingProgress( int progress );
+    // Instructs the widget to display the 'normal' status bar,
+    // without the progress gauge and with file info
+    void displayNormalStatus();
 
   signals:
     // Is emitted when new settings must be used
@@ -70,11 +73,10 @@ class MainWindow : public QMainWindow
     void createCrawler();
     void readSettings();
     void writeSettings();
-    bool loadFile(const QString &fileName);
-    void setCurrentFile( const QString &fileName,
-            int fileSize, int fileNbLine );
+    bool loadFile( const QString& fileName );
+    void setCurrentFile( const QString& fileName );
     void updateRecentFileActions();
-    QString strippedName(const QString &fullFileName);
+    QString strippedName( const QString& fullFileName );
 
     SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;

@@ -26,23 +26,29 @@
 #include "common.h"
 #include "logdata.h"
 
-// Size of the chunk to read (5 MiB)
-const int LogData::sizeChunk = 5*1024*1024;
-
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), fileWatcher( this )
+LogData::LogData() : AbstractLogData(), fileWatcher( this ), linePosition_(), workerThread_()
 {
     // Start with an "empty" log
     file_         = NULL;
-    linePosition_ = NULL;
     fileSize_     = 0;
     nbLines_      = 0;
     maxLength_    = 0;
 
+    indexingInProgress_ = false;
+
     // Initialise the file watcher
     connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
             this, SLOT( fileChangedOnDisk() ) );
+    // Forward the update signal
+    connect( &workerThread_, SIGNAL( indexingProgressed( int ) ),
+            this, SIGNAL( loadingProgressed( int ) ) );
+    connect( &workerThread_, SIGNAL( indexingFinished() ),
+            this, SLOT( indexingFinished() ) );
+
+    // Starts the worker thread
+    workerThread_.start();
 }
 
 LogData::~LogData()
@@ -76,52 +82,26 @@ bool LogData::attachFile( const QString& fileName )
         return false;
     }
 
-    // Create a new line end cache
-    QVarLengthArray<qint64>* newLinePosition = new QVarLengthArray<qint64>;
+    // Now the file is open, so we are committed to loading it
+    // We invalidate the non indexed data
+    fileSize_     = 0;
+    nbLines_      = 0;
+    maxLength_    = 0;
 
-    fileSize_ = file_->size();
+    // And instructs the worker thread to index the whole file asynchronously
+    LOG(logDEBUG) << "Attaching " << fileName.toStdString();
+    indexingInProgress_ = true;
+    workerThread_.attachFile( fileName );
+    workerThread_.indexAll();
 
-    // Count the number of lines and max length
-    // (read big chunks to speed up reading from disk)
-    LOG(logDEBUG) << "Counting the lines...";
-    qint64 end = 0, pos = 0;
-    while ( !file_->atEnd() ) {
-        // Read a chunk of 5MB
-        const qint64 block_beginning = file_->pos();
-        const QByteArray block = file_->read( sizeChunk );
-
-        // Count the number of lines in each chunk
-        qint64 next_lf = 0;
-        while ( next_lf != -1 ) {
-            const qint64 pos_within_block = max2( pos - block_beginning, 0LL);
-            next_lf = block.indexOf( "\n", pos_within_block );
-            if ( next_lf != -1 ) {
-                end = next_lf + block_beginning;
-                const int length = end-pos;
-                if ( length > maxLength_ )
-                    maxLength_ = length;
-                pos = end+1;
-                newLinePosition->append( pos );
-            }
-        }
-
-        // Update the caller for progress indication
-        emit loadingProgressed( pos*100 / fileSize_ );
-    }
-
-    LOG(logDEBUG) << "... found " << newLinePosition->size() << " lines.";
-
-    // Everything is well, we use the newly created file data
-    if (linePosition_)
-        delete linePosition_;
-    linePosition_ = newLinePosition;
-    nbLines_ = linePosition_->size();
-
-    // And we watch the file for updates
-    fileChangedOnDisk_ = UNCHANGED;
-    fileWatcher.addPath( file_->fileName() );
-
+    // The client might now use the new file (even if it is empty for now)!
     return true;
+}
+
+void LogData::interruptLoading()
+{
+    if ( indexingInProgress_ )
+        workerThread_.interrupt();
 }
 
 qint64 LogData::getFileSize() const
@@ -129,7 +109,7 @@ qint64 LogData::getFileSize() const
     return fileSize_;
 }
 
-// Return an initialized LogFilteredData. The search is not started.
+// Return an initialised LogFilteredData. The search is not started.
 LogFilteredData* LogData::getNewFilteredData() const
 {
     LogFilteredData* newFilteredData = new LogFilteredData( this );
@@ -148,15 +128,34 @@ void LogData::fileChangedOnDisk()
         if ( file_->size() < fileSize_ ) {
             fileChangedOnDisk_ = TRUNCATED;
             LOG(logINFO) << "File truncated";
-            // infoLine->setText( infoLine->text() + tr(" - file truncated") );
+            workerThread_.indexAll();
         }
         else if ( fileChangedOnDisk_ != DATA_ADDED ) {
             fileChangedOnDisk_ = DATA_ADDED;
             LOG(logINFO) << "New data on disk";
-            // infoLine->setText( infoLine->text() + tr(" - new data added on disk") );
+            workerThread_.indexAdditionalLines( fileSize_ );
         }
-        fileSize_ = file_->size();
     }
+}
+
+void LogData::indexingFinished()
+{
+    LOG(logDEBUG) << "indexingFinished: now copying in LogData.";
+
+    indexingInProgress_ = false;
+
+    // We use the newly created file data
+    // (Qt implicit copy makes this fast!)
+    workerThread_.getIndexingData( &fileSize_, &maxLength_, &linePosition_ );
+    nbLines_      = linePosition_.size();
+
+    LOG(logDEBUG) << "indexingFinished: found " << nbLines_ << " lines.";
+
+    // And we watch the file for updates
+    fileChangedOnDisk_ = UNCHANGED;
+    fileWatcher.addPath( file_->fileName() );
+
+    emit loadingFinished();
 }
 
 //
@@ -174,12 +173,11 @@ int LogData::doGetMaxLength() const
 
 QString LogData::doGetLineString( int line ) const
 {
-    if ( line >= nbLines_ ) { return ""; /* exception? */ }
+    if ( line >= nbLines_ ) { return QString(); /* exception? */ }
 
-    file_->seek( (*linePosition_)[line] );
+    file_->seek( linePosition_[line] );
     QString string = QString( file_->readLine() );
     string.chop( 1 );
 
     return string;
 }
-

@@ -55,6 +55,7 @@ class CrawlerWidget : public QSplitter
     // Sent to signal the client load has progressed,
     // passing the completion percentage.
     void loadingProgressed( int progress );
+    void loadingFinished();
 
   private slots:
     // Instructs the widget to start a search using the current search line.
@@ -66,6 +67,8 @@ class CrawlerWidget : public QSplitter
     // Called when a new line has been selected in the filtered view,
     // to instruct the main view to jump to the matching line.
     void jumpToMatchingLine( int filteredLineNb );
+
+    void loadingFinishedHandler();
 
   private:
     void replaceCurrentSearch( const QString& searchText );

@@ -61,12 +61,18 @@ MainWindow::MainWindow() : mainIcon_()
     emit optionsChanged();
 
     // We start with the empty file
-    setCurrentFile("", 0, 0);
+    setCurrentFile( "" );
 
     mainIcon_.addFile( ":/images/hicolor/16x16/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/24x24/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/32x32/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/48x48/glogg.png" );
+
+    // Register for progress status bar
+    connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
+            this, SLOT( updateLoadingProgress( int ) ) );
+    connect( crawlerWidget, SIGNAL( loadingFinished() ),
+            this, SLOT( displayNormalStatus() ) );
 
     setWindowIcon( mainIcon_ );
     setCentralWidget(crawlerWidget);
@@ -254,7 +260,17 @@ void MainWindow::updateLoadingProgress( int progress )
     LOG(logDEBUG) << "Loading progress: " << progress;
     infoLine->setText( tr( "Indexing lines... (%1 %)" ).arg( progress ) );
     infoLine->displayGauge( progress );
-    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+}
+
+void MainWindow::displayNormalStatus()
+{
+    LOG(logDEBUG) << "displayNormalStatus";
+
+    int fileSize, fileNbLine;
+    crawlerWidget->getFileInfo( &fileSize, &fileNbLine );
+    infoLine->setText( tr( "%1 (%2 KB - %3 lines)" )
+            .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
+    infoLine->hideGauge();
 }
 
 //
@@ -294,6 +310,7 @@ void MainWindow::dropEvent( QDropEvent* event )
 //
 
 // Loads the passed file into the CrawlerWidget and update the title bar.
+// The loading is done asynchronously.
 bool MainWindow::loadFile( const QString& fileName )
 {
     int topLine = 0;
@@ -302,25 +319,16 @@ bool MainWindow::loadFile( const QString& fileName )
     if ( fileName == currentFile )
         topLine = crawlerWidget->getTopLine();
 
-    // Register for progress status bar
-    connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
-            this, SLOT( updateLoadingProgress( int ) ) );
-
     // Load the file
     updateLoadingProgress( 0 );
     if ( crawlerWidget->readFile( fileName, topLine ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
-        int fileSize, fileNbLine;
-        crawlerWidget->getFileInfo( &fileSize, &fileNbLine );
-        setCurrentFile( fileName, fileSize, fileNbLine );
-        disconnect( crawlerWidget, SIGNAL( loadingProgressed( int ) ), 0, 0 );
-        infoLine->hideGauge();
+        setCurrentFile( fileName );
         return true;
     }
     else {
         LOG(logWARNING) << "Cannot load file " << fileName.toStdString();
-        disconnect( crawlerWidget, SIGNAL( loadingProgressed( int ) ), 0, 0 );
-        infoLine->hideGauge();
+        displayNormalStatus();
         return false;
     }
 }
@@ -332,8 +340,7 @@ QString MainWindow::strippedName( const QString& fullFileName )
 }
 
 // Add the filename to the recent files list and update the title bar.
-void MainWindow::setCurrentFile( const QString& fileName,
-        int fileSize, int fileNbLine )
+void MainWindow::setCurrentFile( const QString& fileName )
 {
     // Change the current file
     currentFile = fileName;
@@ -343,12 +350,6 @@ void MainWindow::setCurrentFile( const QString& fileName,
         recentFiles.removeAll( currentFile );
         recentFiles.prepend( currentFile );
         updateRecentFileActions();
-
-        infoLine->setText( tr( "%1 (%2 KB - %3 lines)" )
-                    .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
-    }
-    else {
-        infoLine->setText( "" );
     }
 
     setWindowTitle(tr("%1 - %2").arg(shownName).arg(tr("glogg")));

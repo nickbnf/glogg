@@ -24,11 +24,11 @@
 #include <QString>
 #include <QFile>
 #include <QVector>
-#include <QVarLengthArray>
 #include <QFileSystemWatcher>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
+#include "logdataworkerthread.h"
 
 // Represents a complete set of data to be displayed (ie. a log file content)
 class LogData : public AbstractLogData {
@@ -41,7 +41,12 @@ class LogData : public AbstractLogData {
     ~LogData();
 
     // Attaches (or reattaches) the LogData to a file on disk
+    // It starts the asynchronous indexing and returns (almost) immediately
+    // Replace the ongoing loading if necessary.
     bool attachFile( const QString& fileName );
+    // Interrupt the loading and restore the previous file.
+    // Does nothing if no loading in progress.
+    void interruptLoading();
     // Creates a new filtered data using the passed regexp
     // ownership is passed to the caller
     LogFilteredData* getNewFilteredData() const;
@@ -52,14 +57,15 @@ class LogData : public AbstractLogData {
     // Sent during the 'attach' process to signal progress
     // percent being the percentage of completion.
     void loadingProgressed( int percent );
+    // Signal the client the file is fully loaded and available.
+    void loadingFinished();
 
   private slots:
     // Consider reloading the file when it changes on disk updated
     void fileChangedOnDisk();
+    void indexingFinished();
 
   private:
-    static const int sizeChunk;
-
     enum MonitoredFileStatus { UNCHANGED, DATA_ADDED, TRUNCATED };
     QFileSystemWatcher fileWatcher;
     MonitoredFileStatus fileChangedOnDisk_;
@@ -68,11 +74,14 @@ class LogData : public AbstractLogData {
     int doGetNbLine() const;
     int doGetMaxLength() const;
 
+    bool indexingInProgress_;
     QFile* file_;
-    QVarLengthArray<qint64>* linePosition_;
+    LinePositionArray linePosition_;
     qint64 fileSize_;
     int nbLines_;
     int maxLength_;
+
+    LogDataWorkerThread workerThread_;
 };
 
 #endif

@@ -29,7 +29,8 @@
 #include "logfiltereddata.h"
 
 // Creates an empty set. It must be possible to display it without error.
-LogFilteredData::LogFilteredData() : AbstractLogData()
+// FIXME
+LogFilteredData::LogFilteredData() : AbstractLogData(), workerThread_( NULL )
 {
     matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
@@ -39,15 +40,27 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 
 // Usual constructor: just copy the data, the search is started by runSearch()
 LogFilteredData::LogFilteredData( const LogData* logData )
-    : AbstractLogData(), currentRegExp_()
+    : AbstractLogData(), currentRegExp_(), workerThread_( logData )
 {
-    matchingLineList = QList<MatchingLine>();
+    // Starts with an empty result list
+    matchingLineList = SearchResultArray();
     maxLength_ = 0;
 
     sourceLogData = logData;
 
     searchDone_ = false;
+
+    // Forward the update signal
+    connect( &workerThread_, SIGNAL( searchProgressed( int, int ) ),
+            this, SLOT( handleSearchProgressed( int, int ) ) );
+
+    // Starts the worker thread
+    workerThread_.start();
 }
+
+//
+// Public functions
+//
 
 // Run the search and send newDataAvailable() signals.
 void LogFilteredData::runSearch( const QRegExp& regExp )
@@ -59,27 +72,8 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
     matchingLineList.clear();
     maxLength_ = 0;
 
-    // And search!
-    for ( int i = 0; i < sourceLogData->getNbLine(); i++ ) {
-        const QString line = sourceLogData->getLineString( i );
-        if ( currentRegExp_.indexIn( line ) != -1 ) {
-            const int length = line.length();
-            if ( length > maxLength_ )
-                maxLength_ = length;
-            MatchingLine match( i, line );
-            matchingLineList.append( match );
-        }
+    workerThread_.search( regExp );
 
-        // Every once in a while, update the status of the search
-        if ( !( i % 5000 ) )
-            emit searchProgressed( matchingLineList.size(),
-                    i * 100 / sourceLogData->getNbLine() );
-    }
-
-    searchDone_ = true;
-    emit searchProgressed( matchingLineList.size(), 100 );
-
-    LOG(logDEBUG) << "End runSearch";
 }
 
 void LogFilteredData::clearSearch()
@@ -125,6 +119,20 @@ bool LogFilteredData::isLineInMatchingList( int lineNumber )
     }
 
     return false;
+}
+
+//
+// Slots
+//
+void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
+{
+    LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
+        << nbMatches << " progress=" << progress;
+
+    // searchDone_ = true;
+    workerThread_.getSearchResult( &maxLength_, &matchingLineList );
+
+    emit searchProgressed( nbMatches, progress );
 }
 
 // Implementation of the virtual function.

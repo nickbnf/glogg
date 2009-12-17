@@ -27,23 +27,9 @@
 #include <QRegExp>
 
 #include "abstractlogdata.h"
+#include "logfiltereddataworkerthread.h"
 
 class LogData;
-
-// Class encapsulating a single matching line
-// Contains the line number the line was found in and its content.
-class MatchingLine {
-  public:
-    MatchingLine( int line, QString str ) { lineNumber_ = line; lineString_ = str; };
-
-    // Accessors
-    int lineNumber() const { return lineNumber_; }
-    QString lineContent() const { return lineString_; }
-
-  private:
-    int lineNumber_;
-    QString lineString_;
-};
 
 // A list of matches found in a LogData, it stores all the matching lines,
 // which can be accessed using the AbstractLogData interface, together with
@@ -74,6 +60,9 @@ class LogFilteredData : public AbstractLogData {
     // and the percentage of completion
     void searchProgressed( int nbMatches, int progress );
 
+  private slots:
+    void handleSearchProgressed( int NbMatches, int progress );
+
   private:
     QString doGetLineString( int line ) const;
     int doGetNbLine() const;
@@ -85,6 +74,8 @@ class LogFilteredData : public AbstractLogData {
     QRegExp currentRegExp_;
     bool searchDone_;
     int maxLength_;
+
+    LogFilteredDataWorkerThread workerThread_;
 };
 
 #endif

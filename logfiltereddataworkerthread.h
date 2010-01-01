@@ -65,6 +65,9 @@ class SearchData
     // Atomically add to all the existing search data.
     void addAll( int length, const SearchResultArray& matches );
 
+    // Atomically clear the data.
+    void clear();
+
   private:
     QMutex dataMutex_;
 
@@ -123,6 +126,7 @@ class LogFilteredDataWorkerThread : public QThread
     // Mutex to protect operationRequested_ and friends
     QMutex mutex_;
     QWaitCondition operationRequestedCond_;
+    QWaitCondition nothingToDoCond_;
 
     // Set when the thread must die
     bool terminate_;

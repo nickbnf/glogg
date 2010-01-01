@@ -45,8 +45,13 @@ class LogFilteredData : public AbstractLogData {
     // Constructor used by LogData
     LogFilteredData( const LogData* logData );
 
-    // Starts the search, sending newDataAvailable() when new data found
+    // Starts the async search, sending newDataAvailable() when new data found.
+    // If a search is already in progress this function will block until
+    // it is done, so the application should call interruptSearch() first.
     void runSearch( const QRegExp& regExp );
+    // Interrupt the running search if one is in progress.
+    // Nothing is done if no search is in progress.
+    void interruptSearch();
     // Clear the search and the list of results.
     void clearSearch();
     // Returns the line number in the original LogData where the element

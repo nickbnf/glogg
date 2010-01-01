@@ -51,6 +51,14 @@ void SearchData::addAll( int length,
     matches_   += matches;
 }
 
+void SearchData::clear()
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    maxLength_ = 0;
+    matches_.clear();
+}
+
 SearchOperation::SearchOperation( const QRegExp& regExp,
         bool* interruptRequest ) : regexp_( regExp )
 {
@@ -65,7 +73,7 @@ const QRegExp& SearchOperation::regExp() const
 
 LogFilteredDataWorkerThread::LogFilteredDataWorkerThread(
         const LogData* sourceLogData )
-    : QThread(), mutex_(), operationRequestedCond_(), searchData_()
+    : QThread(), mutex_(), operationRequestedCond_(), nothingToDoCond_(), searchData_()
 {
     terminate_          = false;
     interruptRequested_ = false;
@@ -89,21 +97,22 @@ void LogFilteredDataWorkerThread::search( const QRegExp& regExp )
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
     LOG(logDEBUG) << "Search requested";
+
+    // If an operation is ongoing, we will block
+    while ( (operationRequested_ != NULL) )
+        nothingToDoCond_.wait( &mutex_ );
+
     interruptRequested_ = false;
     operationRequested_ = new SearchOperation( regExp, &interruptRequested_ );
     operationRequestedCond_.wakeAll();
-
-    // Make it blocking until operation started.
 }
 
 void LogFilteredDataWorkerThread::interrupt()
 {
-    // QMutexLocker locker( &mutex_ );  // to protect interruptRequested_
+    LOG(logDEBUG) << "Search interruption requested";
 
-    LOG(logDEBUG) << "Interrupt requested";
+    // No mutex here, setting a bool is probably atomic!
     interruptRequested_ = true;
-
-    // Make it blocking until operation cancelled.
 }
 
 // This will do an atomic copy of the object
@@ -137,6 +146,7 @@ void LogFilteredDataWorkerThread::run()
             emit searchFinished();
             delete operationRequested_;
             operationRequested_ = NULL;
+            nothingToDoCond_.wakeAll();
         }
     }
 }
@@ -152,7 +162,13 @@ void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperati
     int maxLength = 0, nbMatches = 0;
     SearchResultArray currentList = SearchResultArray();
 
+    // Clear the shared data
+    searchData_.clear();
+
     for ( int i = 0; i < sourceLogData_->getNbLine(); i++ ) {
+        if ( interruptRequested_ )
+            break;
+
         const QString line = sourceLogData_->getLineString( i );
         if ( regExp.indexIn( line ) != -1 ) {
             const int length = line.length();

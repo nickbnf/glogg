@@ -48,15 +48,19 @@ void TestLogFilteredData::simpleSearch()
 
     QSignalSpy progressSpy( filteredData, SIGNAL( searchProgressed( int, int ) ) );
 
-    // Start the search
-    filteredData->runSearch( QRegExp( "123" ) );
-
-    // And check we receive data in 4 chunks (the first being empty)
     int matches[] = { 0, 15, 20, 135 };
-    for ( int i = 0; i < 4; i++ ) {
-        QApplication::exec();
-        QCOMPARE( filteredData->getNbLine(), matches[i] );
+    QBENCHMARK {
+        // Start the search
+        filteredData->runSearch( QRegExp( "123" ) );
+
+        // And check we receive data in 4 chunks (the first being empty)
+        for ( int i = 0; i < 4; i++ ) {
+            QApplication::exec();
+            QCOMPARE( filteredData->getNbLine(), matches[i] );
+        }
     }
+
+    QCOMPARE( progressSpy.count(), 4 );
 
     // Check the search
     QCOMPARE( filteredData->isLineInMatchingList( 122 ), true );
@@ -64,6 +68,22 @@ void TestLogFilteredData::simpleSearch()
     // Line beyond limit
     QCOMPARE( filteredData->isLineInMatchingList( 60000 ), false );
     QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 122 );
+
+    // Now let's try interrupting a search
+    filteredData->runSearch( QRegExp( "123" ) );
+    // ... wait for two chunks.
+    QApplication::exec();
+    QApplication::exec();
+    // and interrupt!
+    filteredData->interruptSearch();
+    QCOMPARE( filteredData->getNbLine(), matches[1] );
+    QApplication::exec();
+    // After interrupt: should be 100% and the same number of matches
+    QCOMPARE( filteredData->getNbLine(), matches[1] );
+
+    // (because there is no guarantee when the search is 
+    // interrupted, we are not sure how many chunk of result
+    // we will get.)
 
     // Disconnect all signals
     disconnect( &logData, 0 );
@@ -89,22 +109,35 @@ void TestLogFilteredData::multipleSearch()
 
     QCOMPARE( logData.getNbLine(), SL_NB_LINES );
 
-    // Now perform a simple search
+    // Performs two searches in a row
     LogFilteredData* filteredData = logData.getNewFilteredData();
     connect( filteredData, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( searchProgressed( int, int ) ) );
 
-    QSignalSpy progressSpy( filteredData, SIGNAL( searchProgressed( int, int ) ) );
+    QSignalSpy progressSpy( filteredData,
+            SIGNAL( searchProgressed( int, int ) ) );
 
     // Start the search, and immediately another one
-    filteredData->runSearch( QRegExp( "123" ) );
+    // (the second call should block until the first search is done)
     filteredData->runSearch( QRegExp( "1234" ) );
+    filteredData->runSearch( QRegExp( "123" ) );
 
-    for ( int i = 0; i < 4; i++ )
+    for ( int i = 0; i < 3; i++ )
         QApplication::exec();
 
     // We should have the result for the 2nd search
     QCOMPARE( filteredData->getNbLine(), 12 );
+
+    QCOMPARE( progressSpy.count(), 4 );
+
+    // Now a tricky one: we run a search and immediately attach a new file
+    filteredData->runSearch( QRegExp( "123" ) );
+    QApplication::exec();
+    logData.attachFile( TMPDIR "/mediumlog.txt" );
+
+    // We don't expect meaningful results but it should not crash!
+    for ( int i = 0; i < 3; i++ )
+        QApplication::exec();
 
     // Disconnect all signals
     disconnect( &logData, 0 );

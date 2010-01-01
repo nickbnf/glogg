@@ -76,6 +76,13 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
 
 }
 
+void LogFilteredData::interruptSearch()
+{
+    LOG(logDEBUG) << "Entering interruptSearch";
+
+    workerThread_.interrupt();
+}
+
 void LogFilteredData::clearSearch()
 {
     currentRegExp_ = QRegExp();

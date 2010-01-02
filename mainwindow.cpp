@@ -38,6 +38,8 @@ MainWindow::MainWindow( QString fileName ) : fileWatcher( this ), mainIcon_()
 {
     // Register the operators for serializable classes
     qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
+    qRegisterMetaTypeStreamOperators<Filter>( "Filter" );
+    qRegisterMetaTypeStreamOperators<FilterSet>( "FilterSet" );
 
     createActions();
     createMenus();

@@ -96,7 +96,6 @@ QDataStream& operator>>( QDataStream& in, Filter& object )
 }
 
 
-
 // Default constructor
 FilterSet::FilterSet()
 {

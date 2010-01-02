@@ -84,9 +84,11 @@ void TestLogData::multipleLoad()
     QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
 
     // Ensure the counting has started
-    QMutex mutex;
-    QWaitCondition sleep;
-    sleep.wait( &mutex, 10 );
+    {
+        QMutex mutex;
+        QWaitCondition sleep;
+        // sleep.wait( &mutex, 10 );
+    }
 
     // Load the SL (should block until VBL is fully indexed)
     QVERIFY( logData.attachFile( TMPDIR "/smalllog.txt" ) );

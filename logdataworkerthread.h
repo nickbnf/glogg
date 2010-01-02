@@ -137,6 +137,7 @@ class LogDataWorkerThread : public QThread
     // Mutex to protect operationRequested_ and friends
     QMutex mutex_;
     QWaitCondition operationRequestedCond_;
+    QWaitCondition nothingToDoCond_;
     QString fileName_;
 
     // Set when the thread must die

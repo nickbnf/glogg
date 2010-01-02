@@ -59,7 +59,7 @@ void IndexingData::addAll( qint64 size, int length,
 
 LogDataWorkerThread::LogDataWorkerThread()
     : QThread(), mutex_(), operationRequestedCond_(),
-    fileName_(), indexingData_()
+    nothingToDoCond_(), fileName_(), indexingData_()
 {
     terminate_          = false;
     interruptRequested_ = false;
@@ -88,11 +88,14 @@ void LogDataWorkerThread::indexAll()
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
     LOG(logDEBUG) << "FullIndex requested";
+
+    // If an operation is ongoing, we will block
+    while ( (operationRequested_ != NULL) )
+        nothingToDoCond_.wait( &mutex_ );
+
     interruptRequested_ = false;
     operationRequested_ = new FullIndexOperation( fileName_, &interruptRequested_ );
     operationRequestedCond_.wakeAll();
-
-    // Make it blocking until operation started.
 }
 
 void LogDataWorkerThread::indexAdditionalLines( qint64 position )
@@ -100,21 +103,22 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
     LOG(logDEBUG) << "AddLines requested";
+
+    // If an operation is ongoing, we will block
+    while ( (operationRequested_ != NULL) )
+        nothingToDoCond_.wait( &mutex_ );
+
     interruptRequested_ = false;
     operationRequested_ = new PartialIndexOperation( fileName_, &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
-
-    // Make it blocking until operation started.
 }
 
 void LogDataWorkerThread::interrupt()
 {
-    // QMutexLocker locker( &mutex_ );  // to protect interruptRequested_
+    LOG(logDEBUG) << "Load interrupt requested";
 
-    LOG(logDEBUG) << "Interrupt requested";
+    // No mutex here, setting a bool is probably atomic!
     interruptRequested_ = true;
-
-    // Make it blocking until operation cancelled.
 }
 
 // This will do an atomic copy of the object
@@ -151,6 +155,7 @@ void LogDataWorkerThread::run()
             emit indexingFinished();
             delete operationRequested_;
             operationRequested_ = NULL;
+            nothingToDoCond_.wakeAll();
         }
     }
 }

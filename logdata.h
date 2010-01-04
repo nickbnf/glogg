@@ -25,12 +25,14 @@
 #include <QFile>
 #include <QVector>
 #include <QFileSystemWatcher>
+#include <QMutex>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
 #include "logdataworkerthread.h"
 
 // Represents a complete set of data to be displayed (ie. a log file content)
+// This class is thread-safe.
 class LogData : public AbstractLogData {
   Q_OBJECT
 
@@ -80,6 +82,10 @@ class LogData : public AbstractLogData {
     qint64 fileSize_;
     int nbLines_;
     int maxLength_;
+
+    mutable QMutex fileMutex_;
+    // (is mutable to allow 'const' function to touch it,
+    // while remaining const)
 
     LogDataWorkerThread workerThread_;
 };

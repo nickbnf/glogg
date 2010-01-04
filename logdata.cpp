@@ -28,7 +28,8 @@
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), fileWatcher( this ), linePosition_(), workerThread_()
+LogData::LogData() : AbstractLogData(), fileWatcher( this ),
+    linePosition_(), fileMutex_(), workerThread_()
 {
     // Start with an "empty" log
     file_         = NULL;
@@ -175,8 +176,13 @@ QString LogData::doGetLineString( int line ) const
 {
     if ( line >= nbLines_ ) { return QString(); /* exception? */ }
 
-    file_->seek( linePosition_[line] );
+    fileMutex_.lock();
+
+    file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
     QString string = QString( file_->readLine() );
+
+    fileMutex_.unlock();
+
     string.chop( 1 );
 
     return string;

@@ -188,27 +188,31 @@ void TestLogData::changingFile()
     QCOMPARE( logData.getFileSize(), 0LL );
 }
 
-#if 0
 void TestLogData::sequentialRead()
 {
-    LogData* logData;
+    LogData logData;
 
+    // Register for notification file is loaded
+    connect( &logData, SIGNAL( loadingFinished() ),
+            this, SLOT( loadingFinished() ) );
+
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
+    // Wait for the loading to be done
     {
-        QByteArray array = generateData();
-        logData = new LogData(array);
+        QApplication::exec();
     }
 
     // Read all lines sequentially
     QString s;
     QBENCHMARK {
-        for (int i = 0; i < NB_LINES; i++)
-            s = logData->getLineString(i);
+        for (int i = 0; i < VBL_NB_LINES; i++) {
+            s = logData.getLineString(i);
+        }
     }
-    QVERIFY(s.length() > 0);
-
-    delete logData;
+    QCOMPARE( s.length(), VBL_LINE_LENGTH );
 }
 
+#if 0
 void TestLogData::randomPageRead()
 {
     LogData* logData;

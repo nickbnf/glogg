@@ -15,8 +15,8 @@
 
 static const int VBL_NB_LINES = 4999999;
 static const int VBL_LINE_PER_PAGE = 70;
-static const char* vbl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
-static const int VBL_LINE_LENGTH = 83; // Without the final '\n' !
+static const char* vbl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %07d\n";
+static const int VBL_LINE_LENGTH = 84; // Without the final '\n' !
 
 static const int SL_NB_LINES = 5000;
 static const int SL_LINE_PER_PAGE = 70;

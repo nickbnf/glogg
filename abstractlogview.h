@@ -33,6 +33,8 @@ class AbstractLogView : public QAbstractScrollArea
   public:
     AbstractLogView(const AbstractLogData* newLogData, QWidget *parent=0);
 
+    // Refresh the widget when the data set as changed.
+    void updateData();
     // Makes the widget use the new data set passed,
     // reconfigure itself and then redraw itself.
     // The caller retains ownership of the data set.

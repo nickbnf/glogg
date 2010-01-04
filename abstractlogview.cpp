@@ -84,8 +84,8 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
     LOG(logDEBUG) << "scrollContentsBy received";
 
-    firstLine -= dy;
-    firstCol  -= dx;
+    firstLine = (firstLine - dy) > 0 ? firstLine - dy : 0;
+    firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
     update();
@@ -175,6 +175,33 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
 // Public functions
 //
 
+void AbstractLogView::updateData()
+{
+    // Check the top Line is within range
+    if ( firstLine >= logData->getNbLine() ) {
+        firstLine = 0;
+        firstCol = 0;
+        verticalScrollBar()->setValue( 0 );
+        horizontalScrollBar()->setValue( 0 );
+    }
+
+    // Unselect the selected line if out of range
+    if ( selectedLine >= logData->getNbLine() )
+        selectedLine = -1;
+
+    // Adapt the scroll bars to the new content
+    verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
+    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
+
+    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+
+    // Repaint!
+    update();
+}
+
+// TODO: Deprecate this version?
 void AbstractLogView::updateData(const AbstractLogData* newLogData, int topLine)
 {
     // Save the new data

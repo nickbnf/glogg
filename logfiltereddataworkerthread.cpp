@@ -113,6 +113,13 @@ void LogFilteredDataWorkerThread::interrupt()
 
     // No mutex here, setting a bool is probably atomic!
     interruptRequested_ = true;
+
+    // We wait for the interruption to be done
+    {
+        QMutexLocker locker( &mutex_ );
+        while ( (operationRequested_ != NULL) )
+            nothingToDoCond_.wait( &mutex_ );
+    }
 }
 
 // This will do an atomic copy of the object

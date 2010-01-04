@@ -145,7 +145,14 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 // Implementation of the virtual function.
 QString LogFilteredData::doGetLineString( int lineNum ) const
 {
-    QString string = matchingLineList[lineNum].lineContent();
+    QString string;
+
+    if ( lineNum < matchingLineList.size() )
+        string = matchingLineList[lineNum].lineContent();
+    else
+    {
+        LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+    }
 
     return string;
 }

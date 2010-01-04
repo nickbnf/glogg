@@ -109,6 +109,10 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 // Start the asynchronous loading of a file.
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
+    // First we cancel any in progress search and loading
+    logFilteredData_->interruptSearch();
+    logData_->interruptLoading();
+
     if ( logData_->attachFile( fileName ) == true )
     {
         // Means the file exist, so we invalidate the search
@@ -154,15 +158,23 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
 {
     LOG(logDEBUG) << "updateFilteredView received.";
 
-    searchInfoLine->setText(
-            tr("Search in progress (%1 %)... %2 match%3 found so far.")
-            .arg( progress )
-            .arg( nbMatches )
-            .arg( nbMatches > 1 ? "es" : "" ) );
-    searchInfoLine->displayGauge( progress );
-    filteredView->updateData(logFilteredData_, 0);
-
-    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+    if ( progress == 100 ) {
+        // Searching done
+        searchInfoLine->setText(
+                tr("%1 match%2 found.").arg( nbMatches )
+                .arg( nbMatches > 1 ? "es" : "" ) );
+        searchInfoLine->hideGauge();
+    }
+    else {
+        // Search in progress
+        searchInfoLine->setText(
+                tr("Search in progress (%1 %)... %2 match%3 found so far.")
+                .arg( progress )
+                .arg( nbMatches )
+                .arg( nbMatches > 1 ? "es" : "" ) );
+        searchInfoLine->displayGauge( progress );
+        filteredView->updateData();
+    }
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
@@ -206,19 +218,20 @@ void CrawlerWidget::loadingFinishedHandler()
 // used one and destroy the old one.
 void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 {
+    LOG(logDEBUG) << "replaceCurrentSearch: " << searchText.toStdString();
+    // Interrupt the search if it's ongoing
+    logFilteredData_->interruptSearch();
+
+    // FIXME: Race condition interruptSearch/clearSearch
+
     if ( !searchText.isEmpty() ) {
         QRegExp regexp( searchText );
-        // Update the LogFilteredData...
+        // Start a new asynchronous search
         logFilteredData_->runSearch( regexp );
-        // Write the permanent info line
-        searchInfoLine->hideGauge();
-        searchInfoLine->setText( tr("Found %1 match%2.")
-                .arg( logFilteredData_->getNbLine() )
-                .arg( logFilteredData_->getNbLine() > 1 ? "es" : "" ) );
     } else {
         logFilteredData_->clearSearch();
         searchInfoLine->setText( "" );
-        filteredView->updateData( logFilteredData_, 0 );
+        filteredView->updateData();
     }
     // Connect the search to the top view
     logMainView->useNewFiltering( logFilteredData_ );
@@ -228,6 +241,9 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 // called when the SavedSearch has been changed.
 void CrawlerWidget::updateSearchCombo()
 {
+    const QString text = searchLineEdit->lineEdit()->text();
     searchLineEdit->clear();
     searchLineEdit->addItems( savedSearches->recentSearches() );
+    // In case we had something that wasn't added to the list (blank...):
+    searchLineEdit->lineEdit()->setText( text );
 }

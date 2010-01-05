@@ -218,17 +218,23 @@ void CrawlerWidget::loadingFinishedHandler()
 // used one and destroy the old one.
 void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 {
-    LOG(logDEBUG) << "replaceCurrentSearch: " << searchText.toStdString();
     // Interrupt the search if it's ongoing
     logFilteredData_->interruptSearch();
-
-    // FIXME: Race condition interruptSearch/clearSearch
 
     if ( !searchText.isEmpty() ) {
         QRegExp regexp( searchText );
         // Start a new asynchronous search
         logFilteredData_->runSearch( regexp );
     } else {
+        // We have to wait for the last search update (100%)
+        // before clearing to avoid having remaining results.
+
+        // FIXME: this is a bit of a hack, we call processEvents
+        // for Qt to empty its event queue, including (hopefully)
+        // the search update event sent by logFilteredData_. It saves
+        // us the overhead of having proper sync.
+        QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+
         logFilteredData_->clearSearch();
         searchInfoLine->setText( "" );
         filteredView->updateData();

@@ -63,11 +63,11 @@ void TestLogFilteredData::simpleSearch()
     QCOMPARE( progressSpy.count(), 4 );
 
     // Check the search
-    QCOMPARE( filteredData->isLineInMatchingList( 122 ), true );
-    QCOMPARE( filteredData->isLineInMatchingList( 123 ), false );
+    QCOMPARE( filteredData->isLineInMatchingList( 123 ), true );
+    QCOMPARE( filteredData->isLineInMatchingList( 124 ), false );
     // Line beyond limit
     QCOMPARE( filteredData->isLineInMatchingList( 60000 ), false );
-    QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 122 );
+    QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 123 );
 
     // Now let's try interrupting a search
     filteredData->runSearch( QRegExp( "123" ) );
@@ -136,7 +136,7 @@ void TestLogFilteredData::multipleSearch()
     logData.attachFile( TMPDIR "/mediumlog.txt" );
 
     // We don't expect meaningful results but it should not crash!
-    for ( int i = 0; i < 3; i++ )
+    for ( int i = 0; i < 2; i++ )
         QApplication::exec();
 
     // Disconnect all signals

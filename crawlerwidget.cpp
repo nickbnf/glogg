@@ -173,8 +173,9 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
                 .arg( nbMatches )
                 .arg( nbMatches > 1 ? "es" : "" ) );
         searchInfoLine->displayGauge( progress );
-        filteredView->updateData();
     }
+
+    filteredView->updateData();
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
@@ -205,7 +206,7 @@ void CrawlerWidget::loadingFinishedHandler()
 {
     // FIXME, handle topLine
     // logMainView->updateData( logData_, topLine );
-    logMainView->updateData( logData_, 0 );
+    logMainView->updateData();
 
     emit loadingFinished();
 }

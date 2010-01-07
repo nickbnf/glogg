@@ -26,6 +26,11 @@ int main(int argc, char *argv[])
 {
     const char* filename = "";
 
+#if 0
+    FILE* file = fopen("glogg.log", "w");
+    Output2FILE::Stream() = file;
+#endif
+
     QApplication app(argc, argv);
 
     if ( argc > 0 ) {

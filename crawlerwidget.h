@@ -69,6 +69,8 @@ class CrawlerWidget : public QSplitter
     void jumpToMatchingLine( int filteredLineNb );
 
     void loadingFinishedHandler();
+    // Manages the info lines to inform the user the file has changed.
+    void fileChangedHandler( LogData::MonitoredFileStatus );
 
   private:
     void replaceCurrentSearch( const QString& searchText );

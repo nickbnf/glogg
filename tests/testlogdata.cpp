@@ -129,6 +129,8 @@ void TestLogData::changingFile()
 
     QSignalSpy finishedSpy( &logData, SIGNAL( loadingFinished() ) );
     QSignalSpy progressSpy( &logData, SIGNAL( loadingProgressed( int ) ) );
+    QSignalSpy changedSpy( &logData,
+            SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ) );
 
     // Register for notification file is loaded
     connect( &logData, SIGNAL( loadingFinished() ),
@@ -165,10 +167,11 @@ void TestLogData::changingFile()
     }
     file.close();
 
-    // and wait for the signal
+    // and wait for the signals
     QApplication::exec();
 
     // Check we have a bigger file
+    QCOMPARE( changedSpy.count(), 1 );
     QCOMPARE( finishedSpy.count(), 2 );
     QCOMPARE( logData.getNbLine(), 400 );
     QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
@@ -178,10 +181,11 @@ void TestLogData::changingFile()
     QVERIFY( file.open( QIODevice::WriteOnly ) );
     file.close();
 
-    // and wait for the signal
+    // and wait for the signals
     QApplication::exec();
 
     // Check we have an empty file
+    QCOMPARE( changedSpy.count(), 2 );
     QCOMPARE( finishedSpy.count(), 3 );
     QCOMPARE( logData.getNbLine(), 0 );
     QCOMPARE( logData.getMaxLength(), 0 );

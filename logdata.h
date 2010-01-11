@@ -42,6 +42,8 @@ class LogData : public AbstractLogData {
     // Destroy an object
     ~LogData();
 
+    enum MonitoredFileStatus { Unchanged, DataAdded, Truncated };
+
     // Attaches (or reattaches) the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately
     // Replace the ongoing loading if necessary.
@@ -61,6 +63,9 @@ class LogData : public AbstractLogData {
     void loadingProgressed( int percent );
     // Signal the client the file is fully loaded and available.
     void loadingFinished();
+    // Sent when the file on disk has changed, will be followed
+    // by loadingProgressed if needed and then a loadingFinished.
+    void fileChanged( LogData::MonitoredFileStatus status );
 
   private slots:
     // Consider reloading the file when it changes on disk updated
@@ -68,7 +73,6 @@ class LogData : public AbstractLogData {
     void indexingFinished();
 
   private:
-    enum MonitoredFileStatus { UNCHANGED, DATA_ADDED, TRUNCATED };
     QFileSystemWatcher fileWatcher;
     MonitoredFileStatus fileChangedOnDisk_;
 

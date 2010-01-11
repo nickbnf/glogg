@@ -125,17 +125,19 @@ LogFilteredData* LogData::getNewFilteredData() const
 void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
-    if ( fileChangedOnDisk_ != TRUNCATED ) {
+    if ( fileChangedOnDisk_ != Truncated ) {
         if ( file_->size() < fileSize_ ) {
-            fileChangedOnDisk_ = TRUNCATED;
+            fileChangedOnDisk_ = Truncated;
             LOG(logINFO) << "File truncated";
             workerThread_.indexAll();
         }
-        else if ( fileChangedOnDisk_ != DATA_ADDED ) {
-            fileChangedOnDisk_ = DATA_ADDED;
+        else if ( fileChangedOnDisk_ != DataAdded ) {
+            fileChangedOnDisk_ = DataAdded;
             LOG(logINFO) << "New data on disk";
             workerThread_.indexAdditionalLines( fileSize_ );
         }
+
+        emit fileChanged( fileChangedOnDisk_ );
     }
 }
 
@@ -153,7 +155,7 @@ void LogData::indexingFinished()
     LOG(logDEBUG) << "indexingFinished: found " << nbLines_ << " lines.";
 
     // And we watch the file for updates
-    fileChangedOnDisk_ = UNCHANGED;
+    fileChangedOnDisk_ = Unchanged;
     fileWatcher.addPath( file_->fileName() );
 
     emit loadingFinished();

@@ -104,6 +104,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SIGNAL( loadingProgressed( int ) ) );
     connect( logData_, SIGNAL( loadingFinished() ),
             this, SLOT( loadingFinishedHandler() ) );
+    connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
+            this, SLOT( fileChangedHandler( LogData::MonitoredFileStatus ) ) );
 }
 
 // Start the asynchronous loading of a file.
@@ -209,6 +211,17 @@ void CrawlerWidget::loadingFinishedHandler()
     logMainView->updateData();
 
     emit loadingFinished();
+}
+
+void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
+{
+    if ( ( status == LogData::Truncated ) &&
+         !( searchInfoLine->text().isEmpty()) ) {
+        logFilteredData_->clearSearch();
+        filteredView->updateData();
+        searchInfoLine->setText(
+                tr("File truncated on disk, previous search results are not valid anymore.") );
+    }
 }
 
 //

@@ -288,7 +288,7 @@ int AbstractLogView::getNbVisibleLines() const
 int AbstractLogView::getNbVisibleCols() const
 {
     QFontMetrics fm = fontMetrics();
-    return viewport()->width()/fm.width('w') + 1;
+    return viewport()->width()/fm.width('i') + 1;
 }
 
 // Converts the mouse x, y coordinates to the line number in the file

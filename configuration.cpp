@@ -17,6 +17,8 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QFontInfo>
+
 #include "log.h"
 
 #include "configuration.h"
@@ -24,7 +26,8 @@
 Configuration::Configuration()
 {
     // Should have some sensible default values.
-    mainFont_ = QFont("courier", 10);
+    mainFont_ = QFont("mono", 10);
+    mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 }
 
 Configuration& Config()
@@ -60,7 +63,9 @@ void Configuration::readFromSettings( QSettings& settings )
 
 void Configuration::writeToSettings( QSettings& settings ) const
 {
-    settings.setValue( "mainFont.family", mainFont_.family() );
-    settings.setValue( "mainFont.size", mainFont_.pointSize() );
+    QFontInfo fi(mainFont_);
+
+    settings.setValue( "mainFont.family", fi.family() );
+    settings.setValue( "mainFont.size", fi.pointSize() );
     settings.setValue( "filterSet", QVariant::fromValue( filterSet_ ) );
 }

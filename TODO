@@ -1,19 +1,18 @@
 New features:
 - Line number
-- Status bar
+- Line number in status bar
 - vim style keyboard commands
 - quicksearch /
 - Matches overview (right bar)
 - 'Follow' file
 - Bookmarks
 - Multi files
-- Savable search text
-- Multithreaded loading/searching
+- Improved savable search text
 - Greater number of latest files
-- Save position with latest files
+- Save position with latest files (not just the last one)
 
 Fixes:
 - Up/Down arrows in filters
 - Error in regexp
 - Yellow background for errors/file changed
-- Command line arguments
+- Better font default on all platforms

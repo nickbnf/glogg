@@ -50,6 +50,8 @@ class CrawlerWidget : public QSplitter
     void getFileInfo( int* fileSize, int* fileNbLine ) const;
     // Get the line number of the first line displayed.
     int getTopLine() const;
+    // Get the selected text as a string (from the main window)
+    QString getSelectedText() const;
 
   signals:
     // Sent to signal the client load has progressed,

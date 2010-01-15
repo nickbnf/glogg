@@ -250,6 +250,11 @@ int AbstractLogView::getTopLine() const
     return firstLine;
 }
 
+int AbstractLogView::getSelection() const
+{
+    return selectedLine;
+}
+
 // Select the line and ensure it is visible on the screen, scrolling if not.
 void AbstractLogView::displayLine( int line )
 {

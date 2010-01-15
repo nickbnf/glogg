@@ -212,6 +212,13 @@ void MainWindow::openRecentFile()
 // Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
+    QClipboard* clipboard = QApplication::clipboard();
+
+    clipboard->setText( crawlerWidget->getSelectedText() );
+
+    // Put it in the global selection as well (X11 only)
+    clipboard->setText( crawlerWidget->getSelectedText(),
+            QClipboard::Selection );
 }
 
 // Reload the current log file

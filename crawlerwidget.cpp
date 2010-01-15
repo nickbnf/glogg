@@ -92,14 +92,17 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             searchButton, SIGNAL( clicked() ));
     connect(searchButton, SIGNAL( clicked() ),
             this, SLOT( startNewSearch() ) );
+
     connect(logMainView, SIGNAL( newSelection( int ) ),
             logMainView, SLOT( update() ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
             this, SLOT( jumpToMatchingLine( int ) ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
+
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
+
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
@@ -139,6 +142,11 @@ void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine ) const
 int CrawlerWidget::getTopLine() const
 {
     return logMainView->getTopLine();
+}
+
+QString CrawlerWidget::getSelectedText() const
+{
+    return logData_->getLineString( logMainView->getSelection() );
 }
 
 //

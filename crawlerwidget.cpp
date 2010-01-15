@@ -58,6 +58,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchLabel = new QLabel(tr("&Text: "));
     searchLineEdit = new QComboBox;
     searchLineEdit->setEditable( true );
+    searchLineEdit->setCompleter( 0 );
     searchLineEdit->addItems( savedSearches->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Minimum ) );
     searchLabel->setBuddy( searchLineEdit );

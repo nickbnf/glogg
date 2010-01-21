@@ -70,6 +70,7 @@ class LogFilteredData : public AbstractLogData {
 
   private:
     QString doGetLineString( int line ) const;
+    QStringList doGetLines( int first, int number ) const;
     int doGetNbLine() const;
     int doGetMaxLength() const;
 

@@ -120,19 +120,23 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         // Params
         const int bulletLineX = 11;  // Looks better with an odd value
 
+        // Lines to write
+        const QStringList lines = logData->getLines( firstLine, lastLine - firstLine );
+
         // First draw the bullet left margin
         painter.setPen(palette.color(QPalette::Text));
         painter.drawLine( bulletLineX, 0, bulletLineX, viewport()->height() );
         painter.fillRect( 0, 0, bulletLineX, viewport()->height(), Qt::darkGray );
 
         // Then draw each line
-        for (int i = firstLine; i < lastLine; i++) {
+        for (int i = firstLine; (i < lastLine) /* && (i < lines.count()) */; i++) {
             // Position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
             const int xPos = bulletLineX + 2;
 
             // string to print, cut to fit the length and position of the view
-            const QString cutLine = logData->getLineString(i).mid(firstCol, firstCol+nbCols);
+            //const QString cutLine = logData->getLineString(i).mid(firstCol, firstCol+nbCols);
+            const QString cutLine = lines[i - firstLine].mid( firstCol, firstCol+nbCols );
 
             if ( i == selectedLine ) {
                 // Reverse the selected line

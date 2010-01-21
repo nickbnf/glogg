@@ -10,9 +10,9 @@ New features:
 - Improved savable search text
 - Greater number of latest files
 - Save position with latest files (not just the last one)
+- Non modal filter dialog
 
 Fixes:
 - Up/Down arrows in filters
 - Error in regexp
 - Yellow background for errors/file changed
-- Better font default on all platforms

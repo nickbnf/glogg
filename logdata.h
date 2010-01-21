@@ -77,6 +77,7 @@ class LogData : public AbstractLogData {
     MonitoredFileStatus fileChangedOnDisk_;
 
     QString doGetLineString( int line ) const;
+    QStringList doGetLines( int first, int number ) const;
     int doGetNbLine() const;
     int doGetMaxLength() const;
 

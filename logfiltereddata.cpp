@@ -158,6 +158,18 @@ QString LogFilteredData::doGetLineString( int lineNum ) const
 }
 
 // Implementation of the virtual function.
+QStringList LogFilteredData::doGetLines( int first_line, int number ) const
+{
+    QStringList list;
+
+    for ( int i = first_line; i < first_line + number; i++ ) {
+        list.append( matchingLineList[i].lineContent() );
+    }
+
+    return list;
+}
+
+// Implementation of the virtual function.
 int LogFilteredData::doGetNbLine() const
 {
     return matchingLineList.size();

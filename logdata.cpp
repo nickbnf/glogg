@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+#include <QFileInfo>
+
 #include "log.h"
 
 #include "common.h"
@@ -89,6 +91,8 @@ bool LogData::attachFile( const QString& fileName )
     nbLines_      = 0;
     maxLength_    = 0;
 
+    file_->close();
+
     // And instructs the worker thread to index the whole file asynchronously
     LOG(logDEBUG) << "Attaching " << fileName.toStdString();
     indexingInProgress_ = true;
@@ -125,7 +129,16 @@ LogFilteredData* LogData::getNewFilteredData() const
 void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
-    if ( fileChangedOnDisk_ != Truncated ) {
+
+    const QString name = file_->fileName();
+    QFileInfo info( name );
+
+    {
+        QMutexLocker locker( &fileMutex_ );
+
+        LOG(logDEBUG) << "current fileSize=" << fileSize_;
+        file_->open( QIODevice::ReadOnly );
+        LOG(logDEBUG) << "info file_->size()=" << info.size();
         if ( file_->size() < fileSize_ ) {
             fileChangedOnDisk_ = Truncated;
             LOG(logINFO) << "File truncated";
@@ -136,9 +149,13 @@ void LogData::fileChangedOnDisk()
             LOG(logINFO) << "New data on disk";
             workerThread_.indexAdditionalLines( fileSize_ );
         }
-
-        emit fileChanged( fileChangedOnDisk_ );
+        file_->close();
     }
+
+    LOG(logDEBUG) << "After open(), file_->size()=" << file_->size();
+    info.refresh();
+    LOG(logDEBUG) << "After open(), info file_->size()=" << info.size();
+    emit fileChanged( fileChangedOnDisk_ );
 }
 
 void LogData::indexingFinished()
@@ -179,13 +196,57 @@ QString LogData::doGetLineString( int line ) const
     if ( line >= nbLines_ ) { return QString(); /* exception? */ }
 
     fileMutex_.lock();
+    file_->open( QIODevice::ReadOnly );
 
     file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
     QString string = QString( file_->readLine() );
 
+    file_->close();
     fileMutex_.unlock();
 
     string.chop( 1 );
 
     return string;
+}
+
+QStringList LogData::doGetLines( int first_line, int number ) const
+{
+    QStringList list;
+    const int last_line = first_line + number - 1;
+
+    // LOG(logDEBUG) << "LogData::doGetLines first_line:" << first_line << " nb:" << number;
+
+    if ( number == 0 ) {
+        return QStringList();
+    }
+
+    if ( last_line >= nbLines_ ) {
+        LOG(logWARNING) << "LogData::doGetLines Lines out of bound asked for";
+        return QStringList(); /* exception? */
+    }
+
+    fileMutex_.lock();
+    file_->open( QIODevice::ReadOnly );
+
+    const qint64 first_byte = (first_line == 0) ? 0 : linePosition_[first_line-1];
+    const qint64 last_byte  = linePosition_[last_line];
+    // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " last_byte:" << last_byte;
+    file_->seek( first_byte );
+    QByteArray blob = file_->read( last_byte - first_byte );
+
+    file_->close();
+    fileMutex_.unlock();
+
+    qint64 beginning = 0;
+    qint64 end = 0;
+    for ( int line = first_line; (line <= last_line); line++ ) {
+        end = linePosition_[line] - first_byte;
+        // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
+        QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
+        // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
+        list.append( QString( this_line ) );
+        beginning = end;
+    }
+
+    return list;
 }

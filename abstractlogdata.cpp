@@ -36,11 +36,18 @@ QString AbstractLogData::getLineString(int line) const
 }
 
 // Simple wrapper in order to use a clean Template Method
+QStringList AbstractLogData::getLines( int first_line, int number ) const
+{
+    return doGetLines( first_line, number );
+}
+
+// Simple wrapper in order to use a clean Template Method
 int AbstractLogData::getNbLine() const
 {
     return doGetNbLine();
 }
 
+// Simple wrapper in order to use a clean Template Method
 int AbstractLogData::getMaxLength() const
 {
     return doGetMaxLength();

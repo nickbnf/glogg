@@ -21,8 +21,8 @@
 #define ABSTRACTLOGDATA_H
 
 #include <QObject>
-#include <QByteArray>
 #include <QString>
+#include <QStringList>
 
 // Base class representing a set of data.
 // It can be either a full set or a filtered set.
@@ -35,7 +35,9 @@ class AbstractLogData : public QObject {
     virtual ~AbstractLogData() {};
 
     // Returns the line passed as a QString
-    QString getLineString(int line) const;
+    QString getLineString( int line ) const;
+    // Returns a set of lines as a QStringList
+    QStringList getLines( int first_line, int number ) const;
     // Returns the total number of lines
     int getNbLine() const;
     // Returns the length of the longest line
@@ -43,7 +45,9 @@ class AbstractLogData : public QObject {
 
   protected:
     // Internal function called to get a given line
-    virtual QString doGetLineString(int line) const = 0;
+    virtual QString doGetLineString( int line ) const = 0;
+    // Internal function called to get a set of lines
+    virtual QStringList doGetLines( int first_line, int number ) const = 0;
     // Internal function called to get the number of lines
     virtual int doGetNbLine() const = 0;
     // Internal function called to get the maximum length

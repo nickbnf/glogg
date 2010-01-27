@@ -39,16 +39,14 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(),
     nbLines_      = 0;
     maxLength_    = 0;
 
-    indexingInProgress_ = false;
-
     // Initialise the file watcher
     connect( &fileWatcher_, SIGNAL( fileChanged( const QString& ) ),
             this, SLOT( fileChangedOnDisk() ) );
     // Forward the update signal
     connect( &workerThread_, SIGNAL( indexingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
-    connect( &workerThread_, SIGNAL( indexingFinished() ),
-            this, SLOT( indexingFinished() ) );
+    connect( &workerThread_, SIGNAL( indexingFinished( bool ) ),
+            this, SLOT( indexingFinished( bool ) ) );
 
     // Starts the worker thread
     workerThread_.start();
@@ -69,11 +67,6 @@ void LogData::attachFile( const QString& fileName )
     if ( file_ ) {
         // Remove the current file from the watch list
         fileWatcher_.removeFile( file_->fileName() );
-        // And use the new filename
-        file_->setFileName( fileName );
-    }
-    else {
-        file_ = new QFile( fileName );
     }
 
     // Now the file is open, so we are committed to loading it
@@ -82,14 +75,9 @@ void LogData::attachFile( const QString& fileName )
     nbLines_      = 0;
     maxLength_    = 0;
 
-    lastModifiedDate_ = QDateTime();
-    QFileInfo fileInfo( fileName );
-    if ( fileInfo.exists() )
-        lastModifiedDate_ = fileInfo.lastModified();
-
     // And instructs the worker thread to index the whole file asynchronously
     LOG(logDEBUG) << "Attaching " << fileName.toStdString();
-    indexingInProgress_ = true;
+    indexingFileName_ = fileName;
     workerThread_.attachFile( fileName );
     workerThread_.indexAll();
 
@@ -98,8 +86,7 @@ void LogData::attachFile( const QString& fileName )
 
 void LogData::interruptLoading()
 {
-    if ( indexingInProgress_ )
-        workerThread_.interrupt();
+    workerThread_.interrupt();
 }
 
 qint64 LogData::getFileSize() const
@@ -153,24 +140,41 @@ void LogData::fileChangedOnDisk()
     emit fileChanged( fileChangedOnDisk_ );
 }
 
-void LogData::indexingFinished()
+void LogData::indexingFinished( bool success )
 {
     LOG(logDEBUG) << "indexingFinished: now copying in LogData.";
-
-    indexingInProgress_ = false;
 
     // We use the newly created file data
     // (Qt implicit copy makes this fast!)
     workerThread_.getIndexingData( &fileSize_, &maxLength_, &linePosition_ );
-    nbLines_      = linePosition_.size();
+    nbLines_ = linePosition_.size();
 
-    LOG(logDEBUG) << "indexingFinished: found " << nbLines_ << " lines.";
+    LOG(logDEBUG) << "indexingFinished: " << success <<
+        ", found " << nbLines_ << " lines.";
 
-    // And we watch the file for updates
-    fileChangedOnDisk_ = Unchanged;
-    fileWatcher_.addFile( file_->fileName() );
+    if ( success )
+    {
+        if ( file_ ) {
+            // Use the new filename
+            file_->setFileName( indexingFileName_ );
+        }
+        else {
+            file_ = new QFile( indexingFileName_ );
+        }
 
-    emit loadingFinished();
+        lastModifiedDate_ = QDateTime();
+        QFileInfo fileInfo( indexingFileName_ );
+        if ( fileInfo.exists() )
+            lastModifiedDate_ = fileInfo.lastModified();
+    }
+
+    if ( file_ ) {
+        // And we watch the file for updates
+        fileChangedOnDisk_ = Unchanged;
+        fileWatcher_.addFile( file_->fileName() );
+    }
+
+    emit loadingFinished( success );
 }
 
 //

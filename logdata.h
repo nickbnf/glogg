@@ -68,7 +68,7 @@ class LogData : public AbstractLogData {
     // percent being the percentage of completion.
     void loadingProgressed( int percent );
     // Signal the client the file is fully loaded and available.
-    void loadingFinished();
+    void loadingFinished( bool success );
     // Sent when the file on disk has changed, will be followed
     // by loadingProgressed if needed and then a loadingFinished.
     void fileChanged( LogData::MonitoredFileStatus status );
@@ -76,7 +76,7 @@ class LogData : public AbstractLogData {
   private slots:
     // Consider reloading the file when it changes on disk updated
     void fileChangedOnDisk();
-    void indexingFinished();
+    void indexingFinished( bool success );
 
   private:
     FileWatcher fileWatcher_;
@@ -87,7 +87,7 @@ class LogData : public AbstractLogData {
     qint64 doGetNbLine() const;
     int doGetMaxLength() const;
 
-    bool indexingInProgress_;
+    QString indexingFileName_;
     QFile* file_;
     LinePositionArray linePosition_;
     qint64 fileSize_;

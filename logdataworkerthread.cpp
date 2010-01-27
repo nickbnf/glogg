@@ -150,9 +150,12 @@ void LogDataWorkerThread::run()
             // Run the operation
             if ( operationRequested_->start( indexingData_ ) ) {
                 LOG(logDEBUG) << "... finished copy in workerThread.";
+                emit indexingFinished( true );
+            }
+            else {
+                emit indexingFinished( false );
             }
 
-            emit indexingFinished();
             delete operationRequested_;
             operationRequested_ = NULL;
             nothingToDoCond_.wakeAll();

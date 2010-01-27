@@ -107,8 +107,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
-    connect( logData_, SIGNAL( loadingFinished() ),
-            this, SLOT( loadingFinishedHandler() ) );
+    connect( logData_, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( loadingFinishedHandler( bool ) ) );
     connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
             this, SLOT( fileChangedHandler( LogData::MonitoredFileStatus ) ) );
 }
@@ -117,8 +117,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
     // First we cancel any in progress search and loading
-    logFilteredData_->interruptSearch();
-    logData_->interruptLoading();
+    stopLoading();
 
     QFileInfo fileInfo( fileName );
     if ( fileInfo.isReadable() )
@@ -128,11 +127,21 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
         logData_->attachFile( fileName );
         replaceCurrentSearch( "" );
         logMainView->updateData( logData_, 0 );
+
+        // Forbid starting a search when loading in progress
+        searchButton->setEnabled( false );
+
         return true;
     }
     else {
         return false;
     }
+}
+
+void CrawlerWidget::stopLoading()
+{
+    logFilteredData_->interruptSearch();
+    logData_->interruptLoading();
 }
 
 void CrawlerWidget::getFileInfo( qint64* fileSize, int* fileNbLine,
@@ -218,13 +227,14 @@ void CrawlerWidget::applyConfiguration()
     updateSearchCombo();
 }
 
-void CrawlerWidget::loadingFinishedHandler()
+void CrawlerWidget::loadingFinishedHandler( bool success )
 {
     // FIXME, handle topLine
     // logMainView->updateData( logData_, topLine );
     logMainView->updateData();
+    searchButton->setEnabled( true );
 
-    emit loadingFinished();
+    emit loadingFinished( success );
 }
 
 void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )

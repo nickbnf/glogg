@@ -134,7 +134,7 @@ class LogDataWorkerThread : public QThread
     void indexingProgressed( int percent );
     // Sent when indexing is finished, signals the client
     // to copy the new data back.
-    void indexingFinished();
+    void indexingFinished( bool success );
 
   protected:
     void run();

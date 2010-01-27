@@ -8,5 +8,6 @@
     <file>images/open.xpm</file>
     <file>images/reload.png</file>
     <file>images/reload16.png</file>
+    <file>images/stop16.png</file>
 </qresource>
 </RCC>

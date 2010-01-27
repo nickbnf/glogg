@@ -34,7 +34,7 @@ void TestLogData::simpleLoad()
     QSignalSpy progressSpy( &logData, SIGNAL( loadingProgressed( int ) ) );
 
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     QBENCHMARK {
@@ -56,10 +56,10 @@ void TestLogData::simpleLoad()
 void TestLogData::multipleLoad()
 {
     LogData logData;
-    QSignalSpy finishedSpy( &logData, SIGNAL( loadingFinished() ) );
+    QSignalSpy finishedSpy( &logData, SIGNAL( loadingFinished( bool ) ) );
 
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     // Start loading the VBL
@@ -73,6 +73,7 @@ void TestLogData::multipleLoad()
 
     // Check we have an empty file
     QCOMPARE( finishedSpy.count(), 1 );
+    // TODO: check loadingFinished arg == false
     QCOMPARE( logData.getNbLine(), 0LL );
     QCOMPARE( logData.getMaxLength(), 0 );
     QCOMPARE( logData.getFileSize(), 0LL );
@@ -124,13 +125,13 @@ void TestLogData::changingFile()
     char newLine[90];
     LogData logData;
 
-    QSignalSpy finishedSpy( &logData, SIGNAL( loadingFinished() ) );
+    QSignalSpy finishedSpy( &logData, SIGNAL( loadingFinished( bool ) ) );
     QSignalSpy progressSpy( &logData, SIGNAL( loadingProgressed( int ) ) );
     QSignalSpy changedSpy( &logData,
             SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ) );
 
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     // Generate a small file
@@ -194,7 +195,7 @@ void TestLogData::sequentialRead()
     LogData logData;
 
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     logData.attachFile( TMPDIR "/verybiglog.txt" );

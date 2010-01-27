@@ -71,8 +71,8 @@ MainWindow::MainWindow() : mainIcon_()
     // Register for progress status bar
     connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
             this, SLOT( updateLoadingProgress( int ) ) );
-    connect( crawlerWidget, SIGNAL( loadingFinished() ),
-            this, SLOT( displayNormalStatus() ) );
+    connect( crawlerWidget, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( displayNormalStatus( bool ) ) );
 
     setWindowIcon( mainIcon_ );
     setCentralWidget(crawlerWidget);
@@ -119,32 +119,37 @@ void MainWindow::createActions()
     exitAction = new QAction(tr("E&xit"), this);
     exitAction->setShortcut(tr("Ctrl+Q"));
     exitAction->setStatusTip(tr("Exit the application"));
-    connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
+    connect( exitAction, SIGNAL(triggered()), this, SLOT(close()) );
 
     copyAction = new QAction(tr("&Copy"), this);
     copyAction->setShortcut(QKeySequence::Copy);
     copyAction->setStatusTip(tr("Copy the selected line"));
-    connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
+    connect( copyAction, SIGNAL(triggered()), this, SLOT(copy()) );
 
     reloadAction = new QAction( tr("&Reload"), this );
     reloadAction->setIcon( QIcon(":/images/reload16.png") );
     connect( reloadAction, SIGNAL(triggered()), this, SLOT(reload()) );
 
+    stopAction = new QAction( tr("&Stop"), this );
+    stopAction->setIcon( QIcon(":/images/stop16.png") );
+    stopAction->setEnabled( false );
+    connect( stopAction, SIGNAL(triggered()), this, SLOT(stop()) );
+
     filtersAction = new QAction(tr("&Filters..."), this);
     filtersAction->setStatusTip(tr("Show the Filters box"));
-    connect(filtersAction, SIGNAL(triggered()), this, SLOT(filters()));
+    connect( filtersAction, SIGNAL(triggered()), this, SLOT(filters()) );
 
     optionsAction = new QAction(tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Show the Options box"));
-    connect(optionsAction, SIGNAL(triggered()), this, SLOT(options()));
+    connect( optionsAction, SIGNAL(triggered()), this, SLOT(options()) );
 
     aboutAction = new QAction(tr("&About"), this);
     aboutAction->setStatusTip(tr("Show the About box"));
-    connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
+    connect( aboutAction, SIGNAL(triggered()), this, SLOT(about()) );
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
     aboutAction->setStatusTip(tr("Show the Qt library's About box"));
-    connect(aboutQtAction, SIGNAL(triggered()), this, SLOT(aboutQt()));
+    connect( aboutQtAction, SIGNAL(triggered()), this, SLOT(aboutQt()) );
 }
 
 void MainWindow::createMenus()
@@ -186,6 +191,7 @@ void MainWindow::createToolBars()
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
     toolBar->addWidget( infoLine );
+    toolBar->addAction( stopAction );
 }
 
 //
@@ -228,6 +234,12 @@ void MainWindow::reload()
         loadFile( currentFile );
 }
 
+// Stop the loading operation
+void MainWindow::stop()
+{
+    crawlerWidget->stopLoading();
+}
+
 // Opens the 'Filters' dialog box
 void MainWindow::filters()
 {
@@ -265,15 +277,18 @@ void MainWindow::aboutQt()
 void MainWindow::updateLoadingProgress( int progress )
 {
     LOG(logDEBUG) << "Loading progress: " << progress;
-    infoLine->setText( tr( "Indexing lines... (%1 %)" ).arg( progress ) );
+    infoLine->setText( loadingFileName + tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
     infoLine->displayGauge( progress );
 }
 
-void MainWindow::displayNormalStatus()
+void MainWindow::displayNormalStatus( bool success )
 {
     QLocale defaultLocale;
 
     LOG(logDEBUG) << "displayNormalStatus";
+
+    if ( success )
+        setCurrentFile( loadingFileName );
 
     qint64 fileSize;
     int fileNbLine;
@@ -293,6 +308,7 @@ void MainWindow::displayNormalStatus()
     }
 
     infoLine->hideGauge();
+    stopAction->setEnabled( false );
 }
 
 //
@@ -342,15 +358,16 @@ bool MainWindow::loadFile( const QString& fileName )
         topLine = crawlerWidget->getTopLine();
 
     // Load the file
-    updateLoadingProgress( 0 );
+    stopAction->setEnabled( true );
     if ( crawlerWidget->readFile( fileName, topLine ) ) {
+        loadingFileName = fileName;
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
-        setCurrentFile( fileName );
+        updateLoadingProgress( 0 );
         return true;
     }
     else {
         LOG(logWARNING) << "Cannot load file " << fileName.toStdString();
-        displayNormalStatus();
+        displayNormalStatus( false );
         return false;
     }
 }

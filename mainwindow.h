@@ -49,6 +49,7 @@ class MainWindow : public QMainWindow
     void openRecentFile();
     void copy();
     void reload();
+    void stop();
     void filters();
     void options();
     void about();
@@ -58,7 +59,7 @@ class MainWindow : public QMainWindow
     void updateLoadingProgress( int progress );
     // Instructs the widget to display the 'normal' status bar,
     // without the progress gauge and with file info
-    void displayNormalStatus();
+    void displayNormalStatus( bool success );
 
   signals:
     // Is emitted when new settings must be used
@@ -83,6 +84,7 @@ class MainWindow : public QMainWindow
     SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;
     QStringList recentFiles;
+    QString loadingFileName;
     QString currentFile;
     QString previousFile;
 
@@ -103,6 +105,7 @@ class MainWindow : public QMainWindow
     QAction *exitAction;
     QAction *copyAction;
     QAction *reloadAction;
+    QAction *stopAction;
     QAction *filtersAction;
     QAction *optionsAction;
     QAction *aboutAction;

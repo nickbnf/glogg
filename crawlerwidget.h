@@ -46,6 +46,8 @@ class CrawlerWidget : public QSplitter
 
     // Loads the passed file and reports success.
     bool readFile( const QString& fileName, int topLine );
+    // Stop the loading of the file if one is in progress
+    void stopLoading();
     // Get the size (in bytes) and number of lines in the current file.
     void getFileInfo( qint64* fileSize, int* fileNbLine,
        QDateTime* lastModified ) const;
@@ -58,7 +60,9 @@ class CrawlerWidget : public QSplitter
     // Sent to signal the client load has progressed,
     // passing the completion percentage.
     void loadingProgressed( int progress );
-    void loadingFinished();
+    // Sent to the client when the loading has finished
+    // weither succesfull or not.
+    void loadingFinished( bool success );
 
   private slots:
     // Instructs the widget to start a search using the current search line.
@@ -71,7 +75,7 @@ class CrawlerWidget : public QSplitter
     // to instruct the main view to jump to the matching line.
     void jumpToMatchingLine( int filteredLineNb );
 
-    void loadingFinishedHandler();
+    void loadingFinishedHandler( bool success );
     // Manages the info lines to inform the user the file has changed.
     void fileChangedHandler( LogData::MonitoredFileStatus );
 

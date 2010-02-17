@@ -200,7 +200,8 @@ void TestLogData::sequentialRead()
     connect( &logData, SIGNAL( loadingFinished() ),
             this, SLOT( loadingFinished() ) );
 
-    logData.attachFile( TMPDIR "/verybiglog.txt" );
+    QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
+
     // Wait for the loading to be done
     {
         QApplication::exec();
@@ -216,33 +217,36 @@ void TestLogData::sequentialRead()
     QCOMPARE( s.length(), VBL_LINE_LENGTH );
 }
 
-#if 0
 void TestLogData::randomPageRead()
 {
-    LogData* logData;
+    LogData logData;
 
+    // Register for notification file is loaded
+    connect( &logData, SIGNAL( loadingFinished() ),
+            this, SLOT( loadingFinished() ) );
+
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
+    // Wait for the loading to be done
     {
-        QByteArray array = generateData();
-        logData = new LogData(array);
+        QApplication::exec();
     }
 
-    // Read page by page from the beginning and the end
-    QString s;
+    QWARN("Starting random page read test");
+
+    // Read page by page from the beginning and the end, using the QStringList
+    // function
+    QStringList list;
     QBENCHMARK {
-        for (int page = 0; page < (NB_LINES/LINE_PER_PAGE)-1; page++)
+        for (int page = 0; page < (VBL_NB_LINES/VBL_LINE_PER_PAGE)-1; page++)
         {
-            for (int i = page*LINE_PER_PAGE; i < ((page+1)*LINE_PER_PAGE); i++)
-                s = logData->getLineString(i);
-            int page_from_end = (NB_LINES/LINE_PER_PAGE) - page - 1;
-            for (int i = page_from_end*LINE_PER_PAGE; i < ((page_from_end+1)*LINE_PER_PAGE); i++)
-                s = logData->getLineString(i);
+            list = logData.getLines( page*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
+            QCOMPARE(list.count(), VBL_LINE_PER_PAGE);
+            int page_from_end = (VBL_NB_LINES/VBL_LINE_PER_PAGE) - page - 1;
+            list = logData.getLines( page_from_end*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
+            QCOMPARE(list.count(), VBL_LINE_PER_PAGE);
         }
     }
-    QVERIFY(s.length() > 0);
-
-    delete logData;
 }
-#endif
 
 //
 // Private functions

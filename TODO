@@ -16,3 +16,8 @@ Fixes:
 - Up/Down arrows in filters
 - Error in regexp
 - Yellow background for errors/file changed
+- Keep colours (partially) of selected text
+- More readable file size (KiB, MiB)
+
+Perf:
+- Search slows down when there is a large number of matches

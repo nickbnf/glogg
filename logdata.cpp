@@ -70,19 +70,10 @@ bool LogData::attachFile( const QString& fileName )
         // Remove the current file from the watch list
         fileWatcher.removePath( file_->fileName() );
         // And use the new filename
-        file_->close();
         file_->setFileName( fileName );
     }
     else {
         file_ = new QFile( fileName );
-    }
-
-    // Open the new file
-    if ( !file_->open( QIODevice::ReadOnly ) )
-    {
-        // TODO: Check that the file is seekable?
-        LOG(logERROR) << "Cannot open file " << fileName.toStdString();
-        return false;
     }
 
     // Now the file is open, so we are committed to loading it
@@ -90,8 +81,6 @@ bool LogData::attachFile( const QString& fileName )
     fileSize_     = 0;
     nbLines_      = 0;
     maxLength_    = 0;
-
-    file_->close();
 
     // And instructs the worker thread to index the whole file asynchronously
     LOG(logDEBUG) << "Attaching " << fileName.toStdString();
@@ -130,16 +119,15 @@ void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
 
+    fileWatcher.removePath( file_->fileName() );
+
     const QString name = file_->fileName();
     QFileInfo info( name );
 
     {
-        QMutexLocker locker( &fileMutex_ );
-
         LOG(logDEBUG) << "current fileSize=" << fileSize_;
-        file_->open( QIODevice::ReadOnly );
         LOG(logDEBUG) << "info file_->size()=" << info.size();
-        if ( file_->size() < fileSize_ ) {
+        if ( info.size() < fileSize_ ) {
             fileChangedOnDisk_ = Truncated;
             LOG(logINFO) << "File truncated";
             workerThread_.indexAll();
@@ -149,7 +137,6 @@ void LogData::fileChangedOnDisk()
             LOG(logINFO) << "New data on disk";
             workerThread_.indexAdditionalLines( fileSize_ );
         }
-        file_->close();
     }
 
     LOG(logDEBUG) << "After open(), file_->size()=" << file_->size();

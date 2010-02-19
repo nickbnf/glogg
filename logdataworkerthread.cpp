@@ -184,45 +184,49 @@ bool FullIndexOperation::start( IndexingData& sharedData )
     LOG(logDEBUG) << "FullIndexOperation::start(), file "
         << fileName_.toStdString();
 
-    QFile file( fileName_ );
-    if ( !file.open( QIODevice::ReadOnly ) )
-    {
-        // TODO: Check that the file is seekable?
-        LOG(logERROR) << "Cannot open file " << fileName_.toStdString();
-        return false;
-    }
-
     // Count the number of lines and max length
     // (read big chunks to speed up reading from disk)
     LOG(logDEBUG) << "FullIndexOperation: Starting the count...";
     int maxLength = 0;
     LinePositionArray linePosition = LinePositionArray();
     qint64 end = 0, pos = 0;
-    while ( !file.atEnd() ) {
-        if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
-            break;
 
-        // Read a chunk of 5MB
-        const qint64 block_beginning = file.pos();
-        const QByteArray block = file.read( sizeChunk );
+    QFile file( fileName_ );
+    if ( file.open( QIODevice::ReadOnly ) ) {
+        while ( !file.atEnd() ) {
+            if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
+                break;
 
-        // Count the number of lines in each chunk
-        qint64 next_lf = 0;
-        while ( next_lf != -1 ) {
-            const qint64 pos_within_block = max2( pos - block_beginning, 0LL);
-            next_lf = block.indexOf( "\n", pos_within_block );
-            if ( next_lf != -1 ) {
-                end = next_lf + block_beginning;
-                const int length = end-pos;
-                if ( length > maxLength )
-                    maxLength = length;
-                pos = end + 1;
-                linePosition.append( pos );
+            // Read a chunk of 5MB
+            const qint64 block_beginning = file.pos();
+            const QByteArray block = file.read( sizeChunk );
+
+            // Count the number of lines in each chunk
+            qint64 next_lf = 0;
+            while ( next_lf != -1 ) {
+                const qint64 pos_within_block = max2( pos - block_beginning, 0LL);
+                next_lf = block.indexOf( "\n", pos_within_block );
+                if ( next_lf != -1 ) {
+                    end = next_lf + block_beginning;
+                    const int length = end-pos;
+                    if ( length > maxLength )
+                        maxLength = length;
+                    pos = end + 1;
+                    linePosition.append( pos );
+                }
             }
-        }
 
-        // Update the caller for progress indication
-        emit indexingProgressed( pos*100 / file.size() );
+            // Update the caller for progress indication
+            int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
+            emit indexingProgressed( progress );
+        }
+    }
+    else {
+        // TODO: Check that the file is seekable?
+        // If the file cannot be open, we do as if it was empty
+        LOG(logWARNING) << "Cannot open file " << fileName_.toStdString();
+
+        emit indexingProgressed( 100 );
     }
 
     if ( *interruptRequest_ == false )

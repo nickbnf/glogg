@@ -67,6 +67,8 @@ class IndexOperation : public QObject
 
     virtual ~IndexOperation() { }
 
+    // Start the indexing operation, returns true if it has been done
+    // and false if it has been cancelled (results not copied)
     virtual bool start( IndexingData& result ) = 0;
 
   signals:

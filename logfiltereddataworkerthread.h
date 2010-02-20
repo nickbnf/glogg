@@ -119,6 +119,8 @@ class LogFilteredDataWorkerThread : public QThread
     void run();
 
   private:
+    static const int nbLinesInChunk;
+
     void doSearch( const SearchOperation* searchOperation );
 
     const LogData* sourceLogData_;

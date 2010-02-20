@@ -24,12 +24,12 @@
 #include <QString>
 #include <QFile>
 #include <QVector>
-#include <QFileSystemWatcher>
 #include <QMutex>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
 #include "logdataworkerthread.h"
+#include "filewatcher.h"
 
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
@@ -73,7 +73,7 @@ class LogData : public AbstractLogData {
     void indexingFinished();
 
   private:
-    QFileSystemWatcher fileWatcher;
+    FileWatcher fileWatcher_;
     MonitoredFileStatus fileChangedOnDisk_;
 
     QString doGetLineString( int line ) const;

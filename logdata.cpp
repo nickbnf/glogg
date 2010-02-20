@@ -30,7 +30,7 @@
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), fileWatcher( this ),
+LogData::LogData() : AbstractLogData(), fileWatcher_(),
     linePosition_(), fileMutex_(), workerThread_()
 {
     // Start with an "empty" log
@@ -42,7 +42,7 @@ LogData::LogData() : AbstractLogData(), fileWatcher( this ),
     indexingInProgress_ = false;
 
     // Initialise the file watcher
-    connect( &fileWatcher, SIGNAL( fileChanged( const QString& ) ),
+    connect( &fileWatcher_, SIGNAL( fileChanged( const QString& ) ),
             this, SLOT( fileChangedOnDisk() ) );
     // Forward the update signal
     connect( &workerThread_, SIGNAL( indexingProgressed( int ) ),
@@ -68,7 +68,7 @@ bool LogData::attachFile( const QString& fileName )
 {
     if ( file_ ) {
         // Remove the current file from the watch list
-        fileWatcher.removePath( file_->fileName() );
+        fileWatcher_.removeFile( file_->fileName() );
         // And use the new filename
         file_->setFileName( fileName );
     }
@@ -119,7 +119,7 @@ void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
 
-    fileWatcher.removePath( file_->fileName() );
+    fileWatcher_.removeFile( file_->fileName() );
 
     const QString name = file_->fileName();
     QFileInfo info( name );
@@ -160,7 +160,7 @@ void LogData::indexingFinished()
 
     // And we watch the file for updates
     fileChangedOnDisk_ = Unchanged;
-    fileWatcher.addPath( file_->fileName() );
+    fileWatcher_.addFile( file_->fileName() );
 
     emit loadingFinished();
 }

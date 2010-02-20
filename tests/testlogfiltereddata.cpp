@@ -79,7 +79,7 @@ void TestLogFilteredData::simpleSearch()
     QCOMPARE( filteredData->getNbLine(), matches[1] );
     QApplication::exec();
     // After interrupt: should be 100% and the same number of matches
-    QCOMPARE( filteredData->getNbLine(), matches[1] );
+    QCOMPARE( filteredData->getNbLine(), matches[2] );
 
     // (because there is no guarantee when the search is 
     // interrupted, we are not sure how many chunk of result

@@ -123,13 +123,18 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
         const int nbLines = logData->getNbLine();
-        if ( firstLine >= nbLines )
-            firstLine = ( nbLines > 0 ) ? nbLines - 1 : 0;
-        if ( lastLine >= nbLines )
-            lastLine = ( nbLines > 0 ) ? nbLines - 1 : 0;
+        if ( nbLines == 0 ) {
+            return;
+        }
+        else {
+            if ( firstLine >= nbLines )
+                firstLine = nbLines - 1;
+            if ( lastLine >= nbLines )
+                lastLine =  nbLines - 1;
+        }
 
         // Lines to write
-        const QStringList lines = logData->getLines( firstLine, lastLine - firstLine );
+        const QStringList lines = logData->getLines( firstLine, lastLine - firstLine + 1 );
 
         // First draw the bullet left margin
         painter.setPen(palette.color(QPalette::Text));
@@ -137,7 +142,7 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         painter.fillRect( 0, 0, bulletLineX, viewport()->height(), Qt::darkGray );
 
         // Then draw each line
-        for (int i = firstLine; (i < lastLine); i++) {
+        for (int i = firstLine; i <= lastLine; i++) {
             // Position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
             const int xPos = bulletLineX + 2;

@@ -112,8 +112,14 @@ class LogDataWorkerThread : public QThread
     LogDataWorkerThread();
     ~LogDataWorkerThread();
 
+    // Attaches to a file on disk. Attaching to a non existant file
+    // will work, it will just appear as an empty file.
     void attachFile( const QString& fileName );
+    // Instructs the thread to start a new full indexing of the file, sending
+    // signals as it progresses.
     void indexAll();
+    // Instructs the thread to start a partial indexing (starting at
+    // the index passed).
     void indexAdditionalLines( qint64 position );
     // Interrupts the indexing if one is in progress
     void interrupt();

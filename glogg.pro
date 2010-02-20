@@ -23,7 +23,8 @@ SOURCES += main.cpp \
     savedsearches.cpp \
     infoline.cpp \
     logdataworkerthread.cpp \
-    logfiltereddataworkerthread.cpp
+    logfiltereddataworkerthread.cpp \
+    filewatcher.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -42,7 +43,8 @@ HEADERS += version.h \
     savedsearches.h \
     infoline.h \
     logdataworkerthread.h \
-    logfiltereddataworkerthread.h
+    logfiltereddataworkerthread.h \
+    filewatcher.h
 
 greaterThan(QT_VERSION, "4.4.0") {
     FORMS += filtersdialog.ui

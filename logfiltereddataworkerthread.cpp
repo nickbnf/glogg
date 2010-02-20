@@ -25,6 +25,9 @@
 #include "logdata.h"
 #include "common.h"
 
+// Number of lines in each chunk to read
+const int LogFilteredDataWorkerThread::nbLinesInChunk = 5000;
+
 void SearchData::getAll( int* length, SearchResultArray* matches )
 {
     QMutexLocker locker( &dataMutex_ );
@@ -166,37 +169,39 @@ void LogFilteredDataWorkerThread::run()
 void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperation )
 {
     const QRegExp regExp = searchOperation->regExp();
+    const int nbSourceLines = sourceLogData_->getNbLine();
     int maxLength = 0, nbMatches = 0;
     SearchResultArray currentList = SearchResultArray();
 
     // Clear the shared data
     searchData_.clear();
 
-    for ( int i = 0; i < sourceLogData_->getNbLine(); i++ ) {
+    for ( int i = 0; i < nbSourceLines; i += nbLinesInChunk ) {
         if ( interruptRequested_ )
             break;
 
-        const QString line = sourceLogData_->getLineString( i );
-        if ( regExp.indexIn( line ) != -1 ) {
-            const int length = line.length();
-            if ( length > maxLength )
-                maxLength = length;
-            MatchingLine match( i, line );
-            currentList.append( match );
-            nbMatches++;
+        emit searchProgressed( nbMatches, i * 100 / nbSourceLines );
+
+        const QStringList lines = sourceLogData_->getLines( i,
+                min2( nbLinesInChunk, nbSourceLines - i ) );
+        LOG(logDEBUG) << "Chunk starting at " << i << ", " << lines.length() << " lines read.";
+
+        for ( int j = 0; j < lines.length(); j++ ) {
+            if ( regExp.indexIn( lines[j] ) != -1 ) {
+                const int length = lines[j].length();
+                if ( length > maxLength )
+                    maxLength = length;
+                MatchingLine match( i+j, lines[j] );
+                currentList.append( match );
+                nbMatches++;
+            }
         }
 
-        // Every once in a while, copy the data to shared data
+        // After each block, copy the data to shared data
         // and update the client
-        if ( !( i % 5000 ) ) {
-            searchData_.addAll( maxLength, currentList );
-            currentList.clear();
-
-            emit searchProgressed( nbMatches,
-                    i * 100 / sourceLogData_->getNbLine() );
-        }
+        searchData_.addAll( maxLength, currentList );
+        currentList.clear();
     }
 
-    searchData_.addAll( maxLength, currentList );
     emit searchProgressed( nbMatches, 100 );
 }

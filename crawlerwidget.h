@@ -47,7 +47,8 @@ class CrawlerWidget : public QSplitter
     // Loads the passed file and reports success.
     bool readFile( const QString& fileName, int topLine );
     // Get the size (in bytes) and number of lines in the current file.
-    void getFileInfo( int* fileSize, int* fileNbLine ) const;
+    void getFileInfo( int* fileSize, int* fileNbLine,
+       QDateTime* lastModified ) const;
     // Get the line number of the first line displayed.
     int getTopLine() const;
     // Get the selected text as a string (from the main window)

@@ -82,6 +82,11 @@ bool LogData::attachFile( const QString& fileName )
     nbLines_      = 0;
     maxLength_    = 0;
 
+    lastModifiedDate_ = QDateTime();
+    QFileInfo fileInfo( fileName );
+    if ( fileInfo.exists() )
+        lastModifiedDate_ = fileInfo.lastModified();
+
     // And instructs the worker thread to index the whole file asynchronously
     LOG(logDEBUG) << "Attaching " << fileName.toStdString();
     indexingInProgress_ = true;
@@ -101,6 +106,11 @@ void LogData::interruptLoading()
 qint64 LogData::getFileSize() const
 {
     return fileSize_;
+}
+
+QDateTime LogData::getLastModifiedDate() const
+{
+    return lastModifiedDate_;
 }
 
 // Return an initialised LogFilteredData. The search is not started.
@@ -139,9 +149,8 @@ void LogData::fileChangedOnDisk()
         }
     }
 
-    LOG(logDEBUG) << "After open(), file_->size()=" << file_->size();
-    info.refresh();
-    LOG(logDEBUG) << "After open(), info file_->size()=" << info.size();
+    lastModifiedDate_ = info.lastModified();
+
     emit fileChanged( fileChangedOnDisk_ );
 }
 

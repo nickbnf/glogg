@@ -25,6 +25,7 @@
 #include <QFile>
 #include <QVector>
 #include <QMutex>
+#include <QDateTime>
 
 #include "abstractlogdata.h"
 #include "logfiltereddata.h"
@@ -47,6 +48,8 @@ class LogData : public AbstractLogData {
     // Attaches (or reattaches) the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately
     // Replace the ongoing loading if necessary.
+    // Attaching to a non existant file works and the file is reported
+    // to be empty.
     bool attachFile( const QString& fileName );
     // Interrupt the loading and restore the previous file.
     // Does nothing if no loading in progress.
@@ -56,6 +59,9 @@ class LogData : public AbstractLogData {
     LogFilteredData* getNewFilteredData() const;
     // Returns the size if the file in bytes
     qint64 getFileSize() const;
+    // Returns the last modification date for the file.
+    // Null if the file is not on disk.
+    QDateTime getLastModifiedDate() const;
 
   signals:
     // Sent during the 'attach' process to signal progress
@@ -87,6 +93,7 @@ class LogData : public AbstractLogData {
     qint64 fileSize_;
     int nbLines_;
     int maxLength_;
+    QDateTime lastModifiedDate_;
 
     mutable QMutex fileMutex_;
     // (is mutable to allow 'const' function to touch it,

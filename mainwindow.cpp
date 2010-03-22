@@ -271,12 +271,26 @@ void MainWindow::updateLoadingProgress( int progress )
 
 void MainWindow::displayNormalStatus()
 {
+    QLocale defaultLocale;
+
     LOG(logDEBUG) << "displayNormalStatus";
 
     int fileSize, fileNbLine;
-    crawlerWidget->getFileInfo( &fileSize, &fileNbLine );
-    infoLine->setText( tr( "%1 (%2 KB - %3 lines)" )
-            .arg(currentFile).arg(fileSize/1024).arg(fileNbLine) );
+    QDateTime lastModified;
+
+    crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );
+    if ( lastModified.isValid() ) {
+        infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4)" )
+                .arg(currentFile).arg(readableSize(fileSize))
+                .arg(fileNbLine)
+                .arg(defaultLocale.toString( lastModified, QLocale::NarrowFormat) ) );
+    }
+    else {
+        infoLine->setText( tr( "%1 (%2 - %3 lines)" )
+                .arg(currentFile).arg(readableSize(fileSize))
+                .arg(fileNbLine) );
+    }
+
     infoLine->hideGauge();
 }
 
@@ -341,7 +355,7 @@ bool MainWindow::loadFile( const QString& fileName )
 }
 
 // Strips the passed filename from its directory part.
-QString MainWindow::strippedName( const QString& fullFileName )
+QString MainWindow::strippedName( const QString& fullFileName ) const
 {
     return QFileInfo( fullFileName ).fileName();
 }
@@ -427,4 +441,34 @@ void MainWindow::readSettings()
     *savedSearches = settings.value( "savedSearches" ).value<SavedSearches>();
 
     Config().readFromSettings( settings );
+}
+
+// Returns the size in human readable format
+QString MainWindow::readableSize( qint64 size ) const
+{
+    static const QString sizeStrs[] = {
+        tr("B"), tr("KiB"), tr("MiB"), tr("GiB"), tr("TiB") };
+
+    QLocale defaultLocale;
+    unsigned int i;
+    double humanSize = size;
+
+    for ( i=0; i+1 < (sizeof(sizeStrs)/sizeof(QString)) && (humanSize/1024.0) >= 1024.0; i++ )
+        humanSize /= 1024.0;
+
+    if ( humanSize >= 1024.0 ) {
+        humanSize /= 1024.0;
+        i++;
+    }
+
+    QString output;
+    if ( i == 0 )
+        // No decimal part if we display straight bytes.
+        output = defaultLocale.toString( (int) humanSize );
+    else
+        output = defaultLocale.toString( humanSize, 'f', 1 );
+
+    output += QString(" ") + sizeStrs[i];
+
+    return output;
 }

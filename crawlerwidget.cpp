@@ -132,10 +132,12 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
     }
 }
 
-void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine ) const
+void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine,
+       QDateTime* lastModified ) const
 {
     *fileSize = logData_->getFileSize();
     *fileNbLine = logData_->getNbLine();
+    *lastModified = logData_->getLastModifiedDate();
 }
 
 // The top line is first one on the main display

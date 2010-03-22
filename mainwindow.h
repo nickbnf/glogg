@@ -76,7 +76,9 @@ class MainWindow : public QMainWindow
     bool loadFile( const QString& fileName );
     void setCurrentFile( const QString& fileName );
     void updateRecentFileActions();
-    QString strippedName( const QString& fullFileName );
+    QString strippedName( const QString& fullFileName ) const;
+    // Returns the size in human readable format
+    QString readableSize( qint64 size ) const;
 
     SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;

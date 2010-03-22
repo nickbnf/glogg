@@ -37,7 +37,8 @@ class Log
 public:
     Log();
     virtual ~Log();
-    std::ostringstream& Get(TLogLevel level = logINFO);
+    std::ostringstream& Get(TLogLevel level = logINFO,
+            const std::string& sourceFile = "", int lineNumber = 0);
 public:
     static TLogLevel& ReportingLevel();
     static std::string ToString(TLogLevel level);
@@ -55,10 +56,12 @@ Log<T>::Log()
 }
 
 template <typename T>
-std::ostringstream& Log<T>::Get(TLogLevel level)
+std::ostringstream& Log<T>::Get(TLogLevel level,
+        const std::string& sourceFile, int lineNumber)
 {
     os << "- " << NowTime();
-    os << " " << ToString(level) << ": ";
+    os << " " << ToString(level);
+    os << " " << sourceFile << ":" << lineNumber << ": ";
     os << std::string(level > logDEBUG ? level - logDEBUG : 0, '\t');
     return os;
 }
@@ -151,7 +154,7 @@ class FILELOG_DECLSPEC FILELog : public Log<Output2FILE> {};
 #define FILE_LOG(level) \
     if (level > FILELOG_MAX_LEVEL) ;\
     else if (level > FILELog::ReportingLevel() || !Output2FILE::Stream()) ; \
-    else FILELog().Get(level)
+    else FILELog().Get(level, __FILE__, __LINE__)
 
 #define LOG(level) FILE_LOG(level)
 

@@ -121,7 +121,7 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
     logData_->interruptLoading();
 
     QFileInfo fileInfo( fileName );
-    if ( fileInfo.exists() )
+    if ( fileInfo.isReadable() )
     {
         // Means the file exist, so we invalidate the search
         // and redraw the screen.

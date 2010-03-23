@@ -50,7 +50,7 @@ class LogData : public AbstractLogData {
     // Replace the ongoing loading if necessary.
     // Attaching to a non existant file works and the file is reported
     // to be empty.
-    bool attachFile( const QString& fileName );
+    void attachFile( const QString& fileName );
     // Interrupt the loading and restore the previous file.
     // Does nothing if no loading in progress.
     void interruptLoading();

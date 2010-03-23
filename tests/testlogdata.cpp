@@ -33,9 +33,6 @@ void TestLogData::simpleLoad()
     LogData logData;
     QSignalSpy progressSpy( &logData, SIGNAL( loadingProgressed( int ) ) );
 
-    // First try to log a non existent file
-    QVERIFY( logData.attachFile( "/non/existent/file" ) == false );
-
     // Register for notification file is loaded
     connect( &logData, SIGNAL( loadingFinished() ),
             this, SLOT( loadingFinished() ) );

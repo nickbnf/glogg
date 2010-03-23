@@ -64,7 +64,7 @@ LogData::~LogData()
 // Public functions
 //
 
-bool LogData::attachFile( const QString& fileName )
+void LogData::attachFile( const QString& fileName )
 {
     if ( file_ ) {
         // Remove the current file from the watch list
@@ -94,7 +94,6 @@ bool LogData::attachFile( const QString& fileName )
     workerThread_.indexAll();
 
     // The client might now use the new file (even if it is empty for now)!
-    return true;
 }
 
 void LogData::interruptLoading()

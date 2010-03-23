@@ -28,6 +28,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QLineEdit>
+#include <QFileInfo>
 
 #include "crawlerwidget.h"
 
@@ -119,10 +120,12 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
     logFilteredData_->interruptSearch();
     logData_->interruptLoading();
 
-    if ( logData_->attachFile( fileName ) == true )
+    QFileInfo fileInfo( fileName );
+    if ( fileInfo.exists() )
     {
         // Means the file exist, so we invalidate the search
         // and redraw the screen.
+        logData_->attachFile( fileName );
         replaceCurrentSearch( "" );
         logMainView->updateData( logData_, 0 );
         return true;

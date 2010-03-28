@@ -21,6 +21,8 @@
 
 #include "infoline.h"
 
+#include <QPainter>
+
 // This file implements InfoLine. It is responsible for decorating the
 // widget and managing the completion gauge.
 
@@ -30,18 +32,18 @@ InfoLine::InfoLine() :
     darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
 {
     setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed );
-
-    setAutoFillBackground( true );
 }
 
 void InfoLine::displayGauge( int completion )
 {
     int changeoverX = width() * completion / 100;
 
+    // Create a gradient for the progress bar
     QLinearGradient linearGrad( changeoverX - 1, 0, changeoverX + 1, 0 );
     linearGrad.setColorAt( 0, darkBackgroundColor_ );
     linearGrad.setColorAt( 1, backgroundColor_ );
 
+    // Apply the gradient to the current palette (background)
     QPalette newPalette = origPalette_;
     newPalette.setBrush( backgroundRole(), QBrush( linearGrad ) );
     setPalette( newPalette );
@@ -50,4 +52,18 @@ void InfoLine::displayGauge( int completion )
 void InfoLine::hideGauge()
 {
     setPalette( origPalette_ );
+}
+
+// Custom painter: draw the background then call QLabel's painter
+void InfoLine::paintEvent( QPaintEvent* paintEvent )
+{
+    // Fill the widget background
+    {
+        QPainter painter( this );
+        painter.fillRect( 0, 0, this->width(), this->height(),
+                palette().brush( backgroundRole() ) );
+    }
+
+    // Call the parent's painter
+    QLabel::paintEvent( paintEvent );
 }

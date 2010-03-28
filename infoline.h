@@ -37,6 +37,9 @@ class InfoLine : public QLabel
     // Hide the gauge and make the widget like a normal QLabel
     void hideGauge();
 
+  protected:
+    void paintEvent(QPaintEvent* paintEvent);
+
   private:
     // The original palette of the QLabel
     QPalette origPalette_;

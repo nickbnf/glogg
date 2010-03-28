@@ -82,16 +82,16 @@ class LogData : public AbstractLogData {
     FileWatcher fileWatcher_;
     MonitoredFileStatus fileChangedOnDisk_;
 
-    QString doGetLineString( int line ) const;
-    QStringList doGetLines( int first, int number ) const;
-    int doGetNbLine() const;
+    QString doGetLineString( qint64 line ) const;
+    QStringList doGetLines( qint64 first, int number ) const;
+    qint64 doGetNbLine() const;
     int doGetMaxLength() const;
 
     bool indexingInProgress_;
     QFile* file_;
     LinePositionArray linePosition_;
     qint64 fileSize_;
-    int nbLines_;
+    qint64 nbLines_;
     int maxLength_;
     QDateTime lastModifiedDate_;
 

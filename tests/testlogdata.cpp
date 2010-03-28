@@ -13,12 +13,12 @@
 #define TMPDIR "/tmp"
 #endif
 
-static const int VBL_NB_LINES = 4999999;
+static const qint64 VBL_NB_LINES = 4999999LL;
 static const int VBL_LINE_PER_PAGE = 70;
 static const char* vbl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %07d\n";
 static const int VBL_LINE_LENGTH = 84; // Without the final '\n' !
 
-static const int SL_NB_LINES = 5000;
+static const qint64 SL_NB_LINES = 5000LL;
 static const int SL_LINE_PER_PAGE = 70;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 static const int SL_LINE_LENGTH = 83; // Without the final '\n' !
@@ -38,7 +38,7 @@ void TestLogData::simpleLoad()
             this, SLOT( loadingFinished() ) );
 
     QBENCHMARK {
-        QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
+        logData.attachFile( TMPDIR "/verybiglog.txt" );
         // Wait for the loading to be done
         {
             QApplication::exec();
@@ -63,7 +63,7 @@ void TestLogData::multipleLoad()
             this, SLOT( loadingFinished() ) );
 
     // Start loading the VBL
-    QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
 
     // Immediately interrupt the loading
     logData.interruptLoading();
@@ -73,12 +73,12 @@ void TestLogData::multipleLoad()
 
     // Check we have an empty file
     QCOMPARE( finishedSpy.count(), 1 );
-    QCOMPARE( logData.getNbLine(), 0 );
+    QCOMPARE( logData.getNbLine(), 0LL );
     QCOMPARE( logData.getMaxLength(), 0 );
     QCOMPARE( logData.getFileSize(), 0LL );
 
     // Restart the VBL
-    QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
 
     // Ensure the counting has started
     {
@@ -88,7 +88,7 @@ void TestLogData::multipleLoad()
     }
 
     // Load the SL (should block until VBL is fully indexed)
-    QVERIFY( logData.attachFile( TMPDIR "/smalllog.txt" ) );
+    logData.attachFile( TMPDIR "/smalllog.txt" );
 
     // and wait for the 2 signals (one for each file)
     QApplication::exec();
@@ -101,7 +101,7 @@ void TestLogData::multipleLoad()
     QCOMPARE( logData.getFileSize(), SL_NB_LINES * (SL_LINE_LENGTH+1LL) );
 
     // Restart the VBL again
-    QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
 
     // Immediately interrupt the loading
     logData.interruptLoading();
@@ -144,14 +144,14 @@ void TestLogData::changingFile()
     file.close();
 
     // Start loading it
-    QVERIFY( logData.attachFile( TMPDIR "/changingfile.txt" ) );
+    logData.attachFile( TMPDIR "/changingfile.txt" );
 
     // and wait for the signal
     QApplication::exec();
 
     // Check we have the small file
     QCOMPARE( finishedSpy.count(), 1 );
-    QCOMPARE( logData.getNbLine(), 200 );
+    QCOMPARE( logData.getNbLine(), 200LL );
     QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
     QCOMPARE( logData.getFileSize(), 200 * (SL_LINE_LENGTH+1LL) );
 
@@ -170,7 +170,7 @@ void TestLogData::changingFile()
     // Check we have a bigger file
     QCOMPARE( changedSpy.count(), 1 );
     QCOMPARE( finishedSpy.count(), 2 );
-    QCOMPARE( logData.getNbLine(), 400 );
+    QCOMPARE( logData.getNbLine(), 400LL );
     QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
     QCOMPARE( logData.getFileSize(), 400 * (SL_LINE_LENGTH+1LL) );
 
@@ -184,7 +184,7 @@ void TestLogData::changingFile()
     // Check we have an empty file
     QCOMPARE( changedSpy.count(), 2 );
     QCOMPARE( finishedSpy.count(), 3 );
-    QCOMPARE( logData.getNbLine(), 0 );
+    QCOMPARE( logData.getNbLine(), 0LL );
     QCOMPARE( logData.getMaxLength(), 0 );
     QCOMPARE( logData.getFileSize(), 0LL );
 }
@@ -197,7 +197,7 @@ void TestLogData::sequentialRead()
     connect( &logData, SIGNAL( loadingFinished() ),
             this, SLOT( loadingFinished() ) );
 
-    QVERIFY( logData.attachFile( TMPDIR "/verybiglog.txt" ) );
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
 
     // Wait for the loading to be done
     {

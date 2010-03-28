@@ -169,21 +169,21 @@ void LogFilteredDataWorkerThread::run()
 void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperation )
 {
     const QRegExp regExp = searchOperation->regExp();
-    const int nbSourceLines = sourceLogData_->getNbLine();
+    const qint64 nbSourceLines = sourceLogData_->getNbLine();
     int maxLength = 0, nbMatches = 0;
     SearchResultArray currentList = SearchResultArray();
 
     // Clear the shared data
     searchData_.clear();
 
-    for ( int i = 0; i < nbSourceLines; i += nbLinesInChunk ) {
+    for ( qint64 i = 0; i < nbSourceLines; i += nbLinesInChunk ) {
         if ( interruptRequested_ )
             break;
 
-        emit searchProgressed( nbMatches, i * 100 / nbSourceLines );
+        emit searchProgressed( nbMatches, (int) ( i * 100 / nbSourceLines ) );
 
         const QStringList lines = sourceLogData_->getLines( i,
-                min2( nbLinesInChunk, nbSourceLines - i ) );
+                min2( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
         LOG(logDEBUG) << "Chunk starting at " << i << ", " << lines.length() << " lines read.";
 
         for ( int j = 0; j < lines.length(); j++ ) {

@@ -135,7 +135,7 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
     }
 }
 
-void CrawlerWidget::getFileInfo( int* fileSize, int* fileNbLine,
+void CrawlerWidget::getFileInfo( qint64* fileSize, int* fileNbLine,
        QDateTime* lastModified ) const
 {
     *fileSize = logData_->getFileSize();

@@ -13,10 +13,10 @@
 #define TMPDIR "/tmp"
 #endif
 
-static const int ML_NB_LINES = 15000;
+static const qint64 ML_NB_LINES = 15000LL;
 static const char* ml_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 
-static const int SL_NB_LINES = 2000;
+static const qint64 SL_NB_LINES = 2000LL;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 
 void TestLogFilteredData::initTestCase()
@@ -33,7 +33,7 @@ void TestLogFilteredData::simpleSearch()
     connect( &logData, SIGNAL( loadingFinished() ),
             this, SLOT( loadingFinished() ) );
 
-    QVERIFY( logData.attachFile( TMPDIR "/mediumlog.txt" ) );
+    logData.attachFile( TMPDIR "/mediumlog.txt" );
     // Wait for the loading to be done
     {
         QApplication::exec();
@@ -48,7 +48,7 @@ void TestLogFilteredData::simpleSearch()
 
     QSignalSpy progressSpy( filteredData, SIGNAL( searchProgressed( int, int ) ) );
 
-    int matches[] = { 0, 15, 20, 135 };
+    qint64 matches[] = { 0, 15, 20, 135 };
     QBENCHMARK {
         // Start the search
         filteredData->runSearch( QRegExp( "123" ) );
@@ -67,7 +67,7 @@ void TestLogFilteredData::simpleSearch()
     QCOMPARE( filteredData->isLineInMatchingList( 124 ), false );
     // Line beyond limit
     QCOMPARE( filteredData->isLineInMatchingList( 60000 ), false );
-    QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 123 );
+    QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 123LL );
 
     // Now let's try interrupting a search
     filteredData->runSearch( QRegExp( "123" ) );
@@ -101,7 +101,7 @@ void TestLogFilteredData::multipleSearch()
     connect( &logData, SIGNAL( loadingFinished() ),
             this, SLOT( loadingFinished() ) );
 
-    QVERIFY( logData.attachFile( TMPDIR "/smalllog.txt" ) );
+    logData.attachFile( TMPDIR "/smalllog.txt" );
     // Wait for the loading to be done
     {
         QApplication::exec();
@@ -126,7 +126,7 @@ void TestLogFilteredData::multipleSearch()
         QApplication::exec();
 
     // We should have the result for the 2nd search
-    QCOMPARE( filteredData->getNbLine(), 12 );
+    QCOMPARE( filteredData->getNbLine(), 12LL );
 
     QCOMPARE( progressSpy.count(), 4 );
 

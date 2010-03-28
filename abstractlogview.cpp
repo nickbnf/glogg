@@ -70,7 +70,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     }
 }
 
-void AbstractLogView::resizeEvent(QResizeEvent* resizeEvent)
+void AbstractLogView::resizeEvent( QResizeEvent* resizeEvent )
 {
     if ( logData == NULL )
         return;
@@ -91,7 +91,7 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
     update();
 }
 
-void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
+void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 {
     QRect invalidRect = paintEvent->rect();
     if ( (invalidRect.isEmpty()) || (logData == NULL) )
@@ -101,7 +101,7 @@ void AbstractLogView::paintEvent(QPaintEvent* paintEvent)
         << " lastLine=" << lastLine <<
         " rect: " << invalidRect.topLeft().x() <<
         ", " << invalidRect.topLeft().y() <<
-        ", " <<invalidRect.bottomRight().x() <<
+        ", " << invalidRect.bottomRight().x() <<
         ", " << invalidRect.bottomRight().y();
 
     {

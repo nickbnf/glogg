@@ -30,19 +30,19 @@ AbstractLogData::AbstractLogData()
 }
 
 // Simple wrapper in order to use a clean Template Method
-QString AbstractLogData::getLineString(int line) const
+QString AbstractLogData::getLineString( qint64 line ) const
 {
     return doGetLineString(line);
 }
 
 // Simple wrapper in order to use a clean Template Method
-QStringList AbstractLogData::getLines( int first_line, int number ) const
+QStringList AbstractLogData::getLines( qint64 first_line, int number ) const
 {
     return doGetLines( first_line, number );
 }
 
 // Simple wrapper in order to use a clean Template Method
-int AbstractLogData::getNbLine() const
+qint64 AbstractLogData::getNbLine() const
 {
     return doGetNbLine();
 }

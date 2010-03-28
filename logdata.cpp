@@ -176,7 +176,7 @@ void LogData::indexingFinished()
 //
 // Implementation of virtual functions
 //
-int LogData::doGetNbLine() const
+qint64 LogData::doGetNbLine() const
 {
     return nbLines_;
 }
@@ -186,7 +186,7 @@ int LogData::doGetMaxLength() const
     return maxLength_;
 }
 
-QString LogData::doGetLineString( int line ) const
+QString LogData::doGetLineString( qint64 line ) const
 {
     if ( line >= nbLines_ ) { return QString(); /* exception? */ }
 
@@ -204,10 +204,10 @@ QString LogData::doGetLineString( int line ) const
     return string;
 }
 
-QStringList LogData::doGetLines( int first_line, int number ) const
+QStringList LogData::doGetLines( qint64 first_line, int number ) const
 {
     QStringList list;
-    const int last_line = first_line + number - 1;
+    const qint64 last_line = first_line + number - 1;
 
     // LOG(logDEBUG) << "LogData::doGetLines first_line:" << first_line << " nb:" << number;
 
@@ -234,7 +234,7 @@ QStringList LogData::doGetLines( int first_line, int number ) const
 
     qint64 beginning = 0;
     qint64 end = 0;
-    for ( int line = first_line; (line <= last_line); line++ ) {
+    for ( qint64 line = first_line; (line <= last_line); line++ ) {
         end = linePosition_[line] - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );

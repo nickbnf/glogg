@@ -56,9 +56,9 @@ class LogFilteredData : public AbstractLogData {
     void clearSearch();
     // Returns the line number in the original LogData where the element
     // 'index' was found.
-    int getMatchingLineNumber( int index ) const;
+    qint64 getMatchingLineNumber( int index ) const;
     // Returns weither the line number passed is in our list of matching ones.
-    bool isLineInMatchingList( int lineNumber );
+    bool isLineInMatchingList( qint64 lineNumber );
 
   signals:
     // Sent when the search has progressed, give the number of matches (so far)
@@ -69,9 +69,9 @@ class LogFilteredData : public AbstractLogData {
     void handleSearchProgressed( int NbMatches, int progress );
 
   private:
-    QString doGetLineString( int line ) const;
-    QStringList doGetLines( int first, int number ) const;
-    int doGetNbLine() const;
+    QString doGetLineString( qint64 line ) const;
+    QStringList doGetLines( qint64 first, int number ) const;
+    qint64 doGetNbLine() const;
     int doGetMaxLength() const;
 
     QList<MatchingLine> matchingLineList;

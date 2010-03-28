@@ -275,7 +275,8 @@ void MainWindow::displayNormalStatus()
 
     LOG(logDEBUG) << "displayNormalStatus";
 
-    int fileSize, fileNbLine;
+    qint64 fileSize;
+    int fileNbLine;
     QDateTime lastModified;
 
     crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );

@@ -35,21 +35,21 @@ class AbstractLogData : public QObject {
     virtual ~AbstractLogData() {};
 
     // Returns the line passed as a QString
-    QString getLineString( int line ) const;
+    QString getLineString( qint64 line ) const;
     // Returns a set of lines as a QStringList
-    QStringList getLines( int first_line, int number ) const;
+    QStringList getLines( qint64 first_line, int number ) const;
     // Returns the total number of lines
-    int getNbLine() const;
+    qint64 getNbLine() const;
     // Returns the length of the longest line
     int getMaxLength() const;
 
   protected:
     // Internal function called to get a given line
-    virtual QString doGetLineString( int line ) const = 0;
+    virtual QString doGetLineString( qint64 line ) const = 0;
     // Internal function called to get a set of lines
-    virtual QStringList doGetLines( int first_line, int number ) const = 0;
+    virtual QStringList doGetLines( qint64 first_line, int number ) const = 0;
     // Internal function called to get the number of lines
-    virtual int doGetNbLine() const = 0;
+    virtual qint64 doGetNbLine() const = 0;
     // Internal function called to get the maximum length
     virtual int doGetMaxLength() const = 0;
 };

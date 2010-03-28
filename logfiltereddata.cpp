@@ -90,15 +90,15 @@ void LogFilteredData::clearSearch()
     maxLength_ = 0;
 }
 
-int LogFilteredData::getMatchingLineNumber( int lineNum ) const
+qint64 LogFilteredData::getMatchingLineNumber( int matchNum ) const
 {
-    int matchingNb = matchingLineList[lineNum].lineNumber();
+    qint64 matchingLine = matchingLineList[matchNum].lineNumber();
 
-    return matchingNb;
+    return matchingLine;
 }
 
 // Scan the list for the 'lineNumber' passed
-bool LogFilteredData::isLineInMatchingList( int lineNumber )
+bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
 {
     // Use a bisection method to find the number
     // (we know the list is sorted)
@@ -114,7 +114,7 @@ bool LogFilteredData::isLineInMatchingList( int lineNumber )
         // Then we test the rest
         while ( (maxIndex - minIndex) > 1 ) {
             const int tryIndex = (minIndex + maxIndex) / 2;
-            const int currentMatchingNumber =
+            const qint64 currentMatchingNumber =
                 matchingLineList[tryIndex].lineNumber();
             if ( currentMatchingNumber > lineNumber )
                 maxIndex = tryIndex;
@@ -143,7 +143,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 }
 
 // Implementation of the virtual function.
-QString LogFilteredData::doGetLineString( int lineNum ) const
+QString LogFilteredData::doGetLineString( qint64 lineNum ) const
 {
     QString string;
 
@@ -158,7 +158,7 @@ QString LogFilteredData::doGetLineString( int lineNum ) const
 }
 
 // Implementation of the virtual function.
-QStringList LogFilteredData::doGetLines( int first_line, int number ) const
+QStringList LogFilteredData::doGetLines( qint64 first_line, int number ) const
 {
     QStringList list;
 
@@ -170,7 +170,7 @@ QStringList LogFilteredData::doGetLines( int first_line, int number ) const
 }
 
 // Implementation of the virtual function.
-int LogFilteredData::doGetNbLine() const
+qint64 LogFilteredData::doGetNbLine() const
 {
     return matchingLineList.size();
 }

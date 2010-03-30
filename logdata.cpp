@@ -28,16 +28,43 @@
 #include "common.h"
 #include "logdata.h"
 
+// Implementation of the 'start' functions for each operation
+
+void LogData::AttachOperation::doStart(
+        LogDataWorkerThread& workerThread ) const
+{
+    LOG(logDEBUG) << "Attaching " << filename_.toStdString();
+    workerThread.attachFile( filename_ );
+    workerThread.indexAll();
+}
+
+void LogData::FullIndexOperation::doStart(
+        LogDataWorkerThread& workerThread ) const
+{
+    LOG(logDEBUG) << "Reindexing (full)";
+    workerThread.indexAll();
+}
+
+void LogData::PartialIndexOperation::doStart(
+        LogDataWorkerThread& workerThread ) const
+{
+    LOG(logDEBUG) << "Reindexing (partial)";
+    workerThread.indexAdditionalLines( filesize_ );
+}
+
+
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), fileWatcher_(),
-    linePosition_(), fileMutex_(), workerThread_()
+LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
+    fileMutex_(), workerThread_()
 {
     // Start with an "empty" log
     file_         = NULL;
     fileSize_     = 0;
     nbLines_      = 0;
     maxLength_    = 0;
+    currentOperation_ = NULL;
+    nextOperation_    = NULL;
 
     // Initialise the file watcher
     connect( &fileWatcher_, SIGNAL( fileChanged( const QString& ) ),
@@ -64,24 +91,20 @@ LogData::~LogData()
 
 void LogData::attachFile( const QString& fileName )
 {
+    LOG(logDEBUG) << "LogData::attachFile " << fileName.toStdString();
+
     if ( file_ ) {
         // Remove the current file from the watch list
         fileWatcher_.removeFile( file_->fileName() );
     }
 
-    // Now the file is open, so we are committed to loading it
-    // We invalidate the non indexed data
-    fileSize_     = 0;
-    nbLines_      = 0;
-    maxLength_    = 0;
+    workerThread_.interrupt();
 
-    // And instructs the worker thread to index the whole file asynchronously
-    LOG(logDEBUG) << "Attaching " << fileName.toStdString();
-    indexingFileName_ = fileName;
-    workerThread_.attachFile( fileName );
-    workerThread_.indexAll();
+    LogDataOperation* newOperation = new AttachOperation( fileName );
 
-    // The client might now use the new file (even if it is empty for now)!
+    // If an attach operation is already in progress, the new one will
+    // be delayed untilthe current one is finished (canceled)
+    enqueueOperation( newOperation );
 }
 
 void LogData::interruptLoading()
@@ -107,6 +130,47 @@ LogFilteredData* LogData::getNewFilteredData() const
     return newFilteredData;
 }
 
+// Add an operation to the queue and perform it immediately if
+// there is none ongoing.
+void LogData::enqueueOperation( const LogDataOperation* newOperation )
+{
+    if ( currentOperation_ == NULL )
+    {
+        // We do it immediately
+        currentOperation_ = newOperation;
+        startOperation();
+    }
+    else
+    {
+        // An operation is in progress...
+        // ... we schedule the attach op for later
+        if ( nextOperation_ != NULL )
+            delete nextOperation_;
+        nextOperation_ = newOperation;
+    }
+}
+
+// Performs the current operation asynchronously, a indexingFinished
+// signal will be received when it's finished.
+void LogData::startOperation()
+{
+    if ( currentOperation_ )
+    {
+        LOG(logDEBUG) << "startOperation found something to do.";
+
+        // If it's a full indexing ...
+        // ... we invalidate the non indexed data
+        if ( currentOperation_->isFull() ) {
+            fileSize_     = 0;
+            nbLines_      = 0;
+            maxLength_    = 0;
+        }
+
+        // And let the operation do its stuff
+        currentOperation_->start( workerThread_ );
+    }
+}
+
 //
 // Slots
 //
@@ -120,20 +184,23 @@ void LogData::fileChangedOnDisk()
     const QString name = file_->fileName();
     QFileInfo info( name );
 
-    {
-        LOG(logDEBUG) << "current fileSize=" << fileSize_;
-        LOG(logDEBUG) << "info file_->size()=" << info.size();
-        if ( info.size() < fileSize_ ) {
-            fileChangedOnDisk_ = Truncated;
-            LOG(logINFO) << "File truncated";
-            workerThread_.indexAll();
-        }
-        else if ( fileChangedOnDisk_ != DataAdded ) {
-            fileChangedOnDisk_ = DataAdded;
-            LOG(logINFO) << "New data on disk";
-            workerThread_.indexAdditionalLines( fileSize_ );
-        }
+    LogDataOperation* newOperation = NULL;
+
+    LOG(logDEBUG) << "current fileSize=" << fileSize_;
+    LOG(logDEBUG) << "info file_->size()=" << info.size();
+    if ( info.size() < fileSize_ ) {
+        fileChangedOnDisk_ = Truncated;
+        LOG(logINFO) << "File truncated";
+        newOperation = new FullIndexOperation();
     }
+    else if ( fileChangedOnDisk_ != DataAdded ) {
+        fileChangedOnDisk_ = DataAdded;
+        LOG(logINFO) << "New data on disk";
+        newOperation = new PartialIndexOperation( fileSize_ );
+    }
+
+    if ( newOperation )
+        enqueueOperation( newOperation );
 
     lastModifiedDate_ = info.lastModified();
 
@@ -142,9 +209,9 @@ void LogData::fileChangedOnDisk()
 
 void LogData::indexingFinished( bool success )
 {
-    LOG(logDEBUG) << "indexingFinished: now copying in LogData.";
+    LOG(logDEBUG) << "Entering LogData::indexingFinished.";
 
-    // We use the newly created file data
+    // We use the newly created file data or restore the old ones.
     // (Qt implicit copy makes this fast!)
     workerThread_.getIndexingData( &fileSize_, &maxLength_, &linePosition_ );
     nbLines_ = linePosition_.size();
@@ -152,18 +219,24 @@ void LogData::indexingFinished( bool success )
     LOG(logDEBUG) << "indexingFinished: " << success <<
         ", found " << nbLines_ << " lines.";
 
-    if ( success )
-    {
-        if ( file_ ) {
-            // Use the new filename
-            file_->setFileName( indexingFileName_ );
-        }
-        else {
-            file_ = new QFile( indexingFileName_ );
+    if ( success ) {
+        // Use the new filename if needed
+        if ( !currentOperation_->getFilename().isNull() ) {
+            QString newFileName = currentOperation_->getFilename();
+
+            if ( file_ ) {
+                QMutexLocker locker( &fileMutex_ );
+                file_->setFileName( newFileName );
+            }
+            else {
+                QMutexLocker locker( &fileMutex_ );
+                file_ = new QFile( newFileName );
+            }
         }
 
+        // Update the modified date/time if the file exists
         lastModifiedDate_ = QDateTime();
-        QFileInfo fileInfo( indexingFileName_ );
+        QFileInfo fileInfo( *file_ );
         if ( fileInfo.exists() )
             lastModifiedDate_ = fileInfo.lastModified();
     }
@@ -175,6 +248,22 @@ void LogData::indexingFinished( bool success )
     }
 
     emit loadingFinished( success );
+
+    // So now the operation is done, let's see if there is something
+    // else to do, in which case, do it!
+    if ( currentOperation_ ) {
+        delete currentOperation_;
+        currentOperation_ = nextOperation_;
+        nextOperation_ = NULL;
+    }
+    else {
+        LOG(logERROR) << "currentOperation_ is NULL in indexingFinished()";
+    }
+
+    if ( currentOperation_ ) {
+        LOG(logDEBUG) << "indexingFinished is performing the next operation";
+        startOperation();
+    }
 }
 
 //

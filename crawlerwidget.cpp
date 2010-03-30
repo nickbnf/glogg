@@ -116,17 +116,19 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 // Start the asynchronous loading of a file.
 bool CrawlerWidget::readFile( const QString& fileName, int topLine )
 {
-    // First we cancel any in progress search and loading
-    stopLoading();
-
     QFileInfo fileInfo( fileName );
     if ( fileInfo.isReadable() )
     {
-        // Means the file exist, so we invalidate the search
+        LOG(logDEBUG) << "Entering readFile " << fileName.toStdString();
+
+        // First we cancel any in progress search and loading
+        stopLoading();
+
+        // The file exist, so we invalidate the search
         // and redraw the screen.
         logData_->attachFile( fileName );
         replaceCurrentSearch( "" );
-        logMainView->updateData( logData_, 0 );
+        logMainView->updateData();
 
         // Forbid starting a search when loading in progress
         searchButton->setEnabled( false );

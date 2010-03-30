@@ -279,6 +279,8 @@ void MainWindow::updateLoadingProgress( int progress )
     LOG(logDEBUG) << "Loading progress: " << progress;
     infoLine->setText( loadingFileName + tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
     infoLine->displayGauge( progress );
+
+    stopAction->setEnabled( true );
 }
 
 void MainWindow::displayNormalStatus( bool success )
@@ -358,7 +360,6 @@ bool MainWindow::loadFile( const QString& fileName )
         topLine = crawlerWidget->getTopLine();
 
     // Load the file
-    stopAction->setEnabled( true );
     if ( crawlerWidget->readFile( fileName, topLine ) ) {
         loadingFileName = fileName;
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();

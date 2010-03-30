@@ -30,7 +30,7 @@ void TestLogFilteredData::simpleSearch()
 
     // First load the tests file
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     logData.attachFile( TMPDIR "/mediumlog.txt" );
@@ -98,7 +98,7 @@ void TestLogFilteredData::multipleSearch()
 
     // First load the tests file
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     logData.attachFile( TMPDIR "/smalllog.txt" );

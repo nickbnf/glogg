@@ -220,7 +220,7 @@ void TestLogData::randomPageRead()
     LogData logData;
 
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished() ),
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
     logData.attachFile( TMPDIR "/verybiglog.txt" );

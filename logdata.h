@@ -32,6 +32,7 @@
 #include "logdataworkerthread.h"
 #include "filewatcher.h"
 
+
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
 class LogData : public AbstractLogData {
@@ -76,9 +77,70 @@ class LogData : public AbstractLogData {
   private slots:
     // Consider reloading the file when it changes on disk updated
     void fileChangedOnDisk();
+    // Called when the worker thread signals the current operation ended
     void indexingFinished( bool success );
 
   private:
+    // This class models an indexing operation.
+    // It exists to permit LogData to delay the operation if another
+    // one is ongoing (operations are asynchronous)
+    class LogDataOperation {
+      public:
+        LogDataOperation( const QString& fileName ) : filename_( fileName ) {}
+        // Permit each child to have its destructor
+        virtual ~LogDataOperation() {};
+
+        void start( LogDataWorkerThread& workerThread ) const
+        { doStart( workerThread ); }
+        const QString& getFilename() const { return filename_; }
+        virtual bool isFull() const { return true; }
+
+      protected:
+        virtual void doStart( LogDataWorkerThread& workerThread ) const = 0;
+        QString filename_;
+    };
+
+    // Attaching a new file (change name + full index)
+    class AttachOperation : public LogDataOperation {
+      public:
+        AttachOperation( const QString& fileName )
+            : LogDataOperation( fileName ) {}
+        ~AttachOperation() {};
+
+        bool isFull() const { return true; }
+
+      protected:
+        void doStart( LogDataWorkerThread& workerThread ) const;
+    };
+
+    // Reindexing the current file
+    class FullIndexOperation : public LogDataOperation {
+      public:
+        FullIndexOperation() : LogDataOperation( QString() ) {}
+        ~FullIndexOperation() {};
+
+        bool isFull() const { return false; }
+
+      protected:
+        void doStart( LogDataWorkerThread& workerThread ) const;
+    };
+
+    // Indexing part of the current file (from fileSize)
+    class PartialIndexOperation : public LogDataOperation {
+      public:
+        PartialIndexOperation( qint64 fileSize )
+            : LogDataOperation( QString() ), filesize_( fileSize ) {}
+        ~PartialIndexOperation() {};
+
+        bool isFull() const { return false; }
+
+      protected:
+        void doStart( LogDataWorkerThread& workerThread ) const;
+
+      private:
+        qint64 filesize_;
+    };
+
     FileWatcher fileWatcher_;
     MonitoredFileStatus fileChangedOnDisk_;
 
@@ -86,6 +148,8 @@ class LogData : public AbstractLogData {
     QStringList doGetLines( qint64 first, int number ) const;
     qint64 doGetNbLine() const;
     int doGetMaxLength() const;
+    void enqueueOperation( const LogDataOperation* newOperation );
+    void startOperation();
 
     QString indexingFileName_;
     QFile* file_;
@@ -94,6 +158,8 @@ class LogData : public AbstractLogData {
     qint64 nbLines_;
     int maxLength_;
     QDateTime lastModifiedDate_;
+    const LogDataOperation* currentOperation_;
+    const LogDataOperation* nextOperation_;
 
     mutable QMutex fileMutex_;
     // (is mutable to allow 'const' function to touch it,

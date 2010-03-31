@@ -88,7 +88,10 @@ void FileWatcher::removeFile( const QString& fileName )
 
     // For debug purpose:
     foreach (QString str, qtFileWatcher_.files()) {
-        LOG(logWARNING) << "Still watched: " << str.toStdString();
+        LOG(logERROR) << "File still watched: " << str.toStdString();
+    }
+    foreach (QString str, qtFileWatcher_.directories()) {
+        LOG(logERROR) << "Directories still watched: " << str.toStdString();
     }
 }
 

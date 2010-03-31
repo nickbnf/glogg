@@ -23,6 +23,7 @@
 #include <QSplitter>
 #include <QComboBox>
 #include <QPushButton>
+#include <QToolButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
@@ -67,6 +68,8 @@ class CrawlerWidget : public QSplitter
   private slots:
     // Instructs the widget to start a search using the current search line.
     void startNewSearch();
+    // Stop the currently ongoing search (if one exists)
+    void stopSearch();
     // Instructs the widget to reconfigure itself because Config() has changed.
     void applyConfiguration();
     // Called when new data must be displayed in the filtered window.
@@ -88,6 +91,7 @@ class CrawlerWidget : public QSplitter
     QLabel*         searchLabel;
     QComboBox*      searchLineEdit;
     QPushButton*    searchButton;
+    QPushButton*    stopButton;
     FilteredView*   filteredView;
     InfoLine*       searchInfoLine;
 

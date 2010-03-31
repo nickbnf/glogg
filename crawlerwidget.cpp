@@ -54,6 +54,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchInfoLine = new InfoLine();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
+    stopButton = new QPushButton();
+    stopButton->setIcon( QIcon(":/images/stop16.png") );
+    stopButton->setIconSize( QSize( 14, 14 ) );
+    stopButton->setEnabled( false );
+    stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Minimum ) );
 
     // Construct the Search line
     searchLabel = new QLabel(tr("&Text: "));
@@ -69,6 +74,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchLineLayout->addWidget(searchLabel);
     searchLineLayout->addWidget(searchLineEdit);
     searchLineLayout->addWidget(searchButton);
+    searchLineLayout->addWidget(stopButton);
     searchLineLayout->setContentsMargins(6, 0, 6, 0);
 
     // Construct the bottom window
@@ -93,6 +99,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             searchButton, SIGNAL( clicked() ));
     connect(searchButton, SIGNAL( clicked() ),
             this, SLOT( startNewSearch() ) );
+    connect(stopButton, SIGNAL( clicked() ),
+            this, SLOT( stopSearch() ) );
 
     connect(logMainView, SIGNAL( newSelection( int ) ),
             logMainView, SLOT( update() ) );
@@ -180,6 +188,11 @@ void CrawlerWidget::startNewSearch()
     replaceCurrentSearch( searchLineEdit->currentText() );
 }
 
+void CrawlerWidget::stopSearch()
+{
+    logFilteredData_->interruptSearch();
+}
+
 // When receiving the 'newDataAvailable' signal from LogFilteredData
 void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
 {
@@ -191,6 +204,8 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
                 tr("%1 match%2 found.").arg( nbMatches )
                 .arg( nbMatches > 1 ? "es" : "" ) );
         searchInfoLine->hideGauge();
+        // De-activate the stop button
+        stopButton->setEnabled( false );
     }
     else {
         // Search in progress
@@ -261,20 +276,23 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     // Interrupt the search if it's ongoing
     logFilteredData_->interruptSearch();
 
+    // We have to wait for the last search update (100%)
+    // before clearing/restarting to avoid having remaining results.
+
+    // FIXME: this is a bit of a hack, we call processEvents
+    // for Qt to empty its event queue, including (hopefully)
+    // the search update event sent by logFilteredData_. It saves
+    // us the overhead of having proper sync.
+    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+
     if ( !searchText.isEmpty() ) {
+        // Activate the stop button
+        stopButton->setEnabled( true );
+
         QRegExp regexp( searchText );
         // Start a new asynchronous search
         logFilteredData_->runSearch( regexp );
     } else {
-        // We have to wait for the last search update (100%)
-        // before clearing to avoid having remaining results.
-
-        // FIXME: this is a bit of a hack, we call processEvents
-        // for Qt to empty its event queue, including (hopefully)
-        // the search update event sent by logFilteredData_. It saves
-        // us the overhead of having proper sync.
-        QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
-
         logFilteredData_->clearSearch();
         searchInfoLine->setText( "" );
         filteredView->updateData();

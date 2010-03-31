@@ -90,8 +90,8 @@ class CrawlerWidget : public QSplitter
     QWidget*        bottomWindow;
     QLabel*         searchLabel;
     QComboBox*      searchLineEdit;
-    QPushButton*    searchButton;
-    QPushButton*    stopButton;
+    QToolButton*    searchButton;
+    QToolButton*    stopButton;
     FilteredView*   filteredView;
     InfoLine*       searchInfoLine;
 

@@ -54,11 +54,10 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchInfoLine = new InfoLine();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
-    stopButton = new QPushButton();
+    stopButton = new QToolButton();
     stopButton->setIcon( QIcon(":/images/stop16.png") );
-    stopButton->setIconSize( QSize( 14, 14 ) );
+    stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
-    stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Minimum ) );
 
     // Construct the Search line
     searchLabel = new QLabel(tr("&Text: "));
@@ -68,7 +67,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchLineEdit->addItems( savedSearches->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Minimum ) );
     searchLabel->setBuddy( searchLineEdit );
-    searchButton = new QPushButton( tr("&Search") );
+    searchButton = new QToolButton();
+    searchButton->setText( tr("&Search") );
+    searchButton->setAutoRaise( true );
 
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
@@ -76,6 +77,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchLineLayout->addWidget(searchButton);
     searchLineLayout->addWidget(stopButton);
     searchLineLayout->setContentsMargins(6, 0, 6, 0);
+    stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
+    searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
     // Construct the bottom window
     QVBoxLayout* bottomMainLayout = new QVBoxLayout;

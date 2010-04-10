@@ -46,6 +46,20 @@ HEADERS += version.h \
     logfiltereddataworkerthread.h \
     filewatcher.h
 
+isEmpty(USE_NATIVE_BOOST) {
+    message(Building using static Boost libraries included in the tarball)
+
+    SOURCES += boost/libs/program_options/src/*.cpp \
+        boost/libs/detail/*.cpp \
+        boost/libs/smart_ptr/src/*.cpp
+
+    INCLUDEPATH += ./boost
+}
+else {
+    message(Building using native dynamic Boost libraries)
+    LIBS += -lboost_program_options -L$HOME/lib/
+}
+
 greaterThan(QT_VERSION, "4.4.0") {
     FORMS += filtersdialog.ui
 }

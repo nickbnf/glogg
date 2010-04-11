@@ -298,10 +298,17 @@ void MainWindow::displayNormalStatus( bool success )
 
     crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
+        const QString date =
+#if QT_VERSION > 0x040400
+            defaultLocale.toString( lastModified, QLocale::NarrowFormat );
+#else
+            defaultLocale.toString( lastModified.date(), QLocale::ShortFormat )
+                .append( " " ).append( defaultLocale.toString(
+                            lastModified.time(), QLocale::ShortFormat ) );
+#endif
         infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4)" )
                 .arg(currentFile).arg(readableSize(fileSize))
-                .arg(fileNbLine)
-                .arg(defaultLocale.toString( lastModified, QLocale::NarrowFormat) ) );
+                .arg(fileNbLine).arg( date ) );
     }
     else {
         infoLine->setText( tr( "%1 (%2 - %3 lines)" )

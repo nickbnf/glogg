@@ -184,9 +184,10 @@ void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperati
 
         const QStringList lines = sourceLogData_->getLines( i,
                 min2( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
-        LOG(logDEBUG) << "Chunk starting at " << i << ", " << lines.length() << " lines read.";
+        LOG(logDEBUG) << "Chunk starting at " << i <<
+            ", " << lines.size() << " lines read.";
 
-        for ( int j = 0; j < lines.length(); j++ ) {
+        for ( int j = 0; j < lines.size(); j++ ) {
             if ( regExp.indexIn( lines[j] ) != -1 ) {
                 const int length = lines[j].length();
                 if ( length > maxLength )

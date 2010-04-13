@@ -72,6 +72,25 @@ else {
 RC_FILE = glogg.rc
 RESOURCES = glogg.qrc
 
+# Build HTML documentation (if 'markdown' is available)
+system(type markdown >/dev/null) {
+    MARKDOWN += doc/documentation.markdown
+}
+else {
+    message("markdown not found, HTML doc will not be generated")
+}
+
+doc_processor.name = markdown
+doc_processor.input = MARKDOWN
+doc_processor.output = doc/${QMAKE_FILE_BASE}.html
+doc_processor.commands = markdown ${QMAKE_FILE_NAME} | \
+    sed -f finish.sed >${QMAKE_FILE_OUT}
+
+doc_processor.CONFIG += target_predeps
+doc_processor.variable_out = doc.files
+
+QMAKE_EXTRA_COMPILERS += doc_processor
+
 # Install (for unix)
 icon16.path  = $$PREFIX/share/icons/hicolor/16x16/apps
 icon16.files = images/hicolor/16x16/glogg.png
@@ -80,7 +99,7 @@ icon32.path  = $$PREFIX/share/icons/hicolor/32x32/apps
 icon32.files = images/hicolor/32x32/glogg.png
 
 doc.path  = $$PREFIX/share/doc/glogg
-doc.files = README.textile COPYING
+doc.files += README COPYING
 
 desktop.path = $$PREFIX/share/applications
 desktop.path = glogg.desktop
@@ -106,3 +125,4 @@ isEmpty(VERSION) {
 else {
     QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$$VERSION\\\"
 }
+

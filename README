@@ -1,0 +1,44 @@
+glogg - the fast, smart log explorer
+
+glogg is a multi-platform GUI application that helps browse and search
+through long and complex log files.  It is designed with programmers and
+system administrators in mind and can be seen as a graphical, interactive
+combination of grep and less.
+
+## Main features
+
+* Runs on Unix-like systems, Windows and Mac thanks to Qt
+* Provides a second window showing the result of the current search
+* Supports grep/egrep like regular expressions
+* Colorizes the log and search results
+* Displays a context view of where in the log the lines of interest are
+* Is fast and reads the file directly from disk, without loading it into memory
+* Is open source, released under the GPL
+
+## Requirements
+
+* Qt libraries (version 4.3.0 or later)
+* Boost "program-options" library (optional, glogg can use a version included
+  in the tarball if the shared library is not installed)
+* Markdown HTML processor (optional, to generate HTML documentation)
+
+## Building
+
+The build system uses qmake. Building and installation is done this way:
+
+tar xzf glogg-X.X.X.tar.gz
+cd glogg-X.X.X
+qmake (or qmake-qt4)
+make
+make install INSTALL_ROOT=/usr/local (as root if needed)
+
+qmake USE_NATIVE_BOOST=1 will use the system wide Boost libraries (recommended
+if available).
+
+The documentation is built and installed if 'markdown' is found.
+
+## Contact
+
+Please visit glogg's website: http://glogg.bonnefon.org/
+
+The development mailing list is hosted at http://groups.google.co.uk/group/glogg-devel

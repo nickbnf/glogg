@@ -61,7 +61,7 @@ Section "glogg" glogg
     File release\glogg.exe
     File release\mingwm10.dll
     File COPYING
-    File README.textile
+    File README
 
     ; Create the 'sendto' link
     CreateShortCut "$SENDTO\glogg.lnk" "$INSTDIR\glogg,exe" "" "$INSTDIR\glogg.exe" 0
@@ -111,6 +111,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${qtlibs} "Needed by glogg, you have to install these unless \
 you already have the Qt4 development kit installed."
     !insertmacro MUI_DESCRIPTION_TEXT ${shortcut} "Create a shortcut in the Start menu for glogg."
+    !insertmacro MUI_DESCRIPTION_TEXT ${associate} "Make glogg the default viewer for .log files."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 # Uninstaller
@@ -118,7 +119,7 @@ Section "Uninstall"
     Delete "$INSTDIR\Uninstall.exe"
 
     Delete "$INSTDIR\glogg.exe"
-    Delete "$INSTDIR\README.textile"
+    Delete "$INSTDIR\README"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\mingwm10.dll"
     Delete "$INSTDIR\QtCore4.dll"

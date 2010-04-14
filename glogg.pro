@@ -118,9 +118,14 @@ Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
 
 # Official builds can be generated with `qmake VERSION="1.2.3"'
 isEmpty(VERSION) {
-    QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date +'\"%F\"'`\\\"
-    QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git describe`\\\"
-    QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git rev-parse --short HEAD`\\\"
+    system([ -f .tarball-version ]) {
+        QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`cat .tarball-version`\\\"
+    }
+    else {
+        QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date +'\"%F\"'`\\\"
+        QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git describe`\\\"
+        QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git rev-parse --short HEAD`\\\"
+    }
 }
 else {
     QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$$VERSION\\\"

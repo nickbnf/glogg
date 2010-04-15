@@ -117,7 +117,7 @@ Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
 Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
 
 # Official builds can be generated with `qmake VERSION="1.2.3"'
-isEmpty(VERSION) {
+isEmpty(VERSION):system(date >/dev/null) {
     system([ -f .tarball-version ]) {
         QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`cat .tarball-version`\\\"
     }

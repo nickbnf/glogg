@@ -102,7 +102,7 @@ doc.path  = $$PREFIX/share/doc/glogg
 doc.files += README COPYING
 
 desktop.path = $$PREFIX/share/applications
-desktop.path = glogg.desktop
+desktop.files = glogg.desktop
 
 target.path = $$PREFIX/bin
 INSTALLS = target icon16 icon32 doc desktop

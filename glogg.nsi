@@ -60,6 +60,7 @@ Section "glogg" glogg
     SetOutPath $INSTDIR
     File release\glogg.exe
     File release\mingwm10.dll
+    File release\libgcc_s_dw2-1.dll
     File COPYING
     File README
 
@@ -122,6 +123,7 @@ Section "Uninstall"
     Delete "$INSTDIR\README"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\mingwm10.dll"
+    Delete "$INSTDIR\libgcc_s_dw2-1.dll"
     Delete "$INSTDIR\QtCore4.dll"
     Delete "$INSTDIR\QtGui4.dll"
     RMDir "$INSTDIR"

@@ -2,10 +2,9 @@
 Name=glogg
 GenericName=Log file browser
 # %f because glogg supports only one file for now
-Exec=glogg %i %f
+Exec=glogg %f
 Icon=glogg
 Type=Application
-DocPath=
-Comment=A fast, advanced log explorer.
+Comment=A smart interactive log explorer.
 Terminal=false
-Categories=Qt;Utility
+Categories=Qt;Utility;

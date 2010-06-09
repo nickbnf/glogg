@@ -299,7 +299,7 @@ void MainWindow::displayNormalStatus( bool success )
     crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
         const QString date =
-#if QT_VERSION > 0x040400
+#if QT_VERSION > 0x040500
             defaultLocale.toString( lastModified, QLocale::NarrowFormat );
 #else
             defaultLocale.toString( lastModified.date(), QLocale::ShortFormat )

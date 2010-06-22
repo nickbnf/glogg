@@ -80,6 +80,8 @@ MainWindow::MainWindow() : mainIcon_()
 
 void MainWindow::loadInitialFile( QString fileName )
 {
+    LOG(logDEBUG) << "loadInitialFile";
+
     // Is there a file passed as argument?
     if ( !fileName.isEmpty() )
         loadFile( fileName );
@@ -360,6 +362,8 @@ void MainWindow::dropEvent( QDropEvent* event )
 // The loading is done asynchronously.
 bool MainWindow::loadFile( const QString& fileName )
 {
+    LOG(logDEBUG) << "loadFile ( " << fileName.toStdString() << " )";
+
     int topLine = 0;
 
     // If we're loading the same file, put the same line on top.
@@ -367,10 +371,9 @@ bool MainWindow::loadFile( const QString& fileName )
         topLine = crawlerWidget->getTopLine();
 
     // Load the file
+    loadingFileName = fileName;
     if ( crawlerWidget->readFile( fileName, topLine ) ) {
-        loadingFileName = fileName;
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
-        updateLoadingProgress( 0 );
         return true;
     }
     else {

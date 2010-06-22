@@ -82,7 +82,7 @@ void AbstractLogView::resizeEvent( QResizeEvent* resizeEvent )
 
 void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
-    LOG(logDEBUG) << "scrollContentsBy received";
+    LOG(logDEBUG4) << "scrollContentsBy received";
 
     firstLine = (firstLine - dy) > 0 ? firstLine - dy : 0;
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
@@ -97,7 +97,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     if ( (invalidRect.isEmpty()) || (logData == NULL) )
         return;
 
-    LOG(logDEBUG) << "paintEvent received, firstLine=" << firstLine
+    LOG(logDEBUG4) << "paintEvent received, firstLine=" << firstLine
         << " lastLine=" << lastLine <<
         " rect: " << invalidRect.topLeft().x() <<
         ", " << invalidRect.topLeft().y() <<
@@ -185,7 +185,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     circleSize * 2, circleSize * 2 );
         }
     }
-    LOG(logDEBUG) << "End of repaint";
+    LOG(logDEBUG4) << "End of repaint";
 }
 
 //

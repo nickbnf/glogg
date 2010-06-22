@@ -194,6 +194,8 @@ bool FullIndexOperation::start( IndexingData& sharedData )
     LinePositionArray linePosition = LinePositionArray();
     qint64 end = 0, pos = 0;
 
+    emit indexingProgressed( 0 );
+
     QFile file( fileName_ );
     if ( file.open( QIODevice::ReadOnly ) ) {
         while ( !file.atEnd() ) {

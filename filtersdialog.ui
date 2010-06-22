@@ -27,10 +27,38 @@
           <widget class="QListWidget" name="filterListWidget"/>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <layout class="QHBoxLayout" name="buttonsLayout">
            <property name="spacing">
-            <number>12</number>
+            <number>6</number>
            </property>
+           <item>
+            <widget class="QToolButton" name="addFilterButton">
+             <property name="toolTip">
+              <string>New Filter</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="glogg.qrc">
+               <normaloff>:/images/plus.png</normaloff>:/images/plus.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="removeFilterButton">
+             <property name="toolTip">
+              <string>Delete Filter</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="glogg.qrc">
+               <normaloff>:/images/minus.png</normaloff>:/images/minus.png</iconset>
+             </property>
+            </widget>
+           </item>
            <item>
             <spacer name="horizontalSpacer">
              <property name="orientation">
@@ -45,16 +73,30 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="addFilterButton">
+            <widget class="QToolButton" name="upFilterButton">
+             <property name="toolTip">
+              <string>Move Filter Up</string>
+             </property>
              <property name="text">
-              <string>Add</string>
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="glogg.qrc">
+               <normaloff>:/images/up.png</normaloff>:/images/up.png</iconset>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="removeFilterButton">
+            <widget class="QToolButton" name="downFilterButton">
+             <property name="toolTip">
+              <string>Move Filter Down</string>
+             </property>
              <property name="text">
-              <string>Remove</string>
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="glogg.qrc">
+               <normaloff>:/images/down.png</normaloff>:/images/down.png</iconset>
              </property>
             </widget>
            </item>
@@ -116,6 +158,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="glogg.qrc"/>
+ </resources>
  <connections/>
 </ui>

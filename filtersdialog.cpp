@@ -31,12 +31,16 @@ FiltersDialog::FiltersDialog( QWidget* parent ) :
 {
     setupUi( this );
 
-
     populateColors();
     populateFilterList();
 
+    // Start with all buttons disabled except 'add'
+    removeFilterButton->setEnabled(false);
+    upFilterButton->setEnabled(false);
+    downFilterButton->setEnabled(false);
+
     connect( filterListWidget, SIGNAL( currentRowChanged( int ) ),
-            this, SLOT( updatePropertyFields() ) );
+            this, SLOT( updatePropertyFields( int ) ) );
     connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
             this, SLOT( updateFilterProperties() ) );
     connect( foreColorBox, SIGNAL( activated( int ) ),
@@ -66,12 +70,44 @@ void FiltersDialog::on_addFilterButton_clicked()
 
 void FiltersDialog::on_removeFilterButton_clicked()
 {
-    LOG(logDEBUG) << "on_removeFilterButton_clicked()";
-
     int index = filterListWidget->currentRow();
+    LOG(logDEBUG) << "on_removeFilterButton_clicked() index " << index;
+
     if ( index >= 0 ) {
-        delete filterListWidget->takeItem( index );
         filterSet.filterList.removeAt( index );
+        filterListWidget->setCurrentRow( -1 );
+        delete filterListWidget->takeItem( index );
+
+        // Select the new item at the same index
+        filterListWidget->setCurrentRow( index );
+    }
+}
+
+void FiltersDialog::on_upFilterButton_clicked()
+{
+    int index = filterListWidget->currentRow();
+    LOG(logDEBUG) << "on_upFilterButton_clicked() index " << index;
+
+    if ( index > 0 ) {
+        filterSet.filterList.move( index, index - 1 );
+
+        QListWidgetItem* item = filterListWidget->takeItem( index );
+        filterListWidget->insertItem( index - 1, item );
+        filterListWidget->setCurrentRow( index - 1 );
+    }
+}
+
+void FiltersDialog::on_downFilterButton_clicked()
+{
+    int index = filterListWidget->currentRow();
+    LOG(logDEBUG) << "on_downFilterButton_clicked() index " << index;
+
+    if ( ( index >= 0 ) && ( index < ( filterListWidget->count() - 1 ) ) ) {
+        filterSet.filterList.move( index, index + 1 );
+
+        QListWidgetItem* item = filterListWidget->takeItem( index );
+        filterListWidget->insertItem( index + 1, item );
+        filterListWidget->setCurrentRow( index + 1 );
     }
 }
 
@@ -92,23 +128,30 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
         reject();
 }
 
-void FiltersDialog::updatePropertyFields()
+void FiltersDialog::updatePropertyFields( int row )
 {
-    LOG(logDEBUG) << "updatePropertyFields()";
+    LOG(logDEBUG) << "updatePropertyFields(), row = " << row;
 
-    const Filter& currentFilter = filterSet.
-        filterList.at( filterListWidget->currentRow() );
+    if ( row >= 0 ) {
+        const Filter& currentFilter = filterSet.filterList.at( row );
 
-    patternEdit->setText( currentFilter.pattern() );
-    int index = foreColorBox->findText( currentFilter.foreColorName() );
-    if ( index != -1 ) {
-        LOG(logDEBUG) << "fore index = " << index;
-        foreColorBox->setCurrentIndex( index );
-    }
-    index = backColorBox->findText( currentFilter.backColorName() );
-    if ( index != -1 ) {
-        LOG(logDEBUG) << "back index = " << index;
-        backColorBox->setCurrentIndex( index );
+        patternEdit->setText( currentFilter.pattern() );
+        int index = foreColorBox->findText( currentFilter.foreColorName() );
+        if ( index != -1 ) {
+            LOG(logDEBUG) << "fore index = " << index;
+            foreColorBox->setCurrentIndex( index );
+        }
+        index = backColorBox->findText( currentFilter.backColorName() );
+        if ( index != -1 ) {
+            LOG(logDEBUG) << "back index = " << index;
+            backColorBox->setCurrentIndex( index );
+        }
+
+        // Enable the buttons if needed
+        removeFilterButton->setEnabled( true );
+        upFilterButton->setEnabled( ( row > 0 ) ? true : false );
+        downFilterButton->setEnabled(
+                ( row < ( filterListWidget->count() - 1 ) ) ? true : false );
     }
 }
 
@@ -117,9 +160,9 @@ void FiltersDialog::updateFilterProperties()
     LOG(logDEBUG) << "updateFilterProperties()";
 
     // If a row is selected
-    if ( filterListWidget->currentRow() >= 0 ) {
-        Filter& currentFilter = filterSet.
-            filterList[filterListWidget->currentRow()];
+    const int row = filterListWidget->currentRow();
+    if ( row >= 0 ) {
+        Filter& currentFilter = filterSet.filterList[row];
 
         currentFilter.setPattern( patternEdit->text() );
         filterListWidget->currentItem()->setText( patternEdit->text() );
@@ -135,7 +178,6 @@ void FiltersDialog::updateFilterProperties()
 // Fills the color selection combo boxes
 void FiltersDialog::populateColors()
 {
-    // const QStringList colorNames = QColor::colorNames();
     const QStringList colorNames = QStringList()
         // Basic 16 HTML colors (minus greys):
         << "black"

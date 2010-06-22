@@ -9,5 +9,9 @@
     <file>images/reload.png</file>
     <file>images/reload16.png</file>
     <file>images/stop16.png</file>
+    <file>images/plus.png</file>
+    <file>images/minus.png</file>
+    <file>images/up.png</file>
+    <file>images/down.png</file>
 </qresource>
 </RCC>

@@ -44,9 +44,11 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     void on_addFilterButton_clicked();
     void on_removeFilterButton_clicked();
     void on_buttonBox_clicked( QAbstractButton* button );
+    void on_upFilterButton_clicked();
+    void on_downFilterButton_clicked();
     // Update the property (pattern, color...) fields from the
     // selected Filter.
-    void updatePropertyFields();
+    void updatePropertyFields( int row );
     // Update the selected Filter from the values in the property fields.
     void updateFilterProperties();
 

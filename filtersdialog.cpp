@@ -24,6 +24,9 @@
 
 #include "filtersdialog.h"
 
+static const QString DEFAULT_FORE_COLOUR = "black";
+static const QString DEFAULT_BACK_COLOUR = "white";
+
 // Construct the box, including a copy of the global FilterSet
 // to handle ok/cancel/apply
 FiltersDialog::FiltersDialog( QWidget* parent ) :
@@ -38,6 +41,12 @@ FiltersDialog::FiltersDialog( QWidget* parent ) :
     removeFilterButton->setEnabled(false);
     upFilterButton->setEnabled(false);
     downFilterButton->setEnabled(false);
+
+    // Default to black on white
+    int index = foreColorBox->findText( DEFAULT_FORE_COLOUR );
+    foreColorBox->setCurrentIndex( index );
+    index = backColorBox->findText( DEFAULT_BACK_COLOUR );
+    backColorBox->setCurrentIndex( index );
 
     connect( filterListWidget, SIGNAL( currentRowChanged( int ) ),
             this, SLOT( updatePropertyFields( int ) ) );

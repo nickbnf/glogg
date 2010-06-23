@@ -52,6 +52,7 @@ class AbstractLogView : public QAbstractScrollArea
     void paintEvent(QPaintEvent* paintEvent);
     void resizeEvent(QResizeEvent* resizeEvent);
     void scrollContentsBy(int dx, int dy);
+    void keyPressEvent(QKeyEvent* keyEvent);
 
     // Must be implemented to return weither the line number is
     // a match or not (used for coloured bullets)
@@ -77,6 +78,9 @@ class AbstractLogView : public QAbstractScrollArea
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
     int convertCoordToLine(int yPos) const;
+    void moveSelection( int y );
+    void jumpToTop();
+    void jumpToBottom();
 };
 
 #endif

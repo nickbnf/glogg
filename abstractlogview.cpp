@@ -70,6 +70,45 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     }
 }
 
+void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
+{
+    LOG(logDEBUG4) << "keyPressEvent received";
+
+    if ( keyEvent->key() == Qt::Key_Left )
+        horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
+    else if ( keyEvent->key() == Qt::Key_Right )
+        horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
+    else {
+        switch ( (keyEvent->text())[0].toAscii() ) {
+            case 'j':
+                //verticalScrollBar()->triggerAction(QScrollBar::SliderSingleStepAdd);
+                moveSelection( 1 );
+                break;
+            case 'k':
+                //verticalScrollBar()->triggerAction(QScrollBar::SliderSingleStepSub);
+                moveSelection( -1 );
+                break;
+            case 'h':
+                horizontalScrollBar()->triggerAction(QScrollBar::SliderSingleStepSub);
+                break;
+            case 'l':
+                horizontalScrollBar()->triggerAction(QScrollBar::SliderSingleStepAdd);
+                break;
+            case 'g':
+                jumpToTop();
+                break;
+            case 'G':
+                jumpToBottom();
+                break;
+            default:
+                keyEvent->ignore();
+        }
+    }
+
+    if ( !keyEvent->isAccepted() )
+        QAbstractScrollArea::keyPressEvent( keyEvent );
+}
+
 void AbstractLogView::resizeEvent( QResizeEvent* resizeEvent )
 {
     if ( logData == NULL )
@@ -218,34 +257,6 @@ void AbstractLogView::updateData()
     update();
 }
 
-// TODO: Deprecate this version?
-void AbstractLogView::updateData(const AbstractLogData* newLogData, int topLine)
-{
-    // Save the new data
-    logData = newLogData;
-
-    // Check the top Line is within range
-    if ( topLine >= logData->getNbLine() )
-        topLine = 0;
-
-    // Adapt the scroll bars to the new content
-    verticalScrollBar()->setValue( topLine );
-    verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
-    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
-        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    horizontalScrollBar()->setValue( 0 );
-    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
-
-    // Unselect any line and show the upper left corner
-    firstLine = topLine;
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
-    firstCol = 0;
-    selectedLine = -1;
-
-    // Repaint!
-    update();
-}
-
 void AbstractLogView::updateDisplaySize()
 {
     // Calculate the index of the last line shown
@@ -320,4 +331,49 @@ int AbstractLogView::convertCoordToLine(int yPos) const
     int line = firstLine + yPos/fm.height();
 
     return line;
+}
+
+// Move the selection up and down by the passed number of lines
+void AbstractLogView::moveSelection( int y )
+{
+    LOG(logDEBUG) << "AbstractLogView::moveSelection y=" << y;
+
+    int new_line = selectedLine;
+
+    if ( new_line == -1 )
+        new_line = 0;
+    else
+        new_line += y;
+
+    if ( new_line >= logData->getNbLine() )
+        new_line = logData->getNbLine() - 1;
+    if ( new_line < 0 )
+        new_line = 0;
+
+    displayLine( new_line );
+}
+
+// Select the first line and jump there
+void AbstractLogView::jumpToTop()
+{
+    const int new_top_line = 0;
+
+    selectedLine = new_top_line;
+
+    // This will also trigger a scrollContents event
+    verticalScrollBar()->setValue( new_top_line );
+    update();       // in case the screen hasn't moved
+}
+
+// Select the last line and jump there
+void AbstractLogView::jumpToBottom()
+{
+    const int new_top_line =
+        max2( logData->getNbLine() - getNbVisibleLines() + 1, 0LL );
+
+    selectedLine = logData->getNbLine() - 1;
+
+    // This will also trigger a scrollContents event
+    verticalScrollBar()->setValue( new_top_line );
+    update();       // in case the screen hasn't moved
 }

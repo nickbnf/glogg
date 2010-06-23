@@ -63,4 +63,19 @@ The font used to display the log file. A clear, monospace font (like the free,
 open source, [DejaVu Mono](http://www.dejavu-fonts.org/) for example) is
 recommended.
 
+## Keyboard commands
 
+_glogg_ keyboard commands try to emulate roughly the default bindings used by
+the classic Unix utilities _vi_ and _less_.
+
+The main commands are:
+<table>
+<tr><td>arrows</td>
+    <td>scroll one line up/down or one column left/right</td></tr>
+<tr><td>j/k</td>
+    <td>move the selection one line down/up</td></tr>
+<tr><td>h/l</td>
+    <td>scroll left/right</td></tr>
+<tr><td>g/G</td>
+    <td>jump to the first/last line of the file (moving the selection)</td></tr>
+</table>

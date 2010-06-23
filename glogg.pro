@@ -113,8 +113,14 @@ release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
 debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
 release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
 
-Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
-Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
+isEmpty(LOG_LEVEL) {
+    Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
+    Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
+}
+else {
+    message("Using specified log level: $$LOG_LEVEL")
+    DEFINES += FILELOG_MAX_LEVEL=\"$$LOG_LEVEL\"
+}
 
 # Official builds can be generated with `qmake VERSION="1.2.3"'
 isEmpty(VERSION):system(date >/dev/null) {

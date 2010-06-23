@@ -203,8 +203,16 @@ void MainWindow::createToolBars()
 // Opens the file selection dialog to select a new log file
 void MainWindow::open()
 {
+    QString defaultDir = ".";
+
+    // Default to the path of the current file if there is one
+    if ( !currentFile.isEmpty() ) {
+        QFileInfo fileInfo = QFileInfo( currentFile );
+        defaultDir = fileInfo.path();
+    }
+
     QString fileName = QFileDialog::getOpenFileName(this,
-            tr("Open file"), ".", tr("All files (*)"));
+            tr("Open file"), defaultDir, tr("All files (*)"));
     if (!fileName.isEmpty())
         loadFile(fileName);
 }

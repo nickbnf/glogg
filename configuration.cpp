@@ -28,6 +28,9 @@ Configuration::Configuration()
     // Should have some sensible default values.
     mainFont_ = QFont("mono", 10);
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
+
+    QFontInfo fi(mainFont_);
+    LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
 }
 
 Configuration& Config()
@@ -44,6 +47,8 @@ QFont Configuration::mainFont() const
 
 void Configuration::setMainFont( QFont newFont )
 {
+    LOG(logDEBUG) << "Configuration::setMainFont";
+
     mainFont_ = newFont;
 }
 
@@ -54,9 +59,14 @@ FilterSet& Configuration::filterSet()
 
 void Configuration::readFromSettings( QSettings& settings )
 {
+    LOG(logDEBUG) << "Configuration::readFromSettings";
+
     QString family = settings.value( "mainFont.family" ).toString();
     int size = settings.value( "mainFont.size" ).toInt();
-    mainFont_ = QFont( family, size);
+
+    // If no config read, keep the default
+    if ( !family.isNull() )
+        mainFont_ = QFont( family, size);
 
     filterSet_ = settings.value( "filterSet" ).value<FilterSet>();
 }

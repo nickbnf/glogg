@@ -5,6 +5,8 @@ TARGET = glogg
 TEMPLATE = app
 
 win32:Debug:CONFIG += console
+# Necessary when cross-compiling:
+win32:Release:QMAKE_LFLAGS += "-Wl,-subsystem,windows"
 
 # Input
 SOURCES += main.cpp \

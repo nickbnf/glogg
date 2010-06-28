@@ -6,9 +6,11 @@ QTXDIR=$HOME/qt-x-win32
 
 make clean
 if [ -z "$VERSION" ]; then
-    qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32" VERSION="$VERSION"
-else
+    echo "Building default version"
     qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32"
+else
+    echo "Building version $VERSION"
+    qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32" VERSION="$VERSION"
 fi
 make -j3
 cp $QTXDIR/qt_win/2010.02.1/qt/bin/{QtCore4,QtGui4}.dll release/

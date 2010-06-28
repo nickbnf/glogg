@@ -2,9 +2,11 @@
 
 PATH=/cygdrive/c/qt/2010.02.1/qt/bin:/cygdrive/c/qt/2010.02.1/mingw/bin/:$PATH
 if [ -z "$VERSION" ]; then
-    qmake glogg.pro -spec win32-g++ -r CONFIG+=release VERSION="$VERSION"
-else
+    echo "Building default version"
     qmake glogg.pro -spec win32-g++ -r CONFIG+=release
+else
+    echo "Building version $VERSION"
+    qmake glogg.pro -spec win32-g++ -r CONFIG+=release VERSION="$VERSION"
 fi
 mingw32-make
 cp /cygdrive/c/qt/2010.02.1/qt/bin/{QtCore4,QtGui4}.dll release/

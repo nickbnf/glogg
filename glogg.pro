@@ -136,6 +136,6 @@ isEmpty(VERSION):system(date >/dev/null) {
     }
 }
 else {
-    QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$(VERSION)\\\"
+    QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$$VERSION\\\"
 }
 

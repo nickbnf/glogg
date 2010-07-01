@@ -39,7 +39,7 @@
 #include "logmainview.h"
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
-       QWidget* parent) : QAbstractScrollArea(parent)
+       QWidget* parent) : QAbstractScrollArea(parent), selection_()
 {
     logData = newLogData;
 
@@ -50,7 +50,6 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     firstLine = 0;
     lastLine = 0;
     firstCol = 0;
-    selectedLine = -1;
 }
 
 //
@@ -64,7 +63,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     {
         int line = convertCoordToLine( mouseEvent->y() );
         if ( line < logData->getNbLine() ) {
-            selectedLine = line;
+            selection_.selectLine( line );
             emit newSelection( line );
         }
     }
@@ -190,7 +189,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             //const QString cutLine = logData->getLineString(i).mid(firstCol, firstCol+nbCols);
             const QString cutLine = lines[i - firstLine].mid( firstCol, firstCol+nbCols );
 
-            if ( i == selectedLine ) {
+            if ( selection_.isLineSelected( i ) ) {
                 // Reverse the selected line
                 foreColor = palette.color( QPalette::HighlightedText );
                 backColor = palette.color( QPalette::Highlight );
@@ -241,9 +240,8 @@ void AbstractLogView::updateData()
         horizontalScrollBar()->setValue( 0 );
     }
 
-    // Unselect the selected line if out of range
-    if ( selectedLine >= logData->getNbLine() )
-        selectedLine = -1;
+    // Crop selection if it become out of range
+    selection_.crop( logData->getNbLine() - 1 );
 
     // Adapt the scroll bars to the new content
     verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
@@ -278,9 +276,9 @@ int AbstractLogView::getTopLine() const
     return firstLine;
 }
 
-int AbstractLogView::getSelection() const
+QString AbstractLogView::getSelection() const
 {
-    return selectedLine;
+    return logData->getLineString( selection_.getLines() );
 }
 
 // Select the line and ensure it is visible on the screen, scrolling if not.
@@ -288,7 +286,7 @@ void AbstractLogView::displayLine( int line )
 {
     LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
 
-    selectedLine = line;
+    selection_.selectLine( line );
 
     // If the line is already the screen
     if ( ( line >= firstLine ) &&
@@ -338,7 +336,7 @@ void AbstractLogView::moveSelection( int y )
 {
     LOG(logDEBUG) << "AbstractLogView::moveSelection y=" << y;
 
-    int new_line = selectedLine;
+    int new_line = selection_.getLines();
 
     if ( new_line == -1 )
         new_line = 0;
@@ -358,7 +356,7 @@ void AbstractLogView::jumpToTop()
 {
     const int new_top_line = 0;
 
-    selectedLine = new_top_line;
+    selection_.selectLine( new_top_line );
 
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( new_top_line );
@@ -371,7 +369,7 @@ void AbstractLogView::jumpToBottom()
     const int new_top_line =
         max2( logData->getNbLine() - getNbVisibleLines() + 1, 0LL );
 
-    selectedLine = logData->getNbLine() - 1;
+    selection_.selectLine( logData->getNbLine() - 1 );
 
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( new_top_line );

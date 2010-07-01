@@ -173,7 +173,7 @@ int CrawlerWidget::getTopLine() const
 
 QString CrawlerWidget::getSelectedText() const
 {
-    return logData_->getLineString( logMainView->getSelection() );
+    return logMainView->getSelection();
 }
 
 //

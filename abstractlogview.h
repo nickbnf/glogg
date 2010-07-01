@@ -23,6 +23,7 @@
 #include <QAbstractScrollArea>
 
 #include "abstractlogdata.h"
+#include "selection.h"
 
 // Base class representing the log view widget.
 // It can be either the top (full) or bottom (filtered) view.
@@ -31,21 +32,19 @@ class AbstractLogView : public QAbstractScrollArea
   Q_OBJECT
 
   public:
+    // Constructor of the widget, the data set is passed.
+    // The caller retains ownership of the data set.
     AbstractLogView(const AbstractLogData* newLogData, QWidget *parent=0);
 
-    // Refresh the widget when the data set as changed.
+    // Refresh the widget when the data set has changed.
     void updateData();
-    // Makes the widget use the new data set passed,
-    // reconfigure itself and then redraw itself.
-    // The caller retains ownership of the data set.
-    void updateData(const AbstractLogData* newLogData, int topLine);
     // Instructs the widget to update it's content geometry,
     // used when the font is changed.
     void updateDisplaySize();
     // Return the line number of the top line of the view
     int getTopLine() const;
     // Return the line number of the line selected, or -1 if none.
-    int getSelection() const;
+    QString getSelection() const;
 
   protected:
     void mousePressEvent(QMouseEvent* mouseEvent);
@@ -54,7 +53,7 @@ class AbstractLogView : public QAbstractScrollArea
     void scrollContentsBy(int dx, int dy);
     void keyPressEvent(QKeyEvent* keyEvent);
 
-    // Must be implemented to return weither the line number is
+    // Must be implemented to return wether the line number is
     // a match or not (used for coloured bullets)
     virtual bool isLineMatching( int lineNumber ) = 0;
 
@@ -69,11 +68,11 @@ class AbstractLogView : public QAbstractScrollArea
 
   private:
     const AbstractLogData* logData;
+
+    Selection selection_;
     qint64 firstLine;
     qint64 lastLine;
     int firstCol;
-    // Line number currently selected, or -1 if none selected
-    qint64 selectedLine;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

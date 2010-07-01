@@ -27,7 +27,8 @@ SOURCES += main.cpp \
     logdataworkerthread.cpp \
     logfiltereddataworkerthread.cpp \
     filewatcher.cpp \
-    selection.cpp
+    selection.cpp \
+    quickfind.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -48,7 +49,8 @@ HEADERS += version.h \
     logdataworkerthread.h \
     logfiltereddataworkerthread.h \
     filewatcher.h \
-    selection.h
+    selection.h \
+    quickfind.h
 
 isEmpty(USE_NATIVE_BOOST) {
     message(Building using static Boost libraries included in the tarball)

@@ -25,6 +25,7 @@
 
 #include "abstractlogdata.h"
 #include "selection.h"
+#include "quickfind.h"
 
 // Utility class for syntax colouring.
 // It stores the chunks of line to draw
@@ -82,7 +83,8 @@ class AbstractLogView : public QAbstractScrollArea
   public:
     // Constructor of the widget, the data set is passed.
     // The caller retains ownership of the data set.
-    AbstractLogView(const AbstractLogData* newLogData, QWidget *parent=0);
+    AbstractLogView( const AbstractLogData* newLogData, QWidget *parent=0 );
+    ~AbstractLogView();
 
     // Refresh the widget when the data set has changed.
     void updateData();
@@ -142,6 +144,9 @@ class AbstractLogView : public QAbstractScrollArea
     bool useFixedFont_;
     int charWidth_;             // Must only be used if useFixedFont_ == true
     int charHeight_;
+
+    // Quick Find object
+    QuickFind* quickFind_;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

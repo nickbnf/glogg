@@ -39,6 +39,7 @@
 #include "common.h"
 #include "configuration.h"
 #include "logmainview.h"
+#include "quickfind.h"
 
 inline void LineDrawer::addChunk( int first_col, int last_col,
         QColor fore, QColor back )
@@ -102,6 +103,14 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     useFixedFont_ = false;
     charWidth_ = 1;
     charHeight_ = 1;
+
+    // Create the QuickFind object for this view
+    quickFind_ = new QuickFind( logData );
+}
+
+AbstractLogView::~AbstractLogView()
+{
+    delete quickFind_;
 }
 
 //
@@ -382,7 +391,12 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
             // Is there something selected in the line?
             int start_col, end_col;
-            if ( selection_.getPortionForLine( i, &start_col, &end_col ) ) {
+            bool isSelection = selection_.getPortionForLine( i, &start_col, &end_col );
+            // Has the line got elements to be highlighted
+            QList<QuickFindMatch> qfMatchList;
+            bool isMatch = quickFind_->matchLine( i, qfMatchList );
+            
+            if ( isSelection || isMatch ) {
                 // We use the LineDrawer, with three chunks
                 // (before selection, selection and after selection)
                 LineDrawer lineDrawer( backColor );
@@ -402,7 +416,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                         viewport()->width(), cutLine );
             }
             else {
-                // We can draw the line in one go!
+                // Nothing to be highlighted, we print the whole line!
                 painter.fillRect( xPos, yPos, viewport()->width(),
                         fontHeight, backColor );
                 painter.setPen( foreColor );

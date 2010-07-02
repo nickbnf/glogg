@@ -38,6 +38,44 @@
 #include "configuration.h"
 #include "logmainview.h"
 
+inline void LineDrawer::addChunk( int first_col, int last_col,
+        QColor fore, QColor back )
+{
+    if ( first_col < 0 )
+        first_col = 0;
+    int length = last_col - first_col;
+    if ( length > 0 ) {
+        list << Chunk ( first_col, length, fore, back );
+    }
+}
+
+inline void LineDrawer::draw( QPainter& painter,
+        int xPos, int yPos, int line_width, const QString& line )
+{
+    QFontMetrics fm = painter.fontMetrics();
+    const int fontHeight = fm.height();
+    const int fontAscent = fm.ascent();
+
+    foreach ( Chunk chunk, list ) {
+        // Draw each chunk
+        LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
+        QString cutline = line.mid( chunk.start(), chunk.length() );
+        const int chunk_width = fm.width( cutline );
+        painter.fillRect( xPos, yPos, chunk_width,
+                fontHeight, chunk.backColor() );
+        painter.setPen( chunk.foreColor() );
+        painter.drawText( xPos, yPos + fontAscent, cutline );
+        xPos += chunk_width;
+    }
+
+    // Draw the empty block at the end of the line
+    int blank_width = line_width - xPos;
+    LOG(logDEBUG) << "blank_width: " << blank_width;
+
+    if ( blank_width > 0 )
+        painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
+}
+
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
        QWidget* parent) : QAbstractScrollArea(parent), selection_()
 {
@@ -186,7 +224,6 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             const int xPos = bulletLineX + 2;
 
             // string to print, cut to fit the length and position of the view
-            //const QString cutLine = logData->getLineString(i).mid(firstCol, firstCol+nbCols);
             const QString cutLine = lines[i - firstLine].mid( firstCol, firstCol+nbCols );
 
             if ( selection_.isLineSelected( i ) ) {
@@ -205,10 +242,37 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 backColor = palette.color( QPalette::Base );
             }
 
-            painter.fillRect( xPos, yPos, viewport()->width(),
-                    fontHeight, backColor );
-            painter.setPen( foreColor );
-            painter.drawText( xPos, yPos + fontAscent, cutLine );
+            // Is there something selected in the line?
+            int start_col, end_col;
+            if ( selection_.getPortionForLine( i, &start_col, &end_col ) ) {
+                // We use the LineDrawer, with three chunks
+                // (before selection, selection and after selection)
+                LineDrawer lineDrawer( backColor );
+
+                LOG(logDEBUG) << "Partial selection "
+                    << start_col << " " << end_col;
+
+                // Convert the chunk to screen based coordinates
+                // (from line based)
+                start_col -= firstCol;
+                end_col   -= firstCol;
+                lineDrawer.addChunk( 0, start_col, foreColor, backColor );
+                lineDrawer.addChunk( start_col, end_col,
+                        palette.color( QPalette::HighlightedText ),
+                        palette.color( QPalette::Highlight ) );
+                lineDrawer.addChunk( end_col, cutLine.length(),
+                        foreColor, backColor );
+
+                lineDrawer.draw( painter, xPos, yPos,
+                        viewport()->width(), cutLine );
+            }
+            else {
+                // We can draw the line in one go!
+                painter.fillRect( xPos, yPos, viewport()->width(),
+                        fontHeight, backColor );
+                painter.setPen( foreColor );
+                painter.drawText( xPos, yPos + fontAscent, cutLine );
+            }
 
             // Then draw the bullet
             const int circleSize = 3;

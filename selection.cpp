@@ -24,3 +24,35 @@
 // at any time.
 
 #include "selection.h"
+
+Selection::Selection()
+{
+    selectedLine_ = -1;
+
+    selectedPartial_.line        = -1;
+    selectedPartial_.startColumn = 0;
+    selectedPartial_.endColumn   = 0;
+}
+
+void Selection::selectPortion( int line, int start_column, int end_column )
+{
+    // First unselect any whole line
+    selectedLine_ = -1;
+
+    selectedPartial_.line = line;
+    selectedPartial_.startColumn = start_column;
+    selectedPartial_.endColumn = end_column;
+}
+
+bool Selection::getPortionForLine( int line, int* start_column, int* end_column ) const
+{
+    if ( selectedPartial_.line == line ) {
+        *start_column = selectedPartial_.startColumn;
+        *end_column   = selectedPartial_.endColumn;
+
+        return true;
+    }
+    else {
+        return false;
+    }
+}

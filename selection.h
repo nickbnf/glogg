@@ -25,7 +25,7 @@ class Selection
 {
   public:
     // Construct an empty selection
-    Selection() { selectedLine_ = -1; };
+    Selection();
 
     // Clear the selection
     void clear() { selectedLine_ = -1; };
@@ -54,6 +54,13 @@ class Selection
   private:
     // Line number currently selected, or -1 if none selected
     int selectedLine_;
+
+    struct SelectedPartial {
+        int line;
+        int startColumn;
+        int endColumn;
+    };
+    struct SelectedPartial selectedPartial_;
 };
 
 #endif

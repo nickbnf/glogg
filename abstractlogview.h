@@ -25,6 +25,53 @@
 #include "abstractlogdata.h"
 #include "selection.h"
 
+// Utility class for syntax colouring.
+// It stores the chunks of line to draw
+// each chunk having a different colour
+class LineDrawer
+{
+  public:
+    LineDrawer( const QColor& back_color) :
+        list(), backColor_( back_color ) { };
+
+    // Add a chunk of line using the given colours.
+    // The first_col is included, the last_col is NOT!
+    // An empty chunk will be ignored.
+    // the first column will be set to 0 if negative
+    // The column are relative to the screen
+    void addChunk( int first_col, int last_col, QColor fore, QColor back );
+
+    // Draw the current line of text using the given painter,
+    // in the passed block (in pixels)
+    // The line must be cut to fit on the screen.
+    void draw( QPainter& painter, int xPos, int yPos,
+            int line_width, const QString& line );
+
+  private:
+    class Chunk {
+      public:
+        // Create a new chunk
+        Chunk( int start, int length, QColor fore, QColor back )
+            : start_( start ), length_( length ),
+            foreColor_ ( fore ), backColor_ ( back ) { };
+
+        // Accessors
+        int start() const { return start_; }
+        int length() const { return length_; }
+        const QColor& foreColor() const { return foreColor_; }
+        const QColor& backColor() const { return backColor_; }
+
+      private:
+        int start_;
+        int length_;
+        QColor foreColor_;
+        QColor backColor_;
+    };
+    QList<Chunk> list;
+    QColor backColor_;
+};
+
+
 // Base class representing the log view widget.
 // It can be either the top (full) or bottom (filtered) view.
 class AbstractLogView : public QAbstractScrollArea

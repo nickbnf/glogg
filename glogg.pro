@@ -26,7 +26,8 @@ SOURCES += main.cpp \
     infoline.cpp \
     logdataworkerthread.cpp \
     logfiltereddataworkerthread.cpp \
-    filewatcher.cpp
+    filewatcher.cpp \
+    selection.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -46,7 +47,8 @@ HEADERS += version.h \
     infoline.h \
     logdataworkerthread.h \
     logfiltereddataworkerthread.h \
-    filewatcher.h
+    filewatcher.h \
+    selection.h
 
 isEmpty(USE_NATIVE_BOOST) {
     message(Building using static Boost libraries included in the tarball)

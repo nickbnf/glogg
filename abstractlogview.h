@@ -21,6 +21,7 @@
 #define ABSTRACTLOGVIEW_H
 
 #include <QAbstractScrollArea>
+#include <QBasicTimer>
 
 #include "abstractlogdata.h"
 #include "selection.h"
@@ -94,11 +95,15 @@ class AbstractLogView : public QAbstractScrollArea
     QString getSelection() const;
 
   protected:
-    void mousePressEvent(QMouseEvent* mouseEvent);
-    void paintEvent(QPaintEvent* paintEvent);
-    void resizeEvent(QResizeEvent* resizeEvent);
-    void scrollContentsBy(int dx, int dy);
-    void keyPressEvent(QKeyEvent* keyEvent);
+    void mousePressEvent( QMouseEvent* mouseEvent );
+    void mouseMoveEvent( QMouseEvent* mouseEvent );
+    void mouseReleaseEvent( QMouseEvent* );
+    void timerEvent( QTimerEvent* timerEvent );
+    void changeEvent( QEvent* changeEvent );
+    void paintEvent( QPaintEvent* paintEvent );
+    void resizeEvent( QResizeEvent* resizeEvent );
+    void scrollContentsBy( int dx, int dy );
+    void keyPressEvent( QKeyEvent* keyEvent );
 
     // Must be implemented to return wether the line number is
     // a match or not (used for coloured bullets)
@@ -114,7 +119,18 @@ class AbstractLogView : public QAbstractScrollArea
     void displayLine(int line);
 
   private:
+    // Constants
+    static const int bulletLineX_;
+    static const int leftMarginPx_;
+
     const AbstractLogData* logData;
+
+    bool selectionStarted_;
+    // Start of the selection (characters)
+    QPoint selectionStartPos_;
+    // Current end of the selection (characters)
+    QPoint selectionCurrentEndPos_;
+    QBasicTimer autoScrollTimer_;
 
     Selection selection_;
     qint64 firstLine;
@@ -123,7 +139,10 @@ class AbstractLogView : public QAbstractScrollArea
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
-    int convertCoordToLine(int yPos) const;
+    void convertCoordToFilePos( const QPoint& pos, int* line, int* column ) const;
+    QPoint convertCoordToFilePos( const QPoint& pos ) const;
+    int convertCoordToLine( int yPos ) const;
+    int convertCoordToColumn( int xPos ) const;
     void moveSelection( int y );
     void jumpToTop();
     void jumpToBottom();

@@ -76,14 +76,22 @@ inline void LineDrawer::draw( QPainter& painter,
         painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
 }
 
+// Looks better with an odd value
+const int AbstractLogView::bulletLineX_ = 11;
+const int AbstractLogView::leftMarginPx_ = bulletLineX_ + 2;
+
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
-       QWidget* parent) : QAbstractScrollArea(parent), selection_()
+        QWidget* parent) : QAbstractScrollArea(parent),
+        selectionStartPos_(), selectionCurrentEndPos_(),
+        autoScrollTimer_(), selection_()
 {
     logData = newLogData;
 
     // Create the viewport QWidget
     setViewport(0);
     setAttribute(Qt::WA_StaticContents);  // Does it work?
+
+    selectionStarted_ = false;
 
     firstLine = 0;
     lastLine = 0;
@@ -93,6 +101,18 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
 //
 // Received events
 //
+
+void AbstractLogView::changeEvent( QEvent* changeEvent )
+{
+    QAbstractScrollArea::changeEvent( changeEvent );
+
+    // Stop the timer if the widget becomes inactive
+    if ( changeEvent->type() == QEvent::ActivationChange ) {
+        if ( ! isActiveWindow() )
+            autoScrollTimer_.stop();
+    }
+    viewport()->update();
+}
 
 void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
@@ -104,7 +124,116 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             selection_.selectLine( line );
             emit newSelection( line );
         }
+
+        // Remember the click in case we're starting a selection
+        selectionStarted_ = true;
+        selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
     }
+}
+
+void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
+{
+    // Selection implementation
+    if ( selectionStarted_ )
+    {
+        int deltaX = 0;
+        int deltaY = 0;
+
+        int fontWidth = fontMetrics().width('i');
+
+        QPoint this_point = convertCoordToFilePos( mouseEvent->pos() );
+        if ( this_point != selectionCurrentEndPos_ )
+        {
+            // Are we on a different line?
+            if ( selectionStartPos_.y() != this_point.y() )
+            {
+                if ( this_point.y() != selectionCurrentEndPos_.y() )
+                {
+                    // This is a 'range' selection
+                    LOG(logDEBUG) << "range selection: "
+                        << selectionStartPos_.y() << " " << this_point.y();
+                }
+            }
+            // Are we on a different column?
+            else if ( selectionStartPos_.x() != this_point.x() )
+            {
+                if ( this_point.x() != selectionCurrentEndPos_.x() )
+                {
+                    // This is a 'portion' selection
+                    LOG(logDEBUG) << "portion selection: "
+                        << selectionStartPos_.x() << " " << this_point.x();
+                    selection_.selectPortion( this_point.y(),
+                            selectionStartPos_.x(), this_point.x() );
+                    update();
+                }
+
+                /*
+                LOG(logDEBUG) << "x = " << mouseEvent->x() << " width() = " << width();
+                if ( mouseEvent->x() < leftMarginPx_ )
+                    deltaX = -1 - abs( mouseEvent->x() - leftMarginPx_ ) / fontWidth;
+                else if ( mouseEvent->x() > width() )
+                    deltaX = +1 - abs( mouseEvent->x() - width() ) / fontWidth;
+                */
+            }
+            selectionCurrentEndPos_ = this_point;
+
+            // Do we need to scroll while extending the selection?
+            QRect visible = viewport()->rect();
+            if ( visible.contains( mouseEvent->pos() ) )
+                autoScrollTimer_.stop();
+            else if ( ! autoScrollTimer_.isActive() )
+                autoScrollTimer_.start( 100, this );
+
+            /*
+            LOG(logDEBUG) << "deltaX = " << deltaX;
+            if ( deltaX != 0 )
+                viewport()->scroll( deltaX, deltaY );
+            */
+        }
+    }
+}
+
+void AbstractLogView::mouseReleaseEvent( QMouseEvent* )
+{
+    if ( autoScrollTimer_.isActive() )
+        autoScrollTimer_.stop();
+}
+
+void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
+{
+    if ( timerEvent->timerId() == autoScrollTimer_.timerId() ) {
+        QRect visible = viewport()->rect();
+        const QPoint globalPos = QCursor::pos();
+        const QPoint pos = viewport()->mapFromGlobal( globalPos );
+        QMouseEvent ev( QEvent::MouseMove, pos, globalPos, Qt::LeftButton,
+                Qt::LeftButton, Qt::NoModifier );
+        mouseMoveEvent( &ev );
+        int deltaX = qMax( pos.x() - visible.top(),
+                visible.bottom() - pos.x() ) - visible.height();
+        int deltaY = qMax( pos.y() - visible.left(),
+                visible.right() - pos.y() ) - visible.width();
+        int delta = qMax( deltaX, deltaY );
+
+        if ( delta >= 0 ) {
+            if ( delta < 7 )
+                delta = 7;
+            int timeout = 4900 / ( delta * delta );
+            autoScrollTimer_.start( timeout, this );
+
+            if ( deltaX > 0 )
+                horizontalScrollBar()->triggerAction(
+                        pos.x() <visible.center().x() ?
+                        QAbstractSlider::SliderSingleStepSub :
+                        QAbstractSlider::SliderSingleStepAdd );
+
+            if ( deltaY > 0 )
+                verticalScrollBar()->triggerAction(
+                        pos.y() <visible.center().y() ?
+                        QAbstractSlider::SliderSingleStepSub :
+                        QAbstractSlider::SliderSingleStepAdd );
+        }
+    }
+    QAbstractScrollArea::timerEvent( timerEvent );
 }
 
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
@@ -193,9 +322,6 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         const QBrush normalBulletBrush = QBrush( Qt::white );
         const QBrush matchBulletBrush = QBrush( Qt::red );
 
-        // Params
-        const int bulletLineX = 11;  // Looks better with an odd value
-
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
         const int nbLines = logData->getNbLine();
@@ -214,14 +340,14 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
         // First draw the bullet left margin
         painter.setPen(palette.color(QPalette::Text));
-        painter.drawLine( bulletLineX, 0, bulletLineX, viewport()->height() );
-        painter.fillRect( 0, 0, bulletLineX, viewport()->height(), Qt::darkGray );
+        painter.drawLine( bulletLineX_, 0, bulletLineX_, viewport()->height() );
+        painter.fillRect( 0, 0, bulletLineX_, viewport()->height(), Qt::darkGray );
 
         // Then draw each line
         for (int i = firstLine; i <= lastLine; i++) {
             // Position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
-            const int xPos = bulletLineX + 2;
+            const int xPos = bulletLineX_ + 2;
 
             // string to print, cut to fit the length and position of the view
             const QString cutLine = lines[i - firstLine].mid( firstCol, firstCol+nbCols );
@@ -282,7 +408,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             else
                 painter.setBrush( normalBulletBrush );
             painter.setPen( palette.color( QPalette::Text ) );
-            painter.drawEllipse( bulletLineX/2 - circleSize,
+            painter.drawEllipse( bulletLineX_/2 - circleSize,
                     yPos + (fontHeight / 2) - circleSize,
                     circleSize * 2, circleSize * 2 );
         }
@@ -395,6 +521,35 @@ int AbstractLogView::convertCoordToLine(int yPos) const
     return line;
 }
 
+// Converts the mouse x, y coordinates to the char coordinates (in the file)
+void AbstractLogView::convertCoordToFilePos( const QPoint& pos,
+        int* line, int* column) const
+{
+    QFontMetrics fm = fontMetrics();
+    *line = firstLine + pos.y()/fm.height();
+    // FIXME, only works with fixed width fonts!!
+    *column = firstCol + ( pos.x() + leftMarginPx_ )/fm.width('i');
+}
+
+QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
+{
+    QFontMetrics fm = fontMetrics();
+    // FIXME, only works with fixed width fonts!!
+    QPoint point( firstCol + ( pos.x() - leftMarginPx_ )/fm.width('i'),
+                  firstLine + pos.y()/fm.height() );
+
+    return point;
+}
+
+int AbstractLogView::convertCoordToColumn( int xPos ) const
+{
+    QFontMetrics fm = fontMetrics();
+    // FIXME, only works with fixed width fonts!!
+    int column = firstCol + xPos/fm.width('i');
+
+    return column;
+}
+
 // Move the selection up and down by the passed number of lines
 void AbstractLogView::moveSelection( int y )
 {
@@ -431,7 +586,7 @@ void AbstractLogView::jumpToTop()
 void AbstractLogView::jumpToBottom()
 {
     const int new_top_line =
-        max2( logData->getNbLine() - getNbVisibleLines() + 1, 0LL );
+        qMax( logData->getNbLine() - getNbVisibleLines() + 1, 0LL );
 
     selection_.selectLine( logData->getNbLine() - 1 );
 

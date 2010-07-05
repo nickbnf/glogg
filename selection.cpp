@@ -40,8 +40,14 @@ void Selection::selectPortion( int line, int start_column, int end_column )
     selectedLine_ = -1;
 
     selectedPartial_.line = line;
-    selectedPartial_.startColumn = start_column;
-    selectedPartial_.endColumn = end_column;
+    if ( start_column <= end_column ) {
+        selectedPartial_.startColumn = start_column;
+        selectedPartial_.endColumn = end_column;
+    }
+    else {
+        selectedPartial_.startColumn = end_column;
+        selectedPartial_.endColumn = start_column;
+    }
 }
 
 bool Selection::getPortionForLine( int line, int* start_column, int* end_column ) const

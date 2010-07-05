@@ -28,10 +28,10 @@ class Selection
     Selection();
 
     // Clear the selection
-    void clear() { selectedLine_ = -1; };
+    void clear() { selectedPartial_.line = -1; selectedLine_ = -1; };
 
     // Select one line
-    void selectLine( int line ) { selectedLine_ = line; };
+    void selectLine( int line ) { selectedPartial_.line = -1; selectedLine_ = line; };
     // Select a portion of line
     void selectPortion( int line, int start_column, int end_column);
     // Select a range of lines

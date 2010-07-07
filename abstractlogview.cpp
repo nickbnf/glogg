@@ -43,7 +43,7 @@ inline void LineDrawer::addChunk( int first_col, int last_col,
 {
     if ( first_col < 0 )
         first_col = 0;
-    int length = last_col - first_col;
+    int length = last_col - first_col + 1;
     if ( length > 0 ) {
         list << Chunk ( first_col, length, fore, back );
     }
@@ -58,7 +58,7 @@ inline void LineDrawer::draw( QPainter& painter,
 
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
-        LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
+        // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
         const int chunk_width = fm.width( cutline );
         painter.fillRect( xPos, yPos, chunk_width,
@@ -70,7 +70,6 @@ inline void LineDrawer::draw( QPainter& painter,
 
     // Draw the empty block at the end of the line
     int blank_width = line_width - xPos;
-    LOG(logDEBUG) << "blank_width: " << blank_width;
 
     if ( blank_width > 0 )
         painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
@@ -128,6 +127,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         // Remember the click in case we're starting a selection
         selectionStarted_ = true;
         selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
+        selectionCurrentEndPos_ = selectionStartPos_;
     }
 }
 
@@ -136,11 +136,6 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
     // Selection implementation
     if ( selectionStarted_ )
     {
-        int deltaX = 0;
-        int deltaY = 0;
-
-        int fontWidth = fontMetrics().width('i');
-
         QPoint thisEndPos = convertCoordToFilePos( mouseEvent->pos() );
         if ( thisEndPos != selectionCurrentEndPos_ )
         {
@@ -150,25 +145,25 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
                 if ( thisEndPos.y() != selectionCurrentEndPos_.y() )
                 {
                     // This is a 'range' selection
-                    LOG(logDEBUG) << "range selection: "
-                        << selectionStartPos_.y() << " " << thisEndPos.y();
                     selection_.selectRange( selectionStartPos_.y(),
                             thisEndPos.y() );
                     update();
                 }
             }
-            // Are we on a different column?
-            else if ( selectionStartPos_.x() != thisEndPos.x() )
+            // So we are on the same line. Are we moving horizontaly?
+            else if ( thisEndPos.x() != selectionCurrentEndPos_.x() )
             {
-                if ( thisEndPos.x() != selectionCurrentEndPos_.x() )
-                {
-                    // This is a 'portion' selection
-                    LOG(logDEBUG) << "portion selection: "
-                        << selectionStartPos_.x() << " " << thisEndPos.x();
-                    selection_.selectPortion( thisEndPos.y(),
-                            selectionStartPos_.x(), thisEndPos.x() );
-                    update();
-                }
+                // This is a 'portion' selection
+                selection_.selectPortion( thisEndPos.y(),
+                        selectionStartPos_.x(), thisEndPos.x() );
+                update();
+            }
+            // On the same line, and moving vertically then
+            else
+            {
+                // This is a 'line' selection
+                selection_.selectLine( thisEndPos.y() );
+                update();
             }
             selectionCurrentEndPos_ = thisEndPos;
 
@@ -184,6 +179,7 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
 
 void AbstractLogView::mouseReleaseEvent( QMouseEvent* )
 {
+    selectionStarted_ = false;
     if ( autoScrollTimer_.isActive() )
         autoScrollTimer_.stop();
 }
@@ -264,7 +260,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         QAbstractScrollArea::keyPressEvent( keyEvent );
 }
 
-void AbstractLogView::resizeEvent( QResizeEvent* resizeEvent )
+void AbstractLogView::resizeEvent( QResizeEvent* )
 {
     if ( logData == NULL )
         return;
@@ -339,7 +335,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             const int xPos = bulletLineX_ + 2;
 
             // string to print, cut to fit the length and position of the view
-            const QString cutLine = lines[i - firstLine].mid( firstCol, firstCol+nbCols );
+            const QString cutLine = lines[i - firstLine].mid( firstCol, nbCols );
 
             if ( selection_.isLineSelected( i ) ) {
                 // Reverse the selected line
@@ -364,18 +360,15 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 // (before selection, selection and after selection)
                 LineDrawer lineDrawer( backColor );
 
-                LOG(logDEBUG) << "Partial selection "
-                    << start_col << " " << end_col;
-
                 // Convert the chunk to screen based coordinates
                 // (from line based)
                 start_col -= firstCol;
                 end_col   -= firstCol;
-                lineDrawer.addChunk( 0, start_col, foreColor, backColor );
+                lineDrawer.addChunk( 0, start_col - 1, foreColor, backColor );
                 lineDrawer.addChunk( start_col, end_col,
                         palette.color( QPalette::HighlightedText ),
                         palette.color( QPalette::Highlight ) );
-                lineDrawer.addChunk( end_col, cutLine.length(),
+                lineDrawer.addChunk( end_col + 1, cutLine.length() - 1,
                         foreColor, backColor );
 
                 lineDrawer.draw( painter, xPos, yPos,
@@ -498,7 +491,7 @@ int AbstractLogView::getNbVisibleLines() const
 int AbstractLogView::getNbVisibleCols() const
 {
     QFontMetrics fm = fontMetrics();
-    return viewport()->width()/fm.width('i') + 1;
+    return ( viewport()->width() - leftMarginPx_ ) / fm.width('i') + 1;
 }
 
 // Converts the mouse x, y coordinates to the line number in the file

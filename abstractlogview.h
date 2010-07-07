@@ -36,7 +36,7 @@ class LineDrawer
         list(), backColor_( back_color ) { };
 
     // Add a chunk of line using the given colours.
-    // The first_col is included, the last_col is NOT!
+    // Both first_col and last_col are included
     // An empty chunk will be ignored.
     // the first column will be set to 0 if negative
     // The column are relative to the screen

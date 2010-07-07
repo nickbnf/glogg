@@ -34,6 +34,9 @@ Selection::Selection()
     selectedPartial_.line        = -1;
     selectedPartial_.startColumn = 0;
     selectedPartial_.endColumn   = 0;
+
+    selectedRange_.startLine = -1;
+    selectedRange_.endLine   = 0;
 }
 
 void Selection::selectPortion( int line, int start_column, int end_column )
@@ -76,7 +79,7 @@ bool Selection::isLineSelected( int line ) const
         return true;
     else if ( selectedRange_.startLine >= 0 )
         return ( ( line >= selectedRange_.startLine )
-                && ( line < selectedRange_.endLine ) );
+                && ( line <= selectedRange_.endLine ) );
     else
         return false;
 }

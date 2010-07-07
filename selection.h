@@ -33,9 +33,9 @@ class Selection
     // Select one line
     void selectLine( int line )
     { selectedPartial_.line = -1; selectedRange_.startLine = -1; selectedLine_ = line; };
-    // Select a portion of line
+    // Select a portion of line (both start and end included)
     void selectPortion( int line, int start_column, int end_column);
-    // Select a range of lines
+    // Select a range of lines (both start and end included)
     void selectRange( int start_line, int end_line );
 
     // Crop selection so that in fit in the range ending with the line passed.

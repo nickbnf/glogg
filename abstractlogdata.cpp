@@ -52,3 +52,9 @@ int AbstractLogData::getMaxLength() const
 {
     return doGetMaxLength();
 }
+
+// Simple wrapper in order to use a clean Template Method
+int AbstractLogData::getLineLength( qint64 line ) const
+{
+    return doGetLineLength( line );
+}

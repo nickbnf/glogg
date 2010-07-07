@@ -31,7 +31,8 @@ class Selection
     void clear() { selectedPartial_.line = -1; selectedLine_ = -1; };
 
     // Select one line
-    void selectLine( int line ) { selectedPartial_.line = -1; selectedLine_ = line; };
+    void selectLine( int line )
+    { selectedPartial_.line = -1; selectedRange_.startLine = -1; selectedLine_ = line; };
     // Select a portion of line
     void selectPortion( int line, int start_column, int end_column);
     // Select a range of lines
@@ -49,7 +50,7 @@ class Selection
     int getLines() const { return selectedLine_; };
 
     // Returns wether the line passed is selected (entirely).
-    bool isLineSelected( int line ) const { return line == selectedLine_; };
+    bool isLineSelected( int line ) const;
 
   private:
     // Line number currently selected, or -1 if none selected
@@ -60,7 +61,12 @@ class Selection
         int startColumn;
         int endColumn;
     };
+    struct SelectedRange {
+        int startLine;
+        int endLine;
+    };
     struct SelectedPartial selectedPartial_;
+    struct SelectedRange selectedRange_;
 };
 
 #endif

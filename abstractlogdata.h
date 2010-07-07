@@ -42,6 +42,8 @@ class AbstractLogData : public QObject {
     qint64 getNbLine() const;
     // Returns the length of the longest line
     int getMaxLength() const;
+    // Returns the length of the passed line
+    int getLineLength( qint64 line ) const;
 
   protected:
     // Internal function called to get a given line
@@ -52,6 +54,8 @@ class AbstractLogData : public QObject {
     virtual qint64 doGetNbLine() const = 0;
     // Internal function called to get the maximum length
     virtual int doGetMaxLength() const = 0;
+    // Internal function called to get the line length
+    virtual int doGetLineLength( qint64 line ) const = 0;
 };
 
 #endif

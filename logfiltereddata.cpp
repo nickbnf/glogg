@@ -180,3 +180,10 @@ int LogFilteredData::doGetMaxLength() const
 {
     return maxLength_;
 }
+
+int LogFilteredData::doGetLineLength( qint64 line ) const
+{
+    if ( line >= matchingLineList.size() ) { return 0; /* exception? */ }
+
+    return matchingLineList[line].length();
+}

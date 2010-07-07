@@ -141,41 +141,36 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
 
         int fontWidth = fontMetrics().width('i');
 
-        QPoint this_point = convertCoordToFilePos( mouseEvent->pos() );
-        if ( this_point != selectionCurrentEndPos_ )
+        QPoint thisEndPos = convertCoordToFilePos( mouseEvent->pos() );
+        if ( thisEndPos != selectionCurrentEndPos_ )
         {
             // Are we on a different line?
-            if ( selectionStartPos_.y() != this_point.y() )
+            if ( selectionStartPos_.y() != thisEndPos.y() )
             {
-                if ( this_point.y() != selectionCurrentEndPos_.y() )
+                if ( thisEndPos.y() != selectionCurrentEndPos_.y() )
                 {
                     // This is a 'range' selection
                     LOG(logDEBUG) << "range selection: "
-                        << selectionStartPos_.y() << " " << this_point.y();
+                        << selectionStartPos_.y() << " " << thisEndPos.y();
+                    selection_.selectRange( selectionStartPos_.y(),
+                            thisEndPos.y() );
+                    update();
                 }
             }
             // Are we on a different column?
-            else if ( selectionStartPos_.x() != this_point.x() )
+            else if ( selectionStartPos_.x() != thisEndPos.x() )
             {
-                if ( this_point.x() != selectionCurrentEndPos_.x() )
+                if ( thisEndPos.x() != selectionCurrentEndPos_.x() )
                 {
                     // This is a 'portion' selection
                     LOG(logDEBUG) << "portion selection: "
-                        << selectionStartPos_.x() << " " << this_point.x();
-                    selection_.selectPortion( this_point.y(),
-                            selectionStartPos_.x(), this_point.x() );
+                        << selectionStartPos_.x() << " " << thisEndPos.x();
+                    selection_.selectPortion( thisEndPos.y(),
+                            selectionStartPos_.x(), thisEndPos.x() );
                     update();
                 }
-
-                /*
-                LOG(logDEBUG) << "x = " << mouseEvent->x() << " width() = " << width();
-                if ( mouseEvent->x() < leftMarginPx_ )
-                    deltaX = -1 - abs( mouseEvent->x() - leftMarginPx_ ) / fontWidth;
-                else if ( mouseEvent->x() > width() )
-                    deltaX = +1 - abs( mouseEvent->x() - width() ) / fontWidth;
-                */
             }
-            selectionCurrentEndPos_ = this_point;
+            selectionCurrentEndPos_ = thisEndPos;
 
             // Do we need to scroll while extending the selection?
             QRect visible = viewport()->rect();
@@ -183,12 +178,6 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
                 autoScrollTimer_.stop();
             else if ( ! autoScrollTimer_.isActive() )
                 autoScrollTimer_.start( 100, this );
-
-            /*
-            LOG(logDEBUG) << "deltaX = " << deltaX;
-            if ( deltaX != 0 )
-                viewport()->scroll( deltaX, deltaY );
-            */
         }
     }
 }
@@ -208,10 +197,10 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
         QMouseEvent ev( QEvent::MouseMove, pos, globalPos, Qt::LeftButton,
                 Qt::LeftButton, Qt::NoModifier );
         mouseMoveEvent( &ev );
-        int deltaX = qMax( pos.x() - visible.top(),
-                visible.bottom() - pos.x() ) - visible.height();
-        int deltaY = qMax( pos.y() - visible.left(),
-                visible.right() - pos.y() ) - visible.width();
+        int deltaX = qMax( pos.x() - visible.left(),
+                visible.right() - pos.x() ) - visible.width();
+        int deltaY = qMax( pos.y() - visible.top(),
+                visible.bottom() - pos.y() ) - visible.height();
         int delta = qMax( deltaX, deltaY );
 
         if ( delta >= 0 ) {
@@ -522,32 +511,26 @@ int AbstractLogView::convertCoordToLine(int yPos) const
 }
 
 // Converts the mouse x, y coordinates to the char coordinates (in the file)
-void AbstractLogView::convertCoordToFilePos( const QPoint& pos,
-        int* line, int* column) const
-{
-    QFontMetrics fm = fontMetrics();
-    *line = firstLine + pos.y()/fm.height();
-    // FIXME, only works with fixed width fonts!!
-    *column = firstCol + ( pos.x() + leftMarginPx_ )/fm.width('i');
-}
-
+// This function ensure the pos exists in the file.
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
     QFontMetrics fm = fontMetrics();
+    int line = firstLine + pos.y() / fm.height();
+    if ( line < 0 )
+        line = 0;
+    if ( line > logData->getNbLine() )
+        line = logData->getNbLine();
+
     // FIXME, only works with fixed width fonts!!
-    QPoint point( firstCol + ( pos.x() - leftMarginPx_ )/fm.width('i'),
-                  firstLine + pos.y()/fm.height() );
+    int column = firstCol + ( pos.x() - leftMarginPx_ ) / fm.width('i');
+    if ( column < 0 )
+        column = 0;
+    if ( column > logData->getLineLength( line ) )
+        column = logData->getLineLength( line );
+
+    QPoint point( column, line );
 
     return point;
-}
-
-int AbstractLogView::convertCoordToColumn( int xPos ) const
-{
-    QFontMetrics fm = fontMetrics();
-    // FIXME, only works with fixed width fonts!!
-    int column = firstCol + xPos/fm.width('i');
-
-    return column;
 }
 
 // Move the selection up and down by the passed number of lines

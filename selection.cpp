@@ -23,6 +23,8 @@
 // There are three types of selection, only one type might be active
 // at any time.
 
+#include <QtGlobal>
+
 #include "selection.h"
 
 Selection::Selection()
@@ -36,18 +38,23 @@ Selection::Selection()
 
 void Selection::selectPortion( int line, int start_column, int end_column )
 {
-    // First unselect any whole line
+    // First unselect any whole line or range
     selectedLine_ = -1;
+    selectedRange_.startLine = -1;
 
     selectedPartial_.line = line;
-    if ( start_column <= end_column ) {
-        selectedPartial_.startColumn = start_column;
-        selectedPartial_.endColumn = end_column;
-    }
-    else {
-        selectedPartial_.startColumn = end_column;
-        selectedPartial_.endColumn = start_column;
-    }
+    selectedPartial_.startColumn = qMin ( start_column, end_column );
+    selectedPartial_.endColumn   = qMax ( start_column, end_column );
+}
+
+void Selection::selectRange( int start_line, int end_line )
+{
+    // First unselect any whole line and portion
+    selectedLine_ = -1;
+    selectedPartial_.line = -1;
+
+    selectedRange_.startLine = qMin ( start_line, end_line );
+    selectedRange_.endLine   = qMax ( start_line, end_line );
 }
 
 bool Selection::getPortionForLine( int line, int* start_column, int* end_column ) const
@@ -61,4 +68,15 @@ bool Selection::getPortionForLine( int line, int* start_column, int* end_column 
     else {
         return false;
     }
+}
+
+bool Selection::isLineSelected( int line ) const
+{
+    if ( line == selectedLine_ )
+        return true;
+    else if ( selectedRange_.startLine >= 0 )
+        return ( ( line >= selectedRange_.startLine )
+                && ( line < selectedRange_.endLine ) );
+    else
+        return false;
 }

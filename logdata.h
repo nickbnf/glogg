@@ -144,10 +144,13 @@ class LogData : public AbstractLogData {
     FileWatcher fileWatcher_;
     MonitoredFileStatus fileChangedOnDisk_;
 
+    // Implementation of virtual functions
     QString doGetLineString( qint64 line ) const;
     QStringList doGetLines( qint64 first, int number ) const;
     qint64 doGetNbLine() const;
     int doGetMaxLength() const;
+    int doGetLineLength( qint64 line ) const;
+
     void enqueueOperation( const LogDataOperation* newOperation );
     void startOperation();
 

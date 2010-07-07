@@ -20,6 +20,8 @@
 #ifndef SELECTION_H
 #define SELECTION_H
 
+#include "abstractlogdata.h"
+
 // Represents a selection in an AbstractLogView
 class Selection
 {
@@ -51,6 +53,9 @@ class Selection
 
     // Returns wether the line passed is selected (entirely).
     bool isLineSelected( int line ) const;
+
+    // Returns the text selected from the passed AbstractLogData
+    QString getSelectedText( const AbstractLogData* logData ) const;
 
   private:
     // Line number currently selected, or -1 if none selected

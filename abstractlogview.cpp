@@ -450,7 +450,7 @@ int AbstractLogView::getTopLine() const
 
 QString AbstractLogView::getSelection() const
 {
-    return logData->getLineString( selection_.getLines() );
+    return selection_.getSelectedText( logData );
 }
 
 // Select the line and ensure it is visible on the screen, scrolling if not.

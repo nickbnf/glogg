@@ -173,7 +173,10 @@ int CrawlerWidget::getTopLine() const
 
 QString CrawlerWidget::getSelectedText() const
 {
-    return logMainView->getSelection();
+    if ( filteredView->hasFocus() )
+        return filteredView->getSelection();
+    else
+        return logMainView->getSelection();
 }
 
 //

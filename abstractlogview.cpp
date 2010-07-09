@@ -229,6 +229,10 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
     else if ( keyEvent->key() == Qt::Key_Right )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
+    else if ( keyEvent->key() == Qt::Key_Home )
+        jumpToStartOfLine();
+    else if ( keyEvent->key() == Qt::Key_End )
+        jumpToRightOfScreen();
     else {
         switch ( (keyEvent->text())[0].toAscii() ) {
             case 'j':
@@ -244,6 +248,12 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 break;
             case 'l':
                 horizontalScrollBar()->triggerAction(QScrollBar::SliderSingleStepAdd);
+                break;
+            case '0':
+                jumpToStartOfLine();
+                break;
+            case '$':
+                jumpToEndOfLine();
                 break;
             case 'g':
                 jumpToTop();
@@ -534,6 +544,10 @@ void AbstractLogView::moveSelection( int delta )
     QList<int> selection = selection_.getLines();
     int new_line;
 
+    // If nothing is selected, do as if line -1 was.
+    if ( selection.isEmpty() )
+        selection.append( -1 );
+
     if ( delta < 0 )
         new_line = selection.first() + delta;
     else
@@ -546,6 +560,44 @@ void AbstractLogView::moveSelection( int delta )
 
     // Select and display the new line
     displayLine( new_line );
+}
+
+// Make the start of the lines visible
+void AbstractLogView::jumpToStartOfLine()
+{
+    horizontalScrollBar()->setValue( 0 );
+}
+
+// Make the end of the lines in the selection visible
+void AbstractLogView::jumpToEndOfLine()
+{
+    QList<int> selection = selection_.getLines();
+
+    // Search the longest line in the selection
+    int max_length = 0;
+    foreach ( int line, selection ) {
+        int length = logData->getLineLength( line );
+        if ( length > max_length )
+            max_length = length;
+    }
+
+    horizontalScrollBar()->setValue( max_length - getNbVisibleCols() );
+}
+
+// Make the end of the lines on the screen visible
+void AbstractLogView::jumpToRightOfScreen()
+{
+    QList<int> selection = selection_.getLines();
+
+    // Search the longest line on screen
+    int max_length = 0;
+    for ( int i = firstLine; i <= ( firstLine + getNbVisibleLines() ); i++ ) {
+        int length = logData->getLineLength( i );
+        if ( length > max_length )
+            max_length = length;
+    }
+
+    horizontalScrollBar()->setValue( max_length - getNbVisibleCols() );
 }
 
 // Select the first line and jump there

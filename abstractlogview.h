@@ -144,6 +144,9 @@ class AbstractLogView : public QAbstractScrollArea
     int convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;
     void moveSelection( int y );
+    void jumpToStartOfLine();
+    void jumpToEndOfLine();
+    void jumpToRightOfScreen();
     void jumpToTop();
     void jumpToBottom();
 };

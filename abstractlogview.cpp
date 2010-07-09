@@ -527,22 +527,24 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 }
 
 // Move the selection up and down by the passed number of lines
-void AbstractLogView::moveSelection( int y )
+void AbstractLogView::moveSelection( int delta )
 {
-    LOG(logDEBUG) << "AbstractLogView::moveSelection y=" << y;
+    LOG(logDEBUG) << "AbstractLogView::moveSelection delta=" << delta;
 
-    int new_line = selection_.getLines();
+    QList<int> selection = selection_.getLines();
+    int new_line;
 
-    if ( new_line == -1 )
-        new_line = 0;
+    if ( delta < 0 )
+        new_line = selection.first() + delta;
     else
-        new_line += y;
+        new_line = selection.last() + delta;
 
-    if ( new_line >= logData->getNbLine() )
-        new_line = logData->getNbLine() - 1;
     if ( new_line < 0 )
         new_line = 0;
+    else if ( new_line >= logData->getNbLine() )
+        new_line = logData->getNbLine() - 1;
 
+    // Select and display the new line
     displayLine( new_line );
 }
 

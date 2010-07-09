@@ -48,8 +48,8 @@ class Selection
     // If so, returns the portion position.
     bool getPortionForLine( int line,
             int* start_column, int* end_column ) const;
-    // Get selected whole line(s).
-    int getLines() const { return selectedLine_; };
+    // Get a list of selected line(s), in order.
+    QList<int> getLines() const;
 
     // Returns wether the line passed is selected (entirely).
     bool isLineSelected( int line ) const;

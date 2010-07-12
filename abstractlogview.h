@@ -137,9 +137,15 @@ class AbstractLogView : public QAbstractScrollArea
     qint64 lastLine;
     int firstCol;
 
+    // Text handling
+    bool useFixedFont_;
+    int charWidth_;             // Must only be used if useFixedFont_ == true
+    int charHeight_;
+
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
-    void convertCoordToFilePos( const QPoint& pos, int* line, int* column ) const;
+    void convertCoordToFilePos( const QPoint& pos,
+            int* line, int* column ) const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;
     int convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;

@@ -95,6 +95,11 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     firstLine = 0;
     lastLine = 0;
     firstCol = 0;
+
+    // Fonts
+    useFixedFont_ = false;
+    charWidth_ = 1;
+    charHeight_ = 1;
 }
 
 //
@@ -439,6 +444,20 @@ void AbstractLogView::updateData()
 
 void AbstractLogView::updateDisplaySize()
 {
+    QFontMetrics fm = fontMetrics();
+
+    charHeight_ = fm.height();
+    // Determine if the font is monospace (to enable various optimisations)
+    useFixedFont_ = true;
+    charWidth_ = fm.width('i');
+    for ( int i = 0x20; i < 0x7F; i++ )
+        if ( fm.width( QLatin1Char( i ) ) != charWidth_ ) {
+            useFixedFont_ = false;
+            break;
+        }
+    // FIXME: seems to be wrong on Qt/Mac
+    LOG(logDEBUG) << "useFixedFont_=" << useFixedFont_;
+
     // Calculate the index of the last line shown
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
@@ -493,15 +512,13 @@ void AbstractLogView::displayLine( int line )
 // Returns the number of lines visible in the viewport
 int AbstractLogView::getNbVisibleLines() const
 {
-    QFontMetrics fm = fontMetrics();
-    return viewport()->height()/fm.height() + 1;
+    return viewport()->height() / charHeight_ + 1;
 }
 
 // Returns the number of columns visible in the viewport
 int AbstractLogView::getNbVisibleCols() const
 {
-    QFontMetrics fm = fontMetrics();
-    return ( viewport()->width() - leftMarginPx_ ) / fm.width('i') + 1;
+    return ( viewport()->width() - leftMarginPx_ ) / charWidth_ + 1;
 }
 
 // Converts the mouse x, y coordinates to the line number in the file
@@ -517,15 +534,31 @@ int AbstractLogView::convertCoordToLine(int yPos) const
 // This function ensure the pos exists in the file.
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
-    QFontMetrics fm = fontMetrics();
-    int line = firstLine + pos.y() / fm.height();
+    int line = firstLine + pos.y() / charHeight_;
     if ( line < 0 )
         line = 0;
     if ( line > logData->getNbLine() )
         line = logData->getNbLine();
 
-    // FIXME, only works with fixed width fonts!!
-    int column = firstCol + ( pos.x() - leftMarginPx_ ) / fm.width('i');
+    int column = 0;
+    // Determine column in screen space
+    if ( useFixedFont_ || ( pos.x()-leftMarginPx_ < 0 ) )
+        column = ( pos.x() - leftMarginPx_ ) / charWidth_;
+    else {
+        QFontMetrics fm = fontMetrics();
+        QString this_line = logData->getLineString( line );
+        const int length = this_line.length();
+        for ( ; column < length; column++ ) {
+            if ( ( fm.width( this_line.mid(firstCol, column) )
+                        + leftMarginPx_ ) > pos.x() ) {
+                column--;
+                break;
+            }
+        }
+    }
+    // Now convert it to file space
+    column += firstCol;
+
     if ( column < 0 )
         column = 0;
     if ( column > logData->getLineLength( line ) )

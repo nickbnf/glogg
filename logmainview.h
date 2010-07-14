@@ -27,7 +27,9 @@
 class LogMainView : public AbstractLogView
 {
   public:
-    LogMainView( const LogData* newLogData, QWidget* parent = 0 );
+    LogMainView( const LogData* newLogData,
+            const QuickFindPattern* const quickFindPattern,
+            QWidget* parent = 0 );
 
     // Configure the view to use the passed filtered list
     // (used for couloured bullets)

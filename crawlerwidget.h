@@ -31,6 +31,8 @@
 #include "filteredview.h"
 #include "savedsearches.h"
 #include "infoline.h"
+#include "quickfindpattern.h"
+#include "quickfindwidget.h"
 
 #include "logdata.h"
 #include "logfiltereddata.h"
@@ -94,11 +96,14 @@ class CrawlerWidget : public QSplitter
     QToolButton*    stopButton;
     FilteredView*   filteredView;
     InfoLine*       searchInfoLine;
+    QuickFindWidget* quickFindWidget;
 
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;
 
     SavedSearches*  savedSearches;
+
+    QuickFindPattern* quickFindPattern_;
 
     LogData*        logData_;
     LogFilteredData* logFilteredData_;

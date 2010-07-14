@@ -20,47 +20,40 @@
 #ifndef QUICKFIND_H
 #define QUICKFIND_H
 
-#include <QRegExp>
+#include <QPoint>
 
-#include "abstractlogdata.h"
-
-// Represents a match result for QuickFind
-class QuickFindMatch
-{
-  public:
-    // Construct a match (must be initialised)
-    QuickFindMatch( int start_column, int length )
-    { startColumn_ = start_column; length_ = length; }
-
-    // Accessor functions
-    int startColumn() const { return startColumn_; }
-    int length() const { return length_; }
-
-  private:
-    int startColumn_;
-    int length_;
-};
-
+class QuickFindPattern;
+class AbstractLogData;
 
 // Represents a search made with Quick Find (without its results)
+// it keeps a pointer to a set of data and to a QuickFindPattern which
+// are used for the searches. (the caller retains ownership of both).
 class QuickFind
 {
   public:
-    // Construct an empty search
-    QuickFind( const AbstractLogData* log_data );
+    // Construct a search
+    QuickFind( const AbstractLogData* const logData,
+            const QuickFindPattern* const quickFindPattern );
 
-    // Set the search to a new pattern
-    void changeSearchPattern( const QString& pattern );
+    // Set the starting point that will be used by the next search
+    void setSearchStartPoint( QPoint startPoint );
 
-    // Returns wether the passed line match the quick find search.
-    // If so, it populate the passed list with the list of matches
-    // within this particular line.
-    bool matchLine( int line_number, QList<QuickFindMatch>& matches ) const;
+    // Used for incremental searches
+    // Return the first occurence of the passed pattern from the starting
+    // point.  These searches don't use the QFP and don't change the
+    // starting point.
+    QPoint incrementallySearchForward( const QString& incPattern );
+    QPoint incrementallySearchBackward( const QString& incPattern );
+
+    // Used for 'normal' (n/N) QF searches
+    // Return the first occurence of the QFP and update the starting point.
+    QPoint searchNext();
+    QPoint searchPrevious();
 
   private:
-    bool active_;
-    QRegExp regexp_;
-    const AbstractLogData* logData_;
+    // Pointers to external objects
+    const AbstractLogData* const logData_;
+    const QuickFindPattern* const quickFindPattern_;
 };
 
 #endif

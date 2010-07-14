@@ -23,8 +23,9 @@
 
 #include "filteredview.h"
 
-FilteredView::FilteredView(const AbstractLogData* newLogData, QWidget* parent)
-    : AbstractLogView(newLogData, parent)
+FilteredView::FilteredView(const AbstractLogData* newLogData,
+        const QuickFindPattern* const quickFindPattern, QWidget* parent)
+    : AbstractLogView(newLogData, quickFindPattern, parent)
 {
 }
 

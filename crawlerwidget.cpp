@@ -41,12 +41,17 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     setOrientation(Qt::Vertical);
 
     // Initialise internal data (with empty file and search)
-    logData_         = new LogData();
-    logFilteredData_ = logData_->getNewFilteredData();
+    logData_          = new LogData();
+    logFilteredData_  = logData_->getNewFilteredData();
 
-    logMainView  = new LogMainView( logData_ );
+    // Initialise the QFP object (one for both views)
+    // This is the confirmed pattern used by n/N and coloured in yellow.
+    quickFindPattern_ = new QuickFindPattern();
+
+    // The views
+    logMainView  = new LogMainView( logData_, quickFindPattern_ );
     bottomWindow = new QWidget;
-    filteredView = new FilteredView( logFilteredData_ );
+    filteredView = new FilteredView( logFilteredData_, quickFindPattern_ );
 
     savedSearches = searches;
 
@@ -71,6 +76,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchButton->setText( tr("&Search") );
     searchButton->setAutoRaise( true );
 
+    // Construct the QuickSearch bar
+    quickFindWidget = new QuickFindWidget();
+
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
     searchLineLayout->addWidget(searchLineEdit);
@@ -82,9 +90,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
     // Construct the bottom window
     QVBoxLayout* bottomMainLayout = new QVBoxLayout;
+    QVBoxLayout* quickFindPlaceholder = new QVBoxLayout;
     bottomMainLayout->addLayout(searchLineLayout);
     bottomMainLayout->addWidget(searchInfoLine);
     bottomMainLayout->addWidget(filteredView);
+    bottomMainLayout->addLayout(quickFindPlaceholder);  // Empty placeholder for now
     bottomMainLayout->setContentsMargins(2, 1, 2, 1);
     bottomWindow->setLayout(bottomMainLayout);
 
@@ -96,6 +106,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     splitterSizes += 400;
     splitterSizes += 100;
     setSizes( splitterSizes );
+
+    // *** TEST ***
+    quickFindPlaceholder->addWidget( quickFindWidget );
 
     // Connect the signals
     connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),

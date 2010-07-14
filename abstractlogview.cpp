@@ -40,6 +40,45 @@
 #include "configuration.h"
 #include "logmainview.h"
 #include "quickfind.h"
+#include "quickfindpattern.h"
+
+
+LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
+{
+    LOG(logDEBUG) << "new LineChunk: " << first_col << " " << last_col;
+
+    start_ = first_col;
+    end_   = last_col;
+    type_  = type;
+}
+
+QList<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
+{
+    QList<LineChunk> list;
+
+    if ( ( sel_start < start_ ) && ( sel_end < start_ ) ) {
+        // Selection BEFORE this chunk: no change
+        list << LineChunk( *this );
+    }
+    else if ( sel_start > end_ ) {
+        // Selection AFTER this chunk: no change
+        list << LineChunk( *this );
+    }
+    else /* if ( ( sel_start >= start_ ) && ( sel_end <= end_ ) ) */
+    {
+        // We only want to consider what's inside THIS chunk
+        sel_start = qMax( sel_start, start_ );
+        sel_end   = qMin( sel_end, end_ );
+
+        if ( sel_start > start_ )
+            list << LineChunk( start_, sel_start - 1, type_ );
+        list << LineChunk( sel_start, sel_end, Selected );
+        if ( sel_end < end_ )
+            list << LineChunk( sel_end + 1, end_, type_ );
+    }
+
+    return list;
+}
 
 inline void LineDrawer::addChunk( int first_col, int last_col,
         QColor fore, QColor back )
@@ -52,6 +91,15 @@ inline void LineDrawer::addChunk( int first_col, int last_col,
     }
 }
 
+inline void LineDrawer::addChunk( const LineChunk& chunk,
+        QColor fore, QColor back )
+{
+    int first_col = chunk.start();
+    int last_col  = chunk.end();
+
+    addChunk( first_col, last_col, fore, back );
+}
+
 inline void LineDrawer::draw( QPainter& painter,
         int xPos, int yPos, int line_width, const QString& line )
 {
@@ -61,7 +109,7 @@ inline void LineDrawer::draw( QPainter& painter,
 
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
-        // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
+        LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
         const int chunk_width = fm.width( cutline );
         painter.fillRect( xPos, yPos, chunk_width,
@@ -83,11 +131,16 @@ const int AbstractLogView::bulletLineX_ = 11;
 const int AbstractLogView::leftMarginPx_ = bulletLineX_ + 2;
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
-        QWidget* parent) : QAbstractScrollArea(parent),
-        selectionStartPos_(), selectionCurrentEndPos_(),
-        autoScrollTimer_(), selection_()
+        const QuickFindPattern* const quickFindPattern, QWidget* parent) :
+    QAbstractScrollArea( parent ),
+    selectionStartPos_(),
+    selectionCurrentEndPos_(),
+    autoScrollTimer_(),
+    selection_(),
+    quickFindPattern_( quickFindPattern ),
+    quickFind_( newLogData, quickFindPattern )
 {
-    logData = newLogData;
+    logData           = newLogData;
 
     // Create the viewport QWidget
     setViewport(0);
@@ -103,14 +156,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     useFixedFont_ = false;
     charWidth_ = 1;
     charHeight_ = 1;
-
-    // Create the QuickFind object for this view
-    quickFind_ = new QuickFind( logData );
 }
 
 AbstractLogView::~AbstractLogView()
 {
-    delete quickFind_;
 }
 
 //
@@ -390,27 +439,65 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             }
 
             // Is there something selected in the line?
-            int start_col, end_col;
-            bool isSelection = selection_.getPortionForLine( i, &start_col, &end_col );
+            int sel_start, sel_end;
+            bool isSelection =
+                selection_.getPortionForLine( i, &sel_start, &sel_end );
             // Has the line got elements to be highlighted
             QList<QuickFindMatch> qfMatchList;
-            bool isMatch = quickFind_->matchLine( i, qfMatchList );
-            
+            bool isMatch =
+                quickFindPattern_->matchLine( cutLine, qfMatchList );
+
             if ( isSelection || isMatch ) {
                 // We use the LineDrawer, with three chunks
                 // (before selection, selection and after selection)
                 LineDrawer lineDrawer( backColor );
 
-                // Convert the chunk to screen based coordinates
-                // (from line based)
-                start_col -= firstCol;
-                end_col   -= firstCol;
-                lineDrawer.addChunk( 0, start_col - 1, foreColor, backColor );
-                lineDrawer.addChunk( start_col, end_col,
-                        palette.color( QPalette::HighlightedText ),
-                        palette.color( QPalette::Highlight ) );
-                lineDrawer.addChunk( end_col + 1, cutLine.length() - 1,
-                        foreColor, backColor );
+                // First we create a list of chunks with the highlights
+                QList<LineChunk> chunkList;
+                int column = 0; // Current column in line space
+                foreach( const QuickFindMatch match, qfMatchList ) {
+                    int start = match.startColumn() - firstCol;
+                    if ( start > column )
+                        chunkList << LineChunk( column, start - 1, LineChunk::Normal );
+                    column = start + match.length();
+                    chunkList << LineChunk( start, column, LineChunk::Highlighted );
+                    column++;
+                }
+                chunkList << LineChunk( column, cutLine.length() - 1, LineChunk::Normal );
+
+                // Then we add the selection if needed
+                QList<LineChunk> newChunkList;
+                if ( isSelection ) {
+                    sel_start -= firstCol; // coord in line space
+                    sel_end   -= firstCol;
+
+                    foreach ( const LineChunk chunk, chunkList ) {
+                        newChunkList << chunk.select( sel_start, sel_end );
+                    }
+                }
+
+                foreach ( const LineChunk chunk, newChunkList ) {
+                    // Select the colours
+                    QColor fore;
+                    QColor back;
+                    switch ( chunk.type() ) {
+                        case LineChunk::Normal:
+                            fore = foreColor;
+                            back = backColor;
+                            break;
+                        case LineChunk::Highlighted:
+                            fore = QColor( "black" );
+                            back = QColor( "yellow" );
+                            // fore = highlightForeColor;
+                            // back = highlightBackColor;
+                            break;
+                        case LineChunk::Selected:
+                            fore = palette.color( QPalette::HighlightedText ),
+                            back = palette.color( QPalette::Highlight );
+                            break;
+                    }
+                    lineDrawer.addChunk ( chunk, fore, back );
+                }
 
                 lineDrawer.draw( painter, xPos, yPos,
                         viewport()->width(), cutLine );

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -17,21 +17,34 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTEREDVIEW_H
-#define FILTEREDVIEW_H
+#ifndef QUICKFINDWIDGET_H
+#define QUICKFINDWIDGET_H
 
-#include "abstractlogview.h"
+#include <QWidget>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include <QToolButton>
 
-// Class implementing the filtered (bottom) view widget.
-class FilteredView : public AbstractLogView
+class QuickFindWidget : public QWidget
 {
-  public:
-    FilteredView( const AbstractLogData* newLogData,
-            const QuickFindPattern* const quickFindPattern,
-            QWidget* parent = 0 );
+  Q_OBJECT
 
-  protected:
-    bool isLineMatching( int lineNumber );
+  public:
+    QuickFindWidget( QWidget* parent = 0 );
+
+  private slots:
+    void doSearchForward();
+    void doSearchBackward();
+
+  private:
+    QHBoxLayout* layout_;
+
+    QToolButton* closeButton_;
+    QToolButton* nextButton_;
+    QToolButton* previousButton_;
+    QLineEdit*   editQuickFind_;
+
+    QToolButton* setupToolButton(const QString &text, const QString &icon);
 };
 
 #endif

@@ -27,6 +27,31 @@
 #include "selection.h"
 #include "quickfind.h"
 
+class LineChunk
+{
+  public:
+    enum ChunkType {
+        Normal,
+        Highlighted,
+        Selected,
+    };
+
+    LineChunk( int first_col, int end_col, ChunkType type );
+
+    int start() const { return start_; }
+    int end() const { return end_; }
+    ChunkType type() const { return type_; }
+
+    // Returns 'true' if the selection is part of this chunk
+    // (at least partially), if so, it should be replaced by the list returned
+    QList<LineChunk> select( int selection_start, int selection_end ) const;
+
+  private:
+    int start_;
+    int end_;
+    ChunkType type_;
+};
+
 // Utility class for syntax colouring.
 // It stores the chunks of line to draw
 // each chunk having a different colour
@@ -42,6 +67,7 @@ class LineDrawer
     // the first column will be set to 0 if negative
     // The column are relative to the screen
     void addChunk( int first_col, int last_col, QColor fore, QColor back );
+    void addChunk( const LineChunk& chunk, QColor fore, QColor back );
 
     // Draw the current line of text using the given painter,
     // in the passed block (in pixels)
@@ -83,7 +109,9 @@ class AbstractLogView : public QAbstractScrollArea
   public:
     // Constructor of the widget, the data set is passed.
     // The caller retains ownership of the data set.
-    AbstractLogView( const AbstractLogData* newLogData, QWidget *parent=0 );
+    // The pointer to the QFP is used for colouring and QuickFind searches
+    AbstractLogView( const AbstractLogData* newLogData,
+            const QuickFindPattern* const quickFind, QWidget* parent=0 );
     ~AbstractLogView();
 
     // Refresh the widget when the data set has changed.
@@ -126,6 +154,7 @@ class AbstractLogView : public QAbstractScrollArea
     static const int bulletLineX_;
     static const int leftMarginPx_;
 
+    // Pointer to the CrawlerWidget's data set
     const AbstractLogData* logData;
 
     bool selectionStarted_;
@@ -145,8 +174,10 @@ class AbstractLogView : public QAbstractScrollArea
     int charWidth_;             // Must only be used if useFixedFont_ == true
     int charHeight_;
 
-    // Quick Find object
-    QuickFind* quickFind_;
+    // Pointer to the CrawlerWidget's QFP object
+    const QuickFindPattern* const quickFindPattern_;
+    // Our own QuickFind object
+    const QuickFind quickFind_;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

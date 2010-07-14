@@ -18,33 +18,22 @@
  */
 
 // This file implements QuickFind.
-// This class implements the Quick Find mechanism, it only stores the
-// current search pattern, and can be asked to search the next/previous
-// matching line number. Or the matches within a specific line.
+// This class implements the Quick Find mechanism
+
+#include "quickfindpattern.h"
 
 #include "quickfind.h"
 
-QuickFind::QuickFind( const AbstractLogData* log_data )
-    : regexp_(), logData_( log_data )
+QuickFind::QuickFind( const AbstractLogData* const logData,
+        const QuickFindPattern* const quickFindPattern ) :
+    logData_( logData ), quickFindPattern_( quickFindPattern )
 {
-    active_ = false;
 }
 
-void QuickFind::changeSearchPattern( const QString& pattern )
+QPoint QuickFind::searchNext()
 {
-    regexp_.setPattern( pattern );
-
-    if ( regexp_.isValid() )
-        active_ = true;
 }
 
-bool QuickFind::matchLine( int line_number,
-        QList<QuickFindMatch>& matches ) const
+QPoint QuickFind::searchPrevious()
 {
-    if ( active_ ) {
-        return false;
-    }
-    else {
-        return false;
-    }
 }

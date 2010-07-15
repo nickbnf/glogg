@@ -544,10 +544,10 @@ int AbstractLogView::convertCoordToLine(int yPos) const
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
     int line = firstLine + pos.y() / charHeight_;
+    if ( line >= logData->getNbLine() )
+        line = logData->getNbLine() - 1;
     if ( line < 0 )
         line = 0;
-    if ( line > logData->getNbLine() )
-        line = logData->getNbLine();
 
     int column = 0;
     // Determine column in screen space
@@ -568,10 +568,10 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
     // Now convert it to file space
     column += firstCol;
 
+    if ( column >= logData->getLineLength( line ) )
+        column = logData->getLineLength( line ) - 1;
     if ( column < 0 )
         column = 0;
-    if ( column > logData->getLineLength( line ) )
-        column = logData->getLineLength( line );
 
     QPoint point( column, line );
 

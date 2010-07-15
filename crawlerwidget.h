@@ -59,6 +59,8 @@ class CrawlerWidget : public QSplitter
     // Get the selected text as a string (from the main window)
     QString getSelectedText() const;
 
+    void displayQuickFindBar();
+
   signals:
     // Sent to signal the client load has progressed,
     // passing the completion percentage.
@@ -84,6 +86,8 @@ class CrawlerWidget : public QSplitter
     // Manages the info lines to inform the user the file has changed.
     void fileChangedHandler( LogData::MonitoredFileStatus );
 
+    void applyNewQFPattern( const QString& newPattern );
+
   private:
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
@@ -96,7 +100,7 @@ class CrawlerWidget : public QSplitter
     QToolButton*    stopButton;
     FilteredView*   filteredView;
     InfoLine*       searchInfoLine;
-    QuickFindWidget* quickFindWidget;
+    QuickFindWidget* quickFindWidget_;
 
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;
@@ -109,6 +113,8 @@ class CrawlerWidget : public QSplitter
     LogFilteredData* logFilteredData_;
 
     qint64          logFileSize_;
+
+    QWidget*        qfSavedFocus_;
 };
 
 #endif

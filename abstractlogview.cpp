@@ -156,6 +156,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     useFixedFont_ = false;
     charWidth_ = 1;
     charHeight_ = 1;
+
+    // Signals
+    connect( quickFindPattern_, SIGNAL( patternUpdated() ),
+            this, SLOT ( update() ) );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -448,18 +452,18 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 quickFindPattern_->matchLine( cutLine, qfMatchList );
 
             if ( isSelection || isMatch ) {
-                // We use the LineDrawer, with three chunks
-                // (before selection, selection and after selection)
+                // We use the LineDrawer and its chunks because the
+                // line has to be somehow highlighted
                 LineDrawer lineDrawer( backColor );
 
                 // First we create a list of chunks with the highlights
                 QList<LineChunk> chunkList;
                 int column = 0; // Current column in line space
                 foreach( const QuickFindMatch match, qfMatchList ) {
-                    int start = match.startColumn() - firstCol;
+                    int start = match.startColumn();
                     if ( start > column )
                         chunkList << LineChunk( column, start - 1, LineChunk::Normal );
-                    column = start + match.length();
+                    column = start + match.length() - 1;
                     chunkList << LineChunk( start, column, LineChunk::Highlighted );
                     column++;
                 }
@@ -475,6 +479,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                         newChunkList << chunk.select( sel_start, sel_end );
                     }
                 }
+                else
+                    newChunkList = chunkList;
 
                 foreach ( const LineChunk chunk, newChunkList ) {
                     // Select the colours

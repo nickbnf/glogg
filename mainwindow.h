@@ -48,6 +48,7 @@ class MainWindow : public QMainWindow
     void open();
     void openRecentFile();
     void copy();
+    void find();
     void reload();
     void stop();
     void filters();
@@ -104,6 +105,7 @@ class MainWindow : public QMainWindow
     QAction *openAction;
     QAction *exitAction;
     QAction *copyAction;
+    QAction *findAction;
     QAction *reloadAction;
     QAction *stopAction;
     QAction *filtersAction;

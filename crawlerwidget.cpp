@@ -77,7 +77,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchButton->setAutoRaise( true );
 
     // Construct the QuickSearch bar
-    quickFindWidget = new QuickFindWidget();
+    quickFindWidget_ = new QuickFindWidget();
 
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
@@ -107,8 +107,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     splitterSizes += 100;
     setSizes( splitterSizes );
 
-    // *** TEST ***
-    quickFindPlaceholder->addWidget( quickFindWidget );
+    quickFindWidget_->hide();
+    quickFindPlaceholder->addWidget( quickFindWidget_ );
 
     // Connect the signals
     connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),
@@ -127,6 +127,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
+
+    connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString& ) ),
+            this, SLOT( applyNewQFPattern( const QString& ) ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
@@ -282,6 +285,25 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
         searchInfoLine->setText(
                 tr("File truncated on disk, previous search results are not valid anymore.") );
     }
+}
+
+void CrawlerWidget::displayQuickFindBar()
+{
+    LOG(logDEBUG) << "CrawlerWidget::displayQuickFindBar";
+
+    // Remember who had the focus
+    qfSavedFocus_ = QApplication::focusWidget();
+
+    quickFindWidget_->show();
+}
+
+void CrawlerWidget::applyNewQFPattern( const QString& newPattern )
+{
+    quickFindPattern_->changeSearchPattern( newPattern );
+
+    // Hide the QF bar and restore the focus
+    quickFindWidget_->hide();
+    qfSavedFocus_->setFocus();
 }
 
 //

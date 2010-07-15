@@ -32,9 +32,15 @@ class QuickFindWidget : public QWidget
   public:
     QuickFindWidget( QWidget* parent = 0 );
 
+    void show();
+
   private slots:
     void doSearchForward();
     void doSearchBackward();
+    void confirmPattern();
+
+  signals:
+    void patternConfirmed( const QString& );
 
   private:
     QHBoxLayout* layout_;

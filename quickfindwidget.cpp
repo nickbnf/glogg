@@ -48,7 +48,7 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
             SLOT( updateButtons() ) );
     */
     connect( editQuickFind_, SIGNAL( returnPressed() ),
-            this, SLOT( doSearchForward() ) );
+            this, SLOT( confirmPattern() ) );
 
     previousButton_ = setupToolButton( QLatin1String("Previous"),
             QLatin1String( ":/images/previous.png" ) );
@@ -56,7 +56,7 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     connect( previousButton_, SIGNAL( clicked() ),
             this, SLOT( doSearchBackward() ) );
 
-    nextButton_ = setupToolButton( QLatin1String("Previous"),
+    nextButton_ = setupToolButton( QLatin1String("Next"),
             QLatin1String( ":/images/next.png" ) );
     layout->addWidget( nextButton_ );
     connect( nextButton_, SIGNAL( clicked() ),
@@ -67,7 +67,13 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
         QSizePolicy::Minimum);
     layout_->addItem(spacerItem);
 #endif
-    setMinimumWidth(minimumSizeHint().width());
+    setMinimumWidth( minimumSizeHint().width() );
+}
+
+void QuickFindWidget::show()
+{
+    QWidget::show();
+    editQuickFind_->setFocus( Qt::ShortcutFocusReason );
 }
 
 //
@@ -82,6 +88,11 @@ void QuickFindWidget::doSearchForward()
 void QuickFindWidget::doSearchBackward()
 {
     LOG(logDEBUG) << "QuickFindWidget::doSearchBackward()";
+}
+
+void QuickFindWidget::confirmPattern()
+{
+    emit patternConfirmed( editQuickFind_->text() );
 }
 
 //

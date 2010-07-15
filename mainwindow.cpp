@@ -128,6 +128,12 @@ void MainWindow::createActions()
     copyAction->setStatusTip(tr("Copy the selected line"));
     connect( copyAction, SIGNAL(triggered()), this, SLOT(copy()) );
 
+    findAction = new QAction(tr("&Find..."), this);
+    findAction->setShortcut(QKeySequence::Find);
+    findAction->setStatusTip(tr("Find the text"));
+    connect( findAction, SIGNAL(triggered()),
+            this, SLOT( find() ) );
+
     reloadAction = new QAction( tr("&Reload"), this );
     reloadAction->setIcon( QIcon(":/images/reload16.png") );
     connect( reloadAction, SIGNAL(triggered()), this, SLOT(reload()) );
@@ -166,6 +172,7 @@ void MainWindow::createMenus()
 
     editMenu = menuBar()->addMenu( tr("&Edit") );
     editMenu->addAction( copyAction );
+    editMenu->addAction( findAction );
 
     viewMenu = menuBar()->addMenu( tr("&View") );
     viewMenu->addAction( reloadAction );
@@ -235,6 +242,11 @@ void MainWindow::copy()
     // Put it in the global selection as well (X11 only)
     clipboard->setText( crawlerWidget->getSelectedText(),
             QClipboard::Selection );
+}
+
+void MainWindow::find()
+{
+    crawlerWidget->displayQuickFindBar();
 }
 
 // Reload the current log file

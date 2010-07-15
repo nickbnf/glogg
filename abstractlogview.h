@@ -98,6 +98,7 @@ class AbstractLogView : public QAbstractScrollArea
     void mousePressEvent( QMouseEvent* mouseEvent );
     void mouseMoveEvent( QMouseEvent* mouseEvent );
     void mouseReleaseEvent( QMouseEvent* );
+    void mouseDoubleClickEvent( QMouseEvent* mouseEvent );
     void timerEvent( QTimerEvent* timerEvent );
     void changeEvent( QEvent* changeEvent );
     void paintEvent( QPaintEvent* paintEvent );
@@ -155,6 +156,8 @@ class AbstractLogView : public QAbstractScrollArea
     void jumpToRightOfScreen();
     void jumpToTop();
     void jumpToBottom();
+    bool isCharWord( char c );
+    void selectWordAtPosition( const QPoint& pos );
 };
 
 #endif

@@ -189,6 +189,15 @@ void AbstractLogView::mouseReleaseEvent( QMouseEvent* )
         autoScrollTimer_.stop();
 }
 
+void AbstractLogView::mouseDoubleClickEvent( QMouseEvent* mouseEvent )
+{
+    if ( mouseEvent->button() == Qt::LeftButton )
+    {
+        const QPoint pos = convertCoordToFilePos( mouseEvent->pos() );
+        selectWordAtPosition( pos );
+    }
+}
+
 void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
 {
     if ( timerEvent->timerId() == autoScrollTimer_.timerId() ) {
@@ -656,4 +665,48 @@ void AbstractLogView::jumpToBottom()
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( new_top_line );
     update();       // in case the screen hasn't moved
+}
+
+// Returns whether the character pass is a 'word' character
+inline bool AbstractLogView::isCharWord( char c )
+{
+    if ( ( ( c >= 'A' ) && ( c <= 'Z' ) ) ||
+         ( ( c >= 'a' ) && ( c <= 'z' ) ) ||
+         ( ( c >= '0' ) && ( c <= '9' ) ) ||
+         ( ( c == '_' ) ) )
+        return true;
+    else
+        return false;
+}
+
+// Select the word under the given position
+void AbstractLogView::selectWordAtPosition( const QPoint& pos )
+{
+    const int x = pos.x();
+    const QString line = logData->getLineString( pos.y() );
+
+    if ( isCharWord( line[x].toLatin1() ) ) {
+        // Search backward for the first character in the word
+        int currentPos = x;
+        for ( ; currentPos > 0; currentPos-- )
+            if ( ! isCharWord( line[currentPos].toLatin1() ) )
+            {
+                currentPos++;
+                break;
+            }
+        int start = currentPos;
+
+        // Now search for the end
+        currentPos = x;
+        for ( ; currentPos < line.length() - 1; currentPos++ )
+            if ( ! isCharWord( line[currentPos].toLatin1() ) )
+            {
+                currentPos--;
+                break;
+            }
+        int end = currentPos;
+
+        selection_.selectPortion( pos.y(), start, end );
+        update();
+    }
 }

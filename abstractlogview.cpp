@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+#include <QApplication>
+#include <QClipboard>
 #include <QFile>
 #include <QRect>
 #include <QPaintEvent>
@@ -187,6 +189,7 @@ void AbstractLogView::mouseReleaseEvent( QMouseEvent* )
     selectionStarted_ = false;
     if ( autoScrollTimer_.isActive() )
         autoScrollTimer_.stop();
+    updateGlobalSelection();
 }
 
 void AbstractLogView::mouseDoubleClickEvent( QMouseEvent* mouseEvent )
@@ -707,6 +710,18 @@ void AbstractLogView::selectWordAtPosition( const QPoint& pos )
         int end = currentPos;
 
         selection_.selectPortion( pos.y(), start, end );
+        updateGlobalSelection();
         update();
     }
+}
+
+// Update the system global (middle click) selection (X11 only)
+void AbstractLogView::updateGlobalSelection()
+{
+    static QClipboard* const clipboard = QApplication::clipboard();
+
+    // Updating it only for "non-trivial" (range or portion) selections
+    if ( ! selection_.isSingleLine() )
+        clipboard->setText( selection_.getSelectedText( logData ),
+                QClipboard::Selection );
 }

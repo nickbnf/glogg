@@ -41,10 +41,12 @@ class Selection
     void selectRange( int start_line, int end_line );
 
     // Crop selection so that in fit in the range ending with the line passed.
-    void crop( int last_line )
-    { if ( selectedLine_ > last_line ) selectedLine_ = -1; };
+    void crop( int last_line );
 
-    // Returns wether a portion is selected or not on the passed line.
+    // Returns whether the selection is a single line
+    bool isSingleLine() const { return ( selectedLine_ != -1 ); }
+
+    // Returns whether a portion is selected or not on the passed line.
     // If so, returns the portion position.
     bool getPortionForLine( int line,
             int* start_column, int* end_column ) const;

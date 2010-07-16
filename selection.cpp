@@ -60,6 +60,21 @@ void Selection::selectRange( int start_line, int end_line )
     selectedRange_.endLine   = qMax ( start_line, end_line );
 }
 
+void Selection::crop( int last_line )
+{
+    if ( selectedLine_ > last_line )
+        selectedLine_ = -1;
+
+    if ( selectedPartial_.line > last_line )
+        selectedPartial_.line = -1;
+
+    if ( selectedRange_.endLine > last_line )
+        selectedRange_.endLine = last_line;
+
+    if ( selectedRange_.startLine > last_line )
+        selectedRange_.startLine = last_line;
+};
+
 bool Selection::getPortionForLine( int line, int* start_column, int* end_column ) const
 {
     if ( selectedPartial_.line == line ) {

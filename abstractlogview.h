@@ -156,8 +156,11 @@ class AbstractLogView : public QAbstractScrollArea
     void jumpToRightOfScreen();
     void jumpToTop();
     void jumpToBottom();
-    bool isCharWord( char c );
     void selectWordAtPosition( const QPoint& pos );
+
+    // Utils functions
+    bool isCharWord( char c );
+    void updateGlobalSelection();
 };
 
 #endif

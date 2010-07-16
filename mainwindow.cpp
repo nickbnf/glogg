@@ -410,7 +410,12 @@ void MainWindow::setCurrentFile( const QString& fileName )
         updateRecentFileActions();
     }
 
-    setWindowTitle(tr("%1 - %2").arg(shownName).arg(tr("glogg")));
+    setWindowTitle(
+            tr("%1 - %2").arg(shownName).arg(tr("glogg"))
+#ifdef GLOGG_COMMIT
+            + " (dev build " GLOGG_VERSION ")"
+#endif
+            );
 }
 
 // Trims the recent file lists and updates the actions.

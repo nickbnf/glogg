@@ -57,3 +57,23 @@ bool QuickFindPattern::matchLine( const QString& line,
 
     return ( matches.length() > 0 );
 }
+
+bool QuickFindPattern::isLineMatching( const QString& line, int column ) const
+{
+    int pos = 0;
+
+    if ( ( pos = regexp_.indexIn( line, column ) ) != -1 ) {
+        lastMatchStart_ = pos;
+        lastMatchEnd_   = pos + regexp_.matchedLength() - 1;
+
+        return true;
+    }
+    else
+        return false;
+}
+
+void QuickFindPattern::getLastMatch( int* start_col, int* end_col ) const
+{
+    *start_col = lastMatchStart_;
+    *end_col   = lastMatchEnd_;
+}

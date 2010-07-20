@@ -86,7 +86,12 @@ class CrawlerWidget : public QSplitter
     // Manages the info lines to inform the user the file has changed.
     void fileChangedHandler( LogData::MonitoredFileStatus );
 
+    void hideQuickFindBar();
+
     void applyNewQFPattern( const QString& newPattern );
+
+    void searchForward();
+    void searchBackward();
 
   private:
     void replaceCurrentSearch( const QString& searchText );

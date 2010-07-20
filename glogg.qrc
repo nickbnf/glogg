@@ -14,5 +14,8 @@
     <file>images/next.png</file>
     <file>images/previous.png</file>
     <file>images/closetab.png</file>
+    <file>images/arrowdown.png</file>
+    <file>images/arrowup.png</file>
+    <file>images/darkclosebutton.png</file>
 </qresource>
 </RCC>

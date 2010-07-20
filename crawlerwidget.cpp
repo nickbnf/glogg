@@ -130,6 +130,12 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
     connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString& ) ),
             this, SLOT( applyNewQFPattern( const QString& ) ) );
+    connect( quickFindWidget_, SIGNAL( close() ),
+            this, SLOT( hideQuickFindBar() ) );
+    connect( quickFindWidget_, SIGNAL( searchForward() ),
+            this, SLOT( searchForward() ) );
+    connect( quickFindWidget_, SIGNAL( searchBackward() ),
+            this, SLOT( searchBackward() ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
@@ -245,7 +251,7 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
 {
     int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
-    logMainView->displayLine(mainViewLine);  // FIXME: should be done with a signal.
+    logMainView->selectAndDisplayLine(mainViewLine);  // FIXME: should be done with a signal.
 }
 
 void CrawlerWidget::applyConfiguration()
@@ -294,16 +300,26 @@ void CrawlerWidget::displayQuickFindBar()
     // Remember who had the focus
     qfSavedFocus_ = QApplication::focusWidget();
 
-    quickFindWidget_->show();
+    quickFindWidget_->activate();
+}
+
+void CrawlerWidget::hideQuickFindBar()
+{
+    // Restore the focus once the QFBar has been hidden
+    qfSavedFocus_->setFocus();
 }
 
 void CrawlerWidget::applyNewQFPattern( const QString& newPattern )
 {
     quickFindPattern_->changeSearchPattern( newPattern );
+}
 
-    // Hide the QF bar and restore the focus
-    quickFindWidget_->hide();
-    qfSavedFocus_->setFocus();
+void CrawlerWidget::searchForward()
+{
+}
+
+void CrawlerWidget::searchBackward()
+{
 }
 
 //

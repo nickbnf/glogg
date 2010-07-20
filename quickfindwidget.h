@@ -30,17 +30,26 @@ class QuickFindWidget : public QWidget
   Q_OBJECT
 
   public:
+    enum QFDirection {
+        Forward,
+        Backward,
+    };
+
     QuickFindWidget( QWidget* parent = 0 );
 
-    void show();
+    // Show the widget with the given direction
+    void activate( QFDirection direction = Forward );
 
   private slots:
     void doSearchForward();
     void doSearchBackward();
-    void confirmPattern();
+    void returnHandler();
 
   signals:
     void patternConfirmed( const QString& );
+    void close();
+    void searchForward();
+    void searchBackward();
 
   private:
     QHBoxLayout* layout_;
@@ -51,6 +60,8 @@ class QuickFindWidget : public QWidget
     QLineEdit*   editQuickFind_;
 
     QToolButton* setupToolButton(const QString &text, const QString &icon);
+
+    QFDirection  direction_;
 };
 
 #endif

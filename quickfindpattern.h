@@ -60,6 +60,15 @@ class QuickFindPattern : public QObject
     bool matchLine( const QString& line,
             QList<QuickFindMatch>& matches ) const;
 
+    // Returns whether there is a match in the passed line, starting at
+    // the passed column.
+    // Results are stored internally.
+    bool isLineMatching( const QString& line, int column = 0 ) const;
+
+    // Must be called when isLineMatching returns 'true', returns
+    // the position of the first match found.
+    void getLastMatch( int* start_col, int* end_col ) const;
+
   signals:
     // Sent when the pattern is changed
     void patternUpdated();
@@ -67,6 +76,9 @@ class QuickFindPattern : public QObject
   private:
     bool active_;
     QRegExp regexp_;
+
+    mutable int lastMatchStart_;
+    mutable int lastMatchEnd_;
 };
 
 #endif

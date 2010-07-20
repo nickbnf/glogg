@@ -34,7 +34,7 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     layout->setSpacing( 6 );
 
     closeButton_ = setupToolButton(
-            QLatin1String(""), QLatin1String( ":/images/closetab.png" ) );
+            QLatin1String(""), QLatin1String( ":/images/darkclosebutton.png" ) );
     layout->addWidget( closeButton_ );
     connect( closeButton_, SIGNAL( clicked() ), SLOT( hide() ) );
 
@@ -48,16 +48,16 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
             SLOT( updateButtons() ) );
     */
     connect( editQuickFind_, SIGNAL( returnPressed() ),
-            this, SLOT( confirmPattern() ) );
+            this, SLOT( returnHandler() ) );
 
     previousButton_ = setupToolButton( QLatin1String("Previous"),
-            QLatin1String( ":/images/previous.png" ) );
+            QLatin1String( ":/images/arrowup.png" ) );
     layout->addWidget( previousButton_ );
     connect( previousButton_, SIGNAL( clicked() ),
             this, SLOT( doSearchBackward() ) );
 
     nextButton_ = setupToolButton( QLatin1String("Next"),
-            QLatin1String( ":/images/next.png" ) );
+            QLatin1String( ":/images/arrowdown.png" ) );
     layout->addWidget( nextButton_ );
     connect( nextButton_, SIGNAL( clicked() ),
             this, SLOT( doSearchForward() ) );
@@ -70,8 +70,9 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     setMinimumWidth( minimumSizeHint().width() );
 }
 
-void QuickFindWidget::show()
+void QuickFindWidget::activate( QFDirection direction )
 {
+    direction_ = direction;
     QWidget::show();
     editQuickFind_->setFocus( Qt::ShortcutFocusReason );
 }
@@ -90,9 +91,13 @@ void QuickFindWidget::doSearchBackward()
     LOG(logDEBUG) << "QuickFindWidget::doSearchBackward()";
 }
 
-void QuickFindWidget::confirmPattern()
+void QuickFindWidget::returnHandler()
 {
     emit patternConfirmed( editQuickFind_->text() );
+    // Close the widget
+    this->hide();
+    emit close();
+    emit searchForward();
 }
 
 //

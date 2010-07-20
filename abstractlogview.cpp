@@ -138,7 +138,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     autoScrollTimer_(),
     selection_(),
     quickFindPattern_( quickFindPattern ),
-    quickFind_( newLogData, quickFindPattern )
+    quickFind_( newLogData, &selection_, quickFindPattern )
 {
     logData           = newLogData;
 
@@ -340,6 +340,9 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             case 'G':
                 jumpToBottom();
                 break;
+            case 'n':
+                searchNext();
+                break;
             default:
                 keyEvent->ignore();
         }
@@ -532,6 +535,17 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     LOG(logDEBUG4) << "End of repaint";
 }
 
+void AbstractLogView::searchNext()
+{
+    LOG(logDEBUG) << "AbstractLogView::searchNext";
+
+    int line = quickFind_.searchNext();
+    if ( line >= 0 ) {
+        LOG(logDEBUG) << "searchNext " << line;
+        displayLine( line );
+    }
+}
+
 //
 // Public functions
 //
@@ -601,27 +615,10 @@ QString AbstractLogView::getSelection() const
     return selection_.getSelectedText( logData );
 }
 
-// Select the line and ensure it is visible on the screen, scrolling if not.
-void AbstractLogView::displayLine( int line )
+void AbstractLogView::selectAndDisplayLine( int line )
 {
-    LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
-
     selection_.selectLine( line );
-
-    // If the line is already the screen
-    if ( ( line >= firstLine ) &&
-         ( line < ( firstLine + getNbVisibleLines() ) ) ) {
-        // ... don't scroll and just repaint
-        update();
-    } else {
-        // Put the selected line in the middle if possible
-        int newTopLine = line - ( getNbVisibleLines() / 2 );
-        if ( newTopLine < 0 )
-            newTopLine = 0;
-
-        // This will also trigger a scrollContents event
-        verticalScrollBar()->setValue( newTopLine );
-    }
+    displayLine( line );
 }
 
 //
@@ -688,6 +685,28 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
     return point;
 }
 
+// Makes the widget adjust itself to display the passed line.
+// Doing so, it will throw itself a scrollContents event.
+void AbstractLogView::displayLine( int line )
+{
+    LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
+
+    // If the line is already the screen
+    if ( ( line >= firstLine ) &&
+         ( line < ( firstLine + getNbVisibleLines() ) ) ) {
+        // ... don't scroll and just repaint
+        update();
+    } else {
+        // Put the selected line in the middle if possible
+        int newTopLine = line - ( getNbVisibleLines() / 2 );
+        if ( newTopLine < 0 )
+            newTopLine = 0;
+
+        // This will also trigger a scrollContents event
+        verticalScrollBar()->setValue( newTopLine );
+    }
+}
+
 // Move the selection up and down by the passed number of lines
 void AbstractLogView::moveSelection( int delta )
 {
@@ -711,6 +730,7 @@ void AbstractLogView::moveSelection( int delta )
         new_line = logData->getNbLine() - 1;
 
     // Select and display the new line
+    selection_.selectLine( new_line );
     displayLine( new_line );
 }
 

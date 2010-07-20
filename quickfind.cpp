@@ -18,22 +18,64 @@
  */
 
 // This file implements QuickFind.
-// This class implements the Quick Find mechanism
+// This class implements the Quick Find mechanism using references
+// to the logData, the QFP and the selection passed.
+// Search is started just after the selection and the selection is updated
+// if a match is found.
 
 #include "quickfindpattern.h"
+#include "selection.h"
 
 #include "quickfind.h"
 
 QuickFind::QuickFind( const AbstractLogData* const logData,
+        Selection* selection,
         const QuickFindPattern* const quickFindPattern ) :
-    logData_( logData ), quickFindPattern_( quickFindPattern )
+    logData_( logData ), selection_( selection ), 
+    quickFindPattern_( quickFindPattern )
 {
 }
 
-QPoint QuickFind::searchNext()
+int QuickFind::searchNext()
 {
+    bool found = false;
+    int line;
+    int column;
+    int start_col;
+    int end_col;
+
+    // Position where we start the search from
+    selection_->getNextPosition( &line, &column );
+
+    // We look at the rest of the first line
+    if ( quickFindPattern_->isLineMatching(
+                logData_->getLineString( line ), column ) ) {
+        quickFindPattern_->getLastMatch( &start_col, &end_col );
+        found = true;
+    }
+    else {
+        // And then the rest of the file
+        line++;
+        while ( line < logData_->getNbLine() ) {
+            if ( quickFindPattern_->isLineMatching(
+                        logData_->getLineString( line ) ) ) {
+                quickFindPattern_->getLastMatch( &start_col, &end_col );
+                found = true;
+                break;
+            }
+            line++;
+        }
+    }
+
+    if ( found )
+    {
+        selection_->selectPortion( line, start_col, end_col );
+        return line;
+    }
+
+    return -1;
 }
 
-QPoint QuickFind::searchPrevious()
+int QuickFind::searchPrevious()
 {
 }

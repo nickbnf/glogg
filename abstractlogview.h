@@ -145,9 +145,12 @@ class AbstractLogView : public QAbstractScrollArea
     void newSelection(int line);
 
   public slots:
-    // Makes the widget adjust itself to display the passed line.
-    // Doing so, it will throw itself a scrollContents event.
-    void displayLine(int line);
+    // Makes the widget select and display the passed line.
+    // Scrolling as necessary
+    void selectAndDisplayLine( int line );
+
+    // Use the current QFP to go and select the next match.
+    void searchNext();
 
   private:
     // Constants
@@ -177,7 +180,7 @@ class AbstractLogView : public QAbstractScrollArea
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;
     // Our own QuickFind object
-    const QuickFind quickFind_;
+    QuickFind quickFind_;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
@@ -186,6 +189,7 @@ class AbstractLogView : public QAbstractScrollArea
     QPoint convertCoordToFilePos( const QPoint& pos ) const;
     int convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;
+    void displayLine( int line );
     void moveSelection( int y );
     void jumpToStartOfLine();
     void jumpToEndOfLine();

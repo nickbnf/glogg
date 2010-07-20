@@ -22,6 +22,25 @@
 
 #include "abstractlogdata.h"
 
+class Portion
+{
+  public:
+    Portion() { line_ = -1; }
+    Portion( int line, int start_column, int end_column )
+    { line_ = line; startColumn_ = start_column; endColumn_ = end_column; }
+
+    int line() const { return line_; }
+    int startColumn() const { return startColumn_; }
+    int endColumn() const { return endColumn_; }
+
+    bool isValid() const { return ( line_ != -1 ); }
+
+  private:
+    int line_;
+    int startColumn_;
+    int endColumn_;
+};
+
 // Represents a selection in an AbstractLogView
 class Selection
 {
@@ -34,9 +53,13 @@ class Selection
 
     // Select one line
     void selectLine( int line )
-    { selectedPartial_.line = -1; selectedRange_.startLine = -1; selectedLine_ = line; };
+      { selectedPartial_.line = -1; selectedRange_.startLine = -1;
+        selectedLine_ = line; };
     // Select a portion of line (both start and end included)
-    void selectPortion( int line, int start_column, int end_column);
+    void selectPortion( int line, int start_column, int end_column );
+    void selectPortion( Portion selection )
+      { selectPortion( selection.line(), selection.startColumn(),
+              selection.endColumn() ); }
     // Select a range of lines (both start and end included)
     void selectRange( int start_line, int end_line );
 
@@ -58,6 +81,10 @@ class Selection
 
     // Returns the text selected from the passed AbstractLogData
     QString getSelectedText( const AbstractLogData* logData ) const;
+
+    // Return the position immediately after the current selection
+    // (used for searches)
+    void getNextPosition( int* line, int* column ) const;
 
   private:
     // Line number currently selected, or -1 if none selected

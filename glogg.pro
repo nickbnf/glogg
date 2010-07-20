@@ -123,6 +123,9 @@ release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
 debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
 release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
 
+# Debug symbols in debug builds
+debug:QMAKE_CXXFLAGS += -g
+
 isEmpty(LOG_LEVEL) {
     Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
     Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"

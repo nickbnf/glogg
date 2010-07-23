@@ -96,6 +96,7 @@ class CrawlerWidget : public QSplitter
   private:
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
+    AbstractLogView* searchableWidget() const;
 
     LogMainView*    logMainView;
     QWidget*        bottomWindow;

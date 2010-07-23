@@ -86,6 +86,8 @@ class Selection
     // (used for searches)
     void getNextPosition( int* line, int* column ) const;
 
+    void getPreviousPosition( int* line, int* column ) const;
+
   private:
     // Line number currently selected, or -1 if none selected
     int selectedLine_;

@@ -84,11 +84,17 @@ void QuickFindWidget::activate( QFDirection direction )
 void QuickFindWidget::doSearchForward()
 {
     LOG(logDEBUG) << "QuickFindWidget::doSearchForward()";
+
+    emit patternConfirmed( editQuickFind_->text() );
+    emit searchForward();
 }
 
 void QuickFindWidget::doSearchBackward()
 {
     LOG(logDEBUG) << "QuickFindWidget::doSearchBackward()";
+
+    emit patternConfirmed( editQuickFind_->text() );
+    emit searchBackward();
 }
 
 void QuickFindWidget::returnHandler()

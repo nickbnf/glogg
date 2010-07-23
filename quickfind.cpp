@@ -23,6 +23,7 @@
 // Search is started just after the selection and the selection is updated
 // if a match is found.
 
+#include "log.h"
 #include "quickfindpattern.h"
 #include "selection.h"
 
@@ -36,7 +37,7 @@ QuickFind::QuickFind( const AbstractLogData* const logData,
 {
 }
 
-int QuickFind::searchNext()
+int QuickFind::searchForward()
 {
     bool found = false;
     int line;
@@ -76,6 +77,44 @@ int QuickFind::searchNext()
     return -1;
 }
 
-int QuickFind::searchPrevious()
+int QuickFind::searchBackward()
 {
+    bool found = false;
+    int line;
+    int column;
+    int start_col;
+    int end_col;
+
+    // Position where we start the search from
+    selection_->getPreviousPosition( &line, &column );
+
+    LOG(logDEBUG) << "getPreviousPosition: " << line << " " << column;
+
+    // We look at the beginning of the first line
+    if ( quickFindPattern_->isLineMatchingBackward(
+                logData_->getLineString( line ), column ) ) {
+        quickFindPattern_->getLastMatch( &start_col, &end_col );
+        found = true;
+    }
+    else {
+        // And then the rest of the file
+        line--;
+        while ( line >= 0 ) {
+            if ( quickFindPattern_->isLineMatching(
+                        logData_->getLineString( line ) ) ) {
+                quickFindPattern_->getLastMatch( &start_col, &end_col );
+                found = true;
+                break;
+            }
+            line--;
+        }
+    }
+
+    if ( found )
+    {
+        selection_->selectPortion( line, start_col, end_col );
+        return line;
+    }
+
+    return -1;
 }

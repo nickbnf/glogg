@@ -150,7 +150,9 @@ class AbstractLogView : public QAbstractScrollArea
     void selectAndDisplayLine( int line );
 
     // Use the current QFP to go and select the next match.
-    void searchNext();
+    void searchForward();
+    // Use the current QFP to go and select the previous match.
+    void searchBackward();
 
   private:
     // Constants
@@ -197,6 +199,10 @@ class AbstractLogView : public QAbstractScrollArea
     void jumpToTop();
     void jumpToBottom();
     void selectWordAtPosition( const QPoint& pos );
+
+    // Search functions (for n/N)
+    void searchNext();
+    void searchPrevious();
 
     // Utils functions
     bool isCharWord( char c );

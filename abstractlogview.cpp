@@ -45,7 +45,7 @@
 
 LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
 {
-    LOG(logDEBUG) << "new LineChunk: " << first_col << " " << last_col;
+    // LOG(logDEBUG) << "new LineChunk: " << first_col << " " << last_col;
 
     start_ = first_col;
     end_   = last_col;
@@ -109,7 +109,7 @@ inline void LineDrawer::draw( QPainter& painter,
 
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
-        LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
+        // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
         const int chunk_width = fm.width( cutline );
         painter.fillRect( xPos, yPos, chunk_width,
@@ -343,6 +343,9 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             case 'n':
                 searchNext();
                 break;
+            case 'N':
+                searchPrevious();
+                break;
             default:
                 keyEvent->ignore();
         }
@@ -537,11 +540,32 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
 void AbstractLogView::searchNext()
 {
-    LOG(logDEBUG) << "AbstractLogView::searchNext";
+    searchForward();
+}
 
-    int line = quickFind_.searchNext();
+void AbstractLogView::searchPrevious()
+{
+    searchBackward();
+}
+
+void AbstractLogView::searchForward()
+{
+    LOG(logDEBUG) << "AbstractLogView::searchForward";
+
+    int line = quickFind_.searchForward();
     if ( line >= 0 ) {
-        LOG(logDEBUG) << "searchNext " << line;
+        LOG(logDEBUG) << "searchForward " << line;
+        displayLine( line );
+    }
+}
+
+void AbstractLogView::searchBackward()
+{
+    LOG(logDEBUG) << "AbstractLogView::searchBackward";
+
+    int line = quickFind_.searchBackward();
+    if ( line >= 0 ) {
+        LOG(logDEBUG) << "searchBackward " << line;
         displayLine( line );
     }
 }

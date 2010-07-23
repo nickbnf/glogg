@@ -65,6 +65,9 @@ class QuickFindPattern : public QObject
     // Results are stored internally.
     bool isLineMatching( const QString& line, int column = 0 ) const;
 
+    // Same as isLineMatching but search backward
+    bool isLineMatchingBackward( const QString& line, int column = -1 ) const;
+
     // Must be called when isLineMatching returns 'true', returns
     // the position of the first match found.
     void getLastMatch( int* start_col, int* end_col ) const;

@@ -49,8 +49,8 @@ class QuickFind
     // Used for 'normal' (n/N) QF searches
     // Return the line of the first occurence of the QFP and
     // update the selection. It returns -1 if nothing is found.
-    int searchNext();
-    int searchPrevious();
+    int searchForward();
+    int searchBackward();
 
   private:
     // Pointers to external objects

@@ -152,3 +152,20 @@ void Selection::getNextPosition( int* line, int* column ) const
         *column = selectedPartial_.endColumn + 1;
     }
 }
+
+void Selection::getPreviousPosition( int* line, int* column ) const
+{
+    *line   = 0;
+    *column = 0;
+
+    if ( selectedLine_ >= 0 ) {
+        *line = selectedLine_;
+    }
+    else if ( selectedRange_.startLine >= 0 ) {
+        *line = selectedRange_.startLine;
+    }
+    else if ( selectedPartial_.line >= 0 ) {
+        *line   = selectedPartial_.line;
+        *column = qMax( selectedPartial_.startColumn - 1, 0 );
+    }
+}

@@ -314,12 +314,36 @@ void CrawlerWidget::applyNewQFPattern( const QString& newPattern )
     quickFindPattern_->changeSearchPattern( newPattern );
 }
 
+// Returns a pointer to the window in which the search should be done
+AbstractLogView* CrawlerWidget::searchableWidget() const
+{
+    QWidget* searchableWidget;
+
+    // Search in the window that has focus, or the window where 'Find' was
+    // called from, or the main window.
+    if ( filteredView->hasFocus() || logMainView->hasFocus() )
+        searchableWidget = QApplication::focusWidget();
+    else
+        searchableWidget = qfSavedFocus_;
+
+    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( searchableWidget ) )
+        return view;
+    else
+        return logMainView;
+}
+
 void CrawlerWidget::searchForward()
 {
+    LOG(logDEBUG) << "CrawlerWidget::searchForward";
+
+    searchableWidget()->searchForward();
 }
 
 void CrawlerWidget::searchBackward()
 {
+    LOG(logDEBUG) << "CrawlerWidget::searchBackward";
+
+    searchableWidget()->searchBackward();
 }
 
 //

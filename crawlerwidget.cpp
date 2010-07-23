@@ -29,6 +29,7 @@
 #include <QFile>
 #include <QLineEdit>
 #include <QFileInfo>
+#include <QKeyEvent>
 
 #include "crawlerwidget.h"
 
@@ -199,6 +200,27 @@ QString CrawlerWidget::getSelectedText() const
         return filteredView->getSelection();
     else
         return logMainView->getSelection();
+}
+
+//
+// Events handlers
+//
+
+void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
+{
+    LOG(logDEBUG4) << "keyPressEvent received";
+
+    switch ( (keyEvent->text())[0].toAscii() ) {
+        case '/':
+        case '?':
+            displayQuickFindBar();
+            break;
+        default:
+            keyEvent->ignore();
+    }
+
+    if ( !keyEvent->isAccepted() )
+        QSplitter::keyPressEvent( keyEvent );
 }
 
 //

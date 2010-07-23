@@ -61,6 +61,9 @@ class CrawlerWidget : public QSplitter
 
     void displayQuickFindBar();
 
+  protected:
+    void keyPressEvent( QKeyEvent* keyEvent );
+
   signals:
     // Sent to signal the client load has progressed,
     // passing the completion percentage.

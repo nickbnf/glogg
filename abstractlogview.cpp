@@ -550,8 +550,6 @@ void AbstractLogView::searchPrevious()
 
 void AbstractLogView::searchForward()
 {
-    LOG(logDEBUG) << "AbstractLogView::searchForward";
-
     int line = quickFind_.searchForward();
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchForward " << line;
@@ -561,8 +559,6 @@ void AbstractLogView::searchForward()
 
 void AbstractLogView::searchBackward()
 {
-    LOG(logDEBUG) << "AbstractLogView::searchBackward";
-
     int line = quickFind_.searchBackward();
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchBackward " << line;
@@ -594,6 +590,9 @@ void AbstractLogView::updateData()
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
     lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+
+    // Reset the QuickFind in case we have new stuff to search into
+    quickFind_.resetLimits();
 
     // Repaint!
     update();
@@ -713,8 +712,6 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 // Doing so, it will throw itself a scrollContents event.
 void AbstractLogView::displayLine( int line )
 {
-    LOG(logDEBUG) << "displayLine " << line << " nbLines: " << logData->getNbLine();
-
     // If the line is already the screen
     if ( ( line >= firstLine ) &&
          ( line < ( firstLine + getNbVisibleLines() ) ) ) {

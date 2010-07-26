@@ -52,11 +52,33 @@ class QuickFind
     int searchForward();
     int searchBackward();
 
+    // Make the object forget the 'no more match' flag.
+    void resetLimits();
+
   private:
+    class LastMatchPosition {
+      public:
+        LastMatchPosition() : line_( -1 ), column_( -1 ) {}
+        void set( int line, int column );
+        void reset() { line_ = -1; column_ = -1; }
+        // Does the passed position come after the recorded one
+        bool isLater( int line, int column ) const;
+        // Does the passed position come before the recorded one
+        bool isSooner( int line, int column ) const;
+      private:
+        int line_;
+        int column_;
+    };
+
     // Pointers to external objects
     const AbstractLogData* const logData_;
     Selection* selection_;
     const QuickFindPattern* const quickFindPattern_;
+
+    // Position of the last match in the file
+    // (to avoid searching multiple times where there is no result)
+    LastMatchPosition lastMatch_;
+    LastMatchPosition firstMatch_;
 };
 
 #endif

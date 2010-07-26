@@ -83,7 +83,8 @@ class Selection
     QString getSelectedText( const AbstractLogData* logData ) const;
 
     // Return the position immediately after the current selection
-    // (used for searches)
+    // (used for searches).
+    // This is the next character or the start of the next line.
     void getNextPosition( int* line, int* column ) const;
 
     void getPreviousPosition( int* line, int* column ) const;

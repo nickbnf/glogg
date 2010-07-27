@@ -80,6 +80,9 @@ int QuickFind::searchForward()
     int found_start_col;
     int found_end_col;
 
+    if ( ! quickFindPattern_->isActive() )
+        return -1;
+
     // Position where we start the search from
     selection_->getNextPosition( &line, &column );
 
@@ -132,6 +135,9 @@ int QuickFind::searchBackward()
     int column;
     int start_col;
     int end_col;
+
+    if ( ! quickFindPattern_->isActive() )
+        return -1;
 
     // Position where we start the search from
     selection_->getPreviousPosition( &line, &column );

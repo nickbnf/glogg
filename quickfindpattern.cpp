@@ -62,6 +62,8 @@ bool QuickFindPattern::isLineMatching( const QString& line, int column ) const
 {
     int pos = 0;
 
+    if ( ! active_ )
+        return false;
     if ( ( pos = regexp_.indexIn( line, column ) ) != -1 ) {
         lastMatchStart_ = pos;
         lastMatchEnd_   = pos + regexp_.matchedLength() - 1;
@@ -77,6 +79,8 @@ bool QuickFindPattern::isLineMatchingBackward(
 {
     int pos = 0;
 
+    if ( ! active_ )
+        return false;
     if ( ( pos = regexp_.lastIndexIn( line, column ) ) != -1 ) {
         lastMatchStart_ = pos;
         lastMatchEnd_   = pos + regexp_.matchedLength() - 1;

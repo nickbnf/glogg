@@ -90,12 +90,12 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
     // Construct the bottom window
+    quickFindWidget_->hide();
     QVBoxLayout* bottomMainLayout = new QVBoxLayout;
-    QVBoxLayout* quickFindPlaceholder = new QVBoxLayout;
     bottomMainLayout->addLayout(searchLineLayout);
     bottomMainLayout->addWidget(searchInfoLine);
     bottomMainLayout->addWidget(filteredView);
-    bottomMainLayout->addLayout(quickFindPlaceholder);  // Empty placeholder for now
+    bottomMainLayout->addWidget(quickFindWidget_);
     bottomMainLayout->setContentsMargins(2, 1, 2, 1);
     bottomWindow->setLayout(bottomMainLayout);
 
@@ -107,9 +107,6 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     splitterSizes += 400;
     splitterSizes += 100;
     setSizes( splitterSizes );
-
-    quickFindWidget_->hide();
-    quickFindPlaceholder->addWidget( quickFindWidget_ );
 
     // Connect the signals
     connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),

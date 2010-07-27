@@ -146,6 +146,8 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     setViewport(0);
     setAttribute(Qt::WA_StaticContents);  // Does it work?
 
+    followMode_ = false;
+
     selectionStarted_ = false;
 
     firstLine = 0;
@@ -160,6 +162,8 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     // Signals
     connect( quickFindPattern_, SIGNAL( patternUpdated() ),
             this, SLOT ( update() ) );
+    connect( verticalScrollBar(), SIGNAL( sliderMoved( int ) ),
+            this, SIGNAL( followDisabled() ) );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -315,10 +319,12 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else {
         switch ( (keyEvent->text())[0].toAscii() ) {
             case 'j':
+                emit followDisabled();
                 //verticalScrollBar()->triggerAction(QScrollBar::SliderSingleStepAdd);
                 moveSelection( 1 );
                 break;
             case 'k':
+                emit followDisabled();
                 //verticalScrollBar()->triggerAction(QScrollBar::SliderSingleStepSub);
                 moveSelection( -1 );
                 break;
@@ -335,9 +341,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 jumpToEndOfLine();
                 break;
             case 'g':
+                emit followDisabled();
+                selection_.selectLine( 0 );
                 jumpToTop();
                 break;
             case 'G':
+                emit followDisabled();
+                selection_.selectLine( logData->getNbLine() - 1 );
                 jumpToBottom();
                 break;
             case 'n':
@@ -353,6 +363,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 
     if ( !keyEvent->isAccepted() )
         QAbstractScrollArea::keyPressEvent( keyEvent );
+}
+
+void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
+{
+    emit followDisabled();
+
+    QAbstractScrollArea::wheelEvent( wheelEvent );
 }
 
 void AbstractLogView::resizeEvent( QResizeEvent* )
@@ -550,6 +567,8 @@ void AbstractLogView::searchPrevious()
 
 void AbstractLogView::searchForward()
 {
+    emit followDisabled();
+
     int line = quickFind_.searchForward();
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchForward " << line;
@@ -559,11 +578,20 @@ void AbstractLogView::searchForward()
 
 void AbstractLogView::searchBackward()
 {
+    emit followDisabled();
+
     int line = quickFind_.searchBackward();
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchBackward " << line;
         displayLine( line );
     }
+}
+
+void AbstractLogView::followSet( bool checked )
+{
+    followMode_ = checked;
+    if ( checked )
+        jumpToBottom();
 }
 
 //
@@ -593,6 +621,9 @@ void AbstractLogView::updateData()
 
     // Reset the QuickFind in case we have new stuff to search into
     quickFind_.resetLimits();
+
+    if ( followMode_ )
+        jumpToBottom();
 
     // Repaint!
     update();
@@ -793,32 +824,26 @@ void AbstractLogView::jumpToRightOfScreen()
     horizontalScrollBar()->setValue( max_length - getNbVisibleCols() );
 }
 
-// Select the first line and jump there
+// Jump to the first line
 void AbstractLogView::jumpToTop()
 {
-    const int new_top_line = 0;
-
-    selection_.selectLine( new_top_line );
-
     // This will also trigger a scrollContents event
-    verticalScrollBar()->setValue( new_top_line );
+    verticalScrollBar()->setValue( 0 );
     update();       // in case the screen hasn't moved
 }
 
-// Select the last line and jump there
+// Jump to the last line
 void AbstractLogView::jumpToBottom()
 {
     const int new_top_line =
         qMax( logData->getNbLine() - getNbVisibleLines() + 1, 0LL );
 
-    selection_.selectLine( logData->getNbLine() - 1 );
-
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( new_top_line );
     update();       // in case the screen hasn't moved
 }
 
-// Returns whether the character pass is a 'word' character
+// Returns whether the character passed is a 'word' character
 inline bool AbstractLogView::isCharWord( char c )
 {
     if ( ( ( c >= 'A' ) && ( c <= 'Z' ) ) ||

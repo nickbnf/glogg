@@ -1,24 +1,19 @@
 New features:
 - Line number
 - Line number in status bar
-- vim style keyboard commands
-- quicksearch /
 - Matches overview (right bar)
-- 'Follow' file
 - Bookmarks
 - Multi files
 - Improved savable search text
 - Save position with latest files (not just the last one)
 - Non modal filter dialog
 - On/off search item window
-- Multi-line/word/character selection
 - Drag 'n drop in filters
 
 Fixes:
 - Error in regexp
 - Yellow background for errors/file changed
 - Keep colours (partially) of selected text
-- "Open" dialog default to last used directory
 - Greater number of latest files
 - 'DejaVu Sans' on Debian
 - Long file name makes the status bar extend

@@ -123,9 +123,16 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
 
+    // Follow option (up and down)
+    connect(this, SIGNAL( followSet( bool ) ),
+            logMainView, SLOT( followSet( bool ) ) );
+    connect(logMainView, SIGNAL( followDisabled() ),
+            this, SIGNAL( followDisabled() ) );
+
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
 
+    // QuickFind
     connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString& ) ),
             this, SLOT( applyNewQFPattern( const QString& ) ) );
     connect( quickFindWidget_, SIGNAL( close() ),

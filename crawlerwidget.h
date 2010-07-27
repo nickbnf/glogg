@@ -72,6 +72,10 @@ class CrawlerWidget : public QSplitter
     // Sent to the client when the loading has finished
     // weither succesfull or not.
     void loadingFinished( bool success );
+    // Sent when follow mode is enabled/disabled
+    void followSet( bool checked );
+    // Sent up to the MainWindow to disable the follow mode
+    void followDisabled();
 
   private slots:
     // Instructs the widget to start a search using the current search line.

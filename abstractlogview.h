@@ -135,6 +135,7 @@ class AbstractLogView : public QAbstractScrollArea
     void resizeEvent( QResizeEvent* resizeEvent );
     void scrollContentsBy( int dx, int dy );
     void keyPressEvent( QKeyEvent* keyEvent );
+    void wheelEvent( QWheelEvent* wheelEvent );
 
     // Must be implemented to return wether the line number is
     // a match or not (used for coloured bullets)
@@ -143,6 +144,8 @@ class AbstractLogView : public QAbstractScrollArea
   signals:
     // Sent when a new line has been selected by the user.
     void newSelection(int line);
+    // Sent up to the MainWindow to disable the follow mode
+    void followDisabled();
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -154,10 +157,16 @@ class AbstractLogView : public QAbstractScrollArea
     // Use the current QFP to go and select the previous match.
     void searchBackward();
 
+    // Signals the follow mode has been enabled
+    void followSet( bool checked );
+
   private:
     // Constants
     static const int bulletLineX_;
     static const int leftMarginPx_;
+
+    // Follow mode
+    bool followMode_;
 
     // Pointer to the CrawlerWidget's data set
     const AbstractLogData* logData;

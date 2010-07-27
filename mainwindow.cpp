@@ -54,8 +54,13 @@ MainWindow::MainWindow() : mainIcon_()
     setGeometry( geometry.x() + 20, geometry.y() + 40,
             geometry.width() - 140, geometry.height() - 140 );
 
+    // Send actions to the crawlerwidget
+    connect( this, SIGNAL( followSet( bool ) ),
+            crawlerWidget, SIGNAL( followSet( bool ) ) );
     connect( this, SIGNAL( optionsChanged() ),
-            crawlerWidget, SLOT( applyConfiguration() ));
+            crawlerWidget, SLOT( applyConfiguration() ) );
+    connect( crawlerWidget, SIGNAL( followDisabled() ),
+            this, SLOT( disableFollow() ) );
 
     readSettings();
     emit optionsChanged();
@@ -134,6 +139,12 @@ void MainWindow::createActions()
     connect( findAction, SIGNAL(triggered()),
             this, SLOT( find() ) );
 
+    followAction = new QAction( tr("&Follow File"), this );
+    followAction->setShortcut(Qt::Key_F);
+    followAction->setCheckable(true);
+    connect( followAction, SIGNAL(toggled( bool )),
+            this, SIGNAL(followSet( bool )) );
+
     reloadAction = new QAction( tr("&Reload"), this );
     reloadAction->setIcon( QIcon(":/images/reload16.png") );
     connect( reloadAction, SIGNAL(triggered()), this, SLOT(reload()) );
@@ -175,6 +186,8 @@ void MainWindow::createMenus()
     editMenu->addAction( findAction );
 
     viewMenu = menuBar()->addMenu( tr("&View") );
+    viewMenu->addAction( followAction );
+    viewMenu->addSeparator();
     viewMenu->addAction( reloadAction );
 
     toolsMenu = menuBar()->addMenu( tr("&Tools") );
@@ -294,6 +307,11 @@ void MainWindow::about()
 // Opens the 'About Qt' dialog box.
 void MainWindow::aboutQt()
 {
+}
+
+void MainWindow::disableFollow()
+{
+    followAction->setChecked( false );
 }
 
 void MainWindow::updateLoadingProgress( int progress )

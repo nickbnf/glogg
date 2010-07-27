@@ -56,6 +56,9 @@ class MainWindow : public QMainWindow
     void about();
     void aboutQt();
 
+    // Disable the follow mode checkbox and send the followSet signal down
+    void disableFollow();
+
     // Instructs the widget to update the loading progress gauge
     void updateLoadingProgress( int progress );
     // Instructs the widget to display the 'normal' status bar,
@@ -65,6 +68,8 @@ class MainWindow : public QMainWindow
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
+    // Is emitted when the 'follow' option is enabled/disabled
+    void followSet( bool checked );
 
   private:
     void createActions();
@@ -106,6 +111,7 @@ class MainWindow : public QMainWindow
     QAction *exitAction;
     QAction *copyAction;
     QAction *findAction;
+    QAction *followAction;
     QAction *reloadAction;
     QAction *stopAction;
     QAction *filtersAction;

@@ -56,18 +56,18 @@ HEADERS += version.h \
     quickfindpattern.h \
     quickfindwidget.h
 
-isEmpty(USE_NATIVE_BOOST) {
-    message(Building using static Boost libraries included in the tarball)
-
-    SOURCES += boost/libs/program_options/src/*.cpp \
-        boost/libs/detail/*.cpp \
-        boost/libs/smart_ptr/src/*.cpp
-
-    INCLUDEPATH += ./boost
+isEmpty(BOOST_PATH) {
+    message(Building using system dynamic Boost libraries)
+    LIBS += -lboost_program_options -L$HOME/lib/
 }
 else {
-    message(Building using native dynamic Boost libraries)
-    LIBS += -lboost_program_options -L$HOME/lib/
+    message(Building using static Boost libraries at $$BOOST_PATH)
+
+    SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp \
+        $$BOOST_PATH/libs/detail/*.cpp \
+        $$BOOST_PATH/libs/smart_ptr/src/*.cpp
+
+    INCLUDEPATH += $$BOOST_PATH
 }
 
 greaterThan(QT_VERSION, "4.4.0") {

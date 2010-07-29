@@ -18,8 +18,7 @@ combination of grep and less.
 ## Requirements
 
 * Qt libraries (version 4.3.0 or later)
-* Boost "program-options" library (optional, glogg can use a version included
-  in the tarball if the shared library is not installed)
+* Boost "program-options" development libraries
 * Markdown HTML processor (optional, to generate HTML documentation)
 
 ## Building
@@ -32,10 +31,14 @@ qmake (or qmake-qt4)
 make
 make install INSTALL_ROOT=/usr/local (as root if needed)
 
-qmake USE_NATIVE_BOOST=1 will use the system wide Boost libraries (recommended
-if available).
+qmake BOOST_PATH=/path/to/boost/ will statically compile the required parts of
+the Boost libraries whose source are found at the specified path.
+The path should be the directory where the tarball from www.boost.org is
+extracted.
+(use this method on Windows or if Boost is not available on the system)
 
-The documentation is built and installed if 'markdown' is found.
+The documentation is built and installed automatically if 'markdown'
+is found.
 
 ## Contact
 

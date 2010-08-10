@@ -40,15 +40,23 @@ public:
     std::ostringstream& Get(TLogLevel level = logINFO,
             const std::string& sourceFile = "", int lineNumber = 0);
 public:
-    static TLogLevel& ReportingLevel();
+    static TLogLevel ReportingLevel() { return reportingLevel; }
     static std::string ToString(TLogLevel level);
     static TLogLevel FromString(const std::string& level);
+    static void setReportingLevel(TLogLevel level) { reportingLevel = level; }
+
+    template <typename U> friend class Log;
+
 protected:
     std::ostringstream os;
 private:
+    static TLogLevel reportingLevel;
+
     Log(const Log&);
     Log& operator =(const Log&);
 };
+
+template <typename T> TLogLevel Log<T>::reportingLevel = logDEBUG4;
 
 template <typename T>
 Log<T>::Log()
@@ -74,16 +82,9 @@ Log<T>::~Log()
 }
 
 template <typename T>
-TLogLevel& Log<T>::ReportingLevel()
-{
-    static TLogLevel reportingLevel = logDEBUG4;
-    return reportingLevel;
-}
-
-template <typename T>
 std::string Log<T>::ToString(TLogLevel level)
 {
-	static const char* const buffer[] = {"ERROR", "WARNING", "INFO", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"};
+    static const char* const buffer[] = {"ERROR", "WARNING", "INFO", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"};
     return buffer[level];
 }
 
@@ -124,7 +125,7 @@ inline FILE*& Output2FILE::Stream()
 }
 
 inline void Output2FILE::Output(const std::string& msg)
-{   
+{
     FILE* pStream = Stream();
     if (!pStream)
         return;
@@ -144,8 +145,8 @@ inline void Output2FILE::Output(const std::string& msg)
 #   define FILELOG_DECLSPEC
 #endif // _WIN32
 
-class FILELOG_DECLSPEC FILELog : public Log<Output2FILE> {};
-//typedef Log<Output2FILE> FILELog;
+//class FILELOG_DECLSPEC FILELog : public Log<Output2FILE> {};
+typedef Log<Output2FILE> FILELog;
 
 #ifndef FILELOG_MAX_LEVEL
 #define FILELOG_MAX_LEVEL logDEBUG

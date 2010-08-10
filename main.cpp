@@ -36,41 +36,66 @@ int main(int argc, char *argv[])
 
     string filename = "";
 
+    TLogLevel logLevel = logWARNING;
+
     try {
         po::options_description desc("Usage: glogg [options] [file]");
         desc.add_options()
             ("help,h", "print out program usage (this message)")
             ("version,v", "print glogg's version information")
+            ("debug,d", "output more debug (include multiple times for more verbosity e.g. -dddd")
             ;
         po::options_description desc_hidden("Hidden options");
+        // For -dd, -ddd...
+        for ( string s = "dd"; s.length() <= 10; s.append("d") )
+            desc_hidden.add_options()(s.c_str(), "debug");
+
         desc_hidden.add_options()
             ("input-file", po::value<string>(), "input file")
             ;
 
+        po::options_description all_options("all options");
+        all_options.add(desc).add(desc_hidden);
+
         po::positional_options_description positional;
         positional.add("input-file", 1);
 
+        int command_line_style = (((po::command_line_style::unix_style ^
+                po::command_line_style::allow_guessing) |
+                po::command_line_style::allow_long_disguise) ^
+                po::command_line_style::allow_sticky);
+
         po::variables_map vm;
         po::store(po::command_line_parser(argc, argv).
-                options(desc.add(desc_hidden)).positional(positional).run(),
+                options(all_options).
+                positional(positional).
+                style(command_line_style).run(),
                 vm);
         po::notify(vm);
 
         if ( vm.count("help") ) {
-            cout << desc << "\n";
-            return 1;
+            desc.print(cout);
+            return 0;
         }
 
         if ( vm.count("version") ) {
             print_version();
-            return 1;
+            return 0;
         }
+
+        if ( vm.count( "debug" ) ) {
+            logLevel = logINFO;
+        }
+
+        for ( string s = "dd"; s.length() <= 10; s.append("d") )
+            if ( vm.count( s ) )
+                logLevel = (TLogLevel) (logWARNING + s.length());
 
         if ( vm.count("input-file") )
             filename = vm["input-file"].as<string>();
     }
     catch(exception& e) {
-        cerr << "error: " << e.what() << "\n";
+        cerr << "Option processing error: " << e.what() << endl;
         return 1;
     }
     catch(...) {
@@ -81,6 +106,8 @@ int main(int argc, char *argv[])
     FILE* file = fopen("glogg.log", "w");
     Output2FILE::Stream() = file;
 #endif
+
+    FILELog::setReportingLevel( logLevel );
 
     MainWindow* mw = new MainWindow();
 

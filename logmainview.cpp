@@ -30,12 +30,10 @@ LogMainView::LogMainView(const LogData* newLogData,
     filteredData_ = NULL;
 }
 
-// Just update our internal record and redraw the view in case
-// there is any change in bullet colours.
+// Just update our internal record.
 void LogMainView::useNewFiltering( LogFilteredData* filteredData )
 {
     filteredData_ = filteredData;
-    update();
 }
 
 bool LogMainView::isLineMatching( int lineNumber )

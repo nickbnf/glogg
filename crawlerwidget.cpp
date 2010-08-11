@@ -271,7 +271,11 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         searchInfoLine->displayGauge( progress );
     }
 
+    // Recompute the content of the filtered window.
     filteredView->updateData();
+
+    // Also update the top window for the coloured bullets.
+    update();
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)

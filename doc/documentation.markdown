@@ -65,8 +65,8 @@ recommended.
 
 ## Keyboard commands
 
-_glogg_ keyboard commands try to emulate roughly the default bindings used by
-the classic Unix utilities _vi_ and _less_.
+_glogg_ keyboard commands try to approximatively emulate the default bindings
+used by the classic Unix utilities _vi_ and _less_.
 
 The main commands are:
 <table>
@@ -78,4 +78,10 @@ The main commands are:
     <td>scroll left/right</td></tr>
 <tr><td>g/G</td>
     <td>jump to the first/last line of the file (moving the selection)</td></tr>
+<tr><td>/</td>
+    <td>start a quickfind search in the current screen</td></tr>
+<tr><td>n/N</td>
+    <td>repeat the previous quickfind search forward/backward</td></tr>
+<tr><td>f</td>
+    <td>active 'follow' mode, which keep the display as the tail of the file (like "tail -f")</td></tr>
 </table>

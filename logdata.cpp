@@ -283,7 +283,9 @@ int LogData::doGetLineLength( qint64 line ) const
 {
     if ( line >= nbLines_ ) { return 0; /* exception? */ }
 
-    qint64 length = linePosition_[line] - linePosition_[line-1];
+    qint64 length = linePosition_[line];
+    if ( line > 0 )
+        length -= linePosition_[line-1];
 
     // -1 because of the end of line.
     return length - 1;

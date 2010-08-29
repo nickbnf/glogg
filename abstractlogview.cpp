@@ -866,20 +866,20 @@ void AbstractLogView::selectWordAtPosition( const QPoint& pos )
         int currentPos = x;
         for ( ; currentPos > 0; currentPos-- )
             if ( ! isCharWord( line[currentPos].toLatin1() ) )
-            {
-                currentPos++;
                 break;
-            }
+        // Exclude the first char of the line if needed
+        if ( ! isCharWord( line[currentPos].toLatin1() ) )
+            currentPos++;
         int start = currentPos;
 
         // Now search for the end
         currentPos = x;
         for ( ; currentPos < line.length() - 1; currentPos++ )
             if ( ! isCharWord( line[currentPos].toLatin1() ) )
-            {
-                currentPos--;
                 break;
-            }
+        // Exclude the last char of the line if needed
+        if ( ! isCharWord( line[currentPos].toLatin1() ) )
+            currentPos--;
         int end = currentPos;
 
         selection_.selectPortion( pos.y(), start, end );

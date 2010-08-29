@@ -81,6 +81,11 @@ void QuickFindWidget::activate( QFDirection direction )
 // SLOTS
 //
 
+void QuickFindWidget::changeDisplayedPattern( const QString& newPattern )
+{
+    editQuickFind_->setText( newPattern );
+}
+
 void QuickFindWidget::doSearchForward()
 {
     LOG(logDEBUG) << "QuickFindWidget::doSearchForward()";

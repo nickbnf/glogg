@@ -148,8 +148,8 @@ int QuickFind::searchBackward()
         return -1;
 
     // We look at the beginning of the first line
-    if ( quickFindPattern_->isLineMatchingBackward(
-                logData_->getLineString( line ), column ) ) {
+    if ( ( column > 0 ) &&  ( quickFindPattern_->isLineMatchingBackward(
+                logData_->getLineString( line ), column ) ) ) {
         quickFindPattern_->getLastMatch( &start_col, &end_col );
         found = true;
     }
@@ -173,7 +173,7 @@ int QuickFind::searchBackward()
         return line;
     }
     else {
-        // Update the position of the last match
+        // Update the position of the first match
         int first_match_line;
         int first_match_column;
         selection_->getNextPosition( &first_match_line, &first_match_column );

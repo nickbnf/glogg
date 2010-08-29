@@ -161,7 +161,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
 
     // Signals
     connect( quickFindPattern_, SIGNAL( patternUpdated() ),
-            this, SLOT ( update() ) );
+            this, SLOT ( handlePatternUpdated() ) );
     connect( verticalScrollBar(), SIGNAL( sliderMoved( int ) ),
             this, SIGNAL( followDisabled() ) );
 }
@@ -355,6 +355,22 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 break;
             case 'N':
                 searchPrevious();
+                break;
+            case '*':
+                // Use the selected 'word' and search forward
+                if ( selection_.isPortion() ) {
+                    emit changeQuickFind(
+                            selection_.getSelectedText( logData ) );
+                    searchNext();
+                }
+                break;
+            case '#':
+                // Use the selected 'word' and search backward
+                if ( selection_.isPortion() ) {
+                    emit changeQuickFind(
+                            selection_.getSelectedText( logData ) );
+                    searchPrevious();
+                }
                 break;
             default:
                 keyEvent->ignore();
@@ -592,6 +608,15 @@ void AbstractLogView::followSet( bool checked )
     followMode_ = checked;
     if ( checked )
         jumpToBottom();
+}
+
+// Reset the QuickFind when the pattern is changed.
+void AbstractLogView::handlePatternUpdated()
+{
+    LOG(logDEBUG) << "AbstractLogView::handlePatternUpdated()";
+
+    quickFind_.resetLimits();
+    update();
 }
 
 //

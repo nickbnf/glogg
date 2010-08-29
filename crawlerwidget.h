@@ -96,7 +96,12 @@ class CrawlerWidget : public QSplitter
 
     void hideQuickFindBar();
 
+    // Instructs the widget to apply the pattern (called by the QF widget).
     void applyNewQFPattern( const QString& newPattern );
+
+    // Instructs the widget to change the pattern in the QuickFind widget
+    // and confirm it.
+    void changeQFPattern( const QString& newPattern );
 
     void searchForward();
     void searchBackward();

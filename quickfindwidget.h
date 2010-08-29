@@ -40,6 +40,10 @@ class QuickFindWidget : public QWidget
     // Show the widget with the given direction
     void activate( QFDirection direction = Forward );
 
+  public slots:
+    // Instructs the widget to change the pattern displayed
+    void changeDisplayedPattern( const QString& newPattern );
+
   private slots:
     void doSearchForward();
     void doSearchBackward();

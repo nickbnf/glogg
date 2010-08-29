@@ -146,6 +146,8 @@ class AbstractLogView : public QAbstractScrollArea
     void newSelection(int line);
     // Sent up to the MainWindow to disable the follow mode
     void followDisabled();
+    // Sent when the view wants the QuickFind widget pattern to change.
+    void changeQuickFind( const QString& newPattern );
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -159,6 +161,9 @@ class AbstractLogView : public QAbstractScrollArea
 
     // Signals the follow mode has been enabled
     void followSet( bool checked );
+
+  private slots:
+    void handlePatternUpdated();
 
   private:
     // Constants

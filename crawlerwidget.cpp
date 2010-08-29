@@ -142,6 +142,12 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     connect( quickFindWidget_, SIGNAL( searchBackward() ),
             this, SLOT( searchBackward() ) );
 
+    // QuickFind changes coming from the views
+    connect(logMainView, SIGNAL( changeQuickFind( const QString& ) ),
+            this, SLOT( changeQFPattern( const QString& ) ) );
+    connect(filteredView, SIGNAL( changeQuickFind( QString& ) ),
+            this, SLOT( changeQFPattern( const QString& ) ) );
+
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
@@ -341,6 +347,12 @@ void CrawlerWidget::hideQuickFindBar()
 
 void CrawlerWidget::applyNewQFPattern( const QString& newPattern )
 {
+    quickFindPattern_->changeSearchPattern( newPattern );
+}
+
+void CrawlerWidget::changeQFPattern( const QString& newPattern )
+{
+    quickFindWidget_->changeDisplayedPattern( newPattern );
     quickFindPattern_->changeSearchPattern( newPattern );
 }
 

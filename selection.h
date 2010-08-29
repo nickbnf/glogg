@@ -69,6 +69,9 @@ class Selection
     // Returns whether the selection is a single line
     bool isSingleLine() const { return ( selectedLine_ != -1 ); }
 
+    // Returns whether the selection is a portion of line
+    bool isPortion() const { return ( selectedPartial_.line != -1 ); }
+
     // Returns whether a portion is selected or not on the passed line.
     // If so, returns the portion position.
     bool getPortionForLine( int line,

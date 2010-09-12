@@ -696,6 +696,7 @@ QString AbstractLogView::getSelection() const
 
 void AbstractLogView::selectAndDisplayLine( int line )
 {
+    emit followDisabled();
     selection_.selectLine( line );
     displayLine( line );
 }

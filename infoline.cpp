@@ -31,7 +31,7 @@ InfoLine::InfoLine() :
     backgroundColor_( origPalette_.color( QPalette::Button ) ),
     darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
 {
-    setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed );
+    setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
 }
 
 void InfoLine::displayGauge( int completion )

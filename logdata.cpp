@@ -56,7 +56,7 @@ void LogData::PartialIndexOperation::doStart(
 // Constructs an empty log file.
 // It must be displayed without error.
 LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
-    fileMutex_(), workerThread_()
+    fileMutex_(), dataMutex_(), workerThread_()
 {
     // Start with an "empty" log
     file_         = NULL;
@@ -213,8 +213,11 @@ void LogData::indexingFinished( bool success )
 
     // We use the newly created file data or restore the old ones.
     // (Qt implicit copy makes this fast!)
-    workerThread_.getIndexingData( &fileSize_, &maxLength_, &linePosition_ );
-    nbLines_ = linePosition_.size();
+    {
+        QMutexLocker locker( &dataMutex_ );
+        workerThread_.getIndexingData( &fileSize_, &maxLength_, &linePosition_ );
+        nbLines_ = linePosition_.size();
+    }
 
     LOG(logDEBUG) << "indexingFinished: " << success <<
         ", found " << nbLines_ << " lines.";
@@ -281,6 +284,8 @@ int LogData::doGetMaxLength() const
 
 int LogData::doGetLineLength( qint64 line ) const
 {
+    QMutexLocker locker( &dataMutex_ );
+
     if ( line >= nbLines_ ) { return 0; /* exception? */ }
 
     qint64 length = linePosition_[line];
@@ -295,20 +300,26 @@ QString LogData::doGetLineString( qint64 line ) const
 {
     if ( line >= nbLines_ ) { return QString(); /* exception? */ }
 
+    dataMutex_.lock();
     fileMutex_.lock();
     file_->open( QIODevice::ReadOnly );
 
     file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
+
     QString string = QString( file_->readLine() );
 
     file_->close();
     fileMutex_.unlock();
+    dataMutex_.unlock();
 
     string.chop( 1 );
 
     return string;
 }
 
+// Note this function is also called from the LogFilteredDataWorker thread, so
+// data must be protected because they // are changed in the main thread (by
+// indexingFinished).
 QStringList LogData::doGetLines( qint64 first_line, int number ) const
 {
     QStringList list;
@@ -324,6 +335,8 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         LOG(logWARNING) << "LogData::doGetLines Lines out of bound asked for";
         return QStringList(); /* exception? */
     }
+
+    dataMutex_.lock();
 
     fileMutex_.lock();
     file_->open( QIODevice::ReadOnly );
@@ -347,6 +360,8 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         list.append( QString( this_line ) );
         beginning = end;
     }
+
+    dataMutex_.unlock();
 
     return list;
 }

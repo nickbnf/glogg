@@ -164,9 +164,13 @@ class LogData : public AbstractLogData {
     const LogDataOperation* currentOperation_;
     const LogDataOperation* nextOperation_;
 
+    // To protect the file:
     mutable QMutex fileMutex_;
-    // (is mutable to allow 'const' function to touch it,
+    // To protect linePosition_, fileSize_ and maxLength_:
+    mutable QMutex dataMutex_;
+    // (are mutable to allow 'const' function to touch it,
     // while remaining const)
+    // When acquiring both, data should be help before locking file.
 
     LogDataWorkerThread workerThread_;
 };

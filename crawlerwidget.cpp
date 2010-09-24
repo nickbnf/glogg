@@ -123,6 +123,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SLOT( jumpToMatchingLine( int ) ) );
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
+    connect(logMainView, SIGNAL( updateLineNumber( int ) ),
+            this, SIGNAL( updateLineNumber( int ) ) );
 
     // Follow option (up and down)
     connect(this, SIGNAL( followSet( bool ) ),

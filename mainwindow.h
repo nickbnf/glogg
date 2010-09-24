@@ -59,11 +59,16 @@ class MainWindow : public QMainWindow
     // Disable the follow mode checkbox and send the followSet signal down
     void disableFollow();
 
+    // Update the line number displayed in the status bar.
+    // Must be passed as the internal (starts at 0) line number.
+    void lineNumberHandler( int line );
+
     // Instructs the widget to update the loading progress gauge
     void updateLoadingProgress( int progress );
     // Instructs the widget to display the 'normal' status bar,
     // without the progress gauge and with file info
     void displayNormalStatus( bool success );
+
 
   signals:
     // Is emitted when new settings must be used
@@ -105,6 +110,7 @@ class MainWindow : public QMainWindow
     QMenu *helpMenu;
 
     InfoLine *infoLine;
+    QLabel* lineNbField;
     QToolBar *toolBar;
 
     QAction *openAction;

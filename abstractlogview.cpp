@@ -194,6 +194,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         int line = convertCoordToLine( mouseEvent->y() );
         if ( line < logData->getNbLine() ) {
             selection_.selectLine( line );
+            emit updateLineNumber( line );
             emit newSelection( line );
         }
 
@@ -220,6 +221,7 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
                     // This is a 'range' selection
                     selection_.selectRange( selectionStartPos_.y(),
                             thisEndPos.y() );
+                    emit updateLineNumber( thisEndPos.y() );
                     update();
                 }
             }
@@ -236,6 +238,7 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
             {
                 // This is a 'line' selection
                 selection_.selectLine( thisEndPos.y() );
+                emit updateLineNumber( thisEndPos.y() );
                 update();
             }
             selectionCurrentEndPos_ = thisEndPos;
@@ -343,11 +346,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             case 'g':
                 emit followDisabled();
                 selection_.selectLine( 0 );
+                emit updateLineNumber( 0 );
                 jumpToTop();
                 break;
             case 'G':
                 emit followDisabled();
                 selection_.selectLine( logData->getNbLine() - 1 );
+                emit updateLineNumber( logData->getNbLine() - 1 );
                 jumpToBottom();
                 break;
             case 'n':
@@ -589,6 +594,7 @@ void AbstractLogView::searchForward()
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchForward " << line;
         displayLine( line );
+        emit updateLineNumber( line );
     }
 }
 
@@ -600,6 +606,7 @@ void AbstractLogView::searchBackward()
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchBackward " << line;
         displayLine( line );
+        emit updateLineNumber( line );
     }
 }
 
@@ -699,6 +706,7 @@ void AbstractLogView::selectAndDisplayLine( int line )
     emit followDisabled();
     selection_.selectLine( line );
     displayLine( line );
+    emit updateLineNumber( line );
 }
 
 //
@@ -810,6 +818,7 @@ void AbstractLogView::moveSelection( int delta )
     // Select and display the new line
     selection_.selectLine( new_line );
     displayLine( new_line );
+    emit updateLineNumber( new_line );
 }
 
 // Make the start of the lines visible

@@ -148,6 +148,8 @@ class AbstractLogView : public QAbstractScrollArea
     void followDisabled();
     // Sent when the view wants the QuickFind widget pattern to change.
     void changeQuickFind( const QString& newPattern );
+    // Sent up when the current line number is updated
+    void updateLineNumber( int line );
 
   public slots:
     // Makes the widget select and display the passed line.

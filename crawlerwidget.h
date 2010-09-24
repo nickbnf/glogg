@@ -76,6 +76,8 @@ class CrawlerWidget : public QSplitter
     void followSet( bool checked );
     // Sent up to the MainWindow to disable the follow mode
     void followDisabled();
+    // Sent up when the current line number is updated
+    void updateLineNumber( int line );
 
   private slots:
     // Instructs the widget to start a search using the current search line.

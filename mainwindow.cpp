@@ -59,8 +59,12 @@ MainWindow::MainWindow() : mainIcon_()
             crawlerWidget, SIGNAL( followSet( bool ) ) );
     connect( this, SIGNAL( optionsChanged() ),
             crawlerWidget, SLOT( applyConfiguration() ) );
+
+    // Actions from the CrawlerWidget
     connect( crawlerWidget, SIGNAL( followDisabled() ),
             this, SLOT( disableFollow() ) );
+    connect( crawlerWidget, SIGNAL( updateLineNumber( int ) ),
+            this, SLOT( lineNumberHandler( int ) ) );
 
     readSettings();
     emit optionsChanged();
@@ -207,6 +211,12 @@ void MainWindow::createToolBars()
     infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     infoLine->setLineWidth( 0 );
 
+    lineNbField = new QLabel( );
+    lineNbField->setText( "Line 0" );
+    lineNbField->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+    lineNbField->setMinimumSize(
+            lineNbField->fontMetrics().size( 0, "Line 0000000") );
+
     toolBar = addToolBar( tr("&Toolbar") );
     toolBar->setIconSize( QSize( 16, 16 ) );
     toolBar->setMovable( false );
@@ -214,6 +224,7 @@ void MainWindow::createToolBars()
     toolBar->addAction( reloadAction );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
+    toolBar->addWidget( lineNbField );
 }
 
 //
@@ -312,6 +323,12 @@ void MainWindow::aboutQt()
 void MainWindow::disableFollow()
 {
     followAction->setChecked( false );
+}
+
+void MainWindow::lineNumberHandler( int line )
+{
+    // The line number received is the internal (starts at 0)
+    lineNbField->setText( tr( "Line %1" ).arg( line + 1 ) );
 }
 
 void MainWindow::updateLoadingProgress( int progress )

@@ -100,6 +100,36 @@ class LineDrawer
 };
 
 
+// Utility class representing a buffer for number entered on the keyboard
+// The buffer keep at most 7 digits, and reset itself after a timeout.
+class DigitsBuffer : public QObject
+{
+  Q_OBJECT
+
+  public:
+    DigitsBuffer();
+
+    // Reset the buffer.
+    void reset();
+    // Add a single digit to the buffer (discarded if it's not a digit),
+    // the timeout timer is reset.
+    void add( char character );
+    // Get the content of the buffer (0 if empty) and reset it.
+    int content();
+
+  protected:
+    void timerEvent( QTimerEvent* event );
+
+  private:
+    // Duration of the timeout in milliseconds.
+    static const int timeout_;
+
+    QString digits_;
+
+    QBasicTimer timer_;
+};
+
+
 // Base class representing the log view widget.
 // It can be either the top (full) or bottom (filtered) view.
 class AbstractLogView : public QAbstractScrollArea
@@ -171,6 +201,9 @@ class AbstractLogView : public QAbstractScrollArea
     // Constants
     static const int bulletLineX_;
     static const int leftMarginPx_;
+
+    // Digits buffer
+    DigitsBuffer digitsBuffer_;
 
     // Follow mode
     bool followMode_;

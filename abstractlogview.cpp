@@ -126,6 +126,48 @@ inline void LineDrawer::draw( QPainter& painter,
         painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
 }
 
+const int DigitsBuffer::timeout_ = 2000;
+
+DigitsBuffer::DigitsBuffer() : QObject()
+{
+}
+
+void DigitsBuffer::reset()
+{
+    LOG(logDEBUG) << "DigitsBuffer::reset()";
+
+    timer_.stop();
+    digits_.clear();
+}
+
+void DigitsBuffer::add( char character )
+{
+    LOG(logDEBUG) << "DigitsBuffer::add()";
+
+    digits_.append( QChar( character ) );
+    timer_.start( timeout_ , this );
+}
+
+int DigitsBuffer::content()
+{
+    int result = digits_.toInt();
+    reset();
+
+    return result;
+}
+
+void DigitsBuffer::timerEvent( QTimerEvent* event )
+{
+    if ( event->timerId() == timer_.timerId() ) {
+        reset();
+    }
+    else {
+        QObject::timerEvent( event );
+    }
+}
+
+
+
 // Looks better with an odd value
 const int AbstractLogView::bulletLineX_ = 11;
 const int AbstractLogView::leftMarginPx_ = bulletLineX_ + 2;
@@ -320,65 +362,87 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( keyEvent->key() == Qt::Key_End )
         jumpToRightOfScreen();
     else {
-        switch ( (keyEvent->text())[0].toAscii() ) {
-            case 'j':
-                emit followDisabled();
-                //verticalScrollBar()->triggerAction(QScrollBar::SliderSingleStepAdd);
-                moveSelection( 1 );
-                break;
-            case 'k':
-                emit followDisabled();
-                //verticalScrollBar()->triggerAction(QScrollBar::SliderSingleStepSub);
-                moveSelection( -1 );
-                break;
-            case 'h':
-                horizontalScrollBar()->triggerAction(QScrollBar::SliderSingleStepSub);
-                break;
-            case 'l':
-                horizontalScrollBar()->triggerAction(QScrollBar::SliderSingleStepAdd);
-                break;
-            case '0':
-                jumpToStartOfLine();
-                break;
-            case '$':
-                jumpToEndOfLine();
-                break;
-            case 'g':
-                emit followDisabled();
-                selection_.selectLine( 0 );
-                emit updateLineNumber( 0 );
-                jumpToTop();
-                break;
-            case 'G':
-                emit followDisabled();
-                selection_.selectLine( logData->getNbLine() - 1 );
-                emit updateLineNumber( logData->getNbLine() - 1 );
-                jumpToBottom();
-                break;
-            case 'n':
-                searchNext();
-                break;
-            case 'N':
-                searchPrevious();
-                break;
-            case '*':
-                // Use the selected 'word' and search forward
-                if ( selection_.isPortion() ) {
-                    emit changeQuickFind(
-                            selection_.getSelectedText( logData ) );
+        const char character = (keyEvent->text())[0].toAscii();
+
+        if ( ( character >= '0' ) && ( character <= '9' ) ) {
+            // Adds the digit to the timed buffer
+            digitsBuffer_.add( character );
+        }
+        else {
+            switch ( (keyEvent->text())[0].toAscii() ) {
+                case 'j':
+                    {
+                        int delta = qMax( 1, digitsBuffer_.content() );
+                        emit followDisabled();
+                        //verticalScrollBar()->triggerAction(
+                        //QScrollBar::SliderSingleStepAdd);
+                        moveSelection( delta );
+                        break;
+                    }
+                case 'k':
+                    {
+                        int delta = qMin( -1, - digitsBuffer_.content() );
+                        emit followDisabled();
+                        //verticalScrollBar()->triggerAction(
+                        //QScrollBar::SliderSingleStepSub);
+                        moveSelection( delta );
+                        break;
+                    }
+                case 'h':
+                    horizontalScrollBar()->triggerAction(
+                            QScrollBar::SliderSingleStepSub);
+                    break;
+                case 'l':
+                    horizontalScrollBar()->triggerAction(
+                            QScrollBar::SliderSingleStepAdd);
+                    break;
+                case '0':
+                    jumpToStartOfLine();
+                    break;
+                case '$':
+                    jumpToEndOfLine();
+                    break;
+                case 'g':
+                    {
+                        int newLine = qMax( 0, digitsBuffer_.content() - 1 );
+                        if ( newLine >= logData->getNbLine() )
+                            newLine = logData->getNbLine() - 1;
+                        emit followDisabled();
+                        selectAndDisplayLine( newLine );
+                        emit updateLineNumber( newLine );
+                        break;
+                    }
+                case 'G':
+                    emit followDisabled();
+                    selection_.selectLine( logData->getNbLine() - 1 );
+                    emit updateLineNumber( logData->getNbLine() - 1 );
+                    jumpToBottom();
+                    break;
+                case 'n':
                     searchNext();
-                }
-                break;
-            case '#':
-                // Use the selected 'word' and search backward
-                if ( selection_.isPortion() ) {
-                    emit changeQuickFind(
-                            selection_.getSelectedText( logData ) );
+                    break;
+                case 'N':
                     searchPrevious();
-                }
-                break;
-            default:
-                keyEvent->ignore();
+                    break;
+                case '*':
+                    // Use the selected 'word' and search forward
+                    if ( selection_.isPortion() ) {
+                        emit changeQuickFind(
+                                selection_.getSelectedText( logData ) );
+                        searchNext();
+                    }
+                    break;
+                case '#':
+                    // Use the selected 'word' and search backward
+                    if ( selection_.isPortion() ) {
+                        emit changeQuickFind(
+                                selection_.getSelectedText( logData ) );
+                        searchPrevious();
+                    }
+                    break;
+                default:
+                    keyEvent->ignore();
+            }
         }
     }
 

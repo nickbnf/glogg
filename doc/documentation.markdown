@@ -72,12 +72,14 @@ The main commands are:
 <table>
 <tr><td>arrows</td>
     <td>scroll one line up/down or one column left/right</td></tr>
-<tr><td>j/k</td>
-    <td>move the selection one line down/up</td></tr>
+<tr><td>[number] j/k</td>
+    <td>move the selection 'number' (or one) line down/up</td></tr>
 <tr><td>h/l</td>
     <td>scroll left/right</td></tr>
-<tr><td>g/G</td>
-    <td>jump to the first/last line of the file (moving the selection)</td></tr>
+<tr><td>[number] g</td>
+    <td>jump to the line number given or the first one if no number is entered</td></tr>
+<tr><td>G</td>
+    <td>jump to the last line of the file (selecting it)</td></tr>
 <tr><td>/</td>
     <td>start a quickfind search in the current screen</td></tr>
 <tr><td>n/N</td>

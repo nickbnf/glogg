@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -123,7 +123,7 @@ static void print_version()
 #ifdef GLOGG_COMMIT
     cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "\n";
 #endif
-    cout << "Copyright (C) 2009 Nicolas Bonnefon and other contributors\n";
+    cout << "Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors\n";
     cout << "This is free software.  You may redistribute copies of it under the terms of\n";
     cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
     cout << "There is NO WARRANTY, to the extent permitted by law.\n";

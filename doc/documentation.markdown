@@ -84,6 +84,8 @@ The main commands are:
     <td>start a quickfind search in the current screen</td></tr>
 <tr><td>n/N</td>
     <td>repeat the previous quickfind search forward/backward</td></tr>
+<tr><td>*/#</td>
+    <td>search for the next/previous occurence of the currently selected text</td></tr>
 <tr><td>f</td>
-    <td>active 'follow' mode, which keep the display as the tail of the file (like "tail -f")</td></tr>
+    <td>activate 'follow' mode, which keep the display as the tail of the file (like "tail -f")</td></tr>
 </table>

@@ -1,6 +1,5 @@
 New features:
-- Line number
-- Line number in status bar
+- Line number in filtered view
 - Matches overview (right bar)
 - Bookmarks
 - Multi files
@@ -15,7 +14,6 @@ Fixes:
 - Yellow background for errors/file changed
 - Keep colours (partially) of selected text
 - Greater number of latest files
-- 'DejaVu Sans' on Debian
 - Long file name makes the status bar extend
 
 Perf:

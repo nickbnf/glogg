@@ -57,3 +57,15 @@ Totals: 5 passed, 0 failed, 0 skipped
 
 Memory: 1,048,576B
 
+
+
+Tab expansion fix:
+before:
+    TestLogData::sequentialRead(): 58,011 msec
+    TestLogData::randomPageRead(): 11,376 msec
+
+after step 1:
+    TestLogData::sequentialRead(): 55,662 msec
+    TestLogData::sequentialReadExpanded(): 91,141 msec
+    TestLogData::randomPageRead(): 10,592 msec
+    TestLogData::randomPageReadExpanded(): 183,567 msec

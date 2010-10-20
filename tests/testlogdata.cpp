@@ -15,8 +15,9 @@
 
 static const qint64 VBL_NB_LINES = 4999999LL;
 static const int VBL_LINE_PER_PAGE = 70;
-static const char* vbl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %07d\n";
-static const int VBL_LINE_LENGTH = 84; // Without the final '\n' !
+static const char* vbl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line\t\t%07d\n";
+static const int VBL_LINE_LENGTH = (76+2+7) ; // Without the final '\n' !
+static const int VBL_VISIBLE_LINE_LENGTH = (76+8+4+7); // Without the final '\n' !
 
 static const qint64 SL_NB_LINES = 5000LL;
 static const int SL_LINE_PER_PAGE = 70;
@@ -215,6 +216,32 @@ void TestLogData::sequentialRead()
         }
     }
     QCOMPARE( s.length(), VBL_LINE_LENGTH );
+
+}
+
+void TestLogData::sequentialReadExpanded()
+{
+    LogData logData;
+
+    // Register for notification file is loaded
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( loadingFinished() ) );
+
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
+
+    // Wait for the loading to be done
+    {
+        QApplication::exec();
+    }
+
+    // Read all expanded lines sequentially
+    QString s;
+    QBENCHMARK {
+        for (int i = 0; i < VBL_NB_LINES; i++) {
+            s = logData.getExpandedLineString(i);
+        }
+    }
+    QCOMPARE( s.length(), VBL_VISIBLE_LINE_LENGTH );
 }
 
 void TestLogData::randomPageRead()
@@ -243,6 +270,38 @@ void TestLogData::randomPageRead()
             QCOMPARE(list.count(), VBL_LINE_PER_PAGE);
             int page_from_end = (VBL_NB_LINES/VBL_LINE_PER_PAGE) - page - 1;
             list = logData.getLines( page_from_end*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
+            QCOMPARE(list.count(), VBL_LINE_PER_PAGE);
+        }
+    }
+
+}
+
+void TestLogData::randomPageReadExpanded()
+{
+    LogData logData;
+
+    // Register for notification file is loaded
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( loadingFinished() ) );
+
+    logData.attachFile( TMPDIR "/verybiglog.txt" );
+    // Wait for the loading to be done
+    {
+        QApplication::exec();
+    }
+
+    QWARN("Starting random page read test (expanded lines)");
+
+    // Read page by page from the beginning and the end, using the QStringList
+    // function
+    QStringList list;
+    QBENCHMARK {
+        for (int page = 0; page < (VBL_NB_LINES/VBL_LINE_PER_PAGE)-1; page++)
+        {
+            list = logData.getExpandedLines( page*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
+            QCOMPARE(list.count(), VBL_LINE_PER_PAGE);
+            int page_from_end = (VBL_NB_LINES/VBL_LINE_PER_PAGE) - page - 1;
+            list = logData.getExpandedLines( page_from_end*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
             QCOMPARE(list.count(), VBL_LINE_PER_PAGE);
         }
     }

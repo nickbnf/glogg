@@ -212,6 +212,7 @@ AbstractLogView::~AbstractLogView()
 {
 }
 
+
 //
 // Received events
 //
@@ -518,7 +519,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         }
 
         // Lines to write
-        const QStringList lines = logData->getLines( firstLine, lastLine - firstLine + 1 );
+        const QStringList lines = logData->getExpandedLines( firstLine, lastLine - firstLine + 1 );
 
         // First draw the bullet left margin
         painter.setPen(palette.color(QPalette::Text));
@@ -540,7 +541,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 backColor = palette.color( QPalette::Highlight );
                 painter.setPen(palette.color(QPalette::Text));
             }
-            else if ( filterSet.matchLine( logData->getLineString(i),
+            else if ( filterSet.matchLine( logData->getLineString( i ),
                         &foreColor, &backColor ) ) {
                 // Apply a filter to the line
             }
@@ -810,28 +811,27 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 
     int column = 0;
     // Determine column in screen space
-    if ( useFixedFont_ || ( pos.x()-leftMarginPx_ < 0 ) )
-        column = ( pos.x() - leftMarginPx_ ) / charWidth_;
-    else {
-        QFontMetrics fm = fontMetrics();
-        QString this_line = logData->getLineString( line );
-        const int length = this_line.length();
-        for ( ; column < length; column++ ) {
-            if ( ( fm.width( this_line.mid(firstCol, column) )
-                        + leftMarginPx_ ) > pos.x() ) {
-                column--;
-                break;
-            }
+    QFontMetrics fm = fontMetrics();
+    QString this_line = logData->getExpandedLineString( line );
+    const int length = this_line.length();
+    for ( ; column < length; column++ ) {
+        if ( ( fm.width( this_line.mid(firstCol, column) )
+                    + leftMarginPx_ ) > pos.x() ) {
+            column--;
+            break;
         }
     }
+
     // Now convert it to file space
     column += firstCol;
 
-    if ( column >= logData->getLineLength( line ) )
-        column = logData->getLineLength( line ) - 1;
+    if ( column >= length )
+        column = length - 1;
     if ( column < 0 )
         column = 0;
 
+    LOG(logDEBUG) << "AbstractLogView::convertCoordToFilePos col="
+        << column << " line=" << line;
     QPoint point( column, line );
 
     return point;

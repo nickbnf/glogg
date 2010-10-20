@@ -158,12 +158,39 @@ QString LogFilteredData::doGetLineString( qint64 lineNum ) const
 }
 
 // Implementation of the virtual function.
+QString LogFilteredData::doGetExpandedLineString( qint64 lineNum ) const
+{
+    QString string;
+
+    if ( lineNum < matchingLineList.size() )
+        string = matchingLineList[lineNum].lineContent();
+    else
+    {
+        LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+    }
+
+    return untabify( string );
+}
+
+// Implementation of the virtual function.
 QStringList LogFilteredData::doGetLines( qint64 first_line, int number ) const
 {
     QStringList list;
 
     for ( int i = first_line; i < first_line + number; i++ ) {
         list.append( matchingLineList[i].lineContent() );
+    }
+
+    return list;
+}
+
+// Implementation of the virtual function.
+QStringList LogFilteredData::doGetExpandedLines( qint64 first_line, int number ) const
+{
+    QStringList list;
+
+    for ( int i = first_line; i < first_line + number; i++ ) {
+        list.append( untabify( matchingLineList[i].lineContent() ) );
     }
 
     return list;

@@ -13,7 +13,9 @@ class TestLogData: public QObject
         void multipleLoad();
         void changingFile();
         void sequentialRead();
+        void sequentialReadExpanded();
         void randomPageRead();
+        void randomPageReadExpanded();
 
     public slots:
         void loadingFinished();

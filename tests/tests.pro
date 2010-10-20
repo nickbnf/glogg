@@ -4,7 +4,12 @@ INCLUDEPATH += ./ ../
 DESTDIR = ./
 CONFIG += qtestlib debug
 
-DEFINES = TMPDIR=\\\"$${TMPDIR}\\\"
+isEmpty(TMPDIR) {
+    DEFINES = TMPDIR=\\\"/tmp\\\"
+}
+else {
+    DEFINES = TMPDIR=\\\"$${TMPDIR}\\\"
+}
 
 TARGET = logcrawler_tests
 HEADERS += testlogdata.h testlogfiltereddata.h logdata.h logfiltereddata.h logdataworkerthread.h\

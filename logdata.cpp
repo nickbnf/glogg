@@ -317,6 +317,15 @@ QString LogData::doGetLineString( qint64 line ) const
     return string;
 }
 
+QString LogData::doGetExpandedLineString( qint64 line ) const
+{
+    const QString string = doGetLineString( line );
+
+    // FIXME: Should be optimised a bit
+
+    return untabify( string );
+}
+
 // Note this function is also called from the LogFilteredDataWorker thread, so
 // data must be protected because they // are changed in the main thread (by
 // indexingFinished).
@@ -362,6 +371,18 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     }
 
     dataMutex_.unlock();
+
+    return list;
+}
+
+QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
+{
+    QStringList list;
+
+    for ( int i = first_line; i < first_line + number; i++ ) {
+        QString line = doGetExpandedLineString( i );
+        list.append( line );
+    }
 
     return list;
 }

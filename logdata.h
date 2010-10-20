@@ -146,7 +146,9 @@ class LogData : public AbstractLogData {
 
     // Implementation of virtual functions
     QString doGetLineString( qint64 line ) const;
+    QString doGetExpandedLineString( qint64 line ) const;
     QStringList doGetLines( qint64 first, int number ) const;
+    QStringList doGetExpandedLines( qint64 first, int number ) const;
     qint64 doGetNbLine() const;
     int doGetMaxLength() const;
     int doGetLineLength( qint64 line ) const;

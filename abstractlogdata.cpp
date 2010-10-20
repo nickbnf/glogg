@@ -36,9 +36,21 @@ QString AbstractLogData::getLineString( qint64 line ) const
 }
 
 // Simple wrapper in order to use a clean Template Method
+QString AbstractLogData::getExpandedLineString( qint64 line ) const
+{
+    return doGetExpandedLineString(line);
+}
+
+// Simple wrapper in order to use a clean Template Method
 QStringList AbstractLogData::getLines( qint64 first_line, int number ) const
 {
     return doGetLines( first_line, number );
+}
+
+// Simple wrapper in order to use a clean Template Method
+QStringList AbstractLogData::getExpandedLines( qint64 first_line, int number ) const
+{
+    return doGetExpandedLines( first_line, number );
 }
 
 // Simple wrapper in order to use a clean Template Method

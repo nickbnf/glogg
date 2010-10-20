@@ -20,6 +20,8 @@
 #ifndef ABSTRACTLOGDATA_H
 #define ABSTRACTLOGDATA_H
 
+// #include "log.h"
+
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -36,26 +38,56 @@ class AbstractLogData : public QObject {
 
     // Returns the line passed as a QString
     QString getLineString( qint64 line ) const;
+    // Returns the line passed as a QString, with tabs expanded
+    QString getExpandedLineString( qint64 line ) const;
     // Returns a set of lines as a QStringList
     QStringList getLines( qint64 first_line, int number ) const;
+    // Returns a set of lines with tabs expanded
+    QStringList getExpandedLines( qint64 first_line, int number ) const;
     // Returns the total number of lines
     qint64 getNbLine() const;
-    // Returns the length of the longest line
+    // Returns the visible length of the longest line
+    // Tabs are expanded
     int getMaxLength() const;
-    // Returns the length of the passed line
+    // Returns the visible length of the passed line
+    // Tabs are expanded
     int getLineLength( qint64 line ) const;
 
   protected:
     // Internal function called to get a given line
     virtual QString doGetLineString( qint64 line ) const = 0;
+    // Internal function called to get a given line
+    virtual QString doGetExpandedLineString( qint64 line ) const = 0;
     // Internal function called to get a set of lines
     virtual QStringList doGetLines( qint64 first_line, int number ) const = 0;
+    // Internal function called to get a set of expanded lines
+    virtual QStringList doGetExpandedLines( qint64 first_line, int number ) const = 0;
     // Internal function called to get the number of lines
     virtual qint64 doGetNbLine() const = 0;
     // Internal function called to get the maximum length
     virtual int doGetMaxLength() const = 0;
     // Internal function called to get the line length
     virtual int doGetLineLength( qint64 line ) const = 0;
+
+    inline static QString untabify( const QString& line ) {
+        QString untabified_line;
+        int total_spaces = 0;
+
+        for ( int j = 0; j < line.length(); j++ ) {
+            if ( line[j] == '\t' ) {
+                int spaces = 8 - ( ( j + total_spaces ) % 8 );
+                // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
+                QString blanks( spaces, QChar(' ') );
+                untabified_line.append( blanks );
+                total_spaces += spaces - 1;
+            }
+            else {
+                untabified_line.append( line[j] );
+            }
+        }
+
+        return untabified_line;
+    }
 };
 
 #endif

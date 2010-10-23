@@ -88,6 +88,26 @@ class AbstractLogData : public QObject {
 
         return untabified_line;
     }
+
+    inline static QString untabify( const char* line ) {
+        QString untabified_line;
+        int total_spaces = 0;
+
+        for ( const char* i = line; *i != '\0'; i++ ) {
+            if ( *i == '\t' ) {
+                int spaces = 8 - ( ( (i - line) + total_spaces ) % 8 );
+                // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
+                QString blanks( spaces, QChar(' ') );
+                untabified_line.append( blanks );
+                total_spaces += spaces - 1;
+            }
+            else {
+                untabified_line.append( *i );
+            }
+        }
+
+        return untabified_line;
+    }
 };
 
 #endif

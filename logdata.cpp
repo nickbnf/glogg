@@ -319,15 +319,28 @@ QString LogData::doGetLineString( qint64 line ) const
 
 QString LogData::doGetExpandedLineString( qint64 line ) const
 {
-    const QString string = doGetLineString( line );
+    if ( line >= nbLines_ ) { return QString(); /* exception? */ }
 
-    // FIXME: Should be optimised a bit
+    dataMutex_.lock();
+    fileMutex_.lock();
+    file_->open( QIODevice::ReadOnly );
 
-    return untabify( string );
+    file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
+
+    QByteArray rawString = file_->readLine();
+
+    file_->close();
+    fileMutex_.unlock();
+    dataMutex_.unlock();
+
+    QString string = QString( untabify( rawString.constData() ) );
+    string.chop( 1 );
+
+    return string;
 }
 
 // Note this function is also called from the LogFilteredDataWorker thread, so
-// data must be protected because they // are changed in the main thread (by
+// data must be protected because they are changed in the main thread (by
 // indexingFinished).
 QStringList LogData::doGetLines( qint64 first_line, int number ) const
 {
@@ -378,11 +391,43 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
 QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 {
     QStringList list;
+    const qint64 last_line = first_line + number - 1;
 
-    for ( int i = first_line; i < first_line + number; i++ ) {
-        QString line = doGetExpandedLineString( i );
-        list.append( line );
+    if ( number == 0 ) {
+        return QStringList();
     }
+
+    if ( last_line >= nbLines_ ) {
+        LOG(logWARNING) << "LogData::doGetExpandedLines Lines out of bound asked for";
+        return QStringList(); /* exception? */
+    }
+
+    dataMutex_.lock();
+
+    fileMutex_.lock();
+    file_->open( QIODevice::ReadOnly );
+
+    const qint64 first_byte = (first_line == 0) ? 0 : linePosition_[first_line-1];
+    const qint64 last_byte  = linePosition_[last_line];
+    // LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
+    file_->seek( first_byte );
+    QByteArray blob = file_->read( last_byte - first_byte );
+
+    file_->close();
+    fileMutex_.unlock();
+
+    qint64 beginning = 0;
+    qint64 end = 0;
+    for ( qint64 line = first_line; (line <= last_line); line++ ) {
+        end = linePosition_[line] - first_byte;
+        // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
+        QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
+        // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
+        list.append( untabify( this_line.constData() ) );
+        beginning = end;
+    }
+
+    dataMutex_.unlock();
 
     return list;
 }

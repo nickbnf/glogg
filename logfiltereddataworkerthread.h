@@ -40,7 +40,6 @@ class MatchingLine {
     // Accessors
     int lineNumber() const { return lineNumber_; }
     QString lineContent() const { return lineString_; }
-    int length() const { return lineString_.length(); }
 
   private:
     int lineNumber_;

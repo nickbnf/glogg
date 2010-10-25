@@ -208,9 +208,10 @@ int LogFilteredData::doGetMaxLength() const
     return maxLength_;
 }
 
+// Implementation of the virtual function.
 int LogFilteredData::doGetLineLength( qint64 line ) const
 {
     if ( line >= matchingLineList.size() ) { return 0; /* exception? */ }
 
-    return matchingLineList[line].length();
+    return untabify( matchingLineList[line].lineContent() ).length();
 }

@@ -14,7 +14,8 @@
 #endif
 
 static const qint64 ML_NB_LINES = 15000LL;
-static const char* ml_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
+static const char* ml_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line\t\t%06d\n";
+static const int ML_VISIBLE_LINE_LENGTH = (76+8+4+6); // Without the final '\n' !
 
 static const qint64 SL_NB_LINES = 2000LL;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
@@ -65,6 +66,9 @@ void TestLogFilteredData::simpleSearch()
     // Check the search
     QCOMPARE( filteredData->isLineInMatchingList( 123 ), true );
     QCOMPARE( filteredData->isLineInMatchingList( 124 ), false );
+    QCOMPARE( filteredData->getMaxLength(), ML_VISIBLE_LINE_LENGTH );
+    QCOMPARE( filteredData->getLineLength( 12 ), ML_VISIBLE_LINE_LENGTH );
+    QCOMPARE( filteredData->getNbLine(), 135LL );
     // Line beyond limit
     QCOMPARE( filteredData->isLineInMatchingList( 60000 ), false );
     QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 123LL );

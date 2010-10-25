@@ -192,7 +192,9 @@ bool FullIndexOperation::start( IndexingData& sharedData )
     LOG(logDEBUG) << "FullIndexOperation: Starting the count...";
     int maxLength = 0;
     LinePositionArray linePosition = LinePositionArray();
-    qint64 end = 0, pos = 0;
+    qint64 pos = 0;  // Absolute position of the start of current line
+    qint64 end = 0;  // Absolute position of the end of current line
+    int additional_spaces = 0;  // Additional spaces due to tabs
 
     emit indexingProgressed( 0 );
 
@@ -207,16 +209,34 @@ bool FullIndexOperation::start( IndexingData& sharedData )
             const QByteArray block = file.read( sizeChunk );
 
             // Count the number of lines in each chunk
-            qint64 next_lf = 0;
-            while ( next_lf != -1 ) {
-                const qint64 pos_within_block = max2( pos - block_beginning, 0LL);
-                next_lf = block.indexOf( "\n", pos_within_block );
-                if ( next_lf != -1 ) {
-                    end = next_lf + block_beginning;
-                    const int length = end-pos;
+            qint64 pos_within_block = 0;
+            while ( pos_within_block != -1 ) {
+                pos_within_block = max2( pos - block_beginning, 0LL);
+                // Looking for the next \n, expanding tabs in the process
+                do {
+                    if ( pos_within_block < block.length() ) {
+                        const char c = block.at(pos_within_block);
+                        if ( c == '\n' )
+                            break;
+                        else if ( c == '\t' )
+                            additional_spaces += 8 - ( ( ( block_beginning - pos ) +
+                                        pos_within_block + additional_spaces ) % 8 ) - 1;
+
+                        pos_within_block++;
+                    }
+                    else {
+                        pos_within_block = -1;
+                    }
+                } while ( pos_within_block != -1 );
+
+                // When a end of line has been found...
+                if ( pos_within_block != -1 ) {
+                    end = pos_within_block + block_beginning;
+                    const int length = end-pos + additional_spaces;
                     if ( length > maxLength )
                         maxLength = length;
                     pos = end + 1;
+                    additional_spaces = 0;
                     linePosition.append( pos );
                 }
             }

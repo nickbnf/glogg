@@ -48,8 +48,8 @@ void TestLogData::simpleLoad()
     QCOMPARE( (qint64) progressSpy.count(), logData.getFileSize() / (5LL*1024*1024) + 2 );
     // Blocks of 5 MiB + 1 for the start notification (0%)
     QCOMPARE( logData.getNbLine(), VBL_NB_LINES );
-    QCOMPARE( logData.getMaxLength(), VBL_LINE_LENGTH );
-    QCOMPARE( logData.getLineLength( 123 ), VBL_LINE_LENGTH );
+    QCOMPARE( logData.getMaxLength(), VBL_VISIBLE_LINE_LENGTH );
+    QCOMPARE( logData.getLineLength( 123 ), VBL_VISIBLE_LINE_LENGTH );
     QCOMPARE( logData.getFileSize(), VBL_NB_LINES * (VBL_LINE_LENGTH+1LL) );
 
     // Disconnect all signals

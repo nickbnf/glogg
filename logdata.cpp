@@ -284,16 +284,11 @@ int LogData::doGetMaxLength() const
 
 int LogData::doGetLineLength( qint64 line ) const
 {
-    QMutexLocker locker( &dataMutex_ );
-
     if ( line >= nbLines_ ) { return 0; /* exception? */ }
 
-    qint64 length = linePosition_[line];
-    if ( line > 0 )
-        length -= linePosition_[line-1];
+    int length = doGetExpandedLineString( line ).length();
 
-    // -1 because of the end of line.
-    return length - 1;
+    return length;
 }
 
 QString LogData::doGetLineString( qint64 line ) const

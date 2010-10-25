@@ -189,7 +189,7 @@ void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperati
 
         for ( int j = 0; j < lines.size(); j++ ) {
             if ( regExp.indexIn( lines[j] ) != -1 ) {
-                const int length = lines[j].length();
+                const int length = sourceLogData_->getExpandedLineString(i+j).length();
                 if ( length > maxLength )
                     maxLength = length;
                 MatchingLine match( i+j, lines[j] );

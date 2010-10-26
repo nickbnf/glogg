@@ -115,6 +115,8 @@ QList<int> Selection::getLines() const
     return selection;
 }
 
+// The tab behaviour is a bit odd at the moment, full lines are not expanded
+// but partials (part of line) are, they probably should not ideally.
 QString Selection::getSelectedText( const AbstractLogData* logData ) const
 {
     QString text;
@@ -123,7 +125,7 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
         text = logData->getLineString( selectedLine_ );
     }
     else if ( selectedPartial_.line >= 0 ) {
-        text = logData->getLineString( selectedPartial_.line ).
+        text = logData->getExpandedLineString( selectedPartial_.line ).
             mid( selectedPartial_.startColumn, ( selectedPartial_.endColumn -
                         selectedPartial_.startColumn ) + 1 );
     }

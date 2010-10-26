@@ -25,7 +25,6 @@
 
 #include "log.h"
 
-#include "common.h"
 #include "logdata.h"
 
 // Implementation of the 'start' functions for each operation

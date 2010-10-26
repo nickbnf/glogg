@@ -36,7 +36,6 @@
 
 #include "log.h"
 
-#include "common.h"
 #include "configuration.h"
 #include "logmainview.h"
 #include "quickfind.h"
@@ -474,7 +473,7 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 
     firstLine = (firstLine - dy) > 0 ? firstLine - dy : 0;
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
     update();
 }
@@ -714,7 +713,7 @@ void AbstractLogView::updateData()
         ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
     // Reset the QuickFind in case we have new stuff to search into
     quickFind_.resetLimits();
@@ -743,7 +742,7 @@ void AbstractLogView::updateDisplaySize()
     LOG(logDEBUG) << "useFixedFont_=" << useFixedFont_;
 
     // Calculate the index of the last line shown
-    lastLine = min2( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
     // Update the scroll bars
     verticalScrollBar()->setPageStep( getNbVisibleLines() );

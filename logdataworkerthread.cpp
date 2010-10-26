@@ -21,8 +21,8 @@
 
 #include "log.h"
 
+#include "logdata.h"
 #include "logdataworkerthread.h"
-#include "common.h"
 
 // Size of the chunk to read (5 MiB)
 const int IndexOperation::sizeChunk = 5*1024*1024;
@@ -53,7 +53,7 @@ void IndexingData::addAll( qint64 size, int length,
     QMutexLocker locker( &dataMutex_ );
 
     indexedSize_  += size;
-    maxLength_     = max2( maxLength_, length );
+    maxLength_     = qMax( maxLength_, length );
     linePosition_ += linePosition;
 }
 
@@ -211,7 +211,7 @@ bool FullIndexOperation::start( IndexingData& sharedData )
             // Count the number of lines in each chunk
             qint64 pos_within_block = 0;
             while ( pos_within_block != -1 ) {
-                pos_within_block = max2( pos - block_beginning, 0LL);
+                pos_within_block = qMax( pos - block_beginning, 0LL);
                 // Looking for the next \n, expanding tabs in the process
                 do {
                     if ( pos_within_block < block.length() ) {
@@ -219,8 +219,9 @@ bool FullIndexOperation::start( IndexingData& sharedData )
                         if ( c == '\n' )
                             break;
                         else if ( c == '\t' )
-                            additional_spaces += 8 - ( ( ( block_beginning - pos ) +
-                                        pos_within_block + additional_spaces ) % 8 ) - 1;
+                            additional_spaces += AbstractLogData::tabStop -
+                                ( ( ( block_beginning - pos ) + pos_within_block
+                                    + additional_spaces ) % AbstractLogData::tabStop ) - 1;
 
                         pos_within_block++;
                     }
@@ -293,7 +294,7 @@ bool PartialIndexOperation::start( IndexingData& sharedData )
             // Count the number of lines in each chunk
             qint64 next_lf = 0;
             while ( next_lf != -1 ) {
-                const qint64 pos_within_block = max2( pos - block_beginning, 0LL);
+                const qint64 pos_within_block = qMax( pos - block_beginning, 0LL);
                 next_lf = block.indexOf( "\n", pos_within_block );
                 if ( next_lf != -1 ) {
                     end = next_lf + block_beginning;

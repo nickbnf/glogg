@@ -53,6 +53,9 @@ class AbstractLogData : public QObject {
     // Tabs are expanded
     int getLineLength( qint64 line ) const;
 
+    // Length of a tab stop
+    static const int tabStop = 8;
+
   protected:
     // Internal function called to get a given line
     virtual QString doGetLineString( qint64 line ) const = 0;
@@ -69,13 +72,13 @@ class AbstractLogData : public QObject {
     // Internal function called to get the line length
     virtual int doGetLineLength( qint64 line ) const = 0;
 
-    inline static QString untabify( const QString& line ) {
+    static inline QString untabify( const QString& line ) {
         QString untabified_line;
         int total_spaces = 0;
 
         for ( int j = 0; j < line.length(); j++ ) {
             if ( line[j] == '\t' ) {
-                int spaces = 8 - ( ( j + total_spaces ) % 8 );
+                int spaces = tabStop - ( ( j + total_spaces ) % tabStop );
                 // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
                 QString blanks( spaces, QChar(' ') );
                 untabified_line.append( blanks );
@@ -89,13 +92,13 @@ class AbstractLogData : public QObject {
         return untabified_line;
     }
 
-    inline static QString untabify( const char* line ) {
+    static inline QString untabify( const char* line ) {
         QString untabified_line;
         int total_spaces = 0;
 
         for ( const char* i = line; *i != '\0'; i++ ) {
             if ( *i == '\t' ) {
-                int spaces = 8 - ( ( (i - line) + total_spaces ) % 8 );
+                int spaces = tabStop - ( ( (i - line) + total_spaces ) % tabStop );
                 // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
                 QString blanks( spaces, QChar(' ') );
                 untabified_line.append( blanks );

@@ -23,7 +23,6 @@
 
 #include "logfiltereddataworkerthread.h"
 #include "logdata.h"
-#include "common.h"
 
 // Number of lines in each chunk to read
 const int LogFilteredDataWorkerThread::nbLinesInChunk = 5000;
@@ -50,7 +49,7 @@ void SearchData::addAll( int length,
 {
     QMutexLocker locker( &dataMutex_ );
 
-    maxLength_  = max2( maxLength_, length );
+    maxLength_  = qMax( maxLength_, length );
     matches_   += matches;
 }
 
@@ -183,7 +182,7 @@ void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperati
         emit searchProgressed( nbMatches, (int) ( i * 100 / nbSourceLines ) );
 
         const QStringList lines = sourceLogData_->getLines( i,
-                min2( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
+                qMin( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
         LOG(logDEBUG) << "Chunk starting at " << i <<
             ", " << lines.size() << " lines read.";
 

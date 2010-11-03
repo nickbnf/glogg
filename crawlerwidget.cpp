@@ -148,8 +148,16 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // QuickFind changes coming from the views
     connect(logMainView, SIGNAL( changeQuickFind( const QString& ) ),
             this, SLOT( changeQFPattern( const QString& ) ) );
-    connect(filteredView, SIGNAL( changeQuickFind( QString& ) ),
+    connect(filteredView, SIGNAL( changeQuickFind( const QString& ) ),
             this, SLOT( changeQFPattern( const QString& ) ) );
+    connect(logMainView, SIGNAL( notifyQuickFind( const QString& ) ),
+            quickFindWidget_, SLOT( notify( const QString& ) ) );
+    connect(filteredView, SIGNAL( notifyQuickFind( const QString& ) ),
+            quickFindWidget_, SLOT( notify( const QString& ) ) );
+    connect(logMainView, SIGNAL( clearQuickFindNotification() ),
+            quickFindWidget_, SLOT( clearNotification() ) );
+    connect(filteredView, SIGNAL( clearQuickFindNotification() ),
+            quickFindWidget_, SLOT( clearNotification() ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
@@ -339,7 +347,7 @@ void CrawlerWidget::displayQuickFindBar()
     // Remember who had the focus
     qfSavedFocus_ = QApplication::focusWidget();
 
-    quickFindWidget_->activate();
+    quickFindWidget_->userActivate();
 }
 
 void CrawlerWidget::hideQuickFindBar()

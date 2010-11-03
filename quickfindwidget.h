@@ -24,6 +24,8 @@
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include <QToolButton>
+#include <QLabel>
+#include <QTimer>
 
 class QuickFindWidget : public QWidget
 {
@@ -38,16 +40,24 @@ class QuickFindWidget : public QWidget
     QuickFindWidget( QWidget* parent = 0 );
 
     // Show the widget with the given direction
-    void activate( QFDirection direction = Forward );
+    // when requested by the user (the widget won't timeout)
+    void userActivate( QFDirection direction = Forward );
 
   public slots:
     // Instructs the widget to change the pattern displayed
     void changeDisplayedPattern( const QString& newPattern );
 
+    // Show the widget for a notification (will timeout)
+    void notify( const QString& message );
+    // Clear the notification
+    void clearNotification();
+
   private slots:
     void doSearchForward();
     void doSearchBackward();
     void returnHandler();
+    void closeHandler();
+    void notificationTimeout();
 
   signals:
     void patternConfirmed( const QString& );
@@ -56,16 +66,24 @@ class QuickFindWidget : public QWidget
     void searchBackward();
 
   private:
+    const static int NOTIFICATION_TIMEOUT;
+
     QHBoxLayout* layout_;
 
     QToolButton* closeButton_;
     QToolButton* nextButton_;
     QToolButton* previousButton_;
     QLineEdit*   editQuickFind_;
+    QLabel*      notificationText_;
 
     QToolButton* setupToolButton(const QString &text, const QString &icon);
 
+    QTimer*      notificationTimer_;
+
     QFDirection  direction_;
+
+    // Whether the user explicitely wants us on the screen
+    bool         userRequested_;
 };
 
 #endif

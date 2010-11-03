@@ -88,8 +88,12 @@ int QuickFind::searchForward()
 
     // Optimisation: if we are already after the last match,
     // we don't do any search at all.
-    if ( lastMatch_.isLater( line, column ) )
+    if ( lastMatch_.isLater( line, column ) ) {
+        // Send a notification
+        emit notify( "Reached end of file, no occurence found." );
+
         return -1;
+    }
 
     line = line;
     // We look at the rest of the first line
@@ -116,6 +120,10 @@ int QuickFind::searchForward()
     if ( found ) {
         selection_->selectPortion(
                 line, found_start_col, found_end_col );
+
+        // Clear any notification
+        emit clearNotification();
+
         return line;
     }
     else {
@@ -124,6 +132,10 @@ int QuickFind::searchForward()
         int last_match_column;
         selection_->getPreviousPosition( &last_match_line, &last_match_column );
         lastMatch_.set( last_match_line, last_match_column );
+
+        // Send a notification
+        emit notify( "Reached end of file, no occurence found." );
+
         return -1;
     }
 }
@@ -144,8 +156,12 @@ int QuickFind::searchBackward()
 
     // Optimisation: if we are already before the first match,
     // we don't do any search at all.
-    if ( firstMatch_.isSooner( line, column ) )
+    if ( firstMatch_.isSooner( line, column ) ) {
+        // Send a notification
+        emit notify( "Reached beginning of file, no occurence found." );
+
         return -1;
+    }
 
     // We look at the beginning of the first line
     if ( ( column > 0 ) &&  ( quickFindPattern_->isLineMatchingBackward(
@@ -170,6 +186,10 @@ int QuickFind::searchBackward()
     if ( found )
     {
         selection_->selectPortion( line, start_col, end_col );
+
+        // Clear any notification
+        emit clearNotification();
+
         return line;
     }
     else {
@@ -178,6 +198,10 @@ int QuickFind::searchBackward()
         int first_match_column;
         selection_->getNextPosition( &first_match_line, &first_match_column );
         firstMatch_.set( first_match_line, first_match_column );
+
+        // Send a notification
+        emit notify( "Reached beginning of file, no occurence found." );
+
         return -1;
     }
 }

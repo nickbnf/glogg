@@ -23,6 +23,8 @@
 
 #include "quickfindwidget.h"
 
+const int QuickFindWidget::NOTIFICATION_TIMEOUT = 2000;
+
 QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 {
     // ui_.setupUi( this );
@@ -36,11 +38,12 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     closeButton_ = setupToolButton(
             QLatin1String(""), QLatin1String( ":/images/darkclosebutton.png" ) );
     layout->addWidget( closeButton_ );
-    connect( closeButton_, SIGNAL( clicked() ), SLOT( hide() ) );
+    connect( closeButton_, SIGNAL( clicked() ), SLOT( closeHandler() ) );
 
     editQuickFind_ = new QLineEdit( this );
-    layout->addWidget( editQuickFind_ );
+    // FIXME: set MinimumSize might be to constraining
     editQuickFind_->setMinimumSize( QSize( 150, 0 ) );
+    layout->addWidget( editQuickFind_ );
     /*
     connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
             SLOT( textChanged( QString ) ) );
@@ -49,7 +52,6 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     */
     connect( editQuickFind_, SIGNAL( returnPressed() ),
             this, SLOT( returnHandler() ) );
-
     previousButton_ = setupToolButton( QLatin1String("Previous"),
             QLatin1String( ":/images/arrowup.png" ) );
     layout->addWidget( previousButton_ );
@@ -62,17 +64,30 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     connect( nextButton_, SIGNAL( clicked() ),
             this, SLOT( doSearchForward() ) );
 
+    notificationText_ = new QLabel( "" );
+    // FIXME: set MinimumSize might be to constraining
+    notificationText_->setMinimumSize( QSize( 150, 0 ) );
+    layout->addWidget( notificationText_ );
+
 #if 0
     QSpacerItem* spacerItem = new QSpacerItem(20, 20, QSizePolicy::Expanding,
         QSizePolicy::Minimum);
     layout_->addItem(spacerItem);
 #endif
     setMinimumWidth( minimumSizeHint().width() );
+
+    // Notification timer:
+    notificationTimer_ = new QTimer( this );
+    notificationTimer_->setSingleShot( true );
+    connect( notificationTimer_, SIGNAL( timeout() ),
+            this, SLOT( notificationTimeout() ) );
+
 }
 
-void QuickFindWidget::activate( QFDirection direction )
+void QuickFindWidget::userActivate( QFDirection direction )
 {
     direction_ = direction;
+    userRequested_ = true;
     QWidget::show();
     editQuickFind_->setFocus( Qt::ShortcutFocusReason );
 }
@@ -86,29 +101,72 @@ void QuickFindWidget::changeDisplayedPattern( const QString& newPattern )
     editQuickFind_->setText( newPattern );
 }
 
+void QuickFindWidget::notify( const QString& message )
+{
+    LOG(logDEBUG) << "QuickFindWidget::notify()";
+
+    notificationText_->setText( message );
+    QWidget::show();
+    notificationTimer_->start( NOTIFICATION_TIMEOUT );
+}
+
+void QuickFindWidget::clearNotification()
+{
+    LOG(logDEBUG) << "QuickFindWidget::clearNotification()";
+
+    notificationText_->setText( "" );
+}
+
+// User clicks forward arrow
 void QuickFindWidget::doSearchForward()
 {
     LOG(logDEBUG) << "QuickFindWidget::doSearchForward()";
+
+    // The user has clicked on a button, so we assume she wants
+    // the widget to stay visible.
+    userRequested_ = true;
 
     emit patternConfirmed( editQuickFind_->text() );
     emit searchForward();
 }
 
+// User clicks backward arrow
 void QuickFindWidget::doSearchBackward()
 {
     LOG(logDEBUG) << "QuickFindWidget::doSearchBackward()";
+
+    // The user has clicked on a button, so we assume she wants
+    // the widget to stay visible.
+    userRequested_ = true;
 
     emit patternConfirmed( editQuickFind_->text() );
     emit searchBackward();
 }
 
+// Close and search when the user presses Return
 void QuickFindWidget::returnHandler()
 {
     emit patternConfirmed( editQuickFind_->text() );
     // Close the widget
+    userRequested_ = false;
     this->hide();
     emit close();
     emit searchForward();
+}
+
+// Close and reset flag when the user clicks 'close'
+void QuickFindWidget::closeHandler()
+{
+    userRequested_ = false;
+    this->hide();
+    emit close();
+}
+
+void QuickFindWidget::notificationTimeout()
+{
+    // We close the widget if the user hasn't explicitely requested it.
+    if ( userRequested_ == false )
+        this->hide();
 }
 
 //

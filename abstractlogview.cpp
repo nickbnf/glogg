@@ -205,6 +205,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
             this, SLOT ( handlePatternUpdated() ) );
     connect( verticalScrollBar(), SIGNAL( sliderMoved( int ) ),
             this, SIGNAL( followDisabled() ) );
+    connect( &quickFind_, SIGNAL( notify( const QString& ) ),
+            this, SIGNAL( notifyQuickFind( const QString& ) ) );
+    connect( &quickFind_, SIGNAL( clearNotification() ),
+            this, SIGNAL( clearQuickFindNotification() ) );
 }
 
 AbstractLogView::~AbstractLogView()

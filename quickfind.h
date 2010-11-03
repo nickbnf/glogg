@@ -20,17 +20,21 @@
 #ifndef QUICKFIND_H
 #define QUICKFIND_H
 
+#include <QObject>
 #include <QPoint>
 
 class QuickFindPattern;
 class AbstractLogData;
 class Portion;
+class Selection;
 
 // Represents a search made with Quick Find (without its results)
 // it keeps a pointer to a set of data and to a QuickFindPattern which
 // are used for the searches. (the caller retains ownership of both).
-class QuickFind
+class QuickFind : public QObject
 {
+  Q_OBJECT
+
   public:
     // Construct a search
     QuickFind( const AbstractLogData* const logData, Selection* selection,
@@ -54,6 +58,12 @@ class QuickFind
 
     // Make the object forget the 'no more match' flag.
     void resetLimits();
+
+  signals:
+    // Send when the UI shall display a message to the user.
+    void notify( const QString& message );
+    // Send when the UI shall clear the notification.
+    void clearNotification();
 
   private:
     class LastMatchPosition {

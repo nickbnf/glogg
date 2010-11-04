@@ -957,7 +957,7 @@ inline bool AbstractLogView::isCharWord( char c )
 void AbstractLogView::selectWordAtPosition( const QPoint& pos )
 {
     const int x = pos.x();
-    const QString line = logData->getLineString( pos.y() );
+    const QString line = logData->getExpandedLineString( pos.y() );
 
     if ( isCharWord( line[x].toLatin1() ) ) {
         // Search backward for the first character in the word

@@ -94,7 +94,7 @@ int QuickFind::searchForward()
     line = line;
     // We look at the rest of the first line
     if ( quickFindPattern_->isLineMatching(
-                logData_->getLineString( line ), column ) ) {
+                logData_->getExpandedLineString( line ), column ) ) {
         quickFindPattern_->getLastMatch( &found_start_col, &found_end_col );
         found = true;
     }
@@ -103,7 +103,7 @@ int QuickFind::searchForward()
         line++;
         while ( line < logData_->getNbLine() ) {
             if ( quickFindPattern_->isLineMatching(
-                        logData_->getLineString( line ) ) ) {
+                        logData_->getExpandedLineString( line ) ) ) {
                 quickFindPattern_->getLastMatch(
                         &found_start_col, &found_end_col );
                 found = true;
@@ -149,7 +149,7 @@ int QuickFind::searchBackward()
 
     // We look at the beginning of the first line
     if ( ( column > 0 ) &&  ( quickFindPattern_->isLineMatchingBackward(
-                logData_->getLineString( line ), column ) ) ) {
+                logData_->getExpandedLineString( line ), column ) ) ) {
         quickFindPattern_->getLastMatch( &start_col, &end_col );
         found = true;
     }
@@ -158,7 +158,7 @@ int QuickFind::searchBackward()
         line--;
         while ( line >= 0 ) {
             if ( quickFindPattern_->isLineMatching(
-                        logData_->getLineString( line ) ) ) {
+                        logData_->getExpandedLineString( line ) ) ) {
                 quickFindPattern_->getLastMatch( &start_col, &end_col );
                 found = true;
                 break;

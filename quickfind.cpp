@@ -157,7 +157,7 @@ int QuickFind::searchBackward()
         // And then the rest of the file
         line--;
         while ( line >= 0 ) {
-            if ( quickFindPattern_->isLineMatching(
+            if ( quickFindPattern_->isLineMatchingBackward(
                         logData_->getExpandedLineString( line ) ) ) {
                 quickFindPattern_->getLastMatch( &start_col, &end_col );
                 found = true;

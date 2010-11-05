@@ -22,11 +22,43 @@
 
 #include <QObject>
 #include <QPoint>
+#include <QTime>
 
 class QuickFindPattern;
 class AbstractLogData;
 class Portion;
 class Selection;
+
+// Handle "long processing" notifications to the UI.
+// reset() shall be called at the beginning of the search
+// and then ping() should be called periodically during the processing.
+// The notify() signal should be forwarded to the UI.
+class SearchingNotifier : public QObject
+{
+  Q_OBJECT
+
+  public:
+    SearchingNotifier() {};
+
+    // Reset internal timers at the beiginning of the processing
+    void reset();
+    // Shall be called frequently during processing, send the notification
+    // and call the event loop when appropriate.
+    inline void ping() {
+        if ( startTime_.msecsTo( QTime::currentTime() ) > 1000 )
+            sendNotification();
+    }
+
+  signals:
+    // Sent when the UI shall display a message to the user.
+    void notify( const QString& message );
+
+  private:
+    void sendNotification();
+
+    QTime startTime_;
+    int dotToDisplay_;
+};
 
 // Represents a search made with Quick Find (without its results)
 // it keeps a pointer to a set of data and to a QuickFindPattern which
@@ -60,9 +92,9 @@ class QuickFind : public QObject
     void resetLimits();
 
   signals:
-    // Send when the UI shall display a message to the user.
+    // Sent when the UI shall display a message to the user.
     void notify( const QString& message );
-    // Send when the UI shall clear the notification.
+    // Sent when the UI shall clear the notification.
     void clearNotification();
 
   private:
@@ -85,10 +117,14 @@ class QuickFind : public QObject
     Selection* selection_;
     const QuickFindPattern* const quickFindPattern_;
 
+    // Owned objects
+
     // Position of the last match in the file
     // (to avoid searching multiple times where there is no result)
     LastMatchPosition lastMatch_;
     LastMatchPosition firstMatch_;
+
+    SearchingNotifier searchingNotifier_;
 };
 
 #endif

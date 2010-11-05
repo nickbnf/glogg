@@ -23,11 +23,35 @@
 // Search is started just after the selection and the selection is updated
 // if a match is found.
 
+#include <QApplication>
+
 #include "log.h"
 #include "quickfindpattern.h"
 #include "selection.h"
 
 #include "quickfind.h"
+
+void SearchingNotifier::reset()
+{
+    dotToDisplay_ = 0;
+    startTime_ = QTime::currentTime();
+}
+
+void SearchingNotifier::sendNotification()
+{
+    QString message = QString( "Searching" );
+
+    dotToDisplay_++;
+    for ( int i=0; i < dotToDisplay_; i++ )
+        message += QChar('.');
+    LOG( logDEBUG ) << "Emitting Searching....";
+    emit notify( message );
+    if ( dotToDisplay_ > 4 )
+        dotToDisplay_ = 0;
+
+    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+    startTime_ = QTime::currentTime().addMSecs( -800 );
+}
 
 void QuickFind::LastMatchPosition::set( int line, int column )
 {
@@ -68,8 +92,10 @@ QuickFind::QuickFind( const AbstractLogData* const logData,
         const QuickFindPattern* const quickFindPattern ) :
     logData_( logData ), selection_( selection ), 
     quickFindPattern_( quickFindPattern ),
-    lastMatch_(), firstMatch_()
+    lastMatch_(), firstMatch_(), searchingNotifier_()
 {
+    connect( &searchingNotifier_, SIGNAL( notify( const QString& ) ),
+            this, SIGNAL( notify( const QString& ) ) );
 }
 
 int QuickFind::searchForward()
@@ -95,7 +121,8 @@ int QuickFind::searchForward()
         return -1;
     }
 
-    line = line;
+    LOG( logDEBUG ) << "Start searching.";
+
     // We look at the rest of the first line
     if ( quickFindPattern_->isLineMatching(
                 logData_->getExpandedLineString( line ), column ) ) {
@@ -103,6 +130,7 @@ int QuickFind::searchForward()
         found = true;
     }
     else {
+        searchingNotifier_.reset();
         // And then the rest of the file
         line++;
         while ( line < logData_->getNbLine() ) {
@@ -114,6 +142,9 @@ int QuickFind::searchForward()
                 break;
             }
             line++;
+
+            // See if we need to notify of the ongoing search
+            searchingNotifier_.ping();
         }
     }
 
@@ -163,6 +194,8 @@ int QuickFind::searchBackward()
         return -1;
     }
 
+    LOG( logDEBUG ) << "Start searching.";
+
     // We look at the beginning of the first line
     if ( ( column > 0 ) &&  ( quickFindPattern_->isLineMatchingBackward(
                 logData_->getExpandedLineString( line ), column ) ) ) {
@@ -170,6 +203,7 @@ int QuickFind::searchBackward()
         found = true;
     }
     else {
+        searchingNotifier_.reset();
         // And then the rest of the file
         line--;
         while ( line >= 0 ) {
@@ -180,6 +214,9 @@ int QuickFind::searchBackward()
                 break;
             }
             line--;
+
+            // See if we need to notify of the ongoing search
+            searchingNotifier_.ping();
         }
     }
 

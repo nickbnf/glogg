@@ -23,6 +23,7 @@
 #include <QSplitter>
 #include <QComboBox>
 #include <QPushButton>
+#include <QCheckBox>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -121,10 +122,13 @@ class CrawlerWidget : public QSplitter
     QToolButton*    stopButton;
     FilteredView*   filteredView;
     InfoLine*       searchInfoLine;
+    QCheckBox*      ignoreCaseCheck;
+    QCheckBox*      searchRefreshCheck;
     QuickFindWidget* quickFindWidget_;
 
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;
+    QHBoxLayout*    searchInfoLineLayout;
 
     SavedSearches*  savedSearches;
 

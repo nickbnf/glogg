@@ -60,10 +60,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchInfoLine = new InfoLine();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
-    stopButton = new QToolButton();
-    stopButton->setIcon( QIcon(":/images/stop16.png") );
-    stopButton->setAutoRaise( true );
-    stopButton->setEnabled( false );
+
+    ignoreCaseCheck = new QCheckBox( "Ignore &case" );
+    searchRefreshCheck = new QCheckBox( "Auto-&refresh" );
 
     // Construct the Search line
     searchLabel = new QLabel(tr("&Text: "));
@@ -73,12 +72,19 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchLineEdit->addItems( savedSearches->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     searchLineEdit->setSizeAdjustPolicy( QComboBox::AdjustToMinimumContentsLengthWithIcon );
+
     searchLabel->setBuddy( searchLineEdit );
+
     searchButton = new QToolButton();
     searchButton->setText( tr("&Search") );
     searchButton->setAutoRaise( true );
 
-    // Construct the QuickSearch bar
+    stopButton = new QToolButton();
+    stopButton->setIcon( QIcon(":/images/stop16.png") );
+    stopButton->setAutoRaise( true );
+    stopButton->setEnabled( false );
+
+    // Construct the QuickFind bar
     quickFindWidget_ = new QuickFindWidget();
 
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
@@ -90,11 +96,16 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
     searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
+    QHBoxLayout* searchInfoLineLayout = new QHBoxLayout;
+    searchInfoLineLayout->addWidget( searchInfoLine );
+    searchInfoLineLayout->addWidget( ignoreCaseCheck );
+    searchInfoLineLayout->addWidget( searchRefreshCheck );
+
     // Construct the bottom window
     quickFindWidget_->hide();
     QVBoxLayout* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout(searchLineLayout);
-    bottomMainLayout->addWidget(searchInfoLine);
+    bottomMainLayout->addLayout(searchInfoLineLayout);
     bottomMainLayout->addWidget(filteredView);
     bottomMainLayout->addWidget(quickFindWidget_);
     bottomMainLayout->setContentsMargins(2, 1, 2, 1);

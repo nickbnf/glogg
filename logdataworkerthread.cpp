@@ -246,6 +246,12 @@ bool FullIndexOperation::start( IndexingData& sharedData )
             int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
             emit indexingProgressed( progress );
         }
+
+        // Check if there is a non LF terminated line at the end of the file
+        if ( file.size() > pos ) {
+            LOG( logWARNING ) << "Non LF terminated file, adding a line";
+            linePosition.append( file.size() + 1 );
+        }
     }
     else {
         // TODO: Check that the file is seekable?
@@ -258,7 +264,7 @@ bool FullIndexOperation::start( IndexingData& sharedData )
     if ( *interruptRequest_ == false )
     {
         // Commit the results to the shared data (atomically)
-        sharedData.setAll( pos, maxLength, linePosition );
+        sharedData.setAll( file.size(), maxLength, linePosition );
     }
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."

@@ -25,7 +25,7 @@
 #include "logdata.h"
 
 // Number of lines in each chunk to read
-const int LogFilteredDataWorkerThread::nbLinesInChunk = 5000;
+const int SearchOperation::nbLinesInChunk = 5000;
 
 void SearchData::getAll( int* length, SearchResultArray* matches )
 {
@@ -61,16 +61,6 @@ void SearchData::clear()
     matches_.clear();
 }
 
-SearchOperation::SearchOperation( const QRegExp& regExp,
-        bool* interruptRequest ) : regexp_( regExp )
-{
-    interruptRequest_ = interruptRequest;
-}
-
-const QRegExp& SearchOperation::regExp() const
-{
-    return regexp_;
-}
 
 
 LogFilteredDataWorkerThread::LogFilteredDataWorkerThread(
@@ -105,7 +95,24 @@ void LogFilteredDataWorkerThread::search( const QRegExp& regExp )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_ = false;
-    operationRequested_ = new SearchOperation( regExp, &interruptRequested_ );
+    operationRequested_ = new FullSearchOperation( sourceLogData_,
+            regExp, &interruptRequested_ );
+    operationRequestedCond_.wakeAll();
+}
+
+void LogFilteredDataWorkerThread::updateSearch( const QRegExp& regExp, qint64 position )
+{
+    QMutexLocker locker( &mutex_ );  // to protect operationRequested_
+
+    LOG(logDEBUG) << "Search requested";
+
+    // If an operation is ongoing, we will block
+    while ( (operationRequested_ != NULL) )
+        nothingToDoCond_.wait( &mutex_ );
+
+    interruptRequested_ = false;
+    operationRequested_ = new UpdateSearchOperation( sourceLogData_,
+            regExp, &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
 }
 
@@ -147,8 +154,11 @@ void LogFilteredDataWorkerThread::run()
             return;      // We must die
 
         if ( operationRequested_ ) {
+            connect( operationRequested_, SIGNAL( searchProgressed( int, int ) ),
+                    this, SIGNAL( searchProgressed( int, int ) ) );
+
             // Run the search operation
-            doSearch( operationRequested_ );
+            operationRequested_->start( searchData_ );
 
             LOG(logDEBUG) << "... finished copy in workerThread.";
 
@@ -164,19 +174,25 @@ void LogFilteredDataWorkerThread::run()
 // Operations implementation
 //
 
-// Called in the worker thread's context
-void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperation )
+SearchOperation::SearchOperation( const LogData* sourceLogData,
+        const QRegExp& regExp, bool* interruptRequest )
+    : regexp_( regExp ), sourceLogData_( sourceLogData )
 {
-    const QRegExp regExp = searchOperation->regExp();
+    interruptRequested_ = interruptRequest;
+}
+
+// Called in the worker thread's context
+void FullSearchOperation::start( SearchData& searchData )
+{
     const qint64 nbSourceLines = sourceLogData_->getNbLine();
     int maxLength = 0, nbMatches = 0;
     SearchResultArray currentList = SearchResultArray();
 
     // Clear the shared data
-    searchData_.clear();
+    searchData.clear();
 
     for ( qint64 i = 0; i < nbSourceLines; i += nbLinesInChunk ) {
-        if ( interruptRequested_ )
+        if ( *interruptRequested_ )
             break;
 
         emit searchProgressed( nbMatches, (int) ( i * 100 / nbSourceLines ) );
@@ -187,7 +203,7 @@ void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperati
             ", " << lines.size() << " lines read.";
 
         for ( int j = 0; j < lines.size(); j++ ) {
-            if ( regExp.indexIn( lines[j] ) != -1 ) {
+            if ( regexp_.indexIn( lines[j] ) != -1 ) {
                 const int length = sourceLogData_->getExpandedLineString(i+j).length();
                 if ( length > maxLength )
                     maxLength = length;
@@ -199,9 +215,13 @@ void LogFilteredDataWorkerThread::doSearch( const SearchOperation* searchOperati
 
         // After each block, copy the data to shared data
         // and update the client
-        searchData_.addAll( maxLength, currentList );
+        searchData.addAll( maxLength, currentList );
         currentList.clear();
     }
 
     emit searchProgressed( nbMatches, 100 );
+}
+
+void UpdateSearchOperation::start( SearchData& searchData )
+{
 }

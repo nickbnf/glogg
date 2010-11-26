@@ -27,8 +27,6 @@
 #include <QRegExp>
 #include <QList>
 
-// #include "logdata.h"
-
 class LogData;
 
 // Class encapsulating a single matching line
@@ -77,14 +75,47 @@ class SearchData
 
 class SearchOperation : public QObject
 {
+  Q_OBJECT
   public:
-    SearchOperation( const QRegExp& regExp, bool* interruptRequest );
+    SearchOperation( const LogData* sourceLogData,
+            const QRegExp& regExp, bool* interruptRequest );
 
-    const QRegExp& regExp() const;
+    virtual ~SearchOperation() { }
+
+    // Start the search operation, returns true if it has been done
+    // and false if it has been cancelled (results not copied)
+    virtual void start( SearchData& result ) = 0;
+
+  signals:
+    void searchProgressed( int percent, int nbMatches );
+
+  protected:
+    static const int nbLinesInChunk;
+
+    bool* interruptRequested_;
+    const QRegExp regexp_;
+    const LogData* sourceLogData_;
+};
+
+class FullSearchOperation : public SearchOperation
+{
+  public:
+    FullSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
+            bool* interruptRequest )
+        : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
+    virtual void start( SearchData& result );
+};
+
+class UpdateSearchOperation : public SearchOperation
+{
+  public:
+    UpdateSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
+            bool* interruptRequest, qint64 position )
+        : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
+    virtual void start( SearchData& result );
 
   private:
-    QRegExp regexp_;
-    bool* interruptRequest_;
+    qint64 initialPosition_;
 };
 
 // Create and manage the thread doing loading/indexing for
@@ -100,7 +131,11 @@ class LogFilteredDataWorkerThread : public QThread
     LogFilteredDataWorkerThread( const LogData* sourceLogData );
     ~LogFilteredDataWorkerThread();
 
+    // Start the search with the passed regexp
     void search( const QRegExp& regExp );
+    // Continue the previous search starting at the passed position
+    // in the source file
+    void updateSearch( const QRegExp& regExp, qint64 position );
     // Interrupts the search if one is in progress
     void interrupt();
 
@@ -119,10 +154,6 @@ class LogFilteredDataWorkerThread : public QThread
     void run();
 
   private:
-    static const int nbLinesInChunk;
-
-    void doSearch( const SearchOperation* searchOperation );
-
     const LogData* sourceLogData_;
 
     // Mutex to protect operationRequested_ and friends

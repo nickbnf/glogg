@@ -28,10 +28,10 @@
 #include <QDateTime>
 
 #include "abstractlogdata.h"
-#include "logfiltereddata.h"
 #include "logdataworkerthread.h"
 #include "filewatcher.h"
 
+class LogFilteredData;
 
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.

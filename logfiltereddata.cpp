@@ -76,6 +76,11 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
 
 }
 
+void LogFilteredData::updateSearch( qint64 position )
+{
+    LOG(logDEBUG) << "Entering updateSearch";
+}
+
 void LogFilteredData::interruptSearch()
 {
     LOG(logDEBUG) << "Entering interruptSearch";

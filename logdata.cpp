@@ -26,6 +26,7 @@
 #include "log.h"
 
 #include "logdata.h"
+#include "logfiltereddata.h"
 
 // Implementation of the 'start' functions for each operation
 
@@ -204,6 +205,7 @@ void LogData::fileChangedOnDisk()
     lastModifiedDate_ = info.lastModified();
 
     emit fileChanged( fileChangedOnDisk_ );
+    // TODO: fileChangedOnDisk_, fileSize_
 }
 
 void LogData::indexingFinished( bool success )

@@ -49,6 +49,9 @@ class LogFilteredData : public AbstractLogData {
     // If a search is already in progress this function will block until
     // it is done, so the application should call interruptSearch() first.
     void runSearch( const QRegExp& regExp );
+    // Add to the existing search, starting at the position passed in the
+    // source file. Used when the file on disk has been added too.
+    void updateSearch( qint64 position );
     // Interrupt the running search if one is in progress.
     // Nothing is done if no search is in progress.
     void interruptSearch();

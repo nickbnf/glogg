@@ -23,6 +23,8 @@
 
 #include "logmainview.h"
 
+#include "logfiltereddata.h"
+
 LogMainView::LogMainView(const LogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent)
     : AbstractLogView(newLogData, quickFindPattern, parent)

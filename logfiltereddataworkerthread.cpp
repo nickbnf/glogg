@@ -27,12 +27,14 @@
 // Number of lines in each chunk to read
 const int SearchOperation::nbLinesInChunk = 5000;
 
-void SearchData::getAll( int* length, SearchResultArray* matches )
+void SearchData::getAll( int* length, SearchResultArray* matches,
+        qint64* lines) const
 {
     QMutexLocker locker( &dataMutex_ );
 
     *length  = maxLength_;
     *matches = matches_;
+    *lines   = nbLinesProcessed_;
 }
 
 void SearchData::setAll( int length,
@@ -45,12 +47,20 @@ void SearchData::setAll( int length,
 }
 
 void SearchData::addAll( int length,
-        const SearchResultArray& matches )
+        const SearchResultArray& matches, qint64 lines )
 {
     QMutexLocker locker( &dataMutex_ );
 
-    maxLength_  = qMax( maxLength_, length );
-    matches_   += matches;
+    maxLength_        = qMax( maxLength_, length );
+    matches_          += matches;
+    nbLinesProcessed_ = lines;
+}
+
+int SearchData::getNbMatches() const
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    return matches_.length();
 }
 
 void SearchData::clear()
@@ -134,9 +144,9 @@ void LogFilteredDataWorkerThread::interrupt()
 // This will do an atomic copy of the object
 // (hopefully fast as we use Qt containers)
 void LogFilteredDataWorkerThread::getSearchResult(
-        int* maxLength, SearchResultArray* searchMatches )
+        int* maxLength, SearchResultArray* searchMatches, qint64* nbLinesProcessed )
 {
-    searchData_.getAll( maxLength, searchMatches );
+    searchData_.getAll( maxLength, searchMatches, nbLinesProcessed );
 }
 
 // This is the thread's main loop
@@ -181,28 +191,27 @@ SearchOperation::SearchOperation( const LogData* sourceLogData,
     interruptRequested_ = interruptRequest;
 }
 
-// Called in the worker thread's context
-void FullSearchOperation::start( SearchData& searchData )
+void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 {
     const qint64 nbSourceLines = sourceLogData_->getNbLine();
-    int maxLength = 0, nbMatches = 0;
+    int maxLength = 0;
+    int nbMatches = searchData.getNbMatches();
     SearchResultArray currentList = SearchResultArray();
 
-    // Clear the shared data
-    searchData.clear();
-
-    for ( qint64 i = 0; i < nbSourceLines; i += nbLinesInChunk ) {
+    for ( qint64 i = initialLine; i < nbSourceLines; i += nbLinesInChunk ) {
         if ( *interruptRequested_ )
             break;
 
-        emit searchProgressed( nbMatches, (int) ( i * 100 / nbSourceLines ) );
+        const int percentage = ( i - initialLine ) * 100 / ( nbSourceLines - initialLine );
+        emit searchProgressed( nbMatches, percentage );
 
         const QStringList lines = sourceLogData_->getLines( i,
                 qMin( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
         LOG(logDEBUG) << "Chunk starting at " << i <<
             ", " << lines.size() << " lines read.";
 
-        for ( int j = 0; j < lines.size(); j++ ) {
+        int j = 0;
+        for ( ; j < lines.size(); j++ ) {
             if ( regexp_.indexIn( lines[j] ) != -1 ) {
                 const int length = sourceLogData_->getExpandedLineString(i+j).length();
                 if ( length > maxLength )
@@ -215,13 +224,24 @@ void FullSearchOperation::start( SearchData& searchData )
 
         // After each block, copy the data to shared data
         // and update the client
-        searchData.addAll( maxLength, currentList );
+        searchData.addAll( maxLength, currentList, i+j );
         currentList.clear();
     }
 
     emit searchProgressed( nbMatches, 100 );
 }
 
+// Called in the worker thread's context
+void FullSearchOperation::start( SearchData& searchData )
+{
+    // Clear the shared data
+    searchData.clear();
+
+    doSearch( searchData, 0 );
+}
+
+// Called in the worker thread's context
 void UpdateSearchOperation::start( SearchData& searchData )
 {
+    doSearch( searchData, initialPosition_ );
 }

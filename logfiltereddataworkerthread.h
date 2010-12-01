@@ -54,23 +54,28 @@ class SearchData
     SearchData() : dataMutex_(), matches_(), maxLength_(0) { }
 
     // Atomically get all the search data
-    void getAll( int* length, SearchResultArray* matches );
+    void getAll( int* length, SearchResultArray* matches,
+            qint64* nbLinesProcessed ) const;
 
     // Atomically set all the search data
     // (overwriting the existing)
     void setAll( int length, const SearchResultArray& matches );
 
     // Atomically add to all the existing search data.
-    void addAll( int length, const SearchResultArray& matches );
+    void addAll( int length, const SearchResultArray& matches, qint64 nbLinesProcessed );
+
+    // Atomically get the number of matches
+    int getNbMatches() const;
 
     // Atomically clear the data.
     void clear();
 
   private:
-    QMutex dataMutex_;
+    mutable QMutex dataMutex_;
 
     SearchResultArray matches_;
     int maxLength_;
+    qint64 nbLinesProcessed_;
 };
 
 class SearchOperation : public QObject
@@ -92,6 +97,10 @@ class SearchOperation : public QObject
   protected:
     static const int nbLinesInChunk;
 
+    // Implement the common part of the search, passing
+    // the shared results and the line to begin the search from.
+    void doSearch( SearchData& result, qint64 initialLine );
+
     bool* interruptRequested_;
     const QRegExp regexp_;
     const LogData* sourceLogData_;
@@ -111,7 +120,8 @@ class UpdateSearchOperation : public SearchOperation
   public:
     UpdateSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
             bool* interruptRequest, qint64 position )
-        : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
+        : SearchOperation( sourceLogData, regExp, interruptRequest ),
+        initialPosition_( position ) {}
     virtual void start( SearchData& result );
 
   private:
@@ -134,13 +144,14 @@ class LogFilteredDataWorkerThread : public QThread
     // Start the search with the passed regexp
     void search( const QRegExp& regExp );
     // Continue the previous search starting at the passed position
-    // in the source file
+    // in the source file (line number)
     void updateSearch( const QRegExp& regExp, qint64 position );
     // Interrupts the search if one is in progress
     void interrupt();
 
     // Returns a copy of the current indexing data
-    void getSearchResult( int* maxLength, SearchResultArray* searchMatches );
+    void getSearchResult( int* maxLength, SearchResultArray* searchMatches,
+           qint64* nbLinesProcessed );
 
   signals:
     // Sent during the indexing process to signal progress

@@ -151,6 +151,63 @@ void TestLogFilteredData::multipleSearch()
     delete filteredData;
 }
 
+void TestLogFilteredData::updateSearch()
+{
+    LogData logData;
+
+    // First load the tests file
+    // Register for notification file is loaded
+    connect( &logData, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( loadingFinished() ) );
+
+    logData.attachFile( TMPDIR "/smalllog.txt" );
+    // Wait for the loading to be done
+    {
+        QApplication::exec();
+    }
+
+    QCOMPARE( logData.getNbLine(), SL_NB_LINES );
+
+    // Performs two searches in a row
+    LogFilteredData* filteredData = logData.getNewFilteredData();
+    connect( filteredData, SIGNAL( searchProgressed( int, int ) ),
+            this, SLOT( searchProgressed( int, int ) ) );
+
+    QSignalSpy progressSpy( filteredData,
+            SIGNAL( searchProgressed( int, int ) ) );
+
+    // Start a search
+    filteredData->runSearch( QRegExp( "123" ) );
+
+    for ( int i = 0; i < 2; i++ )
+        QApplication::exec();
+
+    // Check the result
+    QCOMPARE( filteredData->getNbLine(), 12LL );
+    QCOMPARE( progressSpy.count(), 2 );
+
+    // Add some data to the file
+    char newLine[90];
+    QFile file( TMPDIR "/smalllog.txt" );
+    if ( file.open( QIODevice::Append ) ) {
+        for (int i = 0; i < 3000; i++) {
+            snprintf(newLine, 89, sl_format, i);
+            file.write( newLine, qstrlen(newLine) );
+        }
+    }
+    file.close();
+
+    // Start an update search
+    filteredData->updateSearch();
+
+    for ( int i = 0; i < 3; i++ )
+        QApplication::exec();
+
+    // Check the result
+    QCOMPARE( filteredData->getNbLine(), 25LL );
+    QCOMPARE( progressSpy.count(), 4 );
+}
+
 //
 // Private functions
 //

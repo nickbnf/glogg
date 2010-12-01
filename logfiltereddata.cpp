@@ -72,13 +72,14 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
     matchingLineList.clear();
     maxLength_ = 0;
 
-    workerThread_.search( regExp );
-
+    workerThread_.search( currentRegExp_ );
 }
 
-void LogFilteredData::updateSearch( qint64 position )
+void LogFilteredData::updateSearch()
 {
     LOG(logDEBUG) << "Entering updateSearch";
+
+    workerThread_.updateSearch( currentRegExp_, nbLinesProcessed_ );
 }
 
 void LogFilteredData::interruptSearch()
@@ -142,7 +143,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
         << nbMatches << " progress=" << progress;
 
     // searchDone_ = true;
-    workerThread_.getSearchResult( &maxLength_, &matchingLineList );
+    workerThread_.getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
 
     emit searchProgressed( nbMatches, progress );
 }

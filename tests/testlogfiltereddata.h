@@ -11,6 +11,7 @@ class TestLogFilteredData: public QObject
 
         void simpleSearch();
         void multipleSearch();
+        void updateSearch();
 
     public slots:
         void loadingFinished();

@@ -180,26 +180,19 @@ PartialIndexOperation::PartialIndexOperation( QString& fileName,
     initialPosition_ = position;
 }
 
-// Called in the worker thread's context
-// Should not use any shared variable
-bool FullIndexOperation::start( IndexingData& sharedData )
+qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
+        qint64 initialPosition )
 {
-    LOG(logDEBUG) << "FullIndexOperation::start(), file "
-        << fileName_.toStdString();
+    int max_length = *maxLength;
+    qint64 pos = initialPosition; // Absolute position of the start of current line
+    qint64 end = 0;               // Absolute position of the end of current line
+    int additional_spaces = 0;    // Additional spaces due to tabs
 
     // Count the number of lines and max length
     // (read big chunks to speed up reading from disk)
-    LOG(logDEBUG) << "FullIndexOperation: Starting the count...";
-    int maxLength = 0;
-    LinePositionArray linePosition = LinePositionArray();
-    qint64 pos = 0;  // Absolute position of the start of current line
-    qint64 end = 0;  // Absolute position of the end of current line
-    int additional_spaces = 0;  // Additional spaces due to tabs
-
-    emit indexingProgressed( 0 );
-
     QFile file( fileName_ );
     if ( file.open( QIODevice::ReadOnly ) ) {
+        file.seek( pos );
         while ( !file.atEnd() ) {
             if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
                 break;
@@ -234,8 +227,8 @@ bool FullIndexOperation::start( IndexingData& sharedData )
                 if ( pos_within_block != -1 ) {
                     end = pos_within_block + block_beginning;
                     const int length = end-pos + additional_spaces;
-                    if ( length > maxLength )
-                        maxLength = length;
+                    if ( length > max_length )
+                        max_length = length;
                     pos = end + 1;
                     additional_spaces = 0;
                     linePosition.append( pos );
@@ -261,10 +254,30 @@ bool FullIndexOperation::start( IndexingData& sharedData )
         emit indexingProgressed( 100 );
     }
 
+    *maxLength = max_length;
+
+    return file.size();
+}
+
+// Called in the worker thread's context
+// Should not use any shared variable
+bool FullIndexOperation::start( IndexingData& sharedData )
+{
+    LOG(logDEBUG) << "FullIndexOperation::start(), file "
+        << fileName_.toStdString();
+
+    LOG(logDEBUG) << "FullIndexOperation: Starting the count...";
+    int maxLength = 0;
+    LinePositionArray linePosition = LinePositionArray();
+
+    emit indexingProgressed( 0 );
+
+    qint64 size = doIndex( linePosition, &maxLength, 0 );
+
     if ( *interruptRequest_ == false )
     {
         // Commit the results to the shared data (atomically)
-        sharedData.setAll( file.size(), maxLength, linePosition );
+        sharedData.setAll( size, maxLength, linePosition );
     }
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
@@ -278,57 +291,19 @@ bool PartialIndexOperation::start( IndexingData& sharedData )
     LOG(logDEBUG) << "PartialIndexOperation::start(), file "
         << fileName_.toStdString();
 
-    // Count the number of lines and max length
-    // (read big chunks to speed up reading from disk)
     LOG(logDEBUG) << "PartialIndexOperation: Starting the count at "
         << initialPosition_ << " ...";
     int maxLength = 0;
     LinePositionArray linePosition = LinePositionArray();
-    qint64 end = 0, pos = initialPosition_;
 
-    QFile file( fileName_ );
-    if ( file.open( QIODevice::ReadOnly ) ) {
-        file.seek( pos );
-        while ( !file.atEnd() ) {
-            if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
-                break;
+    emit indexingProgressed( 0 );
 
-            // Read a chunk of 5MB
-            const qint64 block_beginning = file.pos();
-            const QByteArray block = file.read( sizeChunk );
-
-            // Count the number of lines in each chunk
-            qint64 next_lf = 0;
-            while ( next_lf != -1 ) {
-                const qint64 pos_within_block = qMax( pos - block_beginning, 0LL);
-                next_lf = block.indexOf( "\n", pos_within_block );
-                if ( next_lf != -1 ) {
-                    end = next_lf + block_beginning;
-                    const int length = end-pos;
-                    if ( length > maxLength )
-                        maxLength = length;
-                    pos = end + 1;
-                    linePosition.append( pos );
-                }
-            }
-        }
-    }
-    else {
-        // TODO: Check that the file is seekable?
-        // If the file cannot be open, we do as if it was empty
-        LOG(logERROR) << "PartialIndexOperation::start - Cannot open file " << fileName_.toStdString();
-
-        // Empty the file
-        sharedData.setAll( 0, 0, linePosition );
-        initialPosition_ = 0;
-
-        emit indexingProgressed( 100 );
-    }
+    qint64 size = doIndex( linePosition, &maxLength, initialPosition_ );
 
     if ( *interruptRequest_ == false )
     {
         // Commit the results to the shared data (atomically)
-        sharedData.addAll( pos - initialPosition_, maxLength, linePosition );
+        sharedData.addAll( size - initialPosition_, maxLength, linePosition );
     }
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";

@@ -77,6 +77,10 @@ class IndexOperation : public QObject
   protected:
     static const int sizeChunk;
 
+    // Returns the total size indexed
+    qint64 doIndex( LinePositionArray& linePosition, int* maxLength,
+            qint64 initialPosition );
+
     QString fileName_;
     bool* interruptRequest_;
 };

@@ -168,7 +168,7 @@ void TestLogFilteredData::updateSearch()
 
     QCOMPARE( logData.getNbLine(), SL_NB_LINES );
 
-    // Performs two searches in a row
+    // Perform a first search
     LogFilteredData* filteredData = logData.getNewFilteredData();
     connect( filteredData, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( searchProgressed( int, int ) ) );
@@ -194,17 +194,24 @@ void TestLogFilteredData::updateSearch()
             snprintf(newLine, 89, sl_format, i);
             file.write( newLine, qstrlen(newLine) );
         }
+        // To test the edge case when the final line is not complete
+        snprintf(newLine, 89, "123... beginning of line.");
+        file.write( newLine, qstrlen(newLine) );
     }
     file.close();
+
+    // Let the system do the update
+    QApplication::exec();
 
     // Start an update search
     filteredData->updateSearch();
 
-    for ( int i = 0; i < 3; i++ )
+    for ( int i = 0; i < 2; i++ )
         QApplication::exec();
 
     // Check the result
-    QCOMPARE( filteredData->getNbLine(), 25LL );
+    QCOMPARE( logData.getNbLine(), 5001LL );
+    QCOMPARE( filteredData->getNbLine(), 26LL );
     QCOMPARE( progressSpy.count(), 4 );
 }
 

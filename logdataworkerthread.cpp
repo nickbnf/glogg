@@ -188,10 +188,10 @@ qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
     qint64 end = 0;               // Absolute position of the end of current line
     int additional_spaces = 0;    // Additional spaces due to tabs
 
-    // Count the number of lines and max length
-    // (read big chunks to speed up reading from disk)
     QFile file( fileName_ );
     if ( file.open( QIODevice::ReadOnly ) ) {
+        // Count the number of lines and max length
+        // (read big chunks to speed up reading from disk)
         file.seek( pos );
         while ( !file.atEnd() ) {
             if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
@@ -242,8 +242,10 @@ qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
 
         // Check if there is a non LF terminated line at the end of the file
         if ( file.size() > pos ) {
-            LOG( logWARNING ) << "Non LF terminated file, adding a line";
+            LOG( logWARNING ) <<
+                "Non LF terminated file, adding a fake end of line";
             linePosition.append( file.size() + 1 );
+            linePosition.setFakeFinalLF();
         }
     }
     else {

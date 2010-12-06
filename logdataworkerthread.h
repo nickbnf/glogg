@@ -24,11 +24,59 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <QVarLengthArray>
 #include <QVector>
 
-//typedef QVarLengthArray<qint64> LinePositionArray;
-typedef QVector<qint64> LinePositionArray;
+// This class is a list of end of lines position,
+// in addition to a list of qint64 (positions within the files)
+// it can keep track of whether the final LF was added (for non-LF terminated
+// files) and remove it when more data are added.
+class LinePositionArray
+{
+  public:
+    // Default constructor
+    LinePositionArray() : array()
+    { fakeFinalLF_ = false; }
+    // Copy constructor
+    inline LinePositionArray( const LinePositionArray& orig )
+        : array(orig.array)
+    { fakeFinalLF_ = orig.fakeFinalLF_; }
+
+    // Add a new line position at the given position
+    inline void append( qint64 pos )
+    { array.append( pos ); }
+    // Size of the array
+    inline int size()
+    { return array.size(); }
+    // Extract an element
+    inline qint64 at( int i ) const
+    { return array.at( i ); }
+    inline qint64 operator[]( int i ) const
+    { return array.at( i ); }
+    // Set the presence of a fake final LF
+    // Must be used after 'append'-ing a fake LF at the end.
+    void setFakeFinalLF( bool finalLF=true )
+    { fakeFinalLF_ = finalLF; }
+
+    // Add another list to this one, removing any fake LF on this list.
+    LinePositionArray& operator+= ( const LinePositionArray& other )
+    {
+        // If our final LF is fake, we remove it
+        if ( fakeFinalLF_ )
+            this->array.pop_back();
+
+        // Append the arrays
+        this->array += other.array;
+
+        // In case the 'other' object has a fake LF
+        this->fakeFinalLF_ = other.fakeFinalLF_;
+
+        return *this;
+    }
+
+  private:
+    QVector<qint64> array;
+    bool fakeFinalLF_;
+};
 
 // This class is a mutex protected set of indexing data.
 // It is thread safe.

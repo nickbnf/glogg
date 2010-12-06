@@ -24,6 +24,9 @@ static const int SL_LINE_PER_PAGE = 70;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 static const int SL_LINE_LENGTH = 83; // Without the final '\n' !
 
+static const char* partial_line_begin = "123... beginning of line.";
+static const char* partial_line_end = " end of line 123.\n";
+
 void TestLogData::initTestCase()
 {
     QVERIFY( generateDataFiles() );
@@ -165,6 +168,8 @@ void TestLogData::changingFile()
             snprintf(newLine, 89, sl_format, i);
             file.write( newLine, qstrlen(newLine) );
         }
+        // To test the edge case when the final line is not complete
+        file.write( partial_line_begin, qstrlen( partial_line_begin ) );
     }
     file.close();
 
@@ -174,9 +179,31 @@ void TestLogData::changingFile()
     // Check we have a bigger file
     QCOMPARE( changedSpy.count(), 1 );
     QCOMPARE( finishedSpy.count(), 2 );
-    QCOMPARE( logData.getNbLine(), 400LL );
+    QCOMPARE( logData.getNbLine(), 401LL );
     QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
-    QCOMPARE( logData.getFileSize(), 400 * (SL_LINE_LENGTH+1LL) );
+    QCOMPARE( logData.getFileSize(), 400 * (SL_LINE_LENGTH+1LL)
+            + strlen( partial_line_begin ) );
+
+    // Add a couple more lines, including the end of the unfinished one.
+    if ( file.open( QIODevice::Append ) ) {
+        file.write( partial_line_end, qstrlen( partial_line_end ) );
+        for (int i = 0; i < 20; i++) {
+            snprintf(newLine, 89, sl_format, i);
+            file.write( newLine, qstrlen(newLine) );
+        }
+    }
+    file.close();
+
+    // and wait for the signals
+    QApplication::exec();
+
+    // Check we have a bigger file
+    QCOMPARE( changedSpy.count(), 2 );
+    QCOMPARE( finishedSpy.count(), 3 );
+    QCOMPARE( logData.getNbLine(), 421LL );
+    QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
+    QCOMPARE( logData.getFileSize(), 420 * (SL_LINE_LENGTH+1LL)
+            + strlen( partial_line_begin ) + strlen( partial_line_end ) );
 
     // Truncate the file
     QVERIFY( file.open( QIODevice::WriteOnly ) );
@@ -186,8 +213,8 @@ void TestLogData::changingFile()
     QApplication::exec();
 
     // Check we have an empty file
-    QCOMPARE( changedSpy.count(), 2 );
-    QCOMPARE( finishedSpy.count(), 3 );
+    QCOMPARE( changedSpy.count(), 3 );
+    QCOMPARE( finishedSpy.count(), 4 );
     QCOMPARE( logData.getNbLine(), 0LL );
     QCOMPARE( logData.getMaxLength(), 0 );
     QCOMPARE( logData.getFileSize(), 0LL );

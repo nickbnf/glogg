@@ -4,6 +4,8 @@ INCLUDEPATH += ./ ../
 DESTDIR = ./
 CONFIG += qtestlib debug
 
+QMAKE_CXXFLAGS += -O2
+
 isEmpty(TMPDIR) {
     DEFINES = TMPDIR=\\\"/tmp\\\"
 }
@@ -19,3 +21,6 @@ SOURCES += testlogdata.cpp testlogfiltereddata.cpp abstractlogdata.cpp logdata.c
 
 coverage:QMAKE_CXXFLAGS += -g -fprofile-arcs -ftest-coverage -O0
 coverage:QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
+
+prof:QMAKE_CXXFLAGS += -pg
+prof:QMAKE_LFLAGS   += -pg

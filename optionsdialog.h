@@ -21,13 +21,13 @@
 #define OPTIONSDIALOG_H
 
 #include <QDialog>
-#include <QComboBox>
-#include <QDialogButtonBox>
 
 #include "configuration.h"
 
+#include "ui_optionsdialog.h"
+
 // Implements the main option dialog box
-class OptionsDialog : public QDialog
+class OptionsDialog : public QDialog, public Ui::OptionsDialog
 {
     Q_OBJECT
 
@@ -49,11 +49,6 @@ class OptionsDialog : public QDialog
     void onButtonBoxClicked( QAbstractButton* button );
 
   private:
-    QDialogButtonBox* buttonBox;
-
-    QComboBox*   fontFamilyBox;
-    QComboBox*   fontSizeBox;
-
     void setupFontList();
     void updateDialogFromConfig();
 };

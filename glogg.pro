@@ -70,6 +70,8 @@ else {
     INCLUDEPATH += $$BOOST_PATH
 }
 
+FORMS += optionsdialog.ui
+
 greaterThan(QT_VERSION, "4.4.0") {
     FORMS += filtersdialog.ui
 }

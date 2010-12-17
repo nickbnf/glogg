@@ -24,37 +24,16 @@
 #include "optionsdialog.h"
 
 // Constructor
-OptionsDialog::OptionsDialog(QWidget* parent) : QDialog(parent)
+OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
 {
-    QGroupBox* fontBox  = new QGroupBox( tr("Font") );
-
-    QLabel* sizeLabel   = new QLabel( tr("Size: ") );
-    QLabel* familyLabel = new QLabel( tr("Family: ") );
+    setupUi( this );
 
     setupFontList();
-
-    buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok |
-            QDialogButtonBox::Cancel | QDialogButtonBox::Apply );
 
     connect(buttonBox, SIGNAL( clicked( QAbstractButton* ) ),
             this, SLOT( onButtonBoxClicked( QAbstractButton* ) ) );
     connect(fontFamilyBox, SIGNAL( currentIndexChanged(const QString& ) ),
             this, SLOT( updateFontSize( const QString& ) ));
-
-    QHBoxLayout* fontLayout = new QHBoxLayout;
-    fontLayout->addWidget(familyLabel);
-    fontLayout->addWidget(fontFamilyBox);
-    fontLayout->addWidget(sizeLabel);
-    fontLayout->addWidget(fontSizeBox);
-    fontBox->setLayout(fontLayout);
-
-    QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(fontBox);
-    mainLayout->addWidget(buttonBox);
-
-    setLayout(mainLayout);
-    setWindowTitle( tr("Options") );
-    setFixedHeight( sizeHint().height() );
 
     updateDialogFromConfig();
 }
@@ -63,15 +42,12 @@ OptionsDialog::OptionsDialog(QWidget* parent) : QDialog(parent)
 // Private functions
 //
 
-// Creates the two font ComboBoxes and populates the 'family' one
+// Populates the 'family' ComboBox
 void OptionsDialog::setupFontList()
 {
     QFontDatabase database;
 
-    fontFamilyBox = new QComboBox();
     fontFamilyBox->addItems(database.families());
-
-    fontSizeBox = new QComboBox();
 }
 
 // Updates the dialog box using values in global Config()

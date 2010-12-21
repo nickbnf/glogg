@@ -63,6 +63,20 @@ int SearchData::getNbMatches() const
     return matches_.length();
 }
 
+// This function starts searching from the end since we use it
+// to remove the final match.
+void SearchData::deleteMatch( qint64 line )
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    SearchResultArray::iterator i = matches_.end();
+    for ( i--; ( i != matches_.begin() ) && ( i->lineNumber() >= line ); i-- )
+        if ( i->lineNumber() == line ) {
+            matches_.erase(i);
+            break;
+        }
+}
+
 void SearchData::clear()
 {
     QMutexLocker locker( &dataMutex_ );
@@ -243,5 +257,15 @@ void FullSearchOperation::start( SearchData& searchData )
 // Called in the worker thread's context
 void UpdateSearchOperation::start( SearchData& searchData )
 {
-    doSearch( searchData, initialPosition_ );
+    qint64 initial_line = initialPosition_;
+
+    if ( initial_line >= 1 ) {
+        // We need to re-search the last line because it might have
+        // been updated (if it was not LF-terminated)
+        --initial_line;
+        // In case the last line matched, we don't want it to match twice.
+        searchData.deleteMatch( initial_line );
+    }
+
+    doSearch( searchData, initial_line );
 }

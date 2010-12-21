@@ -40,6 +40,11 @@ static const int ML_VISIBLE_LINE_LENGTH = (76+8+4+6); // Without the final '\n' 
 static const qint64 SL_NB_LINES = 2000LL;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 
+static const char* partial_line_begin = "123... beginning of line.";
+static const char* partial_line_end = " end of line 123.\n";
+
+static const char* partial_nonmatching_line_begin = "Beginning of line.";
+
 void TestLogFilteredData::initTestCase()
 {
     QVERIFY( generateDataFiles() );
@@ -213,9 +218,8 @@ void TestLogFilteredData::updateSearch()
             snprintf(newLine, 89, sl_format, i);
             file.write( newLine, qstrlen(newLine) );
         }
-        // To test the edge case when the final line is not complete
-        snprintf(newLine, 89, "123... beginning of line.");
-        file.write( newLine, qstrlen(newLine) );
+        // To test the edge case when the final line is not complete and matching
+        file.write( partial_line_begin, qstrlen( partial_line_begin ) );
     }
     file.close();
 
@@ -232,6 +236,51 @@ void TestLogFilteredData::updateSearch()
     QCOMPARE( logData.getNbLine(), 5001LL );
     QCOMPARE( filteredData->getNbLine(), 26LL );
     QCOMPARE( progressSpy.count(), 4 );
+
+    // Add a couple more lines, including the end of the unfinished one.
+    if ( file.open( QIODevice::Append ) ) {
+        file.write( partial_line_end, qstrlen( partial_line_end ) );
+        for (int i = 0; i < 20; i++) {
+            snprintf(newLine, 89, sl_format, i);
+            file.write( newLine, qstrlen(newLine) );
+        }
+        // To test the edge case when the final line is not complete and not matching
+        file.write( partial_nonmatching_line_begin,
+                qstrlen( partial_nonmatching_line_begin ) );
+    }
+    file.close();
+
+    // Start an update search
+    filteredData->updateSearch();
+
+    for ( int i = 0; i < 3; i++ )
+        QApplication::exec();
+
+    // Check the result
+    QCOMPARE( logData.getNbLine(), 5022LL );
+    QCOMPARE( filteredData->getNbLine(), 26LL );
+    QCOMPARE( progressSpy.count(), 6 );
+
+    // Now test the case where a match is found at the end of an updated line.
+    if ( file.open( QIODevice::Append ) ) {
+        file.write( partial_line_end, qstrlen( partial_line_end ) );
+        for (int i = 0; i < 20; i++) {
+            snprintf(newLine, 89, sl_format, i);
+            file.write( newLine, qstrlen(newLine) );
+        }
+    }
+    file.close();
+
+    // Start an update search
+    filteredData->updateSearch();
+
+    for ( int i = 0; i < 3; i++ )
+        QApplication::exec();
+
+    // Check the result
+    QCOMPARE( logData.getNbLine(), 5042LL );
+    QCOMPARE( filteredData->getNbLine(), 27LL );
+    QCOMPARE( progressSpy.count(), 8 );
 }
 
 //

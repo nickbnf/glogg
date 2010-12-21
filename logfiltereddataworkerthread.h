@@ -56,17 +56,15 @@ class SearchData
     // Atomically get all the search data
     void getAll( int* length, SearchResultArray* matches,
             qint64* nbLinesProcessed ) const;
-
     // Atomically set all the search data
     // (overwriting the existing)
     void setAll( int length, const SearchResultArray& matches );
-
     // Atomically add to all the existing search data.
     void addAll( int length, const SearchResultArray& matches, qint64 nbLinesProcessed );
-
-    // Atomically get the number of matches
+    // Get the number of matches
     int getNbMatches() const;
-
+    // Delete the match for the passed line (if it exist)
+    void deleteMatch( qint64 line );
     // Atomically clear the data.
     void clear();
 

@@ -109,10 +109,54 @@ class CrawlerWidget : public QSplitter
     void searchForward();
     void searchBackward();
 
+    // Called when the checkbox for search auto-refresh is changed
+    void searchRefreshChangedHandler( int state );
+
+    // Called when the text on the search line is modified
+    void searchTextChangeHandler();
+
   private:
+    // State machine holding the state of the search, used to allow/disallow
+    // auto-refresh and inform the user via the info line.
+    class SearchState {
+      public:
+        enum State {
+            NoSearch,
+            Static,
+            Autorefreshing,
+            FileTruncated,
+        };
+
+        SearchState() { state_ = NoSearch; autoRefreshRequested_ = false; }
+
+        // Reset the state (no search active)
+        void resetState();
+        // The user changed auto-refresh request
+        void setAutorefresh( bool refresh );
+        // The file has been truncated (stops auto-refresh)
+        void truncateFile();
+        // The expression has been changed (stops auto-refresh)
+        void changeExpression();
+        // The search has been stopped (stops auto-refresh)
+        void stopSearch();
+        // The search has been started (enable auto-refresh)
+        void startSearch();
+
+        // Get the state in order to display the proper message
+        State getState() const { return state_; }
+        // Is auto-refresh allowed
+        bool isAutorefreshAllowed() const
+            { return ( state_ == Autorefreshing ); }
+
+      private:
+        State state_;
+        bool autoRefreshRequested_;
+    };
+
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
     AbstractLogView* searchableWidget() const;
+    void printSearchInfoMessage( int nbMatches = 0 );
 
     LogMainView*    logMainView;
     QWidget*        bottomWindow;
@@ -141,10 +185,8 @@ class CrawlerWidget : public QSplitter
 
     QWidget*        qfSavedFocus_;
 
-    // Is auto-refresh of the search possible?
-    // it is if the expression hasn't been changed and the file hasn't been
-    // truncated.
-    bool            autoRefreshPossible_;
+    // Search state (for auto-refresh and truncation)
+    SearchState     searchState_;
 };
 
 #endif

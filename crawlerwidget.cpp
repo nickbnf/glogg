@@ -45,9 +45,6 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     logData_          = new LogData();
     logFilteredData_  = logData_->getNewFilteredData();
 
-    // Initialise internal status
-    autoRefreshPossible_ = false;
-
     // Initialise the QFP object (one for both views)
     // This is the confirmed pattern used by n/N and coloured in yellow.
     quickFindPattern_ = new QuickFindPattern();
@@ -126,6 +123,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // Connect the signals
     connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),
             searchButton, SIGNAL( clicked() ));
+    connect(searchLineEdit->lineEdit(), SIGNAL( textEdited( const QString& ) ),
+            this, SLOT( searchTextChangeHandler() ));
     connect(searchButton, SIGNAL( clicked() ),
             this, SLOT( startNewSearch() ) );
     connect(stopButton, SIGNAL( clicked() ),
@@ -180,10 +179,14 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SLOT( loadingFinishedHandler( bool ) ) );
     connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
             this, SLOT( fileChangedHandler( LogData::MonitoredFileStatus ) ) );
+
+    // Search auto-refresh
+    connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
+            this, SLOT( searchRefreshChangedHandler( int ) ) );
 }
 
 // Start the asynchronous loading of a file.
-bool CrawlerWidget::readFile( const QString& fileName, int topLine )
+bool CrawlerWidget::readFile( const QString& fileName, int )
 {
     QFileInfo fileInfo( fileName );
     if ( fileInfo.isReadable() )
@@ -200,7 +203,7 @@ bool CrawlerWidget::readFile( const QString& fileName, int topLine )
         logMainView->updateData();
 
         // Forbid starting a search when loading in progress
-        searchButton->setEnabled( false );
+        // searchButton->setEnabled( false );
 
         return true;
     }
@@ -271,14 +274,13 @@ void CrawlerWidget::startNewSearch()
     updateSearchCombo();
     // Call the private function to do the search
     replaceCurrentSearch( searchLineEdit->currentText() );
-    // Accept auto-refresh of the search
-    autoRefreshPossible_ = true;
 }
 
 void CrawlerWidget::stopSearch()
 {
     logFilteredData_->interruptSearch();
-    autoRefreshPossible_ = false;
+    searchState_.stopSearch();
+    printSearchInfoMessage();
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
@@ -288,9 +290,7 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
 
     if ( progress == 100 ) {
         // Searching done
-        searchInfoLine->setText(
-                tr("%1 match%2 found.").arg( nbMatches )
-                .arg( nbMatches > 1 ? "es" : "" ) );
+        printSearchInfoMessage( nbMatches );
         searchInfoLine->hideGauge();
         // De-activate the stop button
         stopButton->setEnabled( false );
@@ -341,11 +341,10 @@ void CrawlerWidget::loadingFinishedHandler( bool success )
     // FIXME, handle topLine
     // logMainView->updateData( logData_, topLine );
     logMainView->updateData();
-    searchButton->setEnabled( true );
+    // searchButton->setEnabled( true );
 
     // See if we need to auto-refresh the search
-    if ( autoRefreshPossible_ &&
-            ( searchRefreshCheck->checkState() == Qt::Checked ) ) {
+    if ( searchState_.isAutorefreshAllowed() ) {
         LOG(logDEBUG) << "Refreshing the search";
         logFilteredData_->updateSearch();
     }
@@ -355,13 +354,13 @@ void CrawlerWidget::loadingFinishedHandler( bool success )
 
 void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
 {
+    // Handle the case where the file has been truncated
     if ( ( status == LogData::Truncated ) &&
          !( searchInfoLine->text().isEmpty()) ) {
         logFilteredData_->clearSearch();
         filteredView->updateData();
-        searchInfoLine->setText(
-                tr("File truncated on disk, previous search results are not valid anymore.") );
-        autoRefreshPossible_ = false;
+        searchState_.truncateFile();
+        printSearchInfoMessage();
     }
 }
 
@@ -424,6 +423,19 @@ void CrawlerWidget::searchBackward()
     searchableWidget()->searchBackward();
 }
 
+void CrawlerWidget::searchRefreshChangedHandler( int state )
+{
+    searchState_.setAutorefresh( state == Qt::Checked );
+    printSearchInfoMessage( logFilteredData_->getNbLine() );
+}
+
+void CrawlerWidget::searchTextChangeHandler()
+{
+    // We suspend auto-refresh
+    searchState_.changeExpression();
+    printSearchInfoMessage( logFilteredData_->getNbLine() );
+}
+
 //
 // Private functions
 //
@@ -432,7 +444,7 @@ void CrawlerWidget::searchBackward()
 // used one and destroy the old one.
 void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 {
-    // Interrupt the search if it's ongoing
+    // Interrupt the searCh if it's ongoing
     logFilteredData_->interruptSearch();
 
     // We have to wait for the last search update (100%)
@@ -445,16 +457,23 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 
     if ( !searchText.isEmpty() ) {
-        // Activate the stop button
-        stopButton->setEnabled( true );
-
         QRegExp regexp( searchText );
-        // Start a new asynchronous search
-        logFilteredData_->runSearch( regexp );
+        if ( regexp.isValid() ) {
+            // Activate the stop button
+            stopButton->setEnabled( true );
+            // Start a new asynchronous search
+            logFilteredData_->runSearch( regexp );
+            // Accept auto-refresh of the search
+            searchState_.startSearch();
+        }
+        else {
+            // TODO: Gracefully handle errors
+        }
     } else {
         logFilteredData_->clearSearch();
-        searchInfoLine->setText( "" );
         filteredView->updateData();
+        searchState_.resetState();
+        printSearchInfoMessage();
     }
     // Connect the search to the top view
     logMainView->useNewFiltering( logFilteredData_ );
@@ -469,4 +488,76 @@ void CrawlerWidget::updateSearchCombo()
     searchLineEdit->addItems( savedSearches->recentSearches() );
     // In case we had something that wasn't added to the list (blank...):
     searchLineEdit->lineEdit()->setText( text );
+}
+
+// Print the search info message.
+void CrawlerWidget::printSearchInfoMessage( int nbMatches )
+{
+    QString text;
+
+    switch ( searchState_.getState() ) {
+        case SearchState::NoSearch:
+            // Blank text is fine
+            break;
+        case SearchState::Static:
+            text = tr("%1 match%2 found.").arg( nbMatches )
+                .arg( nbMatches > 1 ? "es" : "" );
+            break;
+        case SearchState::Autorefreshing:
+            text = tr("%1 match%2 found. Search is auto-refreshing...").arg( nbMatches )
+                .arg( nbMatches > 1 ? "es" : "" );
+            break;
+        case SearchState::FileTruncated:
+            text = tr("File truncated on disk, previous search results are not valid anymore.");
+            break;
+    }
+
+    searchInfoLine->setText( text );
+}
+
+//
+// SearchState implementation
+//
+void CrawlerWidget::SearchState::resetState()
+{
+    state_ = NoSearch;
+}
+
+void CrawlerWidget::SearchState::setAutorefresh( bool refresh )
+{
+    autoRefreshRequested_ = refresh;
+
+    if ( refresh ) {
+        if ( state_ == Static )
+            state_ = Autorefreshing;
+    }
+    else {
+        if ( state_ == Autorefreshing )
+            state_ = Static;
+    }
+}
+
+void CrawlerWidget::SearchState::truncateFile()
+{
+    state_ = FileTruncated;
+}
+
+void CrawlerWidget::SearchState::changeExpression()
+{
+    if ( state_ == Autorefreshing )
+        state_ = Static;
+}
+
+void CrawlerWidget::SearchState::stopSearch()
+{
+    if ( state_ == Autorefreshing )
+        state_ = Static;
+}
+
+void CrawlerWidget::SearchState::startSearch()
+{
+    if ( autoRefreshRequested_ )
+        state_ = Autorefreshing;
+    else
+        state_ = Static;
 }

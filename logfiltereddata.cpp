@@ -45,6 +45,7 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     // Starts with an empty result list
     matchingLineList = SearchResultArray();
     maxLength_ = 0;
+    nbLinesProcessed_ = 0;
 
     sourceLogData = logData;
 

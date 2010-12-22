@@ -140,6 +140,11 @@ class CrawlerWidget : public QSplitter
     qint64          logFileSize_;
 
     QWidget*        qfSavedFocus_;
+
+    // Is auto-refresh of the search possible?
+    // it is if the expression hasn't been changed and the file hasn't been
+    // truncated.
+    bool            autoRefreshPossible_;
 };
 
 #endif

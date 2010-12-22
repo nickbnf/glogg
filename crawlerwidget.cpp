@@ -45,6 +45,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     logData_          = new LogData();
     logFilteredData_  = logData_->getNewFilteredData();
 
+    // Initialise internal status
+    autoRefreshPossible_ = false;
+
     // Initialise the QFP object (one for both views)
     // This is the confirmed pattern used by n/N and coloured in yellow.
     quickFindPattern_ = new QuickFindPattern();
@@ -268,11 +271,14 @@ void CrawlerWidget::startNewSearch()
     updateSearchCombo();
     // Call the private function to do the search
     replaceCurrentSearch( searchLineEdit->currentText() );
+    // Accept auto-refresh of the search
+    autoRefreshPossible_ = true;
 }
 
 void CrawlerWidget::stopSearch()
 {
     logFilteredData_->interruptSearch();
+    autoRefreshPossible_ = false;
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
@@ -337,6 +343,13 @@ void CrawlerWidget::loadingFinishedHandler( bool success )
     logMainView->updateData();
     searchButton->setEnabled( true );
 
+    // See if we need to auto-refresh the search
+    if ( autoRefreshPossible_ &&
+            ( searchRefreshCheck->checkState() == Qt::Checked ) ) {
+        LOG(logDEBUG) << "Refreshing the search";
+        logFilteredData_->updateSearch();
+    }
+
     emit loadingFinished( success );
 }
 
@@ -348,6 +361,7 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
         filteredView->updateData();
         searchInfoLine->setText(
                 tr("File truncated on disk, previous search results are not valid anymore.") );
+        autoRefreshPossible_ = false;
     }
 }
 

@@ -70,11 +70,17 @@ void SearchData::deleteMatch( qint64 line )
     QMutexLocker locker( &dataMutex_ );
 
     SearchResultArray::iterator i = matches_.end();
-    for ( i--; ( i != matches_.begin() ) && ( i->lineNumber() >= line ); i-- )
-        if ( i->lineNumber() == line ) {
+    while ( i != matches_.begin() ) {
+        i--;
+        const int this_line = i->lineNumber();
+        if ( this_line == line ) {
             matches_.erase(i);
             break;
         }
+        // Exit if we have passed the line number to look for.
+        if ( this_line < line )
+            break;
+    }
 }
 
 void SearchData::clear()

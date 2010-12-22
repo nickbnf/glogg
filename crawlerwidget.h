@@ -153,10 +153,14 @@ class CrawlerWidget : public QSplitter
         bool autoRefreshRequested_;
     };
 
+    // Private functions
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
     AbstractLogView* searchableWidget() const;
     void printSearchInfoMessage( int nbMatches = 0 );
+
+    // Palette for error notification (yellow background)
+    static const QPalette errorPalette;
 
     LogMainView*    logMainView;
     QWidget*        bottomWindow;
@@ -173,6 +177,9 @@ class CrawlerWidget : public QSplitter
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;
     QHBoxLayout*    searchInfoLineLayout;
+
+    // Default palette to be remembered
+    QPalette        searchInfoLineDefaultPalette;
 
     SavedSearches*  savedSearches;
 

@@ -35,6 +35,9 @@
 
 #include "configuration.h"
 
+// Palette for error signaling (yellow background)
+const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
+
 // Constructor makes all the child widgets and set up connections.
 CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
         : QSplitter(parent)
@@ -60,6 +63,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchInfoLine = new InfoLine();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
+    searchInfoLineDefaultPalette = searchInfoLine->palette();
 
     ignoreCaseCheck = new QCheckBox( "Ignore &case" );
     searchRefreshCheck = new QCheckBox( "Auto-&refresh" );
@@ -467,7 +471,16 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             searchState_.startSearch();
         }
         else {
-            // TODO: Gracefully handle errors
+            // The regexp is wrong
+            logFilteredData_->clearSearch();
+            filteredView->updateData();
+            searchState_.resetState();
+
+            // Inform the user
+            QString errorMessage = tr("Error in expression: ");
+            errorMessage += regexp.errorString();
+            searchInfoLine->setPalette( errorPalette );
+            searchInfoLine->setText( errorMessage );
         }
     } else {
         logFilteredData_->clearSearch();
@@ -512,6 +525,7 @@ void CrawlerWidget::printSearchInfoMessage( int nbMatches )
             break;
     }
 
+    searchInfoLine->setPalette( searchInfoLineDefaultPalette );
     searchInfoLine->setText( text );
 }
 

@@ -22,6 +22,8 @@
 // current search pattern, once it has been confirmed (return pressed),
 // it can be asked to return the matches in a specific string.
 
+#include "configuration.h"
+
 #include "quickfindpattern.h"
 
 QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
@@ -31,7 +33,22 @@ QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
 
 void QuickFindPattern::changeSearchPattern( const QString& pattern )
 {
+    // Determine the type of regexp depending on the config
+    QRegExp::PatternSyntax syntax;
+    switch ( Config().quickfindRegexpType() ) {
+        case Wildcard:
+            syntax = QRegExp::Wildcard;
+            break;
+        case FixedString:
+            syntax = QRegExp::FixedString;
+            break;
+        default:
+            syntax = QRegExp::RegExp2;
+            break;
+    }
+
     regexp_.setPattern( pattern );
+    regexp_.setPatternSyntax( syntax );
 
     if ( regexp_.isValid() && ( ! regexp_.isEmpty() ) )
         active_ = true;

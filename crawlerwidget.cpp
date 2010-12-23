@@ -461,7 +461,28 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 
     if ( !searchText.isEmpty() ) {
-        QRegExp regexp( searchText );
+        // Determine the type of regexp depending on the config
+        QRegExp::PatternSyntax syntax;
+        switch ( Config().mainRegexpType() ) {
+            case Wildcard:
+                syntax = QRegExp::Wildcard;
+                break;
+            case FixedString:
+                syntax = QRegExp::FixedString;
+                break;
+            default:
+                syntax = QRegExp::RegExp2;
+                break;
+        }
+
+        // Set the pattern case insensitive if needed
+        Qt::CaseSensitivity case_sensitivity = Qt::CaseSensitive;
+        if ( ignoreCaseCheck->checkState() == Qt::Checked )
+            case_sensitivity = Qt::CaseInsensitive;
+
+        // Constructs the regexp
+        QRegExp regexp( searchText, case_sensitivity, syntax );
+
         if ( regexp.isValid() ) {
             // Activate the stop button
             stopButton->setEnabled( true );

@@ -28,7 +28,6 @@
 // Type of regexp to use for searches
 enum SearchRegexpType {
     ExtendedRegexp,
-    BasicRegexp,
     Wildcard,
     FixedString,
 };

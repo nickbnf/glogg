@@ -56,7 +56,7 @@ void OptionsDialog::setupRegexp()
 {
     QStringList regexpTypes;
 
-    regexpTypes << tr("Extended Regexp") << tr("Basic Regexp")
+    regexpTypes << tr("Extended Regexp")
         << tr("Wildcards") << tr("Fixed Strings");
 
     mainSearchBox->addItems( regexpTypes );

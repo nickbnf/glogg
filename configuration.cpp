@@ -29,6 +29,9 @@ Configuration::Configuration()
     mainFont_ = QFont("mono", 10);
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
+    mainRegexpType_      = ExtendedRegexp;
+    quickfindRegexpType_ = ExtendedRegexp;
+
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
 }
@@ -61,13 +64,21 @@ void Configuration::readFromSettings( QSettings& settings )
 {
     LOG(logDEBUG) << "Configuration::readFromSettings";
 
+    // Fonts
     QString family = settings.value( "mainFont.family" ).toString();
     int size = settings.value( "mainFont.size" ).toInt();
 
     // If no config read, keep the default
     if ( !family.isNull() )
-        mainFont_ = QFont( family, size);
+        mainFont_ = QFont( family, size );
 
+    // Regexp types
+    mainRegexpType_ = static_cast<SearchRegexpType>(
+            settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
+    quickfindRegexpType_ = static_cast<SearchRegexpType>(
+            settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
+
+    // Filters
     filterSet_ = settings.value( "filterSet" ).value<FilterSet>();
 }
 
@@ -77,5 +88,7 @@ void Configuration::writeToSettings( QSettings& settings ) const
 
     settings.setValue( "mainFont.family", fi.family() );
     settings.setValue( "mainFont.size", fi.pointSize() );
+    settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
+    settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "filterSet", QVariant::fromValue( filterSet_ ) );
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -50,6 +50,11 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
 
   private:
     void setupFontList();
+    void setupRegexp();
+
+    int getRegexpIndex( SearchRegexpType syntax ) const;
+    SearchRegexpType getRegexpTypeFromIndex( int index ) const;
+
     void updateDialogFromConfig();
 };
 

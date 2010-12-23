@@ -53,7 +53,7 @@
       <x>10</x>
       <y>30</y>
       <width>371</width>
-      <height>54</height>
+      <height>62</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -65,28 +65,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="mainSearchBox">
-       <item>
-        <property name="text">
-         <string>Extended Regexp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Basic Regexp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Wildcards</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Fixed String</string>
-        </property>
-       </item>
-      </widget>
+      <widget class="QComboBox" name="mainSearchBox"/>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_4">
@@ -96,28 +75,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QComboBox" name="quickFindSearchBox">
-       <item>
-        <property name="text">
-         <string>Extended Regexp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Basic Regexp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Wildcards</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Fixed Strings</string>
-        </property>
-       </item>
-      </widget>
+      <widget class="QComboBox" name="quickFindSearchBox"/>
      </item>
     </layout>
    </widget>

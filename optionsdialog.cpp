@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -29,6 +29,7 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
     setupUi( this );
 
     setupFontList();
+    setupRegexp();
 
     connect(buttonBox, SIGNAL( clicked( QAbstractButton* ) ),
             this, SLOT( onButtonBoxClicked( QAbstractButton* ) ) );
@@ -50,6 +51,30 @@ void OptionsDialog::setupFontList()
     fontFamilyBox->addItems(database.families());
 }
 
+// Populate the regexp ComboBoxes
+void OptionsDialog::setupRegexp()
+{
+    QStringList regexpTypes;
+
+    regexpTypes << tr("Extended Regexp") << tr("Basic Regexp")
+        << tr("Wildcards") << tr("Fixed Strings");
+
+    mainSearchBox->addItems( regexpTypes );
+    quickFindSearchBox->addItems( regexpTypes );
+}
+
+// Convert a regexp type to its index in the list
+int OptionsDialog::getRegexpIndex( SearchRegexpType syntax ) const
+{
+    return static_cast<int>( syntax );
+}
+
+// Convert the index of a regexp type to its type
+SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
+{
+    return static_cast<SearchRegexpType>( index );;
+}
+
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
@@ -63,6 +88,12 @@ void OptionsDialog::updateDialogFromConfig()
     int sizeIndex = fontSizeBox->findText( QString::number(fontInfo.pointSize()) );
     if ( sizeIndex != -1 )
         fontSizeBox->setCurrentIndex( sizeIndex );
+
+    // Regexp types
+    mainSearchBox->setCurrentIndex(
+            getRegexpIndex( Config().mainRegexpType() ) );
+    quickFindSearchBox->setCurrentIndex(
+            getRegexpIndex( Config().quickfindRegexpType() ) );
 }
 
 //
@@ -91,6 +122,11 @@ void OptionsDialog::updateConfigFromDialog()
             fontFamilyBox->currentText(),
             (fontSizeBox->currentText()).toInt() );
     Config().setMainFont(font);
+
+    Config().setMainRegexpType(
+            getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
+    Config().setQuickfindRegexpType(
+            getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
 
     emit optionsChanged();
 }

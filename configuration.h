@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -25,6 +25,14 @@
 
 #include "filterset.h"
 
+// Type of regexp to use for searches
+enum SearchRegexpType {
+    ExtendedRegexp,
+    BasicRegexp,
+    Wildcard,
+    FixedString,
+};
+
 // Configuration class created as a singleton
 // Accessed with Config()
 class Configuration {
@@ -32,6 +40,16 @@ class Configuration {
     // Accesses the main font used for display
     QFont mainFont() const;
     void setMainFont( QFont newFont );
+
+    // Accesses the regexp types
+    SearchRegexpType mainRegexpType() const
+    { return mainRegexpType_; }
+    SearchRegexpType quickfindRegexpType() const
+    { return quickfindRegexpType_; }
+    void setMainRegexpType( SearchRegexpType type )
+    { mainRegexpType_ = type; }
+    void setQuickfindRegexpType( SearchRegexpType type )
+    { quickfindRegexpType_ = type; }
 
     // Accesses the (unique) filterSet
     FilterSet& filterSet();
@@ -46,6 +64,8 @@ class Configuration {
 
     // Configuration settings
     QFont mainFont_;
+    SearchRegexpType mainRegexpType_;
+    SearchRegexpType quickfindRegexpType_;
     FilterSet filterSet_;
 
     // allow this function to create one instance
@@ -53,5 +73,6 @@ class Configuration {
 };
 
 Configuration& Config();
+
 
 #endif

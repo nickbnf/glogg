@@ -53,8 +53,12 @@ the first successful filter are applied.
 
 _glogg_ can display and search through logs while they are written to disk, as
 it might be the case when debugging a running program or server.
-The log is automatically updated when it grows, but the search must be
-manually restarted for the new matches to be found.
+The log is automatically updated when it grows, but the 'Auto-refresh' option
+must be enabled if you want the search results to be automatically refreshed as
+well.
+
+The 'f' key might be used to follow the end of the file as it grows (_a la_
+`tail -f`).
 
 ## Settings
 ### Font
@@ -62,6 +66,15 @@ manually restarted for the new matches to be found.
 The font used to display the log file. A clear, monospace font (like the free,
 open source, [DejaVu Mono](http://www.dejavu-fonts.org/) for example) is
 recommended.
+
+### Search options
+
+Determines which type of regular expression _glogg_ will use when filtering
+lines for the bottom window, and when using QuickFind.
+
+* Extended Regexp: the default, uses regular expressions similar to those used by Perl
+* Wildcards: uses wildcards (\*, ? and []) in a similar fashion as a Unix shell
+* Fixed Strings: searches for the text exactly as it is written, no character is special
 
 ## Keyboard commands
 

@@ -25,6 +25,7 @@
 
 #include "filtersdialog.h"
 
+static const QString DEFAULT_PATTERN = "New Filter";
 static const QString DEFAULT_FORE_COLOUR = "black";
 static const QString DEFAULT_BACK_COLOUR = "white";
 
@@ -53,8 +54,11 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     index = backColorBox->findText( DEFAULT_BACK_COLOUR );
     backColorBox->setCurrentIndex( index );
 
-    connect( filterListWidget, SIGNAL( currentRowChanged( int ) ),
-            this, SLOT( updatePropertyFields( int ) ) );
+    // No filter selected by default
+    selectedRow_ = -1;
+
+    connect( filterListWidget, SIGNAL( itemSelectionChanged() ),
+            this, SLOT( updatePropertyFields() ) );
     connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
             this, SLOT( updateFilterProperties() ) );
     connect( foreColorBox, SIGNAL( activated( int ) ),
@@ -71,15 +75,13 @@ void FiltersDialog::on_addFilterButton_clicked()
 {
     LOG(logDEBUG) << "on_addFilterButton_clicked()";
 
-    if ( !patternEdit->text().isEmpty() ) {
-        Filter newFilter = Filter( patternEdit->text(),
-                foreColorBox->currentText(), backColorBox->currentText() );
-        filterSet.filterList << newFilter;
+    Filter newFilter = Filter( DEFAULT_PATTERN,
+            DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR );
+    filterSet.filterList << newFilter;
 
-        // Add and select the newly created filter
-        filterListWidget->addItem( patternEdit->text() );
-        filterListWidget->setCurrentRow( filterListWidget->count() - 1 );
-    }
+    // Add and select the newly created filter
+    filterListWidget->addItem( DEFAULT_PATTERN );
+    filterListWidget->setCurrentRow( filterListWidget->count() - 1 );
 }
 
 void FiltersDialog::on_removeFilterButton_clicked()
@@ -144,30 +146,46 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
         reject();
 }
 
-void FiltersDialog::updatePropertyFields( int row )
+void FiltersDialog::updatePropertyFields()
 {
-    LOG(logDEBUG) << "updatePropertyFields(), row = " << row;
+    if ( filterListWidget->selectedItems().count() >= 1 )
+        selectedRow_ = filterListWidget->row(
+                filterListWidget->selectedItems().at(0) );
+    else
+        selectedRow_ = -1;
 
-    if ( row >= 0 ) {
-        const Filter& currentFilter = filterSet.filterList.at( row );
+    LOG(logDEBUG) << "updatePropertyFields(), row = " << selectedRow_;
+
+    if ( selectedRow_ >= 0 ) {
+        const Filter& currentFilter = filterSet.filterList.at( selectedRow_ );
 
         patternEdit->setText( currentFilter.pattern() );
+        patternEdit->setEnabled( true );
+
         int index = foreColorBox->findText( currentFilter.foreColorName() );
         if ( index != -1 ) {
             LOG(logDEBUG) << "fore index = " << index;
             foreColorBox->setCurrentIndex( index );
+            foreColorBox->setEnabled( true );
         }
         index = backColorBox->findText( currentFilter.backColorName() );
         if ( index != -1 ) {
             LOG(logDEBUG) << "back index = " << index;
             backColorBox->setCurrentIndex( index );
+            backColorBox->setEnabled( true );
         }
 
         // Enable the buttons if needed
         removeFilterButton->setEnabled( true );
-        upFilterButton->setEnabled( ( row > 0 ) ? true : false );
+        upFilterButton->setEnabled( ( selectedRow_ > 0 ) ? true : false );
         downFilterButton->setEnabled(
-                ( row < ( filterListWidget->count() - 1 ) ) ? true : false );
+                ( selectedRow_ < ( filterListWidget->count() - 1 ) ) ? true : false );
+    }
+    else {
+        // Nothing is selected, greys the buttons
+        patternEdit->setEnabled( false );
+        foreColorBox->setEnabled( false );
+        backColorBox->setEnabled( false );
     }
 }
 
@@ -176,9 +194,8 @@ void FiltersDialog::updateFilterProperties()
     LOG(logDEBUG) << "updateFilterProperties()";
 
     // If a row is selected
-    const int row = filterListWidget->currentRow();
-    if ( row >= 0 ) {
-        Filter& currentFilter = filterSet.filterList[row];
+    if ( selectedRow_ >= 0 ) {
+        Filter& currentFilter = filterSet.filterList[selectedRow_];
 
         currentFilter.setPattern( patternEdit->text() );
         filterListWidget->currentItem()->setText( patternEdit->text() );
@@ -257,6 +274,8 @@ void FiltersDialog::populateFilterList()
 {
     filterListWidget->clear();
     foreach ( Filter filter, filterSet.filterList ) {
-        filterListWidget->addItem( filter.pattern() );
+        QListWidgetItem* new_item = new QListWidgetItem( filter.pattern() );
+        // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
+        filterListWidget->addItem( new_item );
     }
 }

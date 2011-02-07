@@ -48,7 +48,7 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     void on_downFilterButton_clicked();
     // Update the property (pattern, color...) fields from the
     // selected Filter.
-    void updatePropertyFields( int row );
+    void updatePropertyFields();
     // Update the selected Filter from the values in the property fields.
     void updateFilterProperties();
 
@@ -56,6 +56,9 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     // Temporary filterset modified by the dialog
     // it is copied from the one in Config()
     FilterSet filterSet;
+
+    // Index of the row currently selected or -1 if none.
+    int selectedRow_;
 
     void populateColors();
     void populateFilterList();

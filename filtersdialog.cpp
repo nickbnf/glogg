@@ -197,10 +197,17 @@ void FiltersDialog::updateFilterProperties()
     if ( selectedRow_ >= 0 ) {
         Filter& currentFilter = filterSet.filterList[selectedRow_];
 
+        // Update the internal data
         currentFilter.setPattern( patternEdit->text() );
-        filterListWidget->currentItem()->setText( patternEdit->text() );
         currentFilter.setForeColor( foreColorBox->currentText() );
         currentFilter.setBackColor( backColorBox->currentText() );
+
+        // Update the entry in the filterList widget
+        filterListWidget->currentItem()->setText( patternEdit->text() );
+        filterListWidget->currentItem()->setForeground(
+                QBrush( QColor( currentFilter.foreColorName() ) ) );
+        filterListWidget->currentItem()->setBackground(
+                QBrush( QColor( currentFilter.backColorName() ) ) );
     }
 }
 
@@ -276,6 +283,8 @@ void FiltersDialog::populateFilterList()
     foreach ( Filter filter, filterSet.filterList ) {
         QListWidgetItem* new_item = new QListWidgetItem( filter.pattern() );
         // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
+        new_item->setForeground( QBrush( QColor( filter.foreColorName() ) ) );
+        new_item->setBackground( QBrush( QColor( filter.backColorName() ) ) );
         filterListWidget->addItem( new_item );
     }
 }

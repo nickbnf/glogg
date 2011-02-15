@@ -26,6 +26,7 @@ namespace po = boost::program_options;
 using namespace std;
 
 #include "persistentinfo.h"
+#include "sessioninfo.h"
 #include "configuration.h"
 #include "filterset.h"
 #include "mainwindow.h"
@@ -113,6 +114,8 @@ int main(int argc, char *argv[])
     FILELog::setReportingLevel( logLevel );
 
     // Register the configuration items
+    GetPersistentInfo().registerPersistable(
+            new SessionInfo, QString( "session" ) );
     GetPersistentInfo().registerPersistable(
             new Configuration, QString( "settings" ) );
     GetPersistentInfo().registerPersistable(

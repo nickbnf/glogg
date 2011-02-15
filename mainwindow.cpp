@@ -29,6 +29,7 @@
 #include "mainwindow.h"
 
 #include "version.h"
+#include "sessioninfo.h"
 #include "crawlerwidget.h"
 #include "filtersdialog.h"
 #include "optionsdialog.h"
@@ -488,21 +489,22 @@ void MainWindow::updateRecentFileActions()
 }
 
 // Write settings to permanent storage
-// It uses Qt settings storage.
 void MainWindow::writeSettings()
 {
-    /*
-    // Geometry of us and crawlerWidget (splitter pos, etc...)
-    settings.setValue( "geometry", saveGeometry() );
-    settings.setValue( "crawlerWidget", crawlerWidget->saveState() );
+    // Save the session
+    SessionInfo& session = Persistent<SessionInfo>( "session" );
+    session.setGeometry( saveGeometry() );
+    session.setCrawlerState( crawlerWidget->saveState() );
+    session.setCurrentFile( currentFile );
+    GetPersistentInfo().save( QString( "session" ) );
 
+    /*
     // Current file and history
-    settings_->setValue( "currentFile", currentFile );
     settings_->setValue( "recentFiles", recentFiles );
     */
 
     // Searches history
-    settings.setValue( "savedSearches", QVariant::fromValue( *savedSearches ) );
+    // settings.setValue( "savedSearches", QVariant::fromValue( *savedSearches ) );
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
@@ -510,21 +512,23 @@ void MainWindow::writeSettings()
 }
 
 // Read settings from permanent storage
-// It uses Qt settings storage.
 void MainWindow::readSettings()
 {
-    /*
-    restoreGeometry( settings_->value("geometry").toByteArray() );
-    crawlerWidget->restoreState( settings_->value("crawlerWidget").toByteArray() );
+    // Get and restore the session
+    GetPersistentInfo().retrieve( QString( "session" ) );
+    SessionInfo session = Persistent<SessionInfo>( "session" );
+    restoreGeometry( session.geometry() );
+    crawlerWidget->restoreState( session.crawlerState() );
+    previousFile = session.currentFile();
 
-    recentFiles = settings.value("recentFiles").toStringList();
-    previousFile = settings.value("currentFile").toString();
+    /*
+    recentFiles = settings_->value("recentFiles").toStringList();
 
     updateRecentFileActions();
     */
 
     // Copy the searches from the config file to our list
-    *savedSearches = settings.value( "savedSearches" ).value<SavedSearches>();
+    // *savedSearches = settings.value( "savedSearches" ).value<SavedSearches>();
 
     GetPersistentInfo().retrieve( QString( "settings" ) );
     GetPersistentInfo().retrieve( QString( "filterSet" ) );

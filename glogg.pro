@@ -31,7 +31,8 @@ SOURCES += main.cpp \
     selection.cpp \
     quickfind.cpp \
     quickfindpattern.cpp \
-    quickfindwidget.cpp
+    quickfindwidget.cpp \
+    sessioninfo.cpp
 
 HEADERS += version.h \
     mainwindow.h \
@@ -57,6 +58,7 @@ HEADERS += version.h \
     quickfind.h \
     quickfindpattern.h \
     quickfindwidget.h \
+    sessioninfo.h \
     persistable.h
 
 isEmpty(BOOST_PATH) {

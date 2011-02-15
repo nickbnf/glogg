@@ -36,12 +36,6 @@ Configuration::Configuration()
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
 }
 
-Configuration& Config()
-{
-    static Configuration conf;
-    return conf;
-}
-
 // Accessor functions
 QFont Configuration::mainFont() const
 {
@@ -55,14 +49,9 @@ void Configuration::setMainFont( QFont newFont )
     mainFont_ = newFont;
 }
 
-FilterSet& Configuration::filterSet()
+void Configuration::retrieveFromStorage( QSettings& settings )
 {
-    return filterSet_;
-}
-
-void Configuration::readFromSettings( QSettings& settings )
-{
-    LOG(logDEBUG) << "Configuration::readFromSettings";
+    LOG(logDEBUG) << "Configuration::retrieveFromStorage";
 
     // Fonts
     QString family = settings.value( "mainFont.family" ).toString();
@@ -77,18 +66,16 @@ void Configuration::readFromSettings( QSettings& settings )
             settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
     quickfindRegexpType_ = static_cast<SearchRegexpType>(
             settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
-
-    // Filters
-    filterSet_ = settings.value( "filterSet" ).value<FilterSet>();
 }
 
-void Configuration::writeToSettings( QSettings& settings ) const
+void Configuration::saveToStorage( QSettings& settings ) const
 {
+    LOG(logDEBUG) << "Configuration::saveToStorage";
+
     QFontInfo fi(mainFont_);
 
     settings.setValue( "mainFont.family", fi.family() );
     settings.setValue( "mainFont.size", fi.pointSize() );
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
-    settings.setValue( "filterSet", QVariant::fromValue( filterSet_ ) );
 }

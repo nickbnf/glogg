@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -36,7 +36,8 @@
 
 #include "log.h"
 
-#include "configuration.h"
+#include "persistentinfo.h"
+#include "filterset.h"
 #include "logmainview.h"
 #include "quickfind.h"
 #include "quickfindpattern.h"
@@ -502,7 +503,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         const int fontAscent = painter.fontMetrics().ascent();
         const int nbCols = getNbVisibleCols();
         const QPalette& palette = viewport()->palette();
-        const FilterSet& filterSet = Config().filterSet();
+        const FilterSet& filterSet = Persistent<FilterSet>( "filterSet" );
         QColor foreColor, backColor;
 
         const QBrush normalBulletBrush = QBrush( Qt::white );

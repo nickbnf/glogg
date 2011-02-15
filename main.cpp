@@ -25,6 +25,9 @@ namespace po = boost::program_options;
 #include <iostream>
 using namespace std;
 
+#include "persistentinfo.h"
+#include "configuration.h"
+#include "filterset.h"
 #include "mainwindow.h"
 #include "log.h"
 
@@ -109,6 +112,12 @@ int main(int argc, char *argv[])
 
     FILELog::setReportingLevel( logLevel );
 
+    // Register the configuration items
+    GetPersistentInfo().registerPersistable(
+            new Configuration, QString( "settings" ) );
+    GetPersistentInfo().registerPersistable(
+            new FilterSet, QString( "filterSet" ) );
+
     MainWindow* mw = new MainWindow();
 
     LOG(logDEBUG) << "MainWindow created.";
@@ -123,7 +132,7 @@ static void print_version()
 #ifdef GLOGG_COMMIT
     cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "\n";
 #endif
-    cout << "Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors\n";
+    cout << "Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors\n";
     cout << "This is free software.  You may redistribute copies of it under the terms of\n";
     cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
     cout << "There is NO WARRANTY, to the extent permitted by law.\n";

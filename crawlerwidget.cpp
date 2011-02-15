@@ -33,6 +33,7 @@
 
 #include "crawlerwidget.h"
 
+#include "persistentinfo.h"
 #include "configuration.h"
 
 // Palette for error signaling (yellow background)
@@ -324,7 +325,8 @@ void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
 
 void CrawlerWidget::applyConfiguration()
 {
-    QFont font = Config().mainFont();
+    Configuration& config = Persistent<Configuration>( "settings" );
+    QFont font = config.mainFont();
 
     LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
 
@@ -463,7 +465,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     if ( !searchText.isEmpty() ) {
         // Determine the type of regexp depending on the config
         QRegExp::PatternSyntax syntax;
-        switch ( Config().mainRegexpType() ) {
+        Configuration& config = Persistent<Configuration>( "settings" );
+        switch ( config.mainRegexpType() ) {
             case Wildcard:
                 syntax = QRegExp::Wildcard;
                 break;

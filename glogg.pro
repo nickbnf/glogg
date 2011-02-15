@@ -19,6 +19,7 @@ SOURCES += main.cpp \
     logmainview.cpp \
     filteredview.cpp \
     optionsdialog.cpp \
+    persistentinfo.cpp \
     configuration.cpp \
     filtersdialog.cpp \
     filterset.cpp \
@@ -43,6 +44,7 @@ HEADERS += version.h \
     logfiltereddata.h \
     abstractlogview.h \
     optionsdialog.h \
+    persistentinfo.h \
     configuration.h \
     filtersdialog.h \
     filterset.h \
@@ -54,7 +56,8 @@ HEADERS += version.h \
     selection.h \
     quickfind.h \
     quickfindpattern.h \
-    quickfindwidget.h
+    quickfindwidget.h \
+    persistable.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

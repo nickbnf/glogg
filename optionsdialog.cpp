@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -19,9 +19,11 @@
 
 #include <QtGui>
 
-#include "log.h"
-
 #include "optionsdialog.h"
+
+#include "log.h"
+#include "persistentinfo.h"
+#include "configuration.h"
 
 // Constructor
 OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
@@ -78,8 +80,10 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
+    Configuration& config = Persistent<Configuration>( "settings" );
+
     // Main font
-    QFontInfo fontInfo = QFontInfo( Config().mainFont() );
+    QFontInfo fontInfo = QFontInfo( config.mainFont() );
 
     int familyIndex = fontFamilyBox->findText( fontInfo.family() );
     if ( familyIndex != -1 )
@@ -91,9 +95,9 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Regexp types
     mainSearchBox->setCurrentIndex(
-            getRegexpIndex( Config().mainRegexpType() ) );
+            getRegexpIndex( config.mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex(
-            getRegexpIndex( Config().quickfindRegexpType() ) );
+            getRegexpIndex( config.quickfindRegexpType() ) );
 }
 
 //
@@ -118,14 +122,16 @@ void OptionsDialog::updateFontSize(const QString& fontFamily)
 
 void OptionsDialog::updateConfigFromDialog()
 {
+    Configuration& config = Persistent<Configuration>( "settings" );
+
     QFont font = QFont(
             fontFamilyBox->currentText(),
             (fontSizeBox->currentText()).toInt() );
-    Config().setMainFont(font);
+    config.setMainFont(font);
 
-    Config().setMainRegexpType(
+    config.setMainRegexpType(
             getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
-    Config().setQuickfindRegexpType(
+    config.setQuickfindRegexpType(
             getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
 
     emit optionsChanged();

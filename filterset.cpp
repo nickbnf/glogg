@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -19,9 +19,12 @@
 
 // This file implements classes Filter and FilterSet
 
-#include "log.h"
+#include <QSettings>
 
+#include "log.h"
 #include "filterset.h"
+
+const int FilterSet::FILTERSET_VERSION = 1;
 
 Filter::Filter()
 {
@@ -99,6 +102,9 @@ QDataStream& operator>>( QDataStream& in, Filter& object )
 // Default constructor
 FilterSet::FilterSet()
 {
+    qRegisterMetaTypeStreamOperators<Filter>( "Filter" );
+    qRegisterMetaTypeStreamOperators<FilterSet>( "FilterSet" );
+    qRegisterMetaTypeStreamOperators<FilterSet::FilterList>( "FilterSet::FilterList" );
 }
 
 bool FilterSet::matchLine( const QString& line,
@@ -122,6 +128,7 @@ bool FilterSet::matchLine( const QString& line,
 
 QDataStream& operator<<( QDataStream& out, const FilterSet& object )
 {
+    LOG(logDEBUG) << "<<operator from FilterSet";
     out << object.filterList;
 
     return out;
@@ -129,7 +136,76 @@ QDataStream& operator<<( QDataStream& out, const FilterSet& object )
 
 QDataStream& operator>>( QDataStream& in, FilterSet& object )
 {
+    LOG(logDEBUG) << ">>operator from FilterSet";
     in >> object.filterList;
 
     return in;
+}
+
+//
+// Persistable virtual functions implementation
+//
+
+void Filter::saveToStorage( QSettings& settings ) const
+{
+    LOG(logDEBUG) << "Filter::saveToStorage";
+
+    settings.setValue( "regexp", regexp_.pattern() );
+    settings.setValue( "fore_colour", foreColorName_ );
+    settings.setValue( "back_colour", backColorName_ );
+}
+
+void Filter::retrieveFromStorage( QSettings& settings )
+{
+    LOG(logDEBUG) << "Filter::retrieveFromStorage";
+
+    regexp_ = QRegExp( settings.value( "regexp" ).toString() );
+    foreColorName_ = settings.value( "fore_colour" ).toString();
+    backColorName_ = settings.value( "back_colour" ).toString();
+}
+
+void FilterSet::saveToStorage( QSettings& settings ) const
+{
+    LOG(logDEBUG) << "FilterSet::saveToStorage";
+
+    settings.beginGroup( "FilterSet" );
+    settings.setValue( "version", FILTERSET_VERSION );
+    settings.beginWriteArray( "filters" );
+    for (int i = 0; i < filterList.size(); ++i) {
+        settings.setArrayIndex(i);
+        filterList[i].saveToStorage( settings );
+    }
+    settings.endArray();
+    settings.endGroup();
+}
+
+void FilterSet::retrieveFromStorage( QSettings& settings )
+{
+    LOG(logDEBUG) << "FilterSet::retrieveFromStorage";
+
+    if ( settings.contains( "FilterSet/version" ) ) {
+        settings.beginGroup( "FilterSet" );
+        if ( settings.value( "version" ) == FILTERSET_VERSION ) {
+            int size = settings.beginReadArray( "filters" );
+            for (int i = 0; i < size; ++i) {
+                settings.setArrayIndex(i);
+                Filter filter;
+                filter.retrieveFromStorage( settings );
+                filterList.append( filter );
+            }
+            settings.endArray();
+        }
+        else {
+            LOG(logERROR) << "Unknown version of FilterSet, ignoring it...";
+        }
+        settings.endGroup();
+    }
+    else {
+        LOG(logWARNING) << "Trying to import legacy (<=0.8.2) filters...";
+        FilterSet tmp_filter_set =
+            settings.value( "filterSet" ).value<FilterSet>();
+        *this = tmp_filter_set;
+        LOG(logWARNING) << "...imported filterset: "
+            << filterList.count() << " elements";
+    }
 }

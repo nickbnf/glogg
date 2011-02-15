@@ -32,14 +32,10 @@
 #include "crawlerwidget.h"
 #include "filtersdialog.h"
 #include "optionsdialog.h"
+#include "persistentinfo.h"
 
 MainWindow::MainWindow() : mainIcon_()
 {
-    // Register the operators for serializable classes
-    qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
-    qRegisterMetaTypeStreamOperators<Filter>( "Filter" );
-    qRegisterMetaTypeStreamOperators<FilterSet>( "FilterSet" );
-
     createActions();
     createMenus();
     // createContextMenu();
@@ -495,41 +491,43 @@ void MainWindow::updateRecentFileActions()
 // It uses Qt settings storage.
 void MainWindow::writeSettings()
 {
-    QSettings settings( "glogg", "glogg" );
-
+    /*
     // Geometry of us and crawlerWidget (splitter pos, etc...)
     settings.setValue( "geometry", saveGeometry() );
     settings.setValue( "crawlerWidget", crawlerWidget->saveState() );
 
     // Current file and history
-    settings.setValue( "currentFile", currentFile );
-    settings.setValue( "recentFiles", recentFiles );
+    settings_->setValue( "currentFile", currentFile );
+    settings_->setValue( "recentFiles", recentFiles );
+    */
 
     // Searches history
     settings.setValue( "savedSearches", QVariant::fromValue( *savedSearches ) );
 
     // User settings
-    Config().writeToSettings( settings );
+    GetPersistentInfo().save( QString( "settings" ) );
+    GetPersistentInfo().save( QString( "filterSet" ) );
 }
 
 // Read settings from permanent storage
 // It uses Qt settings storage.
 void MainWindow::readSettings()
 {
-    QSettings settings( "glogg", "glogg" );
-
-    restoreGeometry( settings.value("geometry").toByteArray() );
-    crawlerWidget->restoreState( settings.value("crawlerWidget").toByteArray() );
+    /*
+    restoreGeometry( settings_->value("geometry").toByteArray() );
+    crawlerWidget->restoreState( settings_->value("crawlerWidget").toByteArray() );
 
     recentFiles = settings.value("recentFiles").toStringList();
     previousFile = settings.value("currentFile").toString();
 
     updateRecentFileActions();
+    */
 
     // Copy the searches from the config file to our list
     *savedSearches = settings.value( "savedSearches" ).value<SavedSearches>();
 
-    Config().readFromSettings( settings );
+    GetPersistentInfo().retrieve( QString( "settings" ) );
+    GetPersistentInfo().retrieve( QString( "filterSet" ) );
 }
 
 // Returns the size in human readable format

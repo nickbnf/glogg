@@ -24,6 +24,8 @@
 #include <QColor>
 #include <QMetaType>
 
+#include "persistable.h"
+
 // Represents a filter, i.e. a regexp and the colors matching text
 // should be rendered in.
 class Filter
@@ -47,8 +49,13 @@ class Filter
     void setBackColor( const QString& backColorName );
 
     // Operators for serialization
+    // (must be kept to migrate filters from <=0.8.2)
     friend QDataStream& operator<<( QDataStream& out, const Filter& object );
     friend QDataStream& operator>>( QDataStream& in, Filter& object );
+
+    // Reads/writes the current config in the QSettings object passed
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
 
   private:
     QRegExp regexp_;
@@ -58,7 +65,7 @@ class Filter
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
-class FilterSet
+class FilterSet : public Persistable
 {
   public:
     // Construct an empty filter set
@@ -70,20 +77,33 @@ class FilterSet
     bool matchLine( const QString& line,
             QColor* foreColor, QColor* backColor ) const;
 
+    // Reads/writes the current config in the QSettings object passed
+    virtual void saveToStorage( QSettings& settings ) const;
+    virtual void retrieveFromStorage( QSettings& settings );
+
+    // Should be private really, but I don't know how to have 
+    // it recognised by QVariant then.
+    typedef QList<Filter> FilterList;
+
     // Operators for serialization
+    // (must be kept to migrate filters from <=0.8.2)
     friend QDataStream& operator<<(
             QDataStream& out, const FilterSet& object );
     friend QDataStream& operator>>(
             QDataStream& in, FilterSet& object );
 
   private:
-    QList<Filter> filterList;
+    static const int FILTERSET_VERSION;
+
+    FilterList filterList;
 
     // To simplify this class interface, FilterDialog can access our
     // internal structure directly.
     friend class FiltersDialog;
 };
 
+Q_DECLARE_METATYPE(Filter)
 Q_DECLARE_METATYPE(FilterSet)
+Q_DECLARE_METATYPE(FilterSet::FilterList)
 
 #endif

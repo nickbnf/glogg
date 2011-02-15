@@ -23,7 +23,7 @@
 #include <QFont>
 #include <QSettings>
 
-#include "filterset.h"
+#include "persistable.h"
 
 // Type of regexp to use for searches
 enum SearchRegexpType {
@@ -32,10 +32,11 @@ enum SearchRegexpType {
     FixedString,
 };
 
-// Configuration class created as a singleton
-// Accessed with Config()
-class Configuration {
+// Configuration class containing everything in the "Settings" dialog
+class Configuration : public Persistable {
   public:
+    Configuration();
+
     // Accesses the main font used for display
     QFont mainFont() const;
     void setMainFont( QFont newFont );
@@ -50,28 +51,15 @@ class Configuration {
     void setQuickfindRegexpType( SearchRegexpType type )
     { quickfindRegexpType_ = type; }
 
-    // Accesses the (unique) filterSet
-    FilterSet& filterSet();
-
     // Reads/writes the current config in the QSettings object passed
-    void readFromSettings( QSettings& settings );
-    void writeToSettings( QSettings& settings ) const;
+    virtual void saveToStorage( QSettings& settings ) const;
+    virtual void retrieveFromStorage( QSettings& settings );
 
   private:
-    Configuration();
-    Configuration( const Configuration& );
-
     // Configuration settings
     QFont mainFont_;
     SearchRegexpType mainRegexpType_;
     SearchRegexpType quickfindRegexpType_;
-    FilterSet filterSet_;
-
-    // allow this function to create one instance
-    friend Configuration& Config();
 };
-
-Configuration& Config();
-
 
 #endif

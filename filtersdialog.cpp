@@ -20,6 +20,7 @@
 #include "log.h"
 
 #include "configuration.h"
+#include "persistentinfo.h"
 #include "filterset.h"
 
 #include "filtersdialog.h"
@@ -30,7 +31,7 @@ static const QString DEFAULT_BACK_COLOUR = "white";
 // Construct the box, including a copy of the global FilterSet
 // to handle ok/cancel/apply
 FiltersDialog::FiltersDialog( QWidget* parent ) :
-    QDialog( parent ), filterSet( Config().filterSet() )
+    QDialog( parent ), filterSet( Persistent<FilterSet>( "filterSet" ) )
 {
     setupUi( this );
 
@@ -127,7 +128,7 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
     QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
     if (   ( role == QDialogButtonBox::AcceptRole )
         || ( role == QDialogButtonBox::ApplyRole ) ) {
-        Config().filterSet() = filterSet;
+        Persistent<FilterSet>( "filterSet" ) = filterSet;
         emit optionsChanged();
     }
 

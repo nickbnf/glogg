@@ -29,6 +29,7 @@ using namespace std;
 #include "sessioninfo.h"
 #include "configuration.h"
 #include "filterset.h"
+#include "recentfiles.h"
 #include "mainwindow.h"
 #include "log.h"
 
@@ -122,6 +123,8 @@ int main(int argc, char *argv[])
             new FilterSet, QString( "filterSet" ) );
     GetPersistentInfo().registerPersistable(
             new SavedSearches, QString( "savedSearches" ) );
+    GetPersistentInfo().registerPersistable(
+            new RecentFiles, QString( "recentFiles" ) );
 
     MainWindow* mw = new MainWindow();
 

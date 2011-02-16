@@ -30,12 +30,14 @@
 
 #include "version.h"
 #include "sessioninfo.h"
+#include "recentfiles.h"
 #include "crawlerwidget.h"
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 #include "persistentinfo.h"
 
-MainWindow::MainWindow() : mainIcon_()
+MainWindow::MainWindow() :
+    recentFiles( Persistent<RecentFiles>( "recentFiles" ) ), mainIcon_()
 {
     createActions();
     createMenus();
@@ -448,10 +450,9 @@ void MainWindow::setCurrentFile( const QString& fileName )
     currentFile = fileName;
     QString shownName = tr( "Untitled" );
     if ( !currentFile.isEmpty() ) {
-        shownName = strippedName( currentFile );
-        recentFiles.removeAll( currentFile );
-        recentFiles.prepend( currentFile );
+        recentFiles.addRecent( currentFile );
         updateRecentFileActions();
+        shownName = strippedName( currentFile );
     }
 
     setWindowTitle(
@@ -462,22 +463,17 @@ void MainWindow::setCurrentFile( const QString& fileName )
             );
 }
 
-// Trims the recent file lists and updates the actions.
+// Updates the actions for the recent files.
 // Must be called after having added a new name to the list.
 void MainWindow::updateRecentFileActions()
 {
-    // First remove non existent files
-    QMutableStringListIterator i(recentFiles);
-    while ( i.hasNext() ) {
-        if ( !QFile::exists(i.next()) )
-            i.remove();
-    }
+    QStringList recent_files = recentFiles.recentFiles();
 
     for ( int j = 0; j < MaxRecentFiles; ++j ) {
-        if ( j < recentFiles.count() ) {
-            QString text = tr("&%1 %2").arg(j + 1).arg(strippedName(recentFiles[j]));
+        if ( j < recent_files.count() ) {
+            QString text = tr("&%1 %2").arg(j + 1).arg(strippedName(recent_files[j]));
             recentFileActions[j]->setText( text );
-            recentFileActions[j]->setData( recentFiles[j] );
+            recentFileActions[j]->setData( recent_files[j] );
             recentFileActions[j]->setVisible( true );
         }
         else {
@@ -498,10 +494,8 @@ void MainWindow::writeSettings()
     session.setCurrentFile( currentFile );
     GetPersistentInfo().save( QString( "session" ) );
 
-    /*
-    // Current file and history
-    settings_->setValue( "recentFiles", recentFiles );
-    */
+    // History of recent files
+    GetPersistentInfo().save( QString( "recentFiles" ) );
 
     // Searches history
     GetPersistentInfo().save( QString( "savedSearches" ) );
@@ -521,11 +515,9 @@ void MainWindow::readSettings()
     crawlerWidget->restoreState( session.crawlerState() );
     previousFile = session.currentFile();
 
-    /*
-    recentFiles = settings_->value("recentFiles").toStringList();
-
+    // History of recent files
+    GetPersistentInfo().retrieve( QString( "recentFiles" ) );
     updateRecentFileActions();
-    */
 
     GetPersistentInfo().retrieve( QString( "savedSearches" ) );
     GetPersistentInfo().retrieve( QString( "settings" ) );

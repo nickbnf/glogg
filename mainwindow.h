@@ -25,6 +25,7 @@
 #include "infoline.h"
 
 class QAction;
+class RecentFiles;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
@@ -94,7 +95,7 @@ class MainWindow : public QMainWindow
 
     SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;
-    QStringList recentFiles;
+    RecentFiles& recentFiles;
     QString loadingFileName;
     QString currentFile;
     QString previousFile;

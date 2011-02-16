@@ -497,9 +497,6 @@ void MainWindow::writeSettings()
     // History of recent files
     GetPersistentInfo().save( QString( "recentFiles" ) );
 
-    // Searches history
-    GetPersistentInfo().save( QString( "savedSearches" ) );
-
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
     GetPersistentInfo().save( QString( "filterSet" ) );

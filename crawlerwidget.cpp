@@ -273,7 +273,10 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 void CrawlerWidget::startNewSearch()
 {
     // Record the search line in the recent list
+    // (reload the list first in case another glogg changed it)
+    GetPersistentInfo().retrieve( "savedSearches" );
     savedSearches->addRecent( searchLineEdit->currentText() );
+    GetPersistentInfo().save( "savedSearches" );
 
     // Update the SearchLine (history)
     updateSearchCombo();

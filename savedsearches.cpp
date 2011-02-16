@@ -34,7 +34,7 @@ SavedSearches::SavedSearches() : savedSearches_()
 
 void SavedSearches::addRecent( const QString& text )
 {
-    // We're not interrested in blank lines
+    // We're not interested in blank lines
     if ( text.isEmpty() )
         return;
 

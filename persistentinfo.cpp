@@ -48,10 +48,16 @@ void PersistentInfo::save( const QString& name )
         objectList_.value( name )->saveToStorage( settings_ );
     else
         LOG(logERROR) << "Unregistered persistable " << name.toStdString();
+
+    // Sync to ensure it is propagated to other processes
+    settings_.sync();
 }
 
 void PersistentInfo::retrieve( const QString& name )
 {
+    // Sync to ensure it has been propagated from other processes
+    settings_.sync();
+
     if ( objectList_.contains( name ) )
         objectList_.value( name )->retrieveFromStorage( settings_ );
     else

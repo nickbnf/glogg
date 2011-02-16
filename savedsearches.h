@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -24,9 +24,11 @@
 #include <QStringList>
 #include <QMetaType>
 
+#include "persistable.h"
+
 // Keeps track of the previously used searches and allows the application
 // to retrieve them.
-class SavedSearches
+class SavedSearches : public Persistable
 {
   public:
     // Creates an empty set of saved searches
@@ -39,11 +41,17 @@ class SavedSearches
     QStringList recentSearches() const;
 
     // Operators for serialization
+    // (only for migrating pre 0.8.2 settings, will be removed)
     friend QDataStream& operator<<( QDataStream& out, const SavedSearches& object );
     friend QDataStream& operator>>( QDataStream& in, SavedSearches& object );
 
+    // Reads/writes the current config in the QSettings object passed
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
+
   private:
-    static const int maxNumberOfRecentSearches = 20;
+    static const int SAVEDSEARCHES_VERSION;
+    static const int maxNumberOfRecentSearches;
 
     QStringList savedSearches_;
 };

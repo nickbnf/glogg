@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
             new Configuration, QString( "settings" ) );
     GetPersistentInfo().registerPersistable(
             new FilterSet, QString( "filterSet" ) );
+    GetPersistentInfo().registerPersistable(
+            new SavedSearches, QString( "savedSearches" ) );
 
     MainWindow* mw = new MainWindow();
 

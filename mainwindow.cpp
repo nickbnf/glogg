@@ -101,8 +101,8 @@ void MainWindow::loadInitialFile( QString fileName )
 
 void MainWindow::createCrawler()
 {
-    // First create the searches history
-    savedSearches = new SavedSearches();
+    // First get the global search history
+    savedSearches = &(Persistent<SavedSearches>( "savedSearches" ));
 
     crawlerWidget = new CrawlerWidget( savedSearches );
 }
@@ -308,7 +308,7 @@ void MainWindow::about()
 #ifdef GLOGG_COMMIT
                 "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT
 #endif
-                "<p>Copyright &copy; 2009, 2010 Nicolas Bonnefon and other contributors"
+                "<p>Copyright &copy; 2009, 2010, 2011 Nicolas Bonnefon and other contributors"
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
 }
 
@@ -504,7 +504,7 @@ void MainWindow::writeSettings()
     */
 
     // Searches history
-    // settings.setValue( "savedSearches", QVariant::fromValue( *savedSearches ) );
+    GetPersistentInfo().save( QString( "savedSearches" ) );
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
@@ -527,9 +527,7 @@ void MainWindow::readSettings()
     updateRecentFileActions();
     */
 
-    // Copy the searches from the config file to our list
-    // *savedSearches = settings.value( "savedSearches" ).value<SavedSearches>();
-
+    GetPersistentInfo().retrieve( QString( "savedSearches" ) );
     GetPersistentInfo().retrieve( QString( "settings" ) );
     GetPersistentInfo().retrieve( QString( "filterSet" ) );
 }

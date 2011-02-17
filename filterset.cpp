@@ -169,6 +169,8 @@ void FilterSet::saveToStorage( QSettings& settings ) const
     LOG(logDEBUG) << "FilterSet::saveToStorage";
 
     settings.beginGroup( "FilterSet" );
+    // Remove everything in case the array is shorter than the previous one
+    settings.remove("");
     settings.setValue( "version", FILTERSET_VERSION );
     settings.beginWriteArray( "filters" );
     for (int i = 0; i < filterList.size(); ++i) {
@@ -209,5 +211,10 @@ void FilterSet::retrieveFromStorage( QSettings& settings )
         *this = tmp_filter_set;
         LOG(logWARNING) << "...imported filterset: "
             << filterList.count() << " elements";
+        // Remove the old key once migration is done
+        settings.remove( "filterSet" );
+        // And replace it with the new one
+        saveToStorage( settings );
+        settings.sync();
     }
 }

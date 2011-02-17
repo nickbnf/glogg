@@ -85,6 +85,8 @@ void SavedSearches::saveToStorage( QSettings& settings ) const
     LOG(logDEBUG) << "SavedSearches::saveToStorage";
 
     settings.beginGroup( "SavedSearches" );
+    // Remove everything in case the array is shorter than the previous one
+    settings.remove("");
     settings.setValue( "version", SAVEDSEARCHES_VERSION );
     settings.beginWriteArray( "searchHistory" );
     for (int i = 0; i < savedSearches_.size(); ++i) {
@@ -125,5 +127,10 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
         *this = tmp_saved_searches;
         LOG(logWARNING) << "...imported searches: "
             << savedSearches_.count() << " elements";
+        // Remove the old key once migration is done
+        settings.remove( "savedSearches" );
+        // And replace it with the new one
+        saveToStorage( settings );
+        settings.sync();
     }
 }

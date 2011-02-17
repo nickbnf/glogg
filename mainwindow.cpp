@@ -499,7 +499,6 @@ void MainWindow::writeSettings()
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
-    GetPersistentInfo().save( QString( "filterSet" ) );
 }
 
 // Read settings from permanent storage

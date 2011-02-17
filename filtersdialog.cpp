@@ -30,10 +30,14 @@ static const QString DEFAULT_BACK_COLOUR = "white";
 
 // Construct the box, including a copy of the global FilterSet
 // to handle ok/cancel/apply
-FiltersDialog::FiltersDialog( QWidget* parent ) :
-    QDialog( parent ), filterSet( Persistent<FilterSet>( "filterSet" ) )
+FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
 {
     setupUi( this );
+
+    // Reload the filter list from disk (in case it has been changed
+    // by another glogg instance) and copy it to here.
+    GetPersistentInfo().retrieve( "filterSet" );
+    filterSet = Persistent<FilterSet>( "filterSet" );
 
     populateColors();
     populateFilterList();
@@ -128,7 +132,9 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
     QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
     if (   ( role == QDialogButtonBox::AcceptRole )
         || ( role == QDialogButtonBox::ApplyRole ) ) {
+        // Copy the filter set and persist it to disk
         Persistent<FilterSet>( "filterSet" ) = filterSet;
+        GetPersistentInfo().save( "filterSet" );
         emit optionsChanged();
     }
 

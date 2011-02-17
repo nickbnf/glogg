@@ -183,6 +183,8 @@ void FilterSet::retrieveFromStorage( QSettings& settings )
 {
     LOG(logDEBUG) << "FilterSet::retrieveFromStorage";
 
+    filterList.clear();
+
     if ( settings.contains( "FilterSet/version" ) ) {
         settings.beginGroup( "FilterSet" );
         if ( settings.value( "version" ) == FILTERSET_VERSION ) {

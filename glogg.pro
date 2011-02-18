@@ -65,7 +65,7 @@ HEADERS += version.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
-    LIBS += -lboost_program_options -L$HOME/lib/
+    LIBS += -lboost_program_options
 }
 else {
     message(Building using static Boost libraries at $$BOOST_PATH)

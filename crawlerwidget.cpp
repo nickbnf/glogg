@@ -305,12 +305,15 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
     }
     else {
         // Search in progress
-        searchInfoLine->setText(
-                tr("Search in progress (%1 %)... %2 match%3 found so far.")
-                .arg( progress )
-                .arg( nbMatches )
-                .arg( nbMatches > 1 ? "es" : "" ) );
-        searchInfoLine->displayGauge( progress );
+        // We ignore 0% and 100% to avoid a flash when the search is very short
+        if ( progress > 0 ) {
+            searchInfoLine->setText(
+                    tr("Search in progress (%1 %)... %2 match%3 found so far.")
+                    .arg( progress )
+                    .arg( nbMatches )
+                    .arg( nbMatches > 1 ? "es" : "" ) );
+            searchInfoLine->displayGauge( progress );
+        }
     }
 
     // Recompute the content of the filtered window.

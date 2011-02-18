@@ -333,10 +333,15 @@ void MainWindow::lineNumberHandler( int line )
 void MainWindow::updateLoadingProgress( int progress )
 {
     LOG(logDEBUG) << "Loading progress: " << progress;
-    infoLine->setText( loadingFileName + tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
-    infoLine->displayGauge( progress );
 
-    stopAction->setEnabled( true );
+    // We ignore 0% and 100% to avoid a flash when the file (or update)
+    // is very short.
+    if ( progress > 0 && progress < 100 ) {
+        infoLine->setText( loadingFileName + tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
+        infoLine->displayGauge( progress );
+
+        stopAction->setEnabled( true );
+    }
 }
 
 void MainWindow::displayNormalStatus( bool success )

@@ -210,6 +210,8 @@ void TestLogFilteredData::updateSearch()
     QCOMPARE( filteredData->getNbLine(), 12LL );
     QCOMPARE( progressSpy.count(), 2 );
 
+    QWARN("Starting stage 2");
+
     // Add some data to the file
     char newLine[90];
     QFile file( TMPDIR "/smalllog.txt" );
@@ -237,6 +239,8 @@ void TestLogFilteredData::updateSearch()
     QCOMPARE( filteredData->getNbLine(), 26LL );
     QCOMPARE( progressSpy.count(), 4 );
 
+    QWARN("Starting stage 3");
+
     // Add a couple more lines, including the end of the unfinished one.
     if ( file.open( QIODevice::Append ) ) {
         file.write( partial_line_end, qstrlen( partial_line_end ) );
@@ -260,6 +264,8 @@ void TestLogFilteredData::updateSearch()
     QCOMPARE( logData.getNbLine(), 5022LL );
     QCOMPARE( filteredData->getNbLine(), 26LL );
     QCOMPARE( progressSpy.count(), 6 );
+
+    QWARN("Starting stage 4");
 
     // Now test the case where a match is found at the end of an updated line.
     if ( file.open( QIODevice::Append ) ) {

@@ -455,7 +455,10 @@ void MainWindow::setCurrentFile( const QString& fileName )
     currentFile = fileName;
     QString shownName = tr( "Untitled" );
     if ( !currentFile.isEmpty() ) {
+        // (reload the list first in case another glogg changed it)
+        GetPersistentInfo().retrieve( "recentFiles" );
         recentFiles.addRecent( currentFile );
+        GetPersistentInfo().save( "recentFiles" );
         updateRecentFileActions();
         shownName = strippedName( currentFile );
     }
@@ -498,9 +501,6 @@ void MainWindow::writeSettings()
     session.setCrawlerState( crawlerWidget->saveState() );
     session.setCurrentFile( currentFile );
     GetPersistentInfo().save( QString( "session" ) );
-
-    // History of recent files
-    GetPersistentInfo().save( QString( "recentFiles" ) );
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );

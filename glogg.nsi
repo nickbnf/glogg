@@ -128,9 +128,13 @@ Section "Uninstall"
     Delete "$INSTDIR\QtGui4.dll"
     RMDir "$INSTDIR"
 
+    ; Remove settings in %appdata%
+    Delete "$APPDATA\glogg\glogg.ini"
+    RMDir "$APPDATA\glogg"
+
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\glogg"
 
-    ; Remove settings
+    ; Remove settings in the registry (from glogg < 0.9)
     DeleteRegKey HKCU "Software\glogg"
 
     ; Remove the file associations

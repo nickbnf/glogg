@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
     FILELog::setReportingLevel( logLevel );
 
     // Register the configuration items
+    GetPersistentInfo().migrateAndInit();
     GetPersistentInfo().registerPersistable(
             new SessionInfo, QString( "session" ) );
     GetPersistentInfo().registerPersistable(

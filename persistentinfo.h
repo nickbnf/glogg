@@ -29,6 +29,9 @@ class Persistable;
 // then be saved/loaded.
 class PersistentInfo {
   public:
+    // Initialise the storage backend for the Persistable, migrating the settings
+    // if needed. Must be called before any other function.
+    void migrateAndInit();
     // Register a Persistable
     void registerPersistable( Persistable* object, const QString& name );
     // Get a Persistable (or NULL if it doesn't exist)
@@ -42,12 +45,16 @@ class PersistentInfo {
     // Can't be constructed or copied (singleton)
     PersistentInfo();
     PersistentInfo( const PersistentInfo& );
+    ~PersistentInfo();
+
+    // Has migrateAndInit() been called?
+    bool initialised_;
 
     // List of persistables
     QHash<QString, Persistable*> objectList_;
 
     // Qt setting object
-    QSettings settings_;
+    QSettings* settings_;
 
     // allow this function to create one instance
     friend PersistentInfo& GetPersistentInfo();

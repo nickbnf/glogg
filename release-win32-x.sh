@@ -8,10 +8,10 @@ BOOSTDIR=$HOME/boost_1_43_0
 make clean
 if [ -z "$VERSION" ]; then
     echo "Building default version"
-    qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32" BOOST_PATH=$BOOSTDIR
+    qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32 rtti" BOOST_PATH=$BOOSTDIR
 else
     echo "Building version $VERSION"
-    qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32" BOOST_PATH=$BOOSTDIR VERSION="$VERSION"
+    qmake glogg.pro -spec win32-x-g++ -r CONFIG+="release win32 rtti" BOOST_PATH=$BOOSTDIR VERSION="$VERSION"
 fi
 make -j3
 cp $QTXDIR/qt_win/2010.02.1/qt/bin/{QtCore4,QtGui4}.dll release/

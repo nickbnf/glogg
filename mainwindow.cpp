@@ -28,7 +28,6 @@
 
 #include "mainwindow.h"
 
-#include "version.h"
 #include "sessioninfo.h"
 #include "recentfiles.h"
 #include "crawlerwidget.h"

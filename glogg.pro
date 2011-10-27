@@ -35,7 +35,7 @@ SOURCES += main.cpp \
     sessioninfo.cpp \
     recentfiles.cpp
 
-HEADERS += version.h \
+HEADERS += \
     mainwindow.h \
     crawlerwidget.h \
     logmainview.h \

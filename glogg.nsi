@@ -23,7 +23,7 @@ InstallDirRegKey HKLM Software\glogg ""
 ; glogg icon
 ; !define MUI_ICON glogg.ico
 
-RequestExecutionLevel user
+RequestExecutionLevel admin
 
 Name "glogg"
 Caption "glogg ${VERSION} Setup"

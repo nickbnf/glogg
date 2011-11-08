@@ -33,7 +33,8 @@ SOURCES += main.cpp \
     quickfindpattern.cpp \
     quickfindwidget.cpp \
     sessioninfo.cpp \
-    recentfiles.cpp
+    recentfiles.cpp \
+    overview.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -61,7 +62,8 @@ HEADERS += \
     quickfindwidget.h \
     sessioninfo.h \
     persistable.h \
-    recentfiles.h
+    recentfiles.h \
+    overview.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

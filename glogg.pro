@@ -34,7 +34,8 @@ SOURCES += main.cpp \
     quickfindwidget.cpp \
     sessioninfo.cpp \
     recentfiles.cpp \
-    overview.cpp
+    overview.cpp \
+    overviewwidget.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -63,7 +64,8 @@ HEADERS += \
     sessioninfo.h \
     persistable.h \
     recentfiles.h \
-    overview.h
+    overview.h \
+    overviewwidget.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -139,7 +141,7 @@ debug:QMAKE_CXXFLAGS += -g
 
 isEmpty(LOG_LEVEL) {
     Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
-    Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
+    Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG4\"
 }
 else {
     message("Using specified log level: $$LOG_LEVEL")

@@ -167,11 +167,13 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
     }
 }
 
-
+// Graphic parameters
 
 // Looks better with an odd value
 const int AbstractLogView::bulletLineX_ = 11;
 const int AbstractLogView::leftMarginPx_ = bulletLineX_ + 2;
+
+const int AbstractLogView::OVERVIEW_WIDTH = 27;
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
@@ -181,9 +183,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     autoScrollTimer_(),
     selection_(),
     quickFindPattern_( quickFindPattern ),
-    quickFind_( newLogData, &selection_, quickFindPattern )
+    quickFind_( newLogData, &selection_, quickFindPattern ),
+    overviewWidget_( this )
 {
-    logData           = newLogData;
+    logData = newLogData;
 
     followMode_ = false;
 
@@ -484,6 +487,11 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
     lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
+    // Update the overview if we have one
+    if ( overview_ != NULL )
+        overview_->updateCurrentPosition( firstLine, lastLine );
+
+    // Redraw
     update();
 }
 
@@ -649,6 +657,13 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     LOG(logDEBUG4) << "End of repaint";
 }
 
+void AbstractLogView::setOverview( Overview* overview )
+{
+    overview_ = overview;
+    refreshOverview();
+    overviewWidget_.setOverview( overview );
+}
+
 void AbstractLogView::searchNext()
 {
     searchForward();
@@ -693,10 +708,14 @@ void AbstractLogView::followSet( bool checked )
 void AbstractLogView::refreshOverview()
 {
     // Create space for the Overview if needed
-    if ( ( getOverview() != NULL ) && getOverview()->isVisible() )
-        setViewportMargins( 0, 0, 25, 0 );
-    else
+    if ( ( getOverview() != NULL ) && getOverview()->isVisible() ) {
+        setViewportMargins( 0, 0, OVERVIEW_WIDTH, 0 );
+        overviewWidget_.show();
+    }
+    else {
         setViewportMargins( 0, 0, 0, 0 );
+        overviewWidget_.hide();
+    }
 }
 
 // Reset the QuickFind when the pattern is changed.
@@ -770,7 +789,10 @@ void AbstractLogView::updateDisplaySize()
     LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
     LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
     LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
-    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
+    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
+
+    overviewWidget_.setGeometry( viewport()->width() + 1, 1,
+            OVERVIEW_WIDTH - 1, viewport()->height() );
 }
 
 int AbstractLogView::getTopLine() const

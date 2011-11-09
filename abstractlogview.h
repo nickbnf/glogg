@@ -26,6 +26,7 @@
 #include "abstractlogdata.h"
 #include "selection.h"
 #include "quickfind.h"
+#include "overviewwidget.h"
 
 class LineChunk
 {
@@ -173,9 +174,9 @@ class AbstractLogView : public QAbstractScrollArea
     virtual bool isLineMatching( int lineNumber ) = 0;
 
     // Get the overview associated with this view, or NULL if there is none
-    Overview* getOverview() { return overview_; }
+    Overview* getOverview() const { return overview_; }
     // Set the Overview
-    void setOverview( Overview* overview ) { overview_ = overview; refreshOverview(); }
+    void setOverview( Overview* overview );
 
   signals:
     // Sent when a new line has been selected by the user.
@@ -214,6 +215,7 @@ class AbstractLogView : public QAbstractScrollArea
     // Constants
     static const int bulletLineX_;
     static const int leftMarginPx_;
+    static const int OVERVIEW_WIDTH;
 
     // Digits buffer
     DigitsBuffer digitsBuffer_;
@@ -248,6 +250,8 @@ class AbstractLogView : public QAbstractScrollArea
     const QuickFindPattern* const quickFindPattern_;
     // Our own QuickFind object
     QuickFind quickFind_;
+
+    OverviewWidget overviewWidget_;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

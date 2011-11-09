@@ -21,11 +21,16 @@
 // It provides support for drawing the match overview sidebar but
 // the actual drawing is done in AbstractLogView which uses this class.
 
+#include "log.h"
+
 #include "overview.h"
 
 Overview::Overview() : matchLines_(), markLines_()
 {
     logFilteredData_ = NULL;
+    linesInFile_     = 0;
+    topLine_         = 0;
+    lastLine_        = 0;
     height_          = 0;
     dirty_           = true;
     visible_         = false;
@@ -40,15 +45,62 @@ void Overview::setFilteredData( const LogFilteredData* logFilteredData )
     logFilteredData_ = logFilteredData;
 }
 
+void Overview::updateData( int totalNbLine )
+{
+    LOG(logDEBUG) << "OverviewWidget::updateData " << totalNbLine;
+
+    linesInFile_ = totalNbLine;
+    dirty_ = true;
+}
+
 void Overview::updateView( int height )
 {
-    height_ = height;
+    // We don't touch the cache if the height hasn't changed
+    if ( ( height != height_ ) || ( dirty_ == true ) ) {
+        height_ = height;
 
-    matchLines_ << 3;
-    matchLines_ << 12;
+        recalculatesLines();
+    }
 }
 
 const QList<int>* Overview::getMatchLines() const
 {
     return &matchLines_;
+}
+
+const QList<int>* Overview::getMarkLines() const
+{
+    return &markLines_;
+}
+
+std::pair<int,int> Overview::getViewLines() const
+{
+    int top = 0;
+    int bottom = height_ - 1;
+
+    if ( linesInFile_ > 0 ) {
+        top = topLine_ * height_ / linesInFile_;
+        bottom = lastLine_ * height_ / linesInFile_;
+    }
+
+    return std::pair<int,int>(top, bottom);
+}
+
+// Update the internal cache
+void Overview::recalculatesLines()
+{
+    LOG(logDEBUG) << "OverviewWidget::recalculatesLines";
+
+    if ( logFilteredData_ != NULL ) {
+        matchLines_.clear();
+
+        for ( int i = 0; i < logFilteredData_->getNbLine(); i++ ) {
+            int line = (int) logFilteredData_->getMatchingLineNumber( i );
+            matchLines_ << ( line * height_ / linesInFile_ );
+        }
+    }
+    else
+        LOG(logERROR) << "Overview::recalculatesLines: logFilteredData_ == NULL";
+
+    dirty_ = false;
 }

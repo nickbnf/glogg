@@ -96,6 +96,7 @@ class CrawlerWidget : public QSplitter
     // to instruct the main view to jump to the matching line.
     void jumpToMatchingLine( int filteredLineNb );
 
+    void loadingProgressHandler( int progress );
     void loadingFinishedHandler( bool success );
     // Manages the info lines to inform the user the file has changed.
     void fileChangedHandler( LogData::MonitoredFileStatus );

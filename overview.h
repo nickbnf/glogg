@@ -45,6 +45,10 @@ class Overview
     // Set the visibility flag of this overview.
     void setVisible( bool visible ) { visible_ = visible; dirty_ = visible; }
 
+    // Update the current position in the file (to draw the view line)
+    void updateCurrentPosition( int firstLine, int lastLine )
+    { topLine_ = firstLine; lastLine_ = lastLine; }
+
     // Returns weither this overview is visible.
     bool isVisible() { return visible_; }
     // Signal the overview the height of the display has changed, triggering
@@ -57,7 +61,7 @@ class Overview
     // (pointer returned is valid until next call to update*()
     const QList<int>* getMarkLines() const;
     // Return a pair of lines (between 0 and 'height') representing the current view.
-    std::pair<int,int> getViewLines( int topLine, int nbLinesOnScreen ) const;
+    std::pair<int,int> getViewLines() const;
 
     // Return the line number corresponding to the passed overview y coordinate.
     int fileLineFromY( int y ) const;
@@ -65,8 +69,13 @@ class Overview
   private:
     // List of matches associated with this Overview.
     const LogFilteredData* logFilteredData_;
+    // Total number of lines in the file.
+    int linesInFile_;
     // Whether the overview is visible.
     bool visible_;
+    // First and last line currently viewed.
+    int topLine_;
+    int lastLine_;
     // Current height of view window.
     int height_;
     // Does the cache (matchesLines, markLines) need to be recalculated.
@@ -75,6 +84,8 @@ class Overview
     // List of lines representing matches and marks (are shared with the client)
     QList<int> matchLines_;
     QList<int> markLines_;
+
+    void recalculatesLines();
 };
 
 #endif

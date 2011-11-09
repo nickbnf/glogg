@@ -32,6 +32,8 @@ Configuration::Configuration()
     mainRegexpType_      = ExtendedRegexp;
     quickfindRegexpType_ = ExtendedRegexp;
 
+    overviewVisible_     = true;
+
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
 }
@@ -66,6 +68,10 @@ void Configuration::retrieveFromStorage( QSettings& settings )
             settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
     quickfindRegexpType_ = static_cast<SearchRegexpType>(
             settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
+
+    // View settings
+    if ( settings.contains( "view.overviewVisible" ) )
+        overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -78,4 +84,5 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "mainFont.size", fi.pointSize() );
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
+    settings.setValue( "view.overviewVisible", overviewVisible_ );
 }

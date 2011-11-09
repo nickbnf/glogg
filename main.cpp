@@ -128,6 +128,9 @@ int main(int argc, char *argv[])
     GetPersistentInfo().registerPersistable(
             new RecentFiles, QString( "recentFiles" ) );
 
+    // FIXME: should be replaced by a two staged init of MainWindow
+    GetPersistentInfo().retrieve( QString( "settings" ) );
+
     MainWindow* mw = new MainWindow();
 
     LOG(logDEBUG) << "MainWindow created.";

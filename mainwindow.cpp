@@ -112,6 +112,8 @@ void MainWindow::createCrawler()
 // Menu actions
 void MainWindow::createActions()
 {
+    Configuration& config = Persistent<Configuration>( "settings" );
+
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
     openAction->setIcon( QIcon(":/images/open16.png") );
@@ -144,6 +146,7 @@ void MainWindow::createActions()
 
     overviewVisibleAction = new QAction( tr("Matches overview"), this );
     overviewVisibleAction->setCheckable( true );
+    overviewVisibleAction->setChecked( config.isOverviewVisible() );
     connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleOverviewVisibility( bool )) );
 

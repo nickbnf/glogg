@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -31,6 +31,7 @@ using namespace std;
 #include "filterset.h"
 #include "recentfiles.h"
 #include "mainwindow.h"
+#include "savedsearches.h"
 #include "log.h"
 
 static void print_version();

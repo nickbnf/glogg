@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -33,6 +33,11 @@
 
 #include "crawlerwidget.h"
 
+#include "quickfindpattern.h"
+#include "overview.h"
+#include "infoline.h"
+#include "savedsearches.h"
+#include "quickfindwidget.h"
 #include "persistentinfo.h"
 #include "configuration.h"
 
@@ -53,8 +58,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // This is the confirmed pattern used by n/N and coloured in yellow.
     quickFindPattern_ = new QuickFindPattern();
 
+    // The matches overview
+    overview_ = new Overview();
+
     // The views
-    logMainView  = new LogMainView( logData_, quickFindPattern_ );
+    logMainView  = new LogMainView( logData_, quickFindPattern_, overview_ );
     bottomWindow = new QWidget;
     filteredView = new FilteredView( logFilteredData_, quickFindPattern_ );
 
@@ -339,6 +347,9 @@ void CrawlerWidget::applyConfiguration()
     logMainView->setFont(font);
     filteredView->setFont(font);
 
+    overview_->setVisible( config.isOverviewVisible() );
+    logMainView->refreshOverview();
+
     logMainView->updateDisplaySize();
     logMainView->update();
     filteredView->updateDisplaySize();
@@ -512,7 +523,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             searchInfoLine->setPalette( errorPalette );
             searchInfoLine->setText( errorMessage );
         }
-    } else {
+    }
+    else {
         logFilteredData_->clearSearch();
         filteredView->updateData();
         searchState_.resetState();

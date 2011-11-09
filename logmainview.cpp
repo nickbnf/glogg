@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -24,18 +24,27 @@
 #include "logmainview.h"
 
 #include "logfiltereddata.h"
+#include "overview.h"
 
-LogMainView::LogMainView(const LogData* newLogData,
-        const QuickFindPattern* const quickFindPattern, QWidget* parent)
-    : AbstractLogView(newLogData, quickFindPattern, parent)
+LogMainView::LogMainView( const LogData* newLogData,
+        const QuickFindPattern* const quickFindPattern,
+        Overview* overview,
+        QWidget* parent)
+    : AbstractLogView( newLogData, quickFindPattern, parent )
 {
     filteredData_ = NULL;
+
+    // The main data has a real (non NULL) Overview
+    setOverview( overview );
 }
 
 // Just update our internal record.
 void LogMainView::useNewFiltering( LogFilteredData* filteredData )
 {
     filteredData_ = filteredData;
+
+    if ( getOverview() != NULL )
+        getOverview()->setFilteredData( filteredData_ );
 }
 
 bool LogMainView::isLineMatching( int lineNumber )

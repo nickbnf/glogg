@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -56,6 +56,9 @@ class MainWindow : public QMainWindow
     void options();
     void about();
     void aboutQt();
+
+    // Change the view settings
+    void toggleOverviewVisibility( bool isVisible );
 
     // Disable the follow mode checkbox and send the followSet signal down
     void disableFollow();
@@ -118,6 +121,7 @@ class MainWindow : public QMainWindow
     QAction *exitAction;
     QAction *copyAction;
     QAction *findAction;
+    QAction *overviewVisibleAction;
     QAction *followAction;
     QAction *reloadAction;
     QAction *stopAction;

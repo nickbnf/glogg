@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -129,6 +129,7 @@ class DigitsBuffer : public QObject
     QBasicTimer timer_;
 };
 
+class Overview;
 
 // Base class representing the log view widget.
 // It can be either the top (full) or bottom (filtered) view.
@@ -171,6 +172,11 @@ class AbstractLogView : public QAbstractScrollArea
     // a match or not (used for coloured bullets)
     virtual bool isLineMatching( int lineNumber ) = 0;
 
+    // Get the overview associated with this view, or NULL if there is none
+    Overview* getOverview() { return overview_; }
+    // Set the Overview
+    void setOverview( Overview* overview ) { overview_ = overview; refreshOverview(); }
+
   signals:
     // Sent when a new line has been selected by the user.
     void newSelection(int line);
@@ -195,8 +201,11 @@ class AbstractLogView : public QAbstractScrollArea
     // Use the current QFP to go and select the previous match.
     void searchBackward();
 
-    // Signals the follow mode has been enabled
+    // Signals the follow mode has been enabled.
     void followSet( bool checked );
+
+    // Signal the on/off status of the overview has been changed.
+    void refreshOverview();
 
   private slots:
     void handlePatternUpdated();
@@ -214,6 +223,9 @@ class AbstractLogView : public QAbstractScrollArea
 
     // Pointer to the CrawlerWidget's data set
     const AbstractLogData* logData;
+
+    // Pointer to the Overview object
+    Overview* overview_;
 
     bool selectionStarted_;
     // Start of the selection (characters)

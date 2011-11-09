@@ -41,6 +41,7 @@
 #include "logmainview.h"
 #include "quickfind.h"
 #include "quickfindpattern.h"
+#include "overview.h"
 
 
 LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
@@ -184,10 +185,6 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
 {
     logData           = newLogData;
 
-    // Create the viewport QWidget
-    setViewport(0);
-    setAttribute(Qt::WA_StaticContents);  // Does it work?
-
     followMode_ = false;
 
     selectionStarted_ = false;
@@ -196,10 +193,17 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     lastLine = 0;
     firstCol = 0;
 
+    overview_ = NULL;
+
     // Fonts
     useFixedFont_ = false;
     charWidth_ = 1;
     charHeight_ = 1;
+
+    // Create the viewport QWidget
+    setViewport( 0 );
+
+    setAttribute( Qt::WA_StaticContents );  // Does it work?
 
     // Signals
     connect( quickFindPattern_, SIGNAL( patternUpdated() ),
@@ -640,7 +644,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             painter.drawEllipse( bulletLineX_/2 - circleSize,
                     yPos + (fontHeight / 2) - circleSize,
                     circleSize * 2, circleSize * 2 );
-        }
+        } // For each line
     }
     LOG(logDEBUG4) << "End of repaint";
 }
@@ -684,6 +688,15 @@ void AbstractLogView::followSet( bool checked )
     followMode_ = checked;
     if ( checked )
         jumpToBottom();
+}
+
+void AbstractLogView::refreshOverview()
+{
+    // Create space for the Overview if needed
+    if ( ( getOverview() != NULL ) && getOverview()->isVisible() )
+        setViewportMargins( 0, 0, 25, 0 );
+    else
+        setViewportMargins( 0, 0, 0, 0 );
 }
 
 // Reset the QuickFind when the pattern is changed.

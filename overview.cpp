@@ -23,14 +23,32 @@
 
 #include "overview.h"
 
-Overview::Overview( const LogFilteredData* logFilteredData ) :
-    matchLines_(), markLines_()
+Overview::Overview() : matchLines_(), markLines_()
 {
-    logFilteredData_ = logFilteredData;
-    height_ = 0;
-    dirty_ = true;
+    logFilteredData_ = NULL;
+    height_          = 0;
+    dirty_           = true;
+    visible_         = false;
 }
 
 Overview::~Overview()
 {
+}
+
+void Overview::setFilteredData( const LogFilteredData* logFilteredData )
+{
+    logFilteredData_ = logFilteredData;
+}
+
+void Overview::updateView( int height )
+{
+    height_ = height;
+
+    matchLines_ << 3;
+    matchLines_ << 12;
+}
+
+const QList<int>* Overview::getMatchLines() const
+{
+    return &matchLines_;
 }

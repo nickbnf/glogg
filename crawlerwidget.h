@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -27,16 +27,19 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLabel>
 
 #include "logmainview.h"
 #include "filteredview.h"
-#include "savedsearches.h"
-#include "infoline.h"
-#include "quickfindpattern.h"
-#include "quickfindwidget.h"
 
 #include "logdata.h"
 #include "logfiltereddata.h"
+
+class InfoLine;
+class QuickFindPattern;
+class QuickFindWidget;
+class SavedSearches;
+class Overview;
 
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
@@ -194,6 +197,9 @@ class CrawlerWidget : public QSplitter
 
     // Search state (for auto-refresh and truncation)
     SearchState     searchState_;
+
+    // Matches overview
+    Overview*       overview_;
 };
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -51,6 +51,12 @@ class Configuration : public Persistable {
     void setQuickfindRegexpType( SearchRegexpType type )
     { quickfindRegexpType_ = type; }
 
+    // View settings
+    bool isOverviewVisible() const
+    { return overviewVisible_; }
+    void setOverviewVisible( bool isVisible )
+    { overviewVisible_ = isVisible; }
+
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
     virtual void retrieveFromStorage( QSettings& settings );
@@ -60,6 +66,9 @@ class Configuration : public Persistable {
     QFont mainFont_;
     SearchRegexpType mainRegexpType_;
     SearchRegexpType quickfindRegexpType_;
+
+    // View settings
+    bool overviewVisible_;
 };
 
 #endif

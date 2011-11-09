@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -34,6 +34,7 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 #include "persistentinfo.h"
+#include "savedsearches.h"
 
 MainWindow::MainWindow() :
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ), mainIcon_()
@@ -141,6 +142,11 @@ void MainWindow::createActions()
     connect( findAction, SIGNAL(triggered()),
             this, SLOT( find() ) );
 
+    overviewVisibleAction = new QAction( tr("Matches overview"), this );
+    overviewVisibleAction->setCheckable( true );
+    connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
+            this, SLOT( toggleOverviewVisibility( bool )) );
+
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setShortcut(Qt::Key_F);
     followAction->setCheckable(true);
@@ -188,6 +194,8 @@ void MainWindow::createMenus()
     editMenu->addAction( findAction );
 
     viewMenu = menuBar()->addMenu( tr("&View") );
+    viewMenu->addAction( overviewVisibleAction );
+    viewMenu->addSeparator();
     viewMenu->addAction( followAction );
     viewMenu->addSeparator();
     viewMenu->addAction( reloadAction );
@@ -316,6 +324,15 @@ void MainWindow::about()
 // Opens the 'About Qt' dialog box.
 void MainWindow::aboutQt()
 {
+}
+
+void MainWindow::toggleOverviewVisibility( bool isVisible )
+{
+    Configuration& config = Persistent<Configuration>( "settings" );
+
+    config.setOverviewVisible( isVisible );
+
+    emit optionsChanged();
 }
 
 void MainWindow::disableFollow()

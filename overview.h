@@ -33,34 +33,40 @@
 class Overview
 {
   public:
-    Overview( const LogFilteredData* logFilteredData );
+    Overview();
     ~Overview();
 
+    // Associate the passed filteredData to this Overview
+    void setFilteredData( const LogFilteredData* logFilteredData );
     // Signal the overview its attached LogFilteredData has been changed and
     // the overview must be updated with the provided total number
     // of line of the file.
     void updateData( int totalNbLine );
     // Set the visibility flag of this overview.
-    void setVisible( bool visible );
+    void setVisible( bool visible ) { visible_ = visible; dirty_ = visible; }
 
+    // Returns weither this overview is visible.
+    bool isVisible() { return visible_; }
     // Signal the overview the height of the display has changed, triggering
     // an update of its cache.
     void updateView( int height );
     // Returns a list of lines (between 0 and 'height') representing matches.
     // (pointer returned is valid until next call to update*()
-    const QList<int>* getMatchLines();
+    const QList<int>* getMatchLines() const;
     // Returns a list of lines (between 0 and 'height') representing marks.
     // (pointer returned is valid until next call to update*()
-    const QList<int>* getMarkLines();
+    const QList<int>* getMarkLines() const;
     // Return a pair of lines (between 0 and 'height') representing the current view.
-    std::pair<int,int> getViewLines( int topLine, int nbLinesOnScreen );
+    std::pair<int,int> getViewLines( int topLine, int nbLinesOnScreen ) const;
 
     // Return the line number corresponding to the passed overview y coordinate.
-    int fileLineFromY( int y );
+    int fileLineFromY( int y ) const;
 
   private:
     // List of matches associated with this Overview.
     const LogFilteredData* logFilteredData_;
+    // Whether the overview is visible.
+    bool visible_;
     // Current height of view window.
     int height_;
     // Does the cache (matchesLines, markLines) need to be recalculated.

@@ -211,8 +211,8 @@ bool CrawlerWidget::readFile( const QString& fileName, int )
 
         // The file exist, so we invalidate the search
         // and redraw the screen.
-        logData_->attachFile( fileName );
         replaceCurrentSearch( "" );
+        logData_->attachFile( fileName );
         logMainView->updateData();
 
         // Forbid starting a search when loading in progress

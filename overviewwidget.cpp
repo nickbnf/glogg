@@ -31,6 +31,7 @@
 
 // Graphic parameters
 const int OverviewWidget::LINE_MARGIN = 4;
+const float OverviewWidget::LINE_OPACITY = 0.35;
 
 OverviewWidget::OverviewWidget( QWidget* parent ) : QWidget( parent )
 {
@@ -58,10 +59,13 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         painter.setPen( palette().color(QPalette::Text) );
         painter.drawLine( 0, 0, 0, height() );
 
+        // Allow multiple matches to look 'darker' than a single one.
+        painter.setOpacity( LINE_OPACITY );
         // The 'match' lines
         painter.setPen( QColor( Qt::red ) );
         foreach (int line, *(overview_->getMatchLines()) ) {
-            painter.drawLine( 1 + LINE_MARGIN, line, width() - LINE_MARGIN - 1, line );
+            painter.drawLine( 1 + LINE_MARGIN,
+                    line, width() - LINE_MARGIN - 1, line );
         }
 
         // The 'mark' lines
@@ -71,6 +75,7 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         }
 
         // The 'view' lines
+        painter.setOpacity( 1 );
         painter.setPen( palette().color(QPalette::Text) );
         std::pair<int,int> view_lines = overview_->getViewLines();
         painter.drawLine( 1, view_lines.first, width(), view_lines.first );

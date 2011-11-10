@@ -40,6 +40,7 @@ class OverviewWidget : public QWidget
   private:
     // Constants
     static const int LINE_MARGIN;
+    static const float LINE_OPACITY;
 
     Overview* overview_;
 };

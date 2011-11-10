@@ -38,6 +38,9 @@ class OverviewWidget : public QWidget
     void paintEvent( QPaintEvent* paintEvent );
 
   private:
+    // Constants
+    static const int LINE_MARGIN;
+
     Overview* overview_;
 };
 

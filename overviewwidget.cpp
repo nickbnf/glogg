@@ -29,6 +29,9 @@
 
 #include "overview.h"
 
+// Graphic parameters
+const int OverviewWidget::LINE_MARGIN = 4;
+
 OverviewWidget::OverviewWidget( QWidget* parent ) : QWidget( parent )
 {
     overview_ = NULL;
@@ -58,7 +61,7 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         // The 'match' lines
         painter.setPen( QColor( Qt::red ) );
         foreach (int line, *(overview_->getMatchLines()) ) {
-            painter.drawLine( 1, line, width(), line );
+            painter.drawLine( 1 + LINE_MARGIN, line, width() - LINE_MARGIN - 1, line );
         }
 
         // The 'mark' lines

@@ -733,6 +733,8 @@ void AbstractLogView::handlePatternUpdated()
 
 void AbstractLogView::updateData()
 {
+    LOG(logDEBUG) << "AbstractLogView::updateData";
+
     // Check the top Line is within range
     if ( firstLine >= logData->getNbLine() ) {
         firstLine = 0;
@@ -757,6 +759,10 @@ void AbstractLogView::updateData()
 
     if ( followMode_ )
         jumpToBottom();
+
+    // Update the overview if we have one
+    if ( overview_ != NULL )
+        overview_->updateCurrentPosition( firstLine, lastLine );
 
     // Repaint!
     update();

@@ -187,7 +187,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
-            this, SLOT( loadingProgressHandler( int ) ) );
+            this, SIGNAL( loadingProgressed( int ) ) );
     connect( logData_, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinishedHandler( bool ) ) );
     connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
@@ -362,19 +362,16 @@ void CrawlerWidget::applyConfiguration()
     updateSearchCombo();
 }
 
-void CrawlerWidget::loadingProgressHandler( int percentage )
-{
-    overview_->updateData( logData_->getNbLine() );
-
-    emit loadingProgressed( percentage );
-}
-
 void CrawlerWidget::loadingFinishedHandler( bool success )
 {
+    // We need to refresh the main window because the view lines on the
+    // overview have probably changed.
+    overview_->updateData( logData_->getNbLine() );
+
     // FIXME, handle topLine
     // logMainView->updateData( logData_, topLine );
     logMainView->updateData();
-    overview_->updateData( logData_->getNbLine() );
+
     // searchButton->setEnabled( true );
 
     // See if we need to auto-refresh the search

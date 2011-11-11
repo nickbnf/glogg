@@ -796,12 +796,13 @@ void AbstractLogView::updateDisplaySize()
 
     const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
         ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    LOG(logDEBUG) << "getMaxLength=" << logData->getMaxLength();
-    LOG(logDEBUG) << "getNbVisibleCols=" << getNbVisibleCols();
-    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
-    overviewWidget_.setGeometry( viewport()->width() + 1, 1,
+    LOG(logDEBUG) << "viewport.width()=" << viewport()->width();
+    LOG(logDEBUG) << "viewport.height()=" << viewport()->height();
+    LOG(logDEBUG) << "width()=" << width();
+    LOG(logDEBUG) << "height()=" << height();
+    overviewWidget_.setGeometry( viewport()->width() + 2, 1,
             OVERVIEW_WIDTH - 1, viewport()->height() );
 }
 

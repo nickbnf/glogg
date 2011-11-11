@@ -208,6 +208,11 @@ class AbstractLogView : public QAbstractScrollArea
     // Signal the on/off status of the overview has been changed.
     void refreshOverview();
 
+    // Make the view jump to the specified line, regardless of weither it
+    // is on the screen or not.
+    // (does NOT emit followDisabled() )
+    void jumpToLine( int line );
+
   private slots:
     void handlePatternUpdated();
 

@@ -217,6 +217,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
             this, SIGNAL( notifyQuickFind( const QString& ) ) );
     connect( &quickFind_, SIGNAL( clearNotification() ),
             this, SIGNAL( clearQuickFindNotification() ) );
+    connect( &overviewWidget_, SIGNAL( lineClicked ( int ) ),
+            this, SIGNAL( followDisabled() ) );
+    connect( &overviewWidget_, SIGNAL( lineClicked ( int ) ),
+            this, SLOT( jumpToLine( int ) ) );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -819,6 +823,19 @@ void AbstractLogView::selectAndDisplayLine( int line )
     emit updateLineNumber( line );
 }
 
+// The difference between this function and displayLine() is quite
+// subtle: this one always jump, even if the line passed is visible.
+void AbstractLogView::jumpToLine( int line )
+{
+    // Put the selected line in the middle if possible
+    int newTopLine = line - ( getNbVisibleLines() / 2 );
+    if ( newTopLine < 0 )
+        newTopLine = 0;
+
+    // This will also trigger a scrollContents event
+    verticalScrollBar()->setValue( newTopLine );
+}
+
 //
 // Private functions
 //
@@ -892,13 +909,7 @@ void AbstractLogView::displayLine( int line )
         // ... don't scroll and just repaint
         update();
     } else {
-        // Put the selected line in the middle if possible
-        int newTopLine = line - ( getNbVisibleLines() / 2 );
-        if ( newTopLine < 0 )
-            newTopLine = 0;
-
-        // This will also trigger a scrollContents event
-        verticalScrollBar()->setValue( newTopLine );
+        jumpToLine( line );
     }
 }
 

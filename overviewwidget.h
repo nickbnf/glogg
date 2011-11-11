@@ -36,6 +36,12 @@ class OverviewWidget : public QWidget
 
   protected:
     void paintEvent( QPaintEvent* paintEvent );
+    void mousePressEvent( QMouseEvent* mouseEvent );
+    void mouseMoveEvent( QMouseEvent* mouseEvent );
+
+  signals:
+    // Sent when the user click on a line in the Overview.
+    void lineClicked( int line );
 
   private:
     // Constants
@@ -43,6 +49,8 @@ class OverviewWidget : public QWidget
     static const float LINE_OPACITY;
 
     Overview* overview_;
+
+    void handleMousePress( int position );
 };
 
 #endif

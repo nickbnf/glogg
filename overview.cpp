@@ -86,6 +86,13 @@ std::pair<int,int> Overview::getViewLines() const
     return std::pair<int,int>(top, bottom);
 }
 
+int Overview::fileLineFromY( int position ) const
+{
+    int line = position * linesInFile_ / height_;
+
+    return line;
+}
+
 // Update the internal cache
 void Overview::recalculatesLines()
 {

@@ -21,6 +21,7 @@
 // managing and painting the matches overview widget.
 
 #include <QPainter>
+#include <QMouseEvent>
 #include <cassert>
 
 #include "log.h"
@@ -81,4 +82,23 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         painter.drawLine( 1, view_lines.first, width(), view_lines.first );
         painter.drawLine( 1, view_lines.second, width(), view_lines.second );
     }
+}
+
+void OverviewWidget::mousePressEvent( QMouseEvent* mouseEvent )
+{
+    if ( mouseEvent->button() == Qt::LeftButton )
+        handleMousePress( mouseEvent->y() );
+}
+
+void OverviewWidget::mouseMoveEvent( QMouseEvent* mouseEvent )
+{
+    if ( mouseEvent->buttons() |= Qt::LeftButton )
+        handleMousePress( mouseEvent->y() );
+}
+
+void OverviewWidget::handleMousePress( int position )
+{
+    int line = overview_->fileLineFromY( position );
+    LOG(logDEBUG) << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
+    emit lineClicked( line );
 }

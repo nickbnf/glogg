@@ -23,7 +23,7 @@
 
 #include "quickfindwidget.h"
 
-const int QuickFindWidget::NOTIFICATION_TIMEOUT = 2000;
+const int QuickFindWidget::NOTIFICATION_TIMEOUT = 5000;
 
 QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 {

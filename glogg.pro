@@ -142,6 +142,9 @@ release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
 # Debug symbols in debug builds
 debug:QMAKE_CXXFLAGS += -g
 
+# Extra compiler arguments
+# QMAKE_CXXFLAGS += -Weffc++
+
 isEmpty(LOG_LEVEL) {
     Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
     Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG4\"

@@ -4,7 +4,7 @@ INCLUDEPATH += ./ ../
 DESTDIR = ./
 CONFIG += qtestlib debug
 
-QMAKE_CXXFLAGS += -O2
+QMAKE_CXXFLAGS += -O2 -fpermissive
 
 isEmpty(TMPDIR) {
     DEFINES = TMPDIR=\\\"/tmp\\\"

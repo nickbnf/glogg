@@ -45,6 +45,18 @@ static const char* partial_line_end = " end of line 123.\n";
 
 static const char* partial_nonmatching_line_begin = "Beginning of line.";
 
+TestLogFilteredData::TestLogFilteredData() : QObject(),
+    loadingFinishedMutex_(),
+    searchProgressedMutex_(),
+    loadingFinishedCondition_(),
+    searchProgressedCondition_()
+{
+    loadingFinished_received_  = false;
+    loadingFinished_read_      = false;
+    searchProgressed_received_ = false;
+    searchProgressed_read_     = false;
+}
+
 void TestLogFilteredData::initTestCase()
 {
     QVERIFY( generateDataFiles() );
@@ -52,163 +64,190 @@ void TestLogFilteredData::initTestCase()
 
 void TestLogFilteredData::simpleSearch()
 {
-    LogData logData;
+    logData_ = new LogData();
 
-    // First load the tests file
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished( bool ) ),
+    connect( logData_, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
-    logData.attachFile( TMPDIR "/mediumlog.txt" );
-    // Wait for the loading to be done
-    {
-        QApplication::exec();
-    }
-
-    QCOMPARE( logData.getNbLine(), ML_NB_LINES );
-
-    // Now perform a simple search
-    LogFilteredData* filteredData = logData.getNewFilteredData();
-    connect( filteredData, SIGNAL( searchProgressed( int, int ) ),
+    filteredData_ = logData_->getNewFilteredData();
+    connect( filteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( searchProgressed( int, int ) ) );
 
-    QSignalSpy progressSpy( filteredData, SIGNAL( searchProgressed( int, int ) ) );
+    QFuture<void> future = QtConcurrent::run(this, &TestLogFilteredData::simpleSearchTest);
 
+    QApplication::exec();
+
+    disconnect( filteredData_, 0 );
+    disconnect( logData_, 0 );
+
+    delete filteredData_;
+    delete logData_;
+}
+
+void TestLogFilteredData::simpleSearchTest()
+{
+    // First load the tests file
+    logData_->attachFile( TMPDIR "/mediumlog.txt" );
+    // Wait for the loading to be done
+    waitLoadingFinished();
+    QCOMPARE( logData_->getNbLine(), ML_NB_LINES );
+    signalLoadingFinishedRead();
+
+    // Now perform a simple search
     qint64 matches[] = { 0, 15, 20, 135 };
     QBENCHMARK {
         // Start the search
-        filteredData->runSearch( QRegExp( "123" ) );
+        filteredData_->runSearch( QRegExp( "123" ) );
 
         // And check we receive data in 4 chunks (the first being empty)
         for ( int i = 0; i < 4; i++ ) {
-            QApplication::exec();
-            QCOMPARE( filteredData->getNbLine(), matches[i] );
+            std::pair<int,int> progress = waitSearchProgressed();
+            QCOMPARE( (qint64) progress.first, matches[i] );
+            signalSearchProgressedRead();
         }
     }
 
-    QCOMPARE( progressSpy.count(), 4 );
-
+    QCOMPARE( filteredData_->getNbLine(), matches[3] );
     // Check the search
-    QCOMPARE( filteredData->isLineInMatchingList( 123 ), true );
-    QCOMPARE( filteredData->isLineInMatchingList( 124 ), false );
-    QCOMPARE( filteredData->getMaxLength(), ML_VISIBLE_LINE_LENGTH );
-    QCOMPARE( filteredData->getLineLength( 12 ), ML_VISIBLE_LINE_LENGTH );
-    QCOMPARE( filteredData->getNbLine(), 135LL );
+    QCOMPARE( filteredData_->isLineInMatchingList( 123 ), true );
+    QCOMPARE( filteredData_->isLineInMatchingList( 124 ), false );
+    QCOMPARE( filteredData_->getMaxLength(), ML_VISIBLE_LINE_LENGTH );
+    QCOMPARE( filteredData_->getLineLength( 12 ), ML_VISIBLE_LINE_LENGTH );
+    QCOMPARE( filteredData_->getNbLine(), 135LL );
     // Line beyond limit
-    QCOMPARE( filteredData->isLineInMatchingList( 60000 ), false );
-    QCOMPARE( filteredData->getMatchingLineNumber( 0 ), 123LL );
+    QCOMPARE( filteredData_->isLineInMatchingList( 60000 ), false );
+    QCOMPARE( filteredData_->getMatchingLineNumber( 0 ), 123LL );
 
     // Now let's try interrupting a search
-    filteredData->runSearch( QRegExp( "123" ) );
+    filteredData_->runSearch( QRegExp( "123" ) );
     // ... wait for two chunks.
-    QApplication::exec();
-    QApplication::exec();
+    waitSearchProgressed();
+    signalSearchProgressedRead();
+    waitSearchProgressed();
     // and interrupt!
-    filteredData->interruptSearch();
-    QCOMPARE( filteredData->getNbLine(), matches[1] );
-    QApplication::exec();
+    filteredData_->interruptSearch();
+    QCOMPARE( filteredData_->getNbLine(), matches[1] );
+    waitSearchProgressed();
     // After interrupt: should be 100% and the same number of matches
-    QCOMPARE( filteredData->getNbLine(), matches[2] );
+    QCOMPARE( filteredData_->getNbLine(), matches[1] );
+    signalSearchProgressedRead();
 
     // (because there is no guarantee when the search is 
     // interrupted, we are not sure how many chunk of result
     // we will get.)
 
-    // Disconnect all signals
-    disconnect( &logData, 0 );
-
-    // Destroy the filtered data
-    delete filteredData;
+    QApplication::quit();
 }
 
 void TestLogFilteredData::multipleSearch()
 {
-    LogData logData;
+    logData_ = new LogData();
 
-    // First load the tests file
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished( bool ) ),
+    connect( logData_, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
-    logData.attachFile( TMPDIR "/smalllog.txt" );
-    // Wait for the loading to be done
-    {
-        QApplication::exec();
-    }
-
-    QCOMPARE( logData.getNbLine(), SL_NB_LINES );
-
-    // Performs two searches in a row
-    LogFilteredData* filteredData = logData.getNewFilteredData();
-    connect( filteredData, SIGNAL( searchProgressed( int, int ) ),
+    filteredData_ = logData_->getNewFilteredData();
+    connect( filteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( searchProgressed( int, int ) ) );
 
-    QSignalSpy progressSpy( filteredData,
+    QFuture<void> future = QtConcurrent::run(this, &TestLogFilteredData::multipleSearchTest);
+
+    QApplication::exec();
+
+    disconnect( filteredData_, 0 );
+    disconnect( logData_, 0 );
+
+    delete filteredData_;
+    delete logData_;
+}
+
+void TestLogFilteredData::multipleSearchTest()
+{
+    // First load the tests file
+    logData_->attachFile( TMPDIR "/smalllog.txt" );
+    // Wait for the loading to be done
+    waitLoadingFinished();
+    QCOMPARE( logData_->getNbLine(), SL_NB_LINES );
+    signalLoadingFinishedRead();
+
+    // Performs two searches in a row
+    QSignalSpy progressSpy( filteredData_,
             SIGNAL( searchProgressed( int, int ) ) );
 
     // Start the search, and immediately another one
     // (the second call should block until the first search is done)
-    filteredData->runSearch( QRegExp( "1234" ) );
-    filteredData->runSearch( QRegExp( "123" ) );
+    filteredData_->runSearch( QRegExp( "1234" ) );
+    filteredData_->runSearch( QRegExp( "123" ) );
 
-    for ( int i = 0; i < 3; i++ )
-        QApplication::exec();
+    for ( int i = 0; i < 3; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
 
-    // We should have the result for the 2nd search
-    QCOMPARE( filteredData->getNbLine(), 12LL );
-
-    QCOMPARE( progressSpy.count(), 4 );
+    // We should have the result for the 2nd search after the last chunk
+    waitSearchProgressed();
+    QCOMPARE( filteredData_->getNbLine(), 12LL );
+    signalSearchProgressedRead();
 
     // Now a tricky one: we run a search and immediately attach a new file
-    filteredData->runSearch( QRegExp( "123" ) );
-    QApplication::exec();
-    logData.attachFile( TMPDIR "/mediumlog.txt" );
+    filteredData_->runSearch( QRegExp( "123" ) );
+    waitSearchProgressed();
+    signalSearchProgressedRead();
+    logData_->attachFile( TMPDIR "/mediumlog.txt" );
 
     // We don't expect meaningful results but it should not crash!
-    for ( int i = 0; i < 2; i++ )
-        QApplication::exec();
+    for ( int i = 0; i < 1; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
 
-    // Disconnect all signals
-    disconnect( &logData, 0 );
-
-    // Destroy the filtered data
-    delete filteredData;
+    QApplication::quit();
 }
 
 void TestLogFilteredData::updateSearch()
 {
-    LogData logData;
+    logData_ = new LogData();
 
-    // First load the tests file
     // Register for notification file is loaded
-    connect( &logData, SIGNAL( loadingFinished( bool ) ),
+    connect( logData_, SIGNAL( loadingFinished( bool ) ),
             this, SLOT( loadingFinished() ) );
 
-    logData.attachFile( TMPDIR "/smalllog.txt" );
-    // Wait for the loading to be done
-    {
-        QApplication::exec();
-    }
-
-    QCOMPARE( logData.getNbLine(), SL_NB_LINES );
-
-    // Perform a first search
-    LogFilteredData* filteredData = logData.getNewFilteredData();
-    connect( filteredData, SIGNAL( searchProgressed( int, int ) ),
+    filteredData_ = logData_->getNewFilteredData();
+    connect( filteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( searchProgressed( int, int ) ) );
 
-    QSignalSpy progressSpy( filteredData,
-            SIGNAL( searchProgressed( int, int ) ) );
+    QFuture<void> future = QtConcurrent::run(this, &TestLogFilteredData::updateSearchTest);
 
-    // Start a search
-    filteredData->runSearch( QRegExp( "123" ) );
+    QApplication::exec();
 
-    for ( int i = 0; i < 2; i++ )
-        QApplication::exec();
+    disconnect( filteredData_, 0 );
+    disconnect( logData_, 0 );
+
+    delete filteredData_;
+    delete logData_;
+}
+
+void TestLogFilteredData::updateSearchTest()
+{
+    // First load the tests file
+    logData_->attachFile( TMPDIR "/smalllog.txt" );
+    // Wait for the loading to be done
+    waitLoadingFinished();
+    QCOMPARE( logData_->getNbLine(), SL_NB_LINES );
+    signalLoadingFinishedRead();
+
+    // Perform a first search
+    filteredData_->runSearch( QRegExp( "123" ) );
+
+    for ( int i = 0; i < 2; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
 
     // Check the result
-    QCOMPARE( filteredData->getNbLine(), 12LL );
-    QCOMPARE( progressSpy.count(), 2 );
+    QCOMPARE( filteredData_->getNbLine(), 12LL );
 
     QWARN("Starting stage 2");
 
@@ -226,18 +265,20 @@ void TestLogFilteredData::updateSearch()
     file.close();
 
     // Let the system do the update
-    QApplication::exec();
+    waitLoadingFinished();
+    signalLoadingFinishedRead();
 
     // Start an update search
-    filteredData->updateSearch();
+    filteredData_->updateSearch();
 
-    for ( int i = 0; i < 2; i++ )
-        QApplication::exec();
+    for ( int i = 0; i < 2; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
 
     // Check the result
-    QCOMPARE( logData.getNbLine(), 5001LL );
-    QCOMPARE( filteredData->getNbLine(), 26LL );
-    QCOMPARE( progressSpy.count(), 4 );
+    QCOMPARE( logData_->getNbLine(), 5001LL );
+    QCOMPARE( filteredData_->getNbLine(), 26LL );
 
     QWARN("Starting stage 3");
 
@@ -254,16 +295,21 @@ void TestLogFilteredData::updateSearch()
     }
     file.close();
 
-    // Start an update search
-    filteredData->updateSearch();
+    // Let the system do the update
+    waitLoadingFinished();
+    signalLoadingFinishedRead();
 
-    for ( int i = 0; i < 3; i++ )
-        QApplication::exec();
+    // Start an update search
+    filteredData_->updateSearch();
+
+    for ( int i = 0; i < 2; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
 
     // Check the result
-    QCOMPARE( logData.getNbLine(), 5022LL );
-    QCOMPARE( filteredData->getNbLine(), 26LL );
-    QCOMPARE( progressSpy.count(), 6 );
+    QCOMPARE( logData_->getNbLine(), 5022LL );
+    QCOMPARE( filteredData_->getNbLine(), 26LL );
 
     QWARN("Starting stage 4");
 
@@ -277,16 +323,23 @@ void TestLogFilteredData::updateSearch()
     }
     file.close();
 
-    // Start an update search
-    filteredData->updateSearch();
+    // Let the system do the update
+    waitLoadingFinished();
+    signalLoadingFinishedRead();
 
-    for ( int i = 0; i < 3; i++ )
-        QApplication::exec();
+    // Start an update search
+    filteredData_->updateSearch();
+
+    for ( int i = 0; i < 2; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
 
     // Check the result
-    QCOMPARE( logData.getNbLine(), 5042LL );
-    QCOMPARE( filteredData->getNbLine(), 27LL );
-    QCOMPARE( progressSpy.count(), 8 );
+    QCOMPARE( logData_->getNbLine(), 5042LL );
+    QCOMPARE( filteredData_->getNbLine(), 27LL );
+
+    QApplication::quit();
 }
 
 //
@@ -294,12 +347,75 @@ void TestLogFilteredData::updateSearch()
 //
 void TestLogFilteredData::loadingFinished()
 {
-    QApplication::quit();
+    QMutexLocker locker( &loadingFinishedMutex_ );
+
+    QWARN("loadingFinished");
+    loadingFinished_received_ = true;
+    loadingFinished_read_ = false;
+
+    loadingFinishedCondition_.wakeOne();
+
+    // Wait for the test thread to read the signal
+    while ( ! loadingFinished_read_ )
+        loadingFinishedCondition_.wait( locker.mutex() );
 }
 
 void TestLogFilteredData::searchProgressed( int nbMatches, int completion )
 {
-    QApplication::quit();
+    QMutexLocker locker( &searchProgressedMutex_ );
+
+    QWARN("searchProgressed");
+    searchProgressed_received_ = true;
+    searchProgressed_read_ = false;
+
+    searchLastMatches_ = nbMatches;
+    searchLastProgress_ = completion;
+
+    searchProgressedCondition_.wakeOne();
+
+    // Wait for the test thread to read the signal
+    while ( ! searchProgressed_read_ )
+        searchProgressedCondition_.wait( locker.mutex() );
+}
+
+std::pair<int,int> TestLogFilteredData::waitSearchProgressed()
+{
+    QMutexLocker locker( &searchProgressedMutex_ );
+
+    while ( ! searchProgressed_received_ )
+        searchProgressedCondition_.wait( locker.mutex() );
+
+    QWARN("searchProgressed Received");
+
+    return std::pair<int,int>(searchLastMatches_, searchLastProgress_);
+}
+
+void TestLogFilteredData::waitLoadingFinished()
+{
+    QMutexLocker locker( &loadingFinishedMutex_ );
+
+    while ( ! loadingFinished_received_ )
+        loadingFinishedCondition_.wait( locker.mutex() );
+
+    QWARN("loadingFinished Received");
+}
+
+void TestLogFilteredData::signalSearchProgressedRead()
+{
+    QMutexLocker locker( &searchProgressedMutex_ );
+
+    searchProgressed_received_ = false;
+    searchProgressed_read_ = true;
+    searchProgressedCondition_.wakeOne();
+}
+
+void TestLogFilteredData::signalLoadingFinishedRead()
+{
+    QMutexLocker locker( &loadingFinishedMutex_ );
+
+    loadingFinished_received_ = false;
+    loadingFinished_read_ = true;
+    loadingFinishedCondition_.wakeOne();
 }
 
 bool TestLogFilteredData::generateDataFiles()

@@ -18,6 +18,7 @@
  */
 
 #include <QApplication>
+#include <QTranslator>
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -114,6 +115,13 @@ int main(int argc, char *argv[])
 #endif
 
     FILELog::setReportingLevel( logLevel );
+
+    // Install translations
+    QString locale = QLocale::system().name();
+
+    QTranslator translator;
+    translator.load( QString("tr/glogg_") + locale );
+    app.installTranslator( &translator );
 
     // Register the configuration items
     GetPersistentInfo().migrateAndInit();

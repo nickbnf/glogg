@@ -200,8 +200,8 @@ void TestLogData::changingFile()
     QCOMPARE( finishedSpy.count(), 2 );
     QCOMPARE( logData.getNbLine(), 401LL );
     QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
-    QCOMPARE( logData.getFileSize(), 400 * (SL_LINE_LENGTH+1LL)
-            + strlen( partial_line_begin ) );
+    QCOMPARE( logData.getFileSize(), (qint64) (400 * (SL_LINE_LENGTH+1LL)
+            + strlen( partial_line_begin ) ) );
 
     // Add a couple more lines, including the end of the unfinished one.
     if ( file.open( QIODevice::Append ) ) {
@@ -221,8 +221,8 @@ void TestLogData::changingFile()
     QCOMPARE( finishedSpy.count(), 3 );
     QCOMPARE( logData.getNbLine(), 421LL );
     QCOMPARE( logData.getMaxLength(), SL_LINE_LENGTH );
-    QCOMPARE( logData.getFileSize(), 420 * (SL_LINE_LENGTH+1LL)
-            + strlen( partial_line_begin ) + strlen( partial_line_end ) );
+    QCOMPARE( logData.getFileSize(), (qint64) ( 420 * (SL_LINE_LENGTH+1LL)
+            + strlen( partial_line_begin ) + strlen( partial_line_end ) ) );
 
     // Truncate the file
     QVERIFY( file.open( QIODevice::WriteOnly ) );

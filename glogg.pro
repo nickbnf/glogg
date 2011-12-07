@@ -35,7 +35,8 @@ SOURCES += main.cpp \
     sessioninfo.cpp \
     recentfiles.cpp \
     overview.cpp \
-    overviewwidget.cpp
+    overviewwidget.cpp \
+    marks.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -65,7 +66,8 @@ HEADERS += \
     persistable.h \
     recentfiles.h \
     overview.h \
-    overviewwidget.h
+    overviewwidget.h \
+    marks.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -24,23 +24,28 @@
 #include "log.h"
 
 #include <QString>
+#include <cassert>
 
 #include "logdata.h"
+#include "marks.h"
 #include "logfiltereddata.h"
 
 // Creates an empty set. It must be possible to display it without error.
 // FIXME
-LogFilteredData::LogFilteredData() : AbstractLogData(), workerThread_( NULL )
+LogFilteredData::LogFilteredData() : AbstractLogData()
 {
     matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
     maxLength_ = 0;
     searchDone_ = true;
+
+    workerThread_ = new LogFilteredDataWorkerThread( NULL );
+    marks_ = new Marks();
 }
 
 // Usual constructor: just copy the data, the search is started by runSearch()
 LogFilteredData::LogFilteredData( const LogData* logData )
-    : AbstractLogData(), currentRegExp_(), workerThread_( logData )
+    : AbstractLogData(), currentRegExp_()
 {
     // Starts with an empty result list
     matchingLineList = SearchResultArray();
@@ -51,12 +56,15 @@ LogFilteredData::LogFilteredData( const LogData* logData )
 
     searchDone_ = false;
 
+    workerThread_ = new LogFilteredDataWorkerThread( logData );
+    marks_ = new Marks();
+    //
     // Forward the update signal
-    connect( &workerThread_, SIGNAL( searchProgressed( int, int ) ),
+    connect( workerThread_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( handleSearchProgressed( int, int ) ) );
 
     // Starts the worker thread
-    workerThread_.start();
+    workerThread_->start();
 }
 
 //
@@ -73,21 +81,21 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
     matchingLineList.clear();
     maxLength_ = 0;
 
-    workerThread_.search( currentRegExp_ );
+    workerThread_->search( currentRegExp_ );
 }
 
 void LogFilteredData::updateSearch()
 {
     LOG(logDEBUG) << "Entering updateSearch";
 
-    workerThread_.updateSearch( currentRegExp_, nbLinesProcessed_ );
+    workerThread_->updateSearch( currentRegExp_, nbLinesProcessed_ );
 }
 
 void LogFilteredData::interruptSearch()
 {
     LOG(logDEBUG) << "Entering interruptSearch";
 
-    workerThread_.interrupt();
+    workerThread_->interrupt();
 }
 
 void LogFilteredData::clearSearch()
@@ -135,6 +143,50 @@ bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
     return false;
 }
 
+// Delegation to our Marks object
+
+void LogFilteredData::addMark( qint64 line, QChar mark )
+{
+    assert( marks_ );
+
+    marks_->addMark( line, mark );
+}
+
+qint64 LogFilteredData::getMark( QChar mark ) const
+{
+    assert( marks_ );
+
+    return marks_->getMark( mark );
+}
+
+bool LogFilteredData::isLineMarked( qint64 line ) const
+{
+    assert( marks_ );
+
+    return marks_->isLineMarked( line );
+}
+
+void LogFilteredData::deleteMark( QChar mark )
+{
+    assert( marks_ );
+
+    marks_->deleteMark( mark );
+}
+
+void LogFilteredData::deleteMark( qint64 line )
+{
+    assert( marks_ );
+
+    marks_->deleteMark( line );
+}
+
+void LogFilteredData::clearMarks()
+{
+    assert( marks_ );
+
+    marks_->clear();
+}
+
 //
 // Slots
 //
@@ -144,7 +196,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
         << nbMatches << " progress=" << progress;
 
     // searchDone_ = true;
-    workerThread_.getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
+    workerThread_->getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
 
     emit searchProgressed( nbMatches, progress );
 }

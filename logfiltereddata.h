@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -30,6 +30,7 @@
 #include "logfiltereddataworkerthread.h"
 
 class LogData;
+class Marks;
 
 // A list of matches found in a LogData, it stores all the matching lines,
 // which can be accessed using the AbstractLogData interface, together with
@@ -63,6 +64,28 @@ class LogFilteredData : public AbstractLogData {
     // Returns weither the line number passed is in our list of matching ones.
     bool isLineInMatchingList( qint64 lineNumber );
 
+    // Marks interface (delegated to a Marks object)
+
+    // Add a mark at the given line, optionally identified by the given char
+    // If a mark for this char already exist, the previous one is replaced.
+    void addMark( qint64 line, QChar mark = QChar() );
+    // Get the (unique) mark identified by the passed char.
+    qint64 getMark( QChar mark ) const;
+    // Returns wheither the passed line has a mark on it.
+    bool isLineMarked( qint64 line ) const;
+    // Delete the mark identified by the passed char.
+    void deleteMark( QChar mark );
+    // Delete the mark present on the passed line or do nothing if there is
+    // none.
+    void deleteMark( qint64 line );
+    // Completely clear the marks list.
+    void clearMarks();
+
+    // Changes what the AbstractLogData returns via its getXLines/getNbLines
+    // API.
+    enum Visibility { MatchesOnly, MarksOnly, MarksAndMatches };
+    void setVisibility( Visibility visibility );
+
   signals:
     // Sent when the search has progressed, give the number of matches (so far)
     // and the percentage of completion
@@ -90,7 +113,8 @@ class LogFilteredData : public AbstractLogData {
     // Number of lines of the LogData that has been searched for:
     qint64 nbLinesProcessed_;
 
-    LogFilteredDataWorkerThread workerThread_;
+    LogFilteredDataWorkerThread* workerThread_;
+    Marks* marks_;
 };
 
 #endif

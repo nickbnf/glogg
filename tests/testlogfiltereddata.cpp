@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -350,6 +350,84 @@ void TestLogFilteredData::updateSearchTest()
     // Check the result
     QCOMPARE( logData_->getNbLine(), 5042LL );
     QCOMPARE( filteredData_->getNbLine(), 27LL );
+
+    QApplication::quit();
+}
+
+void TestLogFilteredData::marks()
+{
+    logData_ = new LogData();
+
+    // Register for notification file is loaded
+    connect( logData_, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( loadingFinished() ) );
+
+    filteredData_ = logData_->getNewFilteredData();
+    connect( filteredData_, SIGNAL( searchProgressed( int, int ) ),
+            this, SLOT( searchProgressed( int, int ) ) );
+
+    QFuture<void> future = QtConcurrent::run(this, &TestLogFilteredData::marksTest);
+
+    QApplication::exec();
+
+    disconnect( filteredData_, 0 );
+    disconnect( logData_, 0 );
+
+    delete filteredData_;
+    delete logData_;
+}
+
+void TestLogFilteredData::marksTest()
+{
+    // First load the tests file
+    logData_->attachFile( TMPDIR "/smalllog.txt" );
+    // Wait for the loading to be done
+    waitLoadingFinished();
+    QCOMPARE( logData_->getNbLine(), SL_NB_LINES );
+    signalLoadingFinishedRead();
+
+    // First check no line is marked
+    for ( int i = 0; i < SL_NB_LINES; i++ )
+        QVERIFY( filteredData_->isLineMarked( i ) == false );
+
+    // Try to create some "out of limit" marks
+    /*
+    filteredData_->addMark( -10 );
+    filteredData_->addMark( SL_NB_LINES + 25 );
+
+    // Check no line is marked still
+    for ( int i = 0; i < SL_NB_LINES; i++ )
+        QVERIFY( filteredData_->isLineMarked( i ) == false );
+        */
+
+    // Create a couple of unnamed marks
+    filteredData_->addMark( 10 );
+    filteredData_->addMark( 25 );
+
+    // Check they are marked
+    QVERIFY( filteredData_->isLineMarked( 10 ) );
+    QVERIFY( filteredData_->isLineMarked( 25 ) );
+
+    // But others are not
+    QVERIFY( filteredData_->isLineMarked( 15 ) == false );
+    QVERIFY( filteredData_->isLineMarked( 20 ) == false );
+
+    QCOMPARE( filteredData_->getNbLine(), 2LL );
+
+    // Performs a search
+    QSignalSpy progressSpy( filteredData_,
+            SIGNAL( searchProgressed( int, int ) ) );
+    filteredData_->runSearch( QRegExp( "0000.4" ) );
+
+    for ( int i = 0; i < 1; i++ ) {
+        waitSearchProgressed();
+        signalSearchProgressedRead();
+    }
+
+    // We should have the result of the search and the marks
+    waitSearchProgressed();
+    QCOMPARE( filteredData_->getNbLine(), 12LL );
+    signalSearchProgressedRead();
 
     QApplication::quit();
 }

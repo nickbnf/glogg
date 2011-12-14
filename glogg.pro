@@ -147,6 +147,11 @@ debug:QMAKE_CXXFLAGS += -g
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
 
+GPROF {
+    QMAKE_CXXFLAGS += -pg
+    QMAKE_LFLAGS   += -pg
+}
+
 isEmpty(LOG_LEVEL) {
     Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
     Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG4\"

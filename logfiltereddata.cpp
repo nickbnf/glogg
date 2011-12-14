@@ -26,6 +26,7 @@
 #include <QString>
 #include <cassert>
 
+#include "utils.h"
 #include "logdata.h"
 #include "marks.h"
 #include "logfiltereddata.h"
@@ -38,6 +39,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
     /* Prevent any more searching */
     maxLength_ = 0;
     searchDone_ = true;
+    visibility_ = MarksAndMatches;
 
     workerThread_ = new LogFilteredDataWorkerThread( NULL );
     marks_ = new Marks();
@@ -55,6 +57,8 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     sourceLogData_ = logData;
 
     searchDone_ = false;
+
+    visibility_ = MarksAndMatches;
 
     workerThread_ = new LogFilteredDataWorkerThread( logData );
     marks_ = new Marks();
@@ -115,32 +119,9 @@ qint64 LogFilteredData::getMatchingLineNumber( int matchNum ) const
 // Scan the list for the 'lineNumber' passed
 bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
 {
-    // Use a bisection method to find the number
-    // (we know the list is sorted)
-
-    int minIndex = 0;
-    int maxIndex = matchingLineList.size() - 1;
-    // If the list is not empty
-    if ( maxIndex - minIndex >= 0 ) {
-        // First we test the ends
-        if (  ( matchingLineList[minIndex].lineNumber() == lineNumber )
-                || ( matchingLineList[maxIndex].lineNumber() == lineNumber ) )
-            return true;
-        // Then we test the rest
-        while ( (maxIndex - minIndex) > 1 ) {
-            const int tryIndex = (minIndex + maxIndex) / 2;
-            const qint64 currentMatchingNumber =
-                matchingLineList[tryIndex].lineNumber();
-            if ( currentMatchingNumber > lineNumber )
-                maxIndex = tryIndex;
-            else if ( currentMatchingNumber < lineNumber )
-                minIndex = tryIndex;
-            else if ( currentMatchingNumber == lineNumber )
-                return true;
-        }
-    }
-
-    return false;
+    int index;                                    // Not used
+    return lookupLineNumber<SearchResultArray>(
+            matchingLineList, lineNumber, &index);
 }
 
 // Delegation to our Marks object
@@ -187,6 +168,11 @@ void LogFilteredData::clearMarks()
     marks_->clear();
 }
 
+void LogFilteredData::setVisibility( Visibility visi )
+{
+    visibility_ = visi;
+}
+
 //
 // Slots
 //
@@ -197,41 +183,58 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 
     // searchDone_ = true;
     workerThread_->getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
+    filteredItemsCacheDirty_ = true;
 
     emit searchProgressed( nbMatches, progress );
+}
+
+qint64 LogFilteredData::findLogDataLine( qint64 lineNum ) const
+{
+    qint64 line;
+    if ( visibility_ == MatchesOnly ) {
+        if ( lineNum < matchingLineList.size() ) {
+            line = matchingLineList[lineNum].lineNumber();
+        }
+        else {
+            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+        }
+    }
+    else if ( visibility_ == MarksOnly ) {
+        if ( lineNum < marks_->size() )
+            line = marks_->getLineMarkedByIndex( lineNum );
+        else
+            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+    }
+    else {
+        // Regenerate the cache if needed
+        if ( filteredItemsCacheDirty_ )
+            regenerateFilteredItemsCache();
+
+        if ( lineNum < filteredItemsCache_.size() )
+            line = filteredItemsCache_[ lineNum ].lineNumber();
+        else
+            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+    }
+
+    return line;
 }
 
 // Implementation of the virtual function.
 QString LogFilteredData::doGetLineString( qint64 lineNum ) const
 {
-    QString string;
+    qint64 line = findLogDataLine( lineNum );
 
-    if ( lineNum < matchingLineList.size() ) {
-        qint64 line = matchingLineList[lineNum].lineNumber();
-        string = sourceLogData_->getLineString( line );
-    }
-    else {
-        LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
-    }
-
+    QString string = sourceLogData_->getLineString( line );
     return string;
 }
 
 // Implementation of the virtual function.
 QString LogFilteredData::doGetExpandedLineString( qint64 lineNum ) const
 {
-    QString string;
+    qint64 line = findLogDataLine( lineNum );
 
-    if ( lineNum < matchingLineList.size() ) {
-        qint64 line = matchingLineList[lineNum].lineNumber();
-        string = sourceLogData_->getExpandedLineString( line );
-    }
-    else
-    {
-        LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
-    }
-
-    return untabify( string );
+    QString string = sourceLogData_->getExpandedLineString( line );
+    return string;
 }
 
 // Implementation of the virtual function.
@@ -240,8 +243,7 @@ QStringList LogFilteredData::doGetLines( qint64 first_line, int number ) const
     QStringList list;
 
     for ( int i = first_line; i < first_line + number; i++ ) {
-        qint64 line = matchingLineList[i].lineNumber();
-        list.append( sourceLogData_->getLineString( line ) );
+        list.append( doGetLineString( i ) );
     }
 
     return list;
@@ -253,8 +255,7 @@ QStringList LogFilteredData::doGetExpandedLines( qint64 first_line, int number )
     QStringList list;
 
     for ( int i = first_line; i < first_line + number; i++ ) {
-        qint64 line = matchingLineList[i].lineNumber();
-        list.append( sourceLogData_->getExpandedLineString( line ) );
+        list.append( doGetExpandedLineString( i ) );
     }
 
     return list;
@@ -263,20 +264,59 @@ QStringList LogFilteredData::doGetExpandedLines( qint64 first_line, int number )
 // Implementation of the virtual function.
 qint64 LogFilteredData::doGetNbLine() const
 {
-    return matchingLineList.size();
+    qint64 nbLines;
+
+    if ( visibility_ == MatchesOnly )
+        nbLines = matchingLineList.size();
+    else if ( visibility_ == MarksOnly )
+        nbLines = marks_->size();
+    else
+        // FIXME
+        nbLines = matchingLineList.size() + marks_->size();
+
+    return nbLines;
 }
 
 // Implementation of the virtual function.
 int LogFilteredData::doGetMaxLength() const
 {
+    // FIXME
     return maxLength_;
 }
 
 // Implementation of the virtual function.
 int LogFilteredData::doGetLineLength( qint64 lineNum ) const
 {
-    if ( lineNum >= matchingLineList.size() ) { return 0; /* exception? */ }
-
-    qint64 line = matchingLineList[lineNum].lineNumber();
+    qint64 line = findLogDataLine( lineNum );
     return sourceLogData_->getExpandedLineString( line ).length();
+}
+
+void LogFilteredData::regenerateFilteredItemsCache() const
+{
+    LOG(logDEBUG) << "LogFilteredData::regenerateFilteredItemsCache";
+
+    filteredItemsCache_.clear();
+    filteredItemsCache_.reserve( matchingLineList.size() + marks_->size() );
+    // (it's an overestimate but probably not by much so it's fine)
+
+    QList<MatchingLine>::const_iterator i = matchingLineList.begin();
+    Marks::const_iterator j = marks_->begin();
+
+    while ( ( i != matchingLineList.end() ) || ( j != marks_->end() ) ) {
+        qint64 next_mark =
+            ( j != marks_->end() ) ? j->lineNumber() : std::numeric_limits<qint64>::max();
+        qint64 next_match =
+            ( i != matchingLineList.end() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
+        // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
+        if ( next_mark <= next_match )
+            filteredItemsCache_.append( FilteredItem( next_mark ) );
+        else
+            filteredItemsCache_.append( FilteredItem( next_match ) );
+        if ( i != matchingLineList.end() )
+            ++i;
+        if ( j != marks_->end() )
+            ++j;
+    }
+
+    filteredItemsCacheDirty_ = false;
 }

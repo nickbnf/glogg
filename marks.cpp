@@ -19,12 +19,32 @@
 
 #include "marks.h"
 
-Marks::Marks()
+#include "log.h"
+#include "utils.h"
+
+// This file implements the list of marks for a file.
+// It is implemented as a QList which is kept in order when inserting,
+// it is simpler than something fancy like a heap, and insertion are
+// not done very often anyway.  Oh and we need to iterate through the
+// list, disqualifying a straight heap.
+
+Marks::Marks() : marks_()
 {
 }
 
 void Marks::addMark( qint64 line, QChar mark )
 {
+    // Look for the index immediately before
+    int index;
+    if ( ! lookupLineNumber< QList<Mark> >( marks_, line, &index ) )
+    {
+        // If a mark is not already set for this line
+        marks_.insert( index, Mark( line ) );
+    }
+    else
+    {
+        LOG(logERROR) << "Trying to add an existing mark at line " << line;
+    }
 }
 
 qint64 Marks::getMark( QChar mark ) const
@@ -33,6 +53,8 @@ qint64 Marks::getMark( QChar mark ) const
 
 bool Marks::isLineMarked( qint64 line ) const
 {
+    int index;
+    return lookupLineNumber< QList<Mark> >( marks_, line, &index );
 }
 
 void Marks::deleteMark( QChar mark )
@@ -41,8 +63,15 @@ void Marks::deleteMark( QChar mark )
 
 void Marks::deleteMark( qint64 line )
 {
+    int index;
+
+    if ( lookupLineNumber< QList<Mark> >( marks_, line, &index ) )
+    {
+        marks_.removeAt( index );
+    }
 }
 
 void Marks::clear()
 {
+    marks_.clear();
 }

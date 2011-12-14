@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QByteArray>
 #include <QList>
+#include <QVector>
 #include <QStringList>
 #include <QRegExp>
 
@@ -31,6 +32,28 @@
 
 class LogData;
 class Marks;
+
+// A class representing a Mark or Match.
+// Conceptually it should be a base class for Mark and MatchingLine,
+// but we implement it this way for performance reason as we create plenty of
+// those everutime we refresh the cache.
+// Specifically it allows to store this in the cache by value instead
+// of pointer (less small allocations and no RTTI).
+class FilteredItem {
+  public:
+    // A default ctor seems to be necessary for QVector
+    FilteredItem()
+    { lineNumber_ = 0; }
+    FilteredItem( qint64 lineNumber )
+    { lineNumber_ = lineNumber; }
+
+    qint64 lineNumber() const
+    { return lineNumber_; }
+
+  private:
+    qint64 lineNumber_;
+};
+
 
 // A list of matches found in a LogData, it stores all the matching lines,
 // which can be accessed using the AbstractLogData interface, together with
@@ -113,8 +136,20 @@ class LogFilteredData : public AbstractLogData {
     // Number of lines of the LogData that has been searched for:
     qint64 nbLinesProcessed_;
 
+    Visibility visibility_;
+
+    // Cache used to combine Marks and Matches
+    // when visibility_ == MarksAndMatches
+    // (QVector store actual objects instead of pointers)
+    mutable QVector<FilteredItem> filteredItemsCache_;
+    mutable bool filteredItemsCacheDirty_;
+
     LogFilteredDataWorkerThread* workerThread_;
     Marks* marks_;
+
+    // Utility functions
+    qint64 findLogDataLine( qint64 lineNum ) const;
+    void regenerateFilteredItemsCache() const;
 };
 
 #endif

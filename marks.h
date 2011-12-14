@@ -21,6 +21,20 @@
 #define MARKS_H
 
 #include <QChar>
+#include <QList>
+
+// Class encapsulating a single mark
+// Contains the line number the mark is identifying.
+class Mark {
+  public:
+    Mark( int line ) { lineNumber_ = line; };
+
+    // Accessors
+    int lineNumber() const { return lineNumber_; }
+
+  private:
+    int lineNumber_;
+};
 
 // A list of marks, i.e. line numbers optionally associated to an
 // identifying character.
@@ -31,6 +45,7 @@ class Marks {
 
     // Add a mark at the given line, optionally identified by the given char
     // If a mark for this char already exist, the previous one is replaced.
+    // It will happily add marks anywhere, even at stupid indexes.
     void addMark( qint64 line, QChar mark = QChar() );
     // Get the (unique) mark identified by the passed char.
     qint64 getMark( QChar mark ) const;
@@ -41,8 +56,44 @@ class Marks {
     // Delete the mark present on the passed line or do nothing if there is
     // none.
     void deleteMark( qint64 line );
+    // Get the line marked identified by the index (in this list) passed.
+    qint64 getLineMarkedByIndex( int index ) const
+    { return marks_[index].lineNumber(); }
+    // Return the total number of marks
+    int size() const
+    { return marks_.size(); }
     // Completely clear the marks list.
     void clear();
+
+    // Iterator
+    // Provide a const_iterator for the client to iterate through the marks.
+    class const_iterator {
+      public:
+        const_iterator( QList<Mark>::const_iterator iter )
+        { internal_iter_ = iter; }
+        const_iterator( const const_iterator& original )
+        { internal_iter_ = original.internal_iter_; }
+        const Mark& operator*()
+        { return *internal_iter_; }
+        const Mark* operator->()
+        { return &(*internal_iter_); }
+        bool operator!=( const const_iterator& other ) const
+        { return ( internal_iter_ != other.internal_iter_ ); }
+        const_iterator& operator++()
+        { ++internal_iter_ ; return *this; }
+
+      private:
+        QList<Mark>::const_iterator internal_iter_;
+    };
+
+    const_iterator begin() const
+    { return const_iterator( marks_.begin() ); }
+    const_iterator end() const
+    { return const_iterator( marks_.end() ); }
+
+  private:
+    // List of marks.
+    QList<Mark> marks_;
 };
 
 #endif

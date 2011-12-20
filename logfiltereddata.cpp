@@ -47,7 +47,7 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     maxLength_ = 0;
     nbLinesProcessed_ = 0;
 
-    sourceLogData = logData;
+    sourceLogData_ = logData;
 
     searchDone_ = false;
 
@@ -154,10 +154,11 @@ QString LogFilteredData::doGetLineString( qint64 lineNum ) const
 {
     QString string;
 
-    if ( lineNum < matchingLineList.size() )
-        string = matchingLineList[lineNum].lineContent();
-    else
-    {
+    if ( lineNum < matchingLineList.size() ) {
+        qint64 line = matchingLineList[lineNum].lineNumber();
+        string = sourceLogData_->getLineString( line );
+    }
+    else {
         LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
     }
 
@@ -169,8 +170,10 @@ QString LogFilteredData::doGetExpandedLineString( qint64 lineNum ) const
 {
     QString string;
 
-    if ( lineNum < matchingLineList.size() )
-        string = matchingLineList[lineNum].lineContent();
+    if ( lineNum < matchingLineList.size() ) {
+        qint64 line = matchingLineList[lineNum].lineNumber();
+        string = sourceLogData_->getExpandedLineString( line );
+    }
     else
     {
         LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
@@ -185,7 +188,8 @@ QStringList LogFilteredData::doGetLines( qint64 first_line, int number ) const
     QStringList list;
 
     for ( int i = first_line; i < first_line + number; i++ ) {
-        list.append( matchingLineList[i].lineContent() );
+        qint64 line = matchingLineList[i].lineNumber();
+        list.append( sourceLogData_->getLineString( line ) );
     }
 
     return list;
@@ -197,7 +201,8 @@ QStringList LogFilteredData::doGetExpandedLines( qint64 first_line, int number )
     QStringList list;
 
     for ( int i = first_line; i < first_line + number; i++ ) {
-        list.append( untabify( matchingLineList[i].lineContent() ) );
+        qint64 line = matchingLineList[i].lineNumber();
+        list.append( sourceLogData_->getExpandedLineString( line ) );
     }
 
     return list;
@@ -216,9 +221,10 @@ int LogFilteredData::doGetMaxLength() const
 }
 
 // Implementation of the virtual function.
-int LogFilteredData::doGetLineLength( qint64 line ) const
+int LogFilteredData::doGetLineLength( qint64 lineNum ) const
 {
-    if ( line >= matchingLineList.size() ) { return 0; /* exception? */ }
+    if ( lineNum >= matchingLineList.size() ) { return 0; /* exception? */ }
 
-    return untabify( matchingLineList[line].lineContent() ).length();
+    qint64 line = matchingLineList[lineNum].lineNumber();
+    return sourceLogData_->getExpandedLineString( line ).length();
 }

@@ -83,7 +83,7 @@ class LogFilteredData : public AbstractLogData {
 
     QList<MatchingLine> matchingLineList;
 
-    const LogData* sourceLogData;
+    const LogData* sourceLogData_;
     QRegExp currentRegExp_;
     bool searchDone_;
     int maxLength_;

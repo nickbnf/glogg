@@ -33,15 +33,13 @@ class LogData;
 // Contains the line number the line was found in and its content.
 class MatchingLine {
   public:
-    MatchingLine( int line, QString str ) { lineNumber_ = line; lineString_ = str; };
+    MatchingLine( int line ) { lineNumber_ = line; };
 
     // Accessors
     int lineNumber() const { return lineNumber_; }
-    QString lineContent() const { return lineString_; }
 
   private:
     int lineNumber_;
-    QString lineString_;
 };
 
 typedef QList<MatchingLine> SearchResultArray;

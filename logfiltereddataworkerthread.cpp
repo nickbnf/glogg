@@ -236,7 +236,7 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
                 const int length = sourceLogData_->getExpandedLineString(i+j).length();
                 if ( length > maxLength )
                     maxLength = length;
-                MatchingLine match( i+j, lines[j] );
+                MatchingLine match( i+j );
                 currentList.append( match );
                 nbMatches++;
             }

@@ -38,6 +38,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
     matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
     maxLength_ = 0;
+    maxLengthMarks_ = 0;
     searchDone_ = true;
     visibility_ = MarksAndMatches;
 
@@ -52,6 +53,7 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     // Starts with an empty result list
     matchingLineList = SearchResultArray();
     maxLength_ = 0;
+    maxLengthMarks_ = 0;
     nbLinesProcessed_ = 0;
 
     sourceLogData_ = logData;
@@ -84,6 +86,7 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
     currentRegExp_ = regExp;
     matchingLineList.clear();
     maxLength_ = 0;
+    maxLengthMarks_ = 0;
 
     workerThread_->search( currentRegExp_ );
 }
@@ -107,6 +110,7 @@ void LogFilteredData::clearSearch()
     currentRegExp_ = QRegExp();
     matchingLineList.clear();
     maxLength_ = 0;
+    filteredItemsCacheDirty_ = true;
 }
 
 qint64 LogFilteredData::getMatchingLineNumber( int matchNum ) const
@@ -130,7 +134,16 @@ void LogFilteredData::addMark( qint64 line, QChar mark )
 {
     assert( marks_ );
 
-    marks_->addMark( line, mark );
+    if ( ( line >= 0 ) && ( line < sourceLogData_->getNbLine() ) ) {
+        marks_->addMark( line, mark );
+        maxLengthMarks_ = qMax( maxLengthMarks_,
+                sourceLogData_->getLineLength( line ) );
+        filteredItemsCacheDirty_ = true;
+    }
+    else
+        LOG(logERROR) << "LogFilteredData::addMark\
+ trying to create a mark outside of the file.";
+
 }
 
 qint64 LogFilteredData::getMark( QChar mark ) const
@@ -152,6 +165,9 @@ void LogFilteredData::deleteMark( QChar mark )
     assert( marks_ );
 
     marks_->deleteMark( mark );
+    filteredItemsCacheDirty_ = true;
+
+    // FIXME: maxLengthMarks_
 }
 
 void LogFilteredData::deleteMark( qint64 line )
@@ -159,6 +175,19 @@ void LogFilteredData::deleteMark( qint64 line )
     assert( marks_ );
 
     marks_->deleteMark( line );
+    filteredItemsCacheDirty_ = true;
+
+    // Now update the max length if needed
+    if ( sourceLogData_->getLineLength( line ) >= maxLengthMarks_ ) {
+        LOG(logDEBUG) << "deleteMark recalculating longest mark";
+        maxLengthMarks_ = 0;
+        for ( Marks::const_iterator i = marks_->begin();
+                i != marks_->end(); ++i ) {
+            LOG(logDEBUG) << "line " << i->lineNumber();
+            maxLengthMarks_ = qMax( maxLengthMarks_,
+                    sourceLogData_->getLineLength( i->lineNumber() ) );
+        }
+    }
 }
 
 void LogFilteredData::clearMarks()
@@ -166,6 +195,8 @@ void LogFilteredData::clearMarks()
     assert( marks_ );
 
     marks_->clear();
+    filteredItemsCacheDirty_ = true;
+    maxLengthMarks_ = 0;
 }
 
 void LogFilteredData::setVisibility( Visibility visi )
@@ -270,9 +301,12 @@ qint64 LogFilteredData::doGetNbLine() const
         nbLines = matchingLineList.size();
     else if ( visibility_ == MarksOnly )
         nbLines = marks_->size();
-    else
-        // FIXME
-        nbLines = matchingLineList.size() + marks_->size();
+    else {
+        // Regenerate the cache if needed
+        if ( filteredItemsCacheDirty_ )
+            regenerateFilteredItemsCache();
+        nbLines = filteredItemsCache_.size();
+    }
 
     return nbLines;
 }
@@ -280,8 +314,16 @@ qint64 LogFilteredData::doGetNbLine() const
 // Implementation of the virtual function.
 int LogFilteredData::doGetMaxLength() const
 {
-    // FIXME
-    return maxLength_;
+    int max_length;
+
+    if ( visibility_ == MatchesOnly )
+        max_length = maxLength_;
+    else if ( visibility_ == MarksOnly )
+        max_length = maxLengthMarks_;
+    else
+        max_length = qMax( maxLength_, maxLengthMarks_ );
+
+    return max_length;
 }
 
 // Implementation of the virtual function.
@@ -291,9 +333,11 @@ int LogFilteredData::doGetLineLength( qint64 lineNum ) const
     return sourceLogData_->getExpandedLineString( line ).length();
 }
 
+// TODO: We might be a bit smarter and not regenerate the whole thing when
+// e.g. stuff is added at the end of the search.
 void LogFilteredData::regenerateFilteredItemsCache() const
 {
-    LOG(logDEBUG) << "LogFilteredData::regenerateFilteredItemsCache";
+    LOG(logDEBUG) << "regenerateFilteredItemsCache";
 
     filteredItemsCache_.clear();
     filteredItemsCache_.reserve( matchingLineList.size() + marks_->size() );
@@ -308,14 +352,20 @@ void LogFilteredData::regenerateFilteredItemsCache() const
         qint64 next_match =
             ( i != matchingLineList.end() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
         // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
-        if ( next_mark <= next_match )
+        if ( next_mark <= next_match ) {
+            LOG(logDEBUG) << "Add mark at " << next_mark;
             filteredItemsCache_.append( FilteredItem( next_mark ) );
-        else
+            if ( j != marks_->end() )
+                ++j;
+            if ( ( next_mark == next_match ) && ( i != matchingLineList.end() ) )
+                ++i;  // Case when it's both match and mark.
+        }
+        else {
+            LOG(logDEBUG) << "Add match at " << next_match;
             filteredItemsCache_.append( FilteredItem( next_match ) );
-        if ( i != matchingLineList.end() )
-            ++i;
-        if ( j != marks_->end() )
-            ++j;
+            if ( i != matchingLineList.end() )
+                ++i;
+        }
     }
 
     filteredItemsCacheDirty_ = false;

@@ -18,6 +18,7 @@ class TestLogFilteredData: public QObject
         void simpleSearch();
         void multipleSearch();
         void marks();
+        void lineLength();
         void updateSearch();
 
     public slots:
@@ -31,6 +32,7 @@ class TestLogFilteredData: public QObject
         void multipleSearchTest();
         void updateSearchTest();
         void marksTest();
+        void lineLengthTest();
 
         std::pair<int,int> waitSearchProgressed();
         void waitLoadingFinished();

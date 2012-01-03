@@ -391,28 +391,28 @@ void TestLogFilteredData::marksTest()
         QVERIFY( filteredData_->isLineMarked( i ) == false );
 
     // Try to create some "out of limit" marks
-    /*
     filteredData_->addMark( -10 );
     filteredData_->addMark( SL_NB_LINES + 25 );
 
     // Check no line is marked still
     for ( int i = 0; i < SL_NB_LINES; i++ )
         QVERIFY( filteredData_->isLineMarked( i ) == false );
-        */
 
     // Create a couple of unnamed marks
     filteredData_->addMark( 10 );
+    filteredData_->addMark( 44 );  // This one will also be a match
     filteredData_->addMark( 25 );
 
     // Check they are marked
     QVERIFY( filteredData_->isLineMarked( 10 ) );
     QVERIFY( filteredData_->isLineMarked( 25 ) );
+    QVERIFY( filteredData_->isLineMarked( 44 ) );
 
     // But others are not
     QVERIFY( filteredData_->isLineMarked( 15 ) == false );
     QVERIFY( filteredData_->isLineMarked( 20 ) == false );
 
-    QCOMPARE( filteredData_->getNbLine(), 2LL );
+    QCOMPARE( filteredData_->getNbLine(), 3LL );
 
     // Performs a search
     QSignalSpy progressSpy( filteredData_,
@@ -428,6 +428,112 @@ void TestLogFilteredData::marksTest()
     waitSearchProgressed();
     QCOMPARE( filteredData_->getNbLine(), 12LL );
     signalSearchProgressedRead();
+
+    QString startline = "LOGDATA is a part of glogg, we are going to test it thoroughly, this is line ";
+
+    QCOMPARE( filteredData_->getLineString(0), startline + "000004" );
+    QCOMPARE( filteredData_->getLineString(1), startline + "000010" );
+    QCOMPARE( filteredData_->getLineString(2), startline + "000014" );
+    QCOMPARE( filteredData_->getLineString(3), startline + "000024" );
+    QCOMPARE( filteredData_->getLineString(4), startline + "000025" );
+    QCOMPARE( filteredData_->getLineString(5), startline + "000034" );
+    QCOMPARE( filteredData_->getLineString(6), startline + "000044" );
+    QCOMPARE( filteredData_->getLineString(7), startline + "000054" );
+    QCOMPARE( filteredData_->getLineString(8), startline + "000064" );
+    QCOMPARE( filteredData_->getLineString(9), startline + "000074" );
+    QCOMPARE( filteredData_->getLineString(10), startline + "000084" );
+    QCOMPARE( filteredData_->getLineString(11), startline + "000094" );
+
+    filteredData_->setVisibility( LogFilteredData::MatchesOnly );
+
+    QCOMPARE( filteredData_->getNbLine(), 10LL );
+    QCOMPARE( filteredData_->getLineString(0), startline + "000004" );
+    QCOMPARE( filteredData_->getLineString(1), startline + "000014" );
+    QCOMPARE( filteredData_->getLineString(2), startline + "000024" );
+    QCOMPARE( filteredData_->getLineString(3), startline + "000034" );
+    QCOMPARE( filteredData_->getLineString(4), startline + "000044" );
+    QCOMPARE( filteredData_->getLineString(5), startline + "000054" );
+    QCOMPARE( filteredData_->getLineString(6), startline + "000064" );
+    QCOMPARE( filteredData_->getLineString(7), startline + "000074" );
+    QCOMPARE( filteredData_->getLineString(8), startline + "000084" );
+    QCOMPARE( filteredData_->getLineString(9), startline + "000094" );
+
+    filteredData_->setVisibility( LogFilteredData::MarksOnly );
+
+    QCOMPARE( filteredData_->getNbLine(), 3LL );
+    QCOMPARE( filteredData_->getLineString(0), startline + "000010" );
+    QCOMPARE( filteredData_->getLineString(1), startline + "000025" );
+    QCOMPARE( filteredData_->getLineString(2), startline + "000044" );
+
+    QApplication::quit();
+}
+
+void TestLogFilteredData::lineLength()
+{
+    logData_ = new LogData();
+
+    // Register for notification file is loaded
+    connect( logData_, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( loadingFinished() ) );
+
+    filteredData_ = logData_->getNewFilteredData();
+    connect( filteredData_, SIGNAL( searchProgressed( int, int ) ),
+            this, SLOT( searchProgressed( int, int ) ) );
+
+    QFuture<void> future = QtConcurrent::run(this, &TestLogFilteredData::lineLengthTest);
+
+    QApplication::exec();
+
+    disconnect( filteredData_, 0 );
+    disconnect( logData_, 0 );
+
+    delete filteredData_;
+    delete logData_;
+}
+
+void TestLogFilteredData::lineLengthTest()
+{
+    // Line length tests
+
+    logData_->attachFile( TMPDIR "/length_test.txt" );
+    // Wait for the loading to be done
+    waitLoadingFinished();
+    QCOMPARE( logData_->getNbLine(), 4LL );
+    signalLoadingFinishedRead();
+
+    // Performs a search (the two middle lines matche)
+    filteredData_->setVisibility( LogFilteredData::MatchesOnly );
+    filteredData_->runSearch( QRegExp( "longer" ) );
+
+    std::pair<int,int> progress;
+    do {
+        progress = waitSearchProgressed();
+        signalSearchProgressedRead();
+        QWARN("progress");
+    } while ( progress.second < 100 );
+
+    filteredData_->addMark( 3 );
+
+    QCOMPARE( filteredData_->getNbLine(), 2LL );
+    QCOMPARE( filteredData_->getMaxLength(), 40 );
+
+    filteredData_->setVisibility( LogFilteredData::MarksAndMatches );
+    QCOMPARE( filteredData_->getNbLine(), 3LL );
+    QCOMPARE( filteredData_->getMaxLength(), 103 );
+
+    filteredData_->setVisibility( LogFilteredData::MarksOnly );
+    QCOMPARE( filteredData_->getNbLine(), 1LL );
+    QCOMPARE( filteredData_->getMaxLength(), 103 );
+
+    filteredData_->addMark( 0 );
+    QCOMPARE( filteredData_->getNbLine(), 2LL );
+    QCOMPARE( filteredData_->getMaxLength(), 103 );
+    filteredData_->deleteMark( 3 );
+    QCOMPARE( filteredData_->getNbLine(), 1LL );
+    QCOMPARE( filteredData_->getMaxLength(), 27 );
+
+    filteredData_->setVisibility( LogFilteredData::MarksAndMatches );
+    QCOMPARE( filteredData_->getMaxLength(), 40 );
 
     QApplication::quit();
 }
@@ -533,6 +639,16 @@ bool TestLogFilteredData::generateDataFiles()
     }
     else {
         return false;
+    }
+    file.close();
+
+    file.setFileName( TMPDIR "/length_test.txt" );
+    if ( file.open( QIODevice::WriteOnly ) ) {
+        file.write( "This line is 28 characters.\n" );
+        file.write( "This line is longer: 36 characters.\n" );
+        file.write( "This line is even longer: 41 characters.\n" );
+        file.write( "This line is very long, it's actually hard to count but it is\
+ probably something around 102 characters.\n" );
     }
     file.close();
 

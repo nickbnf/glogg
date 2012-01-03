@@ -13,6 +13,10 @@ else {
     DEFINES = TMPDIR=\\\"$${TMPDIR}\\\"
 }
 
+mac {
+  CONFIG -= app_bundle
+}
+
 TARGET = logcrawler_tests
 HEADERS += testlogdata.h testlogfiltereddata.h logdata.h logfiltereddata.h logdataworkerthread.h\
     abstractlogdata.h logfiltereddataworkerthread.h filewatcher.h marks.h

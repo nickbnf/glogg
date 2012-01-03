@@ -163,7 +163,6 @@ void LogFilteredData::addMark( qint64 line, QChar mark )
     else
         LOG(logERROR) << "LogFilteredData::addMark\
  trying to create a mark outside of the file.";
-
 }
 
 qint64 LogFilteredData::getMark( QChar mark ) const

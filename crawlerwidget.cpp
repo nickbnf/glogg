@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -344,7 +344,10 @@ void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
 
 void CrawlerWidget::markLineFromMain( qint64 line )
 {
-    logFilteredData_->addMark( line );
+    if ( logFilteredData_->isLineMarked( line ) )
+        logFilteredData_->deleteMark( line );
+    else
+        logFilteredData_->addMark( line );
 
     // Recompute the content of the filtered window.
     filteredView->updateData();

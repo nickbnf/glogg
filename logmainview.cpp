@@ -47,10 +47,19 @@ void LogMainView::useNewFiltering( LogFilteredData* filteredData )
         getOverview()->setFilteredData( filteredData_ );
 }
 
-bool LogMainView::isLineMatching( int lineNumber )
+AbstractLogView::LineType LogMainView::lineType( int lineNumber ) const
 {
-    if ( filteredData_ != NULL )
-        return filteredData_->isLineInMatchingList( lineNumber );
+    if ( filteredData_ != NULL ) {
+        LineType line_type;
+        if ( filteredData_->isLineMarked( lineNumber ) )
+            line_type = Marked;
+        else if ( filteredData_->isLineInMatchingList( lineNumber ) )
+            line_type = Match;
+        else
+            line_type = Normal;
+
+        return line_type;
+    }
     else
-        return false;
+        return Normal;
 }

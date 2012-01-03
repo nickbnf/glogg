@@ -145,13 +145,13 @@ class LogData : public AbstractLogData {
     MonitoredFileStatus fileChangedOnDisk_;
 
     // Implementation of virtual functions
-    QString doGetLineString( qint64 line ) const;
-    QString doGetExpandedLineString( qint64 line ) const;
-    QStringList doGetLines( qint64 first, int number ) const;
-    QStringList doGetExpandedLines( qint64 first, int number ) const;
-    qint64 doGetNbLine() const;
-    int doGetMaxLength() const;
-    int doGetLineLength( qint64 line ) const;
+    virtual QString doGetLineString( qint64 line ) const;
+    virtual QString doGetExpandedLineString( qint64 line ) const;
+    virtual QStringList doGetLines( qint64 first, int number ) const;
+    virtual QStringList doGetExpandedLines( qint64 first, int number ) const;
+    virtual qint64 doGetNbLine() const;
+    virtual int doGetMaxLength() const;
+    virtual int doGetLineLength( qint64 line ) const;
 
     void enqueueOperation( const LogDataOperation* newOperation );
     void startOperation();

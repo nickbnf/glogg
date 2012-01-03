@@ -191,6 +191,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     followMode_ = false;
 
     selectionStarted_ = false;
+    markingClickInitiated_ = false;
 
     firstLine = 0;
     lastLine = 0;
@@ -250,16 +251,26 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     if ( mouseEvent->button() == Qt::LeftButton )
     {
         int line = convertCoordToLine( mouseEvent->y() );
-        if ( line < logData->getNbLine() ) {
-            selection_.selectLine( line );
-            emit updateLineNumber( line );
-            emit newSelection( line );
-        }
 
-        // Remember the click in case we're starting a selection
-        selectionStarted_ = true;
-        selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
-        selectionCurrentEndPos_ = selectionStartPos_;
+        if ( mouseEvent->x() < leftMarginPx_ ) {
+            // Mark a line if it is clicked in the left margin
+            // (only if click and release in the same area)
+            markingClickInitiated_ = true;
+            markingClickLine_ = line;
+        }
+        else {
+            // Select the line, and start a selection
+            if ( line < logData->getNbLine() ) {
+                selection_.selectLine( line );
+                emit updateLineNumber( line );
+                emit newSelection( line );
+            }
+
+            // Remember the click in case we're starting a selection
+            selectionStarted_ = true;
+            selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
+            selectionCurrentEndPos_ = selectionStartPos_;
+        }
     }
 }
 
@@ -311,12 +322,20 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
     }
 }
 
-void AbstractLogView::mouseReleaseEvent( QMouseEvent* )
+void AbstractLogView::mouseReleaseEvent( QMouseEvent* mouseEvent )
 {
-    selectionStarted_ = false;
-    if ( autoScrollTimer_.isActive() )
-        autoScrollTimer_.stop();
-    updateGlobalSelection();
+    if ( markingClickInitiated_ ) {
+        markingClickInitiated_ = false;
+        int line = convertCoordToLine( mouseEvent->y() );
+        if ( line == markingClickLine_ )
+            emit markLine( line );
+    }
+    else {
+        selectionStarted_ = false;
+        if ( autoScrollTimer_.isActive() )
+            autoScrollTimer_.stop();
+        updateGlobalSelection();
+    }
 }
 
 void AbstractLogView::mouseDoubleClickEvent( QMouseEvent* mouseEvent )
@@ -522,8 +541,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         const FilterSet& filterSet = Persistent<FilterSet>( "filterSet" );
         QColor foreColor, backColor;
 
-        const QBrush normalBulletBrush = QBrush( Qt::white );
-        const QBrush matchBulletBrush = QBrush( Qt::red );
+        static const QBrush normalBulletBrush = QBrush( Qt::white );
+        static const QBrush matchBulletBrush = QBrush( Qt::red );
+        static const QBrush markBrush = QBrush( Qt::blue );
 
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
@@ -646,16 +666,37 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             }
 
             // Then draw the bullet
-            const int circleSize = 3;
-
-            if ( isLineMatching( i ) )
-                painter.setBrush( matchBulletBrush );
-            else
-                painter.setBrush( normalBulletBrush );
             painter.setPen( palette.color( QPalette::Text ) );
-            painter.drawEllipse( bulletLineX_/2 - circleSize,
-                    yPos + (fontHeight / 2) - circleSize,
-                    circleSize * 2, circleSize * 2 );
+            const int circleSize = 3;
+            const int arrowHeight = 4;
+            const int middleXLine = bulletLineX_ / 2;
+            const int middleYLine = yPos + (fontHeight / 2);
+
+            const LineType line_type = lineType( i );
+            if ( line_type == Marked ) {
+                // A pretty arrow if the line is marked
+                const QPoint points[7] = {
+                    QPoint(1, middleYLine - 1),
+                    QPoint(middleXLine, middleYLine - 1),
+                    QPoint(middleXLine, middleYLine - arrowHeight),
+                    QPoint(bulletLineX_ - 2, middleYLine),
+                    QPoint(middleXLine, middleYLine + arrowHeight),
+                    QPoint(middleXLine, middleYLine + 1),
+                    QPoint(1, middleYLine + 1 ),
+                };
+
+                painter.setBrush( markBrush );
+                painter.drawPolygon( points, 7 );
+            }
+            else {
+                if ( lineType( i ) == Match )
+                    painter.setBrush( matchBulletBrush );
+                else
+                    painter.setBrush( normalBulletBrush );
+                painter.drawEllipse( middleXLine - circleSize,
+                        middleYLine - circleSize,
+                        circleSize * 2, circleSize * 2 );
+            }
         } // For each line
     }
     LOG(logDEBUG4) << "End of repaint";

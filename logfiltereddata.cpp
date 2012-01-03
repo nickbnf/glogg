@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -25,6 +25,7 @@
 
 #include <QString>
 #include <cassert>
+#include <limits>
 
 #include "utils.h"
 #include "logdata.h"
@@ -115,7 +116,7 @@ void LogFilteredData::clearSearch()
 
 qint64 LogFilteredData::getMatchingLineNumber( int matchNum ) const
 {
-    qint64 matchingLine = matchingLineList[matchNum].lineNumber();
+    qint64 matchingLine = findLogDataLine( matchNum );
 
     return matchingLine;
 }
@@ -126,6 +127,25 @@ bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
     int index;                                    // Not used
     return lookupLineNumber<SearchResultArray>(
             matchingLineList, lineNumber, &index);
+}
+
+LogFilteredData::FilteredLineType
+    LogFilteredData::filteredLineTypeByIndex( int index ) const
+{
+    // If we are only showing one type, the line is there because
+    // it is of this type.
+    if ( visibility_ == MatchesOnly )
+        return Match;
+    else if ( visibility_ == MarksOnly )
+        return Mark;
+    else {
+        // If it is MarksAndMatches, we have to look.
+        // Regenerate the cache if needed
+        if ( filteredItemsCacheDirty_ )
+            regenerateFilteredItemsCache();
+
+        return filteredItemsCache_[ index ].type();
+    }
 }
 
 // Delegation to our Marks object
@@ -221,7 +241,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 
 qint64 LogFilteredData::findLogDataLine( qint64 lineNum ) const
 {
-    qint64 line;
+    qint64 line = 0;
     if ( visibility_ == MatchesOnly ) {
         if ( lineNum < matchingLineList.size() ) {
             line = matchingLineList[lineNum].lineNumber();
@@ -353,20 +373,22 @@ void LogFilteredData::regenerateFilteredItemsCache() const
             ( i != matchingLineList.end() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
         // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
         if ( next_mark <= next_match ) {
-            LOG(logDEBUG) << "Add mark at " << next_mark;
-            filteredItemsCache_.append( FilteredItem( next_mark ) );
+            // LOG(logDEBUG) << "Add mark at " << next_mark;
+            filteredItemsCache_.append( FilteredItem( next_mark, Mark ) );
             if ( j != marks_->end() )
                 ++j;
             if ( ( next_mark == next_match ) && ( i != matchingLineList.end() ) )
                 ++i;  // Case when it's both match and mark.
         }
         else {
-            LOG(logDEBUG) << "Add match at " << next_match;
-            filteredItemsCache_.append( FilteredItem( next_match ) );
+            // LOG(logDEBUG) << "Add match at " << next_match;
+            filteredItemsCache_.append( FilteredItem( next_match, Match ) );
             if ( i != matchingLineList.end() )
                 ++i;
         }
     }
 
     filteredItemsCacheDirty_ = false;
+
+    LOG(logDEBUG) << "finished regenerateFilteredItemsCache";
 }

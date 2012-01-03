@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -23,14 +23,22 @@
 
 #include "filteredview.h"
 
-FilteredView::FilteredView(const AbstractLogData* newLogData,
+FilteredView::FilteredView(const LogFilteredData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent)
     : AbstractLogView(newLogData, quickFindPattern, parent)
 {
+    // We keep a copy of the filtered data for fast lookup of the line type
+    logFilteredData_ = newLogData;
 }
 
+
 // For the filtered view, a line is always matching!
-bool FilteredView::isLineMatching( int lineNumber )
+AbstractLogView::LineType FilteredView::lineType( int lineNumber ) const
 {
-    return true;
+    LogFilteredData::FilteredLineType type =
+        logFilteredData_->filteredLineTypeByIndex( lineNumber );
+    if ( type == LogFilteredData::Mark )
+        return Marked;
+    else
+        return Match;
 }

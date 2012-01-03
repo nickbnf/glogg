@@ -39,7 +39,8 @@ void Marks::addMark( qint64 line, QChar mark )
     if ( ! lookupLineNumber< QList<Mark> >( marks_, line, &index ) )
     {
         // If a mark is not already set for this line
-        LOG(logDEBUG) << "Inserting mark at index " << index;
+        LOG(logDEBUG) << "Inserting mark at line " << line
+            << " (index " << index << ")";
         marks_.insert( index, Mark( line ) );
     }
     else

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -33,28 +33,6 @@
 class LogData;
 class Marks;
 
-// A class representing a Mark or Match.
-// Conceptually it should be a base class for Mark and MatchingLine,
-// but we implement it this way for performance reason as we create plenty of
-// those everutime we refresh the cache.
-// Specifically it allows to store this in the cache by value instead
-// of pointer (less small allocations and no RTTI).
-class FilteredItem {
-  public:
-    // A default ctor seems to be necessary for QVector
-    FilteredItem()
-    { lineNumber_ = 0; }
-    FilteredItem( qint64 lineNumber )
-    { lineNumber_ = lineNumber; }
-
-    qint64 lineNumber() const
-    { return lineNumber_; }
-
-  private:
-    qint64 lineNumber_;
-};
-
-
 // A list of matches found in a LogData, it stores all the matching lines,
 // which can be accessed using the AbstractLogData interface, together with
 // the original line number where they were found.
@@ -87,6 +65,11 @@ class LogFilteredData : public AbstractLogData {
     // Returns weither the line number passed is in our list of matching ones.
     bool isLineInMatchingList( qint64 lineNumber );
 
+    // Returns the reason why the line at the passed index is in the filtered
+    // data.  It can be because it is either a mark or a match.
+    enum FilteredLineType { Match, Mark };
+    FilteredLineType filteredLineTypeByIndex( int index ) const;
+
     // Marks interface (delegated to a Marks object)
 
     // Add a mark at the given line, optionally identified by the given char
@@ -118,6 +101,8 @@ class LogFilteredData : public AbstractLogData {
     void handleSearchProgressed( int NbMatches, int progress );
 
   private:
+    class FilteredItem;
+
     // Implementation of virtual functions
     QString doGetLineString( qint64 line ) const;
     QString doGetExpandedLineString( qint64 line ) const;
@@ -153,5 +138,28 @@ class LogFilteredData : public AbstractLogData {
     void regenerateFilteredItemsCache() const;
 };
 
-#endif
+// A class representing a Mark or Match.
+// Conceptually it should be a base class for Mark and MatchingLine,
+// but we implement it this way for performance reason as we create plenty of
+// those everytime we refresh the cache.
+// Specifically it allows to store this in the cache by value instead
+// of pointer (less small allocations and no RTTI).
+class LogFilteredData::FilteredItem {
+  public:
+    // A default ctor seems to be necessary for QVector
+    FilteredItem()
+    { lineNumber_ = 0; }
+    FilteredItem( qint64 lineNumber, FilteredLineType type )
+    { lineNumber_ = lineNumber; type_ = type; }
 
+    qint64 lineNumber() const
+    { return lineNumber_; }
+    FilteredLineType type() const
+    { return type_; }
+
+  private:
+    qint64 lineNumber_;
+    FilteredLineType type_;
+};
+
+#endif

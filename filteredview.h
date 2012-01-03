@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -22,16 +22,21 @@
 
 #include "abstractlogview.h"
 
+#include "logfiltereddata.h"
+
 // Class implementing the filtered (bottom) view widget.
 class FilteredView : public AbstractLogView
 {
   public:
-    FilteredView( const AbstractLogData* newLogData,
+    FilteredView( const LogFilteredData* newLogData,
             const QuickFindPattern* const quickFindPattern,
             QWidget* parent = 0 );
 
   protected:
-    bool isLineMatching( int lineNumber );
+    virtual LineType lineType( int lineNumber ) const;
+
+  private:
+    const LogFilteredData* logFilteredData_;
 };
 
 #endif

@@ -58,7 +58,9 @@ template <typename T> bool lookupLineNumber(
 
         // If we haven't found anything...
         // ... end of the list or before the next
-        if ( lineNumber > list[minIndex].lineNumber() )
+        if ( lineNumber > list[maxIndex].lineNumber() )
+            *foundIndex = maxIndex + 1;
+        else if ( lineNumber > list[minIndex].lineNumber() )
             *foundIndex = minIndex + 1;
         else
             *foundIndex = minIndex;

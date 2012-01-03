@@ -465,6 +465,19 @@ void TestLogFilteredData::marksTest()
     QCOMPARE( filteredData_->getLineString(1), startline + "000025" );
     QCOMPARE( filteredData_->getLineString(2), startline + "000044" );
 
+    // Another test with marks only
+    filteredData_->clearSearch();
+    filteredData_->clearMarks();
+    filteredData_->setVisibility( LogFilteredData::MarksOnly );
+
+    filteredData_->addMark(18);
+    filteredData_->addMark(19);
+    filteredData_->addMark(20);
+
+    QCOMPARE( filteredData_->getMatchingLineNumber(0), 18LL );
+    QCOMPARE( filteredData_->getMatchingLineNumber(1), 19LL );
+    QCOMPARE( filteredData_->getMatchingLineNumber(2), 20LL );
+
     QApplication::quit();
 }
 
@@ -644,11 +657,11 @@ bool TestLogFilteredData::generateDataFiles()
 
     file.setFileName( TMPDIR "/length_test.txt" );
     if ( file.open( QIODevice::WriteOnly ) ) {
-        file.write( "This line is 28 characters.\n" );
+        file.write( "This line is 27 characters.\n" );
         file.write( "This line is longer: 36 characters.\n" );
-        file.write( "This line is even longer: 41 characters.\n" );
+        file.write( "This line is even longer: 40 characters.\n" );
         file.write( "This line is very long, it's actually hard to count but it is\
- probably something around 102 characters.\n" );
+ probably something around 103 characters.\n" );
     }
     file.close();
 

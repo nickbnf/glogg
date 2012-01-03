@@ -151,6 +151,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             filteredView, SLOT( update() ) );
     connect(logMainView, SIGNAL( updateLineNumber( int ) ),
             this, SIGNAL( updateLineNumber( int ) ) );
+    connect(logMainView, SIGNAL( markLine( qint64 ) ),
+            this, SLOT( markLineFromMain( qint64 ) ) );
 
     // Follow option (up and down)
     connect(this, SIGNAL( followSet( bool ) ),
@@ -338,6 +340,20 @@ void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
 {
     int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
     logMainView->selectAndDisplayLine(mainViewLine);  // FIXME: should be done with a signal.
+}
+
+void CrawlerWidget::markLineFromMain( qint64 line )
+{
+    logFilteredData_->addMark( line );
+
+    // Recompute the content of the filtered window.
+    filteredView->updateData();
+
+    // Update the match overview
+    overview_->updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
 }
 
 void CrawlerWidget::applyConfiguration()

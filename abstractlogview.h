@@ -170,8 +170,9 @@ class AbstractLogView : public QAbstractScrollArea
     void wheelEvent( QWheelEvent* wheelEvent );
 
     // Must be implemented to return wether the line number is
-    // a match or not (used for coloured bullets)
-    virtual bool isLineMatching( int lineNumber ) = 0;
+    // a match, a mark or just a normal line (used for coloured bullets)
+    enum LineType { Normal, Marked, Match };
+    virtual LineType lineType( int lineNumber ) const = 0;
 
     // Get the overview associated with this view, or NULL if there is none
     Overview* getOverview() const { return overview_; }
@@ -191,6 +192,9 @@ class AbstractLogView : public QAbstractScrollArea
     void notifyQuickFind( const QString& message );
     // Sent up when quickFind wants to clear the notification.
     void clearQuickFindNotification();
+    // Sent when the view ask for a line to be marked
+    // (click in the left margin).
+    void markLine( qint64 line );
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -240,6 +244,10 @@ class AbstractLogView : public QAbstractScrollArea
     // Current end of the selection (characters)
     QPoint selectionCurrentEndPos_;
     QBasicTimer autoScrollTimer_;
+
+    // Marks (left margin click)
+    bool markingClickInitiated_;
+    qint64 markingClickLine_;
 
     Selection selection_;
     qint64 firstLine;

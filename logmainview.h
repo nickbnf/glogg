@@ -39,7 +39,7 @@ class LogMainView : public AbstractLogView
 
   protected:
     // Implements the virtual function
-    bool isLineMatching( int lineNumber );
+    virtual LineType lineType( int lineNumber ) const;
 
   private:
     LogFilteredData* filteredData_;

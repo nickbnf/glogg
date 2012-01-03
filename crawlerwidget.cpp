@@ -211,9 +211,10 @@ bool CrawlerWidget::readFile( const QString& fileName, int )
         // First we cancel any in progress search and loading
         stopLoading();
 
-        // The file exist, so we invalidate the search
+        // The file exist, so we invalidate the search, remove all marks
         // and redraw the screen.
         replaceCurrentSearch( "" );
+        logFilteredData_->clearMarks();
         logData_->attachFile( fileName );
         logMainView->updateData();
 
@@ -405,12 +406,16 @@ void CrawlerWidget::loadingFinishedHandler( bool success )
 void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
 {
     // Handle the case where the file has been truncated
-    if ( ( status == LogData::Truncated ) &&
-         !( searchInfoLine->text().isEmpty()) ) {
-        logFilteredData_->clearSearch();
-        filteredView->updateData();
-        searchState_.truncateFile();
-        printSearchInfoMessage();
+    if ( status == LogData::Truncated ) {
+        // Clear all marks (TODO offer the option to keep them)
+        logFilteredData_->clearMarks();
+        if ( ! searchInfoLine->text().isEmpty() ) {
+            // Invalidate the search
+            logFilteredData_->clearSearch();
+            filteredView->updateData();
+            searchState_.truncateFile();
+            printSearchInfoMessage();
+        }
     }
 }
 

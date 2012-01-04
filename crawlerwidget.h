@@ -97,6 +97,8 @@ class CrawlerWidget : public QSplitter
     void jumpToMatchingLine( int filteredLineNb );
     // Mark a line that has been clicked on the main (top) view.
     void markLineFromMain( qint64 line );
+    // Mark a line that has been clicked on the filtered (bottom) view.
+    void markLineFromFiltered( qint64 line );
 
     void loadingFinishedHandler( bool success );
     // Manages the info lines to inform the user the file has changed.

@@ -153,6 +153,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SIGNAL( updateLineNumber( int ) ) );
     connect(logMainView, SIGNAL( markLine( qint64 ) ),
             this, SLOT( markLineFromMain( qint64 ) ) );
+    connect(filteredView, SIGNAL( markLine( qint64 ) ),
+            this, SLOT( markLineFromFiltered( qint64 ) ) );
 
     // Follow option (up and down)
     connect(this, SIGNAL( followSet( bool ) ),
@@ -349,6 +351,25 @@ void CrawlerWidget::markLineFromMain( qint64 line )
         logFilteredData_->deleteMark( line );
     else
         logFilteredData_->addMark( line );
+
+    // Recompute the content of the filtered window.
+    filteredView->updateData();
+
+    // Update the match overview
+    overview_->updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
+}
+
+void CrawlerWidget::markLineFromFiltered( qint64 line )
+{
+    qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
+    if ( logFilteredData_->filteredLineTypeByIndex( line )
+            == LogFilteredData::Mark )
+        logFilteredData_->deleteMark( line_in_file );
+    else
+        logFilteredData_->addMark( line_in_file );
 
     // Recompute the content of the filtered window.
     filteredView->updateData();

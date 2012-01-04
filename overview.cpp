@@ -63,12 +63,12 @@ void Overview::updateView( int height )
     }
 }
 
-const QList<int>* Overview::getMatchLines() const
+const QVector<Overview::WeightedLine>* Overview::getMatchLines() const
 {
     return &matchLines_;
 }
 
-const QList<int>* Overview::getMarkLines() const
+const QVector<Overview::WeightedLine>* Overview::getMarkLines() const
 {
     return &markLines_;
 }
@@ -100,15 +100,33 @@ void Overview::recalculatesLines()
 
     if ( logFilteredData_ != NULL ) {
         matchLines_.clear();
+        markLines_.clear();
 
         for ( int i = 0; i < logFilteredData_->getNbLine(); i++ ) {
             LogFilteredData::FilteredLineType line_type =
                 logFilteredData_->filteredLineTypeByIndex( i );
             int line = (int) logFilteredData_->getMatchingLineNumber( i );
-            if ( line_type == LogFilteredData::Match )
-                matchLines_ << ( line * height_ / linesInFile_ );
-            else
-                markLines_ << ( line * height_ / linesInFile_ );
+            int position = ( line * height_ / linesInFile_ );
+            if ( line_type == LogFilteredData::Match ) {
+                if ( ( ! matchLines_.isEmpty() ) && matchLines_.last().position() == position ) {
+                    // If the line is already there, we increase its weight
+                    matchLines_.last().load();
+                }
+                else {
+                    // If not we just add it
+                    matchLines_.append( WeightedLine( position ) );
+                }
+            }
+            else {
+                if ( ( ! markLines_.isEmpty() ) && markLines_.last().position() == position ) {
+                    // If the line is already there, we increase its weight
+                    markLines_.last().load();
+                }
+                else {
+                    // If not we just add it
+                    markLines_.append( WeightedLine( position ) );
+                }
+            }
         }
     }
     else

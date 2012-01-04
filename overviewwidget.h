@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -46,7 +46,6 @@ class OverviewWidget : public QWidget
   private:
     // Constants
     static const int LINE_MARGIN;
-    static const float LINE_OPACITY;
 
     Overview* overview_;
 

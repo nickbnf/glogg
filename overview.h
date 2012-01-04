@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -33,6 +33,25 @@
 class Overview
 {
   public:
+    // A line with a position in pixel and a weight (darkness)
+    class WeightedLine {
+      public:
+        static const int WEIGHT_STEPS = 3;
+
+        WeightedLine() { pos_ = 0; weight_ = 0; }
+        // (Necessary for QVector)
+        WeightedLine( int pos ) { pos_ = pos; weight_ = 0; }
+
+        int position() const { return pos_; }
+        int weight() const { return weight_; }
+
+        void load() { weight_ = qMin( weight_ + 1, WEIGHT_STEPS - 1 ); }
+
+      private:
+        int pos_;
+        int weight_;
+    };
+
     Overview();
     ~Overview();
 
@@ -56,10 +75,10 @@ class Overview
     void updateView( int height );
     // Returns a list of lines (between 0 and 'height') representing matches.
     // (pointer returned is valid until next call to update*()
-    const QList<int>* getMatchLines() const;
+    const QVector<WeightedLine>* getMatchLines() const;
     // Returns a list of lines (between 0 and 'height') representing marks.
     // (pointer returned is valid until next call to update*()
-    const QList<int>* getMarkLines() const;
+    const QVector<WeightedLine>* getMarkLines() const;
     // Return a pair of lines (between 0 and 'height') representing the current view.
     std::pair<int,int> getViewLines() const;
 
@@ -82,8 +101,8 @@ class Overview
     int dirty_;
 
     // List of lines representing matches and marks (are shared with the client)
-    QList<int> matchLines_;
-    QList<int> markLines_;
+    QVector<WeightedLine> matchLines_;
+    QVector<WeightedLine> markLines_;
 
     void recalculatesLines();
 };

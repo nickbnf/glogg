@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -32,7 +32,6 @@
 
 // Graphic parameters
 const int OverviewWidget::LINE_MARGIN = 4;
-const float OverviewWidget::LINE_OPACITY = 0.35;
 
 OverviewWidget::OverviewWidget( QWidget* parent ) : QWidget( parent )
 {
@@ -63,20 +62,24 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         painter.setPen( palette().color(QPalette::Text) );
         painter.drawLine( 0, 0, 0, height() );
 
-        // Allow multiple matches to look 'darker' than a single one.
-        painter.setOpacity( LINE_OPACITY );
         // The 'match' lines
         painter.setPen( match_color );
-        foreach (int line, *(overview_->getMatchLines()) ) {
+        foreach (Overview::WeightedLine line, *(overview_->getMatchLines()) ) {
+            painter.setOpacity( ( 1.0 / Overview::WeightedLine::WEIGHT_STEPS )
+                   * ( line.weight() + 1 ) );
+            // (allow multiple matches to look 'darker' than a single one.)
             painter.drawLine( 1 + LINE_MARGIN,
-                    line, width() - LINE_MARGIN - 1, line );
+                    line.position(), width() - LINE_MARGIN - 1, line.position() );
         }
 
         // The 'mark' lines
         painter.setPen( mark_color );
-        foreach (int line, *(overview_->getMarkLines()) ) {
+        foreach (Overview::WeightedLine line, *(overview_->getMarkLines()) ) {
+            painter.setOpacity( ( 1.0 / Overview::WeightedLine::WEIGHT_STEPS )
+                   * ( line.weight() + 1 ) );
+            // (allow multiple matches to look 'darker' than a single one.)
             painter.drawLine( 1 + LINE_MARGIN,
-                    line, width() - LINE_MARGIN - 1, line );
+                    line.position(), width() - LINE_MARGIN - 1, line.position() );
         }
 
         // The 'view' lines

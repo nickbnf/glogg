@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -102,8 +102,13 @@ void Overview::recalculatesLines()
         matchLines_.clear();
 
         for ( int i = 0; i < logFilteredData_->getNbLine(); i++ ) {
+            LogFilteredData::FilteredLineType line_type =
+                logFilteredData_->filteredLineTypeByIndex( i );
             int line = (int) logFilteredData_->getMatchingLineNumber( i );
-            matchLines_ << ( line * height_ / linesInFile_ );
+            if ( line_type == LogFilteredData::Match )
+                matchLines_ << ( line * height_ / linesInFile_ );
+            else
+                markLines_ << ( line * height_ / linesInFile_ );
         }
     }
     else

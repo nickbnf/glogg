@@ -48,6 +48,9 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
 {
     LOG(logDEBUG) << "OverviewWidget::paintEvent";
 
+    static const QColor match_color("red");
+    static const QColor mark_color("dodgerblue");
+
     // We must be hidden until we have an Overview
     assert( overview_ != NULL );
 
@@ -63,16 +66,17 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         // Allow multiple matches to look 'darker' than a single one.
         painter.setOpacity( LINE_OPACITY );
         // The 'match' lines
-        painter.setPen( QColor( Qt::red ) );
+        painter.setPen( match_color );
         foreach (int line, *(overview_->getMatchLines()) ) {
             painter.drawLine( 1 + LINE_MARGIN,
                     line, width() - LINE_MARGIN - 1, line );
         }
 
         // The 'mark' lines
-        painter.setPen( QColor( Qt::blue ) );
+        painter.setPen( mark_color );
         foreach (int line, *(overview_->getMarkLines()) ) {
-            painter.drawLine( 1, line, width(), line );
+            painter.drawLine( 1 + LINE_MARGIN,
+                    line, width() - LINE_MARGIN - 1, line );
         }
 
         // The 'view' lines

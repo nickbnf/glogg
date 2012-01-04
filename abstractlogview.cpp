@@ -543,7 +543,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
         static const QBrush normalBulletBrush = QBrush( Qt::white );
         static const QBrush matchBulletBrush = QBrush( Qt::red );
-        static const QBrush markBrush = QBrush( Qt::blue );
+        static const QBrush markBrush = QBrush( "dodgerblue" );
 
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
@@ -676,13 +676,13 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             if ( line_type == Marked ) {
                 // A pretty arrow if the line is marked
                 const QPoint points[7] = {
-                    QPoint(1, middleYLine - 1),
-                    QPoint(middleXLine, middleYLine - 1),
+                    QPoint(1, middleYLine - 2),
+                    QPoint(middleXLine, middleYLine - 2),
                     QPoint(middleXLine, middleYLine - arrowHeight),
                     QPoint(bulletLineX_ - 2, middleYLine),
                     QPoint(middleXLine, middleYLine + arrowHeight),
-                    QPoint(middleXLine, middleYLine + 1),
-                    QPoint(1, middleYLine + 1 ),
+                    QPoint(middleXLine, middleYLine + 2),
+                    QPoint(1, middleYLine + 2 ),
                 };
 
                 painter.setBrush( markBrush );

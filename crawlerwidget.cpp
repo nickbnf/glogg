@@ -481,14 +481,14 @@ void CrawlerWidget::searchBackward()
 void CrawlerWidget::searchRefreshChangedHandler( int state )
 {
     searchState_.setAutorefresh( state == Qt::Checked );
-    printSearchInfoMessage( logFilteredData_->getNbLine() );
+    printSearchInfoMessage( logFilteredData_->getNbMatches() );
 }
 
 void CrawlerWidget::searchTextChangeHandler()
 {
     // We suspend auto-refresh
     searchState_.changeExpression();
-    printSearchInfoMessage( logFilteredData_->getNbLine() );
+    printSearchInfoMessage( logFilteredData_->getNbMatches() );
 }
 
 //
@@ -499,7 +499,7 @@ void CrawlerWidget::searchTextChangeHandler()
 // used one and destroy the old one.
 void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 {
-    // Interrupt the searCh if it's ongoing
+    // Interrupt the search if it's ongoing
     logFilteredData_->interruptSearch();
 
     // We have to wait for the last search update (100%)

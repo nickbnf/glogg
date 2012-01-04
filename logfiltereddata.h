@@ -62,8 +62,13 @@ class LogFilteredData : public AbstractLogData {
     // Returns the line number in the original LogData where the element
     // 'index' was found.
     qint64 getMatchingLineNumber( int index ) const;
-    // Returns weither the line number passed is in our list of matching ones.
+    // Returns whether the line number passed is in our list of matching ones.
     bool isLineInMatchingList( qint64 lineNumber );
+
+    // Returns the number of matches (independently of the visibility)
+    int getNbMatches() const;
+    // Returns the number of marks (independently of the visibility)
+    int getNbMarks() const;
 
     // Returns the reason why the line at the passed index is in the filtered
     // data.  It can be because it is either a mark or a match.

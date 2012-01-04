@@ -129,6 +129,17 @@ bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
             matchingLineList, lineNumber, &index);
 }
 
+
+int LogFilteredData::getNbMatches() const
+{
+    return matchingLineList.size();
+}
+
+int LogFilteredData::getNbMarks() const
+{
+    return marks_->size();
+}
+
 LogFilteredData::FilteredLineType
     LogFilteredData::filteredLineTypeByIndex( int index ) const
 {

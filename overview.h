@@ -66,7 +66,7 @@ class Overview
 
     // Update the current position in the file (to draw the view line)
     void updateCurrentPosition( int firstLine, int lastLine )
-    { topLine_ = firstLine; lastLine_ = lastLine; }
+    { topLine_ = firstLine; nbLines_ = lastLine - firstLine; }
 
     // Returns weither this overview is visible.
     bool isVisible() { return visible_; }
@@ -94,7 +94,7 @@ class Overview
     bool visible_;
     // First and last line currently viewed.
     int topLine_;
-    int lastLine_;
+    int nbLines_;
     // Current height of view window.
     int height_;
     // Does the cache (matchesLines, markLines) need to be recalculated.

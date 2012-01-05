@@ -30,7 +30,7 @@ Overview::Overview() : matchLines_(), markLines_()
     logFilteredData_ = NULL;
     linesInFile_     = 0;
     topLine_         = 0;
-    lastLine_        = 0;
+    nbLines_         = 0;
     height_          = 0;
     dirty_           = true;
     visible_         = false;
@@ -80,7 +80,7 @@ std::pair<int,int> Overview::getViewLines() const
 
     if ( linesInFile_ > 0 ) {
         top = topLine_ * height_ / linesInFile_;
-        bottom = lastLine_ * height_ / linesInFile_;
+        bottom = top + nbLines_ * height_ / linesInFile_;
     }
 
     return std::pair<int,int>(top, bottom);

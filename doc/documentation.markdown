@@ -40,6 +40,10 @@ want to know what kind of connection has been opened:
 `.*` will match any sequence of character on a single line, but _glogg_ will only
 display lines with a space and the word `connection` somewhere after `Created a`
 
+In addition to the filtered window, the match overview on the right hand side
+of the screen offers a view of the position of matches in the log file. Matches
+are showed as small red lines.
+
 ## Using filters
 
 _Filters_ can colorize some lines of the log being displayed, for example to
@@ -48,6 +52,15 @@ sort of event. Any number of filter can be defined in the 'Filters'
 configuration dialog, each using a regexp against which lines will be matched.
 For each line, all filters are tried in order and the fore and back colors of
 the first successful filter are applied.
+
+## Marking lines in the log file
+
+In addition to regexp matches, _glogg_ enable the user to mark any interesting
+line in the log. To do this, click on the round bullet in the left margin in
+front of the line that needs to be marked.
+
+Marks are combined with matches and showed in the filtered window. They also
+appears as blue lines in the match overview.
 
 ## Browsing changing log files
 

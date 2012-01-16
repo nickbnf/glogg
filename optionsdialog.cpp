@@ -50,7 +50,11 @@ void OptionsDialog::setupFontList()
 {
     QFontDatabase database;
 
-    fontFamilyBox->addItems(database.families());
+    // We only show the fixed fonts
+    foreach ( const QString &str, database.families() ) {
+         if ( database.isFixedPitch( str ) )
+             fontFamilyBox->addItem( str );
+     }
 }
 
 // Populate the regexp ComboBoxes

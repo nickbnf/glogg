@@ -106,13 +106,14 @@ inline void LineDrawer::draw( QPainter& painter,
 {
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
+    const int fontWidth = fm.maxWidth();
     const int fontAscent = fm.ascent();
 
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
         // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
-        const int chunk_width = fm.width( cutline );
+        const int chunk_width = cutline.length() * fontWidth;
         painter.fillRect( xPos, yPos, chunk_width,
                 fontHeight, chunk.backColor() );
         painter.setPen( chunk.foreColor() );
@@ -200,7 +201,6 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     overview_ = NULL;
 
     // Fonts
-    useFixedFont_ = false;
     charWidth_ = 1;
     charHeight_ = 1;
 
@@ -815,19 +815,10 @@ void AbstractLogView::updateData()
 
 void AbstractLogView::updateDisplaySize()
 {
+    // Font is assumed to be mono-space (is restricted by options dialog)
     QFontMetrics fm = fontMetrics();
-
     charHeight_ = fm.height();
-    // Determine if the font is monospace (to enable various optimisations)
-    useFixedFont_ = true;
-    charWidth_ = fm.width('i');
-    for ( int i = 0x20; i < 0x7F; i++ )
-        if ( fm.width( QLatin1Char( i ) ) != charWidth_ ) {
-            useFixedFont_ = false;
-            break;
-        }
-    // FIXME: seems to be wrong on Qt/Mac
-    LOG(logDEBUG) << "useFixedFont_=" << useFixedFont_;
+    charWidth_ = fm.maxWidth();
 
     // Calculate the index of the last line shown
     lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
@@ -913,21 +904,11 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
     if ( line < 0 )
         line = 0;
 
-    int column = 0;
-    // Determine column in screen space
-    QFontMetrics fm = fontMetrics();
+    // Determine column in screen space and convert it to file space
+    int column = firstCol + ( pos.x() - leftMarginPx_ ) / charWidth_;
+
     QString this_line = logData->getExpandedLineString( line );
     const int length = this_line.length();
-    for ( ; column < length; column++ ) {
-        if ( ( fm.width( this_line.mid(firstCol, column) )
-                    + leftMarginPx_ ) > pos.x() ) {
-            column--;
-            break;
-        }
-    }
-
-    // Now convert it to file space
-    column += firstCol;
 
     if ( column >= length )
         column = length - 1;

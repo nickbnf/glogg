@@ -36,6 +36,8 @@ Configuration::Configuration()
 
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
+
+    wrapLines_ = false;
 }
 
 // Accessor functions
@@ -72,6 +74,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
+    if ( settings.contains( "view.wrapLines" ) )
+        wrapLines_ = settings.value( "view.wrapLines" ).toBool();
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -85,4 +89,5 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "view.overviewVisible", overviewVisible_ );
+    settings.setValue( "view.wrapLines", wrapLines_ );
 }

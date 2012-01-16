@@ -57,6 +57,11 @@ class Configuration : public Persistable {
     void setOverviewVisible( bool isVisible )
     { overviewVisible_ = isVisible; }
 
+    bool wrapLines() const
+    { return wrapLines_; }
+    void setWrapLines( bool wrapLines )
+    { wrapLines_ = wrapLines; }
+
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
     virtual void retrieveFromStorage( QSettings& settings );
@@ -69,6 +74,7 @@ class Configuration : public Persistable {
 
     // View settings
     bool overviewVisible_;
+    bool wrapLines_;
 };
 
 #endif

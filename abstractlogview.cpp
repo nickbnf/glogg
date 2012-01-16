@@ -33,6 +33,7 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QScrollBar>
+#include <QtCore/qmath.h>
 
 #include "log.h"
 
@@ -81,6 +82,11 @@ QList<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
     return list;
 }
 
+inline void LineDrawer::setWrapLines( bool wrapLines )
+{
+    wrapLines_ = wrapLines;
+}
+
 inline void LineDrawer::addChunk( int first_col, int last_col,
         QColor fore, QColor back )
 {
@@ -102,30 +108,70 @@ inline void LineDrawer::addChunk( const LineChunk& chunk,
 }
 
 inline void LineDrawer::draw( QPainter& painter,
-        int xPos, int yPos, int line_width, const QString& line )
+                              int xPos, int yPos,
+                              int line_width, int nbCols,
+                              const QString& line )
 {
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
     const int fontWidth = fm.maxWidth();
     const int fontAscent = fm.ascent();
 
+    int yPosFrag = yPos;
+    int xPosFrag = xPos;
+    int nbFreeCols = nbCols;
+
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
-        // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
-        QString cutline = line.mid( chunk.start(), chunk.length() );
-        const int chunk_width = cutline.length() * fontWidth;
-        painter.fillRect( xPos, yPos, chunk_width,
-                fontHeight, chunk.backColor() );
-        painter.setPen( chunk.foreColor() );
-        painter.drawText( xPos, yPos + fontAscent, cutline );
-        xPos += chunk_width;
+        LOG(logDEBUG4) << "Chunk: " << chunk.start() << " " << chunk.length();
+        // Break down chunk into "fragments", where each fragment
+        // is the maximum piece that stays within the same
+        // visible line (ie. doesn't wrap)
+        int chunkCharsDrawn = 0;
+        int fragsDrawn = 0;
+        int fragWidth;
+        // When wrapping: draw entire chunk,
+        // when not wrapping: draw just the first fragment
+        while ( (wrapLines_ && chunkCharsDrawn < chunk.length() ) ||
+               ( ! wrapLines_ && fragsDrawn <= 0 ) ) {
+            // Fragment restricted by either how much we need to draw or
+            // how much space we have available
+            int fragLength = qMin( chunk.length() - chunkCharsDrawn,
+                                   nbFreeCols );
+            QString fragment = line.mid( chunk.start() + chunkCharsDrawn,
+                                         fragLength );
+            LOG(logDEBUG4) << "  Fragment (" << fragLength << "): "
+                           << "'" << fragment.toStdString() << "'";
+            fragWidth = fragLength * fontWidth;
+            painter.fillRect( xPosFrag, yPosFrag, fragWidth,
+                              fontHeight, chunk.backColor() );
+            painter.setPen( chunk.foreColor() );
+            painter.drawText( xPosFrag, yPosFrag + fontAscent, fragment );
+            if ( wrapLines_ &&
+                 fragLength < chunk.length() - chunkCharsDrawn ) { // wrapped
+                LOG(logDEBUG4) << "  Line wrapped";
+                // Draw the empty block at the end of the line
+                int blank_width = line_width - (xPosFrag + fragWidth);
+                if ( blank_width > 0 )
+                    painter.fillRect( xPosFrag + fragWidth, yPosFrag, blank_width,
+                                      fontHeight, backColor_ );
+                yPosFrag += fontHeight;
+                xPosFrag = xPos; // "carriage-return"
+                nbFreeCols = nbCols;
+            } else {
+                xPosFrag += fragWidth;
+                nbFreeCols -= fragLength;
+            }
+            chunkCharsDrawn += fragLength;
+            ++fragsDrawn;
+        }
     }
 
     // Draw the empty block at the end of the line
-    int blank_width = line_width - xPos;
+    int blank_width = line_width - xPosFrag;
 
     if ( blank_width > 0 )
-        painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
+        painter.fillRect( xPosFrag, yPosFrag, blank_width, fontHeight, backColor_ );
 }
 
 const int DigitsBuffer::timeout_ = 2000;
@@ -183,6 +229,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     selectionCurrentEndPos_(),
     autoScrollTimer_(),
     selection_(),
+    visibleLineToFilePos(),
     quickFindPattern_( quickFindPattern ),
     quickFind_( newLogData, &selection_, quickFindPattern ),
     overviewWidget_( this )
@@ -190,12 +237,12 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     logData = newLogData;
 
     followMode_ = false;
+    wrapLines_ = false;
 
     selectionStarted_ = false;
     markingClickInitiated_ = false;
 
     firstLine = 0;
-    lastLine = 0;
     firstCol = 0;
 
     overview_ = NULL;
@@ -508,11 +555,6 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 
     firstLine = (firstLine - dy) > 0 ? firstLine - dy : 0;
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
-    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
-
-    // Update the overview if we have one
-    if ( overview_ != NULL )
-        overview_->updateCurrentPosition( firstLine, lastLine );
 
     // Redraw
     update();
@@ -524,8 +566,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     if ( (invalidRect.isEmpty()) || (logData == NULL) )
         return;
 
-    LOG(logDEBUG4) << "paintEvent received, firstLine=" << firstLine
-        << " lastLine=" << lastLine <<
+    LOG(logDEBUG4) << "paintEvent received, firstLine=" << firstLine <<
         " rect: " << invalidRect.topLeft().x() <<
         ", " << invalidRect.topLeft().y() <<
         ", " << invalidRect.bottomRight().x() <<
@@ -554,12 +595,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         else {
             if ( firstLine >= nbLines )
                 firstLine = nbLines - 1;
-            if ( lastLine >= nbLines )
-                lastLine =  nbLines - 1;
         }
-
-        // Lines to write
-        const QStringList lines = logData->getExpandedLines( firstLine, lastLine - firstLine + 1 );
 
         // First draw the bullet left margin
         painter.setPen(palette.color(QPalette::Text));
@@ -567,23 +603,34 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         painter.fillRect( 0, 0, bulletLineX_, viewport()->height(), Qt::darkGray );
 
         // Then draw each line
-        for (int i = firstLine; i <= lastLine; i++) {
-            // Position in pixel of the base line of the line to print
-            const int yPos = (i-firstLine) * fontHeight;
-            const int xPos = bulletLineX_ + 2;
+        const int xPos = bulletLineX_ + 2;
+        int yPos = 0;
+        qint64 nbDataLines = logData->getNbLine();
+        int nbVisibleLines = getNbVisibleLines();
+        int dataLine = firstLine;
+        int visibleLine = 0;
+        visibleLineToFilePos.resize( nbVisibleLines );
 
-            // string to print, cut to fit the length and position of the view
-            const QString line = lines[i - firstLine];
-            const QString cutLine = line.mid( firstCol, nbCols );
+        while ( visibleLine < nbVisibleLines && dataLine < nbDataLines ) {
+            // The characters of the whole line that is being printed
+            const QString& line = logData->getExpandedLineString(dataLine);
 
-            if ( selection_.isLineSelected( i ) ) {
+            int lineLen, startColumn;
+            if ( wrapLines_ ) {
+                lineLen = line.length();
+                startColumn = 0;
+            } else {
+                lineLen = qMin( line.length() - firstCol, nbCols );
+                startColumn = firstCol;
+            }
+
+            if ( selection_.isLineSelected( dataLine ) ) {
                 // Reverse the selected line
                 foreColor = palette.color( QPalette::HighlightedText );
                 backColor = palette.color( QPalette::Highlight );
                 painter.setPen(palette.color(QPalette::Text));
             }
-            else if ( filterSet.matchLine( logData->getLineString( i ),
-                        &foreColor, &backColor ) ) {
+            else if ( filterSet.matchLine( line, &foreColor, &backColor ) ) {
                 // Apply a filter to the line
             }
             else {
@@ -594,17 +641,20 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
             // Is there something selected in the line?
             int sel_start, sel_end;
+
             bool isSelection =
-                selection_.getPortionForLine( i, &sel_start, &sel_end );
+                selection_.getPortionForLine( dataLine, &sel_start, &sel_end );
             // Has the line got elements to be highlighted
             QList<QuickFindMatch> qfMatchList;
             bool isMatch =
                 quickFindPattern_->matchLine( line, qfMatchList );
 
+            int dyPos = 0; // change in yPos after drawing all fragments
             if ( isSelection || isMatch ) {
                 // We use the LineDrawer and its chunks because the
                 // line has to be somehow highlighted
                 LineDrawer lineDrawer( backColor );
+                lineDrawer.setWrapLines( wrapLines_ );
 
                 // First we create a list of chunks with the highlights
                 QList<LineChunk> chunkList;
@@ -617,13 +667,14 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                         continue;
                     if ( start > column )
                         chunkList << LineChunk( column, start - 1, LineChunk::Normal );
-                    column = qMin( start + match.length() - 1, nbCols );
+                    column = qMin( start + match.length() - 1,
+                                   qMin( lineLen, nbCols ) );
                     chunkList << LineChunk( qMax( start, 0 ), column,
                                             LineChunk::Highlighted );
                     column++;
                 }
-                if ( column <= cutLine.length() - 1 )
-                    chunkList << LineChunk( column, cutLine.length() - 1, LineChunk::Normal );
+                if ( column <= lineLen - 1 )
+                    chunkList << LineChunk( column, lineLen - 1, LineChunk::Normal );
 
                 // Then we add the selection if needed
                 QList<LineChunk> newChunkList;
@@ -661,15 +712,32 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     lineDrawer.addChunk ( chunk, fore, back );
                 }
 
-                lineDrawer.draw( painter, xPos, yPos,
-                        viewport()->width(), cutLine );
+                if ( wrapLines_ ) {
+                    lineDrawer.draw( painter, xPos, yPos, viewport()->width(), nbCols, line );
+                } else {
+                    const QString& cutLine = line.mid( firstCol, nbCols );
+                    lineDrawer.draw( painter, xPos, yPos, viewport()->width(), nbCols, cutLine );
+                }
+                for ( int dataColumn = startColumn; dataColumn < lineLen; dataColumn += nbCols ) {
+                    dyPos += fontHeight;
+                    visibleLineToFilePos[visibleLine++] = QPoint( dataColumn, dataLine );
+                }
             }
             else {
                 // Nothing to be highlighted, we print the whole line!
-                painter.fillRect( xPos, yPos, viewport()->width(),
-                        fontHeight, backColor );
+                int nbFrags = qCeil( static_cast<double>(lineLen) / nbCols );
+                painter.fillRect( xPos, yPos + dyPos, viewport()->width(),
+                                  fontHeight * nbFrags, backColor );
                 painter.setPen( foreColor );
-                painter.drawText( xPos, yPos + fontAscent, cutLine );
+
+                // Draw wrapping if necessary
+                LOG(logDEBUG4) << "lineLen: " << lineLen << " nbCols: " << nbCols;
+                for ( int dataColumn = startColumn; dataColumn < lineLen; dataColumn += nbCols ) {
+                    painter.drawText( xPos, yPos + dyPos + fontAscent,
+                                      line.mid( dataColumn, nbCols ) );
+                    dyPos += fontHeight;
+                    visibleLineToFilePos[visibleLine++] = QPoint( dataColumn, dataLine );
+                }
             }
 
             // Then draw the bullet
@@ -679,7 +747,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             const int middleXLine = bulletLineX_ / 2;
             const int middleYLine = yPos + (fontHeight / 2);
 
-            const LineType line_type = lineType( i );
+            const LineType line_type = lineType( dataLine );
             if ( line_type == Marked ) {
                 // A pretty arrow if the line is marked
                 const QPoint points[7] = {
@@ -696,7 +764,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 painter.drawPolygon( points, 7 );
             }
             else {
-                if ( lineType( i ) == Match )
+                if ( lineType( dataLine ) == Match )
                     painter.setBrush( matchBulletBrush );
                 else
                     painter.setBrush( normalBulletBrush );
@@ -704,7 +772,16 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                         middleYLine - circleSize,
                         circleSize * 2, circleSize * 2 );
             }
+
+            ++dataLine;
+            yPos += dyPos;
         } // For each line
+
+        // Update the overview if we have one
+        if ( overview_ != NULL ) {
+            overview_->updateCurrentPosition( firstLine, dataLine );
+            overviewWidget_.update();
+        }
     }
     LOG(logDEBUG4) << "End of repaint";
 }
@@ -770,6 +847,12 @@ void AbstractLogView::refreshOverview()
     }
 }
 
+void AbstractLogView::setWrapLines( bool wrapLines )
+{
+    wrapLines_ = wrapLines;
+    update();
+}
+
 // Reset the QuickFind when the pattern is changed.
 void AbstractLogView::handlePatternUpdated()
 {
@@ -800,21 +883,21 @@ void AbstractLogView::updateData()
 
     // Adapt the scroll bars to the new content
     verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
-    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
-        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
-    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    // Disable horizontal scroll bar when wrapping is turned on
+    int hScrollMaxValue = 0;
+    if ( ! wrapLines_ ) {
+        hScrollMaxValue =
+            ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+                ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    }
+    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
     // Reset the QuickFind in case we have new stuff to search into
     quickFind_.resetLimits();
 
     if ( followMode_ )
         jumpToBottom();
-
-    // Update the overview if we have one
-    if ( overview_ != NULL )
-        overview_->updateCurrentPosition( firstLine, lastLine );
 
     // Repaint!
     update();
@@ -827,20 +910,22 @@ void AbstractLogView::updateDisplaySize()
     charHeight_ = fm.height();
     charWidth_ = fm.maxWidth();
 
-    // Calculate the index of the last line shown
-    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
-
     // Update the scroll bars
     verticalScrollBar()->setPageStep( getNbVisibleLines() );
 
-    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
-        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
+    int hScrollMaxValue = 0;
+    if ( ! wrapLines_ ) {
+        hScrollMaxValue =
+            ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+                ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    }
+    horizontalScrollBar()->setRange( 0,  hScrollMaxValue );
 
     LOG(logDEBUG) << "viewport.width()=" << viewport()->width();
     LOG(logDEBUG) << "viewport.height()=" << viewport()->height();
     LOG(logDEBUG) << "width()=" << width();
     LOG(logDEBUG) << "height()=" << height();
+    LOG(logDEBUG) << "hScrollMaxValue=" << hScrollMaxValue;
     overviewWidget_.setGeometry( viewport()->width() + 2, 1,
             OVERVIEW_WIDTH - 1, viewport()->height() );
 }
@@ -889,44 +974,58 @@ int AbstractLogView::getNbVisibleLines() const
 // Returns the number of columns visible in the viewport
 int AbstractLogView::getNbVisibleCols() const
 {
-    return ( viewport()->width() - leftMarginPx_ ) / charWidth_ + 1;
+    int pixelWidth = viewport()->width() - leftMarginPx_ -
+        verticalScrollBar()->width();
+    return pixelWidth / charWidth_ + 1;
 }
 
 // Converts the mouse x, y coordinates to the line number in the file
 int AbstractLogView::convertCoordToLine(int yPos) const
 {
-    QFontMetrics fm = fontMetrics();
-    int line = firstLine + yPos/fm.height();
+    int visibleLine = yPos / charHeight_;
+    const QPoint& lineStartFilePos = visibleLineToFilePos[visibleLine];
 
-    return line;
+    LOG(logDEBUG) << "AbstractLogView::convertCoordToLine "
+        << "view y pos " << yPos << " -> file line " << lineStartFilePos.y();
+    return lineStartFilePos.y();
 }
 
 // Converts the mouse x, y coordinates to the char coordinates (in the file)
 // This function ensure the pos exists in the file.
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
-    int line = firstLine + pos.y() / charHeight_;
+    // Restrict mouse pos to the actual view region and normalize
+    int xPos = qMin( qMax( pos.x() - leftMarginPx_, 0 ),
+                     viewport()->width() - verticalScrollBar()->width() - leftMarginPx_ );
+    int yPos = pos.y();
+
+    int visibleLine = yPos / charHeight_;
+    int visibleColumn = xPos / charWidth_;
+    const QPoint& lineStartFilePos = visibleLineToFilePos[visibleLine];
+    int column = visibleColumn + lineStartFilePos.x();
+    int line = lineStartFilePos.y();
+
+    // Safety checks and bounds
+
+    QString this_line = logData->getExpandedLineString( line );
+    const int length = this_line.length();
+
     if ( line >= logData->getNbLine() )
         line = logData->getNbLine() - 1;
     if ( line < 0 )
         line = 0;
-
-    // Determine column in screen space and convert it to file space
-    int column = firstCol + ( pos.x() - leftMarginPx_ ) / charWidth_;
-
-    QString this_line = logData->getExpandedLineString( line );
-    const int length = this_line.length();
 
     if ( column >= length )
         column = length - 1;
     if ( column < 0 )
         column = 0;
 
-    LOG(logDEBUG) << "AbstractLogView::convertCoordToFilePos col="
-        << column << " line=" << line;
-    QPoint point( column, line );
+    QPoint filePos( column, line );
 
-    return point;
+    LOG(logDEBUG) << "AbstractLogView::convertCoordToFilePos "
+        << "view pos ( " << pos.x() << ", " << pos.y() << " ) -> "
+        << "file pos ( " << filePos.x() << ", " << filePos.y() << " )";
+    return filePos;
 }
 
 // Makes the widget adjust itself to display the passed line.

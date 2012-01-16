@@ -573,7 +573,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             const int xPos = bulletLineX_ + 2;
 
             // string to print, cut to fit the length and position of the view
-            const QString cutLine = lines[i - firstLine].mid( firstCol, nbCols );
+            const QString line = lines[i - firstLine];
+            const QString cutLine = line.mid( firstCol, nbCols );
 
             if ( selection_.isLineSelected( i ) ) {
                 // Reverse the selected line
@@ -598,7 +599,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             // Has the line got elements to be highlighted
             QList<QuickFindMatch> qfMatchList;
             bool isMatch =
-                quickFindPattern_->matchLine( cutLine, qfMatchList );
+                quickFindPattern_->matchLine( line, qfMatchList );
 
             if ( isSelection || isMatch ) {
                 // We use the LineDrawer and its chunks because the
@@ -609,14 +610,20 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 QList<LineChunk> chunkList;
                 int column = 0; // Current column in line space
                 foreach( const QuickFindMatch match, qfMatchList ) {
-                    int start = match.startColumn();
+                    int start = match.startColumn() - firstCol;
+                    int end = start + match.length();
+                    // Ignore matches that are *completely* outside view area
+                    if ( ( start < 0 && end < 0 ) || start >= nbCols )
+                        continue;
                     if ( start > column )
                         chunkList << LineChunk( column, start - 1, LineChunk::Normal );
-                    column = start + match.length() - 1;
-                    chunkList << LineChunk( start, column, LineChunk::Highlighted );
+                    column = qMin( start + match.length() - 1, nbCols );
+                    chunkList << LineChunk( qMax( start, 0 ), column,
+                                            LineChunk::Highlighted );
                     column++;
                 }
-                chunkList << LineChunk( column, cutLine.length() - 1, LineChunk::Normal );
+                if ( column <= cutLine.length() - 1 )
+                    chunkList << LineChunk( column, cutLine.length() - 1, LineChunk::Normal );
 
                 // Then we add the selection if needed
                 QList<LineChunk> newChunkList;

@@ -264,8 +264,7 @@ class AbstractLogView : public QAbstractScrollArea
     int firstCol;
 
     // Text handling
-    bool useFixedFont_;
-    int charWidth_;             // Must only be used if useFixedFont_ == true
+    int charWidth_;
     int charHeight_;
 
     // Popup menu

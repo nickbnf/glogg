@@ -26,6 +26,7 @@
 
 class QAction;
 class RecentFiles;
+class MenuActionToolTipBehavior;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
@@ -87,6 +88,7 @@ class MainWindow : public QMainWindow
     void createToolBars();
     void createStatusBar();
     void createCrawler();
+    void createRecentFileToolTipTimer();
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName );
@@ -105,6 +107,7 @@ class MainWindow : public QMainWindow
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];
+    MenuActionToolTipBehavior *recentFileActionBehaviors[MaxRecentFiles];
     QAction *separatorAction;
 
     QMenu *fileMenu;

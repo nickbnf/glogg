@@ -34,6 +34,7 @@ SOURCES += main.cpp \
     quickfindwidget.cpp \
     sessioninfo.cpp \
     recentfiles.cpp \
+    menuactiontooltipbehavior.cpp \
     overview.cpp \
     overviewwidget.cpp \
     marks.cpp
@@ -65,6 +66,7 @@ HEADERS += \
     sessioninfo.h \
     persistable.h \
     recentfiles.h \
+    menuactiontooltipbehavior.h \
     overview.h \
     overviewwidget.h \
     marks.h

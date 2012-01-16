@@ -35,6 +35,7 @@
 #include "optionsdialog.h"
 #include "persistentinfo.h"
 #include "savedsearches.h"
+#include "menuactiontooltipbehavior.h"
 
 MainWindow::MainWindow() :
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ), mainIcon_()
@@ -187,8 +188,11 @@ void MainWindow::createMenus()
     fileMenu = menuBar()->addMenu( tr("&File") );
     fileMenu->addAction( openAction );
     fileMenu->addSeparator();
-    for (int i = 0; i < MaxRecentFiles; ++i)
+    for (int i = 0; i < MaxRecentFiles; ++i) {
         fileMenu->addAction( recentFileActions[i] );
+        recentFileActionBehaviors[i] =
+            new MenuActionToolTipBehavior(recentFileActions[i], fileMenu, this);
+    }
     fileMenu->addSeparator();
     fileMenu->addAction( exitAction );
 
@@ -500,6 +504,7 @@ void MainWindow::updateRecentFileActions()
         if ( j < recent_files.count() ) {
             QString text = tr("&%1 %2").arg(j + 1).arg(strippedName(recent_files[j]));
             recentFileActions[j]->setText( text );
+            recentFileActions[j]->setToolTip( recent_files[j] );
             recentFileActions[j]->setData( recent_files[j] );
             recentFileActions[j]->setVisible( true );
         }

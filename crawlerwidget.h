@@ -176,6 +176,7 @@ class CrawlerWidget : public QSplitter
     QToolButton*    searchButton;
     QToolButton*    stopButton;
     FilteredView*   filteredView;
+    QComboBox*      visibilityBox;
     InfoLine*       searchInfoLine;
     QCheckBox*      ignoreCaseCheck;
     QCheckBox*      searchRefreshCheck;

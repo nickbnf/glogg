@@ -30,6 +30,9 @@
 #include <QLineEdit>
 #include <QFileInfo>
 #include <QKeyEvent>
+#include <QStandardItemModel>
+#include <QHeaderView>
+#include <QTreeView>
 
 #include "crawlerwidget.h"
 
@@ -67,6 +70,55 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     filteredView = new FilteredView( logFilteredData_, quickFindPattern_ );
 
     savedSearches = searches;
+
+    // Construct the visibility button
+    QPixmap marksAndMatchesPixmap( 20, 10 );
+    QPixmap marksPixmap( 20, 10 );
+    QPixmap matchesPixmap( 20, 10 );
+
+    marksAndMatchesPixmap.fill( "grey" );
+    marksPixmap.fill( Qt::blue );
+    matchesPixmap.fill( Qt::red );
+
+    QStandardItemModel* visibilityModel = new QStandardItemModel( 3, 2 );
+    visibilityModel->setItem( 0 , 0, new QStandardItem( QIcon( marksAndMatchesPixmap ), "" ) );
+    visibilityModel->setItem( 0 , 1, new QStandardItem( tr( "Marks and matches" ) ) );
+    visibilityModel->setItem( 1 , 0, new QStandardItem( QIcon( marksPixmap ), "" ) );
+    visibilityModel->setItem( 1 , 1, new QStandardItem( tr( "Marks" ) ) );
+    visibilityModel->setItem( 2 , 0, new QStandardItem( QIcon( matchesPixmap ), "" ) );
+    visibilityModel->setItem( 2 , 1, new QStandardItem( tr( "Matches" ) ) );
+
+    QTreeView *treeView = new QTreeView;
+    treeView->setModel( visibilityModel );
+    treeView->setColumnWidth( 0, 20 );
+    treeView->setColumnWidth( 1, 0 );
+    treeView->setColumnWidth( 2, 1000 );
+    treeView->header()->hide();
+    treeView->header()->setStretchLastSection(false);
+    treeView->header()->setResizeMode(0, QHeaderView::Stretch);
+    treeView->header()->setResizeMode(1, QHeaderView::ResizeToContents);
+    treeView->setMinimumWidth( 170 );
+
+    visibilityBox = new QComboBox();
+    visibilityBox->setModel( visibilityModel );
+    visibilityBox->setView( treeView );
+    visibilityBox->setModelColumn( 0 );
+    visibilityBox->setStyleSheet( " \
+        QComboBox {\
+            padding: 1px 2px 1px 6px;\
+            max-width: 20px;\
+            width: 20px;\
+            height: 15px;\
+            margin: 0px 1px 1px 1px;\
+            border: 1px solid gray;\
+        } \
+        QComboBox::drop-down::down-arrow {\
+            subcontrol-origin: content;\
+            subcontrol-position: center;\
+            width: 5px;\
+            border-width: 0px;\
+        } \
+" );
 
     // Construct the Search Info line
     searchInfoLine = new InfoLine();
@@ -110,6 +162,7 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
     QHBoxLayout* searchInfoLineLayout = new QHBoxLayout;
+    searchInfoLineLayout->addWidget( visibilityBox );
     searchInfoLineLayout->addWidget( searchInfoLine );
     searchInfoLineLayout->addWidget( ignoreCaseCheck );
     searchInfoLineLayout->addWidget( searchRefreshCheck );

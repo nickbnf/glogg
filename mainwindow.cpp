@@ -144,7 +144,7 @@ void MainWindow::createActions()
     connect( findAction, SIGNAL(triggered()),
             this, SLOT( find() ) );
 
-    overviewVisibleAction = new QAction( tr("Matches overview"), this );
+    overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
     overviewVisibleAction->setChecked( config.isOverviewVisible() );
     connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
@@ -157,6 +157,7 @@ void MainWindow::createActions()
             this, SIGNAL(followSet( bool )) );
 
     reloadAction = new QAction( tr("&Reload"), this );
+    reloadAction->setShortcut(QKeySequence::Refresh);
     reloadAction->setIcon( QIcon(":/images/reload16.png") );
     connect( reloadAction, SIGNAL(triggered()), this, SLOT(reload()) );
 

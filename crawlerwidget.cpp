@@ -32,7 +32,7 @@
 #include <QKeyEvent>
 #include <QStandardItemModel>
 #include <QHeaderView>
-#include <QTreeView>
+#include <QListView>
 
 #include "crawlerwidget.h"
 
@@ -72,50 +72,49 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     savedSearches = searches;
 
     // Construct the visibility button
+    QStandardItemModel* visibilityModel = new QStandardItemModel( this );
+
+    QStandardItem *marksAndMatchesItem = new QStandardItem( tr( "Marks and matches" ) );
     QPixmap marksAndMatchesPixmap( 20, 10 );
+    marksAndMatchesPixmap.fill( Qt::gray );
+    marksAndMatchesItem->setIcon( QIcon( marksAndMatchesPixmap ) );
+    visibilityModel->appendRow( marksAndMatchesItem );
+
+    QStandardItem *marksItem = new QStandardItem( tr( "Marks" ) );
     QPixmap marksPixmap( 20, 10 );
-    QPixmap matchesPixmap( 20, 10 );
-
-    marksAndMatchesPixmap.fill( "grey" );
     marksPixmap.fill( Qt::blue );
+    marksItem->setIcon( QIcon( marksPixmap ) );
+    visibilityModel->appendRow( marksItem );
+
+    QStandardItem *matchesItem = new QStandardItem( tr( "Matches" ) );
+    QPixmap matchesPixmap( 20, 10 );
     matchesPixmap.fill( Qt::red );
+    matchesItem->setIcon( QIcon( matchesPixmap ) );
+    visibilityModel->appendRow( matchesItem );
 
-    QStandardItemModel* visibilityModel = new QStandardItemModel( 3, 2 );
-    visibilityModel->setItem( 0 , 0, new QStandardItem( QIcon( marksAndMatchesPixmap ), "" ) );
-    visibilityModel->setItem( 0 , 1, new QStandardItem( tr( "Marks and matches" ) ) );
-    visibilityModel->setItem( 1 , 0, new QStandardItem( QIcon( marksPixmap ), "" ) );
-    visibilityModel->setItem( 1 , 1, new QStandardItem( tr( "Marks" ) ) );
-    visibilityModel->setItem( 2 , 0, new QStandardItem( QIcon( matchesPixmap ), "" ) );
-    visibilityModel->setItem( 2 , 1, new QStandardItem( tr( "Matches" ) ) );
-
-    QTreeView *treeView = new QTreeView;
-    treeView->setModel( visibilityModel );
-    treeView->setColumnWidth( 0, 20 );
-    treeView->setColumnWidth( 1, 0 );
-    treeView->setColumnWidth( 2, 1000 );
-    treeView->header()->hide();
-    treeView->header()->setStretchLastSection(false);
-    treeView->header()->setResizeMode(0, QHeaderView::Stretch);
-    treeView->header()->setResizeMode(1, QHeaderView::ResizeToContents);
-    treeView->setMinimumWidth( 170 );
+    QListView *visibilityView = new QListView( this );
+    visibilityView->setMovement( QListView::Static );
+    visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
+    visibilityView->setModel( visibilityModel );
 
     visibilityBox = new QComboBox();
     visibilityBox->setModel( visibilityModel );
-    visibilityBox->setView( treeView );
-    visibilityBox->setModelColumn( 0 );
+    visibilityBox->setView( visibilityView );
+
+    // TODO: consider not overriding the stylesheet and just display the text
+    // when drop down is closed.
+    // Also, maybe there is some way to set the popup width to be
+    // sized-to-content (as it is when the stylesheet is not overriden) in the
+    // stylesheet as opposed to setting a hard min-width on the view above.
     visibilityBox->setStyleSheet( " \
-        QComboBox {\
-            padding: 1px 2px 1px 6px;\
-            max-width: 20px;\
+        QComboBox:!on {\
+            padding: 1px 1px 1px 6px;\
             width: 20px;\
             height: 15px;\
-            margin: 0px 1px 1px 1px;\
             border: 1px solid gray;\
         } \
         QComboBox::drop-down::down-arrow {\
-            subcontrol-origin: content;\
-            subcontrol-position: center;\
-            width: 5px;\
+            width: 0px;\
             border-width: 0px;\
         } \
 " );

@@ -75,19 +75,19 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     QStandardItemModel* visibilityModel = new QStandardItemModel( this );
 
     QStandardItem *marksAndMatchesItem = new QStandardItem( tr( "Marks and matches" ) );
-    QPixmap marksAndMatchesPixmap( 20, 10 );
+    QPixmap marksAndMatchesPixmap( 16, 10 );
     marksAndMatchesPixmap.fill( Qt::gray );
     marksAndMatchesItem->setIcon( QIcon( marksAndMatchesPixmap ) );
     visibilityModel->appendRow( marksAndMatchesItem );
 
     QStandardItem *marksItem = new QStandardItem( tr( "Marks" ) );
-    QPixmap marksPixmap( 20, 10 );
+    QPixmap marksPixmap( 16, 10 );
     marksPixmap.fill( Qt::blue );
     marksItem->setIcon( QIcon( marksPixmap ) );
     visibilityModel->appendRow( marksItem );
 
     QStandardItem *matchesItem = new QStandardItem( tr( "Matches" ) );
-    QPixmap matchesPixmap( 20, 10 );
+    QPixmap matchesPixmap( 16, 10 );
     matchesPixmap.fill( Qt::red );
     matchesItem->setIcon( QIcon( matchesPixmap ) );
     visibilityModel->appendRow( matchesItem );
@@ -107,10 +107,14 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // sized-to-content (as it is when the stylesheet is not overriden) in the
     // stylesheet as opposed to setting a hard min-width on the view above.
     visibilityBox->setStyleSheet( " \
+        QComboBox:on {\
+            padding: 1px 2px 1px 6px;\
+            width: 19px;\
+        } \
         QComboBox:!on {\
-            padding: 1px 1px 1px 6px;\
-            width: 20px;\
-            height: 15px;\
+            padding: 1px 2px 1px 7px;\
+            width: 19px;\
+            height: 16px;\
             border: 1px solid gray;\
         } \
         QComboBox::drop-down::down-arrow {\

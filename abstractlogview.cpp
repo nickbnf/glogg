@@ -620,7 +620,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 lineLen = line.length();
                 startColumn = 0;
             } else {
-                lineLen = qMin( line.length() - firstCol, nbCols );
+                lineLen = qMax( qMin( line.length() - firstCol, nbCols ), 0 );
                 startColumn = firstCol;
             }
 
@@ -718,26 +718,30 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     const QString& cutLine = line.mid( firstCol, nbCols );
                     lineDrawer.draw( painter, xPos, yPos, viewport()->width(), nbCols, cutLine );
                 }
-                for ( int dataColumn = startColumn; dataColumn < lineLen; dataColumn += nbCols ) {
+                int dataColumn = startColumn;
+                do {
                     dyPos += fontHeight;
                     visibleLineToFilePos[visibleLine++] = QPoint( dataColumn, dataLine );
-                }
+                    dataColumn += nbCols;
+                } while (dataColumn - startColumn < lineLen || nbCols == 0);
             }
             else {
                 // Nothing to be highlighted, we print the whole line!
-                int nbFrags = qCeil( static_cast<double>(lineLen) / nbCols );
+                int nbFrags = qMax( qCeil( static_cast<double>(lineLen) / nbCols ), 1 );
                 painter.fillRect( xPos, yPos + dyPos, viewport()->width(),
                                   fontHeight * nbFrags, backColor );
                 painter.setPen( foreColor );
 
                 // Draw wrapping if necessary
                 LOG(logDEBUG4) << "lineLen: " << lineLen << " nbCols: " << nbCols;
-                for ( int dataColumn = startColumn; dataColumn < lineLen; dataColumn += nbCols ) {
+                int dataColumn = startColumn;
+                do {
                     painter.drawText( xPos, yPos + dyPos + fontAscent,
                                       line.mid( dataColumn, nbCols ) );
                     dyPos += fontHeight;
                     visibleLineToFilePos[visibleLine++] = QPoint( dataColumn, dataLine );
-                }
+                    dataColumn += nbCols;
+                } while (dataColumn - startColumn < lineLen || nbCols == 0);
             }
 
             // Then draw the bullet

@@ -978,8 +978,7 @@ int AbstractLogView::getNbVisibleLines() const
 // Returns the number of columns visible in the viewport
 int AbstractLogView::getNbVisibleCols() const
 {
-    int pixelWidth = viewport()->width() - leftMarginPx_ -
-        verticalScrollBar()->width();
+    int pixelWidth = viewport()->width() - leftMarginPx_;
     return pixelWidth / charWidth_ + 1;
 }
 

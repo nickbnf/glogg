@@ -284,6 +284,7 @@ class AbstractLogView : public QAbstractScrollArea
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
+    int getNbFullyVisibleCols() const;
     void convertCoordToFilePos( const QPoint& pos,
             int* line, int* column ) const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;

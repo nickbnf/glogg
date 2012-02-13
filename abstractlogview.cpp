@@ -577,7 +577,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         QPainter painter( viewport() );
         const int fontHeight = painter.fontMetrics().height();
         const int fontAscent = painter.fontMetrics().ascent();
-        const int nbCols = getNbVisibleCols();
+        const int nbCols = wrapLines_ ? getNbFullyVisibleCols() : getNbVisibleCols();
         const QPalette& palette = viewport()->palette();
         const FilterSet& filterSet = Persistent<FilterSet>( "filterSet" );
         QColor foreColor, backColor;
@@ -980,6 +980,12 @@ int AbstractLogView::getNbVisibleCols() const
 {
     int pixelWidth = viewport()->width() - leftMarginPx_;
     return pixelWidth / charWidth_ + 1;
+}
+
+int AbstractLogView::getNbFullyVisibleCols() const
+{
+    int pixelWidth = viewport()->width() - leftMarginPx_;
+    return pixelWidth / charWidth_;
 }
 
 // Converts the mouse x, y coordinates to the line number in the file

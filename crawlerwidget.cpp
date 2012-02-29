@@ -72,38 +72,41 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     savedSearches = searches;
 
     // Construct the visibility button
-    QStandardItemModel* visibilityModel = new QStandardItemModel( this );
+    visibilityModel_ = new QStandardItemModel( this );
 
     QStandardItem *marksAndMatchesItem = new QStandardItem( tr( "Marks and matches" ) );
     QPixmap marksAndMatchesPixmap( 16, 10 );
     marksAndMatchesPixmap.fill( Qt::gray );
     marksAndMatchesItem->setIcon( QIcon( marksAndMatchesPixmap ) );
-    visibilityModel->appendRow( marksAndMatchesItem );
+    marksAndMatchesItem->setData( FilteredView::MarksAndMatches );
+    visibilityModel_->appendRow( marksAndMatchesItem );
 
     QStandardItem *marksItem = new QStandardItem( tr( "Marks" ) );
     QPixmap marksPixmap( 16, 10 );
     marksPixmap.fill( Qt::blue );
     marksItem->setIcon( QIcon( marksPixmap ) );
-    visibilityModel->appendRow( marksItem );
+    marksItem->setData( FilteredView::MarksOnly );
+    visibilityModel_->appendRow( marksItem );
 
     QStandardItem *matchesItem = new QStandardItem( tr( "Matches" ) );
     QPixmap matchesPixmap( 16, 10 );
     matchesPixmap.fill( Qt::red );
     matchesItem->setIcon( QIcon( matchesPixmap ) );
-    visibilityModel->appendRow( matchesItem );
+    matchesItem->setData( FilteredView::MatchesOnly );
+    visibilityModel_->appendRow( matchesItem );
 
     QListView *visibilityView = new QListView( this );
     visibilityView->setMovement( QListView::Static );
     visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
-    visibilityView->setModel( visibilityModel );
 
     visibilityBox = new QComboBox();
-    visibilityBox->setModel( visibilityModel );
+    visibilityBox->setModel( visibilityModel_ );
     visibilityBox->setView( visibilityView );
 
-    // TODO: consider not overriding the stylesheet and just display the text
-    // when drop down is closed.
-    // Also, maybe there is some way to set the popup width to be
+    // Select "Marks and matches" by default (same default as the filtered view)
+    visibilityBox->setCurrentIndex( 0 );
+
+    // TODO: Maybe there is some way to set the popup width to be
     // sized-to-content (as it is when the stylesheet is not overriden) in the
     // stylesheet as opposed to setting a hard min-width on the view above.
     visibilityBox->setStyleSheet( " \
@@ -198,6 +201,9 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SLOT( startNewSearch() ) );
     connect(stopButton, SIGNAL( clicked() ),
             this, SLOT( stopSearch() ) );
+
+    connect(visibilityBox, SIGNAL( currentIndexChanged( int ) ),
+            this, SLOT( changeFilteredViewVisibility( int ) ) );
 
     connect(logMainView, SIGNAL( newSelection( int ) ),
             logMainView, SLOT( update() ) );
@@ -566,6 +572,15 @@ void CrawlerWidget::searchTextChangeHandler()
     // We suspend auto-refresh
     searchState_.changeExpression();
     printSearchInfoMessage( logFilteredData_->getNbMatches() );
+}
+
+void CrawlerWidget::changeFilteredViewVisibility( int index )
+{
+    QStandardItem* item = visibilityModel_->item( index );
+    FilteredView::Visibility visibility =
+        static_cast< FilteredView::Visibility>( item->data().toInt() );
+
+    filteredView->setVisibility( visibility );
 }
 
 //

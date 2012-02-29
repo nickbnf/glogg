@@ -21,16 +21,40 @@
 // Most of the actual drawing and event management is done in AbstractLogView
 // Only behaviour specific to the filtered (bottom) view is implemented here.
 
+#include <cassert>
+
 #include "filteredview.h"
 
-FilteredView::FilteredView(const LogFilteredData* newLogData,
-        const QuickFindPattern* const quickFindPattern, QWidget* parent)
-    : AbstractLogView(newLogData, quickFindPattern, parent)
+FilteredView::FilteredView( LogFilteredData* newLogData,
+        const QuickFindPattern* const quickFindPattern, QWidget* parent )
+    : AbstractLogView( newLogData, quickFindPattern, parent )
 {
     // We keep a copy of the filtered data for fast lookup of the line type
     logFilteredData_ = newLogData;
 }
 
+void FilteredView::setVisibility( Visibility visi )
+{
+    assert( logFilteredData_ );
+
+    LogFilteredData::Visibility data_visibility =
+        LogFilteredData::MarksAndMatches;
+    switch ( visi ) {
+        case MarksOnly:
+            data_visibility = LogFilteredData::MarksOnly;
+            break;
+        case MatchesOnly:
+            data_visibility = LogFilteredData::MatchesOnly;
+            break;
+        case MarksAndMatches:
+            data_visibility = LogFilteredData::MarksAndMatches;
+            break;
+    };
+
+    logFilteredData_->setVisibility( data_visibility );
+
+    updateData();
+}
 
 // For the filtered view, a line is always matching!
 AbstractLogView::LineType FilteredView::lineType( int lineNumber ) const

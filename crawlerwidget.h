@@ -40,6 +40,7 @@ class QuickFindPattern;
 class QuickFindWidget;
 class SavedSearches;
 class Overview;
+class QStandardItemModel;
 
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
@@ -121,6 +122,9 @@ class CrawlerWidget : public QSplitter
 
     // Called when the text on the search line is modified
     void searchTextChangeHandler();
+
+    // Called when the user change the visibility combobox
+    void changeFilteredViewVisibility( int index );
 
   private:
     // State machine holding the state of the search, used to allow/disallow
@@ -205,6 +209,9 @@ class CrawlerWidget : public QSplitter
 
     // Matches overview
     Overview*       overview_;
+
+    // Model for the visibility selector
+    QStandardItemModel* visibilityModel_;
 };
 
 #endif

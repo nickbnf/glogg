@@ -28,15 +28,19 @@
 class FilteredView : public AbstractLogView
 {
   public:
-    FilteredView( const LogFilteredData* newLogData,
+    FilteredView( LogFilteredData* newLogData,
             const QuickFindPattern* const quickFindPattern,
             QWidget* parent = 0 );
+
+    // What is visible in the view.
+    enum Visibility { MatchesOnly, MarksOnly, MarksAndMatches };
+    void setVisibility( Visibility visi );
 
   protected:
     virtual LineType lineType( int lineNumber ) const;
 
   private:
-    const LogFilteredData* logFilteredData_;
+    LogFilteredData* logFilteredData_;
 };
 
 #endif

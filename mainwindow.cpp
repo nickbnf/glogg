@@ -151,6 +151,12 @@ void MainWindow::createActions()
     connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleOverviewVisibility( bool )) );
 
+    wrapLinesAction = new QAction( tr("&Wrap lines"), this );
+    wrapLinesAction->setCheckable( true );
+    wrapLinesAction->setChecked( config.wrapLines() );
+    connect( wrapLinesAction, SIGNAL( toggled( bool ) ),
+            this, SLOT( toggleWrapLines( bool )) );
+
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setShortcut(Qt::Key_F);
     followAction->setCheckable(true);
@@ -203,6 +209,7 @@ void MainWindow::createMenus()
 
     viewMenu = menuBar()->addMenu( tr("&View") );
     viewMenu->addAction( overviewVisibleAction );
+    viewMenu->addAction( wrapLinesAction );
     viewMenu->addSeparator();
     viewMenu->addAction( followAction );
     viewMenu->addSeparator();
@@ -340,6 +347,13 @@ void MainWindow::toggleOverviewVisibility( bool isVisible )
 
     config.setOverviewVisible( isVisible );
 
+    emit optionsChanged();
+}
+
+void MainWindow::toggleWrapLines( bool wrapLines )
+{
+    Configuration& config = Persistent<Configuration>( "settings" );
+    config.setWrapLines( wrapLines );
     emit optionsChanged();
 }
 

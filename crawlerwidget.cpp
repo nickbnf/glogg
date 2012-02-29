@@ -447,11 +447,14 @@ void CrawlerWidget::applyConfiguration()
 {
     Configuration& config = Persistent<Configuration>( "settings" );
     QFont font = config.mainFont();
+    bool wrapLines = config.wrapLines();
 
     LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
 
     logMainView->setFont(font);
     filteredView->setFont(font);
+    logMainView->setWrapLines(wrapLines);
+    filteredView->setWrapLines(wrapLines);
 
     overview_->setVisible( config.isOverviewVisible() );
     logMainView->refreshOverview();

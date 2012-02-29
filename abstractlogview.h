@@ -60,7 +60,12 @@ class LineDrawer
 {
   public:
     LineDrawer( const QColor& back_color) :
-        list(), backColor_( back_color ) { };
+        list(),
+        backColor_( back_color ),
+        wrapLines_( false )
+    { };
+
+    void setWrapLines( bool wrapLines );
 
     // Add a chunk of line using the given colours.
     // Both first_col and last_col are included
@@ -70,11 +75,13 @@ class LineDrawer
     void addChunk( int first_col, int last_col, QColor fore, QColor back );
     void addChunk( const LineChunk& chunk, QColor fore, QColor back );
 
-    // Draw the current line of text using the given painter,
-    // in the passed block (in pixels)
-    // The line must be cut to fit on the screen.
+    // Draw the current line of text using the given painter, in the
+    // passed block, wrapping as necessary. Block is restricted only
+    // in x-axis, the wrapping can occupy any number of lines in the
+    // y-direction.  Width of block is passed in pixels (line_width)
+    // and in chars (nbCols).
     void draw( QPainter& painter, int xPos, int yPos,
-            int line_width, const QString& line );
+               int line_width, int nbCols, const QString& line );
 
   private:
     class Chunk {
@@ -98,6 +105,7 @@ class LineDrawer
     };
     QList<Chunk> list;
     QColor backColor_;
+    bool wrapLines_;
 };
 
 
@@ -217,6 +225,9 @@ class AbstractLogView : public QAbstractScrollArea
     // (does NOT emit followDisabled() )
     void jumpToLine( int line );
 
+    // Set the flag that controls line wrapping
+    void setWrapLines( bool wrapLines );
+
   private slots:
     void handlePatternUpdated();
 
@@ -231,6 +242,8 @@ class AbstractLogView : public QAbstractScrollArea
 
     // Follow mode
     bool followMode_;
+
+    bool wrapLines_;
 
     // Pointer to the CrawlerWidget's data set
     const AbstractLogData* logData;
@@ -251,13 +264,16 @@ class AbstractLogView : public QAbstractScrollArea
 
     Selection selection_;
     qint64 firstLine;
-    qint64 lastLine;
     int firstCol;
 
     // Text handling
     bool useFixedFont_;
     int charWidth_;             // Must only be used if useFixedFont_ == true
     int charHeight_;
+
+    // Map: visible line number -> file (column, line) where visible text starts
+    // For converting coord to data line
+    QVector<QPoint> visibleLineToFilePos;
 
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;
@@ -268,6 +284,7 @@ class AbstractLogView : public QAbstractScrollArea
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
+    int getNbFullyVisibleCols() const;
     void convertCoordToFilePos( const QPoint& pos,
             int* line, int* column ) const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;

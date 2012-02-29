@@ -60,6 +60,7 @@ class MainWindow : public QMainWindow
 
     // Change the view settings
     void toggleOverviewVisibility( bool isVisible );
+    void toggleWrapLines( bool wrapLines );
 
     // Disable the follow mode checkbox and send the followSet signal down
     void disableFollow();
@@ -125,6 +126,7 @@ class MainWindow : public QMainWindow
     QAction *copyAction;
     QAction *findAction;
     QAction *overviewVisibleAction;
+    QAction *wrapLinesAction;
     QAction *followAction;
     QAction *reloadAction;
     QAction *stopAction;

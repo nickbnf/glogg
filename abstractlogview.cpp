@@ -44,6 +44,7 @@
 #include "quickfind.h"
 #include "quickfindpattern.h"
 #include "overview.h"
+#include "configuration.h"
 
 
 LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
@@ -252,6 +253,8 @@ void AbstractLogView::changeEvent( QEvent* changeEvent )
 
 void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
+    static Configuration& config = Persistent<Configuration>( "settings" );
+
     // Selection implementation
     if ( mouseEvent->button() == Qt::LeftButton )
     {
@@ -298,6 +301,10 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             findPreviousAction_->setEnabled( false );
             addToSearchAction_->setEnabled( false );
         }
+
+        // "Add to search" only makes sense in regexp mode
+        if ( config.mainRegexpType() != ExtendedRegexp )
+            addToSearchAction_->setEnabled( false );
 
         // Display the popup (blocking)
         popupMenu_->exec( QCursor::pos() );

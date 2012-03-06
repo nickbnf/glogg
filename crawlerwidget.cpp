@@ -595,8 +595,8 @@ void CrawlerWidget::addToSearch( const QString& string )
     if ( text.isEmpty() )
         text = string;
     else {
-        text += '|';
-        text += string;
+        // Escape the regexp chars from the string before adding it.
+        text += ( '|' + QRegExp::escape( string ) );
     }
 
     searchLineEdit->setEditText( text );
@@ -628,7 +628,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     if ( !searchText.isEmpty() ) {
         // Determine the type of regexp depending on the config
         QRegExp::PatternSyntax syntax;
-        Configuration& config = Persistent<Configuration>( "settings" );
+        static Configuration& config = Persistent<Configuration>( "settings" );
         switch ( config.mainRegexpType() ) {
             case Wildcard:
                 syntax = QRegExp::Wildcard;

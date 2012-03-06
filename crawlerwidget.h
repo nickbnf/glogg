@@ -126,6 +126,9 @@ class CrawlerWidget : public QSplitter
     // Called when the user change the visibility combobox
     void changeFilteredViewVisibility( int index );
 
+    // Called when the user add the string to the search
+    void addToSearch( const QString& string );
+
   private:
     // State machine holding the state of the search, used to allow/disallow
     // auto-refresh and inform the user via the info line.

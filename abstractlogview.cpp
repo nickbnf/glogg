@@ -33,6 +33,8 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QScrollBar>
+#include <QMenu>
+#include <QAction>
 
 #include "log.h"
 
@@ -209,6 +211,9 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
 
     setAttribute( Qt::WA_StaticContents );  // Does it work?
 
+    // Init the popup menu
+    createMenu();
+
     // Signals
     connect( quickFindPattern_, SIGNAL( patternUpdated() ),
             this, SLOT ( handlePatternUpdated() ) );
@@ -271,6 +276,31 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
             selectionCurrentEndPos_ = selectionStartPos_;
         }
+    }
+    else if ( mouseEvent->button() == Qt::RightButton )
+    {
+        // Prepare the popup depending on selection type
+        if ( selection_.isSingleLine() ) {
+            copyAction_->setText( "&Copy this line" );
+        }
+        else {
+            copyAction_->setText( "&Copy" );
+            copyAction_->setStatusTip( tr("Copy the selection") );
+        }
+
+        if ( selection_.isPortion() ) {
+            findNextAction_->setEnabled( true );
+            findPreviousAction_->setEnabled( true );
+            addToSearchAction_->setEnabled( true );
+        }
+        else {
+            findNextAction_->setEnabled( false );
+            findPreviousAction_->setEnabled( false );
+            addToSearchAction_->setEnabled( false );
+        }
+
+        // Display the popup (blocking)
+        popupMenu_->exec( QCursor::pos() );
     }
 }
 
@@ -461,19 +491,11 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     break;
                 case '*':
                     // Use the selected 'word' and search forward
-                    if ( selection_.isPortion() ) {
-                        emit changeQuickFind(
-                                selection_.getSelectedText( logData ) );
-                        searchNext();
-                    }
+                    findNextSelected();
                     break;
                 case '#':
                     // Use the selected 'word' and search backward
-                    if ( selection_.isPortion() ) {
-                        emit changeQuickFind(
-                                selection_.getSelectedText( logData ) );
-                        searchPrevious();
-                    }
+                    findPreviousSelected();
                     break;
                 default:
                     keyEvent->ignore();
@@ -770,6 +792,47 @@ void AbstractLogView::handlePatternUpdated()
 
     quickFind_.resetLimits();
     update();
+}
+
+// OR the current with the current search expression
+void AbstractLogView::addToSearch()
+{
+    if ( selection_.isPortion() ) {
+        LOG(logDEBUG) << "AbstractLogView::addToSearch()";
+        emit addToSearch( selection_.getSelectedText( logData ) );
+    }
+    else {
+        LOG(logERROR) << "AbstractLogView::addToSearch called for a wrong type of selection";
+    }
+}
+
+// Find next occurence of the selected text (*)
+void AbstractLogView::findNextSelected()
+{
+    // Use the selected 'word' and search forward
+    if ( selection_.isPortion() ) {
+        emit changeQuickFind(
+                selection_.getSelectedText( logData ) );
+        searchNext();
+    }
+}
+
+// Find next previous of the selected text (#)
+void AbstractLogView::findPreviousSelected()
+{
+    if ( selection_.isPortion() ) {
+        emit changeQuickFind(
+                selection_.getSelectedText( logData ) );
+        searchPrevious();
+    }
+}
+
+// Copy the selection to the clipboard
+void AbstractLogView::copy()
+{
+    static QClipboard* clipboard = QApplication::clipboard();
+
+    clipboard->setText( selection_.getSelectedText( logData ) );
 }
 
 //
@@ -1094,4 +1157,40 @@ void AbstractLogView::updateGlobalSelection()
     if ( ! selection_.isSingleLine() )
         clipboard->setText( selection_.getSelectedText( logData ),
                 QClipboard::Selection );
+}
+
+// Create the pop-up menu
+void AbstractLogView::createMenu()
+{
+    copyAction_ = new QAction( tr("&Copy"), this );
+    // No text as this action title depends on the type of selection
+    connect( copyAction_, SIGNAL(triggered()), this, SLOT(copy()) );
+
+    // For '#' and '*', shortcuts doesn't seem to work but
+    // at least it displays them in the menu, we manually handle those keys
+    // as keys event anyway (in keyPressEvent).
+    findNextAction_ = new QAction(tr("Find &next"), this);
+    findNextAction_->setShortcut( Qt::Key_Asterisk );
+    findNextAction_->setStatusTip( tr("Find the next occurence") );
+    connect( findNextAction_, SIGNAL(triggered()),
+            this, SLOT( findNextSelected() ) );
+
+    findPreviousAction_ = new QAction( tr("Find &previous"), this );
+    findPreviousAction_->setShortcut( tr("#")  );
+    findPreviousAction_->setStatusTip( tr("Find the previous occurence") );
+    connect( findPreviousAction_, SIGNAL(triggered()),
+            this, SLOT( findPreviousSelected() ) );
+
+    addToSearchAction_ = new QAction( tr("&Add to search"), this );
+    addToSearchAction_->setStatusTip(
+            tr("Add the selection to the current search") );
+    connect( addToSearchAction_, SIGNAL( triggered() ),
+            this, SLOT( addToSearch() ) );
+
+    popupMenu_ = new QMenu( this );
+    popupMenu_->addAction( copyAction_ );
+    popupMenu_->addSeparator();
+    popupMenu_->addAction( findNextAction_ );
+    popupMenu_->addAction( findPreviousAction_ );
+    popupMenu_->addAction( addToSearchAction_ );
 }

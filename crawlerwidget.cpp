@@ -218,6 +218,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     connect(filteredView, SIGNAL( markLine( qint64 ) ),
             this, SLOT( markLineFromFiltered( qint64 ) ) );
 
+    connect(logMainView, SIGNAL( addToSearch( const QString& ) ),
+            this, SLOT( addToSearch( const QString& ) ) );
+    connect(filteredView, SIGNAL( addToSearch( const QString& ) ),
+            this, SLOT( addToSearch( const QString& ) ) );
+
     // Follow option (up and down)
     connect(this, SIGNAL( followSet( bool ) ),
             logMainView, SLOT( followSet( bool ) ) );
@@ -581,6 +586,23 @@ void CrawlerWidget::changeFilteredViewVisibility( int index )
         static_cast< FilteredView::Visibility>( item->data().toInt() );
 
     filteredView->setVisibility( visibility );
+}
+
+void CrawlerWidget::addToSearch( const QString& string )
+{
+    QString text = searchLineEdit->currentText();
+
+    if ( text.isEmpty() )
+        text = string;
+    else {
+        text += '|';
+        text += string;
+    }
+
+    searchLineEdit->setEditText( text );
+
+    // Set the focus to lineEdit so that the user can press 'Return' immediately
+    searchLineEdit->lineEdit()->setFocus();
 }
 
 //

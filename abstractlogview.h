@@ -28,6 +28,9 @@
 #include "quickfind.h"
 #include "overviewwidget.h"
 
+class QMenu;
+class QAction;
+
 class LineChunk
 {
   public:
@@ -195,6 +198,8 @@ class AbstractLogView : public QAbstractScrollArea
     // Sent when the view ask for a line to be marked
     // (click in the left margin).
     void markLine( qint64 line );
+    // Sent up when the user wants to add the selection to the search
+    void addToSearch( const QString& selection );
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -219,6 +224,10 @@ class AbstractLogView : public QAbstractScrollArea
 
   private slots:
     void handlePatternUpdated();
+    void addToSearch();
+    void findNextSelected();
+    void findPreviousSelected();
+    void copy();
 
   private:
     // Constants
@@ -259,6 +268,13 @@ class AbstractLogView : public QAbstractScrollArea
     int charWidth_;             // Must only be used if useFixedFont_ == true
     int charHeight_;
 
+    // Popup menu
+    QMenu* popupMenu_;
+    QAction* copyAction_;
+    QAction* findNextAction_;
+    QAction* findPreviousAction_;
+    QAction* addToSearchAction_;
+
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;
     // Our own QuickFind object
@@ -281,6 +297,8 @@ class AbstractLogView : public QAbstractScrollArea
     void jumpToTop();
     void jumpToBottom();
     void selectWordAtPosition( const QPoint& pos );
+
+    void createMenu();
 
     // Search functions (for n/N)
     void searchNext();

@@ -136,7 +136,7 @@ void MainWindow::createActions()
 
     copyAction = new QAction(tr("&Copy"), this);
     copyAction->setShortcut(QKeySequence::Copy);
-    copyAction->setStatusTip(tr("Copy the selected line"));
+    copyAction->setStatusTip(tr("Copy the selection"));
     connect( copyAction, SIGNAL(triggered()), this, SLOT(copy()) );
 
     findAction = new QAction(tr("&Find..."), this);
@@ -273,7 +273,7 @@ void MainWindow::openRecentFile()
 // Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
-    QClipboard* clipboard = QApplication::clipboard();
+    static QClipboard* clipboard = QApplication::clipboard();
 
     clipboard->setText( crawlerWidget->getSelectedText() );
 

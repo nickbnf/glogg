@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include <QFileInfo>
+#include <QTextCodec>
 
 #include "log.h"
 
@@ -65,6 +66,7 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
     maxLength_    = 0;
     currentOperation_ = NULL;
     nextOperation_    = NULL;
+    codec_ = NULL;
 
     // Initialise the file watcher
     connect( &fileWatcher_, SIGNAL( fileChanged( const QString& ) ),
@@ -122,6 +124,11 @@ QDateTime LogData::getLastModifiedDate() const
     return lastModifiedDate_;
 }
 
+void LogData::setCodec( QTextCodec* codec )
+{
+    codec_ = codec;
+}
+
 // Return an initialised LogFilteredData. The search is not started.
 LogFilteredData* LogData::getNewFilteredData() const
 {
@@ -169,6 +176,13 @@ void LogData::startOperation()
         // And let the operation do its stuff
         currentOperation_->start( workerThread_ );
     }
+}
+
+QString LogData::toUnicode( QByteArray rawString ) const
+{
+    if ( codec_ )
+        return codec_->toUnicode( rawString );
+    return QString(rawString);
 }
 
 //
@@ -302,7 +316,7 @@ QString LogData::doGetLineString( qint64 line ) const
 
     file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
 
-    QString string = QString( file_->readLine() );
+    QString string = toUnicode( file_->readLine() );
 
     file_->close();
     fileMutex_.unlock();
@@ -329,7 +343,7 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
     fileMutex_.unlock();
     dataMutex_.unlock();
 
-    QString string = QString( untabify( rawString.constData() ) );
+    QString string = QString( untabify( toUnicode( rawString ) ) );
     string.chop( 1 );
 
     return string;
@@ -375,7 +389,7 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( QString( this_line ) );
+        list.append( toUnicode( this_line ) );
         beginning = end;
     }
 
@@ -419,7 +433,8 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( untabify( this_line.constData() ) );
+        QString str = toUnicode ( this_line );
+        list.append( untabify( str ) );
         beginning = end;
     }
 

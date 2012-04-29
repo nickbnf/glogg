@@ -102,6 +102,26 @@ void OptionsDialog::updateDialogFromConfig()
             getRegexpIndex( config.mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex(
             getRegexpIndex( config.quickfindRegexpType() ) );
+
+    // Sort the available encodings; display all aliases
+    QMap<QString, QString> encodings;
+    foreach ( QByteArray encoding, QTextCodec::availableCodecs() ) {
+        QString encodingStr( encoding );
+        const QString& encodingStrLower = encodingStr.toLower();
+        encodings.insert( encodingStrLower, encodingStr );
+    }
+    QStringList encodingList;
+    foreach ( QString encoding, encodings ) {
+        encodingList.append( encoding );
+    } 
+    defaultEncodingBox->addItems( encodingList );
+
+    const QString& encoding = config.encoding();
+
+    int encodingIndex =
+        defaultEncodingBox->findText( encoding, Qt::MatchFixedString);
+    if ( encodingIndex != -1 )
+        defaultEncodingBox->setCurrentIndex( encodingIndex );
 }
 
 //
@@ -137,6 +157,9 @@ void OptionsDialog::updateConfigFromDialog()
             getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
     config.setQuickfindRegexpType(
             getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
+
+    QString encoding = defaultEncodingBox->currentText();
+    config.setEncoding( encoding );
 
     emit optionsChanged();
 }

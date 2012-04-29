@@ -18,9 +18,9 @@
  */
 
 #include <QFontInfo>
+#include <QTextCodec>
 
 #include "log.h"
-
 #include "configuration.h"
 
 Configuration::Configuration()
@@ -33,6 +33,7 @@ Configuration::Configuration()
     quickfindRegexpType_ = ExtendedRegexp;
 
     overviewVisible_     = true;
+    encoding_ = QTextCodec::codecForLocale()->name();
 
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
@@ -72,6 +73,12 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
+
+    if ( settings.contains( "view.encoding" ) ) {
+        const QString& encoding = settings.value( "view.encoding" ).toString();
+        if ( !encoding.isEmpty() )
+            encoding_ = encoding;
+    }
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -85,4 +92,5 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "view.overviewVisible", overviewVisible_ );
+    settings.setValue( "view.encoding", encoding_ );
 }

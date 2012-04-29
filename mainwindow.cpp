@@ -231,11 +231,36 @@ void MainWindow::createToolBars()
     lineNbField->setMinimumSize(
             lineNbField->fontMetrics().size( 0, "Line 0000000") );
 
+    // Sort the available encodings; display all aliases
+    QMap<QString, QString> encodings;
+    foreach ( QByteArray encoding, QTextCodec::availableCodecs() ) {
+        QString encodingStr( encoding );
+        const QString& encodingStrLower = encodingStr.toLower();
+        encodings.insert( encodingStrLower, encodingStr );
+    }
+    QStringList encodingList;
+    foreach ( QString encoding, encodings ) {
+        encodingList.append( encoding );
+    } 
+
+    encodingBox = new QComboBox();
+    encodingBox->addItems( encodingList );
+    connect( encodingBox, SIGNAL(currentIndexChanged( const QString& )),
+             this, SLOT(reload()) );
+
+    Configuration& config = Persistent<Configuration>( "settings" );
+    const QString& encoding = config.encoding();
+
+    int encodingIndex = encodingBox->findText( encoding, Qt::MatchFixedString );
+    if ( encodingIndex != -1 )
+        encodingBox->setCurrentIndex( encodingIndex );
+
     toolBar = addToolBar( tr("&Toolbar") );
     toolBar->setIconSize( QSize( 16, 16 ) );
     toolBar->setMovable( false );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
+    toolBar->addWidget( encodingBox );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
     toolBar->addWidget( lineNbField );
@@ -453,9 +478,13 @@ bool MainWindow::loadFile( const QString& fileName )
     if ( fileName == currentFile )
         topLine = crawlerWidget->getTopLine();
 
+    // Get the codec for the selected encoding
+    const QString& encoding = encodingBox->currentText();
+    QTextCodec* codec = QTextCodec::codecForName( encoding.toUtf8() );
+
     // Load the file
     loadingFileName = fileName;
-    if ( crawlerWidget->readFile( fileName, topLine ) ) {
+    if ( crawlerWidget->readFile( fileName, codec, topLine ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
         return true;
     }

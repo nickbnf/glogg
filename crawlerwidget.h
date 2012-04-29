@@ -35,6 +35,8 @@
 #include "logdata.h"
 #include "logfiltereddata.h"
 
+class QTextCodec;
+
 class InfoLine;
 class QuickFindPattern;
 class QuickFindWidget;
@@ -53,7 +55,7 @@ class CrawlerWidget : public QSplitter
     CrawlerWidget( SavedSearches* searches, QWidget *parent=0 );
 
     // Loads the passed file and reports success.
-    bool readFile( const QString& fileName, int topLine );
+    bool readFile( const QString& fileName, QTextCodec* codec, int topLine );
     // Stop the loading of the file if one is in progress
     void stopLoading();
     // Get the size (in bytes) and number of lines in the current file.

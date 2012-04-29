@@ -119,6 +119,7 @@ class MainWindow : public QMainWindow
     InfoLine *infoLine;
     QLabel* lineNbField;
     QToolBar *toolBar;
+    QComboBox *encodingBox;
 
     QAction *openAction;
     QAction *exitAction;

@@ -21,11 +21,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+
 #include "crawlerwidget.h"
 #include "infoline.h"
 
 class QAction;
+
 class RecentFiles;
+class RecentEncodings;
+class EncodingSelector;
 class MenuActionToolTipBehavior;
 
 // Main window of the application, creates menus, toolbar and
@@ -74,7 +78,6 @@ class MainWindow : public QMainWindow
     // without the progress gauge and with file info
     void displayNormalStatus( bool success );
 
-
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
@@ -88,6 +91,7 @@ class MainWindow : public QMainWindow
     void createToolBars();
     void createStatusBar();
     void createCrawler();
+    void createEncodingSelector();
     void createRecentFileToolTipTimer();
     void readSettings();
     void writeSettings();
@@ -101,6 +105,7 @@ class MainWindow : public QMainWindow
     SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;
     RecentFiles& recentFiles;
+    RecentEncodings *recentEncodings;
     QString loadingFileName;
     QString currentFile;
     QString previousFile;
@@ -119,7 +124,7 @@ class MainWindow : public QMainWindow
     InfoLine *infoLine;
     QLabel* lineNbField;
     QToolBar *toolBar;
-    QComboBox *encodingBox;
+    EncodingSelector *encodingSelector;
 
     QAction *openAction;
     QAction *exitAction;

@@ -30,16 +30,19 @@
 
 #include "sessioninfo.h"
 #include "recentfiles.h"
+#include "recentencodings.h"
 #include "crawlerwidget.h"
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 #include "persistentinfo.h"
 #include "savedsearches.h"
 #include "menuactiontooltipbehavior.h"
+#include "encodingselector.h"
 
 MainWindow::MainWindow() :
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ), mainIcon_()
 {
+    createEncodingSelector();
     createActions();
     createMenus();
     // createContextMenu();
@@ -60,11 +63,17 @@ MainWindow::MainWindow() :
     connect( this, SIGNAL( optionsChanged() ),
             crawlerWidget, SLOT( applyConfiguration() ) );
 
+    connect( this, SIGNAL( optionsChanged() ),
+             encodingSelector, SLOT( applyConfiguration() ) );
+
     // Actions from the CrawlerWidget
     connect( crawlerWidget, SIGNAL( followDisabled() ),
             this, SLOT( disableFollow() ) );
     connect( crawlerWidget, SIGNAL( updateLineNumber( int ) ),
             this, SLOT( lineNumberHandler( int ) ) );
+
+    connect( encodingSelector, SIGNAL( encodingChanged( const QString& ) ),
+             this, SLOT( reload() ) );
 
     readSettings();
     emit optionsChanged();
@@ -108,6 +117,19 @@ void MainWindow::createCrawler()
     savedSearches = &(Persistent<SavedSearches>( "savedSearches" ));
 
     crawlerWidget = new CrawlerWidget( savedSearches );
+}
+
+void MainWindow::createEncodingSelector()
+{
+    GetPersistentInfo().retrieve( QString( "settings" ) );
+    Configuration* config = &(Persistent<Configuration>( "settings" ));
+
+    GetPersistentInfo().retrieve( QString( "recentEncodings" ) );
+    recentEncodings = &(Persistent<RecentEncodings>( "recentEncodings" ));
+
+    encodingSelector = new EncodingSelector( config, recentEncodings,
+                                             this /* menuParent */,
+                                             this /* parent */);
 }
 
 // Menu actions
@@ -203,6 +225,7 @@ void MainWindow::createMenus()
 
     viewMenu = menuBar()->addMenu( tr("&View") );
     viewMenu->addAction( overviewVisibleAction );
+    viewMenu->addMenu( encodingSelector->encodingsMenu() );
     viewMenu->addSeparator();
     viewMenu->addAction( followAction );
     viewMenu->addSeparator();
@@ -231,36 +254,11 @@ void MainWindow::createToolBars()
     lineNbField->setMinimumSize(
             lineNbField->fontMetrics().size( 0, "Line 0000000") );
 
-    // Sort the available encodings; display all aliases
-    QMap<QString, QString> encodings;
-    foreach ( QByteArray encoding, QTextCodec::availableCodecs() ) {
-        QString encodingStr( encoding );
-        const QString& encodingStrLower = encodingStr.toLower();
-        encodings.insert( encodingStrLower, encodingStr );
-    }
-    QStringList encodingList;
-    foreach ( QString encoding, encodings ) {
-        encodingList.append( encoding );
-    } 
-
-    encodingBox = new QComboBox();
-    encodingBox->addItems( encodingList );
-    connect( encodingBox, SIGNAL(currentIndexChanged( const QString& )),
-             this, SLOT(reload()) );
-
-    Configuration& config = Persistent<Configuration>( "settings" );
-    const QString& encoding = config.encoding();
-
-    int encodingIndex = encodingBox->findText( encoding, Qt::MatchFixedString );
-    if ( encodingIndex != -1 )
-        encodingBox->setCurrentIndex( encodingIndex );
-
     toolBar = addToolBar( tr("&Toolbar") );
     toolBar->setIconSize( QSize( 16, 16 ) );
     toolBar->setMovable( false );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
-    toolBar->addWidget( encodingBox );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
     toolBar->addWidget( lineNbField );
@@ -337,6 +335,8 @@ void MainWindow::filters()
 void MainWindow::options()
 {
     OptionsDialog dialog(this);
+    connect(&dialog, SIGNAL( optionsChanged() ),
+            encodingSelector, SLOT( applyConfiguration() ));
     connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
     dialog.exec();
 }
@@ -478,9 +478,13 @@ bool MainWindow::loadFile( const QString& fileName )
     if ( fileName == currentFile )
         topLine = crawlerWidget->getTopLine();
 
-    // Get the codec for the selected encoding
-    const QString& encoding = encodingBox->currentText();
-    QTextCodec* codec = QTextCodec::codecForName( encoding.toUtf8() );
+    // Get the codec for the currently selected encoding
+    QTextCodec* codec;
+    const QString& encoding = encodingSelector->selectedEncoding();
+    if ( ! encoding.isEmpty() )
+        codec = QTextCodec::codecForName( encoding.toUtf8() );
+    else
+        codec = QTextCodec::codecForLocale();
 
     // Load the file
     loadingFileName = fileName;

@@ -34,10 +34,12 @@ SOURCES += main.cpp \
     quickfindwidget.cpp \
     sessioninfo.cpp \
     recentfiles.cpp \
+    recentencodings.cpp \
     menuactiontooltipbehavior.cpp \
     overview.cpp \
     overviewwidget.cpp \
-    marks.cpp
+    marks.cpp \
+    encodingselector.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -66,10 +68,12 @@ HEADERS += \
     sessioninfo.h \
     persistable.h \
     recentfiles.h \
+    recentencodings.h \
     menuactiontooltipbehavior.h \
     overview.h \
     overviewwidget.h \
-    marks.h
+    marks.h \
+    encodingselector.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

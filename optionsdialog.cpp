@@ -24,6 +24,7 @@
 #include "log.h"
 #include "persistentinfo.h"
 #include "configuration.h"
+#include "encodingselector.h"
 
 // Constructor
 OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
@@ -103,21 +104,9 @@ void OptionsDialog::updateDialogFromConfig()
     quickFindSearchBox->setCurrentIndex(
             getRegexpIndex( config.quickfindRegexpType() ) );
 
-    // Sort the available encodings; display all aliases
-    QMap<QString, QString> encodings;
-    foreach ( QByteArray encoding, QTextCodec::availableCodecs() ) {
-        QString encodingStr( encoding );
-        const QString& encodingStrLower = encodingStr.toLower();
-        encodings.insert( encodingStrLower, encodingStr );
-    }
-    QStringList encodingList;
-    foreach ( QString encoding, encodings ) {
-        encodingList.append( encoding );
-    } 
-    defaultEncodingBox->addItems( encodingList );
+    defaultEncodingBox->addItems( EncodingSelector::allEncodings() );
 
     const QString& encoding = config.encoding();
-
     int encodingIndex =
         defaultEncodingBox->findText( encoding, Qt::MatchFixedString);
     if ( encodingIndex != -1 )

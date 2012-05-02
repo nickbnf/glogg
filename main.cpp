@@ -30,6 +30,7 @@ using namespace std;
 #include "configuration.h"
 #include "filterset.h"
 #include "recentfiles.h"
+#include "recentencodings.h"
 #include "mainwindow.h"
 #include "savedsearches.h"
 #include "log.h"
@@ -127,6 +128,8 @@ int main(int argc, char *argv[])
             new SavedSearches, QString( "savedSearches" ) );
     GetPersistentInfo().registerPersistable(
             new RecentFiles, QString( "recentFiles" ) );
+    GetPersistentInfo().registerPersistable(
+            new RecentEncodings, QString( "recentEncodings" ) );
 
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );

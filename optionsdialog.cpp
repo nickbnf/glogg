@@ -24,6 +24,7 @@
 #include "log.h"
 #include "persistentinfo.h"
 #include "configuration.h"
+#include "encodingselector.h"
 
 // Constructor
 OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
@@ -102,6 +103,14 @@ void OptionsDialog::updateDialogFromConfig()
             getRegexpIndex( config.mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex(
             getRegexpIndex( config.quickfindRegexpType() ) );
+
+    defaultEncodingBox->addItems( EncodingSelector::allEncodings() );
+
+    const QString& encoding = config.encoding();
+    int encodingIndex =
+        defaultEncodingBox->findText( encoding, Qt::MatchFixedString);
+    if ( encodingIndex != -1 )
+        defaultEncodingBox->setCurrentIndex( encodingIndex );
 }
 
 //
@@ -137,6 +146,9 @@ void OptionsDialog::updateConfigFromDialog()
             getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
     config.setQuickfindRegexpType(
             getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
+
+    QString encoding = defaultEncodingBox->currentText();
+    config.setEncoding( encoding );
 
     emit optionsChanged();
 }

@@ -32,6 +32,7 @@
 #include "filewatcher.h"
 
 class LogFilteredData;
+class QTextCodec;
 
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
@@ -63,6 +64,8 @@ class LogData : public AbstractLogData {
     // Returns the last modification date for the file.
     // Null if the file is not on disk.
     QDateTime getLastModifiedDate() const;
+    // Sets the codec to use for interpreting the data
+    void setCodec( QTextCodec* codec );
 
   signals:
     // Sent during the 'attach' process to signal progress
@@ -156,6 +159,8 @@ class LogData : public AbstractLogData {
     void enqueueOperation( const LogDataOperation* newOperation );
     void startOperation();
 
+    QString toUnicode( QByteArray rawString ) const;
+
     QString indexingFileName_;
     QFile* file_;
     LinePositionArray linePosition_;
@@ -163,6 +168,8 @@ class LogData : public AbstractLogData {
     qint64 nbLines_;
     int maxLength_;
     QDateTime lastModifiedDate_;
+    QTextCodec* codec_;
+
     const LogDataOperation* currentOperation_;
     const LogDataOperation* nextOperation_;
 

@@ -57,6 +57,11 @@ class Configuration : public Persistable {
     void setOverviewVisible( bool isVisible )
     { overviewVisible_ = isVisible; }
 
+    QString encoding() const
+    { return encoding_; }
+    void setEncoding( const QString& encoding )
+    { encoding_ = encoding; }
+
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
     virtual void retrieveFromStorage( QSettings& settings );
@@ -69,6 +74,7 @@ class Configuration : public Persistable {
 
     // View settings
     bool overviewVisible_;
+    QString encoding_;
 };
 
 #endif

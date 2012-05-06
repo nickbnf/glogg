@@ -33,6 +33,7 @@
 #include <QStandardItemModel>
 #include <QHeaderView>
 #include <QListView>
+#include <QTextCodec>
 
 #include "crawlerwidget.h"
 
@@ -56,6 +57,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // Initialise internal data (with empty file and search)
     logData_          = new LogData();
     logFilteredData_  = logData_->getNewFilteredData();
+
+    // Initialize to the default encoding from persisted options
+    Configuration& config = Persistent<Configuration>( "settings" );
+    const QString& encoding = config.encoding();
+    logData_->setCodec( QTextCodec::codecForName( encoding.toUtf8() ) );
 
     // Initialise the QFP object (one for both views)
     // This is the confirmed pattern used by n/N and coloured in yellow.
@@ -270,7 +276,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 }
 
 // Start the asynchronous loading of a file.
-bool CrawlerWidget::readFile( const QString& fileName, int )
+bool CrawlerWidget::readFile( const QString& fileName, QTextCodec* codec,
+                              int )
 {
     QFileInfo fileInfo( fileName );
     if ( fileInfo.isReadable() )
@@ -284,6 +291,7 @@ bool CrawlerWidget::readFile( const QString& fileName, int )
         // and redraw the screen.
         replaceCurrentSearch( "" );
         logFilteredData_->clearMarks();
+        logData_->setCodec( codec );
         logData_->attachFile( fileName );
         logMainView->updateData();
 

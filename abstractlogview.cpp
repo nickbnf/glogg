@@ -35,6 +35,7 @@
 #include <QScrollBar>
 #include <QMenu>
 #include <QAction>
+#include <QtCore>
 
 #include "log.h"
 
@@ -45,6 +46,48 @@
 #include "quickfindpattern.h"
 #include "overview.h"
 #include "configuration.h"
+
+namespace {
+
+int countDigits( quint64 n )
+{
+    if (n == 0)
+        return 1;
+
+    // We must force the compiler to not store intermediate results
+    // in registers because this causes incorrect result on some
+    // systems under optimizations level >0. For the skeptical:
+    //
+    // #include <math.h>
+    // #include <stdlib.h>
+    // int main(int argc, char **argv) {
+    //     (void)argc;
+    //     long long int n = atoll(argv[1]);
+    //     return floor( log( n ) / log( 10 ) + 1 );
+    // }
+    //
+    // This is on Thinkpad T60 (Genuine Intel(R) CPU T2300).
+    // $ g++ --version
+    // g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
+    // $ g++ -O0 -Wall -W -o math math.cpp -lm; ./math 10; echo $?
+    // 2
+    // $ g++ -O1 -Wall -W -o math math.cpp -lm; ./math 10; echo $?
+    // 1
+    //
+    // A fix is to (1) explicitly place intermediate results in
+    // variables *and* (2) [A] mark them as 'volatile', or [B] pass
+    // -ffloat-store to g++ (note that approach [A] is more portable).
+
+    volatile qreal ln_n  = qLn( n );
+    volatile qreal ln_10 = qLn( 10 );
+    volatile qreal lg_n = ln_n / ln_10;
+    volatile qreal lg_n_1 = lg_n + 1;
+    volatile qreal fl_lg_n_1 = qFloor( lg_n_1 );
+
+    return fl_lg_n_1;
+}
+
+} // anon namespace
 
 
 LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
@@ -174,14 +217,13 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
 // Graphic parameters
 
 // Looks better with an odd value
-const int AbstractLogView::bulletLineX_ = 11;
-const int AbstractLogView::leftMarginPx_ = bulletLineX_ + 2;
-
 const int AbstractLogView::OVERVIEW_WIDTH = 27;
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
     QAbstractScrollArea( parent ),
+    leftMarginPx_( 0 ),
+    lineNumbersVisible_( false ),
     selectionStartPos_(),
     selectionCurrentEndPos_(),
     autoScrollTimer_(),
@@ -574,6 +616,11 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         static const QBrush matchBulletBrush = QBrush( Qt::red );
         static const QBrush markBrush = QBrush( "dodgerblue" );
 
+        const int SEPARATOR_WIDTH = 1;
+        const int BULLET_MARGIN_WIDTH = 11;
+        const int CONTENT_MARGIN_WIDTH = 1;
+        const int LINE_NUMBER_PADDING = 3;
+
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
         const int nbLines = logData->getNbLine();
@@ -590,16 +637,46 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         // Lines to write
         const QStringList lines = logData->getExpandedLines( firstLine, lastLine - firstLine + 1 );
 
+        leftMarginPx_ = 0;
+
         // First draw the bullet left margin
+        int bulletMarginX = leftMarginPx_;
         painter.setPen(palette.color(QPalette::Text));
-        painter.drawLine( bulletLineX_, 0, bulletLineX_, viewport()->height() );
-        painter.fillRect( 0, 0, bulletLineX_, viewport()->height(), Qt::darkGray );
+        painter.drawLine( bulletMarginX + BULLET_MARGIN_WIDTH,
+                          0,
+                          bulletMarginX + BULLET_MARGIN_WIDTH,
+                          viewport()->height() );
+        painter.fillRect( bulletMarginX, 0,
+                          BULLET_MARGIN_WIDTH, viewport()->height(),
+                          Qt::darkGray );
+        leftMarginPx_ += BULLET_MARGIN_WIDTH + SEPARATOR_WIDTH;
+
+        // Draw the line number margin
+        int maxLineNumberDigits = 0;
+        int lineNumberMarginX = 0;
+        if ( lineNumbersVisible_ ) {
+            // TODO: Calculate these once per file load
+            maxLineNumberDigits = countDigits( maxDisplayLineNumber() );
+            int lineNumberWidth = charWidth_ * maxLineNumberDigits;
+            int lineNumberMarginWidth =
+                2 * LINE_NUMBER_PADDING + lineNumberWidth;
+            lineNumberMarginX = leftMarginPx_;
+            painter.setPen(palette.color(QPalette::Text));
+            painter.drawLine( lineNumberMarginX + lineNumberMarginWidth,
+                              0,
+                              lineNumberMarginX + lineNumberMarginWidth,
+                              viewport()->height() );
+            painter.fillRect( lineNumberMarginX, 0,
+                              lineNumberMarginWidth, viewport()->height(),
+                              Qt::lightGray );
+            leftMarginPx_ += lineNumberMarginWidth + SEPARATOR_WIDTH;
+        }
 
         // Then draw each line
         for (int i = firstLine; i <= lastLine; i++) {
             // Position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
-            const int xPos = bulletLineX_ + 2;
+            const int xPos = leftMarginPx_ + CONTENT_MARGIN_WIDTH;
 
             // string to print, cut to fit the length and position of the view
             const QString line = lines[i - firstLine];
@@ -691,7 +768,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 }
 
                 lineDrawer.draw( painter, xPos, yPos,
-                        viewport()->width(), cutLine );
+                                 viewport()->width(), cutLine );
             }
             else {
                 // Nothing to be highlighted, we print the whole line!
@@ -705,7 +782,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             painter.setPen( palette.color( QPalette::Text ) );
             const int circleSize = 3;
             const int arrowHeight = 4;
-            const int middleXLine = bulletLineX_ / 2;
+            const int middleXLine = bulletMarginX + BULLET_MARGIN_WIDTH / 2;
             const int middleYLine = yPos + (fontHeight / 2);
 
             const LineType line_type = lineType( i );
@@ -715,7 +792,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     QPoint(1, middleYLine - 2),
                     QPoint(middleXLine, middleYLine - 2),
                     QPoint(middleXLine, middleYLine - arrowHeight),
-                    QPoint(bulletLineX_ - 2, middleYLine),
+                    QPoint(bulletMarginX + BULLET_MARGIN_WIDTH - 2, middleYLine),
                     QPoint(middleXLine, middleYLine + arrowHeight),
                     QPoint(middleXLine, middleYLine + 2),
                     QPoint(1, middleYLine + 2 ),
@@ -733,9 +810,31 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                         middleYLine - circleSize,
                         circleSize * 2, circleSize * 2 );
             }
+
+            // Draw the line number
+            if ( lineNumbersVisible_ ) {
+                static const QString lineNumberFormat( "%1" );
+                const QString& lineNumberStr =
+                    lineNumberFormat.arg( displayLineNumber( i ),
+                                          maxLineNumberDigits );
+                painter.setPen( palette.color( QPalette::Text ) );
+                painter.drawText( lineNumberMarginX + LINE_NUMBER_PADDING,
+                                  yPos + fontAscent, lineNumberStr );
+            }
+
         } // For each line
     }
     LOG(logDEBUG4) << "End of repaint";
+}
+
+qint64 AbstractLogView::displayLineNumber( int lineNumber ) const
+{
+    return lineNumber + 1; // show a 1-based index
+}
+
+qint64 AbstractLogView::maxDisplayLineNumber() const
+{
+    return logData->getNbLine();
 }
 
 void AbstractLogView::setOverview( Overview* overview )
@@ -944,6 +1043,11 @@ void AbstractLogView::jumpToLine( int line )
 
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( newTopLine );
+}
+
+void AbstractLogView::setLineNumbersVisible( bool lineNumbersVisible )
+{
+    lineNumbersVisible_ = lineNumbersVisible;
 }
 
 //

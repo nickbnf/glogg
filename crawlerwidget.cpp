@@ -458,6 +458,9 @@ void CrawlerWidget::applyConfiguration()
     logMainView->setFont(font);
     filteredView->setFont(font);
 
+    logMainView->setLineNumbersVisible( config.lineNumbersVisible() );
+    filteredView->setLineNumbersVisible( config.lineNumbersVisible() );
+
     overview_->setVisible( config.isOverviewVisible() );
     logMainView->refreshOverview();
 

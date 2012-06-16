@@ -151,6 +151,12 @@ void MainWindow::createActions()
     connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleOverviewVisibility( bool )) );
 
+    lineNumbersVisibleAction = new QAction( tr("Line &numbers"), this );
+    lineNumbersVisibleAction->setCheckable( true );
+    lineNumbersVisibleAction->setChecked( config.lineNumbersVisible() );
+    connect( lineNumbersVisibleAction, SIGNAL( toggled( bool ) ),
+            this, SLOT( toggleLineNumbersVisibility( bool )) );
+
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setShortcut(Qt::Key_F);
     followAction->setCheckable(true);
@@ -203,6 +209,7 @@ void MainWindow::createMenus()
 
     viewMenu = menuBar()->addMenu( tr("&View") );
     viewMenu->addAction( overviewVisibleAction );
+    viewMenu->addAction( lineNumbersVisibleAction );
     viewMenu->addSeparator();
     viewMenu->addAction( followAction );
     viewMenu->addSeparator();
@@ -337,9 +344,14 @@ void MainWindow::aboutQt()
 void MainWindow::toggleOverviewVisibility( bool isVisible )
 {
     Configuration& config = Persistent<Configuration>( "settings" );
-
     config.setOverviewVisible( isVisible );
+    emit optionsChanged();
+}
 
+void MainWindow::toggleLineNumbersVisibility( bool isVisible )
+{
+    Configuration& config = Persistent<Configuration>( "settings" );
+    config.setLineNumbersVisible( isVisible );
     emit optionsChanged();
 }
 

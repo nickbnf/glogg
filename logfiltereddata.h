@@ -65,6 +65,8 @@ class LogFilteredData : public AbstractLogData {
     // Returns whether the line number passed is in our list of matching ones.
     bool isLineInMatchingList( qint64 lineNumber );
 
+    // Returns the number of lines in the source log data
+    qint64 getNbTotalLines() const;
     // Returns the number of matches (independently of the visibility)
     int getNbMatches() const;
     // Returns the number of marks (independently of the visibility)

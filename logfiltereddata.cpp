@@ -130,6 +130,11 @@ bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
 }
 
 
+qint64 LogFilteredData::getNbTotalLines() const
+{
+    return sourceLogData_->getNbLine();
+}
+
 int LogFilteredData::getNbMatches() const
 {
     return matchingLineList.size();

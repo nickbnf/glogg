@@ -66,3 +66,14 @@ AbstractLogView::LineType FilteredView::lineType( int lineNumber ) const
     else
         return Match;
 }
+
+qint64 FilteredView::displayLineNumber( int lineNumber ) const
+{
+    // Display a 1-based index
+    return logFilteredData_->getMatchingLineNumber( lineNumber ) + 1;
+}
+
+qint64 FilteredView::maxDisplayLineNumber() const
+{
+    return logFilteredData_->getNbTotalLines();
+}

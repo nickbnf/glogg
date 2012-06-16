@@ -109,14 +109,17 @@ inline void LineDrawer::draw( QPainter& painter,
 {
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
-    const int fontWidth = fm.maxWidth();
     const int fontAscent = fm.ascent();
 
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
         // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
-        const int chunk_width = cutline.length() * fontWidth;
+        // Note that fm.width is not the same as len * maxWidth due to
+        // bearings.  We could use the latter and take bearings into account,
+        // but perhaps the font metics already makes width() efficient for
+        // fixed width fonts.
+        const int chunk_width = fm.width( cutline );
         painter.fillRect( xPos, yPos, chunk_width,
                 fontHeight, chunk.backColor() );
         painter.setPen( chunk.foreColor() );

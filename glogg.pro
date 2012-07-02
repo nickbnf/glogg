@@ -79,7 +79,6 @@ else {
     message(Building using static Boost libraries at $$BOOST_PATH)
 
     SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp \
-        $$BOOST_PATH/libs/detail/*.cpp \
         $$BOOST_PATH/libs/smart_ptr/src/*.cpp
 
     INCLUDEPATH += $$BOOST_PATH

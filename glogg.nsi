@@ -59,8 +59,6 @@ Section "glogg" glogg
 
     SetOutPath $INSTDIR
     File release\glogg.exe
-    File release\mingwm10.dll
-    File release\libgcc_s_dw2-1.dll
     File COPYING
     File README
 

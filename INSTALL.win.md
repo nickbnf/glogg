@@ -27,18 +27,20 @@ of gcc (MinGW-W64) on both machines.
 Here are instructions to do the build in a Windows 7 VM:
 
  - Download the source from qt website (tested 4.8.2), be sure to download it with DOS end-of-line conventions (zip archive instead of tar.bz2 or tar.gz).
+ - Install the .NET Framework 4 (http://www.microsoft.com/en-us/download/details.aspx?id=17718)
+ - Install the Windows SDK (http://www.microsoft.com/en-us/download/details.aspx?id=8279)
  - Install mingw-w64 from TDM-GCC (tdm64-gcc, tested with 4.6.1).
  - Extract the Qt source in c:\qt\4.8.2
 
 If building a 32 bits version of Qt (what we do for _glogg_):
 
- - Modify qt/4.8.2/mkspecs/win32-g++/qmake.conf to add `-m32` to `QMAKE_CCFLAGS` and `QMAKE_LFLAGS`
+ - Modify qt/4.8.2/mkspecs/win32-g++/qmake.conf to add `-m32` to `QMAKE_CFLAGS` and `QMAKE_LFLAGS`
  - Modify qt/4.8.2/mkspecs/win32-g++/qmake.conf to replace: `QMAKE_RC = windres -F pe-i386`
  - (optionally make other changes here to improve performances)
 
 Build from the MinGW command prompt:
 
-    configure.exe -platform win32-g++-4.6 -no-phonon -no-phonon-backend -no-webkit -fast -opensource -shared -no-qt3support -no-sql-sqlite -no-openvg -no-gif -no-opengl -no-scripttools
+    configure.exe -platform win32-g++-4.6 -no-phonon -no-phonon-backend -no-webkit -fast -opensource -shared -no-qt3support -no-sql-sqlite -no-openvg -no-gif -no-opengl -no-scripttools -qt-style-windowsxp -qt-style-windowsvista
     mingw32-make
 
  - copy the whole `qt/4.8.2` to the linux machine in `~/qt-x-win32/qt_win/4.8.2`
@@ -57,7 +59,7 @@ and modify it to point to the cross-compiler and our local version of Windows Qt
     sudo sed -i -re 's/ (gcc|g\+\+)/ i686-w64-mingw32-\1/' win32-x-g++/qmake.conf
     sudo sed -i -re '/QMAKE_SH/iQMAKE_SH=1' win32-x-g++/qmake.conf
     sudo sed -i -re 's/QMAKE_COPY_DIR.*$/QMAKE_COPY_DIR = cp -r/' win32-x-g++/qmake.conf
-    sudo sed -i -re '/QMAKE_LFLAGS/s/$/ -mwindows/' win32-x-g++/qmake.conf
+    sudo sed -i -re '/QMAKE_LFLAGS/s/$/ -mwindows -static-libgcc -static-libstdc++/' win32-x-g++/qmake.conf
     sudo sed -i -re 's/QMAKE_RC.*$/QMAKE_RC = i686-w64-mingw32-windres/' win32-x-g++/qmake.conf
     sudo sed -i -re 's/QMAKE_STRIP\s.*$/QMAKE_STRIP = i686-w64-mingw32-strip/' win32-x-g++/qmake.conf
     sudo sed -i -re 's/\.exe//' win32-x-g++/qmake.conf

@@ -455,6 +455,11 @@ void CrawlerWidget::applyConfiguration()
 
     LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
 
+    // Whatever font we use, we should NOT use kerning
+    font.setKerning( false );
+    font.setFixedPitch( true );
+    // Necessary on systems doing subpixel positionning (e.g. Ubuntu 12.04)
+    font.setStyleStrategy( QFont::ForceIntegerMetrics );
     logMainView->setFont(font);
     filteredView->setFont(font);
 

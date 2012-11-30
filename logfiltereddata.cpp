@@ -34,7 +34,11 @@
 
 // Creates an empty set. It must be possible to display it without error.
 // FIXME
-LogFilteredData::LogFilteredData() : AbstractLogData()
+LogFilteredData::LogFilteredData() : AbstractLogData(),
+    matchingLineList( QList<MatchingLine>() ),
+    currentRegExp_(),
+    visibility_(),
+    filteredItemsCache_()
 {
     matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
@@ -45,14 +49,19 @@ LogFilteredData::LogFilteredData() : AbstractLogData()
 
     workerThread_ = new LogFilteredDataWorkerThread( NULL );
     marks_ = new Marks();
+
+    filteredItemsCacheDirty_ = true;
 }
 
 // Usual constructor: just copy the data, the search is started by runSearch()
 LogFilteredData::LogFilteredData( const LogData* logData )
-    : AbstractLogData(), currentRegExp_()
+    : AbstractLogData(),
+    matchingLineList( SearchResultArray() ),
+    currentRegExp_(),
+    visibility_(),
+    filteredItemsCache_()
 {
     // Starts with an empty result list
-    matchingLineList = SearchResultArray();
     maxLength_ = 0;
     maxLengthMarks_ = 0;
     nbLinesProcessed_ = 0;
@@ -65,7 +74,9 @@ LogFilteredData::LogFilteredData( const LogData* logData )
 
     workerThread_ = new LogFilteredDataWorkerThread( logData );
     marks_ = new Marks();
-    //
+
+    filteredItemsCacheDirty_ = true;
+
     // Forward the update signal
     connect( workerThread_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( handleSearchProgressed( int, int ) ) );
@@ -332,7 +343,8 @@ qint64 LogFilteredData::doGetNbLine() const
     else if ( visibility_ == MarksOnly )
         nbLines = marks_->size();
     else {
-        // Regenerate the cache if needed
+        // Regenerate the cache if needed (hopefully most of the time
+        // it won't be necessarily)
         if ( filteredItemsCacheDirty_ )
             regenerateFilteredItemsCache();
         nbLines = filteredItemsCache_.size();

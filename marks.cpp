@@ -47,10 +47,17 @@ void Marks::addMark( qint64 line, QChar mark )
     {
         LOG(logERROR) << "Trying to add an existing mark at line " << line;
     }
+
+    // 'mark' is not used yet
+    mark = mark;
 }
 
 qint64 Marks::getMark( QChar mark ) const
 {
+    // 'mark' is not used yet
+    mark = mark;
+
+    return 0;
 }
 
 bool Marks::isLineMarked( qint64 line ) const
@@ -61,6 +68,8 @@ bool Marks::isLineMarked( qint64 line ) const
 
 void Marks::deleteMark( QChar mark )
 {
+    // 'mark' is not used yet
+    mark = mark;
 }
 
 void Marks::deleteMark( qint64 line )

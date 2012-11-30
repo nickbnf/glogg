@@ -109,8 +109,10 @@ inline void LineDrawer::draw( QPainter& painter,
 {
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
-    const int fontWidth = fm.maxWidth();
     const int fontAscent = fm.ascent();
+    // For some reason on Qt 4.8.2 for Win, maxWidth() is wrong but the
+    // following give the right result, not sure why:
+    const int fontWidth = fm.width( QChar('a') );
 
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
@@ -895,7 +897,9 @@ void AbstractLogView::updateDisplaySize()
     // Font is assumed to be mono-space (is restricted by options dialog)
     QFontMetrics fm = fontMetrics();
     charHeight_ = fm.height();
-    charWidth_ = fm.maxWidth();
+    // For some reason on Qt 4.8.2 for Win, maxWidth() is wrong but the
+    // following give the right result, not sure why:
+    charWidth_ = fm.width( QChar('a') );
 
     // Calculate the index of the last line shown
     lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );

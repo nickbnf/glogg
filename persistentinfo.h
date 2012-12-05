@@ -21,6 +21,7 @@
 #define PERSISTENTINFO_H
 
 #include <QSettings>
+#include <QHash>
 
 class Persistable;
 

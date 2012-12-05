@@ -60,7 +60,7 @@ int SearchData::getNbMatches() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    return matches_.length();
+    return matches_.count();
 }
 
 // This function starts searching from the end since we use it

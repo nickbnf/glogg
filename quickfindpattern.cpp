@@ -73,7 +73,7 @@ bool QuickFindPattern::matchLine( const QString& line,
         }
     }
 
-    return ( matches.length() > 0 );
+    return ( matches.count() > 0 );
 }
 
 bool QuickFindPattern::isLineMatching( const QString& line, int column ) const

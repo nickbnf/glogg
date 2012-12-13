@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -148,7 +148,9 @@ inline void LineDrawer::addChunk( const LineChunk& chunk,
 }
 
 inline void LineDrawer::draw( QPainter& painter,
-        int xPos, int yPos, int line_width, const QString& line )
+        int initialXPos, int initialYPos,
+        int line_width, const QString& line,
+        int leftExtraBackgroundPx )
 {
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
@@ -157,13 +159,26 @@ inline void LineDrawer::draw( QPainter& painter,
     // following give the right result, not sure why:
     const int fontWidth = fm.width( QChar('a') );
 
+    int xPos = initialXPos;
+    int yPos = initialYPos;
+
     foreach ( Chunk chunk, list ) {
         // Draw each chunk
         // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
         const int chunk_width = cutline.length() * fontWidth;
-        painter.fillRect( xPos, yPos, chunk_width,
-                fontHeight, chunk.backColor() );
+        if ( xPos == initialXPos ) {
+            // First chunk, we extend the left background a bit,
+            // it looks prettier.
+            painter.fillRect( xPos - leftExtraBackgroundPx, yPos,
+                    chunk_width + leftExtraBackgroundPx,
+                    fontHeight, chunk.backColor() );
+        }
+        else {
+            // other chunks...
+            painter.fillRect( xPos, yPos, chunk_width,
+                    fontHeight, chunk.backColor() );
+        }
         painter.setPen( chunk.foreColor() );
         painter.drawText( xPos, yPos + fontAscent, cutline );
         xPos += chunk_width;
@@ -224,7 +239,6 @@ const int AbstractLogView::OVERVIEW_WIDTH = 27;
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
     QAbstractScrollArea( parent ),
-    leftMarginPx_( 0 ),
     lineNumbersVisible_( false ),
     selectionStartPos_(),
     selectionCurrentEndPos_(),
@@ -246,6 +260,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     firstCol = 0;
 
     overview_ = NULL;
+
+    // Display
+    nbDigitsInLineNumber_ = 0;
+    leftMarginPx_ = 0;
 
     // Fonts
     charWidth_ = 1;
@@ -618,10 +636,10 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         static const QBrush matchBulletBrush = QBrush( Qt::red );
         static const QBrush markBrush = QBrush( "dodgerblue" );
 
-        const int SEPARATOR_WIDTH = 1;
-        const int BULLET_MARGIN_WIDTH = 11;
-        const int CONTENT_MARGIN_WIDTH = 1;
-        const int LINE_NUMBER_PADDING = 3;
+        static const int SEPARATOR_WIDTH = 1;
+        static const int BULLET_AREA_WIDTH = 11;
+        static const int CONTENT_MARGIN_WIDTH = 1;
+        static const int LINE_NUMBER_PADDING = 3;
 
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
@@ -639,46 +657,51 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         // Lines to write
         const QStringList lines = logData->getExpandedLines( firstLine, lastLine - firstLine + 1 );
 
-        leftMarginPx_ = 0;
-
         // First draw the bullet left margin
-        int bulletMarginX = leftMarginPx_;
         painter.setPen(palette.color(QPalette::Text));
-        painter.drawLine( bulletMarginX + BULLET_MARGIN_WIDTH,
-                          0,
-                          bulletMarginX + BULLET_MARGIN_WIDTH,
-                          viewport()->height() );
-        painter.fillRect( bulletMarginX, 0,
-                          BULLET_MARGIN_WIDTH, viewport()->height(),
+        painter.drawLine( BULLET_AREA_WIDTH, 0,
+                          BULLET_AREA_WIDTH, viewport()->height() );
+        painter.fillRect( 0, 0,
+                          BULLET_AREA_WIDTH, viewport()->height(),
                           Qt::darkGray );
-        leftMarginPx_ += BULLET_MARGIN_WIDTH + SEPARATOR_WIDTH;
 
-        // Draw the line number margin
-        int maxLineNumberDigits = 0;
-        int lineNumberMarginX = 0;
+        // Column at which the content should start (pixels)
+        int contentStartPosX = BULLET_AREA_WIDTH + SEPARATOR_WIDTH;
+
+        // Draw the line numbers area
+        int lineNumberAreaStartX = 0;
         if ( lineNumbersVisible_ ) {
-            // TODO: Calculate these once per file load
-            maxLineNumberDigits = countDigits( maxDisplayLineNumber() );
-            int lineNumberWidth = charWidth_ * maxLineNumberDigits;
-            int lineNumberMarginWidth =
+            int lineNumberWidth = charWidth_ * nbDigitsInLineNumber_;
+            int lineNumberAreaWidth =
                 2 * LINE_NUMBER_PADDING + lineNumberWidth;
-            lineNumberMarginX = leftMarginPx_;
+            lineNumberAreaStartX = contentStartPosX;
+
             painter.setPen(palette.color(QPalette::Text));
-            painter.drawLine( lineNumberMarginX + lineNumberMarginWidth,
+            /* Not sure if it looks good...
+            painter.drawLine( contentStartPosX + lineNumberAreaWidth,
                               0,
-                              lineNumberMarginX + lineNumberMarginWidth,
+                              contentStartPosX + lineNumberAreaWidth,
                               viewport()->height() );
-            painter.fillRect( lineNumberMarginX, 0,
-                              lineNumberMarginWidth, viewport()->height(),
+            */
+            painter.fillRect( contentStartPosX, 0,
+                              lineNumberAreaWidth, viewport()->height(),
                               Qt::lightGray );
-            leftMarginPx_ += lineNumberMarginWidth + SEPARATOR_WIDTH;
+
+            // Update for drawing the actual text
+            contentStartPosX += lineNumberAreaWidth;
         }
+        else {
+            contentStartPosX += SEPARATOR_WIDTH;
+        }
+
+        // This is the total width of the 'margin' used for mouse calculation etc...
+        leftMarginPx_ = contentStartPosX;
 
         // Then draw each line
         for (int i = firstLine; i <= lastLine; i++) {
             // Position in pixel of the base line of the line to print
             const int yPos = (i-firstLine) * fontHeight;
-            const int xPos = leftMarginPx_ + CONTENT_MARGIN_WIDTH;
+            const int xPos = contentStartPosX + CONTENT_MARGIN_WIDTH;
 
             // string to print, cut to fit the length and position of the view
             const QString line = lines[i - firstLine];
@@ -770,12 +793,15 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 }
 
                 lineDrawer.draw( painter, xPos, yPos,
-                                 viewport()->width(), cutLine );
+                                 viewport()->width(), cutLine,
+                                 CONTENT_MARGIN_WIDTH );
             }
             else {
                 // Nothing to be highlighted, we print the whole line!
-                painter.fillRect( xPos, yPos, viewport()->width(),
-                        fontHeight, backColor );
+                painter.fillRect( xPos - CONTENT_MARGIN_WIDTH, yPos,
+                        viewport()->width(), fontHeight, backColor );
+                // (the rectangle is extended on the left to cover the small
+                // margin, it looks better (LineDrawer does the same) )
                 painter.setPen( foreColor );
                 painter.drawText( xPos, yPos + fontAscent, cutLine );
             }
@@ -784,7 +810,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             painter.setPen( palette.color( QPalette::Text ) );
             const int circleSize = 3;
             const int arrowHeight = 4;
-            const int middleXLine = bulletMarginX + BULLET_MARGIN_WIDTH / 2;
+            const int middleXLine = BULLET_AREA_WIDTH / 2;
             const int middleYLine = yPos + (fontHeight / 2);
 
             const LineType line_type = lineType( i );
@@ -794,7 +820,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     QPoint(1, middleYLine - 2),
                     QPoint(middleXLine, middleYLine - 2),
                     QPoint(middleXLine, middleYLine - arrowHeight),
-                    QPoint(bulletMarginX + BULLET_MARGIN_WIDTH - 2, middleYLine),
+                    QPoint(BULLET_AREA_WIDTH - 2, middleYLine),
                     QPoint(middleXLine, middleYLine + arrowHeight),
                     QPoint(middleXLine, middleYLine + 2),
                     QPoint(1, middleYLine + 2 ),
@@ -818,9 +844,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 static const QString lineNumberFormat( "%1" );
                 const QString& lineNumberStr =
                     lineNumberFormat.arg( displayLineNumber( i ),
-                                          maxLineNumberDigits );
+                                          nbDigitsInLineNumber_ );
                 painter.setPen( palette.color( QPalette::Text ) );
-                painter.drawText( lineNumberMarginX + LINE_NUMBER_PADDING,
+                painter.drawText( lineNumberAreaStartX + LINE_NUMBER_PADDING,
                                   yPos + fontAscent, lineNumberStr );
             }
 
@@ -829,6 +855,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     LOG(logDEBUG4) << "End of repaint";
 }
 
+// These two functions are virtual and this implementation is clearly
+// only valid for a non-filtered display.
+// We count on the 'filtered' derived classes to override them.
 qint64 AbstractLogView::displayLineNumber( int lineNumber ) const
 {
     return lineNumber + 1; // show a 1-based index
@@ -986,6 +1015,9 @@ void AbstractLogView::updateData()
     // Update the overview if we have one
     if ( overview_ != NULL )
         overview_->updateCurrentPosition( firstLine, lastLine );
+
+    // Update the length of line numbers
+    nbDigitsInLineNumber_ = countDigits( maxDisplayLineNumber() );
 
     // Repaint!
     update();

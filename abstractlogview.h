@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -76,8 +76,12 @@ class LineDrawer
     // Draw the current line of text using the given painter,
     // in the passed block (in pixels)
     // The line must be cut to fit on the screen.
+    // leftExtraBackgroundPx is the an extra margin to start drawing
+    // the coloured // background, going all the way to the element
+    // left of the line looks better.
     void draw( QPainter& painter, int xPos, int yPos,
-               int line_width, const QString& line );
+               int line_width, const QString& line,
+               int leftExtraBackgroundPx );
 
   private:
     class Chunk {
@@ -240,10 +244,13 @@ class AbstractLogView : public QAbstractScrollArea
     // Constants
     static const int OVERVIEW_WIDTH;
 
-    // Total size of all margins in pixels
+    // Total size of all margins and decorations in pixels
     int leftMarginPx_;
 
-    // Digits buffer
+    // Number of digits to display in line numbers
+    int nbDigitsInLineNumber_;
+
+    // Digits buffer (for numeric keyboard entry)
     DigitsBuffer digitsBuffer_;
 
     // Follow mode

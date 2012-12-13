@@ -151,11 +151,19 @@ void MainWindow::createActions()
     connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleOverviewVisibility( bool )) );
 
-    lineNumbersVisibleAction = new QAction( tr("Line &numbers"), this );
-    lineNumbersVisibleAction->setCheckable( true );
-    lineNumbersVisibleAction->setChecked( config.lineNumbersVisible() );
-    connect( lineNumbersVisibleAction, SIGNAL( toggled( bool ) ),
-            this, SLOT( toggleLineNumbersVisibility( bool )) );
+    lineNumbersVisibleInMainAction =
+        new QAction( tr("Line &numbers in main view"), this );
+    lineNumbersVisibleInMainAction->setCheckable( true );
+    lineNumbersVisibleInMainAction->setChecked( config.mainLineNumbersVisible() );
+    connect( lineNumbersVisibleInMainAction, SIGNAL( toggled( bool ) ),
+            this, SLOT( toggleMainLineNumbersVisibility( bool )) );
+
+    lineNumbersVisibleInFilteredAction =
+        new QAction( tr("Line &numbers in filtered view"), this );
+    lineNumbersVisibleInFilteredAction->setCheckable( true );
+    lineNumbersVisibleInFilteredAction->setChecked( config.filteredLineNumbersVisible() );
+    connect( lineNumbersVisibleInFilteredAction, SIGNAL( toggled( bool ) ),
+            this, SLOT( toggleFilteredLineNumbersVisibility( bool )) );
 
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setShortcut(Qt::Key_F);
@@ -209,7 +217,9 @@ void MainWindow::createMenus()
 
     viewMenu = menuBar()->addMenu( tr("&View") );
     viewMenu->addAction( overviewVisibleAction );
-    viewMenu->addAction( lineNumbersVisibleAction );
+    viewMenu->addSeparator();
+    viewMenu->addAction( lineNumbersVisibleInMainAction );
+    viewMenu->addAction( lineNumbersVisibleInFilteredAction );
     viewMenu->addSeparator();
     viewMenu->addAction( followAction );
     viewMenu->addSeparator();
@@ -348,10 +358,17 @@ void MainWindow::toggleOverviewVisibility( bool isVisible )
     emit optionsChanged();
 }
 
-void MainWindow::toggleLineNumbersVisibility( bool isVisible )
+void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 {
     Configuration& config = Persistent<Configuration>( "settings" );
-    config.setLineNumbersVisible( isVisible );
+    config.setMainLineNumbersVisible( isVisible );
+    emit optionsChanged();
+}
+
+void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
+{
+    Configuration& config = Persistent<Configuration>( "settings" );
+    config.setFilteredLineNumbersVisible( isVisible );
     emit optionsChanged();
 }
 

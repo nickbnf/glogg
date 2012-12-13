@@ -56,10 +56,14 @@ class Configuration : public Persistable {
     { return overviewVisible_; }
     void setOverviewVisible( bool isVisible )
     { overviewVisible_ = isVisible; }
-    bool lineNumbersVisible() const
-    { return lineNumbersVisible_; }
-    void setLineNumbersVisible( bool lineNumbersVisible )
-    { lineNumbersVisible_ = lineNumbersVisible; }
+    bool mainLineNumbersVisible() const
+    { return lineNumbersVisibleInMain_; }
+    bool filteredLineNumbersVisible() const
+    { return lineNumbersVisibleInFiltered_; }
+    void setMainLineNumbersVisible( bool lineNumbersVisible )
+    { lineNumbersVisibleInMain_ = lineNumbersVisible; }
+    void setFilteredLineNumbersVisible( bool lineNumbersVisible )
+    { lineNumbersVisibleInFiltered_ = lineNumbersVisible; }
 
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
@@ -73,7 +77,8 @@ class Configuration : public Persistable {
 
     // View settings
     bool overviewVisible_;
-    bool lineNumbersVisible_;
+    bool lineNumbersVisibleInMain_;
+    bool lineNumbersVisibleInFiltered_;
 };
 
 #endif

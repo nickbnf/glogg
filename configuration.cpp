@@ -29,11 +29,12 @@ Configuration::Configuration()
     mainFont_ = QFont("mono", 10);
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
-    mainRegexpType_      = ExtendedRegexp;
-    quickfindRegexpType_ = ExtendedRegexp;
+    mainRegexpType_               = ExtendedRegexp;
+    quickfindRegexpType_          = ExtendedRegexp;
 
-    overviewVisible_     = true;
-    lineNumbersVisible_  = false;
+    overviewVisible_              = true;
+    lineNumbersVisibleInMain_     = false;
+    lineNumbersVisibleInFiltered_ = true;
 
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
@@ -73,8 +74,12 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
-    if ( settings.contains( "view.lineNumbersVisible" ) )
-        lineNumbersVisible_ = settings.value( "view.lineNumbersVisible" ).toBool();
+    if ( settings.contains( "view.lineNumbersVisibleInMain" ) )
+        lineNumbersVisibleInMain_ =
+            settings.value( "view.lineNumbersVisibleInMain" ).toBool();
+    if ( settings.contains( "view.lineNumbersVisibleInFiltered" ) )
+        lineNumbersVisibleInFiltered_ =
+            settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -88,5 +93,6 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "view.overviewVisible", overviewVisible_ );
-    settings.setValue( "view.lineNumbersVisible", lineNumbersVisible_ );
+    settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
+    settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );
 }

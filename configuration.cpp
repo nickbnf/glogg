@@ -33,6 +33,7 @@ Configuration::Configuration()
     quickfindRegexpType_ = ExtendedRegexp;
 
     overviewVisible_     = true;
+    lineNumbersVisible_  = false;
 
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
@@ -72,6 +73,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
+    if ( settings.contains( "view.lineNumbersVisible" ) )
+        lineNumbersVisible_ = settings.value( "view.lineNumbersVisible" ).toBool();
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -85,4 +88,5 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "view.overviewVisible", overviewVisible_ );
+    settings.setValue( "view.lineNumbersVisible", lineNumbersVisible_ );
 }

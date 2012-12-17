@@ -77,7 +77,7 @@ class LineDrawer
     // in the passed block (in pixels)
     // The line must be cut to fit on the screen.
     void draw( QPainter& painter, int xPos, int yPos,
-            int line_width, const QString& line );
+               int line_width, const QString& line );
 
   private:
     class Chunk {
@@ -177,6 +177,10 @@ class AbstractLogView : public QAbstractScrollArea
     enum LineType { Normal, Marked, Match };
     virtual LineType lineType( int lineNumber ) const = 0;
 
+    // Line number to display for line at the given index
+    virtual qint64 displayLineNumber( int lineNumber ) const;
+    virtual qint64 maxDisplayLineNumber() const;
+
     // Get the overview associated with this view, or NULL if there is none
     Overview* getOverview() const { return overview_; }
     // Set the Overview
@@ -222,6 +226,9 @@ class AbstractLogView : public QAbstractScrollArea
     // (does NOT emit followDisabled() )
     void jumpToLine( int line );
 
+    // Configure the setting of whether to show line number margin
+    void setLineNumbersVisible( bool lineNumbersVisible );
+
   private slots:
     void handlePatternUpdated();
     void addToSearch();
@@ -231,15 +238,19 @@ class AbstractLogView : public QAbstractScrollArea
 
   private:
     // Constants
-    static const int bulletLineX_;
-    static const int leftMarginPx_;
     static const int OVERVIEW_WIDTH;
+
+    // Total size of all margins in pixels
+    int leftMarginPx_;
 
     // Digits buffer
     DigitsBuffer digitsBuffer_;
 
     // Follow mode
     bool followMode_;
+
+    // Whether to show line numbers or not
+    bool lineNumbersVisible_;
 
     // Pointer to the CrawlerWidget's data set
     const AbstractLogData* logData;

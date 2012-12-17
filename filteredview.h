@@ -39,6 +39,10 @@ class FilteredView : public AbstractLogView
   protected:
     virtual LineType lineType( int lineNumber ) const;
 
+    // Number of the filtered line relative to the unfiltered source
+    virtual qint64 displayLineNumber( int lineNumber ) const;
+    virtual qint64 maxDisplayLineNumber() const;
+
   private:
     LogFilteredData* logFilteredData_;
 };

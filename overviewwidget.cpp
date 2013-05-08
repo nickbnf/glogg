@@ -38,6 +38,13 @@ OverviewWidget::OverviewWidget( QWidget* parent ) : QWidget( parent )
     overview_ = NULL;
 
     setBackgroundRole( QPalette::Window );
+
+    // Highlight
+    highlightedLine_ = 100;
+    highlightedTTL_  = 5;
+
+    // We should be hidden by default (e.g. for the FilteredView)
+    hide();
 }
 
 void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
@@ -85,6 +92,14 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         std::pair<int,int> view_lines = overview_->getViewLines();
         painter.drawLine( 1, view_lines.first, width(), view_lines.first );
         painter.drawLine( 1, view_lines.second, width(), view_lines.second );
+
+        // The highlight
+        QPen highlight_pen( palette().color(QPalette::Text) );
+        highlight_pen.setWidth( 3 );
+        painter.setOpacity( 1 );
+        painter.setPen( highlight_pen );
+        int position = overview_->yFromFileLine( highlightedLine_ );
+        painter.drawRect( 2, position - 2, width() - 2 - 2, 4 );
     }
 }
 
@@ -105,4 +120,10 @@ void OverviewWidget::handleMousePress( int position )
     int line = overview_->fileLineFromY( position );
     LOG(logDEBUG) << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
     emit lineClicked( line );
+}
+
+void OverviewWidget::highlight_line( int line )
+{
+    highlightedLine_ = line;
+    highlightedTTL_  = 3;
 }

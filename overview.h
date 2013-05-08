@@ -84,6 +84,8 @@ class Overview
 
     // Return the line number corresponding to the passed overview y coordinate.
     int fileLineFromY( int y ) const;
+    // Return the y coordinate corresponding to the passed line number.
+    int yFromFileLine( int file_line ) const;
 
   private:
     // List of matches associated with this Overview.

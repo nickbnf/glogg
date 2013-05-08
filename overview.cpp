@@ -93,6 +93,16 @@ int Overview::fileLineFromY( int position ) const
     return line;
 }
 
+int Overview::yFromFileLine( int file_line ) const
+{
+    int position = 0;
+
+    if ( linesInFile_ > 0 )
+        position = file_line * height_ / linesInFile_;
+
+    return position;
+}
+
 // Update the internal cache
 void Overview::recalculatesLines()
 {

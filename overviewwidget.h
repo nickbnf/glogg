@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2012 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -34,6 +34,11 @@ class OverviewWidget : public QWidget
     // Associate the widget with an Overview object.
     void setOverview( Overview* overview ) { overview_ = overview; }
 
+  public slots:
+    // Sent when a match at the line passed must be highlighted in
+    // the overview
+    void highlight_line( int line );
+
   protected:
     void paintEvent( QPaintEvent* paintEvent );
     void mousePressEvent( QMouseEvent* mouseEvent );
@@ -48,6 +53,10 @@ class OverviewWidget : public QWidget
     static const int LINE_MARGIN;
 
     Overview* overview_;
+
+    // Highlight
+    int highlightedLine_;
+    int highlightedTTL_;
 
     void handleMousePress( int position );
 };

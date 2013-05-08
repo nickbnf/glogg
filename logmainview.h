@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon
+ * and other contributors
  *
  * This file is part of glogg.
  *
@@ -29,7 +30,8 @@ class LogMainView : public AbstractLogView
   public:
     LogMainView( const LogData* newLogData,
             const QuickFindPattern* const quickFindPattern,
-            Overview* overview = NULL,
+            Overview* overview,
+            OverviewWidget* overview_widget,
             QWidget* parent = 0 );
 
     // Configure the view to use the passed filtered list

@@ -65,9 +65,13 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     overview_ = new Overview();
 
     // The views
-    logMainView  = new LogMainView( logData_, quickFindPattern_, overview_ );
     bottomWindow = new QWidget;
-    filteredView = new FilteredView( logFilteredData_, quickFindPattern_ );
+    overviewWidget_ = new OverviewWidget();
+    logMainView     = new LogMainView( logData_, quickFindPattern_, overview_, overviewWidget_ );
+    filteredView    = new FilteredView( logFilteredData_, quickFindPattern_ );
+
+    overviewWidget_->setOverview( overview_ );
+    overviewWidget_->setParent( logMainView );
 
     savedSearches = searches;
 
@@ -183,8 +187,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     bottomMainLayout->setContentsMargins(2, 1, 2, 1);
     bottomWindow->setLayout(bottomMainLayout);
 
-    addWidget(logMainView);
-    addWidget(bottomWindow);
+    addWidget( logMainView );
+    addWidget( bottomWindow );
 
     // Default splitter position (usually overridden by the config file)
     QList<int> splitterSizes;

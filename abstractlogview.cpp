@@ -24,6 +24,7 @@
 // pattern.
 
 #include <iostream>
+#include <cassert>
 
 #include <QApplication>
 #include <QClipboard>
@@ -232,8 +233,6 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
 }
 
 // Graphic parameters
-
-// Looks better with an odd value
 const int AbstractLogView::OVERVIEW_WIDTH = 27;
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
@@ -245,8 +244,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     autoScrollTimer_(),
     selection_(),
     quickFindPattern_( quickFindPattern ),
-    quickFind_( newLogData, &selection_, quickFindPattern ),
-    overviewWidget_( this )
+    quickFind_( newLogData, &selection_, quickFindPattern )
 {
     logData = newLogData;
 
@@ -260,6 +258,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     firstCol = 0;
 
     overview_ = NULL;
+    overviewWidget_ = NULL;
 
     // Display
     nbDigitsInLineNumber_ = 0;
@@ -286,10 +285,6 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
             this, SIGNAL( notifyQuickFind( const QString& ) ) );
     connect( &quickFind_, SIGNAL( clearNotification() ),
             this, SIGNAL( clearQuickFindNotification() ) );
-    connect( &overviewWidget_, SIGNAL( lineClicked ( int ) ),
-            this, SIGNAL( followDisabled() ) );
-    connect( &overviewWidget_, SIGNAL( lineClicked ( int ) ),
-            this, SLOT( jumpToLine( int ) ) );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -868,11 +863,19 @@ qint64 AbstractLogView::maxDisplayLineNumber() const
     return logData->getNbLine();
 }
 
-void AbstractLogView::setOverview( Overview* overview )
+void AbstractLogView::setOverview( Overview* overview,
+       OverviewWidget* overview_widget )
 {
     overview_ = overview;
+    overviewWidget_ = overview_widget;
+
+    if ( overviewWidget_ ) {
+        connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
+                this, SIGNAL( followDisabled() ) );
+        connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
+                this, SLOT( jumpToLine( int ) ) );
+    }
     refreshOverview();
-    overviewWidget_.setOverview( overview );
 }
 
 void AbstractLogView::searchNext()
@@ -918,14 +921,16 @@ void AbstractLogView::followSet( bool checked )
 
 void AbstractLogView::refreshOverview()
 {
+    assert( overviewWidget_ );
+
     // Create space for the Overview if needed
     if ( ( getOverview() != NULL ) && getOverview()->isVisible() ) {
         setViewportMargins( 0, 0, OVERVIEW_WIDTH, 0 );
-        overviewWidget_.show();
+        overviewWidget_->show();
     }
     else {
         setViewportMargins( 0, 0, 0, 0 );
-        overviewWidget_.hide();
+        overviewWidget_->hide();
     }
 }
 
@@ -1046,8 +1051,10 @@ void AbstractLogView::updateDisplaySize()
     LOG(logDEBUG) << "viewport.height()=" << viewport()->height();
     LOG(logDEBUG) << "width()=" << width();
     LOG(logDEBUG) << "height()=" << height();
-    overviewWidget_.setGeometry( viewport()->width() + 2, 1,
-            OVERVIEW_WIDTH - 1, viewport()->height() );
+
+    if ( overviewWidget_ )
+        overviewWidget_->setGeometry( viewport()->width() + 2, 1,
+                OVERVIEW_WIDTH - 1, viewport()->height() );
 }
 
 int AbstractLogView::getTopLine() const

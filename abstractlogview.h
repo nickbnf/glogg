@@ -187,8 +187,8 @@ class AbstractLogView : public QAbstractScrollArea
 
     // Get the overview associated with this view, or NULL if there is none
     Overview* getOverview() const { return overview_; }
-    // Set the Overview
-    void setOverview( Overview* overview );
+    // Set the Overview and OverviewWidget
+    void setOverview( Overview* overview, OverviewWidget* overview_widget );
 
   signals:
     // Sent when a new line has been selected by the user.
@@ -265,6 +265,11 @@ class AbstractLogView : public QAbstractScrollArea
     // Pointer to the Overview object
     Overview* overview_;
 
+    // Pointer to the OverviewWidget, this class doesn't own it,
+    // but is responsible for displaying it (for purely aesthetic
+    // reasons).
+    OverviewWidget* overviewWidget_;
+
     bool selectionStarted_;
     // Start of the selection (characters)
     QPoint selectionStartPos_;
@@ -296,8 +301,6 @@ class AbstractLogView : public QAbstractScrollArea
     const QuickFindPattern* const quickFindPattern_;
     // Our own QuickFind object
     QuickFind quickFind_;
-
-    OverviewWidget overviewWidget_;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

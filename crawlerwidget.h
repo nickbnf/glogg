@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon
+ * and other contributors
  *
  * This file is part of glogg.
  *
@@ -41,6 +42,7 @@ class QuickFindWidget;
 class SavedSearches;
 class Overview;
 class QStandardItemModel;
+class OverviewWidget;
 
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
@@ -188,6 +190,7 @@ class CrawlerWidget : public QSplitter
     QCheckBox*      ignoreCaseCheck;
     QCheckBox*      searchRefreshCheck;
     QuickFindWidget* quickFindWidget_;
+    OverviewWidget* overviewWidget_;
 
     QVBoxLayout*    bottomMainLayout;
     QHBoxLayout*    searchLineLayout;

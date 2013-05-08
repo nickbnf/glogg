@@ -38,9 +38,6 @@ OverviewWidget::OverviewWidget( QWidget* parent ) : QWidget( parent )
     overview_ = NULL;
 
     setBackgroundRole( QPalette::Window );
-
-    // We should be hidden by default (e.g. for the FilteredView)
-    hide();
 }
 
 void OverviewWidget::paintEvent( QPaintEvent* paintEvent )

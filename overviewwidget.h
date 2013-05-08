@@ -29,7 +29,7 @@ class OverviewWidget : public QWidget
   Q_OBJECT
 
   public:
-    OverviewWidget( QWidget* parent );
+    OverviewWidget( QWidget* parent = 0 );
 
     // Associate the widget with an Overview object.
     void setOverview( Overview* overview ) { overview_ = overview; }

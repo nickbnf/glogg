@@ -32,7 +32,107 @@
 
 // Graphic parameters
 const int OverviewWidget::LINE_MARGIN = 4;
-const int OverviewWidget::STEP_DURATION_MS = 50;
+const int OverviewWidget::STEP_DURATION_MS = 30;
+const int OverviewWidget::INITIAL_TTL_VALUE = 5;
+
+#define HIGHLIGHT_XPM_WIDTH 27
+#define HIGHLIGHT_XPM_HEIGHT 9
+
+#define S(x) #x
+#define SX(x) S(x)
+
+    // width height colours char/pixel
+    // Colours
+#define HIGHLIGHT_XPM_LEAD_LINE SX(HIGHLIGHT_XPM_WIDTH) " " SX(HIGHLIGHT_XPM_HEIGHT) " 2 1",\
+    "  s mask c none",\
+    "x c #572F80"
+
+const char* const highlight_xpm[][14] = {
+    {
+    HIGHLIGHT_XPM_LEAD_LINE,
+    "                           ",
+    "                           ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "   xx                 xx   ",
+    "   xx                 xx   ",
+    "   xx                 xx   ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "                           ",
+    "                           ",
+    },
+    {
+    HIGHLIGHT_XPM_LEAD_LINE,
+    "                           ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxx                 xxx  ",
+    "  xxx                 xxx  ",
+    "  xxx                 xxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "                           ",
+    },
+    {
+    HIGHLIGHT_XPM_LEAD_LINE,
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxx                 xxxx ",
+    " xxxx                 xxxx ",
+    " xxxx                 xxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+    },
+    {
+    HIGHLIGHT_XPM_LEAD_LINE,
+    "                           ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxx                 xxx  ",
+    "  xxx                 xxx  ",
+    "  xxx                 xxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+    "                           ",
+    },
+    {
+    HIGHLIGHT_XPM_LEAD_LINE,
+    "                           ",
+    "                           ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "   xx                 xx   ",
+    "   xx                 xx   ",
+    "   xx                 xx   ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "   xxxxxxxxxxxxxxxxxxxxx   ",
+    "                           ",
+    "                           ",
+    },
+    {
+    HIGHLIGHT_XPM_LEAD_LINE,
+    "                           ",
+    "                           ",
+    "                           ",
+    "    xxxxxxxxxxxxxxxxxxx    ",
+    "    x                 x    ",
+    "    x                 x    ",
+    "    x                 x    ",
+    "    xxxxxxxxxxxxxxxxxxx    ",
+    "                           ",
+    "                           ",
+    "                           ",
+    },
+};
 
 OverviewWidget::OverviewWidget( QWidget* parent ) :
     QWidget( parent ), highlightTimer_()
@@ -55,6 +155,14 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
 
     static const QColor match_color("red");
     static const QColor mark_color("dodgerblue");
+
+    static const QPixmap highlight_pixmap[] = {
+        QPixmap( highlight_xpm[0] ),
+        QPixmap( highlight_xpm[1] ),
+        QPixmap( highlight_xpm[2] ),
+        QPixmap( highlight_xpm[3] ),
+        QPixmap( highlight_xpm[4] ),
+        QPixmap( highlight_xpm[5] ), };
 
     // We must be hidden until we have an Overview
     assert( overview_ != NULL );
@@ -97,12 +205,18 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
 
         // The highlight
         if ( highlightedLine_ >= 0 ) {
+            /*
             QPen highlight_pen( palette().color(QPalette::Text) );
             highlight_pen.setWidth( 4 - highlightedTTL_ );
             painter.setOpacity( 1 );
             painter.setPen( highlight_pen );
-            int position = overview_->yFromFileLine( highlightedLine_ );
             painter.drawRect( 2, position - 2, width() - 2 - 2, 4 );
+            */
+            int position = overview_->yFromFileLine( highlightedLine_ );
+            painter.drawPixmap(
+                   ( width() - HIGHLIGHT_XPM_WIDTH ) / 2,
+                   position - ( HIGHLIGHT_XPM_HEIGHT / 2 ),
+                   highlight_pixmap[ INITIAL_TTL_VALUE - highlightedTTL_ ] );
         }
     }
 }
@@ -128,8 +242,10 @@ void OverviewWidget::handleMousePress( int position )
 
 void OverviewWidget::highlightLine( qint64 line )
 {
+    highlightTimer_.stop();
+
     highlightedLine_ = line;
-    highlightedTTL_  = 3;
+    highlightedTTL_  = INITIAL_TTL_VALUE;
 
     update();
     highlightTimer_.start( STEP_DURATION_MS, this );
@@ -137,6 +253,8 @@ void OverviewWidget::highlightLine( qint64 line )
 
 void OverviewWidget::removeHighlight()
 {
+    highlightTimer_.stop();
+
     highlightedLine_ = -1;
     update();
 }

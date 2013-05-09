@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2012, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -32,16 +32,18 @@
 
 // Graphic parameters
 const int OverviewWidget::LINE_MARGIN = 4;
+const int OverviewWidget::STEP_DURATION_MS = 50;
 
-OverviewWidget::OverviewWidget( QWidget* parent ) : QWidget( parent )
+OverviewWidget::OverviewWidget( QWidget* parent ) :
+    QWidget( parent ), highlightTimer_()
 {
     overview_ = NULL;
 
     setBackgroundRole( QPalette::Window );
 
     // Highlight
-    highlightedLine_ = 100;
-    highlightedTTL_  = 5;
+    highlightedLine_ = -1;
+    highlightedTTL_  = 0;
 
     // We should be hidden by default (e.g. for the FilteredView)
     hide();
@@ -94,12 +96,14 @@ void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
         painter.drawLine( 1, view_lines.second, width(), view_lines.second );
 
         // The highlight
-        QPen highlight_pen( palette().color(QPalette::Text) );
-        highlight_pen.setWidth( 3 );
-        painter.setOpacity( 1 );
-        painter.setPen( highlight_pen );
-        int position = overview_->yFromFileLine( highlightedLine_ );
-        painter.drawRect( 2, position - 2, width() - 2 - 2, 4 );
+        if ( highlightedLine_ >= 0 ) {
+            QPen highlight_pen( palette().color(QPalette::Text) );
+            highlight_pen.setWidth( 4 - highlightedTTL_ );
+            painter.setOpacity( 1 );
+            painter.setPen( highlight_pen );
+            int position = overview_->yFromFileLine( highlightedLine_ );
+            painter.drawRect( 2, position - 2, width() - 2 - 2, 4 );
+        }
     }
 }
 
@@ -122,8 +126,34 @@ void OverviewWidget::handleMousePress( int position )
     emit lineClicked( line );
 }
 
-void OverviewWidget::highlight_line( int line )
+void OverviewWidget::highlightLine( qint64 line )
 {
     highlightedLine_ = line;
     highlightedTTL_  = 3;
+
+    update();
+    highlightTimer_.start( STEP_DURATION_MS, this );
+}
+
+void OverviewWidget::removeHighlight()
+{
+    highlightedLine_ = -1;
+    update();
+}
+
+void OverviewWidget::timerEvent( QTimerEvent* event )
+{
+    if ( event->timerId() == highlightTimer_.timerId() ) {
+        LOG(logDEBUG) << "OverviewWidget::timerEvent";
+        if ( highlightedTTL_ > 0 ) {
+            --highlightedTTL_;
+            update();
+        }
+        else {
+            highlightTimer_.stop();
+        }
+    }
+    else {
+        QObject::timerEvent( event );
+    }
 }

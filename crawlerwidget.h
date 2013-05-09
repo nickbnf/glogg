@@ -131,6 +131,9 @@ class CrawlerWidget : public QSplitter
     // Called when the user add the string to the search
     void addToSearch( const QString& string );
 
+    // Called when a match is hovered on in the filtered view
+    void mouseHoveredOverMatch( qint64 line );
+
   private:
     // State machine holding the state of the search, used to allow/disallow
     // auto-refresh and inform the user via the info line.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -273,6 +273,10 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
 
     setAttribute( Qt::WA_StaticContents );  // Does it work?
 
+    // Hovering
+    setMouseTracking( true );
+    lastHoveredLine_ = -1;
+
     // Init the popup menu
     createMenu();
 
@@ -312,7 +316,6 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
     static Configuration& config = Persistent<Configuration>( "settings" );
 
-    // Selection implementation
     if ( mouseEvent->button() == Qt::LeftButton )
     {
         int line = convertCoordToLine( mouseEvent->y() );
@@ -413,6 +416,9 @@ void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
             else if ( ! autoScrollTimer_.isActive() )
                 autoScrollTimer_.start( 100, this );
         }
+    }
+    else {
+        considerMouseHovering( mouseEvent->x(), mouseEvent->y() );
     }
 }
 
@@ -599,6 +605,10 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
     // Update the overview if we have one
     if ( overview_ != NULL )
         overview_->updateCurrentPosition( firstLine, lastLine );
+
+    // Are we hovering over a new line?
+    const QPoint mouse_pos = mapFromGlobal( QCursor::pos() );
+    considerMouseHovering( mouse_pos.x(), mouse_pos.y() );
 
     // Redraw
     update();
@@ -1138,7 +1148,7 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
     if ( column < 0 )
         column = 0;
 
-    LOG(logDEBUG) << "AbstractLogView::convertCoordToFilePos col="
+    LOG(logDEBUG4) << "AbstractLogView::convertCoordToFilePos col="
         << column << " line=" << line;
     QPoint point( column, line );
 
@@ -1334,4 +1344,26 @@ void AbstractLogView::createMenu()
     popupMenu_->addAction( findNextAction_ );
     popupMenu_->addAction( findPreviousAction_ );
     popupMenu_->addAction( addToSearchAction_ );
+}
+
+void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
+{
+    int line = convertCoordToLine( y_pos );
+    if ( ( x_pos < leftMarginPx_ )
+            && ( line >= 0 )
+            && ( line < logData->getNbLine() ) ) {
+        // Mouse moved in the margin, send event up
+        // (possibly to highlight the overview)
+        if ( line != lastHoveredLine_ ) {
+            LOG(logDEBUG) << "Mouse moved in margin line: " << line;
+            emit mouseHoveredOverLine( line );
+            lastHoveredLine_ = line;
+        }
+    }
+    else {
+        if ( lastHoveredLine_ != -1 ) {
+            emit mouseLeftHoveringZone();
+            lastHoveredLine_ = -1;
+        }
+    }
 }

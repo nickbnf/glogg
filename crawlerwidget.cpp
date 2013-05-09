@@ -227,6 +227,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     connect(filteredView, SIGNAL( addToSearch( const QString& ) ),
             this, SLOT( addToSearch( const QString& ) ) );
 
+    connect(filteredView, SIGNAL( mouseHoveredOverLine( qint64 ) ),
+            this, SLOT( mouseHoveredOverMatch( qint64 ) ) );
+    connect(filteredView, SIGNAL( mouseLeftHoveringZone() ),
+            overviewWidget_, SLOT( removeHighlight() ) );
+
     // Follow option (up and down)
     connect(this, SIGNAL( followSet( bool ) ),
             logMainView, SLOT( followSet( bool ) ) );
@@ -617,6 +622,13 @@ void CrawlerWidget::addToSearch( const QString& string )
 
     // Set the focus to lineEdit so that the user can press 'Return' immediately
     searchLineEdit->lineEdit()->setFocus();
+}
+
+void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
+{
+    qint64 line_in_mainview = logFilteredData_->getMatchingLineNumber( line );
+
+    overviewWidget_->highlightLine( line_in_mainview );
 }
 
 //

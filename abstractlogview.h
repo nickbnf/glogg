@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon
+ * and other contributors
  *
  * This file is part of glogg.
  *
@@ -208,6 +209,10 @@ class AbstractLogView : public QAbstractScrollArea
     void markLine( qint64 line );
     // Sent up when the user wants to add the selection to the search
     void addToSearch( const QString& selection );
+    // Sent up when the mouse is hovered over a line's margin
+    void mouseHoveredOverLine( qint64 line );
+    // Sent up when the mouse leaves a line's margin
+    void mouseLeftHoveringZone();
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -277,6 +282,10 @@ class AbstractLogView : public QAbstractScrollArea
     QPoint selectionCurrentEndPos_;
     QBasicTimer autoScrollTimer_;
 
+    // Hovering state
+    // Last line that has been hoovered on, -1 if none
+    qint64 lastHoveredLine_;
+
     // Marks (left margin click)
     bool markingClickInitiated_;
     qint64 markingClickLine_;
@@ -304,8 +313,6 @@ class AbstractLogView : public QAbstractScrollArea
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
-    void convertCoordToFilePos( const QPoint& pos,
-            int* line, int* column ) const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;
     int convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;
@@ -319,6 +326,8 @@ class AbstractLogView : public QAbstractScrollArea
     void selectWordAtPosition( const QPoint& pos );
 
     void createMenu();
+
+    void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
     void searchNext();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2012, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -21,6 +21,7 @@
 #define OVERVIEWWIDGET_H
 
 #include <QWidget>
+#include <QBasicTimer>
 
 class Overview;
 
@@ -37,12 +38,14 @@ class OverviewWidget : public QWidget
   public slots:
     // Sent when a match at the line passed must be highlighted in
     // the overview
-    void highlight_line( int line );
+    void highlightLine( qint64 line );
+    void removeHighlight();
 
   protected:
     void paintEvent( QPaintEvent* paintEvent );
     void mousePressEvent( QMouseEvent* mouseEvent );
     void mouseMoveEvent( QMouseEvent* mouseEvent );
+    void timerEvent( QTimerEvent* event );
 
   signals:
     // Sent when the user click on a line in the Overview.
@@ -51,12 +54,17 @@ class OverviewWidget : public QWidget
   private:
     // Constants
     static const int LINE_MARGIN;
+    static const int STEP_DURATION_MS;
 
     Overview* overview_;
 
-    // Highlight
+    // Highlight:
+    // Which line is higlighted, or -1 if none
     int highlightedLine_;
+    // Number of step until the highlight become static
     int highlightedTTL_;
+
+    QBasicTimer highlightTimer_;
 
     void handleMousePress( int position );
 };

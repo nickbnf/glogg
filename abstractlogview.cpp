@@ -723,7 +723,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     dyPos += fontHeight;
                     visibleLineToFilePos[visibleLine++] = QPoint( dataColumn, dataLine );
                     dataColumn += nbCols;
-                } while (dataColumn - startColumn < lineLen || nbCols == 0);
+                } while ( ( dataColumn - startColumn < lineLen &&
+                            visibleLine < nbVisibleLines ) ||
+                           nbCols == 0 );
             }
             else {
                 // Nothing to be highlighted, we print the whole line!
@@ -741,7 +743,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                     dyPos += fontHeight;
                     visibleLineToFilePos[visibleLine++] = QPoint( dataColumn, dataLine );
                     dataColumn += nbCols;
-                } while (dataColumn - startColumn < lineLen || nbCols == 0);
+                } while ( ( dataColumn - startColumn < lineLen &&
+                            visibleLine < nbVisibleLines ) ||
+                           nbCols == 0 );
             }
 
             // Then draw the bullet

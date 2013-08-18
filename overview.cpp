@@ -79,8 +79,8 @@ std::pair<int,int> Overview::getViewLines() const
     int bottom = height_ - 1;
 
     if ( linesInFile_ > 0 ) {
-        top = topLine_ * height_ / linesInFile_;
-        bottom = top + nbLines_ * height_ / linesInFile_;
+        top = (int)((qint64)topLine_ * height_ / linesInFile_);
+        bottom = (int)((qint64)top + nbLines_ * height_ / linesInFile_);
     }
 
     return std::pair<int,int>(top, bottom);
@@ -88,7 +88,7 @@ std::pair<int,int> Overview::getViewLines() const
 
 int Overview::fileLineFromY( int position ) const
 {
-    int line = position * linesInFile_ / height_;
+    int line = (int)((qint64)position * linesInFile_ / height_);
 
     return line;
 }
@@ -98,7 +98,7 @@ int Overview::yFromFileLine( int file_line ) const
     int position = 0;
 
     if ( linesInFile_ > 0 )
-        position = file_line * height_ / linesInFile_;
+        position =  (int)((qint64)file_line * height_ / linesInFile_);
 
     return position;
 }
@@ -116,7 +116,7 @@ void Overview::recalculatesLines()
             LogFilteredData::FilteredLineType line_type =
                 logFilteredData_->filteredLineTypeByIndex( i );
             int line = (int) logFilteredData_->getMatchingLineNumber( i );
-            int position = ( line * height_ / linesInFile_ );
+            int position = (int)( (qint64)line * height_ / linesInFile_ );
             if ( line_type == LogFilteredData::Match ) {
                 if ( ( ! matchLines_.isEmpty() ) && matchLines_.last().position() == position ) {
                     // If the line is already there, we increase its weight

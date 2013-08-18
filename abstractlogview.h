@@ -249,6 +249,9 @@ class AbstractLogView : public QAbstractScrollArea
     // Constants
     static const int OVERVIEW_WIDTH;
 
+    // Width of the bullet zone, including decoration
+    int bulletZoneWidthPx_;
+
     // Total size of all margins and decorations in pixels
     int leftMarginPx_;
 

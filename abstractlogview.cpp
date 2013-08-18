@@ -320,7 +320,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     {
         int line = convertCoordToLine( mouseEvent->y() );
 
-        if ( mouseEvent->x() < leftMarginPx_ ) {
+        if ( mouseEvent->x() < bulletZoneWidthPx_ ) {
             // Mark a line if it is clicked in the left margin
             // (only if click and release in the same area)
             markingClickInitiated_ = true;
@@ -673,6 +673,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         // Column at which the content should start (pixels)
         int contentStartPosX = BULLET_AREA_WIDTH + SEPARATOR_WIDTH;
 
+        // This is also the bullet zone width, used for marking clicks
+        bulletZoneWidthPx_ = contentStartPosX;
+
         // Draw the line numbers area
         int lineNumberAreaStartX = 0;
         if ( lineNumbersVisible_ ) {
@@ -699,7 +702,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
             contentStartPosX += SEPARATOR_WIDTH;
         }
 
-        // This is the total width of the 'margin' used for mouse calculation etc...
+        // This is the total width of the 'margin' (including line number if any)
+        // used for mouse calculation etc...
         leftMarginPx_ = contentStartPosX;
 
         // Then draw each line

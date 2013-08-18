@@ -23,13 +23,13 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QStringList>
 
 class QObject;
 class QWidget;
 class QMenu;
 class QAction;
 class QActionGroup;
-class QStringList;
 
 class Configuration;
 class RecentEncodings;
@@ -55,7 +55,8 @@ class EncodingSelector : public QObject
     static const QStringList& allEncodings();
 
   public:
-    EncodingSelector( Configuration* config, RecentEncodings* recentEncodings,
+    EncodingSelector( Configuration* config,
+                      RecentEncodings* recentEncodingsStore,
                       QWidget* menuParent, QObject* parent = 0 );
 
   private:
@@ -80,18 +81,27 @@ class EncodingSelector : public QObject
     void changeEncoding( QAction* encodingAction );
 
   private:
-    void createActions();
+    QAction* createAction( const QString& encoding, QWidget* parent );
+    void destroyAction( QAction *action );
+    void createAction();
     void createMenu();
     void createMoreEncodingsSection();
     void createStickySection();
     void createDefaultSection();
     void createRecentSection();
 
+    // Check items in all menu sections according to selected encoding
+    void updateCheckmarks();
+
+    // Convert indexes into model data structures to view data structures
+    int recentIndexToMenuIndex( int recentIndex );
+    int defaultEncodingMenuIndex();
+
     // Updates the default-encoding item in the menu
-    void changeDefaultEncoding();
+    void changeDefaultEncoding( const QString& encoding );
 
     // Perform necessary steps to mark the encoding as recently-used
-    void makeRecent( QAction* action );
+    void makeRecent( const QString& action );
 
     // Remember encoding as recently-used by adding to persistable collection
     void recordRecent( const QString& encoding );
@@ -100,7 +110,7 @@ class EncodingSelector : public QObject
     QWidget* menuParent_;
 
     Configuration* config_;
-    RecentEncodings* recentEncodings_;
+    RecentEncodings* recentEncodingsStore_;
 
     QMenu* encodingsMenu_;
     QMenu* moreEncodingsMenu_;
@@ -108,22 +118,21 @@ class EncodingSelector : public QObject
     // All encoding actions are in this group
     QActionGroup* actionGroup_;
 
-    // Stores the action for each encoding known to the selector
-    // Maps: encoding name -> action
-    QHash<QString, QAction*> actions_;
-
     // Model collection for the menu section with permanently-visible encodings
-    // Invariant: disjoint with recentActions_
-    QList<QAction*> stickyActions_;
+    // Invariant: disjoint with recentEncodings_
+    QStringList stickyEncodings_;
 
     // Model collection for the menu section with recently used encodings
     // (ordered newest to oldest)
     // Invariant: disjoint with {stickyActions,default}
-    QList<QAction*> recentActions_;
+    QStringList recentEncodings_;
 
     // Model menu item for the default encoding set in options
     // Invariant: not in {stickyActions,recentActions}
-    QAction* defaultAction_;
+    QString defaultEncoding_;
+
+    // Currently selected encoding
+    QString selectedEncoding_;
 
     // Separator before the sticky+default sections and the recents section
     // We don't explicitly separate sticky+default, so they share this separator
@@ -131,7 +140,7 @@ class EncodingSelector : public QObject
     QAction* stickyAndDefaultSeparator_;
 
     // Separator before the sticky section
-    // Invariant: not null if recentActions_ is not empty
+    // Invariant: not null if recentEncodings_ is not empty
     QAction* recentSeparator_;
 
 };

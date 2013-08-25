@@ -46,9 +46,12 @@ class SearchingNotifier : public QObject
     void reset();
     // Shall be called frequently during processing, send the notification
     // and call the event loop when appropriate.
-    inline void ping() {
+    // Pass the current line number and total number of line so that
+    // a progress percentage is calculated and displayed.
+    // (line shall be negative if ging in reverse)
+    inline void ping( qint64 line, qint64 nb_lines ) {
         if ( startTime_.msecsTo( QTime::currentTime() ) > 1000 )
-            sendNotification();
+            sendNotification( line, nb_lines );
     }
 
   signals:
@@ -56,7 +59,7 @@ class SearchingNotifier : public QObject
     void notify( const QFNotification& message );
 
   private:
-    void sendNotification();
+    void sendNotification( qint64 current_line, qint64 nb_lines );
 
     QTime startTime_;
     int dotToDisplay_;

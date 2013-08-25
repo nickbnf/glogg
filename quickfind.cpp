@@ -37,17 +37,15 @@ void SearchingNotifier::reset()
     startTime_ = QTime::currentTime();
 }
 
-void SearchingNotifier::sendNotification()
+void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
 {
-    dotToDisplay_++;
-    /*
-    for ( int i=0; i < dotToDisplay_; i++ )
-        message += QChar('.');
-    */
     LOG( logDEBUG ) << "Emitting Searching....";
-    emit notify( QFNotificationProgress( dotToDisplay_ ) );
-    if ( dotToDisplay_ > 4 )
-        dotToDisplay_ = 0;
+    qint64 progress;
+    if ( current_line < 0 )
+        progress = ( nb_lines + current_line ) * 100 / nb_lines;
+    else
+        progress = current_line * 100 / nb_lines;
+    emit notify( QFNotificationProgress( progress ) );
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
     startTime_ = QTime::currentTime().addMSecs( -800 );
@@ -132,8 +130,9 @@ int QuickFind::searchForward()
     else {
         searchingNotifier_.reset();
         // And then the rest of the file
+        qint64 nb_lines = logData_->getNbLine();
         line++;
-        while ( line < logData_->getNbLine() ) {
+        while ( line < nb_lines ) {
             if ( quickFindPattern_->isLineMatching(
                         logData_->getExpandedLineString( line ) ) ) {
                 quickFindPattern_->getLastMatch(
@@ -144,7 +143,7 @@ int QuickFind::searchForward()
             line++;
 
             // See if we need to notify of the ongoing search
-            searchingNotifier_.ping();
+            searchingNotifier_.ping( line, nb_lines );
         }
     }
 
@@ -205,6 +204,7 @@ int QuickFind::searchBackward()
     else {
         searchingNotifier_.reset();
         // And then the rest of the file
+        qint64 nb_lines = logData_->getNbLine();
         line--;
         while ( line >= 0 ) {
             if ( quickFindPattern_->isLineMatchingBackward(
@@ -216,7 +216,7 @@ int QuickFind::searchBackward()
             line--;
 
             // See if we need to notify of the ongoing search
-            searchingNotifier_.ping();
+            searchingNotifier_.ping( -line, nb_lines );
         }
     }
 

@@ -24,6 +24,8 @@
 #include <QPoint>
 #include <QTime>
 
+#include "qfnotifications.h"
+
 class QuickFindPattern;
 class AbstractLogData;
 class Portion;
@@ -51,7 +53,7 @@ class SearchingNotifier : public QObject
 
   signals:
     // Sent when the UI shall display a message to the user.
-    void notify( const QString& message );
+    void notify( const QFNotification& message );
 
   private:
     void sendNotification();
@@ -93,7 +95,7 @@ class QuickFind : public QObject
 
   signals:
     // Sent when the UI shall display a message to the user.
-    void notify( const QString& message );
+    void notify( const QFNotification& message );
     // Sent when the UI shall clear the notification.
     void clearNotification();
 

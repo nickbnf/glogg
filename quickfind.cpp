@@ -39,13 +39,13 @@ void SearchingNotifier::reset()
 
 void SearchingNotifier::sendNotification()
 {
-    QString message = QString( "Searching" );
-
     dotToDisplay_++;
+    /*
     for ( int i=0; i < dotToDisplay_; i++ )
         message += QChar('.');
+    */
     LOG( logDEBUG ) << "Emitting Searching....";
-    emit notify( message );
+    emit notify( QFNotificationProgress( dotToDisplay_ ) );
     if ( dotToDisplay_ > 4 )
         dotToDisplay_ = 0;
 
@@ -94,8 +94,8 @@ QuickFind::QuickFind( const AbstractLogData* const logData,
     quickFindPattern_( quickFindPattern ),
     lastMatch_(), firstMatch_(), searchingNotifier_()
 {
-    connect( &searchingNotifier_, SIGNAL( notify( const QString& ) ),
-            this, SIGNAL( notify( const QString& ) ) );
+    connect( &searchingNotifier_, SIGNAL( notify( const QFNotification& ) ),
+            this, SIGNAL( notify( const QFNotification& ) ) );
 }
 
 int QuickFind::searchForward()
@@ -116,7 +116,7 @@ int QuickFind::searchForward()
     // we don't do any search at all.
     if ( lastMatch_.isLater( line, column ) ) {
         // Send a notification
-        emit notify( "Reached end of file, no occurence found." );
+        emit notify( QFNotificationReachedEndOfFile() );
 
         return -1;
     }
@@ -165,7 +165,7 @@ int QuickFind::searchForward()
         lastMatch_.set( last_match_line, last_match_column );
 
         // Send a notification
-        emit notify( "Reached end of file, no occurence found." );
+        emit notify( QFNotificationReachedEndOfFile() );
 
         return -1;
     }
@@ -189,7 +189,7 @@ int QuickFind::searchBackward()
     // we don't do any search at all.
     if ( firstMatch_.isSooner( line, column ) ) {
         // Send a notification
-        emit notify( "Reached beginning of file, no occurence found." );
+        emit notify( QFNotificationReachedBegininningOfFile() );
 
         return -1;
     }
@@ -237,7 +237,8 @@ int QuickFind::searchBackward()
         firstMatch_.set( first_match_line, first_match_column );
 
         // Send a notification
-        emit notify( "Reached beginning of file, no occurence found." );
+        LOG( logDEBUG ) << "Send notification.";
+        emit notify( QFNotificationReachedBegininningOfFile() );
 
         return -1;
     }

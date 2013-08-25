@@ -260,10 +260,10 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SLOT( changeQFPattern( const QString& ) ) );
     connect(filteredView, SIGNAL( changeQuickFind( const QString& ) ),
             this, SLOT( changeQFPattern( const QString& ) ) );
-    connect(logMainView, SIGNAL( notifyQuickFind( const QString& ) ),
-            quickFindWidget_, SLOT( notify( const QString& ) ) );
-    connect(filteredView, SIGNAL( notifyQuickFind( const QString& ) ),
-            quickFindWidget_, SLOT( notify( const QString& ) ) );
+    connect(logMainView, SIGNAL( notifyQuickFind( const QFNotification& ) ),
+            quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
+    connect(filteredView, SIGNAL( notifyQuickFind( const QFNotification& ) ),
+            quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
     connect(logMainView, SIGNAL( clearQuickFindNotification() ),
             quickFindWidget_, SLOT( clearNotification() ) );
     connect(filteredView, SIGNAL( clearQuickFindNotification() ),

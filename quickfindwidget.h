@@ -27,6 +27,8 @@
 #include <QLabel>
 #include <QTimer>
 
+class QFNotification;
+
 class QuickFindWidget : public QWidget
 {
   Q_OBJECT
@@ -48,7 +50,7 @@ class QuickFindWidget : public QWidget
     void changeDisplayedPattern( const QString& newPattern );
 
     // Show the widget for a notification (will timeout)
-    void notify( const QString& message );
+    void notify( const QFNotification& message );
     // Clear the notification
     void clearNotification();
 

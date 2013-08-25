@@ -69,7 +69,8 @@ HEADERS += \
     menuactiontooltipbehavior.h \
     overview.h \
     overviewwidget.h \
-    marks.h
+    marks.h \
+    qfnotifications.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

@@ -20,10 +20,14 @@
 #include "log.h"
 
 #include "configuration.h"
+#include "qfnotifications.h"
 
 #include "quickfindwidget.h"
 
 const int QuickFindWidget::NOTIFICATION_TIMEOUT = 5000;
+
+const QString QFNotification::REACHED_EOF = "Reached end of file, no occurence found.";
+const QString QFNotification::REACHED_BOF = "Reached beginning of file, no occurence found.";
 
 QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 {
@@ -101,11 +105,11 @@ void QuickFindWidget::changeDisplayedPattern( const QString& newPattern )
     editQuickFind_->setText( newPattern );
 }
 
-void QuickFindWidget::notify( const QString& message )
+void QuickFindWidget::notify( const QFNotification& message )
 {
     LOG(logDEBUG) << "QuickFindWidget::notify()";
 
-    notificationText_->setText( message );
+    notificationText_->setText( message.message() );
     QWidget::show();
     notificationTimer_->start( NOTIFICATION_TIMEOUT );
 }

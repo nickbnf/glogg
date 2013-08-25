@@ -203,7 +203,7 @@ class AbstractLogView : public QAbstractScrollArea
     // Sent up when the current line number is updated
     void updateLineNumber( int line );
     // Sent up when quickFind wants to show a message to the user.
-    void notifyQuickFind( const QString& message );
+    void notifyQuickFind( const QFNotification& message );
     // Sent up when quickFind wants to clear the notification.
     void clearQuickFindNotification();
     // Sent when the view ask for a line to be marked

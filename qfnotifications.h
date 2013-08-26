@@ -21,6 +21,8 @@
 #define QFNOTIFICATIONS_H
 
 #include <QObject>
+#include <QWidget>
+#include <QFontMetrics>
 
 // Notifications sent by the QF for displaying to the user
 // and their translation in UI text.
@@ -28,9 +30,11 @@ class QFNotification {
   public:
     virtual QString message() const = 0;
 
-    // Max width of the message (in characters)
-    static int maxWidthChars() {
-        return qMax( REACHED_BOF.size(), REACHED_EOF.size() );
+    // Max width of the message (in pixels)
+    static int maxWidth( const QWidget* widget ) {
+        QFontMetrics fm = widget->fontMetrics();
+        return qMax( fm.size( Qt::TextSingleLine, REACHED_BOF ).width(),
+                     fm.size( Qt::TextSingleLine, REACHED_EOF ).width() );
     }
 
   protected:

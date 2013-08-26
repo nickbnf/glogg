@@ -69,8 +69,9 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
             this, SLOT( doSearchForward() ) );
 
     notificationText_ = new QLabel( "" );
-    // FIXME: set MinimumSize might be to constraining
-    notificationText_->setMinimumSize( QSize( 150, 0 ) );
+    // FIXME: set MinimumSize might be too constraining
+    int width = QFNotification::maxWidth( notificationText_ );
+    notificationText_->setMinimumSize( width, 0 );
     layout->addWidget( notificationText_ );
 
 #if 0

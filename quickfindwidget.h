@@ -29,21 +29,21 @@
 
 class QFNotification;
 
+enum QFDirection {
+    Forward,
+    Backward,
+};
+
 class QuickFindWidget : public QWidget
 {
   Q_OBJECT
 
   public:
-    enum QFDirection {
-        Forward,
-        Backward,
-    };
-
     QuickFindWidget( QWidget* parent = 0 );
 
     // Show the widget with the given direction
     // when requested by the user (the widget won't timeout)
-    void userActivate( QFDirection direction = Forward );
+    void userActivate( QFDirection direction );
 
   public slots:
     // Instructs the widget to change the pattern displayed

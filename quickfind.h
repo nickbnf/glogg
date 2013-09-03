@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -87,9 +87,16 @@ class QuickFind : public QObject
     Portion incrementallySearchForward( const QString& incPattern );
     Portion incrementallySearchBackward( const QString& incPattern );
 
-    // Used for 'normal' (n/N) QF searches
+    // Used for 'repeated' (n/N) QF searches using the current direction
     // Return the line of the first occurence of the QFP and
     // update the selection. It returns -1 if nothing is found.
+    /*
+    int searchNext();
+    int searchPrevious();
+    */
+
+    // Idem but ignore the direction and always search in the
+    // specified direction
     int searchForward();
     int searchBackward();
 
@@ -103,6 +110,11 @@ class QuickFind : public QObject
     void clearNotification();
 
   private:
+    enum QFDirection {
+        Forward,
+        Backward,
+    };
+
     class LastMatchPosition {
       public:
         LastMatchPosition() : line_( -1 ), column_( -1 ) {}
@@ -123,6 +135,9 @@ class QuickFind : public QObject
     const QuickFindPattern* const quickFindPattern_;
 
     // Owned objects
+
+    // Current direction (for n/N)
+    QFDirection currentDirection_;
 
     // Position of the last match in the file
     // (to avoid searching multiple times where there is no result)

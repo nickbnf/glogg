@@ -901,21 +901,12 @@ void AbstractLogView::setOverview( Overview* overview,
     refreshOverview();
 }
 
-void AbstractLogView::searchNext()
-{
-    searchForward();
-}
-
-void AbstractLogView::searchPrevious()
-{
-    searchBackward();
-}
-
-void AbstractLogView::searchForward()
+void AbstractLogView::searchUsingFunction(
+        int (QuickFind::*search_function)() )
 {
     emit followDisabled();
 
-    int line = quickFind_.searchForward();
+    int line = (quickFind_.*search_function)();
     if ( line >= 0 ) {
         LOG(logDEBUG) << "searchForward " << line;
         displayLine( line );
@@ -923,16 +914,24 @@ void AbstractLogView::searchForward()
     }
 }
 
+void AbstractLogView::searchNext()
+{
+    searchUsingFunction( &QuickFind::searchForward );
+}
+
+void AbstractLogView::searchPrevious()
+{
+    searchUsingFunction( &QuickFind::searchBackward );
+}
+
+void AbstractLogView::searchForward()
+{
+    searchUsingFunction( &QuickFind::searchForward );
+}
+
 void AbstractLogView::searchBackward()
 {
-    emit followDisabled();
-
-    int line = quickFind_.searchBackward();
-    if ( line >= 0 ) {
-        LOG(logDEBUG) << "searchBackward " << line;
-        displayLine( line );
-        emit updateLineNumber( line );
-    }
+    searchUsingFunction( &QuickFind::searchBackward );
 }
 
 void AbstractLogView::followSet( bool checked )

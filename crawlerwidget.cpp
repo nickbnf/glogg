@@ -353,8 +353,10 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 
     switch ( (keyEvent->text())[0].toAscii() ) {
         case '/':
+            displayQuickFindBar( Forward );
+            break;
         case '?':
-            displayQuickFindBar();
+            displayQuickFindBar( Backward );
             break;
         default:
             keyEvent->ignore();
@@ -535,14 +537,14 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
     }
 }
 
-void CrawlerWidget::displayQuickFindBar()
+void CrawlerWidget::displayQuickFindBar( QFDirection direction )
 {
     LOG(logDEBUG) << "CrawlerWidget::displayQuickFindBar";
 
     // Remember who had the focus
     qfSavedFocus_ = QApplication::focusWidget();
 
-    quickFindWidget_->userActivate();
+    quickFindWidget_->userActivate( direction );
 }
 
 void CrawlerWidget::hideQuickFindBar()

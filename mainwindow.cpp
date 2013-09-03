@@ -316,7 +316,7 @@ void MainWindow::copy()
 // Display the QuickFind bar
 void MainWindow::find()
 {
-    crawlerWidget->displayQuickFindBar();
+    crawlerWidget->displayQuickFindBar( Forward );
 }
 
 // Reload the current log file

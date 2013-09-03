@@ -335,6 +335,7 @@ class AbstractLogView : public QAbstractScrollArea
     void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
+    void searchUsingFunction ( int (QuickFind::*search_function)() );
     void searchNext();
     void searchPrevious();
 

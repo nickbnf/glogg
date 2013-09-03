@@ -32,9 +32,9 @@
 
 #include "logmainview.h"
 #include "filteredview.h"
-
 #include "logdata.h"
 #include "logfiltereddata.h"
+#include "quickfindwidget.h"
 
 class InfoLine;
 class QuickFindPattern;
@@ -67,7 +67,7 @@ class CrawlerWidget : public QSplitter
     QString getSelectedText() const;
 
     // Display the QFB at the bottom, remembering where the focus was
-    void displayQuickFindBar();
+    void displayQuickFindBar( QFDirection direction );
 
     // Instructs the widget to select all the text in the window the user
     // is interacting with

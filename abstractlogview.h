@@ -28,6 +28,7 @@
 #include "selection.h"
 #include "quickfind.h"
 #include "overviewwidget.h"
+#include "quickfindmux.h"
 
 class QMenu;
 class QAction;
@@ -142,7 +143,8 @@ class Overview;
 
 // Base class representing the log view widget.
 // It can be either the top (full) or bottom (filtered) view.
-class AbstractLogView : public QAbstractScrollArea
+class AbstractLogView :
+    public QAbstractScrollArea, public SearchableWidgetInterface
 {
   Q_OBJECT
 

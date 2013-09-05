@@ -35,6 +35,7 @@
 #include "logdata.h"
 #include "logfiltereddata.h"
 #include "quickfindwidget.h"
+#include "quickfindmux.h"
 
 class InfoLine;
 class QuickFindPattern;
@@ -47,7 +48,7 @@ class OverviewWidget;
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
 // lines and various buttons.
-class CrawlerWidget : public QSplitter
+class CrawlerWidget : public QSplitter, public QuickFindMuxSelectorInterface
 {
   Q_OBJECT
 
@@ -72,6 +73,10 @@ class CrawlerWidget : public QSplitter
     // Instructs the widget to select all the text in the window the user
     // is interacting with
     void selectAll();
+
+    // Implementation on the mux selector interface
+    // (for dispatching QuickFind to the right widget)
+    virtual SearchableWidgetInterface* getActiveSearchable() const;
 
   protected:
     void keyPressEvent( QKeyEvent* keyEvent );

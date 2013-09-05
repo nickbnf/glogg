@@ -37,7 +37,8 @@ SOURCES += main.cpp \
     menuactiontooltipbehavior.cpp \
     overview.cpp \
     overviewwidget.cpp \
-    marks.cpp
+    marks.cpp \
+    quickfindmux.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -70,7 +71,8 @@ HEADERS += \
     overview.h \
     overviewwidget.h \
     marks.h \
-    qfnotifications.h
+    qfnotifications.h \
+    quickfindmux.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

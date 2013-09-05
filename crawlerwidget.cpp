@@ -343,6 +343,24 @@ void CrawlerWidget::selectAll()
     activeView()->selectAll();
 }
 
+// Return a pointer to the view in which we should do the QuickFind
+SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
+{
+    QWidget* searchableWidget;
+
+    // Search in the window that has focus, or the window where 'Find' was
+    // called from, or the main window.
+    if ( filteredView->hasFocus() || logMainView->hasFocus() )
+        searchableWidget = QApplication::focusWidget();
+    else
+        searchableWidget = qfSavedFocus_;
+
+    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( searchableWidget ) )
+        return view;
+    else
+        return logMainView;
+}
+
 //
 // Events handlers
 //

@@ -20,7 +20,10 @@
 #ifndef QUICKFINDMUX_H
 #define QUICKFINDMUX_H
 
+#include <QObject>
 #include <QString>
+
+#include "quickfindpattern.h"
 
 // Interface representing a widget searchable in both direction.
 class SearchableWidgetInterface {
@@ -36,11 +39,15 @@ class QuickFindMuxSelectorInterface {
     virtual SearchableWidgetInterface* getActiveSearchable() const = 0;
 };
 
+class QFNotification;
+
 // Represents a multiplexer (unique application wise) dispatching the
 // Quick Find search from the UI to the relevant view.
 // It owns the QuickFindPattern.
-class QuickFindMux
+class QuickFindMux : public QObject
 {
+  Q_OBJECT
+
   public:
 
     enum QFDirection {
@@ -52,15 +59,25 @@ class QuickFindMux
     // and ask who the search have to be forwarded to.
     QuickFindMux( const QuickFindMuxSelectorInterface* selector );
 
-    // Register the mux with this searchable widget for messages
+    // Register/unregister this searchable widget with the mux for messages
     // to be forwarded back to the client.
     // The client should call this for each possible searchable widget.
-    void registerSearchable( const SearchableWidgetInterface* searchable );
+    void registerSearchable( QObject* searchable );
+    void unregisterSearchable( QObject* searchable );
 
     // Set the direction that will be used by the search when searching
     // forward.
     void setDirection( QFDirection direction );
 
+    // Get a pointer to the pattern
+    QuickFindPattern* getPattern() { return &pattern_; }
+
+  signals:
+    void patternChanged( const QString& );
+    void notify( const QFNotification& );
+    void clearNotification();
+
+  public slots:
     // Signal the current pattern must be altered (will start an incremental
     // search if the options are configured in such a way).
     void setNewPattern( const QString& new_pattern );
@@ -77,7 +94,12 @@ class QuickFindMux
   private:
     const QuickFindMuxSelectorInterface* selector_;
 
+    // The (application wide) quick find pattern
+    QuickFindPattern pattern_;
+
     QFDirection currentDirection_;
+
+    SearchableWidgetInterface* getSearchableWidget() const;
 };
 
 #endif

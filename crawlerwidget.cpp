@@ -57,23 +57,28 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     logData_          = new LogData();
     logFilteredData_  = logData_->getNewFilteredData();
 
-    // Initialise the QFP object (one for both views)
-    // This is the confirmed pattern used by n/N and coloured in yellow.
-    quickFindPattern_ = new QuickFindPattern();
-
     // The matches overview
     overview_ = new Overview();
+
+    // Initialise the QF Mux to send requests from the QFWidget
+    // to the right window
+    quickFindMux_ = new QuickFindMux( this );
 
     // The views
     bottomWindow = new QWidget;
     overviewWidget_ = new OverviewWidget();
-    logMainView     = new LogMainView( logData_, quickFindPattern_, overview_, overviewWidget_ );
-    filteredView    = new FilteredView( logFilteredData_, quickFindPattern_ );
+    logMainView     = new LogMainView(
+            logData_, quickFindMux_->getPattern(), overview_, overviewWidget_ );
+    filteredView    = new FilteredView(
+            logFilteredData_, quickFindMux_->getPattern() );
 
     overviewWidget_->setOverview( overview_ );
     overviewWidget_->setParent( logMainView );
 
     savedSearches = searches;
+
+    quickFindMux_->registerSearchable( logMainView );
+    quickFindMux_->registerSearchable( filteredView );
 
     // Construct the visibility button
     visibilityModel_ = new QStandardItemModel( this );
@@ -246,28 +251,22 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
             this, SLOT( updateFilteredView( int, int ) ) );
 
     // QuickFind
-    connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString& ) ),
-            this, SLOT( applyNewQFPattern( const QString& ) ) );
     connect( quickFindWidget_, SIGNAL( close() ),
-            this, SLOT( hideQuickFindBar() ) );
+             this, SLOT( hideQuickFindBar() ) );
+    connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString& ) ),
+             quickFindMux_, SLOT( setNewPattern( const QString& ) ) );
     connect( quickFindWidget_, SIGNAL( searchForward() ),
-            this, SLOT( searchForward() ) );
+             quickFindMux_, SLOT( searchForward() ) );
     connect( quickFindWidget_, SIGNAL( searchBackward() ),
-            this, SLOT( searchBackward() ) );
+             quickFindMux_, SLOT( searchBackward() ) );
 
     // QuickFind changes coming from the views
-    connect(logMainView, SIGNAL( changeQuickFind( const QString& ) ),
-            this, SLOT( changeQFPattern( const QString& ) ) );
-    connect(filteredView, SIGNAL( changeQuickFind( const QString& ) ),
-            this, SLOT( changeQFPattern( const QString& ) ) );
-    connect(logMainView, SIGNAL( notifyQuickFind( const QFNotification& ) ),
-            quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
-    connect(filteredView, SIGNAL( notifyQuickFind( const QFNotification& ) ),
-            quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
-    connect(logMainView, SIGNAL( clearQuickFindNotification() ),
-            quickFindWidget_, SLOT( clearNotification() ) );
-    connect(filteredView, SIGNAL( clearQuickFindNotification() ),
-            quickFindWidget_, SLOT( clearNotification() ) );
+    connect( quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
+             this, SLOT( changeQFPattern( const QString& ) ) );
+    connect( quickFindMux_, SIGNAL( notify( const QFNotification& ) ),
+             quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
+    connect( quickFindMux_, SIGNAL( clearNotification() ),
+             quickFindWidget_, SLOT( clearNotification() ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
@@ -571,15 +570,9 @@ void CrawlerWidget::hideQuickFindBar()
     qfSavedFocus_->setFocus();
 }
 
-void CrawlerWidget::applyNewQFPattern( const QString& newPattern )
-{
-    quickFindPattern_->changeSearchPattern( newPattern );
-}
-
 void CrawlerWidget::changeQFPattern( const QString& newPattern )
 {
     quickFindWidget_->changeDisplayedPattern( newPattern );
-    quickFindPattern_->changeSearchPattern( newPattern );
 }
 
 // Returns a pointer to the window in which the search should be done

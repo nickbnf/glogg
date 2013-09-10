@@ -68,7 +68,7 @@ class CrawlerWidget : public QSplitter, public QuickFindMuxSelectorInterface
     QString getSelectedText() const;
 
     // Display the QFB at the bottom, remembering where the focus was
-    void displayQuickFindBar( QFDirection direction );
+    void displayQuickFindBar( QuickFindMux::QFDirection direction );
 
     // Instructs the widget to select all the text in the window the user
     // is interacting with

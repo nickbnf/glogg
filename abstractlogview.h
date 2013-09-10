@@ -201,7 +201,8 @@ class AbstractLogView :
     // Sent up to the MainWindow to disable the follow mode
     void followDisabled();
     // Sent when the view wants the QuickFind widget pattern to change.
-    void changeQuickFind( const QString& newPattern );
+    void changeQuickFind( const QString& newPattern,
+            QuickFindMux::QFDirection newDirection );
     // Sent up when the current line number is updated
     void updateLineNumber( int line );
     // Sent up when quickFind wants to show a message to the user.
@@ -217,6 +218,9 @@ class AbstractLogView :
     void mouseHoveredOverLine( qint64 line );
     // Sent up when the mouse leaves a line's margin
     void mouseLeftHoveringZone();
+    // Sent up for view initiated quickfind searches
+    void searchNext();
+    void searchPrevious();
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -338,8 +342,6 @@ class AbstractLogView :
 
     // Search functions (for n/N)
     void searchUsingFunction ( int (QuickFind::*search_function)() );
-    void searchNext();
-    void searchPrevious();
 
     // Utils functions
     bool isCharWord( char c );

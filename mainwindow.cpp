@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -316,7 +316,7 @@ void MainWindow::copy()
 // Display the QuickFind bar
 void MainWindow::find()
 {
-    crawlerWidget->displayQuickFindBar( Forward );
+    crawlerWidget->displayQuickFindBar( QuickFindMux::Forward );
 }
 
 // Reload the current log file

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -259,6 +259,8 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
              quickFindMux_, SLOT( searchForward() ) );
     connect( quickFindWidget_, SIGNAL( searchBackward() ),
              quickFindMux_, SLOT( searchBackward() ) );
+    connect( quickFindWidget_, SIGNAL( searchNext() ),
+             quickFindMux_, SLOT( searchNext() ) );
 
     // QuickFind changes coming from the views
     connect( quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
@@ -370,10 +372,10 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 
     switch ( (keyEvent->text())[0].toAscii() ) {
         case '/':
-            displayQuickFindBar( Forward );
+            displayQuickFindBar( QuickFindMux::Forward );
             break;
         case '?':
-            displayQuickFindBar( Backward );
+            displayQuickFindBar( QuickFindMux::Backward );
             break;
         default:
             keyEvent->ignore();
@@ -554,14 +556,15 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
     }
 }
 
-void CrawlerWidget::displayQuickFindBar( QFDirection direction )
+void CrawlerWidget::displayQuickFindBar( QuickFindMux::QFDirection direction )
 {
     LOG(logDEBUG) << "CrawlerWidget::displayQuickFindBar";
 
     // Remember who had the focus
     qfSavedFocus_ = QApplication::focusWidget();
 
-    quickFindWidget_->userActivate( direction );
+    quickFindMux_->setDirection( direction );
+    quickFindWidget_->userActivate();
 }
 
 void CrawlerWidget::hideQuickFindBar()

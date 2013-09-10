@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -89,9 +89,8 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 
 }
 
-void QuickFindWidget::userActivate( QFDirection direction )
+void QuickFindWidget::userActivate()
 {
-    direction_ = direction;
     userRequested_ = true;
     QWidget::show();
     editQuickFind_->setFocus( Qt::ShortcutFocusReason );
@@ -156,7 +155,7 @@ void QuickFindWidget::returnHandler()
     userRequested_ = false;
     this->hide();
     emit close();
-    emit searchForward();
+    emit searchNext();
 }
 
 // Close and reset flag when the user clicks 'close'

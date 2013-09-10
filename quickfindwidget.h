@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -43,7 +43,7 @@ class QuickFindWidget : public QWidget
 
     // Show the widget with the given direction
     // when requested by the user (the widget won't timeout)
-    void userActivate( QFDirection direction );
+    void userActivate();
 
   public slots:
     // Instructs the widget to change the pattern displayed
@@ -66,6 +66,7 @@ class QuickFindWidget : public QWidget
     void close();
     void searchForward();
     void searchBackward();
+    void searchNext();
 
   private:
     const static int NOTIFICATION_TIMEOUT;

@@ -26,6 +26,10 @@ QuickFindMux::QuickFindMux( const QuickFindMuxSelectorInterface* selector ) :
 {
     // The selector object we will use when forwarding search requests
     selector_ = selector;
+
+    // Forward the pattern's signal to our listeners
+    connect( &pattern_, SIGNAL( patternUpdated() ),
+             this, SLOT( notifyPatternChanged() ) );
 }
 
 //
@@ -34,14 +38,20 @@ QuickFindMux::QuickFindMux( const QuickFindMuxSelectorInterface* selector ) :
 void QuickFindMux::registerSearchable( QObject* searchable )
 {
     // The searchable can change our qf pattern
-    connect( searchable, SIGNAL( changeQuickFind( const QString& ) ),
-             this, SLOT( setNewPattern( const QString& ) ) );
+    connect( searchable,
+             SIGNAL( changeQuickFind( const QString&, QuickFindMux::QFDirection ) ),
+             this, SLOT( changeQuickFind( const QString&, QuickFindMux::QFDirection ) ) );
     // Send us notifications
     connect( searchable, SIGNAL( notifyQuickFind( const QFNotification& ) ),
              this, SIGNAL( notify( const QFNotification& ) ) );
     // And clear them
     connect( searchable, SIGNAL( clearQuickFindNotification() ),
              this, SIGNAL( clearNotification() ) );
+    // Search can be initiated by the view itself
+    connect( searchable, SIGNAL( searchNext() ),
+             this, SLOT( searchNext() ) );
+    connect( searchable, SIGNAL( searchPrevious() ),
+             this, SLOT( searchPrevious() ) );
 }
 
 void QuickFindMux::unregisterSearchable( QObject* searchable )
@@ -51,17 +61,16 @@ void QuickFindMux::unregisterSearchable( QObject* searchable )
 
 void QuickFindMux::setDirection( QFDirection direction )
 {
+    LOG(logDEBUG) << "QuickFindMux::setDirection: new direction: " << direction;
     currentDirection_ = direction;
 }
 
-void QuickFindMux::setNewPattern( const QString& new_pattern )
-{
-    pattern_.changeSearchPattern( new_pattern );
-    emit patternChanged( new_pattern );
-}
-
+//
+// Public slots
+//
 void QuickFindMux::searchNext()
 {
+    LOG(logDEBUG) << "QuickFindMux::searchNext";
     if ( currentDirection_ == Forward )
         searchForward();
     else
@@ -70,6 +79,7 @@ void QuickFindMux::searchNext()
 
 void QuickFindMux::searchPrevious()
 {
+    LOG(logDEBUG) << "QuickFindMux::searchPrevious";
     if ( currentDirection_ == Forward )
         searchBackward();
     else
@@ -78,6 +88,7 @@ void QuickFindMux::searchPrevious()
 
 void QuickFindMux::searchForward()
 {
+    LOG(logDEBUG) << "QuickFindMux::searchForward";
     SearchableWidgetInterface* searchable = getSearchableWidget();
 
     searchable->searchForward();
@@ -85,9 +96,25 @@ void QuickFindMux::searchForward()
 
 void QuickFindMux::searchBackward()
 {
+    LOG(logDEBUG) << "QuickFindMux::searchBackward";
     SearchableWidgetInterface* searchable = getSearchableWidget();
 
-    searchable->searchForward();
+    searchable->searchBackward();
+}
+
+//
+// Private slots
+//
+void QuickFindMux::changeQuickFind(
+        const QString& new_pattern, QFDirection new_direction )
+{
+    setNewPattern( new_pattern );
+    setDirection( new_direction );
+}
+
+void QuickFindMux::notifyPatternChanged()
+{
+    emit patternChanged( pattern_.getPattern() );
 }
 
 //
@@ -105,4 +132,10 @@ SearchableWidgetInterface* QuickFindMux::getSearchableWidget() const
         LOG(logERROR) << "QuickFindMux::getActiveSearchable() no registered selector";
 
     return searchable;
+}
+
+void QuickFindMux::setNewPattern( const QString& new_pattern )
+{
+    LOG(logDEBUG) << "QuickFindMux::setNewPattern";
+    pattern_.changeSearchPattern( new_pattern );
 }

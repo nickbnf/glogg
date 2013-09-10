@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -56,6 +56,9 @@ class QuickFindPattern : public QObject
 
     // Returns whether the search is active (i.e. valid and non empty regexp)
     bool isActive() const { return active_; }
+
+    // Return the text of the regex
+    QString getPattern() const { return regexp_.pattern(); }
 
     // Returns whether the passed line match the quick find search.
     // If so, it populate the passed list with the list of matches

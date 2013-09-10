@@ -563,10 +563,10 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     jumpToBottom();
                     break;
                 case 'n':
-                    searchNext();
+                    emit searchNext();
                     break;
                 case 'N':
-                    searchPrevious();
+                    emit searchPrevious();
                     break;
                 case '*':
                     // Use the selected 'word' and search forward
@@ -914,16 +914,6 @@ void AbstractLogView::searchUsingFunction(
     }
 }
 
-void AbstractLogView::searchNext()
-{
-    searchUsingFunction( &QuickFind::searchForward );
-}
-
-void AbstractLogView::searchPrevious()
-{
-    searchUsingFunction( &QuickFind::searchBackward );
-}
-
 void AbstractLogView::searchForward()
 {
     searchUsingFunction( &QuickFind::searchForward );
@@ -983,8 +973,9 @@ void AbstractLogView::findNextSelected()
     // Use the selected 'word' and search forward
     if ( selection_.isPortion() ) {
         emit changeQuickFind(
-                selection_.getSelectedText( logData ) );
-        searchNext();
+                selection_.getSelectedText( logData ),
+                QuickFindMux::Forward );
+        emit searchNext();
     }
 }
 
@@ -993,8 +984,9 @@ void AbstractLogView::findPreviousSelected()
 {
     if ( selection_.isPortion() ) {
         emit changeQuickFind(
-                selection_.getSelectedText( logData ) );
-        searchPrevious();
+                selection_.getSelectedText( logData ),
+                QuickFindMux::Backward );
+        emit searchNext();
     }
 }
 

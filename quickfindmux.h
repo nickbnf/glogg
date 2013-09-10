@@ -91,6 +91,11 @@ class QuickFindMux : public QObject
     void searchForward();
     void searchBackward();
 
+  private slots:
+    void changeQuickFind( const QString& new_pattern,
+            QuickFindMux::QFDirection new_direction );
+    void notifyPatternChanged();
+
   private:
     const QuickFindMuxSelectorInterface* selector_;
 

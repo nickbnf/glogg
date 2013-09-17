@@ -236,6 +236,8 @@ class AbstractLogView :
     virtual void incrementallySearchForward();
     // Use the current QFP to go and select the previous match (incremental)
     virtual void incrementallySearchBackward();
+    // Stop the current incremental search (typically when user press return)
+    virtual void incrementalSearchStop();
 
     // Signals the follow mode has been enabled.
     void followSet( bool checked );

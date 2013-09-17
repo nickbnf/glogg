@@ -62,7 +62,10 @@ class QuickFindWidget : public QWidget
     void notificationTimeout();
 
   signals:
+    // Sent when Return is presed to confirm the pattern
     void patternConfirmed( const QString& );
+    // Sent every time the pattern is modified
+    void patternUpdated( const QString& );
     void close();
     void searchForward();
     void searchBackward();

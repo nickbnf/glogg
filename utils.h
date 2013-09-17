@@ -79,6 +79,8 @@ template <typename T> bool lookupLineNumber(
 class FilePosition
 {
   public:
+    FilePosition()
+    { line_ = -1; column_ = -1; }
     FilePosition( qint64 line, int column )
     { line_ = line; column_ = column; }
 

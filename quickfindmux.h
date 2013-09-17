@@ -33,6 +33,7 @@ class SearchableWidgetInterface {
 
     virtual void incrementallySearchForward() = 0;
     virtual void incrementallySearchBackward() = 0;
+    virtual void incrementalSearchStop() = 0;
 };
 
 // Interface representing the selector. It will be called and asked
@@ -84,6 +85,10 @@ class QuickFindMux : public QObject
     // Signal the current pattern must be altered (will start an incremental
     // search if the options are configured in such a way).
     void setNewPattern( const QString& new_pattern );
+
+    // Signal the current pattern must be altered and is confirmed
+    // (will stop an incremental search if needed)
+    void confirmPattern( const QString& new_pattern );
 
     // Starts a search in the specified direction
     void searchNext();

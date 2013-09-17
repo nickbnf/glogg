@@ -105,10 +105,16 @@ QuickFind::QuickFind( const AbstractLogData* const logData,
         const QuickFindPattern* const quickFindPattern ) :
     logData_( logData ), selection_( selection ), 
     quickFindPattern_( quickFindPattern ),
-    lastMatch_(), firstMatch_(), searchingNotifier_()
+    lastMatch_(), firstMatch_(), searchingNotifier_(),
+    incrementalSearchOngoing_( None ), incrementalSearchStartPosition_()
 {
     connect( &searchingNotifier_, SIGNAL( notify( const QFNotification& ) ),
             this, SIGNAL( notify( const QFNotification& ) ) );
+}
+
+void QuickFind::incrementalSearchStop()
+{
+    incrementalSearchOngoing_ = None;
 }
 
 qint64 QuickFind::incrementallySearchForward()
@@ -117,6 +123,17 @@ qint64 QuickFind::incrementallySearchForward()
 
     // Position where we start the search from
     FilePosition start_position = selection_->getNextPosition();
+
+    if ( incrementalSearchOngoing_ == Forward ) {
+        // We restart the search from the initial point
+        LOG( logDEBUG ) << "Restart search from initial point";
+        start_position = incrementalSearchStartPosition_;
+    }
+    else {
+        // It's a new search so we search from the selection
+        incrementalSearchOngoing_ = Forward;
+        incrementalSearchStartPosition_ = start_position;
+    }
 
     return doSearchForward( start_position );
 }
@@ -128,11 +145,24 @@ qint64 QuickFind::incrementallySearchBackward()
     // Position where we start the search from
     FilePosition start_position = selection_->getPreviousPosition();
 
+    if ( incrementalSearchOngoing_ == Backward ) {
+        // We restart the search from the initial point
+        LOG( logDEBUG ) << "Restart search from initial point";
+        start_position = incrementalSearchStartPosition_;
+    }
+    else {
+        // It's a new search so we search from the selection
+        incrementalSearchOngoing_ = Backward;
+        incrementalSearchStartPosition_ = start_position;
+    }
+
     return doSearchBackward( start_position );
 }
 
 qint64 QuickFind::searchForward()
 {
+    incrementalSearchStop();
+
     // Position where we start the search from
     FilePosition start_position = selection_->getNextPosition();
 
@@ -142,6 +172,8 @@ qint64 QuickFind::searchForward()
 
 qint64 QuickFind::searchBackward()
 {
+    incrementalSearchStop();
+
     // Position where we start the search from
     FilePosition start_position = selection_->getPreviousPosition();
 
@@ -169,9 +201,8 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
         return -1;
     }
 
-    LOG( logDEBUG ) << "Start searching.";
-
     qint64 line = start_position.line();
+    LOG( logDEBUG ) << "Start searching at line " << line;
     // We look at the rest of the first line
     if ( quickFindPattern_->isLineMatching(
                 logData_->getExpandedLineString( line ),
@@ -241,9 +272,8 @@ qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
         return -1;
     }
 
-    LOG( logDEBUG ) << "Start searching.";
-
     qint64 line = start_position.line();
+    LOG( logDEBUG ) << "Start searching at line " << line;
     // We look at the beginning of the first line
     if (    ( start_position.column() > 0 )
          && ( quickFindPattern_->isLineMatchingBackward(

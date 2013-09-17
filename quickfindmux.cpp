@@ -116,6 +116,22 @@ void QuickFindMux::setNewPattern( const QString& new_pattern )
         searchable->incrementallySearchBackward();
 }
 
+void QuickFindMux::confirmPattern( const QString& new_pattern )
+{
+    pattern_.changeSearchPattern( new_pattern );
+
+    SearchableWidgetInterface* searchable = getSearchableWidget();
+    // if not incremental
+    /*
+    if ( currentDirection_ == Forward )
+        searchable->searchForward();
+    else
+        searchable->searchBackward();
+    */
+    // else
+    searchable->incrementalSearchStop();
+}
+
 //
 // Private slots
 //

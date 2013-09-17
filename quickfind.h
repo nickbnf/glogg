@@ -89,6 +89,11 @@ class QuickFind : public QObject
     qint64 incrementallySearchForward();
     qint64 incrementallySearchBackward();
 
+    // Stop the currently ongoing incremental search, leave the selection
+    // where it is and throw away the start point associated with
+    // the search.
+    void incrementalSearchStop();
+
     // Used for 'repeated' (n/N) QF searches using the current direction
     // Return the line of the first occurence of the QFP and
     // update the selection. It returns -1 if nothing is found.
@@ -113,6 +118,7 @@ class QuickFind : public QObject
 
   private:
     enum QFDirection {
+        None,
         Forward,
         Backward,
     };
@@ -142,15 +148,16 @@ class QuickFind : public QObject
 
     // Owned objects
 
-    // Current direction (for n/N)
-    QFDirection currentDirection_;
-
     // Position of the last match in the file
     // (to avoid searching multiple times where there is no result)
     LastMatchPosition lastMatch_;
     LastMatchPosition firstMatch_;
 
     SearchingNotifier searchingNotifier_;
+
+    // Incremental searches
+    QFDirection incrementalSearchOngoing_;
+    FilePosition incrementalSearchStartPosition_;
 
     // Private functions
     qint64 doSearchForward( const FilePosition &start_position );

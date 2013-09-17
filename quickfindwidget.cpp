@@ -48,17 +48,20 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     // FIXME: set MinimumSize might be to constraining
     editQuickFind_->setMinimumSize( QSize( 150, 0 ) );
     layout->addWidget( editQuickFind_ );
+
+    connect( editQuickFind_, SIGNAL( textChanged( QString ) ),
+             this, SIGNAL( patternUpdated( const QString& ) ) );
     /*
-    connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
-            SLOT( textChanged( QString ) ) );
     connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
             SLOT( updateButtons() ) );
     */
     connect( editQuickFind_, SIGNAL( returnPressed() ),
-            this, SLOT( returnHandler() ) );
+             this, SLOT( returnHandler() ) );
+
     previousButton_ = setupToolButton( QLatin1String("Previous"),
             QLatin1String( ":/images/arrowup.png" ) );
     layout->addWidget( previousButton_ );
+
     connect( previousButton_, SIGNAL( clicked() ),
             this, SLOT( doSearchBackward() ) );
 
@@ -155,7 +158,6 @@ void QuickFindWidget::returnHandler()
     userRequested_ = false;
     this->hide();
     emit close();
-    emit searchNext();
 }
 
 // Close and reset flag when the user clicks 'close'

@@ -933,6 +933,12 @@ void AbstractLogView::incrementallySearchBackward()
 {
     searchUsingFunction( &QuickFind::incrementallySearchBackward );
 }
+
+void AbstractLogView::incrementalSearchStop()
+{
+    quickFind_.incrementalSearchStop();
+}
+
 void AbstractLogView::followSet( bool checked )
 {
     followMode_ = checked;

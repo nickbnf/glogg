@@ -102,13 +102,27 @@ void QuickFindMux::searchBackward()
     searchable->searchBackward();
 }
 
+void QuickFindMux::setNewPattern( const QString& new_pattern )
+{
+    LOG(logDEBUG) << "QuickFindMux::setNewPattern";
+    pattern_.changeSearchPattern( new_pattern );
+
+    // If we must do an incremental search, we do it now
+    // TODO add configuration option
+    SearchableWidgetInterface* searchable = getSearchableWidget();
+    if ( currentDirection_ == Forward )
+        searchable->incrementallySearchForward();
+    else
+        searchable->incrementallySearchBackward();
+}
+
 //
 // Private slots
 //
 void QuickFindMux::changeQuickFind(
         const QString& new_pattern, QFDirection new_direction )
 {
-    setNewPattern( new_pattern );
+    pattern_.changeSearchPattern( new_pattern );
     setDirection( new_direction );
 }
 
@@ -132,10 +146,4 @@ SearchableWidgetInterface* QuickFindMux::getSearchableWidget() const
         LOG(logERROR) << "QuickFindMux::getActiveSearchable() no registered selector";
 
     return searchable;
-}
-
-void QuickFindMux::setNewPattern( const QString& new_pattern )
-{
-    LOG(logDEBUG) << "QuickFindMux::setNewPattern";
-    pattern_.changeSearchPattern( new_pattern );
 }

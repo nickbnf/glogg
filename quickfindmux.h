@@ -30,6 +30,9 @@ class SearchableWidgetInterface {
   public:
     virtual void searchForward() = 0;
     virtual void searchBackward() = 0;
+
+    virtual void incrementallySearchForward() = 0;
+    virtual void incrementallySearchBackward() = 0;
 };
 
 // Interface representing the selector. It will be called and asked

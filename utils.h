@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#ifndef UTILS_H
+#define UTILS_H
 
 // Use a bisection method to find the given line number
 // in a sorted list.
@@ -71,3 +74,20 @@ template <typename T> bool lookupLineNumber(
 
     return false;
 }
+
+// Represents a position in a file (line, column)
+class FilePosition
+{
+  public:
+    FilePosition( qint64 line, int column )
+    { line_ = line; column_ = column; }
+
+    qint64 line() const { return line_; }
+    int column() const { return column_; }
+
+  private:
+    qint64 line_;
+    int column_;
+};
+
+#endif

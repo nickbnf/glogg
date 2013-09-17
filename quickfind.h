@@ -24,6 +24,7 @@
 #include <QPoint>
 #include <QTime>
 
+#include "utils.h"
 #include "qfnotifications.h"
 
 class QuickFindPattern;
@@ -84,8 +85,9 @@ class QuickFind : public QObject
     // Return the first occurence of the passed pattern from the starting
     // point.  These searches don't use the QFP and don't change the
     // starting point.
-    Portion incrementallySearchForward( const QString& incPattern );
-    Portion incrementallySearchBackward( const QString& incPattern );
+    // TODO Update comment
+    qint64 incrementallySearchForward();
+    qint64 incrementallySearchBackward();
 
     // Used for 'repeated' (n/N) QF searches using the current direction
     // Return the line of the first occurence of the QFP and
@@ -97,8 +99,8 @@ class QuickFind : public QObject
 
     // Idem but ignore the direction and always search in the
     // specified direction
-    int searchForward();
-    int searchBackward();
+    qint64 searchForward();
+    qint64 searchBackward();
 
     // Make the object forget the 'no more match' flag.
     void resetLimits();
@@ -119,11 +121,15 @@ class QuickFind : public QObject
       public:
         LastMatchPosition() : line_( -1 ), column_( -1 ) {}
         void set( int line, int column );
+        void set( const FilePosition& position );
         void reset() { line_ = -1; column_ = -1; }
         // Does the passed position come after the recorded one
         bool isLater( int line, int column ) const;
+        bool isLater( const FilePosition& position ) const;
         // Does the passed position come before the recorded one
         bool isSooner( int line, int column ) const;
+        bool isSooner( const FilePosition& position ) const;
+
       private:
         int line_;
         int column_;
@@ -145,6 +151,10 @@ class QuickFind : public QObject
     LastMatchPosition firstMatch_;
 
     SearchingNotifier searchingNotifier_;
+
+    // Private functions
+    qint64 doSearchForward( const FilePosition &start_position );
+    qint64 doSearchBackward( const FilePosition &start_position );
 };
 
 #endif

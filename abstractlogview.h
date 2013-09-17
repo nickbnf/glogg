@@ -228,9 +228,14 @@ class AbstractLogView :
     void selectAndDisplayLine( int line );
 
     // Use the current QFP to go and select the next match.
-    void searchForward();
+    virtual void searchForward();
     // Use the current QFP to go and select the previous match.
-    void searchBackward();
+    virtual void searchBackward();
+
+    // Use the current QFP to go and select the next match (incremental)
+    virtual void incrementallySearchForward();
+    // Use the current QFP to go and select the previous match (incremental)
+    virtual void incrementallySearchBackward();
 
     // Signals the follow mode has been enabled.
     void followSet( bool checked );
@@ -341,7 +346,7 @@ class AbstractLogView :
     void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
-    void searchUsingFunction ( int (QuickFind::*search_function)() );
+    void searchUsingFunction ( qint64 (QuickFind::*search_function)() );
 
     // Utils functions
     bool isCharWord( char c );

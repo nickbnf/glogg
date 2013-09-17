@@ -161,36 +161,40 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
     return text;
 }
 
-void Selection::getNextPosition( int* line, int* column ) const
+FilePosition Selection::getNextPosition() const
 {
-    *line   = 0;
-    *column = 0;
+    qint64 line = 0;
+    int column = 0;
 
     if ( selectedLine_ >= 0 ) {
-        *line = selectedLine_ + 1;
+        line = selectedLine_ + 1;
     }
     else if ( selectedRange_.startLine >= 0 ) {
-        *line = selectedRange_.endLine + 1;
+        line = selectedRange_.endLine + 1;
     }
     else if ( selectedPartial_.line >= 0 ) {
-        *line   = selectedPartial_.line;
-        *column = selectedPartial_.endColumn + 1;
+        line   = selectedPartial_.line;
+        column = selectedPartial_.endColumn + 1;
     }
+
+    return FilePosition( line, column );
 }
 
-void Selection::getPreviousPosition( int* line, int* column ) const
+FilePosition Selection::getPreviousPosition() const
 {
-    *line   = 0;
-    *column = 0;
+    qint64 line = 0;
+    int column = 0;
 
     if ( selectedLine_ >= 0 ) {
-        *line = selectedLine_;
+        line = selectedLine_;
     }
     else if ( selectedRange_.startLine >= 0 ) {
-        *line = selectedRange_.startLine;
+        line = selectedRange_.startLine;
     }
     else if ( selectedPartial_.line >= 0 ) {
-        *line   = selectedPartial_.line;
-        *column = qMax( selectedPartial_.startColumn - 1, 0 );
+        line   = selectedPartial_.line;
+        column = qMax( selectedPartial_.startColumn - 1, 0 );
     }
+
+    return FilePosition( line, column );
 }

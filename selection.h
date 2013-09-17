@@ -20,6 +20,7 @@
 #ifndef SELECTION_H
 #define SELECTION_H
 
+#include "utils.h"
 #include "abstractlogdata.h"
 
 class Portion
@@ -95,9 +96,10 @@ class Selection
     // Return the position immediately after the current selection
     // (used for searches).
     // This is the next character or the start of the next line.
-    void getNextPosition( int* line, int* column ) const;
+    FilePosition getNextPosition() const;
 
-    void getPreviousPosition( int* line, int* column ) const;
+    // Idem from the position immediately before selection.
+    FilePosition getPreviousPosition() const;
 
   private:
     // Line number currently selected, or -1 if none selected

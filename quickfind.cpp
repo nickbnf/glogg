@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -61,6 +61,11 @@ void QuickFind::LastMatchPosition::set( int line, int column )
     }
 }
 
+void QuickFind::LastMatchPosition::set( const FilePosition &position )
+{
+    set( position.line(), position.column() );
+}
+
 bool QuickFind::LastMatchPosition::isLater( int line, int column ) const
 {
     if ( line_ == -1 )
@@ -71,6 +76,11 @@ bool QuickFind::LastMatchPosition::isLater( int line, int column ) const
         return true;
     else
         return false;
+}
+
+bool QuickFind::LastMatchPosition::isLater( const FilePosition &position ) const
+{
+    return isLater( position.line(), position.column() );
 }
 
 bool QuickFind::LastMatchPosition::isSooner( int line, int column ) const
@@ -85,6 +95,11 @@ bool QuickFind::LastMatchPosition::isSooner( int line, int column ) const
         return false;
 }
 
+bool QuickFind::LastMatchPosition::isSooner( const FilePosition &position ) const
+{
+    return isSooner( position.line(), position.column() );
+}
+
 QuickFind::QuickFind( const AbstractLogData* const logData,
         Selection* selection,
         const QuickFindPattern* const quickFindPattern ) :
@@ -96,23 +111,58 @@ QuickFind::QuickFind( const AbstractLogData* const logData,
             this, SIGNAL( notify( const QFNotification& ) ) );
 }
 
-int QuickFind::searchForward()
+qint64 QuickFind::incrementallySearchForward()
+{
+    LOG( logDEBUG ) << "QuickFind::incrementallySearchForward";
+
+    // Position where we start the search from
+    FilePosition start_position = selection_->getNextPosition();
+
+    return doSearchForward( start_position );
+}
+
+qint64 QuickFind::incrementallySearchBackward()
+{
+    LOG( logDEBUG ) << "QuickFind::incrementallySearchBackward";
+
+    // Position where we start the search from
+    FilePosition start_position = selection_->getPreviousPosition();
+
+    return doSearchBackward( start_position );
+}
+
+qint64 QuickFind::searchForward()
+{
+    // Position where we start the search from
+    FilePosition start_position = selection_->getNextPosition();
+
+    return doSearchForward( start_position );
+}
+
+
+qint64 QuickFind::searchBackward()
+{
+    // Position where we start the search from
+    FilePosition start_position = selection_->getPreviousPosition();
+
+    return doSearchBackward( start_position );
+}
+
+// Internal implementation of forward search,
+// returns the line where the pattern is found or -1 if not found.
+// Parameters are the position the search shall start
+qint64 QuickFind::doSearchForward( const FilePosition &start_position )
 {
     bool found = false;
-    int line;
-    int column;
     int found_start_col;
     int found_end_col;
 
     if ( ! quickFindPattern_->isActive() )
         return -1;
 
-    // Position where we start the search from
-    selection_->getNextPosition( &line, &column );
-
     // Optimisation: if we are already after the last match,
     // we don't do any search at all.
-    if ( lastMatch_.isLater( line, column ) ) {
+    if ( lastMatch_.isLater( start_position ) ) {
         // Send a notification
         emit notify( QFNotificationReachedEndOfFile() );
 
@@ -121,9 +171,11 @@ int QuickFind::searchForward()
 
     LOG( logDEBUG ) << "Start searching.";
 
+    qint64 line = start_position.line();
     // We look at the rest of the first line
     if ( quickFindPattern_->isLineMatching(
-                logData_->getExpandedLineString( line ), column ) ) {
+                logData_->getExpandedLineString( line ),
+                start_position.column() ) ) {
         quickFindPattern_->getLastMatch( &found_start_col, &found_end_col );
         found = true;
     }
@@ -158,10 +210,8 @@ int QuickFind::searchForward()
     }
     else {
         // Update the position of the last match
-        int last_match_line;
-        int last_match_column;
-        selection_->getPreviousPosition( &last_match_line, &last_match_column );
-        lastMatch_.set( last_match_line, last_match_column );
+        FilePosition last_match_position = selection_->getPreviousPosition();
+        lastMatch_.set( last_match_position );
 
         // Send a notification
         emit notify( QFNotificationReachedEndOfFile() );
@@ -170,23 +220,21 @@ int QuickFind::searchForward()
     }
 }
 
-int QuickFind::searchBackward()
+// Internal implementation of backward search,
+// returns the line where the pattern is found or -1 if not found.
+// Parameters are the position the search shall start
+qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
 {
     bool found = false;
-    int line;
-    int column;
     int start_col;
     int end_col;
 
     if ( ! quickFindPattern_->isActive() )
         return -1;
 
-    // Position where we start the search from
-    selection_->getPreviousPosition( &line, &column );
-
     // Optimisation: if we are already before the first match,
     // we don't do any search at all.
-    if ( firstMatch_.isSooner( line, column ) ) {
+    if ( firstMatch_.isSooner( start_position ) ) {
         // Send a notification
         emit notify( QFNotificationReachedBegininningOfFile() );
 
@@ -195,9 +243,13 @@ int QuickFind::searchBackward()
 
     LOG( logDEBUG ) << "Start searching.";
 
+    qint64 line = start_position.line();
     // We look at the beginning of the first line
-    if ( ( column > 0 ) &&  ( quickFindPattern_->isLineMatchingBackward(
-                logData_->getExpandedLineString( line ), column ) ) ) {
+    if (    ( start_position.column() > 0 )
+         && ( quickFindPattern_->isLineMatchingBackward(
+                 logData_->getExpandedLineString( line ),
+                 start_position.column() ) )
+       ) {
         quickFindPattern_->getLastMatch( &start_col, &end_col );
         found = true;
     }
@@ -231,10 +283,8 @@ int QuickFind::searchBackward()
     }
     else {
         // Update the position of the first match
-        int first_match_line;
-        int first_match_column;
-        selection_->getNextPosition( &first_match_line, &first_match_column );
-        firstMatch_.set( first_match_line, first_match_column );
+        FilePosition first_match_position = selection_->getNextPosition();
+        firstMatch_.set( first_match_position );
 
         // Send a notification
         LOG( logDEBUG ) << "Send notification.";

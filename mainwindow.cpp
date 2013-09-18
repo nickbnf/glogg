@@ -139,6 +139,12 @@ void MainWindow::createActions()
     copyAction->setStatusTip(tr("Copy the selection"));
     connect( copyAction, SIGNAL(triggered()), this, SLOT(copy()) );
 
+    selectAllAction = new QAction(tr("Select &All"), this);
+    selectAllAction->setShortcut(tr("Ctrl+A"));
+    selectAllAction->setStatusTip(tr("Select all the text"));
+    connect( selectAllAction, SIGNAL(triggered()),
+             this, SLOT( selectAll() ) );
+
     findAction = new QAction(tr("&Find..."), this);
     findAction->setShortcut(QKeySequence::Find);
     findAction->setStatusTip(tr("Find the text"));
@@ -213,6 +219,8 @@ void MainWindow::createMenus()
 
     editMenu = menuBar()->addMenu( tr("&Edit") );
     editMenu->addAction( copyAction );
+    editMenu->addAction( selectAllAction );
+    editMenu->addSeparator();
     editMenu->addAction( findAction );
 
     viewMenu = menuBar()->addMenu( tr("&View") );
@@ -287,6 +295,12 @@ void MainWindow::openRecentFile()
         loadFile(action->data().toString());
 }
 
+// Select all the text in the currently selected view
+void MainWindow::selectAll()
+{
+    crawlerWidget->selectAll();
+}
+
 // Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
@@ -299,6 +313,7 @@ void MainWindow::copy()
             QClipboard::Selection );
 }
 
+// Display the QuickFind bar
 void MainWindow::find()
 {
     crawlerWidget->displayQuickFindBar();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -49,6 +49,7 @@ class MainWindow : public QMainWindow
   private slots:
     void open();
     void openRecentFile();
+    void selectAll();
     void copy();
     void find();
     void reload();
@@ -125,6 +126,7 @@ class MainWindow : public QMainWindow
     QAction *openAction;
     QAction *exitAction;
     QAction *copyAction;
+    QAction *selectAllAction;
     QAction *findAction;
     QAction *overviewVisibleAction;
     QAction *lineNumbersVisibleInMainAction;

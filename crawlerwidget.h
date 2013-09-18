@@ -69,6 +69,10 @@ class CrawlerWidget : public QSplitter
     // Display the QFB at the bottom, remembering where the focus was
     void displayQuickFindBar();
 
+    // Instructs the widget to select all the text in the window the user
+    // is interacting with
+    void selectAll();
+
   protected:
     void keyPressEvent( QKeyEvent* keyEvent );
 
@@ -175,7 +179,7 @@ class CrawlerWidget : public QSplitter
     // Private functions
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
-    AbstractLogView* searchableWidget() const;
+    AbstractLogView* activeView() const;
     void printSearchInfoMessage( int nbMatches = 0 );
 
     // Palette for error notification (yellow background)

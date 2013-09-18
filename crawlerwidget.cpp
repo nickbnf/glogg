@@ -334,6 +334,11 @@ QString CrawlerWidget::getSelectedText() const
         return logMainView->getSelection();
 }
 
+void CrawlerWidget::selectAll()
+{
+    activeView()->selectAll();
+}
+
 //
 // Events handlers
 //
@@ -554,18 +559,18 @@ void CrawlerWidget::changeQFPattern( const QString& newPattern )
 }
 
 // Returns a pointer to the window in which the search should be done
-AbstractLogView* CrawlerWidget::searchableWidget() const
+AbstractLogView* CrawlerWidget::activeView() const
 {
-    QWidget* searchableWidget;
+    QWidget* activeView;
 
     // Search in the window that has focus, or the window where 'Find' was
     // called from, or the main window.
     if ( filteredView->hasFocus() || logMainView->hasFocus() )
-        searchableWidget = QApplication::focusWidget();
+        activeView = QApplication::focusWidget();
     else
-        searchableWidget = qfSavedFocus_;
+        activeView = qfSavedFocus_;
 
-    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( searchableWidget ) )
+    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView ) )
         return view;
     else
         return logMainView;
@@ -575,14 +580,14 @@ void CrawlerWidget::searchForward()
 {
     LOG(logDEBUG) << "CrawlerWidget::searchForward";
 
-    searchableWidget()->searchForward();
+    activeView()->searchForward();
 }
 
 void CrawlerWidget::searchBackward()
 {
     LOG(logDEBUG) << "CrawlerWidget::searchBackward";
 
-    searchableWidget()->searchBackward();
+    activeView()->searchBackward();
 }
 
 void CrawlerWidget::searchRefreshChangedHandler( int state )

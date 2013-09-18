@@ -1081,6 +1081,12 @@ QString AbstractLogView::getSelection() const
     return selection_.getSelectedText( logData );
 }
 
+void AbstractLogView::selectAll()
+{
+    selection_.selectRange( 0, logData->getNbLine() - 1 );
+    update();
+}
+
 void AbstractLogView::selectAndDisplayLine( int line )
 {
     emit followDisabled();

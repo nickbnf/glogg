@@ -161,8 +161,10 @@ class AbstractLogView : public QAbstractScrollArea
     void updateDisplaySize();
     // Return the line number of the top line of the view
     int getTopLine() const;
-    // Return the line number of the line selected, or -1 if none.
+    // Return the text of the current selection.
     QString getSelection() const;
+    // Instructs the widget to select the whole text.
+    void selectAll();
 
   protected:
     void mousePressEvent( QMouseEvent* mouseEvent );

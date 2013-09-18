@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>411</width>
-    <height>262</height>
+    <height>303</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,7 +23,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>220</y>
+     <y>260</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -41,7 +41,7 @@
      <x>11</x>
      <y>89</y>
      <width>389</width>
-     <height>101</height>
+     <height>161</height>
     </rect>
    </property>
    <property name="title">
@@ -53,7 +53,7 @@
       <x>10</x>
       <y>30</y>
       <width>371</width>
-      <height>62</height>
+      <height>111</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -76,6 +76,16 @@
      </item>
      <item row="1" column="1">
       <widget class="QComboBox" name="quickFindSearchBox"/>
+     </item>
+     <item row="4" column="1">
+      <widget class="QCheckBox" name="incrementalCheckBox">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Incremental QuickFind</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>

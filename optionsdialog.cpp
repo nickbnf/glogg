@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -37,8 +37,12 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
             this, SLOT( onButtonBoxClicked( QAbstractButton* ) ) );
     connect(fontFamilyBox, SIGNAL( currentIndexChanged(const QString& ) ),
             this, SLOT( updateFontSize( const QString& ) ));
+    connect(incrementalCheckBox, SIGNAL( toggled( bool ) ),
+            this, SLOT( onIncrementalChanged() ) );
 
     updateDialogFromConfig();
+
+    setupIncremental();
 }
 
 //
@@ -67,6 +71,20 @@ void OptionsDialog::setupRegexp()
 
     mainSearchBox->addItems( regexpTypes );
     quickFindSearchBox->addItems( regexpTypes );
+}
+
+// Enable/disable the QuickFind options depending on the state
+// of the "incremental" checkbox.
+void OptionsDialog::setupIncremental()
+{
+    if ( incrementalCheckBox->isChecked() ) {
+        quickFindSearchBox->setCurrentIndex(
+                getRegexpIndex( FixedString ) );
+        quickFindSearchBox->setEnabled( false );
+    }
+    else {
+        quickFindSearchBox->setEnabled( true );
+    }
 }
 
 // Convert a regexp type to its index in the list
@@ -102,6 +120,8 @@ void OptionsDialog::updateDialogFromConfig()
             getRegexpIndex( config.mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex(
             getRegexpIndex( config.quickfindRegexpType() ) );
+
+    incrementalCheckBox->setChecked( config.isQuickfindIncremental() );
 }
 
 //
@@ -137,6 +157,7 @@ void OptionsDialog::updateConfigFromDialog()
             getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
     config.setQuickfindRegexpType(
             getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
+    config.setQuickfindIncremental( incrementalCheckBox->isChecked() );
 
     emit optionsChanged();
 }
@@ -153,4 +174,9 @@ void OptionsDialog::onButtonBoxClicked( QAbstractButton* button )
         accept();
     else if ( role == QDialogButtonBox::RejectRole )
         reject();
+}
+
+void OptionsDialog::onIncrementalChanged()
+{
+    setupIncremental();
 }

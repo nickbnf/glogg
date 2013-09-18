@@ -19,6 +19,8 @@
 
 #include "log.h"
 
+#include "persistentinfo.h"
+#include "configuration.h"
 #include "quickfindmux.h"
 
 QuickFindMux::QuickFindMux( const QuickFindMuxSelectorInterface* selector ) :
@@ -104,32 +106,35 @@ void QuickFindMux::searchBackward()
 
 void QuickFindMux::setNewPattern( const QString& new_pattern )
 {
+    static Configuration& config = Persistent<Configuration>( "settings" );
+
     LOG(logDEBUG) << "QuickFindMux::setNewPattern";
     pattern_.changeSearchPattern( new_pattern );
 
     // If we must do an incremental search, we do it now
-    // TODO add configuration option
-    SearchableWidgetInterface* searchable = getSearchableWidget();
-    if ( currentDirection_ == Forward )
-        searchable->incrementallySearchForward();
-    else
-        searchable->incrementallySearchBackward();
+    if ( config.isQuickfindIncremental() ) {
+        SearchableWidgetInterface* searchable = getSearchableWidget();
+        if ( currentDirection_ == Forward )
+            searchable->incrementallySearchForward();
+        else
+            searchable->incrementallySearchBackward();
+    }
 }
 
 void QuickFindMux::confirmPattern( const QString& new_pattern )
 {
+    static Configuration& config = Persistent<Configuration>( "settings" );
+
     pattern_.changeSearchPattern( new_pattern );
 
-    SearchableWidgetInterface* searchable = getSearchableWidget();
-    // if not incremental
-    /*
-    if ( currentDirection_ == Forward )
-        searchable->searchForward();
-    else
-        searchable->searchBackward();
-    */
-    // else
-    searchable->incrementalSearchStop();
+    // if non-incremental, we perform the search now
+    if ( ! config.isQuickfindIncremental() ) {
+        searchNext();
+    }
+    else {
+        SearchableWidgetInterface* searchable = getSearchableWidget();
+        searchable->incrementalSearchStop();
+    }
 }
 
 //

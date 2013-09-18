@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -47,10 +47,13 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void updateConfigFromDialog();
     // Called when a ok/cancel/apply button is clicked.
     void onButtonBoxClicked( QAbstractButton* button );
+    // Called when the 'incremental' button is toggled.
+    void onIncrementalChanged();
 
   private:
     void setupFontList();
     void setupRegexp();
+    void setupIncremental();
 
     int getRegexpIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;

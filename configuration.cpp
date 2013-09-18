@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -30,7 +30,8 @@ Configuration::Configuration()
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
     mainRegexpType_               = ExtendedRegexp;
-    quickfindRegexpType_          = ExtendedRegexp;
+    quickfindRegexpType_          = FixedString;
+    quickfindIncremental_         = true;
 
     overviewVisible_              = true;
     lineNumbersVisibleInMain_     = false;
@@ -70,6 +71,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
             settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
     quickfindRegexpType_ = static_cast<SearchRegexpType>(
             settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
+    if ( settings.contains( "quickfind.incremental" ) )
+        quickfindIncremental_ = settings.value( "quickfind.incremental" ).toBool();
 
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
@@ -80,6 +83,10 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "view.lineNumbersVisibleInFiltered" ) )
         lineNumbersVisibleInFiltered_ =
             settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
+
+    // Some sanity check (mainly for people upgrading)
+    if ( quickfindIncremental_ )
+        quickfindRegexpType_ = FixedString;
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -92,6 +99,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "mainFont.size", fi.pointSize() );
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
+    settings.setValue( "quickfind.incremental", quickfindIncremental_ );
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );

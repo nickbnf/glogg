@@ -47,6 +47,8 @@ class QFNotification;
 
 // Represents a multiplexer (unique application wise) dispatching the
 // Quick Find search from the UI to the relevant view.
+// It is also its responsability to determine if an incremental search
+// must be performed and to react accordingly.
 // It owns the QuickFindPattern.
 class QuickFindMux : public QObject
 {

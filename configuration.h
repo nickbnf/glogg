@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -46,10 +46,14 @@ class Configuration : public Persistable {
     { return mainRegexpType_; }
     SearchRegexpType quickfindRegexpType() const
     { return quickfindRegexpType_; }
+    bool isQuickfindIncremental() const
+    { return quickfindIncremental_; }
     void setMainRegexpType( SearchRegexpType type )
     { mainRegexpType_ = type; }
     void setQuickfindRegexpType( SearchRegexpType type )
     { quickfindRegexpType_ = type; }
+    void setQuickfindIncremental( bool is_incremental )
+    { quickfindIncremental_ = is_incremental; }
 
     // View settings
     bool isOverviewVisible() const
@@ -74,6 +78,7 @@ class Configuration : public Persistable {
     QFont mainFont_;
     SearchRegexpType mainRegexpType_;
     SearchRegexpType quickfindRegexpType_;
+    bool quickfindIncremental_;
 
     // View settings
     bool overviewVisible_;

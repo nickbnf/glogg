@@ -166,6 +166,7 @@ void QuickFindWidget::closeHandler()
     userRequested_ = false;
     this->hide();
     emit close();
+    emit cancelSearch();
 }
 
 void QuickFindWidget::notificationTimeout()

@@ -934,6 +934,14 @@ void AbstractLogView::incrementallySearchBackward()
     searchUsingFunction( &QuickFind::incrementallySearchBackward );
 }
 
+void AbstractLogView::incrementalSearchAbort()
+{
+    quickFind_.incrementalSearchAbort();
+    emit changeQuickFind(
+            "",
+            QuickFindMux::Forward );
+}
+
 void AbstractLogView::incrementalSearchStop()
 {
     quickFind_.incrementalSearchStop();

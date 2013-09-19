@@ -137,6 +137,16 @@ void QuickFindMux::confirmPattern( const QString& new_pattern )
     }
 }
 
+void QuickFindMux::cancelSearch()
+{
+    static Configuration& config = Persistent<Configuration>( "settings" );
+
+    if ( config.isQuickfindIncremental() ) {
+        SearchableWidgetInterface* searchable = getSearchableWidget();
+        searchable->incrementalSearchAbort();
+    }
+}
+
 //
 // Private slots
 //

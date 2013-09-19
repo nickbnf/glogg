@@ -238,6 +238,8 @@ class AbstractLogView :
     virtual void incrementallySearchBackward();
     // Stop the current incremental search (typically when user press return)
     virtual void incrementalSearchStop();
+    // Abort the current incremental search (typically when user press esc)
+    virtual void incrementalSearchAbort();
 
     // Signals the follow mode has been enabled.
     void followSet( bool checked );

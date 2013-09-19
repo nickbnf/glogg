@@ -67,6 +67,8 @@ class QuickFindWidget : public QWidget
     // Sent every time the pattern is modified
     void patternUpdated( const QString& );
     void close();
+    // Emitted when the user closes the window
+    void cancelSearch();
     void searchForward();
     void searchBackward();
     void searchNext();

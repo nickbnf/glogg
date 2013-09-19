@@ -71,6 +71,10 @@ class Selection
     // Crop selection so that in fit in the range ending with the line passed.
     void crop( int last_line );
 
+    // Returns whether the selection is empty
+    bool isEmpty() const
+    { return ( selectedPartial_.line == -1 ) && ( selectedLine_ == -1 ); }
+
     // Returns whether the selection is a single line
     bool isSingleLine() const { return ( selectedLine_ != -1 ); }
 

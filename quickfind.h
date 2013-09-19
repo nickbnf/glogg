@@ -26,11 +26,11 @@
 
 #include "utils.h"
 #include "qfnotifications.h"
+#include "selection.h"
 
 class QuickFindPattern;
 class AbstractLogData;
 class Portion;
-class Selection;
 
 // Handle "long processing" notifications to the UI.
 // reset() shall be called at the beginning of the search
@@ -90,9 +90,14 @@ class QuickFind : public QObject
     qint64 incrementallySearchBackward();
 
     // Stop the currently ongoing incremental search, leave the selection
-    // where it is and throw away the start point associated with
+    // where it is if a match has been found, restore the old one
+    // if not. Also throw away the start point associated with
     // the search.
     void incrementalSearchStop();
+
+    // Throw away the current search and restore the initial
+    // position/selection
+    void incrementalSearchAbort();
 
     // Used for 'repeated' (n/N) QF searches using the current direction
     // Return the line of the first occurence of the QFP and
@@ -141,6 +146,29 @@ class QuickFind : public QObject
         int column_;
     };
 
+    class IncrementalSearchStatus {
+      public:
+        /* Constructors */
+        IncrementalSearchStatus() :
+            ongoing_( None ), position_(), initialSelection_() {}
+        IncrementalSearchStatus(
+                QFDirection direction,
+                const FilePosition& position,
+                const Selection& initial_selection ) :
+            ongoing_( direction ),
+            position_( position ),
+            initialSelection_( initial_selection ) {}
+
+        bool isOngoing() const { return ( ongoing_ != None ); }
+        QFDirection direction() const { return ongoing_; }
+        FilePosition position() const { return position_; }
+        Selection initialSelection() const { return initialSelection_; }
+      private:
+        QFDirection ongoing_;
+        FilePosition position_;
+        Selection initialSelection_;
+    };
+
     // Pointers to external objects
     const AbstractLogData* const logData_;
     Selection* selection_;
@@ -155,9 +183,8 @@ class QuickFind : public QObject
 
     SearchingNotifier searchingNotifier_;
 
-    // Incremental searches
-    QFDirection incrementalSearchOngoing_;
-    FilePosition incrementalSearchStartPosition_;
+    // Incremental search status
+    IncrementalSearchStatus incrementalSearchStatus_;
 
     // Private functions
     qint64 doSearchForward( const FilePosition &start_position );

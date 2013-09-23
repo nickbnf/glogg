@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -63,6 +63,10 @@ class Selection
     // Select a range of lines (both start and end included)
     void selectRange( int start_line, int end_line );
 
+    // Select a range from the previously selected line or beginning
+    // of range (shift+click behaviour)
+    void selectRangeFromPrevious( int line );
+
     // Crop selection so that in fit in the range ending with the line passed.
     void crop( int last_line );
 
@@ -81,6 +85,9 @@ class Selection
 
     // Returns wether the line passed is selected (entirely).
     bool isLineSelected( int line ) const;
+
+    // Returns the line selected or -1 if not a single line selection
+    qint64 selectedLine() const;
 
     // Returns the text selected from the passed AbstractLogData
     QString getSelectedText( const AbstractLogData* logData ) const;
@@ -102,8 +109,11 @@ class Selection
         int endColumn;
     };
     struct SelectedRange {
+        // The limits of the range, sorted
         int startLine;
         int endLine;
+        // The line selected first, used for shift+click
+        int firstLine;
     };
     struct SelectedPartial selectedPartial_;
     struct SelectedRange selectedRange_;

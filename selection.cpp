@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -58,6 +58,24 @@ void Selection::selectRange( int start_line, int end_line )
 
     selectedRange_.startLine = qMin ( start_line, end_line );
     selectedRange_.endLine   = qMax ( start_line, end_line );
+
+    selectedRange_.firstLine = start_line;
+}
+
+void Selection::selectRangeFromPrevious( int line )
+{
+    int previous_line;
+
+    if ( selectedLine_ >= 0 )
+        previous_line = selectedLine_;
+    else if ( selectedRange_.startLine >= 0 )
+        previous_line = selectedRange_.firstLine;
+    else if ( selectedPartial_.line >= 0 )
+        previous_line = selectedPartial_.line;
+    else
+        previous_line = 0;
+
+    selectRange( previous_line, line );
 }
 
 void Selection::crop( int last_line )
@@ -97,6 +115,11 @@ bool Selection::isLineSelected( int line ) const
                 && ( line <= selectedRange_.endLine ) );
     else
         return false;
+}
+
+qint64 Selection::selectedLine() const
+{
+    return selectedLine_;
 }
 
 QList<int> Selection::getLines() const

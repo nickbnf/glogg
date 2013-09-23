@@ -320,24 +320,33 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     {
         int line = convertCoordToLine( mouseEvent->y() );
 
-        if ( mouseEvent->x() < bulletZoneWidthPx_ ) {
-            // Mark a line if it is clicked in the left margin
-            // (only if click and release in the same area)
-            markingClickInitiated_ = true;
-            markingClickLine_ = line;
+        if ( mouseEvent->modifiers() & Qt::ShiftModifier )
+        {
+            selection_.selectRangeFromPrevious( line );
+            emit updateLineNumber( line );
+            update();
         }
-        else {
-            // Select the line, and start a selection
-            if ( line < logData->getNbLine() ) {
-                selection_.selectLine( line );
-                emit updateLineNumber( line );
-                emit newSelection( line );
+        else
+        {
+            if ( mouseEvent->x() < bulletZoneWidthPx_ ) {
+                // Mark a line if it is clicked in the left margin
+                // (only if click and release in the same area)
+                markingClickInitiated_ = true;
+                markingClickLine_ = line;
             }
+            else {
+                // Select the line, and start a selection
+                if ( line < logData->getNbLine() ) {
+                    selection_.selectLine( line );
+                    emit updateLineNumber( line );
+                    emit newSelection( line );
+                }
 
-            // Remember the click in case we're starting a selection
-            selectionStarted_ = true;
-            selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
-            selectionCurrentEndPos_ = selectionStartPos_;
+                // Remember the click in case we're starting a selection
+                selectionStarted_ = true;
+                selectionStartPos_ = convertCoordToFilePos( mouseEvent->pos() );
+                selectionCurrentEndPos_ = selectionStartPos_;
+            }
         }
     }
     else if ( mouseEvent->button() == Qt::RightButton )

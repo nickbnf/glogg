@@ -235,7 +235,11 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // Follow option (up and down)
     connect(this, SIGNAL( followSet( bool ) ),
             logMainView, SLOT( followSet( bool ) ) );
+    connect(this, SIGNAL( followSet( bool ) ),
+            filteredView, SLOT( followSet( bool ) ) );
     connect(logMainView, SIGNAL( followDisabled() ),
+            this, SIGNAL( followDisabled() ) );
+    connect(filteredView, SIGNAL( followDisabled() ),
             this, SIGNAL( followDisabled() ) );
 
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),

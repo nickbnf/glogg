@@ -496,15 +496,36 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
+    bool controlModifier = (keyEvent->modifiers() & Qt::ControlModifier) == Qt::ControlModifier;
+    bool shiftModifier = (keyEvent->modifiers() & Qt::ShiftModifier) == Qt::ShiftModifier;
 
     if ( keyEvent->key() == Qt::Key_Left )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
     else if ( keyEvent->key() == Qt::Key_Right )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
-    else if ( keyEvent->key() == Qt::Key_Home )
+    else if ( keyEvent->key() == Qt::Key_Home && !controlModifier)
         jumpToStartOfLine();
-    else if ( keyEvent->key() == Qt::Key_End )
+    else if ( keyEvent->key() == Qt::Key_End  && !controlModifier)
         jumpToRightOfScreen();
+    else if ( (keyEvent->key() == Qt::Key_PageDown && controlModifier)
+           || (keyEvent->key() == Qt::Key_End && controlModifier) )
+    {
+        emit followDisabled(); // duplicate of 'G' action.
+        selection_.selectLine( logData->getNbLine() - 1 );
+        emit updateLineNumber( logData->getNbLine() - 1 );
+        jumpToBottom();
+    }
+    else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
+           || (keyEvent->key() == Qt::Key_Home && controlModifier) )
+    {
+        emit followDisabled(); // like 'g' but 0 input first line action.
+        selectAndDisplayLine( 0 );
+        emit updateLineNumber( 0 );
+    }
+    else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
+        searchNext(); // duplicate of 'n' action.
+    else if ( keyEvent->key() == Qt::Key_F3 && shiftModifier )
+        searchPrevious(); // duplicate of 'N' action.
     else {
         const char character = (keyEvent->text())[0].toAscii();
 

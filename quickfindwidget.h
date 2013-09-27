@@ -21,12 +21,13 @@
 #define QUICKFINDWIDGET_H
 
 #include <QWidget>
-#include <QHBoxLayout>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QLabel>
 #include <QTimer>
 
+class QHBoxLayout;
+class QLineEdit;
+class QToolButton;
+class QLabel;
+class QCheckBox;
 class QFNotification;
 
 enum QFDirection {
@@ -60,12 +61,15 @@ class QuickFindWidget : public QWidget
     void returnHandler();
     void closeHandler();
     void notificationTimeout();
+    void textChanged();
 
   signals:
-    // Sent when Return is presed to confirm the pattern
-    void patternConfirmed( const QString& );
+    // Sent when Return is pressed to confirm the pattern
+    // (pattern and ignor_case flag)
+    void patternConfirmed( const QString&, bool );
     // Sent every time the pattern is modified
-    void patternUpdated( const QString& );
+    // (pattern and ignor_case flag)
+    void patternUpdated( const QString&, bool );
     void close();
     // Emitted when the user closes the window
     void cancelSearch();
@@ -82,9 +86,11 @@ class QuickFindWidget : public QWidget
     QToolButton* nextButton_;
     QToolButton* previousButton_;
     QLineEdit*   editQuickFind_;
+    QCheckBox*   ignoreCaseCheck_;
     QLabel*      notificationText_;
 
     QToolButton* setupToolButton(const QString &text, const QString &icon);
+    bool isIgnoreCase() const;
 
     QTimer*      notificationTimer_;
 

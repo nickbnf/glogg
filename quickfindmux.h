@@ -87,11 +87,11 @@ class QuickFindMux : public QObject
   public slots:
     // Signal the current pattern must be altered (will start an incremental
     // search if the options are configured in such a way).
-    void setNewPattern( const QString& new_pattern );
+    void setNewPattern( const QString& new_pattern, bool ignore_case );
 
     // Signal the current pattern must be altered and is confirmed
     // (will stop an incremental search if needed)
-    void confirmPattern( const QString& new_pattern );
+    void confirmPattern( const QString& new_pattern, bool ignore_case );
 
     // Signal the user cancelled the search
     // (used for incremental only)

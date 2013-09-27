@@ -59,6 +59,13 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
     emit patternUpdated();
 }
 
+void QuickFindPattern::changeSearchPattern( const QString& pattern, bool ignoreCase )
+{
+    regexp_.setCaseSensitivity(
+            ignoreCase ? Qt::CaseInsensitive : Qt::CaseSensitive );
+    changeSearchPattern( pattern );
+}
+
 bool QuickFindPattern::matchLine( const QString& line,
         QList<QuickFindMatch>& matches ) const
 {

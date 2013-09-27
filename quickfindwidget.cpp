@@ -19,6 +19,12 @@
 
 #include "log.h"
 
+#include <QToolButton>
+#include <QLabel>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QHBoxLayout>
+
 #include "configuration.h"
 #include "qfnotifications.h"
 
@@ -42,34 +48,22 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     closeButton_ = setupToolButton(
             QLatin1String(""), QLatin1String( ":/images/darkclosebutton.png" ) );
     layout->addWidget( closeButton_ );
-    connect( closeButton_, SIGNAL( clicked() ), SLOT( closeHandler() ) );
 
     editQuickFind_ = new QLineEdit( this );
     // FIXME: set MinimumSize might be to constraining
     editQuickFind_->setMinimumSize( QSize( 150, 0 ) );
     layout->addWidget( editQuickFind_ );
 
-    connect( editQuickFind_, SIGNAL( textChanged( QString ) ),
-             this, SIGNAL( patternUpdated( const QString& ) ) );
-    /*
-    connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
-            SLOT( updateButtons() ) );
-    */
-    connect( editQuickFind_, SIGNAL( returnPressed() ),
-             this, SLOT( returnHandler() ) );
+    ignoreCaseCheck_ = new QCheckBox( "Ignore &case" );
+    layout->addWidget( ignoreCaseCheck_ );
 
     previousButton_ = setupToolButton( QLatin1String("Previous"),
             QLatin1String( ":/images/arrowup.png" ) );
     layout->addWidget( previousButton_ );
 
-    connect( previousButton_, SIGNAL( clicked() ),
-            this, SLOT( doSearchBackward() ) );
-
     nextButton_ = setupToolButton( QLatin1String("Next"),
             QLatin1String( ":/images/arrowdown.png" ) );
     layout->addWidget( nextButton_ );
-    connect( nextButton_, SIGNAL( clicked() ),
-            this, SLOT( doSearchForward() ) );
 
     notificationText_ = new QLabel( "" );
     // FIXME: set MinimumSize might be too constraining
@@ -84,12 +78,28 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 #endif
     setMinimumWidth( minimumSizeHint().width() );
 
+    // Behaviour
+    connect( closeButton_, SIGNAL( clicked() ), SLOT( closeHandler() ) );
+    connect( editQuickFind_, SIGNAL( textChanged( QString ) ),
+             this, SLOT( textChanged() ) );
+    connect( ignoreCaseCheck_, SIGNAL( stateChanged( int ) ),
+             this, SLOT( textChanged() ) );
+    /*
+    connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
+            SLOT( updateButtons() ) );
+    */
+    connect( editQuickFind_, SIGNAL( returnPressed() ),
+             this, SLOT( returnHandler() ) );
+    connect( previousButton_, SIGNAL( clicked() ),
+            this, SLOT( doSearchBackward() ) );
+    connect( nextButton_, SIGNAL( clicked() ),
+            this, SLOT( doSearchForward() ) );
+
     // Notification timer:
     notificationTimer_ = new QTimer( this );
     notificationTimer_->setSingleShot( true );
     connect( notificationTimer_, SIGNAL( timeout() ),
             this, SLOT( notificationTimeout() ) );
-
 }
 
 void QuickFindWidget::userActivate()
@@ -133,7 +143,7 @@ void QuickFindWidget::doSearchForward()
     // the widget to stay visible.
     userRequested_ = true;
 
-    emit patternConfirmed( editQuickFind_->text() );
+    emit patternConfirmed( editQuickFind_->text(), isIgnoreCase() );
     emit searchForward();
 }
 
@@ -146,14 +156,14 @@ void QuickFindWidget::doSearchBackward()
     // the widget to stay visible.
     userRequested_ = true;
 
-    emit patternConfirmed( editQuickFind_->text() );
+    emit patternConfirmed( editQuickFind_->text(), isIgnoreCase() );
     emit searchBackward();
 }
 
 // Close and search when the user presses Return
 void QuickFindWidget::returnHandler()
 {
-    emit patternConfirmed( editQuickFind_->text() );
+    emit patternConfirmed( editQuickFind_->text(), isIgnoreCase() );
     // Close the widget
     userRequested_ = false;
     this->hide();
@@ -176,10 +186,16 @@ void QuickFindWidget::notificationTimeout()
         this->hide();
 }
 
+void QuickFindWidget::textChanged()
+{
+    emit patternUpdated( editQuickFind_->text(), isIgnoreCase() );
+}
+
 //
 // Private functions
 //
-QToolButton* QuickFindWidget::setupToolButton(const QString &text, const QString &icon)
+QToolButton* QuickFindWidget::setupToolButton(
+        const QString &text, const QString &icon)
 {
     QToolButton *toolButton = new QToolButton(this);
 
@@ -189,4 +205,9 @@ QToolButton* QuickFindWidget::setupToolButton(const QString &text, const QString
     toolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
     return toolButton;
+}
+
+bool QuickFindWidget::isIgnoreCase() const
+{
+    return ( ignoreCaseCheck_->checkState() == Qt::Checked );
 }

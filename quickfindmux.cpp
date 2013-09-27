@@ -104,12 +104,13 @@ void QuickFindMux::searchBackward()
     searchable->searchBackward();
 }
 
-void QuickFindMux::setNewPattern( const QString& new_pattern )
+void QuickFindMux::setNewPattern(
+        const QString& new_pattern, bool ignore_case )
 {
     static Configuration& config = Persistent<Configuration>( "settings" );
 
     LOG(logDEBUG) << "QuickFindMux::setNewPattern";
-    pattern_.changeSearchPattern( new_pattern );
+    pattern_.changeSearchPattern( new_pattern, ignore_case );
 
     // If we must do an incremental search, we do it now
     if ( config.isQuickfindIncremental() ) {
@@ -121,11 +122,12 @@ void QuickFindMux::setNewPattern( const QString& new_pattern )
     }
 }
 
-void QuickFindMux::confirmPattern( const QString& new_pattern )
+void QuickFindMux::confirmPattern(
+        const QString& new_pattern, bool ignore_case )
 {
     static Configuration& config = Persistent<Configuration>( "settings" );
 
-    pattern_.changeSearchPattern( new_pattern );
+    pattern_.changeSearchPattern( new_pattern, ignore_case );
 
     // if non-incremental, we perform the search now
     if ( ! config.isQuickfindIncremental() ) {

@@ -253,10 +253,10 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     // QuickFind
     connect( quickFindWidget_, SIGNAL( close() ),
              this, SLOT( hideQuickFindBar() ) );
-    connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString& ) ),
-             quickFindMux_, SLOT( confirmPattern( const QString& ) ) );
-    connect( quickFindWidget_, SIGNAL( patternUpdated( const QString& ) ),
-             quickFindMux_, SLOT( setNewPattern( const QString& ) ) );
+    connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString&, bool ) ),
+             quickFindMux_, SLOT( confirmPattern( const QString&, bool ) ) );
+    connect( quickFindWidget_, SIGNAL( patternUpdated( const QString&, bool ) ),
+             quickFindMux_, SLOT( setNewPattern( const QString&, bool ) ) );
     connect( quickFindWidget_, SIGNAL( cancelSearch() ),
              quickFindMux_, SLOT( cancelSearch() ) );
     connect( quickFindWidget_, SIGNAL( searchForward() ),

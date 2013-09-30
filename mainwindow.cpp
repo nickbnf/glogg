@@ -357,7 +357,7 @@ void MainWindow::about()
 #ifdef GLOGG_COMMIT
                 "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT
 #endif
-                "<p>Copyright &copy; 2009, 2010, 2011 2012 Nicolas Bonnefon and other contributors"
+                "<p>Copyright &copy; 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors"
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
 }
 

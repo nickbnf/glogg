@@ -150,6 +150,7 @@ debug:QMAKE_CXXFLAGS += -g
 
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
+QMAKE_CXXFLAGS += -Wextra
 
 GPROF {
     QMAKE_CXXFLAGS += -pg

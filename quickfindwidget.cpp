@@ -71,16 +71,11 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     notificationText_->setMinimumSize( width, 0 );
     layout->addWidget( notificationText_ );
 
-#if 0
-    QSpacerItem* spacerItem = new QSpacerItem(20, 20, QSizePolicy::Expanding,
-        QSizePolicy::Minimum);
-    layout_->addItem(spacerItem);
-#endif
     setMinimumWidth( minimumSizeHint().width() );
 
     // Behaviour
     connect( closeButton_, SIGNAL( clicked() ), SLOT( closeHandler() ) );
-    connect( editQuickFind_, SIGNAL( textChanged( QString ) ),
+    connect( editQuickFind_, SIGNAL( textEdited( QString ) ),
              this, SLOT( textChanged() ) );
     connect( ignoreCaseCheck_, SIGNAL( stateChanged( int ) ),
              this, SLOT( textChanged() ) );

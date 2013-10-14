@@ -24,7 +24,6 @@
 #include <QAbstractScrollArea>
 #include <QBasicTimer>
 
-#include "abstractlogdata.h"
 #include "selection.h"
 #include "quickfind.h"
 #include "overviewwidget.h"
@@ -32,6 +31,7 @@
 
 class QMenu;
 class QAction;
+class AbstractLogData;
 
 class LineChunk
 {

@@ -32,8 +32,8 @@
 
 #include "logmainview.h"
 #include "filteredview.h"
-#include "logdata.h"
-#include "logfiltereddata.h"
+#include "data/logdata.h"
+#include "data/logfiltereddata.h"
 #include "quickfindwidget.h"
 #include "quickfindmux.h"
 

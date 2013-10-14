@@ -24,7 +24,7 @@
 
 #include "logmainview.h"
 
-#include "logfiltereddata.h"
+#include "data/logfiltereddata.h"
 #include "overview.h"
 
 LogMainView::LogMainView( const LogData* newLogData,

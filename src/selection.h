@@ -20,8 +20,12 @@
 #ifndef SELECTION_H
 #define SELECTION_H
 
+#include <QList>
+#include <QString>
+
 #include "utils.h"
-#include "abstractlogdata.h"
+
+class AbstractLogData;
 
 class Portion
 {

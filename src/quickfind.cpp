@@ -28,6 +28,7 @@
 #include "log.h"
 #include "quickfindpattern.h"
 #include "selection.h"
+#include "data/abstractlogdata.h"
 
 #include "quickfind.h"
 

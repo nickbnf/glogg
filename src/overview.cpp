@@ -23,6 +23,8 @@
 
 #include "log.h"
 
+#include "data/logfiltereddata.h"
+
 #include "overview.h"
 
 Overview::Overview() : matchLines_(), markLines_()

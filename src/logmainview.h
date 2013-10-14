@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2009, 2010, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon
+ * and other contributors
  *
  * This file is part of glogg.
  *
@@ -17,34 +18,33 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTEREDVIEW_H
-#define FILTEREDVIEW_H
+#ifndef LOGMAINVIEW_H
+#define LOGMAINVIEW_H
 
 #include "abstractlogview.h"
+#include "data/logdata.h"
 
-#include "logfiltereddata.h"
-
-// Class implementing the filtered (bottom) view widget.
-class FilteredView : public AbstractLogView
+// Class implementing the main (top) view widget.
+class LogMainView : public AbstractLogView
 {
   public:
-    FilteredView( LogFilteredData* newLogData,
+    LogMainView( const LogData* newLogData,
             const QuickFindPattern* const quickFindPattern,
+            Overview* overview,
+            OverviewWidget* overview_widget,
             QWidget* parent = 0 );
 
-    // What is visible in the view.
-    enum Visibility { MatchesOnly, MarksOnly, MarksAndMatches };
-    void setVisibility( Visibility visi );
+    // Configure the view to use the passed filtered list
+    // (used for couloured bullets)
+    // Should be NULL or the empty LFD if no filtering is used
+    void useNewFiltering( LogFilteredData* filteredData );
 
   protected:
+    // Implements the virtual function
     virtual LineType lineType( int lineNumber ) const;
 
-    // Number of the filtered line relative to the unfiltered source
-    virtual qint64 displayLineNumber( int lineNumber ) const;
-    virtual qint64 maxDisplayLineNumber() const;
-
   private:
-    LogFilteredData* logFilteredData_;
+    LogFilteredData* filteredData_;
 };
 
 #endif

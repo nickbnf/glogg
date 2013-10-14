@@ -21,8 +21,9 @@
 #define OVERVIEW_H
 
 #include <QList>
+#include <QVector>
 
-#include "logfiltereddata.h"
+class LogFilteredData;
 
 // Class implementing the logic behind the matches overview bar.
 // This class converts the matches found in a LogFilteredData in

@@ -23,9 +23,9 @@
 // There are three types of selection, only one type might be active
 // at any time.
 
-#include <QtGlobal>
-
 #include "selection.h"
+
+#include "data/abstractlogdata.h"
 
 Selection::Selection()
 {

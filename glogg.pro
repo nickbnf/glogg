@@ -91,14 +91,7 @@ else {
 }
 
 FORMS += src/optionsdialog.ui
-
-greaterThan(QT_VERSION, "4.4.0") {
-    FORMS += src/filtersdialog.ui
-}
-else {
-    message(Using old FiltersDialog)
-    FORMS += src/filtersdialog_old.ui
-}
+FORMS += src/filtersdialog.ui
 
 # For Windows icon
 RC_FILE = glogg.rc
@@ -147,6 +140,8 @@ debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
 release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
 debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
 release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
+debug:UI_DIR = $${OUT_PWD}/.ui/debug-shared
+release:UI_DIR = $${OUT_PWD}/.ui/release-shared
 
 # Debug symbols in debug builds
 debug:QMAKE_CXXFLAGS += -g

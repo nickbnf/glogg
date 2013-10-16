@@ -25,10 +25,6 @@
 #include "logdata.h"
 #include "logfiltereddata.h"
 
-#if QT_VERSION < 0x040500
-#define QBENCHMARK
-#endif
-
 #if !defined( TMPDIR )
 #define TMPDIR "/tmp"
 #endif

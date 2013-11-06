@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -20,6 +20,8 @@
 // This file implements LogData, the content of a log file.
 
 #include <iostream>
+
+#include <cassert>
 
 #include <QFileInfo>
 
@@ -59,12 +61,12 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
     fileMutex_(), dataMutex_(), workerThread_()
 {
     // Start with an "empty" log
-    file_         = NULL;
+    file_         = nullptr;
     fileSize_     = 0;
     nbLines_      = 0;
     maxLength_    = 0;
-    currentOperation_ = NULL;
-    nextOperation_    = NULL;
+    currentOperation_ = nullptr;
+    nextOperation_    = nullptr;
 
     // Initialise the file watcher
     connect( &fileWatcher_, SIGNAL( fileChanged( const QString& ) ),
@@ -81,8 +83,6 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
 
 LogData::~LogData()
 {
-    if ( file_ )
-        delete file_;
 }
 
 //
@@ -100,11 +100,9 @@ void LogData::attachFile( const QString& fileName )
 
     workerThread_.interrupt();
 
-    LogDataOperation* newOperation = new AttachOperation( fileName );
-
     // If an attach operation is already in progress, the new one will
     // be delayed untilthe current one is finished (canceled)
-    enqueueOperation( newOperation );
+    enqueueOperation( std::unique_ptr<const LogDataOperation>( new AttachOperation( fileName ) ) );
 }
 
 void LogData::interruptLoading()
@@ -132,21 +130,19 @@ LogFilteredData* LogData::getNewFilteredData() const
 
 // Add an operation to the queue and perform it immediately if
 // there is none ongoing.
-void LogData::enqueueOperation( const LogDataOperation* newOperation )
+void LogData::enqueueOperation( std::shared_ptr<const LogDataOperation> new_operation )
 {
-    if ( currentOperation_ == NULL )
+    if ( currentOperation_ == nullptr )
     {
         // We do it immediately
-        currentOperation_ = newOperation;
+        currentOperation_ =  new_operation;
         startOperation();
     }
     else
     {
         // An operation is in progress...
         // ... we schedule the attach op for later
-        if ( nextOperation_ != NULL )
-            delete nextOperation_;
-        nextOperation_ = newOperation;
+        nextOperation_ = new_operation;
     }
 }
 
@@ -184,19 +180,19 @@ void LogData::fileChangedOnDisk()
     const QString name = file_->fileName();
     QFileInfo info( name );
 
-    LogDataOperation* newOperation = NULL;
+    std::shared_ptr<LogDataOperation> newOperation;
 
     LOG(logDEBUG) << "current fileSize=" << fileSize_;
     LOG(logDEBUG) << "info file_->size()=" << info.size();
     if ( info.size() < fileSize_ ) {
         fileChangedOnDisk_ = Truncated;
         LOG(logINFO) << "File truncated";
-        newOperation = new FullIndexOperation();
+        newOperation = std::make_shared<FullIndexOperation>();
     }
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
         LOG(logINFO) << "New data on disk";
-        newOperation = new PartialIndexOperation( fileSize_ );
+        newOperation = std::make_shared<PartialIndexOperation>( fileSize_ );
     }
 
     if ( newOperation )
@@ -234,7 +230,7 @@ void LogData::indexingFinished( bool success )
             }
             else {
                 QMutexLocker locker( &fileMutex_ );
-                file_ = new QFile( newFileName );
+                file_.reset( new QFile( newFileName ) );
             }
         }
 
@@ -255,14 +251,10 @@ void LogData::indexingFinished( bool success )
 
     // So now the operation is done, let's see if there is something
     // else to do, in which case, do it!
-    if ( currentOperation_ ) {
-        delete currentOperation_;
-        currentOperation_ = nextOperation_;
-        nextOperation_ = NULL;
-    }
-    else {
-        LOG(logERROR) << "currentOperation_ is NULL in indexingFinished()";
-    }
+    assert( currentOperation_ );
+
+    currentOperation_ = nextOperation_;
+    nextOperation_ = nullptr;
 
     if ( currentOperation_ ) {
         LOG(logDEBUG) << "indexingFinished is performing the next operation";

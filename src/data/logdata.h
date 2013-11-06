@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -19,6 +19,8 @@
 
 #ifndef LOGDATA_H
 #define LOGDATA_H
+
+#include <memory>
 
 #include <QObject>
 #include <QString>
@@ -153,18 +155,18 @@ class LogData : public AbstractLogData {
     virtual int doGetMaxLength() const;
     virtual int doGetLineLength( qint64 line ) const;
 
-    void enqueueOperation( const LogDataOperation* newOperation );
+    void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
 
     QString indexingFileName_;
-    QFile* file_;
+    std::unique_ptr<QFile> file_;
     LinePositionArray linePosition_;
     qint64 fileSize_;
     qint64 nbLines_;
     int maxLength_;
     QDateTime lastModifiedDate_;
-    const LogDataOperation* currentOperation_;
-    const LogDataOperation* nextOperation_;
+    std::shared_ptr<const LogDataOperation> currentOperation_;
+    std::shared_ptr<const LogDataOperation> nextOperation_;
 
     // To protect the file:
     mutable QMutex fileMutex_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -38,7 +38,9 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
     matchingLineList( QList<MatchingLine>() ),
     currentRegExp_(),
     visibility_(),
-    filteredItemsCache_()
+    filteredItemsCache_(),
+    workerThread_( nullptr ),
+    marks_( new Marks() )
 {
     matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
@@ -46,9 +48,6 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
     maxLengthMarks_ = 0;
     searchDone_ = true;
     visibility_ = MarksAndMatches;
-
-    workerThread_ = new LogFilteredDataWorkerThread( NULL );
-    marks_ = new Marks();
 
     filteredItemsCacheDirty_ = true;
 }
@@ -59,7 +58,9 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     matchingLineList( SearchResultArray() ),
     currentRegExp_(),
     visibility_(),
-    filteredItemsCache_()
+    filteredItemsCache_(),
+    workerThread_( logData ),
+    marks_( new Marks() )
 {
     // Starts with an empty result list
     maxLength_ = 0;
@@ -72,17 +73,20 @@ LogFilteredData::LogFilteredData( const LogData* logData )
 
     visibility_ = MarksAndMatches;
 
-    workerThread_ = new LogFilteredDataWorkerThread( logData );
-    marks_ = new Marks();
-
     filteredItemsCacheDirty_ = true;
 
     // Forward the update signal
-    connect( workerThread_, SIGNAL( searchProgressed( int, int ) ),
+    connect( &workerThread_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( handleSearchProgressed( int, int ) ) );
 
     // Starts the worker thread
-    workerThread_->start();
+    workerThread_.start();
+}
+
+LogFilteredData::~LogFilteredData()
+{
+    // FIXME
+    // workerThread_.stop();
 }
 
 //
@@ -100,21 +104,21 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
     maxLength_ = 0;
     maxLengthMarks_ = 0;
 
-    workerThread_->search( currentRegExp_ );
+    workerThread_.search( currentRegExp_ );
 }
 
 void LogFilteredData::updateSearch()
 {
     LOG(logDEBUG) << "Entering updateSearch";
 
-    workerThread_->updateSearch( currentRegExp_, nbLinesProcessed_ );
+    workerThread_.updateSearch( currentRegExp_, nbLinesProcessed_ );
 }
 
 void LogFilteredData::interruptSearch()
 {
     LOG(logDEBUG) << "Entering interruptSearch";
 
-    workerThread_->interrupt();
+    workerThread_.interrupt();
 }
 
 void LogFilteredData::clearSearch()
@@ -259,7 +263,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
         << nbMatches << " progress=" << progress;
 
     // searchDone_ = true;
-    workerThread_->getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
+    workerThread_.getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
     emit searchProgressed( nbMatches, progress );

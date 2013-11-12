@@ -20,6 +20,8 @@
 #ifndef LOGFILTEREDDATA_H
 #define LOGFILTEREDDATA_H
 
+#include <memory>
+
 #include <QObject>
 #include <QByteArray>
 #include <QList>
@@ -46,6 +48,8 @@ class LogFilteredData : public AbstractLogData {
     LogFilteredData();
     // Constructor used by LogData
     LogFilteredData( const LogData* logData );
+
+    ~LogFilteredData();
 
     // Starts the async search, sending newDataAvailable() when new data found.
     // If a search is already in progress this function will block until
@@ -137,8 +141,8 @@ class LogFilteredData : public AbstractLogData {
     mutable QVector<FilteredItem> filteredItemsCache_;
     mutable bool filteredItemsCacheDirty_;
 
-    LogFilteredDataWorkerThread* workerThread_;
-    Marks* marks_;
+    LogFilteredDataWorkerThread workerThread_;
+    std::unique_ptr<Marks> marks_;
 
     // Utility functions
     qint64 findLogDataLine( qint64 lineNum ) const;

@@ -83,6 +83,8 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
 
 LogData::~LogData()
 {
+    // FIXME
+    // workerThread_.stop();
 }
 
 //

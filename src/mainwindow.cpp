@@ -22,7 +22,19 @@
 // load/save the settings on opening/closing of the app
 
 #include <iostream>
-#include <QtGui>
+
+#include <QAction>
+#include <QDesktopWidget>
+#include <QMenuBar>
+#include <QToolBar>
+#include <QFileInfo>
+#include <QFileDialog>
+#include <QClipboard>
+#include <QMessageBox>
+#include <QCloseEvent>
+#include <QDragEnterEvent>
+#include <QMimeData>
+#include <QUrl>
 
 #include "log.h"
 

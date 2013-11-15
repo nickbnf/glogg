@@ -148,10 +148,26 @@ release:UI_DIR = $${OUT_PWD}/.ui/release-shared
 # Debug symbols in debug builds
 debug:QMAKE_CXXFLAGS += -g
 
+# Which compiler are we using
+system( g++ --version | grep -e " 4\.6" ) {
+    message ( "g++ version < 4.7, supports C++0x" )
+    CONFIG += C++0x
+}
+else {
+    system( g++ --version | grep -e " 4\.[7-9]" ) {
+        message ( "g++ version 4.7 or newer, supports C++11" )
+        CONFIG += C++11
+    }
+    else {
+        error ( "glogg requires g++ version 4.6 or later" )
+    }
+}
+
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
 QMAKE_CXXFLAGS += -Wextra
-QMAKE_CXXFLAGS += -std=c++11
+C++0x:QMAKE_CXXFLAGS += -std=c++0x
+C++11:QMAKE_CXXFLAGS += -std=c++11
 
 GPROF {
     QMAKE_CXXFLAGS += -pg

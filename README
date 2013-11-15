@@ -17,9 +17,13 @@ combination of grep and less.
 
 ## Requirements
 
-* Qt libraries (version 4.3.0 or later)
+* GCC version 4.6.0 or later
+* Qt libraries (version 4.5.0 or later)
 * Boost "program-options" development libraries
 * Markdown HTML processor (optional, to generate HTML documentation)
+
+glogg version 0.9.X still support older versions of gcc and Qt if you need to
+build on an older platform.
 
 ## Building
 

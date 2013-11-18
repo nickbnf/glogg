@@ -122,6 +122,7 @@ class MainWindow : public QMainWindow
     InfoLine *infoLine;
     QLabel* lineNbField;
     QToolBar *toolBar;
+    QCheckBox *followCheckBox;
 
     QAction *openAction;
     QAction *exitAction;

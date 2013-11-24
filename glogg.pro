@@ -13,6 +13,7 @@ win32:Release:QMAKE_LFLAGS += "-Wl,-subsystem,windows"
 # Input
 SOURCES += \
     src/main.cpp \
+    src/session.cpp \
     src/data/abstractlogdata.cpp \
     src/data/logdata.cpp \
     src/data/logfiltereddata.cpp \
@@ -52,6 +53,8 @@ HEADERS += \
     src/data/logfiltereddataworkerthread.h \
     src/data/logdataworkerthread.h \
     src/mainwindow.h \
+    src/session.h \
+    src/viewinterface.h \
     src/crawlerwidget.h \
     src/logmainview.h \
     src/log.h \

@@ -49,8 +49,10 @@
 #include "savedsearches.h"
 #include "menuactiontooltipbehavior.h"
 
-MainWindow::MainWindow() :
-    recentFiles( Persistent<RecentFiles>( "recentFiles" ) ), mainIcon_()
+MainWindow::MainWindow( std::unique_ptr<Session> session ) :
+    session_( std::move( session )  ),
+    recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
+    mainIcon_()
 {
     createActions();
     createMenus();

@@ -20,11 +20,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <memory>
 #include <QMainWindow>
+
+#include "session.h"
 #include "crawlerwidget.h"
 #include "infoline.h"
 
 class QAction;
+class Session;
 class RecentFiles;
 class MenuActionToolTipBehavior;
 
@@ -35,7 +39,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
   public:
-    MainWindow();
+    // Constructor
+    // The ownership of the session is transferred to us
+    MainWindow( std::unique_ptr<Session> session );
 
     // Loads the initial file (parameter passed or from config file)
     void loadInitialFile( QString fileName );
@@ -101,6 +107,7 @@ class MainWindow : public QMainWindow
     // Returns the size in human readable format
     QString readableSize( qint64 size ) const;
 
+    std::unique_ptr<Session> session_;
     SavedSearches *savedSearches;
     CrawlerWidget *crawlerWidget;
     RecentFiles& recentFiles;

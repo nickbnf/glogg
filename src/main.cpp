@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -19,6 +19,8 @@
 
 #include <QApplication>
 
+#include <memory>
+
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -30,6 +32,7 @@ using namespace std;
 #include "configuration.h"
 #include "filterset.h"
 #include "recentfiles.h"
+#include "session.h"
 #include "mainwindow.h"
 #include "savedsearches.h"
 #include "log.h"
@@ -131,7 +134,8 @@ int main(int argc, char *argv[])
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );
 
-    MainWindow* mw = new MainWindow();
+    std::unique_ptr<Session> session( new Session() );
+    MainWindow* mw = new MainWindow( std::move( session ) );
 
     LOG(logDEBUG) << "MainWindow created.";
     mw->show();
@@ -145,7 +149,7 @@ static void print_version()
 #ifdef GLOGG_COMMIT
     cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "\n";
 #endif
-    cout << "Copyright (C) 2009, 2010, 2011 Nicolas Bonnefon and other contributors\n";
+    cout << "Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors\n";
     cout << "This is free software.  You may redistribute copies of it under the terms of\n";
     cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
     cout << "There is NO WARRANTY, to the extent permitted by law.\n";

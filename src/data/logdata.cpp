@@ -104,7 +104,8 @@ void LogData::attachFile( const QString& fileName )
 
     // If an attach operation is already in progress, the new one will
     // be delayed untilthe current one is finished (canceled)
-    enqueueOperation( std::unique_ptr<const LogDataOperation>( new AttachOperation( fileName ) ) );
+    std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
+    enqueueOperation( std::move( operation ) );
 }
 
 void LogData::interruptLoading()

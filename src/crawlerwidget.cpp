@@ -367,6 +367,19 @@ SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
 }
 
 //
+// Protected functions
+//
+void CrawlerWidget::doSetLogData( std::shared_ptr<LogData> log_data )
+{
+    logData_ = log_data.get();
+}
+
+void CrawlerWidget::doSetLogFilteredData( std::shared_ptr<LogFilteredData> filtered_data )
+{
+    logFilteredData_ = filtered_data.get();
+}
+
+//
 // Events handlers
 //
 

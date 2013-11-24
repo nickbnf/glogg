@@ -43,8 +43,8 @@ class ViewInterface {
     virtual ViewContextInterface& getViewContext( void ) = 0;
     */
 
-    // No polymorphic destruction please...
-    ~ViewInterface() = delete;
+    // To allow polymorphic destruction
+    virtual ~ViewInterface() {}
 
   protected:
     // Virtual functions (using NVI)

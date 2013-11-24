@@ -44,19 +44,21 @@ class Session {
     // Return the view associated to a file if it is open
     // The filename must be strictly identical to trigger a match
     // (no match in case of e.g. relative vs. absolute pathname.
-    ViewInterface* getViewIfOpen( const char* file_name ) const;
+    ViewInterface* getViewIfOpen( const std::string& file_name ) const;
     // Open a new file, and construct a new view for it (the caller passes a factory
     // to build the concrete view)
     // The ownership of the view is given to the caller
     // Throw exceptions if the file is already open or if it cannot be open.
-    ViewInterface* open( const char* file_name, std::function<ViewInterface*()> view_factory );
+    ViewInterface* open( const std::string& file_name,
+            std::function<ViewInterface*()> view_factory );
     // Close the file identified by the view passed
     // Throw an exception if it does not exist.
     void close( const ViewInterface* view );
 
   private:
     // Open a file without checking if it is existing/readable
-    ViewInterface* openAlways( const char* file_name, std::function<ViewInterface*()> view_factory );
+    ViewInterface* openAlways( const std::string& file_name,
+            std::function<ViewInterface*()> view_factory );
 
     struct OpenFile {
         std::string fileName;

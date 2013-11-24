@@ -29,3 +29,11 @@ Session::~Session()
 {
     // FIXME Clean up all the data objects...
 }
+
+ViewInterface* Session::open( const std::string& file_name,
+        std::function<ViewInterface*()> view_factory )
+{
+    ViewInterface* view = view_factory();
+
+    return view;
+}

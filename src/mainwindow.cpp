@@ -59,7 +59,6 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     // createContextMenu();
     createToolBars();
     // createStatusBar();
-    createCrawler();
 
     setAcceptDrops( true );
 
@@ -68,37 +67,14 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     setGeometry( geometry.x() + 20, geometry.y() + 40,
             geometry.width() - 140, geometry.height() - 140 );
 
-    // Send actions to the crawlerwidget
-    connect( this, SIGNAL( followSet( bool ) ),
-            crawlerWidget, SIGNAL( followSet( bool ) ) );
-    connect( this, SIGNAL( optionsChanged() ),
-            crawlerWidget, SLOT( applyConfiguration() ) );
-
-    // Actions from the CrawlerWidget
-    connect( crawlerWidget, SIGNAL( followDisabled() ),
-            this, SLOT( disableFollow() ) );
-    connect( crawlerWidget, SIGNAL( updateLineNumber( int ) ),
-            this, SLOT( lineNumberHandler( int ) ) );
-
-    readSettings();
-    emit optionsChanged();
-
-    // We start with the empty file
-    setCurrentFile( "" );
-
     mainIcon_.addFile( ":/images/hicolor/16x16/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/24x24/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/32x32/glogg.png" );
     mainIcon_.addFile( ":/images/hicolor/48x48/glogg.png" );
 
-    // Register for progress status bar
-    connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
-            this, SLOT( updateLoadingProgress( int ) ) );
-    connect( crawlerWidget, SIGNAL( loadingFinished( bool ) ),
-            this, SLOT( displayNormalStatus( bool ) ) );
-
     setWindowIcon( mainIcon_ );
-    setCentralWidget(crawlerWidget);
+
+    crawlerWidget = nullptr;
 }
 
 void MainWindow::loadInitialFile( QString fileName )
@@ -118,10 +94,6 @@ void MainWindow::loadInitialFile( QString fileName )
 
 void MainWindow::createCrawler()
 {
-    // First get the global search history
-    savedSearches = &(Persistent<SavedSearches>( "savedSearches" ));
-
-    crawlerWidget = new CrawlerWidget( savedSearches );
 }
 
 // Menu actions
@@ -501,12 +473,48 @@ bool MainWindow::loadFile( const QString& fileName )
 
     int topLine = 0;
 
+    LOG(logDEBUG) << "crawlerWidget=" << crawlerWidget;
+
     // If we're loading the same file, put the same line on top.
     if ( fileName == currentFile )
         topLine = crawlerWidget->getTopLine();
 
+    // First get the global search history
+    savedSearches = &(Persistent<SavedSearches>( "savedSearches" ));
+
     // Load the file
     loadingFileName = fileName;
+    crawlerWidget = dynamic_cast<CrawlerWidget*>( session_->open( fileName.toStdString(),
+            [this]() { return new CrawlerWidget( savedSearches, this ); } ) );
+
+    LOG(logDEBUG) << "crawlerWidget=" << crawlerWidget;
+
+    // Send actions to the crawlerwidget
+    connect( this, SIGNAL( followSet( bool ) ),
+            crawlerWidget, SIGNAL( followSet( bool ) ) );
+    connect( this, SIGNAL( optionsChanged() ),
+            crawlerWidget, SLOT( applyConfiguration() ) );
+
+    // Actions from the CrawlerWidget
+    connect( crawlerWidget, SIGNAL( followDisabled() ),
+            this, SLOT( disableFollow() ) );
+    connect( crawlerWidget, SIGNAL( updateLineNumber( int ) ),
+            this, SLOT( lineNumberHandler( int ) ) );
+
+    readSettings();
+    emit optionsChanged();
+
+    // We start with the empty file
+    setCurrentFile( "" );
+
+    // Register for progress status bar
+    connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
+            this, SLOT( updateLoadingProgress( int ) ) );
+    connect( crawlerWidget, SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( displayNormalStatus( bool ) ) );
+
+    setCentralWidget(crawlerWidget);
+
     if ( crawlerWidget->readFile( fileName, topLine ) ) {
         LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
         return true;

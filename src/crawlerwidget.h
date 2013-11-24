@@ -36,6 +36,7 @@
 #include "data/logfiltereddata.h"
 #include "quickfindwidget.h"
 #include "quickfindmux.h"
+#include "viewinterface.h"
 
 class InfoLine;
 class QuickFindPattern;
@@ -48,7 +49,8 @@ class OverviewWidget;
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
 // lines and various buttons.
-class CrawlerWidget : public QSplitter, public QuickFindMuxSelectorInterface
+class CrawlerWidget : public QSplitter,
+    public QuickFindMuxSelectorInterface, public ViewInterface
 {
   Q_OBJECT
 
@@ -80,6 +82,10 @@ class CrawlerWidget : public QSplitter, public QuickFindMuxSelectorInterface
 
   protected:
     void keyPressEvent( QKeyEvent* keyEvent );
+
+    // Implementation of the ViewInterface functions
+    virtual void doSetLogData( std::shared_ptr<LogData> log_data );
+    virtual void doSetLogFilteredData( std::shared_ptr<LogFilteredData> filtered_data );
 
   signals:
     // Sent to signal the client load has progressed,

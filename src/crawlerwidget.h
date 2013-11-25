@@ -84,8 +84,9 @@ class CrawlerWidget : public QSplitter,
     void keyPressEvent( QKeyEvent* keyEvent );
 
     // Implementation of the ViewInterface functions
-    virtual void doSetLogData( std::shared_ptr<LogData> log_data );
-    virtual void doSetLogFilteredData( std::shared_ptr<LogFilteredData> filtered_data );
+    virtual void doSetData(
+            std::shared_ptr<LogData> log_data,
+            std::shared_ptr<LogFilteredData> filtered_data );
 
   signals:
     // Sent to signal the client load has progressed,
@@ -185,6 +186,7 @@ class CrawlerWidget : public QSplitter,
     };
 
     // Private functions
+    void setup();
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
     AbstractLogView* activeView() const;

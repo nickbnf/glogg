@@ -24,6 +24,8 @@
 
 #include "log.h"
 
+#include <cassert>
+
 #include <Qt>
 #include <QApplication>
 #include <QFile>
@@ -47,15 +49,376 @@
 // Palette for error signaling (yellow background)
 const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 
-// Constructor makes all the child widgets and set up connections.
+// Constructor only does trivial construction. The real work is done once
+// the data is attached.
 CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
         : QSplitter(parent)
 {
+    logData_         = nullptr;
+    logFilteredData_ = nullptr;
+
+    savedSearches    = searches;
+}
+
+// The top line is first one on the main display
+int CrawlerWidget::getTopLine() const
+{
+    return logMainView->getTopLine();
+}
+
+QString CrawlerWidget::getSelectedText() const
+{
+    if ( filteredView->hasFocus() )
+        return filteredView->getSelection();
+    else
+        return logMainView->getSelection();
+}
+
+void CrawlerWidget::selectAll()
+{
+    activeView()->selectAll();
+}
+
+// Return a pointer to the view in which we should do the QuickFind
+SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
+{
+    QWidget* searchableWidget;
+
+    // Search in the window that has focus, or the window where 'Find' was
+    // called from, or the main window.
+    if ( filteredView->hasFocus() || logMainView->hasFocus() )
+        searchableWidget = QApplication::focusWidget();
+    else
+        searchableWidget = qfSavedFocus_;
+
+    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( searchableWidget ) )
+        return view;
+    else
+        return logMainView;
+}
+
+//
+// Protected functions
+//
+void CrawlerWidget::doSetData(
+        std::shared_ptr<LogData> log_data,
+        std::shared_ptr<LogFilteredData> filtered_data )
+{
+    logData_         = log_data.get();
+    logFilteredData_ = filtered_data.get();
+
+    setup();
+}
+
+//
+// Events handlers
+//
+
+void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
+{
+    LOG(logDEBUG4) << "keyPressEvent received";
+
+    switch ( (keyEvent->text())[0].toLatin1() ) {
+        case '/':
+            displayQuickFindBar( QuickFindMux::Forward );
+            break;
+        case '?':
+            displayQuickFindBar( QuickFindMux::Backward );
+            break;
+        default:
+            keyEvent->ignore();
+    }
+
+    if ( !keyEvent->isAccepted() )
+        QSplitter::keyPressEvent( keyEvent );
+}
+
+//
+// Slots
+//
+
+void CrawlerWidget::startNewSearch()
+{
+    // Record the search line in the recent list
+    // (reload the list first in case another glogg changed it)
+    GetPersistentInfo().retrieve( "savedSearches" );
+    savedSearches->addRecent( searchLineEdit->currentText() );
+    GetPersistentInfo().save( "savedSearches" );
+
+    // Update the SearchLine (history)
+    updateSearchCombo();
+    // Call the private function to do the search
+    replaceCurrentSearch( searchLineEdit->currentText() );
+}
+
+void CrawlerWidget::stopSearch()
+{
+    logFilteredData_->interruptSearch();
+    searchState_.stopSearch();
+    printSearchInfoMessage();
+}
+
+// When receiving the 'newDataAvailable' signal from LogFilteredData
+void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
+{
+    LOG(logDEBUG) << "updateFilteredView received.";
+
+    if ( progress == 100 ) {
+        // Searching done
+        printSearchInfoMessage( nbMatches );
+        searchInfoLine->hideGauge();
+        // De-activate the stop button
+        stopButton->setEnabled( false );
+    }
+    else {
+        // Search in progress
+        // We ignore 0% and 100% to avoid a flash when the search is very short
+        if ( progress > 0 ) {
+            searchInfoLine->setText(
+                    tr("Search in progress (%1 %)... %2 match%3 found so far.")
+                    .arg( progress )
+                    .arg( nbMatches )
+                    .arg( nbMatches > 1 ? "es" : "" ) );
+            searchInfoLine->displayGauge( progress );
+        }
+    }
+
+    // Recompute the content of the filtered window.
+    filteredView->updateData();
+
+    // Update the match overview
+    overview_->updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
+}
+
+void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
+{
+    int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
+    logMainView->selectAndDisplayLine(mainViewLine);  // FIXME: should be done with a signal.
+}
+
+void CrawlerWidget::markLineFromMain( qint64 line )
+{
+    if ( logFilteredData_->isLineMarked( line ) )
+        logFilteredData_->deleteMark( line );
+    else
+        logFilteredData_->addMark( line );
+
+    // Recompute the content of the filtered window.
+    filteredView->updateData();
+
+    // Update the match overview
+    overview_->updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
+}
+
+void CrawlerWidget::markLineFromFiltered( qint64 line )
+{
+    qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
+    if ( logFilteredData_->filteredLineTypeByIndex( line )
+            == LogFilteredData::Mark )
+        logFilteredData_->deleteMark( line_in_file );
+    else
+        logFilteredData_->addMark( line_in_file );
+
+    // Recompute the content of the filtered window.
+    filteredView->updateData();
+
+    // Update the match overview
+    overview_->updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
+}
+
+void CrawlerWidget::applyConfiguration()
+{
+    Configuration& config = Persistent<Configuration>( "settings" );
+    QFont font = config.mainFont();
+
+    LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
+
+    // Whatever font we use, we should NOT use kerning
+    font.setKerning( false );
+    font.setFixedPitch( true );
+#if QT_VERSION > 0x040700
+    // Necessary on systems doing subpixel positionning (e.g. Ubuntu 12.04)
+    font.setStyleStrategy( QFont::ForceIntegerMetrics );
+#endif
+    logMainView->setFont(font);
+    filteredView->setFont(font);
+
+    logMainView->setLineNumbersVisible( config.mainLineNumbersVisible() );
+    filteredView->setLineNumbersVisible( config.filteredLineNumbersVisible() );
+
+    overview_->setVisible( config.isOverviewVisible() );
+    logMainView->refreshOverview();
+
+    logMainView->updateDisplaySize();
+    logMainView->update();
+    filteredView->updateDisplaySize();
+    filteredView->update();
+
+    // Update the SearchLine (history)
+    updateSearchCombo();
+}
+
+void CrawlerWidget::loadingFinishedHandler( bool success )
+{
+    // We need to refresh the main window because the view lines on the
+    // overview have probably changed.
+    overview_->updateData( logData_->getNbLine() );
+
+    // FIXME, handle topLine
+    // logMainView->updateData( logData_, topLine );
+    logMainView->updateData();
+
+        // Shall we Forbid starting a search when loading in progress?
+        // searchButton->setEnabled( false );
+
+    // searchButton->setEnabled( true );
+
+    // See if we need to auto-refresh the search
+    if ( searchState_.isAutorefreshAllowed() ) {
+        LOG(logDEBUG) << "Refreshing the search";
+        logFilteredData_->updateSearch();
+    }
+
+    emit loadingFinished( success );
+}
+
+void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
+{
+    // Handle the case where the file has been truncated
+    if ( status == LogData::Truncated ) {
+        // Clear all marks (TODO offer the option to keep them)
+        logFilteredData_->clearMarks();
+        if ( ! searchInfoLine->text().isEmpty() ) {
+            // Invalidate the search
+            logFilteredData_->clearSearch();
+            filteredView->updateData();
+            searchState_.truncateFile();
+            printSearchInfoMessage();
+        }
+    }
+}
+
+void CrawlerWidget::displayQuickFindBar( QuickFindMux::QFDirection direction )
+{
+    LOG(logDEBUG) << "CrawlerWidget::displayQuickFindBar";
+
+    // Remember who had the focus
+    qfSavedFocus_ = QApplication::focusWidget();
+
+    quickFindMux_->setDirection( direction );
+    quickFindWidget_->userActivate();
+}
+
+void CrawlerWidget::hideQuickFindBar()
+{
+    // Restore the focus once the QFBar has been hidden
+    qfSavedFocus_->setFocus();
+}
+
+void CrawlerWidget::changeQFPattern( const QString& newPattern )
+{
+    quickFindWidget_->changeDisplayedPattern( newPattern );
+}
+
+// Returns a pointer to the window in which the search should be done
+AbstractLogView* CrawlerWidget::activeView() const
+{
+    QWidget* activeView;
+
+    // Search in the window that has focus, or the window where 'Find' was
+    // called from, or the main window.
+    if ( filteredView->hasFocus() || logMainView->hasFocus() )
+        activeView = QApplication::focusWidget();
+    else
+        activeView = qfSavedFocus_;
+
+    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView ) )
+        return view;
+    else
+        return logMainView;
+}
+
+void CrawlerWidget::searchForward()
+{
+    LOG(logDEBUG) << "CrawlerWidget::searchForward";
+
+    activeView()->searchForward();
+}
+
+void CrawlerWidget::searchBackward()
+{
+    LOG(logDEBUG) << "CrawlerWidget::searchBackward";
+
+    activeView()->searchBackward();
+}
+
+void CrawlerWidget::searchRefreshChangedHandler( int state )
+{
+    searchState_.setAutorefresh( state == Qt::Checked );
+    printSearchInfoMessage( logFilteredData_->getNbMatches() );
+}
+
+void CrawlerWidget::searchTextChangeHandler()
+{
+    // We suspend auto-refresh
+    searchState_.changeExpression();
+    printSearchInfoMessage( logFilteredData_->getNbMatches() );
+}
+
+void CrawlerWidget::changeFilteredViewVisibility( int index )
+{
+    QStandardItem* item = visibilityModel_->item( index );
+    FilteredView::Visibility visibility =
+        static_cast< FilteredView::Visibility>( item->data().toInt() );
+
+    filteredView->setVisibility( visibility );
+}
+
+void CrawlerWidget::addToSearch( const QString& string )
+{
+    QString text = searchLineEdit->currentText();
+
+    if ( text.isEmpty() )
+        text = string;
+    else {
+        // Escape the regexp chars from the string before adding it.
+        text += ( '|' + QRegExp::escape( string ) );
+    }
+
+    searchLineEdit->setEditText( text );
+
+    // Set the focus to lineEdit so that the user can press 'Return' immediately
+    searchLineEdit->lineEdit()->setFocus();
+}
+
+void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
+{
+    qint64 line_in_mainview = logFilteredData_->getMatchingLineNumber( line );
+
+    overviewWidget_->highlightLine( line_in_mainview );
+}
+
+//
+// Private functions
+//
+
+// Build the widget and connect all the signals, this must be done once
+// the data are attached.
+void CrawlerWidget::setup()
+{
     setOrientation(Qt::Vertical);
 
-    // Initialise internal data (with empty file and search)
-    logData_          = new LogData();
-    logFilteredData_  = logData_->getNewFilteredData();
+    assert( logData_ );
+    assert( logFilteredData_ );
 
     // The matches overview
     overview_ = new Overview();
@@ -74,8 +437,6 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
 
     overviewWidget_->setOverview( overview_ );
     overviewWidget_->setParent( logMainView );
-
-    savedSearches = searches;
 
     quickFindMux_->registerSearchable( logMainView );
     quickFindMux_->registerSearchable( filteredView );
@@ -286,396 +647,6 @@ CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
     connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
             this, SLOT( searchRefreshChangedHandler( int ) ) );
 }
-
-// Start the asynchronous loading of a file.
-bool CrawlerWidget::readFile( const QString& fileName, int )
-{
-    QFileInfo fileInfo( fileName );
-    if ( fileInfo.isReadable() )
-    {
-        LOG(logDEBUG) << "Entering readFile " << fileName.toStdString();
-
-        // First we cancel any in progress search and loading
-        stopLoading();
-
-        // The file exist, so we invalidate the search, remove all marks
-        // and redraw the screen.
-        replaceCurrentSearch( "" );
-        logFilteredData_->clearMarks();
-        logData_->attachFile( fileName );
-        logMainView->updateData();
-
-        // Forbid starting a search when loading in progress
-        // searchButton->setEnabled( false );
-
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-void CrawlerWidget::stopLoading()
-{
-    logFilteredData_->interruptSearch();
-    logData_->interruptLoading();
-}
-
-void CrawlerWidget::getFileInfo( qint64* fileSize, int* fileNbLine,
-       QDateTime* lastModified ) const
-{
-    *fileSize = logData_->getFileSize();
-    *fileNbLine = logData_->getNbLine();
-    *lastModified = logData_->getLastModifiedDate();
-}
-
-// The top line is first one on the main display
-int CrawlerWidget::getTopLine() const
-{
-    return logMainView->getTopLine();
-}
-
-QString CrawlerWidget::getSelectedText() const
-{
-    if ( filteredView->hasFocus() )
-        return filteredView->getSelection();
-    else
-        return logMainView->getSelection();
-}
-
-void CrawlerWidget::selectAll()
-{
-    activeView()->selectAll();
-}
-
-// Return a pointer to the view in which we should do the QuickFind
-SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
-{
-    QWidget* searchableWidget;
-
-    // Search in the window that has focus, or the window where 'Find' was
-    // called from, or the main window.
-    if ( filteredView->hasFocus() || logMainView->hasFocus() )
-        searchableWidget = QApplication::focusWidget();
-    else
-        searchableWidget = qfSavedFocus_;
-
-    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( searchableWidget ) )
-        return view;
-    else
-        return logMainView;
-}
-
-//
-// Protected functions
-//
-void CrawlerWidget::doSetLogData( std::shared_ptr<LogData> log_data )
-{
-    logData_ = log_data.get();
-}
-
-void CrawlerWidget::doSetLogFilteredData( std::shared_ptr<LogFilteredData> filtered_data )
-{
-    logFilteredData_ = filtered_data.get();
-}
-
-//
-// Events handlers
-//
-
-void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
-{
-    LOG(logDEBUG4) << "keyPressEvent received";
-
-    switch ( (keyEvent->text())[0].toLatin1() ) {
-        case '/':
-            displayQuickFindBar( QuickFindMux::Forward );
-            break;
-        case '?':
-            displayQuickFindBar( QuickFindMux::Backward );
-            break;
-        default:
-            keyEvent->ignore();
-    }
-
-    if ( !keyEvent->isAccepted() )
-        QSplitter::keyPressEvent( keyEvent );
-}
-
-//
-// Slots
-//
-
-void CrawlerWidget::startNewSearch()
-{
-    // Record the search line in the recent list
-    // (reload the list first in case another glogg changed it)
-    GetPersistentInfo().retrieve( "savedSearches" );
-    savedSearches->addRecent( searchLineEdit->currentText() );
-    GetPersistentInfo().save( "savedSearches" );
-
-    // Update the SearchLine (history)
-    updateSearchCombo();
-    // Call the private function to do the search
-    replaceCurrentSearch( searchLineEdit->currentText() );
-}
-
-void CrawlerWidget::stopSearch()
-{
-    logFilteredData_->interruptSearch();
-    searchState_.stopSearch();
-    printSearchInfoMessage();
-}
-
-// When receiving the 'newDataAvailable' signal from LogFilteredData
-void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
-{
-    LOG(logDEBUG) << "updateFilteredView received.";
-
-    if ( progress == 100 ) {
-        // Searching done
-        printSearchInfoMessage( nbMatches );
-        searchInfoLine->hideGauge();
-        // De-activate the stop button
-        stopButton->setEnabled( false );
-    }
-    else {
-        // Search in progress
-        // We ignore 0% and 100% to avoid a flash when the search is very short
-        if ( progress > 0 ) {
-            searchInfoLine->setText(
-                    tr("Search in progress (%1 %)... %2 match%3 found so far.")
-                    .arg( progress )
-                    .arg( nbMatches )
-                    .arg( nbMatches > 1 ? "es" : "" ) );
-            searchInfoLine->displayGauge( progress );
-        }
-    }
-
-    // Recompute the content of the filtered window.
-    filteredView->updateData();
-
-    // Update the match overview
-    overview_->updateData( logData_->getNbLine() );
-
-    // Also update the top window for the coloured bullets.
-    update();
-}
-
-void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
-{
-    int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
-    logMainView->selectAndDisplayLine(mainViewLine);  // FIXME: should be done with a signal.
-}
-
-void CrawlerWidget::markLineFromMain( qint64 line )
-{
-    if ( logFilteredData_->isLineMarked( line ) )
-        logFilteredData_->deleteMark( line );
-    else
-        logFilteredData_->addMark( line );
-
-    // Recompute the content of the filtered window.
-    filteredView->updateData();
-
-    // Update the match overview
-    overview_->updateData( logData_->getNbLine() );
-
-    // Also update the top window for the coloured bullets.
-    update();
-}
-
-void CrawlerWidget::markLineFromFiltered( qint64 line )
-{
-    qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
-    if ( logFilteredData_->filteredLineTypeByIndex( line )
-            == LogFilteredData::Mark )
-        logFilteredData_->deleteMark( line_in_file );
-    else
-        logFilteredData_->addMark( line_in_file );
-
-    // Recompute the content of the filtered window.
-    filteredView->updateData();
-
-    // Update the match overview
-    overview_->updateData( logData_->getNbLine() );
-
-    // Also update the top window for the coloured bullets.
-    update();
-}
-
-void CrawlerWidget::applyConfiguration()
-{
-    Configuration& config = Persistent<Configuration>( "settings" );
-    QFont font = config.mainFont();
-
-    LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
-
-    // Whatever font we use, we should NOT use kerning
-    font.setKerning( false );
-    font.setFixedPitch( true );
-#if QT_VERSION > 0x040700
-    // Necessary on systems doing subpixel positionning (e.g. Ubuntu 12.04)
-    font.setStyleStrategy( QFont::ForceIntegerMetrics );
-#endif
-    logMainView->setFont(font);
-    filteredView->setFont(font);
-
-    logMainView->setLineNumbersVisible( config.mainLineNumbersVisible() );
-    filteredView->setLineNumbersVisible( config.filteredLineNumbersVisible() );
-
-    overview_->setVisible( config.isOverviewVisible() );
-    logMainView->refreshOverview();
-
-    logMainView->updateDisplaySize();
-    logMainView->update();
-    filteredView->updateDisplaySize();
-    filteredView->update();
-
-    // Update the SearchLine (history)
-    updateSearchCombo();
-}
-
-void CrawlerWidget::loadingFinishedHandler( bool success )
-{
-    // We need to refresh the main window because the view lines on the
-    // overview have probably changed.
-    overview_->updateData( logData_->getNbLine() );
-
-    // FIXME, handle topLine
-    // logMainView->updateData( logData_, topLine );
-    logMainView->updateData();
-
-    // searchButton->setEnabled( true );
-
-    // See if we need to auto-refresh the search
-    if ( searchState_.isAutorefreshAllowed() ) {
-        LOG(logDEBUG) << "Refreshing the search";
-        logFilteredData_->updateSearch();
-    }
-
-    emit loadingFinished( success );
-}
-
-void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
-{
-    // Handle the case where the file has been truncated
-    if ( status == LogData::Truncated ) {
-        // Clear all marks (TODO offer the option to keep them)
-        logFilteredData_->clearMarks();
-        if ( ! searchInfoLine->text().isEmpty() ) {
-            // Invalidate the search
-            logFilteredData_->clearSearch();
-            filteredView->updateData();
-            searchState_.truncateFile();
-            printSearchInfoMessage();
-        }
-    }
-}
-
-void CrawlerWidget::displayQuickFindBar( QuickFindMux::QFDirection direction )
-{
-    LOG(logDEBUG) << "CrawlerWidget::displayQuickFindBar";
-
-    // Remember who had the focus
-    qfSavedFocus_ = QApplication::focusWidget();
-
-    quickFindMux_->setDirection( direction );
-    quickFindWidget_->userActivate();
-}
-
-void CrawlerWidget::hideQuickFindBar()
-{
-    // Restore the focus once the QFBar has been hidden
-    qfSavedFocus_->setFocus();
-}
-
-void CrawlerWidget::changeQFPattern( const QString& newPattern )
-{
-    quickFindWidget_->changeDisplayedPattern( newPattern );
-}
-
-// Returns a pointer to the window in which the search should be done
-AbstractLogView* CrawlerWidget::activeView() const
-{
-    QWidget* activeView;
-
-    // Search in the window that has focus, or the window where 'Find' was
-    // called from, or the main window.
-    if ( filteredView->hasFocus() || logMainView->hasFocus() )
-        activeView = QApplication::focusWidget();
-    else
-        activeView = qfSavedFocus_;
-
-    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView ) )
-        return view;
-    else
-        return logMainView;
-}
-
-void CrawlerWidget::searchForward()
-{
-    LOG(logDEBUG) << "CrawlerWidget::searchForward";
-
-    activeView()->searchForward();
-}
-
-void CrawlerWidget::searchBackward()
-{
-    LOG(logDEBUG) << "CrawlerWidget::searchBackward";
-
-    activeView()->searchBackward();
-}
-
-void CrawlerWidget::searchRefreshChangedHandler( int state )
-{
-    searchState_.setAutorefresh( state == Qt::Checked );
-    printSearchInfoMessage( logFilteredData_->getNbMatches() );
-}
-
-void CrawlerWidget::searchTextChangeHandler()
-{
-    // We suspend auto-refresh
-    searchState_.changeExpression();
-    printSearchInfoMessage( logFilteredData_->getNbMatches() );
-}
-
-void CrawlerWidget::changeFilteredViewVisibility( int index )
-{
-    QStandardItem* item = visibilityModel_->item( index );
-    FilteredView::Visibility visibility =
-        static_cast< FilteredView::Visibility>( item->data().toInt() );
-
-    filteredView->setVisibility( visibility );
-}
-
-void CrawlerWidget::addToSearch( const QString& string )
-{
-    QString text = searchLineEdit->currentText();
-
-    if ( text.isEmpty() )
-        text = string;
-    else {
-        // Escape the regexp chars from the string before adding it.
-        text += ( '|' + QRegExp::escape( string ) );
-    }
-
-    searchLineEdit->setEditText( text );
-
-    // Set the focus to lineEdit so that the user can press 'Return' immediately
-    searchLineEdit->lineEdit()->setFocus();
-}
-
-void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
-{
-    qint64 line_in_mainview = logFilteredData_->getMatchingLineNumber( line );
-
-    overviewWidget_->highlightLine( line_in_mainview );
-}
-
-//
-// Private functions
-//
 
 // Create a new search using the text passed, replace the currently
 // used one and destroy the old one.

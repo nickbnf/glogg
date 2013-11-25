@@ -28,14 +28,11 @@ class LogFilteredData;
 // ViewInterface represents a high-level view on a log file.
 class ViewInterface {
   public:
-    // Set the log data to associate to this view
+    // Set the log data and filtered data to associate to this view
     // Ownership stay with the caller but is shared
-    void setLogData( std::shared_ptr<LogData> log_data )
-    { doSetLogData( log_data ); }
-    // Set the Filetered log data to associate to this view
-    // Ownership stay with the caller but is shared
-    void setLogFilteredData( std::shared_ptr<LogFilteredData> filtered_data )
-    { doSetLogFilteredData( filtered_data ); }
+    void setData( std::shared_ptr<LogData> log_data,
+            std::shared_ptr<LogFilteredData> filtered_data )
+    { doSetData( log_data, filtered_data ); }
 
     // For save/restore of the context
     /*
@@ -48,7 +45,7 @@ class ViewInterface {
 
   protected:
     // Virtual functions (using NVI)
-    virtual void doSetLogData( std::shared_ptr<LogData> log_data ) = 0;
-    virtual void doSetLogFilteredData( std::shared_ptr<LogFilteredData> filtered_data ) = 0;
+    virtual void doSetData( std::shared_ptr<LogData> log_data,
+            std::shared_ptr<LogFilteredData> filtered_data ) = 0;
 };
 #endif

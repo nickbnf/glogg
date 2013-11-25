@@ -70,6 +70,10 @@ class Session {
     // List of open files
     typedef std::unordered_map<std::string, OpenFile> OpenFileMap;
     OpenFileMap open_files;
+
+    // tmp
+    std::shared_ptr<LogData> logData_;
+    std::shared_ptr<LogFilteredData> logFilteredData_;
 };
 
 #endif

@@ -315,7 +315,8 @@ void MainWindow::reload()
 // Stop the loading operation
 void MainWindow::stop()
 {
-    crawlerWidget->stopLoading();
+    // FIXME
+    // crawlerWidget->stopLoading();
 }
 
 // Opens the 'Filters' dialog box
@@ -411,7 +412,8 @@ void MainWindow::displayNormalStatus( bool success )
     int fileNbLine;
     QDateTime lastModified;
 
-    crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );
+    // FIXME
+    // crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
         const QString date =
             defaultLocale.toString( lastModified, QLocale::NarrowFormat );
@@ -484,6 +486,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     // Load the file
     loadingFileName = fileName;
+
     crawlerWidget = dynamic_cast<CrawlerWidget*>( session_->open( fileName.toStdString(),
             [this]() { return new CrawlerWidget( savedSearches, this ); } ) );
 
@@ -515,15 +518,8 @@ bool MainWindow::loadFile( const QString& fileName )
 
     setCentralWidget(crawlerWidget);
 
-    if ( crawlerWidget->readFile( fileName, topLine ) ) {
-        LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
-        return true;
-    }
-    else {
-        LOG(logWARNING) << "Cannot load file " << fileName.toStdString();
-        displayNormalStatus( false );
-        return false;
-    }
+    LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
+    return true;
 }
 
 // Strips the passed filename from its directory part.

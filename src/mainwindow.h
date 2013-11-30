@@ -96,7 +96,6 @@ class MainWindow : public QMainWindow
     void createContextMenu();
     void createToolBars();
     void createStatusBar();
-    void createCrawler();
     void createRecentFileToolTipTimer();
     void readSettings();
     void writeSettings();
@@ -104,8 +103,6 @@ class MainWindow : public QMainWindow
     void setCurrentFile( const QString& fileName );
     void updateRecentFileActions();
     QString strippedName( const QString& fullFileName ) const;
-    // Returns the size in human readable format
-    QString readableSize( qint64 size ) const;
 
     std::unique_ptr<Session> session_;
     SavedSearches *savedSearches;

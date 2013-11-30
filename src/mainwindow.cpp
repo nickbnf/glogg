@@ -49,6 +49,9 @@
 #include "savedsearches.h"
 #include "menuactiontooltipbehavior.h"
 
+// Returns the size in human readable format
+static QString readableSize( qint64 size );
+
 MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     session_( std::move( session )  ),
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
@@ -74,6 +77,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
 
     setWindowIcon( mainIcon_ );
 
+    readSettings();
+
     crawlerWidget = nullptr;
 }
 
@@ -91,10 +96,6 @@ void MainWindow::loadInitialFile( QString fileName )
 //
 // Private functions
 //
-
-void MainWindow::createCrawler()
-{
-}
 
 // Menu actions
 void MainWindow::createActions()
@@ -407,12 +408,12 @@ void MainWindow::displayNormalStatus( bool success )
     if ( success )
         setCurrentFile( loadingFileName );
 
-    qint64 fileSize;
-    int fileNbLine;
+    uint64_t fileSize;
+    uint32_t fileNbLine;
     QDateTime lastModified;
 
-    // FIXME
-    // crawlerWidget->getFileInfo( &fileSize, &fileNbLine, &lastModified );
+    session_->getFileInfo( crawlerWidget,
+            &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
         const QString date =
             defaultLocale.toString( lastModified, QLocale::NarrowFormat );
@@ -428,6 +429,9 @@ void MainWindow::displayNormalStatus( bool success )
 
     infoLine->hideGauge();
     stopAction->setEnabled( false );
+
+    // Now everything is ready, we can finally show the file!
+    crawlerWidget->show();
 }
 
 //
@@ -466,15 +470,14 @@ void MainWindow::dropEvent( QDropEvent* event )
 // Private functions
 //
 
-// Loads the passed file into the CrawlerWidget and update the title bar.
+// Create a CrawlerWidget for the passed file, start its loading
+// and update the title bar.
 // The loading is done asynchronously.
 bool MainWindow::loadFile( const QString& fileName )
 {
     LOG(logDEBUG) << "loadFile ( " << fileName.toStdString() << " )";
 
     int topLine = 0;
-
-    LOG(logDEBUG) << "crawlerWidget=" << crawlerWidget;
 
     // If we're loading the same file, put the same line on top.
     if ( fileName == currentFile )
@@ -489,7 +492,8 @@ bool MainWindow::loadFile( const QString& fileName )
     crawlerWidget = dynamic_cast<CrawlerWidget*>( session_->open( fileName.toStdString(),
             [this]() { return new CrawlerWidget( savedSearches, this ); } ) );
 
-    LOG(logDEBUG) << "crawlerWidget=" << crawlerWidget;
+    // We won't show the widget until the file is fully loaded
+    crawlerWidget->hide();
 
     // Send actions to the crawlerwidget
     connect( this, SIGNAL( followSet( bool ) ),
@@ -503,7 +507,7 @@ bool MainWindow::loadFile( const QString& fileName )
     connect( crawlerWidget, SIGNAL( updateLineNumber( int ) ),
             this, SLOT( lineNumberHandler( int ) ) );
 
-    readSettings();
+    // FIXME: is it necessary?
     emit optionsChanged();
 
     // We start with the empty file
@@ -593,8 +597,11 @@ void MainWindow::readSettings()
     GetPersistentInfo().retrieve( QString( "session" ) );
     SessionInfo session = Persistent<SessionInfo>( "session" );
     restoreGeometry( session.geometry() );
-    crawlerWidget->restoreState( session.crawlerState() );
     previousFile = session.currentFile();
+    /*
+     * FIXME: should be in the session
+    crawlerWidget->restoreState( session.crawlerState() );
+    */
 
     // History of recent files
     GetPersistentInfo().retrieve( QString( "recentFiles" ) );
@@ -606,10 +613,11 @@ void MainWindow::readSettings()
 }
 
 // Returns the size in human readable format
-QString MainWindow::readableSize( qint64 size ) const
+static QString readableSize( qint64 size )
 {
     static const QString sizeStrs[] = {
-        tr("B"), tr("KiB"), tr("MiB"), tr("GiB"), tr("TiB") };
+        QObject::tr("B"), QObject::tr("KiB"), QObject::tr("MiB"),
+        QObject::tr("GiB"), QObject::tr("TiB") };
 
     QLocale defaultLocale;
     unsigned int i;

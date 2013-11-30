@@ -19,6 +19,7 @@
 
 #include "session.h"
 
+#include <cassert>
 #include <QFileInfo>
 
 #include "viewinterface.h"
@@ -43,15 +44,22 @@ ViewInterface* Session::open( const std::string& file_name,
     if ( fileInfo.isReadable() )
     {
         // Create the data objects
-        logData_          = std::shared_ptr<LogData>( new LogData() );
-        logFilteredData_  =
-            std::shared_ptr<LogFilteredData>( logData_->getNewFilteredData() );
+        auto log_data          = std::make_shared<LogData>();
+        auto log_filtered_data =
+            std::shared_ptr<LogFilteredData>( log_data->getNewFilteredData() );
 
         view = view_factory();
-        view->setData( logData_, logFilteredData_ );
+        view->setData( log_data, log_filtered_data );
+
+        // Insert in the hash
+        open_files_.insert( { view,
+                { file_name,
+                  log_data,
+                  log_filtered_data,
+                  view } } );
 
         // Start loading the file
-        logData_->attachFile( QString( file_name.c_str() ) );
+        log_data->attachFile( QString( file_name.c_str() ) );
     }
     else {
         // throw
@@ -59,18 +67,53 @@ ViewInterface* Session::open( const std::string& file_name,
 
     return view;
 }
-/*
-void CrawlerWidget::stopLoading()
+
+void Session::stopLoading( const ViewInterface* view )
 {
-    logFilteredData_->interruptSearch();
-    logData_->interruptLoading();
+    OpenFile* file = findOpenFileFromView( view );
+    if ( file ) {
+        file->logFilteredData->interruptSearch();
+        file->logData->interruptLoading();
+    }
 }
 
-void CrawlerWidget::getFileInfo( qint64* fileSize, int* fileNbLine,
-       QDateTime* lastModified ) const
+void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
+        uint32_t* fileNbLine, QDateTime* lastModified ) const
 {
-    *fileSize = logData_->getFileSize();
-    *fileNbLine = logData_->getNbLine();
-    *lastModified = logData_->getLastModifiedDate();
+    const OpenFile* file = findOpenFileFromView( view );
+
+    assert( file );
+
+    *fileSize = file->logData->getFileSize();
+    *fileNbLine = file->logData->getNbLine();
+    *lastModified = file->logData->getLastModifiedDate();
 }
-*/
+
+
+/*
+ * Private methods
+ */
+
+Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* view )
+{
+    assert( view );
+
+    OpenFile* file = &( open_files_.at( view ) );
+
+    // OpenfileMap::at might throw out_of_range but since a view MUST always
+    // be attached to a file, we don't handle it!
+
+    return file;
+}
+
+const Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* view ) const
+{
+    assert( view );
+
+    const OpenFile* file = &( open_files_.at( view ) );
+
+    // OpenfileMap::at might throw out_of_range but since a view MUST always
+    // be attached to a file, we don't handle it!
+
+    return file;
+}

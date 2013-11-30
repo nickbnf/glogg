@@ -315,8 +315,7 @@ void MainWindow::reload()
 // Stop the loading operation
 void MainWindow::stop()
 {
-    // FIXME
-    // crawlerWidget->stopLoading();
+    session_->stopLoading( crawlerWidget );
 }
 
 // Opens the 'Filters' dialog box

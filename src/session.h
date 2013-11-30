@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <string>
 
+#include <QDateTime>
+
 class ViewInterface;
 class LogData;
 class LogFilteredData;
@@ -45,8 +47,8 @@ class Session {
     // The filename must be strictly identical to trigger a match
     // (no match in case of e.g. relative vs. absolute pathname.
     ViewInterface* getViewIfOpen( const std::string& file_name ) const;
-    // Open a new file, and construct a new view for it (the caller passes a factory
-    // to build the concrete view)
+    // Open a new file, starts its asynchronous loading, and construct a new 
+    // view for it (the caller passes a factory to build the concrete view)
     // The ownership of the view is given to the caller
     // Throw exceptions if the file is already open or if it cannot be open.
     ViewInterface* open( const std::string& file_name,
@@ -54,12 +56,15 @@ class Session {
     // Close the file identified by the view passed
     // Throw an exception if it does not exist.
     void close( const ViewInterface* view );
+    // Stop the asynchoronous loading of the file if one is in progress
+    // The file is identified by the view attached to it.
+    void stopLoading( const ViewInterface* view );
+    // Get the size (in bytes) and number of lines in the current file.
+    // The file is identified by the view attached to it.
+    void getFileInfo(  const ViewInterface* view, uint64_t* fileSize,
+            uint32_t* fileNbLine, QDateTime* lastModified ) const;
 
   private:
-    // Open a file without checking if it is existing/readable
-    ViewInterface* openAlways( const std::string& file_name,
-            std::function<ViewInterface*()> view_factory );
-
     struct OpenFile {
         std::string fileName;
         std::shared_ptr<LogData> logData;
@@ -67,13 +72,16 @@ class Session {
         ViewInterface* view;
     };
 
-    // List of open files
-    typedef std::unordered_map<std::string, OpenFile> OpenFileMap;
-    OpenFileMap open_files;
+    // Open a file without checking if it is existing/readable
+    ViewInterface* openAlways( const std::string& file_name,
+            std::function<ViewInterface*()> view_factory );
+    // Find an open file from its associated view
+    OpenFile* findOpenFileFromView( const ViewInterface* view );
+    const OpenFile* findOpenFileFromView( const ViewInterface* view ) const;
 
-    // tmp
-    std::shared_ptr<LogData> logData_;
-    std::shared_ptr<LogFilteredData> logFilteredData_;
+    // List of open files
+    typedef std::unordered_map<const ViewInterface*, OpenFile> OpenFileMap;
+    OpenFileMap open_files_;
 };
 
 #endif

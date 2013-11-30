@@ -26,6 +26,7 @@
 #include "session.h"
 #include "crawlerwidget.h"
 #include "infoline.h"
+#include "signalmux.h"
 
 class QAction;
 class Session;
@@ -144,6 +145,9 @@ class MainWindow : public QMainWindow
     QAction *aboutQtAction;
 
     QIcon mainIcon_;
+
+    // Multiplex signals to any of the CrawlerWidgets
+    SignalMux signalMux_;
 };
 
 #endif

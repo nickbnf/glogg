@@ -42,7 +42,8 @@ SOURCES += \
     src/overview.cpp \
     src/overviewwidget.cpp \
     src/marks.cpp \
-    src/quickfindmux.cpp
+    src/quickfindmux.cpp \
+    src/signalmux.cpp
 
 INCLUDEPATH += src/
 
@@ -80,7 +81,8 @@ HEADERS += \
     src/overviewwidget.h \
     src/marks.h \
     src/qfnotifications.h \
-    src/quickfindmux.h
+    src/quickfindmux.h \
+    src/signalmux.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

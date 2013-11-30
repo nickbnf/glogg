@@ -55,7 +55,8 @@ static QString readableSize( qint64 size );
 MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     session_( std::move( session )  ),
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
-    mainIcon_()
+    mainIcon_(),
+    signalMux_()
 {
     createActions();
     createMenus();
@@ -495,16 +496,18 @@ bool MainWindow::loadFile( const QString& fileName )
     // We won't show the widget until the file is fully loaded
     crawlerWidget->hide();
 
+    signalMux_.setCurrentDocument( crawlerWidget );
+
     // Send actions to the crawlerwidget
-    connect( this, SIGNAL( followSet( bool ) ),
-            crawlerWidget, SIGNAL( followSet( bool ) ) );
-    connect( this, SIGNAL( optionsChanged() ),
-            crawlerWidget, SLOT( applyConfiguration() ) );
+    signalMux_.connect( this, SIGNAL( followSet( bool ) ),
+            SIGNAL( followSet( bool ) ) );
+    signalMux_.connect( this, SIGNAL( optionsChanged() ),
+            SLOT( applyConfiguration() ) );
 
     // Actions from the CrawlerWidget
-    connect( crawlerWidget, SIGNAL( followDisabled() ),
+    signalMux_.connect( SIGNAL( followDisabled() ),
             this, SLOT( disableFollow() ) );
-    connect( crawlerWidget, SIGNAL( updateLineNumber( int ) ),
+    signalMux_.connect( SIGNAL( updateLineNumber( int ) ),
             this, SLOT( lineNumberHandler( int ) ) );
 
     // FIXME: is it necessary?
@@ -514,9 +517,9 @@ bool MainWindow::loadFile( const QString& fileName )
     setCurrentFile( "" );
 
     // Register for progress status bar
-    connect( crawlerWidget, SIGNAL( loadingProgressed( int ) ),
+    signalMux_.connect( SIGNAL( loadingProgressed( int ) ),
             this, SLOT( updateLoadingProgress( int ) ) );
-    connect( crawlerWidget, SIGNAL( loadingFinished( bool ) ),
+    signalMux_.connect( SIGNAL( loadingFinished( bool ) ),
             this, SLOT( displayNormalStatus( bool ) ) );
 
     setCentralWidget(crawlerWidget);

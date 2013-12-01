@@ -20,7 +20,7 @@
 // This file implements the CrawlerWidget class.
 // It is responsible for creating and managing the two views and all
 // the UI elements.  It implements the connection between the UI elements.
-// It also owns the sets of data (full and filtered).
+// It also interacts with the sets of data (full and filtered).
 
 #include "log.h"
 
@@ -95,6 +95,16 @@ SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
         return view;
     else
         return logMainView;
+}
+
+void CrawlerWidget::reload()
+{
+    searchState_.resetState();
+    logFilteredData_->clearSearch();
+    filteredView->updateData();
+    printSearchInfoMessage();
+
+    logData_->reload();
 }
 
 //

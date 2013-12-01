@@ -59,7 +59,6 @@ class MainWindow : public QMainWindow
     void selectAll();
     void copy();
     void find();
-    void reload();
     void stop();
     void filters();
     void options();

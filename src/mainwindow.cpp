@@ -168,7 +168,7 @@ void MainWindow::createActions()
     reloadAction = new QAction( tr("&Reload"), this );
     reloadAction->setShortcut(QKeySequence::Refresh);
     reloadAction->setIcon( QIcon(":/images/reload16.png") );
-    connect( reloadAction, SIGNAL(triggered()), this, SLOT(reload()) );
+    signalMux_.connect( reloadAction, SIGNAL(triggered()), SLOT(reload()) );
 
     stopAction = new QAction( tr("&Stop"), this );
     stopAction->setIcon( QIcon(":/images/stop16.png") );
@@ -305,13 +305,6 @@ void MainWindow::copy()
 void MainWindow::find()
 {
     crawlerWidget->displayQuickFindBar( QuickFindMux::Forward );
-}
-
-// Reload the current log file
-void MainWindow::reload()
-{
-    if ( !currentFile.isEmpty() )
-        loadFile( currentFile );
 }
 
 // Stop the loading operation
@@ -478,12 +471,6 @@ bool MainWindow::loadFile( const QString& fileName )
 {
     LOG(logDEBUG) << "loadFile ( " << fileName.toStdString() << " )";
 
-    int topLine = 0;
-
-    // If we're loading the same file, put the same line on top.
-    if ( fileName == currentFile )
-        topLine = crawlerWidget->getTopLine();
-
     // First get the global search history
     savedSearches = &(Persistent<SavedSearches>( "savedSearches" ));
 
@@ -537,24 +524,31 @@ QString MainWindow::strippedName( const QString& fullFileName ) const
 // Add the filename to the recent files list and update the title bar.
 void MainWindow::setCurrentFile( const QString& fileName )
 {
-    // Change the current file
-    currentFile = fileName;
-    QString shownName = tr( "Untitled" );
-    if ( !currentFile.isEmpty() ) {
-        // (reload the list first in case another glogg changed it)
-        GetPersistentInfo().retrieve( "recentFiles" );
-        recentFiles.addRecent( currentFile );
-        GetPersistentInfo().save( "recentFiles" );
-        updateRecentFileActions();
-        shownName = strippedName( currentFile );
-    }
+    if ( fileName != currentFile )
+    {
+        // Change the current file
+        currentFile = fileName;
+        QString shownName = tr( "Untitled" );
+        if ( !currentFile.isEmpty() ) {
+            // (reload the list first in case another glogg changed it)
+            GetPersistentInfo().retrieve( "recentFiles" );
+            recentFiles.addRecent( currentFile );
+            GetPersistentInfo().save( "recentFiles" );
+            updateRecentFileActions();
+            shownName = strippedName( currentFile );
+        }
 
-    setWindowTitle(
-            tr("%1 - %2").arg(shownName).arg(tr("glogg"))
+        setWindowTitle(
+                tr("%1 - %2").arg(shownName).arg(tr("glogg"))
 #ifdef GLOGG_COMMIT
-            + " (dev build " GLOGG_VERSION ")"
+                + " (dev build " GLOGG_VERSION ")"
 #endif
-            );
+                );
+    }
+    else
+    {
+        // Nothing, happens when e.g., the file is reloaded
+    }
 }
 
 // Updates the actions for the recent files.

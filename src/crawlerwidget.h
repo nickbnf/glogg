@@ -73,6 +73,10 @@ class CrawlerWidget : public QSplitter,
     // (for dispatching QuickFind to the right widget)
     virtual SearchableWidgetInterface* getActiveSearchable() const;
 
+  public slots:
+    // Reload the displayed file
+    void reload();
+
   protected:
     void keyPressEvent( QKeyEvent* keyEvent );
 

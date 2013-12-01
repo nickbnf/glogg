@@ -131,6 +131,17 @@ LogFilteredData* LogData::getNewFilteredData() const
     return newFilteredData;
 }
 
+void LogData::reload()
+{
+    workerThread_.interrupt();
+
+    enqueueOperation( std::make_shared<FullIndexOperation>() );
+}
+
+//
+// Private functions
+//
+
 // Add an operation to the queue and perform it immediately if
 // there is none ongoing.
 void LogData::enqueueOperation( std::shared_ptr<const LogDataOperation> new_operation )

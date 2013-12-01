@@ -65,6 +65,8 @@ class LogData : public AbstractLogData {
     // Returns the last modification date for the file.
     // Null if the file is not on disk.
     QDateTime getLastModifiedDate() const;
+    // Throw away all the file data and reload/reindex.
+    void reload();
 
   signals:
     // Sent during the 'attach' process to signal progress

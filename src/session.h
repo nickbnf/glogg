@@ -56,9 +56,6 @@ class Session {
     // Close the file identified by the view passed
     // Throw an exception if it does not exist.
     void close( const ViewInterface* view );
-    // Stop the asynchoronous loading of the file if one is in progress
-    // The file is identified by the view attached to it.
-    void stopLoading( const ViewInterface* view );
     // Get the size (in bytes) and number of lines in the current file.
     // The file is identified by the view attached to it.
     void getFileInfo(  const ViewInterface* view, uint64_t* fileSize,

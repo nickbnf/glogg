@@ -74,6 +74,9 @@ class CrawlerWidget : public QSplitter,
     virtual SearchableWidgetInterface* getActiveSearchable() const;
 
   public slots:
+    // Stop the asynchoronous loading of the file if one is in progress
+    // The file is identified by the view attached to it.
+    void stopLoading();
     // Reload the displayed file
     void reload();
 

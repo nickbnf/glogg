@@ -173,7 +173,7 @@ void MainWindow::createActions()
     stopAction = new QAction( tr("&Stop"), this );
     stopAction->setIcon( QIcon(":/images/stop16.png") );
     stopAction->setEnabled( false );
-    connect( stopAction, SIGNAL(triggered()), this, SLOT(stop()) );
+    signalMux_.connect( stopAction, SIGNAL(triggered()), SLOT(stopLoading()) );
 
     filtersAction = new QAction(tr("&Filters..."), this);
     filtersAction->setStatusTip(tr("Show the Filters box"));
@@ -305,12 +305,6 @@ void MainWindow::copy()
 void MainWindow::find()
 {
     crawlerWidget->displayQuickFindBar( QuickFindMux::Forward );
-}
-
-// Stop the loading operation
-void MainWindow::stop()
-{
-    session_->stopLoading( crawlerWidget );
 }
 
 // Opens the 'Filters' dialog box

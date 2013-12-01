@@ -68,15 +68,6 @@ ViewInterface* Session::open( const std::string& file_name,
     return view;
 }
 
-void Session::stopLoading( const ViewInterface* view )
-{
-    OpenFile* file = findOpenFileFromView( view );
-    if ( file ) {
-        file->logFilteredData->interruptSearch();
-        file->logData->interruptLoading();
-    }
-}
-
 void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
         uint32_t* fileNbLine, QDateTime* lastModified ) const
 {

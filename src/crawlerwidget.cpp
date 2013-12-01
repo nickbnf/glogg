@@ -97,6 +97,16 @@ SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
         return logMainView;
 }
 
+//
+// Public slots
+//
+
+void CrawlerWidget::stopLoading()
+{
+    logFilteredData_->interruptSearch();
+    logData_->interruptLoading();
+}
+
 void CrawlerWidget::reload()
 {
     searchState_.resetState();

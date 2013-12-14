@@ -83,6 +83,8 @@ class MainWindow : public QMainWindow
     // without the progress gauge and with file info
     void displayNormalStatus( bool success );
 
+    // Close the tab with the passed index
+    void closeTab( int index );
 
   signals:
     // Is emitted when new settings must be used

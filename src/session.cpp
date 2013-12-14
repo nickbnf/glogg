@@ -76,6 +76,11 @@ ViewInterface* Session::open( const std::string& file_name,
     return view;
 }
 
+void Session::close( const ViewInterface* view )
+{
+    openFiles_.erase( openFiles_.find( view ) );
+}
+
 void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
         uint32_t* fileNbLine, QDateTime* lastModified ) const
 {

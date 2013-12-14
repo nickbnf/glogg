@@ -102,7 +102,15 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     signalMux_.connect( SIGNAL( loadingFinished( bool ) ),
             this, SLOT( displayNormalStatus( bool ) ) );
 
+    // Configure the main tabbed widget
+    // mainTabWidget_.setDocumentMode( true );
+    mainTabWidget_.setMovable( true );
+    mainTabWidget_.setTabShape( QTabWidget::Triangular );
+    mainTabWidget_.setTabsClosable( true );
     setCentralWidget( &mainTabWidget_ );
+
+    connect( &mainTabWidget_, SIGNAL( tabCloseRequested ( int ) ),
+            this, SLOT( closeTab( int ) ) );
 }
 
 void MainWindow::loadInitialFile( QString fileName )
@@ -454,6 +462,18 @@ void MainWindow::displayNormalStatus( bool success )
     // Now everything is ready, we can finally show the file!
     currentCrawlerWidget()->show();
     mainTabWidget_.setEnabled( true );
+}
+
+void MainWindow::closeTab( int index )
+{
+    auto widget = dynamic_cast<CrawlerWidget*>(
+            mainTabWidget_.widget( index ) );
+
+    assert( widget );
+
+    mainTabWidget_.removeTab( index );
+    session_->close( widget );
+    delete widget;
 }
 
 //

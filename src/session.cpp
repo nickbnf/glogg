@@ -23,11 +23,18 @@
 #include <QFileInfo>
 
 #include "viewinterface.h"
+#include "persistentinfo.h"
+#include "savedsearches.h"
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
 
 Session::Session()
 {
+    GetPersistentInfo().retrieve( QString( "savedSearches" ) );
+
+    // Get the global search history
+    savedSearches_ = std::shared_ptr<SavedSearches>(
+            &(Persistent<SavedSearches>( "savedSearches" )) );
 }
 
 Session::~Session()
@@ -50,9 +57,10 @@ ViewInterface* Session::open( const std::string& file_name,
 
         view = view_factory();
         view->setData( log_data, log_filtered_data );
+        view->setSavedSearches( savedSearches_ );
 
         // Insert in the hash
-        open_files_.insert( { view,
+        openFiles_.insert( { view,
                 { file_name,
                   log_data,
                   log_filtered_data,
@@ -89,7 +97,7 @@ Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* view )
 {
     assert( view );
 
-    OpenFile* file = &( open_files_.at( view ) );
+    OpenFile* file = &( openFiles_.at( view ) );
 
     // OpenfileMap::at might throw out_of_range but since a view MUST always
     // be attached to a file, we don't handle it!
@@ -101,7 +109,7 @@ const Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* vie
 {
     assert( view );
 
-    const OpenFile* file = &( open_files_.at( view ) );
+    const OpenFile* file = &( openFiles_.at( view ) );
 
     // OpenfileMap::at might throw out_of_range but since a view MUST always
     // be attached to a file, we don't handle it!

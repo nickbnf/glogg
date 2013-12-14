@@ -24,6 +24,7 @@
 
 class LogData;
 class LogFilteredData;
+class SavedSearches;
 
 // ViewInterface represents a high-level view on a log file.
 class ViewInterface {
@@ -33,6 +34,10 @@ class ViewInterface {
     void setData( std::shared_ptr<LogData> log_data,
             std::shared_ptr<LogFilteredData> filtered_data )
     { doSetData( log_data, filtered_data ); }
+
+    // Set the (shared) search history object
+    void setSavedSearches( std::shared_ptr<SavedSearches> saved_searches )
+    { doSetSavedSearches( saved_searches ); }
 
     // For save/restore of the context
     /*
@@ -47,5 +52,7 @@ class ViewInterface {
     // Virtual functions (using NVI)
     virtual void doSetData( std::shared_ptr<LogData> log_data,
             std::shared_ptr<LogFilteredData> filtered_data ) = 0;
+    virtual void doSetSavedSearches(
+            std::shared_ptr<SavedSearches> saved_searches ) = 0;
 };
 #endif

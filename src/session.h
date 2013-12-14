@@ -29,11 +29,12 @@
 class ViewInterface;
 class LogData;
 class LogFilteredData;
+class SavedSearches;
 
 // The session is responsible for maintaining the list of open log files
 // and their association with Views.
 // It also maintains the domain objects which are common to all log files
-// (SearchHistory, FileHistory, QFPattern...)
+// (SavedSearches, FileHistory, QFPattern...)
 class Session {
   public:
     Session();
@@ -78,7 +79,10 @@ class Session {
 
     // List of open files
     typedef std::unordered_map<const ViewInterface*, OpenFile> OpenFileMap;
-    OpenFileMap open_files_;
+    OpenFileMap openFiles_;
+
+    // Global search history
+    std::shared_ptr<SavedSearches> savedSearches_;
 };
 
 #endif

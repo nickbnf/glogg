@@ -106,7 +106,6 @@ class MainWindow : public QMainWindow
     CrawlerWidget* currentCrawlerWidget() const;
 
     std::unique_ptr<Session> session_;
-    SavedSearches *savedSearches;
     RecentFiles& recentFiles;
     QString loadingFileName;
     QString currentFile;

@@ -55,7 +55,7 @@ class CrawlerWidget : public QSplitter,
   Q_OBJECT
 
   public:
-    CrawlerWidget( SavedSearches* searches, QWidget *parent=0 );
+    CrawlerWidget( QWidget *parent=0 );
 
     // Get the line number of the first line displayed.
     int getTopLine() const;
@@ -87,6 +87,8 @@ class CrawlerWidget : public QSplitter,
     virtual void doSetData(
             std::shared_ptr<LogData> log_data,
             std::shared_ptr<LogFilteredData> filtered_data );
+    virtual void doSetSavedSearches(
+            std::shared_ptr<SavedSearches> saved_searches );
 
   signals:
     // Sent to signal the client load has progressed,
@@ -216,7 +218,7 @@ class CrawlerWidget : public QSplitter,
     // Default palette to be remembered
     QPalette        searchInfoLineDefaultPalette;
 
-    SavedSearches*  savedSearches;
+    std::shared_ptr<SavedSearches> savedSearches_;
 
     QuickFindMux*   quickFindMux_;
 

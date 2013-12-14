@@ -51,13 +51,13 @@ const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 
 // Constructor only does trivial construction. The real work is done once
 // the data is attached.
-CrawlerWidget::CrawlerWidget(SavedSearches* searches, QWidget *parent)
-        : QSplitter(parent)
+CrawlerWidget::CrawlerWidget( QWidget *parent )
+        : QSplitter( parent )
 {
     logData_         = nullptr;
     logFilteredData_ = nullptr;
 
-    savedSearches    = searches;
+    savedSearches_   = nullptr;
 }
 
 // The top line is first one on the main display
@@ -126,7 +126,15 @@ void CrawlerWidget::doSetData(
 {
     logData_         = log_data.get();
     logFilteredData_ = filtered_data.get();
+}
 
+void CrawlerWidget::doSetSavedSearches(
+        std::shared_ptr<SavedSearches> saved_searches )
+{
+    savedSearches_ = saved_searches;
+
+    // We do setup now, assuming doSetData has been called before
+    // us, that's not great really...
     setup();
 }
 
@@ -162,7 +170,7 @@ void CrawlerWidget::startNewSearch()
     // Record the search line in the recent list
     // (reload the list first in case another glogg changed it)
     GetPersistentInfo().retrieve( "savedSearches" );
-    savedSearches->addRecent( searchLineEdit->currentText() );
+    savedSearches_->addRecent( searchLineEdit->currentText() );
     GetPersistentInfo().save( "savedSearches" );
 
     // Update the SearchLine (history)
@@ -530,7 +538,7 @@ void CrawlerWidget::setup()
     searchLineEdit = new QComboBox;
     searchLineEdit->setEditable( true );
     searchLineEdit->setCompleter( 0 );
-    searchLineEdit->addItems( savedSearches->recentSearches() );
+    searchLineEdit->addItems( savedSearches_->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     searchLineEdit->setSizeAdjustPolicy( QComboBox::AdjustToMinimumContentsLengthWithIcon );
 
@@ -745,7 +753,7 @@ void CrawlerWidget::updateSearchCombo()
 {
     const QString text = searchLineEdit->lineEdit()->text();
     searchLineEdit->clear();
-    searchLineEdit->addItems( savedSearches->recentSearches() );
+    searchLineEdit->addItems( savedSearches_->recentSearches() );
     // In case we had something that wasn't added to the list (blank...):
     searchLineEdit->lineEdit()->setText( text );
 }

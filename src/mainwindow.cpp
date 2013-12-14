@@ -22,6 +22,7 @@
 // load/save the settings on opening/closing of the app
 
 #include <iostream>
+#include <cassert>
 
 #include <QAction>
 #include <QDesktopWidget>
@@ -46,7 +47,6 @@
 #include "filtersdialog.h"
 #include "optionsdialog.h"
 #include "persistentinfo.h"
-#include "savedsearches.h"
 #include "menuactiontooltipbehavior.h"
 
 // Returns the size in human readable format
@@ -499,15 +499,13 @@ bool MainWindow::loadFile( const QString& fileName )
 {
     LOG(logDEBUG) << "loadFile ( " << fileName.toStdString() << " )";
 
-    // First get the global search history
-    savedSearches = &(Persistent<SavedSearches>( "savedSearches" ));
-
     // Load the file
     loadingFileName = fileName;
 
     CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
             session_->open( fileName.toStdString(),
-                [this]() { return new CrawlerWidget( savedSearches, this ); } ) );
+                []() { return new CrawlerWidget(); } ) );
+    assert( crawler_widget );
 
     // We won't show the widget until the file is fully loaded
     crawler_widget->hide();
@@ -632,7 +630,6 @@ void MainWindow::readSettings()
     GetPersistentInfo().retrieve( QString( "recentFiles" ) );
     updateRecentFileActions();
 
-    GetPersistentInfo().retrieve( QString( "savedSearches" ) );
     GetPersistentInfo().retrieve( QString( "settings" ) );
     GetPersistentInfo().retrieve( QString( "filterSet" ) );
 }

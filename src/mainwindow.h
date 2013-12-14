@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <QMainWindow>
+#include <QTabWidget>
 
 #include "session.h"
 #include "crawlerwidget.h"
@@ -102,10 +103,10 @@ class MainWindow : public QMainWindow
     void setCurrentFile( const QString& fileName );
     void updateRecentFileActions();
     QString strippedName( const QString& fullFileName ) const;
+    CrawlerWidget* currentCrawlerWidget() const;
 
     std::unique_ptr<Session> session_;
     SavedSearches *savedSearches;
-    CrawlerWidget *crawlerWidget;
     RecentFiles& recentFiles;
     QString loadingFileName;
     QString currentFile;
@@ -146,6 +147,9 @@ class MainWindow : public QMainWindow
 
     // Multiplex signals to any of the CrawlerWidgets
     SignalMux signalMux_;
+
+    // The main widget
+    QTabWidget mainTabWidget_;
 };
 
 #endif

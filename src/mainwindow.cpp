@@ -56,7 +56,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     session_( std::move( session )  ),
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
     mainIcon_(),
-    signalMux_()
+    signalMux_(),
+    mainTabWidget_( this )
 {
     createActions();
     createMenus();
@@ -80,7 +81,28 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
 
     readSettings();
 
-    crawlerWidget = nullptr;
+    // Connect the signals to the mux (they will be forwarded to the
+    // "current" crawlerwidget
+
+    // Send actions to the crawlerwidget
+    signalMux_.connect( this, SIGNAL( followSet( bool ) ),
+            SIGNAL( followSet( bool ) ) );
+    signalMux_.connect( this, SIGNAL( optionsChanged() ),
+            SLOT( applyConfiguration() ) );
+
+    // Actions from the CrawlerWidget
+    signalMux_.connect( SIGNAL( followDisabled() ),
+            this, SLOT( disableFollow() ) );
+    signalMux_.connect( SIGNAL( updateLineNumber( int ) ),
+            this, SLOT( lineNumberHandler( int ) ) );
+
+    // Register for progress status bar
+    signalMux_.connect( SIGNAL( loadingProgressed( int ) ),
+            this, SLOT( updateLoadingProgress( int ) ) );
+    signalMux_.connect( SIGNAL( loadingFinished( bool ) ),
+            this, SLOT( displayNormalStatus( bool ) ) );
+
+    setCentralWidget( &mainTabWidget_ );
 }
 
 void MainWindow::loadInitialFile( QString fileName )
@@ -286,41 +308,52 @@ void MainWindow::openRecentFile()
 // Select all the text in the currently selected view
 void MainWindow::selectAll()
 {
-    crawlerWidget->selectAll();
+    CrawlerWidget* current = currentCrawlerWidget();
+
+    if ( current )
+        current->selectAll();
 }
 
 // Copy the currently selected line into the clipboard
 void MainWindow::copy()
 {
     static QClipboard* clipboard = QApplication::clipboard();
+    CrawlerWidget* current = currentCrawlerWidget();
 
-    clipboard->setText( crawlerWidget->getSelectedText() );
+    if ( current ) {
+        clipboard->setText( current->getSelectedText() );
 
-    // Put it in the global selection as well (X11 only)
-    clipboard->setText( crawlerWidget->getSelectedText(),
-            QClipboard::Selection );
+        // Put it in the global selection as well (X11 only)
+        clipboard->setText( current->getSelectedText(),
+                QClipboard::Selection );
+    }
 }
 
 // Display the QuickFind bar
 void MainWindow::find()
 {
-    crawlerWidget->displayQuickFindBar( QuickFindMux::Forward );
+    CrawlerWidget* current = currentCrawlerWidget();
+
+    if ( current )
+        current->displayQuickFindBar( QuickFindMux::Forward );
 }
 
 // Opens the 'Filters' dialog box
 void MainWindow::filters()
 {
     FiltersDialog dialog(this);
-    connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
+    signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
     dialog.exec();
+    signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
 }
 
 // Opens the 'Options' modal dialog box
 void MainWindow::options()
 {
     OptionsDialog dialog(this);
-    connect(&dialog, SIGNAL( optionsChanged() ), crawlerWidget, SLOT( applyConfiguration() ));
+    signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
     dialog.exec();
+    signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
 }
 
 // Opens the 'About' dialog box.
@@ -400,7 +433,7 @@ void MainWindow::displayNormalStatus( bool success )
     uint32_t fileNbLine;
     QDateTime lastModified;
 
-    session_->getFileInfo( crawlerWidget,
+    session_->getFileInfo( currentCrawlerWidget(),
             &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
         const QString date =
@@ -419,7 +452,8 @@ void MainWindow::displayNormalStatus( bool success )
     stopAction->setEnabled( false );
 
     // Now everything is ready, we can finally show the file!
-    crawlerWidget->show();
+    currentCrawlerWidget()->show();
+    mainTabWidget_.setEnabled( true );
 }
 
 //
@@ -471,39 +505,30 @@ bool MainWindow::loadFile( const QString& fileName )
     // Load the file
     loadingFileName = fileName;
 
-    crawlerWidget = dynamic_cast<CrawlerWidget*>( session_->open( fileName.toStdString(),
-            [this]() { return new CrawlerWidget( savedSearches, this ); } ) );
+    CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+            session_->open( fileName.toStdString(),
+                [this]() { return new CrawlerWidget( savedSearches, this ); } ) );
 
     // We won't show the widget until the file is fully loaded
-    crawlerWidget->hide();
+    crawler_widget->hide();
 
-    signalMux_.setCurrentDocument( crawlerWidget );
+    // We disable the tab widget to avoid having someone switch
+    // tab during loading. (maybe FIXME)
+    mainTabWidget_.setEnabled( false );
 
-    // Send actions to the crawlerwidget
-    signalMux_.connect( this, SIGNAL( followSet( bool ) ),
-            SIGNAL( followSet( bool ) ) );
-    signalMux_.connect( this, SIGNAL( optionsChanged() ),
-            SLOT( applyConfiguration() ) );
+    int index = mainTabWidget_.addTab( crawler_widget, strippedName( fileName ) );
 
-    // Actions from the CrawlerWidget
-    signalMux_.connect( SIGNAL( followDisabled() ),
-            this, SLOT( disableFollow() ) );
-    signalMux_.connect( SIGNAL( updateLineNumber( int ) ),
-            this, SLOT( lineNumberHandler( int ) ) );
+    // Setting the new tab, the user will see a blank page for the duration
+    // of the loading, with no way to switch to another tab
+    mainTabWidget_.setCurrentIndex( index );
+
+    signalMux_.setCurrentDocument( crawler_widget );
 
     // FIXME: is it necessary?
     emit optionsChanged();
 
     // We start with the empty file
     setCurrentFile( "" );
-
-    // Register for progress status bar
-    signalMux_.connect( SIGNAL( loadingProgressed( int ) ),
-            this, SLOT( updateLoadingProgress( int ) ) );
-    signalMux_.connect( SIGNAL( loadingFinished( bool ) ),
-            this, SLOT( displayNormalStatus( bool ) ) );
-
-    setCentralWidget(crawlerWidget);
 
     LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
     return true;
@@ -513,6 +538,15 @@ bool MainWindow::loadFile( const QString& fileName )
 QString MainWindow::strippedName( const QString& fullFileName ) const
 {
     return QFileInfo( fullFileName ).fileName();
+}
+
+// Return the currently active CrawlerWidget, or NULL if none
+CrawlerWidget* MainWindow::currentCrawlerWidget() const
+{
+    auto current = dynamic_cast<CrawlerWidget*>(
+            mainTabWidget_.currentWidget() );
+
+    return current;
 }
 
 // Add the filename to the recent files list and update the title bar.
@@ -573,7 +607,7 @@ void MainWindow::writeSettings()
     // Save the session
     SessionInfo& session = Persistent<SessionInfo>( "session" );
     session.setGeometry( saveGeometry() );
-    session.setCrawlerState( crawlerWidget->saveState() );
+    //session.setCrawlerState( crawlerWidget->saveState() );
     session.setCurrentFile( currentFile );
     GetPersistentInfo().save( QString( "session" ) );
 

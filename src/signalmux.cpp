@@ -123,6 +123,7 @@ void SignalMux::connect( const Connection& connection )
 {
     if ( currentDocument_ )
     {
+        LOG( logDEBUG ) << "SignalMux::connect";
         if ( connection.source && ( ! connection.sink ) )
         {
             // Downstream signal
@@ -146,6 +147,7 @@ void SignalMux::disconnect( const Connection& connection )
 {
     if ( currentDocument_ )
     {
+        LOG( logDEBUG ) << "SignalMux::disconnect";
         if ( connection.source && ( ! connection.sink ) )
         {
             // Downstream signal

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013, 2014  Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -22,12 +22,12 @@
 
 #include <memory>
 #include <QMainWindow>
-#include <QTabWidget>
 
 #include "session.h"
 #include "crawlerwidget.h"
 #include "infoline.h"
 #include "signalmux.h"
+#include "tabbedcrawlerwidget.h"
 
 class QAction;
 class Session;
@@ -150,7 +150,7 @@ class MainWindow : public QMainWindow
     SignalMux signalMux_;
 
     // The main widget
-    QTabWidget mainTabWidget_;
+    TabbedCrawlerWidget mainTabWidget_;
 };
 
 #endif

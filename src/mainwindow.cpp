@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -48,6 +48,7 @@
 #include "optionsdialog.h"
 #include "persistentinfo.h"
 #include "menuactiontooltipbehavior.h"
+#include "tabbedcrawlerwidget.h"
 
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
@@ -57,7 +58,7 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
     mainIcon_(),
     signalMux_(),
-    mainTabWidget_( this )
+    mainTabWidget_()
 {
     createActions();
     createMenus();
@@ -103,9 +104,9 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
             this, SLOT( displayNormalStatus( bool ) ) );
 
     // Configure the main tabbed widget
-    // mainTabWidget_.setDocumentMode( true );
+    mainTabWidget_.setDocumentMode( true );
     mainTabWidget_.setMovable( true );
-    mainTabWidget_.setTabShape( QTabWidget::Triangular );
+    //mainTabWidget_.setTabShape( QTabWidget::Triangular );
     mainTabWidget_.setTabsClosable( true );
     setCentralWidget( &mainTabWidget_ );
 

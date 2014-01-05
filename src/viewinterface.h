@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -25,6 +25,7 @@
 class LogData;
 class LogFilteredData;
 class SavedSearches;
+class QuickFindPattern;
 
 // ViewInterface represents a high-level view on a log file.
 class ViewInterface {
@@ -34,6 +35,10 @@ class ViewInterface {
     void setData( std::shared_ptr<LogData> log_data,
             std::shared_ptr<LogFilteredData> filtered_data )
     { doSetData( log_data, filtered_data ); }
+
+    // Set the (shared) quickfind pattern object
+    void setQuickFindPattern( std::shared_ptr<QuickFindPattern> qfp )
+    { doSetQuickFindPattern( qfp ); }
 
     // Set the (shared) search history object
     void setSavedSearches( std::shared_ptr<SavedSearches> saved_searches )
@@ -52,6 +57,8 @@ class ViewInterface {
     // Virtual functions (using NVI)
     virtual void doSetData( std::shared_ptr<LogData> log_data,
             std::shared_ptr<LogFilteredData> filtered_data ) = 0;
+    virtual void doSetQuickFindPattern(
+            std::shared_ptr<QuickFindPattern> qfp ) = 0;
     virtual void doSetSavedSearches(
             std::shared_ptr<SavedSearches> saved_searches ) = 0;
 };

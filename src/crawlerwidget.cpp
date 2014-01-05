@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -57,6 +57,8 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     logData_         = nullptr;
     logFilteredData_ = nullptr;
 
+    quickFindPattern_ = nullptr;
+
     savedSearches_   = nullptr;
 }
 
@@ -80,21 +82,18 @@ void CrawlerWidget::selectAll()
 }
 
 // Return a pointer to the view in which we should do the QuickFind
-SearchableWidgetInterface* CrawlerWidget::getActiveSearchable() const
+SearchableWidgetInterface* CrawlerWidget::doGetActiveSearchable() const
 {
-    QWidget* searchableWidget;
+    return activeView();
+}
 
-    // Search in the window that has focus, or the window where 'Find' was
-    // called from, or the main window.
-    if ( filteredView->hasFocus() || logMainView->hasFocus() )
-        searchableWidget = QApplication::focusWidget();
-    else
-        searchableWidget = qfSavedFocus_;
+// Return all the searchable widgets (views)
+std::vector<QObject*> CrawlerWidget::doGetAllSearchables() const
+{
+    std::vector<QObject*> searchables =
+    { logMainView, filteredView };
 
-    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( searchableWidget ) )
-        return view;
-    else
-        return logMainView;
+    return searchables;
 }
 
 //
@@ -128,6 +127,12 @@ void CrawlerWidget::doSetData(
     logFilteredData_ = filtered_data.get();
 }
 
+void CrawlerWidget::doSetQuickFindPattern(
+        std::shared_ptr<QuickFindPattern> qfp )
+{
+    quickFindPattern_ = qfp;
+}
+
 void CrawlerWidget::doSetSavedSearches(
         std::shared_ptr<SavedSearches> saved_searches )
 {
@@ -148,10 +153,10 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 
     switch ( (keyEvent->text())[0].toLatin1() ) {
         case '/':
-            displayQuickFindBar( QuickFindMux::Forward );
+            // displayQuickFindBar( QuickFindMux::Forward );
             break;
         case '?':
-            displayQuickFindBar( QuickFindMux::Backward );
+            // displayQuickFindBar( QuickFindMux::Backward );
             break;
         default:
             keyEvent->ignore();
@@ -335,26 +340,17 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
     }
 }
 
-void CrawlerWidget::displayQuickFindBar( QuickFindMux::QFDirection direction )
-{
-    LOG(logDEBUG) << "CrawlerWidget::displayQuickFindBar";
-
-    // Remember who had the focus
-    qfSavedFocus_ = QApplication::focusWidget();
-
-    quickFindMux_->setDirection( direction );
-    quickFindWidget_->userActivate();
-}
-
 void CrawlerWidget::hideQuickFindBar()
 {
     // Restore the focus once the QFBar has been hidden
+#if 0
     qfSavedFocus_->setFocus();
+#endif
 }
 
 void CrawlerWidget::changeQFPattern( const QString& newPattern )
 {
-    quickFindWidget_->changeDisplayedPattern( newPattern );
+    // quickFindWidget_->changeDisplayedPattern( newPattern );
 }
 
 // Returns a pointer to the window in which the search should be done
@@ -367,12 +363,16 @@ AbstractLogView* CrawlerWidget::activeView() const
     if ( filteredView->hasFocus() || logMainView->hasFocus() )
         activeView = QApplication::focusWidget();
     else
-        activeView = qfSavedFocus_;
+        activeView = nullptr; // qfSavedFocus_;
 
-    if ( AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView ) )
+    if ( activeView ) {
+        AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView );
         return view;
-    else
+    }
+    else {
+        LOG(logWARNING) << "No active view, defaulting to logMainView";
         return logMainView;
+    }
 }
 
 void CrawlerWidget::searchForward()
@@ -451,23 +451,16 @@ void CrawlerWidget::setup()
     // The matches overview
     overview_ = new Overview();
 
-    // Initialise the QF Mux to send requests from the QFWidget
-    // to the right window
-    quickFindMux_ = new QuickFindMux( this );
-
     // The views
     bottomWindow = new QWidget;
     overviewWidget_ = new OverviewWidget();
     logMainView     = new LogMainView(
-            logData_, quickFindMux_->getPattern(), overview_, overviewWidget_ );
+            logData_, quickFindPattern_.get(), overview_, overviewWidget_ );
     filteredView    = new FilteredView(
-            logFilteredData_, quickFindMux_->getPattern() );
+            logFilteredData_, quickFindPattern_.get() );
 
     overviewWidget_->setOverview( overview_ );
     overviewWidget_->setParent( logMainView );
-
-    quickFindMux_->registerSearchable( logMainView );
-    quickFindMux_->registerSearchable( filteredView );
 
     // Construct the visibility button
     visibilityModel_ = new QStandardItemModel( this );
@@ -553,9 +546,6 @@ void CrawlerWidget::setup()
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
 
-    // Construct the QuickFind bar
-    quickFindWidget_ = new QuickFindWidget();
-
     QHBoxLayout* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
     searchLineLayout->addWidget(searchLineEdit);
@@ -572,12 +562,10 @@ void CrawlerWidget::setup()
     searchInfoLineLayout->addWidget( searchRefreshCheck );
 
     // Construct the bottom window
-    quickFindWidget_->hide();
     QVBoxLayout* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout(searchLineLayout);
     bottomMainLayout->addLayout(searchInfoLineLayout);
     bottomMainLayout->addWidget(filteredView);
-    bottomMainLayout->addWidget(quickFindWidget_);
     bottomMainLayout->setContentsMargins(2, 1, 2, 1);
     bottomWindow->setLayout(bottomMainLayout);
 
@@ -638,30 +626,6 @@ void CrawlerWidget::setup()
 
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
-
-    // QuickFind
-    connect( quickFindWidget_, SIGNAL( close() ),
-             this, SLOT( hideQuickFindBar() ) );
-    connect( quickFindWidget_, SIGNAL( patternConfirmed( const QString&, bool ) ),
-             quickFindMux_, SLOT( confirmPattern( const QString&, bool ) ) );
-    connect( quickFindWidget_, SIGNAL( patternUpdated( const QString&, bool ) ),
-             quickFindMux_, SLOT( setNewPattern( const QString&, bool ) ) );
-    connect( quickFindWidget_, SIGNAL( cancelSearch() ),
-             quickFindMux_, SLOT( cancelSearch() ) );
-    connect( quickFindWidget_, SIGNAL( searchForward() ),
-             quickFindMux_, SLOT( searchForward() ) );
-    connect( quickFindWidget_, SIGNAL( searchBackward() ),
-             quickFindMux_, SLOT( searchBackward() ) );
-    connect( quickFindWidget_, SIGNAL( searchNext() ),
-             quickFindMux_, SLOT( searchNext() ) );
-
-    // QuickFind changes coming from the views
-    connect( quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
-             this, SLOT( changeQFPattern( const QString& ) ) );
-    connect( quickFindMux_, SIGNAL( notify( const QFNotification& ) ),
-             quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
-    connect( quickFindMux_, SIGNAL( clearNotification() ),
-             quickFindWidget_, SLOT( clearNotification() ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),

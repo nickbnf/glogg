@@ -26,6 +26,8 @@
 
 #include <QDateTime>
 
+#include "quickfindpattern.h"
+
 class ViewInterface;
 class LogData;
 class LogFilteredData;
@@ -59,8 +61,11 @@ class Session {
     void close( const ViewInterface* view );
     // Get the size (in bytes) and number of lines in the current file.
     // The file is identified by the view attached to it.
-    void getFileInfo(  const ViewInterface* view, uint64_t* fileSize,
+    void getFileInfo( const ViewInterface* view, uint64_t* fileSize,
             uint32_t* fileNbLine, QDateTime* lastModified ) const;
+    // Get a (non-const) reference to the QuickFind pattern.
+    std::shared_ptr<QuickFindPattern> getQuickFindPattern() const
+    { return quickFindPattern_; }
 
   private:
     struct OpenFile {
@@ -83,6 +88,9 @@ class Session {
 
     // Global search history
     std::shared_ptr<SavedSearches> savedSearches_;
+
+    // Global quickfind pattern
+    std::shared_ptr<QuickFindPattern> quickFindPattern_;
 };
 
 #endif

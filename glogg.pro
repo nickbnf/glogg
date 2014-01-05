@@ -152,7 +152,7 @@ debug:UI_DIR = $${OUT_PWD}/.ui/debug-shared
 release:UI_DIR = $${OUT_PWD}/.ui/release-shared
 
 # Debug symbols in debug builds
-debug:QMAKE_CXXFLAGS += -g
+debug:QMAKE_CXXFLAGS += -g -O0
 
 # Which compiler are we using
 system( g++ --version | grep -e " 4\.6" ) {

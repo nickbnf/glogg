@@ -34,13 +34,10 @@
 #include "filteredview.h"
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
-#include "quickfindwidget.h"
-#include "quickfindmux.h"
 #include "viewinterface.h"
 
 class InfoLine;
 class QuickFindPattern;
-class QuickFindWidget;
 class SavedSearches;
 class Overview;
 class QStandardItemModel;
@@ -69,10 +66,6 @@ class CrawlerWidget : public QSplitter,
     // is interacting with
     void selectAll();
 
-    // Implementation on the mux selector interface
-    // (for dispatching QuickFind to the right widget)
-    virtual SearchableWidgetInterface* getActiveSearchable() const;
-
   public slots:
     // Stop the asynchoronous loading of the file if one is in progress
     // The file is identified by the view attached to it.
@@ -87,8 +80,15 @@ class CrawlerWidget : public QSplitter,
     virtual void doSetData(
             std::shared_ptr<LogData> log_data,
             std::shared_ptr<LogFilteredData> filtered_data );
+    virtual void doSetQuickFindPattern(
+            std::shared_ptr<QuickFindPattern> qfp );
     virtual void doSetSavedSearches(
             std::shared_ptr<SavedSearches> saved_searches );
+
+    // Implementation of the mux selector interface
+    // (for dispatching QuickFind to the right widget)
+    virtual SearchableWidgetInterface* doGetActiveSearchable() const;
+    virtual std::vector<QObject*> doGetAllSearchables() const;
 
   signals:
     // Sent to signal the client load has progressed,
@@ -208,7 +208,6 @@ class CrawlerWidget : public QSplitter,
     InfoLine*       searchInfoLine;
     QCheckBox*      ignoreCaseCheck;
     QCheckBox*      searchRefreshCheck;
-    QuickFindWidget* quickFindWidget_;
     OverviewWidget* overviewWidget_;
 
     QVBoxLayout*    bottomMainLayout;
@@ -220,7 +219,8 @@ class CrawlerWidget : public QSplitter,
 
     std::shared_ptr<SavedSearches> savedSearches_;
 
-    QuickFindMux*   quickFindMux_;
+    // Reference to the QuickFind Pattern (not owned)
+    std::shared_ptr<QuickFindPattern> quickFindPattern_;
 
     LogData*        logData_;
     LogFilteredData* logFilteredData_;

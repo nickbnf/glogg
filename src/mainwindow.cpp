@@ -58,6 +58,7 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
     mainIcon_(),
     signalMux_(),
+    quickFindMux_( session_->getQuickFindPattern() ),
     mainTabWidget_()
 {
     createActions();
@@ -108,10 +109,49 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     mainTabWidget_.setMovable( true );
     //mainTabWidget_.setTabShape( QTabWidget::Triangular );
     mainTabWidget_.setTabsClosable( true );
-    setCentralWidget( &mainTabWidget_ );
 
     connect( &mainTabWidget_, SIGNAL( tabCloseRequested ( int ) ),
             this, SLOT( closeTab( int ) ) );
+
+    // Establish the QuickFindWidget and mux ( to send requests from the
+    // QFWidget to the right window )
+    /*
+    connect( quickFindWidget_, SIGNAL( close() ),
+             this, SLOT( hideQuickFindBar() ) );
+             */
+    connect( &quickFindWidget_, SIGNAL( patternConfirmed( const QString&, bool ) ),
+             &quickFindMux_, SLOT( confirmPattern( const QString&, bool ) ) );
+    connect( &quickFindWidget_, SIGNAL( patternUpdated( const QString&, bool ) ),
+             &quickFindMux_, SLOT( setNewPattern( const QString&, bool ) ) );
+    connect( &quickFindWidget_, SIGNAL( cancelSearch() ),
+             &quickFindMux_, SLOT( cancelSearch() ) );
+    connect( &quickFindWidget_, SIGNAL( searchForward() ),
+             &quickFindMux_, SLOT( searchForward() ) );
+    connect( &quickFindWidget_, SIGNAL( searchBackward() ),
+             &quickFindMux_, SLOT( searchBackward() ) );
+    connect( &quickFindWidget_, SIGNAL( searchNext() ),
+             &quickFindMux_, SLOT( searchNext() ) );
+
+    // QuickFind changes coming from the views
+    /*
+    connect( quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
+             this, SLOT( changeQFPattern( const QString& ) ) );
+             */
+    connect( &quickFindMux_, SIGNAL( notify( const QFNotification& ) ),
+             &quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
+    connect( &quickFindMux_, SIGNAL( clearNotification() ),
+             &quickFindWidget_, SLOT( clearNotification() ) );
+
+    // Construct the QuickFind bar
+    quickFindWidget_.hide();
+
+    QWidget* central_widget = new QWidget();
+    QVBoxLayout* main_layout = new QVBoxLayout();
+    main_layout->addWidget( &mainTabWidget_ );
+    main_layout->addWidget( &quickFindWidget_ );
+    central_widget->setLayout( main_layout );
+
+    setCentralWidget( central_widget );
 }
 
 void MainWindow::loadInitialFile( QString fileName )
@@ -341,10 +381,7 @@ void MainWindow::copy()
 // Display the QuickFind bar
 void MainWindow::find()
 {
-    CrawlerWidget* current = currentCrawlerWidget();
-
-    if ( current )
-        current->displayQuickFindBar( QuickFindMux::Forward );
+    displayQuickFindBar( QuickFindMux::Forward );
 }
 
 // Opens the 'Filters' dialog box
@@ -542,6 +579,7 @@ bool MainWindow::loadFile( const QString& fileName )
     mainTabWidget_.setCurrentIndex( index );
 
     signalMux_.setCurrentDocument( crawler_widget );
+    quickFindMux_.registerSelector( crawler_widget );
 
     // FIXME: is it necessary?
     emit optionsChanged();
@@ -653,6 +691,17 @@ void MainWindow::readSettings()
 
     GetPersistentInfo().retrieve( QString( "settings" ) );
     GetPersistentInfo().retrieve( QString( "filterSet" ) );
+}
+
+void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
+{
+    LOG(logDEBUG) << "MainWindow::displayQuickFindBar";
+
+    // Remember who had the focus
+    //qfSavedFocus_ = QApplication::focusWidget();
+
+    quickFindMux_.setDirection( direction );
+    quickFindWidget_.userActivate();
 }
 
 // Returns the size in human readable format

@@ -35,6 +35,8 @@ Session::Session()
     // Get the global search history
     savedSearches_ = std::shared_ptr<SavedSearches>(
             &(Persistent<SavedSearches>( "savedSearches" )) );
+
+    quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
 
 Session::~Session()
@@ -57,6 +59,7 @@ ViewInterface* Session::open( const std::string& file_name,
 
         view = view_factory();
         view->setData( log_data, log_filtered_data );
+        view->setQuickFindPattern( quickFindPattern_ );
         view->setSavedSearches( savedSearches_ );
 
         // Insert in the hash

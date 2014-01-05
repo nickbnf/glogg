@@ -28,6 +28,8 @@
 #include "infoline.h"
 #include "signalmux.h"
 #include "tabbedcrawlerwidget.h"
+#include "quickfindwidget.h"
+#include "quickfindmux.h"
 
 class QAction;
 class Session;
@@ -106,6 +108,7 @@ class MainWindow : public QMainWindow
     void updateRecentFileActions();
     QString strippedName( const QString& fullFileName ) const;
     CrawlerWidget* currentCrawlerWidget() const;
+    void displayQuickFindBar( QuickFindMux::QFDirection direction );
 
     std::unique_ptr<Session> session_;
     RecentFiles& recentFiles;
@@ -148,6 +151,12 @@ class MainWindow : public QMainWindow
 
     // Multiplex signals to any of the CrawlerWidgets
     SignalMux signalMux_;
+
+    // QuickFind widget
+    QuickFindWidget quickFindWidget_;
+
+    // Multiplex signals to/from the QuickFindWidget
+    QuickFindMux quickFindMux_;
 
     // The main widget
     TabbedCrawlerWidget mainTabWidget_;

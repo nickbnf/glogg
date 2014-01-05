@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -19,6 +19,9 @@
 
 #ifndef QUICKFINDMUX_H
 #define QUICKFINDMUX_H
+
+#include <memory>
+#include <vector>
 
 #include <QObject>
 #include <QString>
@@ -41,7 +44,17 @@ class SearchableWidgetInterface {
 // who the search have to be forwarded to.
 class QuickFindMuxSelectorInterface {
   public:
-    virtual SearchableWidgetInterface* getActiveSearchable() const = 0;
+    // Return the searchable widget to use.
+    SearchableWidgetInterface* getActiveSearchable() const
+    { return doGetActiveSearchable(); }
+    // Return the list of all possible searchables, this
+    // is done on registration in order to establish
+    // listeners on all searchables.
+    std::vector<QObject*> getAllSearchables() const
+    { return doGetAllSearchables(); }
+  protected:
+    virtual SearchableWidgetInterface* doGetActiveSearchable() const = 0;
+    virtual std::vector<QObject*> doGetAllSearchables() const = 0;
 };
 
 class QFNotification;
@@ -50,7 +63,6 @@ class QFNotification;
 // Quick Find search from the UI to the relevant view.
 // It is also its responsability to determine if an incremental search
 // must be performed and to react accordingly.
-// It owns the QuickFindPattern.
 class QuickFindMux : public QObject
 {
   Q_OBJECT
@@ -62,22 +74,20 @@ class QuickFindMux : public QObject
         Backward,
     };
 
-    // Construct the multiplexer, the selector class will be called
-    // and ask who the search have to be forwarded to.
-    QuickFindMux( const QuickFindMuxSelectorInterface* selector );
+    // Construct the multiplexer, taking a reference to the pattern
+    QuickFindMux( std::shared_ptr<QuickFindPattern> pattern );
 
-    // Register/unregister this searchable widget with the mux for messages
-    // to be forwarded back to the client.
-    // The client should call this for each possible searchable widget.
-    void registerSearchable( QObject* searchable );
-    void unregisterSearchable( QObject* searchable );
+    // Register a new selector, which will be called and asked
+    // who the search have to be forwarded to.
+    // The selector is called immediately when registering to get the list of
+    // searchables.
+    // The previous selector and its associated views are automatically
+    // deregistered.
+    void registerSelector( const QuickFindMuxSelectorInterface* selector );
 
     // Set the direction that will be used by the search when searching
     // forward.
     void setDirection( QFDirection direction );
-
-    // Get a pointer to the pattern
-    QuickFindPattern* getPattern() { return &pattern_; }
 
   signals:
     void patternChanged( const QString& );
@@ -115,11 +125,13 @@ class QuickFindMux : public QObject
     const QuickFindMuxSelectorInterface* selector_;
 
     // The (application wide) quick find pattern
-    QuickFindPattern pattern_;
+    std::shared_ptr<QuickFindPattern> pattern_;
 
     QFDirection currentDirection_;
 
     SearchableWidgetInterface* getSearchableWidget() const;
+    void registerSearchable( QObject* searchable );
+    void unregisterAllSearchables();
 };
 
 #endif

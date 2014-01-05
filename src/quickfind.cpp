@@ -365,7 +365,7 @@ qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
         firstMatch_.set( first_match_position );
 
         // Send a notification
-        LOG( logDEBUG ) << "Send notification.";
+        LOG( logDEBUG ) << "QF: Send BOF notification.";
         emit notify( QFNotificationReachedBegininningOfFile() );
 
         return -1;

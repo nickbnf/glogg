@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -23,42 +23,33 @@
 #include "configuration.h"
 #include "quickfindmux.h"
 
-QuickFindMux::QuickFindMux( const QuickFindMuxSelectorInterface* selector ) :
-    QObject(), pattern_()
+#include "qfnotifications.h"
+
+QuickFindMux::QuickFindMux( std::shared_ptr<QuickFindPattern> pattern ) :
+    QObject(), pattern_( pattern )
 {
-    // The selector object we will use when forwarding search requests
-    selector_ = selector;
+    selector_ = nullptr;
 
     // Forward the pattern's signal to our listeners
-    connect( &pattern_, SIGNAL( patternUpdated() ),
+    connect( pattern_.get(), SIGNAL( patternUpdated() ),
              this, SLOT( notifyPatternChanged() ) );
 }
 
 //
 // Public member functions
 //
-void QuickFindMux::registerSearchable( QObject* searchable )
+void QuickFindMux::registerSelector(
+        const QuickFindMuxSelectorInterface* selector )
 {
-    // The searchable can change our qf pattern
-    connect( searchable,
-             SIGNAL( changeQuickFind( const QString&, QuickFindMux::QFDirection ) ),
-             this, SLOT( changeQuickFind( const QString&, QuickFindMux::QFDirection ) ) );
-    // Send us notifications
-    connect( searchable, SIGNAL( notifyQuickFind( const QFNotification& ) ),
-             this, SIGNAL( notify( const QFNotification& ) ) );
-    // And clear them
-    connect( searchable, SIGNAL( clearQuickFindNotification() ),
-             this, SIGNAL( clearNotification() ) );
-    // Search can be initiated by the view itself
-    connect( searchable, SIGNAL( searchNext() ),
-             this, SLOT( searchNext() ) );
-    connect( searchable, SIGNAL( searchPrevious() ),
-             this, SLOT( searchPrevious() ) );
-}
+    LOG(logDEBUG) << "QuickFindMux::registerSelector";
 
-void QuickFindMux::unregisterSearchable( QObject* searchable )
-{
-    disconnect( searchable );
+    // The selector object we will use when forwarding search requests
+    selector_ = selector;
+
+    unregisterAllSearchables();
+
+    for ( auto i: selector_->getAllSearchables() )
+        registerSearchable( i );
 }
 
 void QuickFindMux::setDirection( QFDirection direction )
@@ -110,7 +101,7 @@ void QuickFindMux::setNewPattern(
     static Configuration& config = Persistent<Configuration>( "settings" );
 
     LOG(logDEBUG) << "QuickFindMux::setNewPattern";
-    pattern_.changeSearchPattern( new_pattern, ignore_case );
+    pattern_->changeSearchPattern( new_pattern, ignore_case );
 
     // If we must do an incremental search, we do it now
     if ( config.isQuickfindIncremental() ) {
@@ -127,7 +118,7 @@ void QuickFindMux::confirmPattern(
 {
     static Configuration& config = Persistent<Configuration>( "settings" );
 
-    pattern_.changeSearchPattern( new_pattern, ignore_case );
+    pattern_->changeSearchPattern( new_pattern, ignore_case );
 
     // if non-incremental, we perform the search now
     if ( ! config.isQuickfindIncremental() ) {
@@ -155,13 +146,13 @@ void QuickFindMux::cancelSearch()
 void QuickFindMux::changeQuickFind(
         const QString& new_pattern, QFDirection new_direction )
 {
-    pattern_.changeSearchPattern( new_pattern );
+    pattern_->changeSearchPattern( new_pattern );
     setDirection( new_direction );
 }
 
 void QuickFindMux::notifyPatternChanged()
 {
-    emit patternChanged( pattern_.getPattern() );
+    emit patternChanged( pattern_->getPattern() );
 }
 
 //
@@ -171,6 +162,8 @@ void QuickFindMux::notifyPatternChanged()
 // Use the registered 'selector' to determine where to send the search requests.
 SearchableWidgetInterface* QuickFindMux::getSearchableWidget() const
 {
+    LOG(logDEBUG) << "QuickFindMux::getSearchableWidget";
+
     SearchableWidgetInterface* searchable = NULL;
 
     if ( selector_ )
@@ -179,4 +172,34 @@ SearchableWidgetInterface* QuickFindMux::getSearchableWidget() const
         LOG(logERROR) << "QuickFindMux::getActiveSearchable() no registered selector";
 
     return searchable;
+}
+
+void QuickFindMux::registerSearchable( QObject* searchable )
+{
+    LOG(logDEBUG) << "QuickFindMux::registerSearchable";
+
+    // The searchable can change our qf pattern
+    connect( searchable,
+             SIGNAL( changeQuickFind( const QString&, QuickFindMux::QFDirection ) ),
+             this, SLOT( changeQuickFind( const QString&, QuickFindMux::QFDirection ) ) );
+    // Send us notifications
+    connect( searchable, SIGNAL( notifyQuickFind( const QFNotification& ) ),
+             this, SIGNAL( notify( const QFNotification& ) ) );
+    connect( searchable, SIGNAL( notifyQuickFind( const QFNotification& ) ),
+             this, SLOT( test() ) );
+
+    // And clear them
+    connect( searchable, SIGNAL( clearQuickFindNotification() ),
+             this, SIGNAL( clearNotification() ) );
+    // Search can be initiated by the view itself
+    connect( searchable, SIGNAL( searchNext() ),
+             this, SLOT( searchNext() ) );
+    connect( searchable, SIGNAL( searchPrevious() ),
+             this, SLOT( searchPrevious() ) );
+}
+
+void QuickFindMux::unregisterAllSearchables()
+{
+    //    FIXME
+//    disconnect();
 }

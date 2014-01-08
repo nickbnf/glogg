@@ -55,6 +55,7 @@ class MainWindow : public QMainWindow
     // Drag and drop support
     void dragEnterEvent( QDragEnterEvent* event );
     void dropEvent( QDropEvent* event );
+    void keyPressEvent( QKeyEvent* keyEvent );
 
   private slots:
     void open();
@@ -88,11 +89,20 @@ class MainWindow : public QMainWindow
     // Close the tab with the passed index
     void closeTab( int index );
 
+    // Instructs the widget to change the pattern in the QuickFind widget
+    // and confirm it.
+    void changeQFPattern( const QString& newPattern );
+
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
     // Is emitted when the 'follow' option is enabled/disabled
     void followSet( bool checked );
+    // Is emitted before the QuickFind box is activated,
+    // to allow crawlers to get search in the right view.
+    void enteringQuickFind();
+    // Emitted when the quickfind bar is closed.
+    void exitingQuickFind();
 
   private:
     void createActions();

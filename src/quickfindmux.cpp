@@ -185,8 +185,6 @@ void QuickFindMux::registerSearchable( QObject* searchable )
     // Send us notifications
     connect( searchable, SIGNAL( notifyQuickFind( const QFNotification& ) ),
              this, SIGNAL( notify( const QFNotification& ) ) );
-    connect( searchable, SIGNAL( notifyQuickFind( const QFNotification& ) ),
-             this, SLOT( test() ) );
 
     // And clear them
     connect( searchable, SIGNAL( clearQuickFindNotification() ),

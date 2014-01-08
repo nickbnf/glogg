@@ -91,6 +91,10 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
             SIGNAL( followSet( bool ) ) );
     signalMux_.connect( this, SIGNAL( optionsChanged() ),
             SLOT( applyConfiguration() ) );
+    signalMux_.connect( this, SIGNAL( enteringQuickFind() ),
+            SLOT( enteringQuickFind() ) );
+    signalMux_.connect( &quickFindWidget_, SIGNAL( close() ),
+            SLOT( exitingQuickFind() ) );
 
     // Actions from the CrawlerWidget
     signalMux_.connect( SIGNAL( followDisabled() ),
@@ -115,10 +119,6 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
 
     // Establish the QuickFindWidget and mux ( to send requests from the
     // QFWidget to the right window )
-    /*
-    connect( quickFindWidget_, SIGNAL( close() ),
-             this, SLOT( hideQuickFindBar() ) );
-             */
     connect( &quickFindWidget_, SIGNAL( patternConfirmed( const QString&, bool ) ),
              &quickFindMux_, SLOT( confirmPattern( const QString&, bool ) ) );
     connect( &quickFindWidget_, SIGNAL( patternUpdated( const QString&, bool ) ),
@@ -133,10 +133,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
              &quickFindMux_, SLOT( searchNext() ) );
 
     // QuickFind changes coming from the views
-    /*
-    connect( quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
+    connect( &quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
              this, SLOT( changeQFPattern( const QString& ) ) );
-             */
     connect( &quickFindMux_, SIGNAL( notify( const QFNotification& ) ),
              &quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
     connect( &quickFindMux_, SIGNAL( clearNotification() ),
@@ -514,6 +512,11 @@ void MainWindow::closeTab( int index )
     delete widget;
 }
 
+void MainWindow::changeQFPattern( const QString& newPattern )
+{
+    quickFindWidget_.changeDisplayedPattern( newPattern );
+}
+
 //
 // Events
 //
@@ -544,6 +547,25 @@ void MainWindow::dropEvent( QDropEvent* event )
         return;
 
     loadFile( fileName );
+}
+
+void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
+{
+    LOG(logDEBUG4) << "keyPressEvent received";
+
+    switch ( (keyEvent->text())[0].toLatin1() ) {
+        case '/':
+            displayQuickFindBar( QuickFindMux::Forward );
+            break;
+        case '?':
+            displayQuickFindBar( QuickFindMux::Backward );
+            break;
+        default:
+            keyEvent->ignore();
+    }
+
+    if ( !keyEvent->isAccepted() )
+        QMainWindow::keyPressEvent( keyEvent );
 }
 
 //
@@ -697,8 +719,9 @@ void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
 {
     LOG(logDEBUG) << "MainWindow::displayQuickFindBar";
 
-    // Remember who had the focus
-    //qfSavedFocus_ = QApplication::focusWidget();
+    // Warn crawlers so they can save the position of the focus in order
+    // to do incremental search in the right view.
+    emit enteringQuickFind();
 
     quickFindMux_.setDirection( direction );
     quickFindWidget_.userActivate();

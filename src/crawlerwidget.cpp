@@ -60,6 +60,8 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     quickFindPattern_ = nullptr;
 
     savedSearches_   = nullptr;
+
+    qfSavedFocus_    = nullptr;
 }
 
 // The top line is first one on the main display
@@ -141,29 +143,6 @@ void CrawlerWidget::doSetSavedSearches(
     // We do setup now, assuming doSetData has been called before
     // us, that's not great really...
     setup();
-}
-
-//
-// Events handlers
-//
-
-void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
-{
-    LOG(logDEBUG4) << "keyPressEvent received";
-
-    switch ( (keyEvent->text())[0].toLatin1() ) {
-        case '/':
-            // displayQuickFindBar( QuickFindMux::Forward );
-            break;
-        case '?':
-            // displayQuickFindBar( QuickFindMux::Backward );
-            break;
-        default:
-            keyEvent->ignore();
-    }
-
-    if ( !keyEvent->isAccepted() )
-        QSplitter::keyPressEvent( keyEvent );
 }
 
 //
@@ -300,6 +279,26 @@ void CrawlerWidget::applyConfiguration()
     updateSearchCombo();
 }
 
+void CrawlerWidget::enteringQuickFind()
+{
+    LOG(logDEBUG) << "CrawlerWidget::enteringQuickFind";
+
+    // Remember who had the focus (only if it is one of our views)
+    QWidget* focus_widget =  QApplication::focusWidget();
+
+    if ( ( focus_widget == logMainView ) || ( focus_widget == filteredView ) )
+        qfSavedFocus_ = focus_widget;
+    else
+        qfSavedFocus_ = nullptr;
+}
+
+void CrawlerWidget::exitingQuickFind()
+{
+    // Restore the focus once the QFBar has been hidden
+    if ( qfSavedFocus_ )
+        qfSavedFocus_->setFocus();
+}
+
 void CrawlerWidget::loadingFinishedHandler( bool success )
 {
     // We need to refresh the main window because the view lines on the
@@ -340,19 +339,6 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
     }
 }
 
-void CrawlerWidget::hideQuickFindBar()
-{
-    // Restore the focus once the QFBar has been hidden
-#if 0
-    qfSavedFocus_->setFocus();
-#endif
-}
-
-void CrawlerWidget::changeQFPattern( const QString& newPattern )
-{
-    // quickFindWidget_->changeDisplayedPattern( newPattern );
-}
-
 // Returns a pointer to the window in which the search should be done
 AbstractLogView* CrawlerWidget::activeView() const
 {
@@ -363,7 +349,7 @@ AbstractLogView* CrawlerWidget::activeView() const
     if ( filteredView->hasFocus() || logMainView->hasFocus() )
         activeView = QApplication::focusWidget();
     else
-        activeView = nullptr; // qfSavedFocus_;
+        activeView = qfSavedFocus_;
 
     if ( activeView ) {
         AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView );

@@ -74,8 +74,6 @@ class CrawlerWidget : public QSplitter,
     void reload();
 
   protected:
-    void keyPressEvent( QKeyEvent* keyEvent );
-
     // Implementation of the ViewInterface functions
     virtual void doSetData(
             std::shared_ptr<LogData> log_data,
@@ -111,6 +109,10 @@ class CrawlerWidget : public QSplitter,
     void stopSearch();
     // Instructs the widget to reconfigure itself because Config() has changed.
     void applyConfiguration();
+    // QuickFind is being entered, save the focus for incremental qf.
+    void enteringQuickFind();
+    // QuickFind is being closed.
+    void exitingQuickFind();
     // Called when new data must be displayed in the filtered window.
     void updateFilteredView( int nbMatches, int progress );
     // Called when a new line has been selected in the filtered view,
@@ -124,12 +126,6 @@ class CrawlerWidget : public QSplitter,
     void loadingFinishedHandler( bool success );
     // Manages the info lines to inform the user the file has changed.
     void fileChangedHandler( LogData::MonitoredFileStatus );
-
-    void hideQuickFindBar();
-
-    // Instructs the widget to change the pattern in the QuickFind widget
-    // and confirm it.
-    void changeQFPattern( const QString& newPattern );
 
     void searchForward();
     void searchBackward();

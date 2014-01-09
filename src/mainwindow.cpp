@@ -145,6 +145,7 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
 
     QWidget* central_widget = new QWidget();
     QVBoxLayout* main_layout = new QVBoxLayout();
+    main_layout->setContentsMargins( 0, 0, 0, 0 );
     main_layout->addWidget( &mainTabWidget_ );
     main_layout->addWidget( &quickFindWidget_ );
     central_widget->setLayout( main_layout );

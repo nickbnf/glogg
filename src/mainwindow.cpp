@@ -153,6 +153,27 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     setCentralWidget( central_widget );
 }
 
+void MainWindow::reloadSession()
+{
+    int current_file_index = -1;
+
+    for ( auto open_file: session_->restore(
+               []() { return new CrawlerWidget(); },
+               &current_file_index ) )
+    {
+        QString file_name = { open_file.first.c_str() };
+        CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+                open_file.second );
+
+        assert( crawler_widget );
+
+        mainTabWidget_.addTab( crawler_widget, strippedName( file_name ) );
+    }
+
+    if ( current_file_index >= 0 )
+        mainTabWidget_.setCurrentIndex( current_file_index );
+}
+
 void MainWindow::loadInitialFile( QString fileName )
 {
     LOG(logDEBUG) << "loadInitialFile";

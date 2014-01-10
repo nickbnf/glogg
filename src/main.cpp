@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
 
     LOG(logDEBUG) << "MainWindow created.";
     mw->show();
+    mw->reloadSession();
     mw->loadInitialFile( QString::fromStdString( filename ) );
     return app.exec();
 }

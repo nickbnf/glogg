@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -52,28 +52,10 @@ ViewInterface* Session::open( const std::string& file_name,
     QFileInfo fileInfo( file_name.c_str() );
     if ( fileInfo.isReadable() )
     {
-        // Create the data objects
-        auto log_data          = std::make_shared<LogData>();
-        auto log_filtered_data =
-            std::shared_ptr<LogFilteredData>( log_data->getNewFilteredData() );
-
-        view = view_factory();
-        view->setData( log_data, log_filtered_data );
-        view->setQuickFindPattern( quickFindPattern_ );
-        view->setSavedSearches( savedSearches_ );
-
-        // Insert in the hash
-        openFiles_.insert( { view,
-                { file_name,
-                  log_data,
-                  log_filtered_data,
-                  view } } );
-
-        // Start loading the file
-        log_data->attachFile( QString( file_name.c_str() ) );
+        return openAlways( file_name, view_factory );
     }
     else {
-        // throw
+        // FIXME throw
     }
 
     return view;
@@ -82,6 +64,24 @@ ViewInterface* Session::open( const std::string& file_name,
 void Session::close( const ViewInterface* view )
 {
     openFiles_.erase( openFiles_.find( view ) );
+}
+
+std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
+        std::function<ViewInterface*()> view_factory,
+        int *current_file_index )
+{
+    std::vector<std::string> session_files = { "/tmp/test1", "/tmp/test2" };
+    std::vector<std::pair<std::string, ViewInterface*>> result;
+
+    for ( auto file: session_files )
+    {
+        ViewInterface* view = openAlways( file, view_factory );
+        result.push_back( { file, view } );
+    }
+
+    *current_file_index = -1;
+
+    return result;
 }
 
 void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
@@ -100,6 +100,32 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
 /*
  * Private methods
  */
+
+ViewInterface* Session::openAlways( const std::string& file_name,
+        std::function<ViewInterface*()> view_factory )
+{
+    // Create the data objects
+    auto log_data          = std::make_shared<LogData>();
+    auto log_filtered_data =
+        std::shared_ptr<LogFilteredData>( log_data->getNewFilteredData() );
+
+    ViewInterface* view = view_factory();
+    view->setData( log_data, log_filtered_data );
+    view->setQuickFindPattern( quickFindPattern_ );
+    view->setSavedSearches( savedSearches_ );
+
+    // Insert in the hash
+    openFiles_.insert( { view,
+            { file_name,
+            log_data,
+            log_filtered_data,
+            view } } );
+
+    // Start loading the file
+    log_data->attachFile( QString( file_name.c_str() ) );
+
+    return view;
+}
 
 Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* view )
 {

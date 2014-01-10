@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013, 2014  Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -47,6 +47,8 @@ class MainWindow : public QMainWindow
     // The ownership of the session is transferred to us
     MainWindow( std::unique_ptr<Session> session );
 
+    // Re-load the files from the previous session
+    void reloadSession();
     // Loads the initial file (parameter passed or from config file)
     void loadInitialFile( QString fileName );
 

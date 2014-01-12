@@ -129,6 +129,8 @@ class QuickFindMux : public QObject
 
     QFDirection currentDirection_;
 
+    std::vector<QObject*> registeredSearchables_;
+
     SearchableWidgetInterface* getSearchableWidget() const;
     void registerSearchable( QObject* searchable );
     void unregisterAllSearchables();

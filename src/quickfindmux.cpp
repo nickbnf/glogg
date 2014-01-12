@@ -26,7 +26,7 @@
 #include "qfnotifications.h"
 
 QuickFindMux::QuickFindMux( std::shared_ptr<QuickFindPattern> pattern ) :
-    QObject(), pattern_( pattern )
+    QObject(), pattern_( pattern ), registeredSearchables_()
 {
     selector_ = nullptr;
 
@@ -194,10 +194,14 @@ void QuickFindMux::registerSearchable( QObject* searchable )
              this, SLOT( searchNext() ) );
     connect( searchable, SIGNAL( searchPrevious() ),
              this, SLOT( searchPrevious() ) );
+
+    registeredSearchables_.push_back( searchable );
 }
 
 void QuickFindMux::unregisterAllSearchables()
 {
-    //    FIXME
-//    disconnect();
+    for ( auto searchable: registeredSearchables_ )
+        disconnect( searchable, 0, this, 0 );
+
+    registeredSearchables_.clear();
 }

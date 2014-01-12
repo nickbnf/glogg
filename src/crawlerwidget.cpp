@@ -58,10 +58,10 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     logFilteredData_ = nullptr;
 
     quickFindPattern_ = nullptr;
-
     savedSearches_   = nullptr;
-
     qfSavedFocus_    = nullptr;
+
+    currentLineNumber_ = 0;
 }
 
 // The top line is first one on the main display
@@ -96,6 +96,14 @@ std::vector<QObject*> CrawlerWidget::doGetAllSearchables() const
     { logMainView, filteredView };
 
     return searchables;
+}
+
+// Update the state of the parent
+void CrawlerWidget::doSendAllStateSignals()
+{
+    emit updateLineNumber( currentLineNumber_ );
+    // FIXME, should only be done if loading is finished
+    emit loadingFinished( true );
 }
 
 //
@@ -209,6 +217,12 @@ void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
 {
     int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
     logMainView->selectAndDisplayLine(mainViewLine);  // FIXME: should be done with a signal.
+}
+
+void CrawlerWidget::updateLineNumberHandler( int line )
+{
+    currentLineNumber_ = line;
+    emit updateLineNumber( line );
 }
 
 void CrawlerWidget::markLineFromMain( qint64 line )
@@ -584,7 +598,7 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( newSelection( int ) ),
             filteredView, SLOT( update() ) );
     connect(logMainView, SIGNAL( updateLineNumber( int ) ),
-            this, SIGNAL( updateLineNumber( int ) ) );
+            this, SLOT( updateLineNumberHandler( int ) ) );
     connect(logMainView, SIGNAL( markLine( qint64 ) ),
             this, SLOT( markLineFromMain( qint64 ) ) );
     connect(filteredView, SIGNAL( markLine( qint64 ) ),

@@ -45,12 +45,23 @@
    |        | |        | |       | |       |
    +--------+ +--------+ +-------+ +-------+
 */
-// Strongly inspired by http://doc.qt.digia.com/qq/qq08-action-multiplexer.html
+// Largely inspired by http://doc.qt.digia.com/qq/qq08-action-multiplexer.html
 
 #include <list>
 #include <QPointer>
 
 class QObject;
+
+class MuxableDocumentInterface {
+  public:
+    // Send all signals refering to a state of the document to update
+    // the parent widget.
+    void sendAllStateSignals()
+    { doSendAllStateSignals(); }
+
+  protected:
+    virtual void doSendAllStateSignals() = 0;
+};
 
 class SignalMux {
   public:

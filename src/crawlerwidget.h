@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon
+ * Copyright (C) 2009, 2010, 2011, 2013, 2014 Nicolas Bonnefon
  * and other contributors
  *
  * This file is part of glogg.
@@ -35,6 +35,7 @@
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
 #include "viewinterface.h"
+#include "signalmux.h"
 
 class InfoLine;
 class QuickFindPattern;
@@ -47,7 +48,8 @@ class OverviewWidget;
 // It includes both windows, the search line, the info
 // lines and various buttons.
 class CrawlerWidget : public QSplitter,
-    public QuickFindMuxSelectorInterface, public ViewInterface
+    public QuickFindMuxSelectorInterface, public ViewInterface,
+    public MuxableDocumentInterface
 {
   Q_OBJECT
 
@@ -88,6 +90,9 @@ class CrawlerWidget : public QSplitter,
     virtual SearchableWidgetInterface* doGetActiveSearchable() const;
     virtual std::vector<QObject*> doGetAllSearchables() const;
 
+    // Implementation of the MuxableDocumentInterface
+    virtual void doSendAllStateSignals();
+
   signals:
     // Sent to signal the client load has progressed,
     // passing the completion percentage.
@@ -118,6 +123,8 @@ class CrawlerWidget : public QSplitter,
     // Called when a new line has been selected in the filtered view,
     // to instruct the main view to jump to the matching line.
     void jumpToMatchingLine( int filteredLineNb );
+    // Called when the main view is on a new line number
+    void updateLineNumberHandler( int line );
     // Mark a line that has been clicked on the main (top) view.
     void markLineFromMain( qint64 line );
     // Mark a line that has been clicked on the filtered (bottom) view.
@@ -233,6 +240,9 @@ class CrawlerWidget : public QSplitter,
 
     // Model for the visibility selector
     QStandardItemModel* visibilityModel_;
+
+    // Last main line number received
+    qint64 currentLineNumber_;
 };
 
 #endif

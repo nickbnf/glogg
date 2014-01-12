@@ -706,11 +706,17 @@ void MainWindow::updateRecentFileActions()
 void MainWindow::writeSettings()
 {
     // Save the session
-    SessionInfo& session = Persistent<SessionInfo>( "session" );
-    session.setGeometry( saveGeometry() );
+    // Generate the ordered list of widgets and their topLine
+    std::vector<std::pair<const ViewInterface*, uint64_t>> widget_list;
+    for ( int i = 0; i < mainTabWidget_.count(); ++i )
+        widget_list.push_back( {
+                dynamic_cast<const ViewInterface*>( mainTabWidget_.widget( i ) ),
+                0 } );
+    session_->save( widget_list );
+    //SessionInfo& session = Persistent<SessionInfo>( "session" );
+    //session.setGeometry( saveGeometry() );
     //session.setCrawlerState( crawlerWidget->saveState() );
-    session.setCurrentFile( currentFile );
-    GetPersistentInfo().save( QString( "session" ) );
+    //GetPersistentInfo().save( QString( "session" ) );
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
@@ -720,10 +726,9 @@ void MainWindow::writeSettings()
 void MainWindow::readSettings()
 {
     // Get and restore the session
-    GetPersistentInfo().retrieve( QString( "session" ) );
-    SessionInfo session = Persistent<SessionInfo>( "session" );
-    restoreGeometry( session.geometry() );
-    previousFile = session.currentFile();
+    // GetPersistentInfo().retrieve( QString( "session" ) );
+    // SessionInfo session = Persistent<SessionInfo>( "session" );
+    //restoreGeometry( session.geometry() );
     /*
      * FIXME: should be in the session
     crawlerWidget->restoreState( session.crawlerState() );
@@ -733,7 +738,7 @@ void MainWindow::readSettings()
     GetPersistentInfo().retrieve( QString( "recentFiles" ) );
     updateRecentFileActions();
 
-    GetPersistentInfo().retrieve( QString( "settings" ) );
+    // GetPersistentInfo().retrieve( QString( "settings" ) );
     GetPersistentInfo().retrieve( QString( "filterSet" ) );
 }
 

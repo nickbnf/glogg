@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -23,20 +23,54 @@
 
 #include "log.h"
 
+const int SessionInfo::OPENFILES_VERSION = 1;
+
 void SessionInfo::retrieveFromStorage( QSettings& settings )
 {
     LOG(logDEBUG) << "SessionInfo::retrieveFromStorage";
 
+    /*
     geometry_     = settings.value("geometry").toByteArray();
     crawlerState_ = settings.value("crawlerWidget").toByteArray();
-    currentFile_  = settings.value("currentFile").toString();
+    */
+    if ( settings.contains( "OpenFiles/version" ) ) {
+        // Unserialise the "new style" stored history
+        settings.beginGroup( "OpenFiles" );
+        if ( settings.value( "version" ) == OPENFILES_VERSION ) {
+            int size = settings.beginReadArray( "openFiles" );
+            for (int i = 0; i < size; ++i) {
+                settings.setArrayIndex(i);
+                std::string file_name =
+                    settings.value( "fileName" ).toString().toStdString();
+                uint64_t top_line = settings.value( "topLine" ).toInt();
+                openFiles_.push_back( { file_name, top_line } );
+            }
+            settings.endArray();
+        }
+        else {
+            LOG(logERROR) << "Unknown version of OpenFiles, ignoring it...";
+        }
+        settings.endGroup();
+    }
 }
 
 void SessionInfo::saveToStorage( QSettings& settings ) const
 {
     LOG(logDEBUG) << "SessionInfo::saveToStorage";
 
+    /*
     settings.setValue( "geometry", geometry_ );
     settings.setValue( "crawlerWidget", crawlerState_ );
-    settings.setValue( "currentFile", currentFile_ );
+    */
+    settings.beginGroup( "OpenFiles" );
+    settings.setValue( "version", OPENFILES_VERSION );
+    settings.beginWriteArray( "openFiles" );
+    for ( int i = 0; i < openFiles_.size(); ++i ) {
+        settings.setArrayIndex( i );
+        const OpenFile* open_file = &(openFiles_.at( i ));
+        settings.setValue( "fileName", QString( open_file->fileName.c_str() ) );
+        settings.setValue( "topLine", qint64( open_file->topLine ) );
+    }
+    settings.endArray();
+    settings.endGroup();
 }

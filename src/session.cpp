@@ -19,12 +19,15 @@
 
 #include "session.h"
 
+#include "log.h"
+
 #include <cassert>
 #include <QFileInfo>
 
 #include "viewinterface.h"
 #include "persistentinfo.h"
 #include "savedsearches.h"
+#include "sessioninfo.h"
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
 
@@ -66,17 +69,39 @@ void Session::close( const ViewInterface* view )
     openFiles_.erase( openFiles_.find( view ) );
 }
 
+void Session::save(
+        std::vector<std::pair<const ViewInterface*, uint64_t>> view_list )
+{
+    LOG(logDEBUG) << "Session::save";
+
+    std::vector<SessionInfo::OpenFile> session_files;
+    for ( auto view: view_list ) {
+        const OpenFile* file = findOpenFileFromView( view.first );
+        assert( file );
+
+        LOG(logDEBUG) << "Saving " << file->fileName << " in session.";
+        session_files.push_back( { file->fileName, view.second } );
+    }
+
+    SessionInfo& session = Persistent<SessionInfo>( "session" );
+    session.setOpenFiles( session_files );
+    GetPersistentInfo().save( QString( "session" ) );
+}
+
 std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
         std::function<ViewInterface*()> view_factory,
         int *current_file_index )
 {
-    std::vector<std::string> session_files = { "/tmp/test1", "/tmp/test2" };
+    GetPersistentInfo().retrieve( QString( "session" ) );
+    SessionInfo& session = Persistent<SessionInfo>( "session" );
+
+    std::vector<SessionInfo::OpenFile> session_files = session.openFiles();
     std::vector<std::pair<std::string, ViewInterface*>> result;
 
     for ( auto file: session_files )
     {
-        ViewInterface* view = openAlways( file, view_factory );
-        result.push_back( { file, view } );
+        ViewInterface* view = openAlways( file.fileName, view_factory );
+        result.push_back( { file.fileName, view } );
     }
 
     *current_file_index = -1;

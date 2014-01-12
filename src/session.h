@@ -52,7 +52,7 @@ class Session {
     // The filename must be strictly identical to trigger a match
     // (no match in case of e.g. relative vs. absolute pathname.
     ViewInterface* getViewIfOpen( const std::string& file_name ) const;
-    // Open a new file, starts its asynchronous loading, and construct a new 
+    // Open a new file, starts its asynchronous loading, and construct a new
     // view for it (the caller passes a factory to build the concrete view)
     // The ownership of the view is given to the caller
     // Throw exceptions if the file is already open or if it cannot be open.
@@ -61,6 +61,7 @@ class Session {
     // Close the file identified by the view passed
     // Throw an exception if it does not exist.
     void close( const ViewInterface* view );
+
     // Open all the files listed in the stored session
     // (see ::open)
     // returns a vector of pairs (file_name, view) and the index of the
@@ -68,6 +69,13 @@ class Session {
     std::vector<std::pair<std::string, ViewInterface*>> restore(
             std::function<ViewInterface*()> view_factory,
             int *current_file_index );
+    // Save the session to persistent storage. An ordered list of
+    // (view, topLine) is passed, this is because only the main window
+    // know the order in which the views are presented to the user (it might
+    // have changed since file were opened).
+    void save(
+            std::vector<std::pair<const ViewInterface*, uint64_t>> view_list );
+
     // Get the size (in bytes) and number of lines in the current file.
     // The file is identified by the view attached to it.
     void getFileInfo( const ViewInterface* view, uint64_t* fileSize,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -20,6 +20,9 @@
 #ifndef SESSIONINFO_H
 #define SESSIONINFO_H
 
+#include <vector>
+#include <string>
+
 #include <QByteArray>
 #include <QString>
 
@@ -29,9 +32,10 @@
 // to be persisted and reloaded upon start
 class SessionInfo : public Persistable {
   public:
-    SessionInfo() { }
+    SessionInfo() : openFiles_() { }
 
     // Geometry of the main window
+    /*
     QByteArray geometry() const
     { return geometry_; }
     void setGeometry( const QByteArray& geometry )
@@ -41,20 +45,29 @@ class SessionInfo : public Persistable {
     { return crawlerState_; }
     void setCrawlerState( const QByteArray& geometry )
     { crawlerState_ = geometry; }
-    // Name of the current (last loaded) file
-    QString currentFile() const
-    { return currentFile_; }
-    void setCurrentFile( const QString& filename )
-    { currentFile_ = filename; }
+    */
+    struct OpenFile
+    {
+        std::string fileName;
+        uint64_t    topLine;
+    };
+
+    // List of the loaded files
+    std::vector<OpenFile> openFiles() const
+    { return openFiles_; }
+    void setOpenFiles( const std::vector<OpenFile>& loaded_files );
+    { openFiles_ = loaded_files; }
 
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
     virtual void retrieveFromStorage( QSettings& settings );
 
   private:
+    static const int OPENFILES_VERSION;
+
     QByteArray geometry_;
     QByteArray crawlerState_;
-    QString    currentFile_;
+    std::vector<OpenFile> openFiles_;
 };
 
 #endif

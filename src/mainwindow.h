@@ -90,6 +90,8 @@ class MainWindow : public QMainWindow
 
     // Close the tab with the passed index
     void closeTab( int index );
+    // Setup the tab with current index for view
+    void currentTabChanged( int index );
 
     // Instructs the widget to change the pattern in the QuickFind widget
     // and confirm it.
@@ -126,7 +128,6 @@ class MainWindow : public QMainWindow
     RecentFiles& recentFiles;
     QString loadingFileName;
     QString currentFile;
-    QString previousFile;
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];

@@ -114,8 +114,10 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     //mainTabWidget_.setTabShape( QTabWidget::Triangular );
     mainTabWidget_.setTabsClosable( true );
 
-    connect( &mainTabWidget_, SIGNAL( tabCloseRequested ( int ) ),
+    connect( &mainTabWidget_, SIGNAL( tabCloseRequested( int ) ),
             this, SLOT( closeTab( int ) ) );
+    connect( &mainTabWidget_, SIGNAL( currentChanged( int ) ),
+            this, SLOT( currentTabChanged( int ) ) );
 
     // Establish the QuickFindWidget and mux ( to send requests from the
     // QFWidget to the right window )
@@ -181,8 +183,6 @@ void MainWindow::loadInitialFile( QString fileName )
     // Is there a file passed as argument?
     if ( !fileName.isEmpty() )
         loadFile( fileName );
-    else if ( !previousFile.isEmpty() )
-        loadFile( previousFile );
 }
 
 //
@@ -534,6 +534,26 @@ void MainWindow::closeTab( int index )
     delete widget;
 }
 
+void MainWindow::currentTabChanged( int index )
+{
+    LOG(logDEBUG) << "currentTabChanged";
+
+    if ( index >= 0 )
+    {
+        CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+                mainTabWidget_.widget( index ) );
+        signalMux_.setCurrentDocument( crawler_widget );
+        quickFindMux_.registerSelector( crawler_widget );
+
+        // New tab is set up with fonts etc...
+        emit optionsChanged();
+    }
+    else
+    {
+        // FIXME
+    }
+}
+
 void MainWindow::changeQFPattern( const QString& newPattern )
 {
     quickFindWidget_.changeDisplayedPattern( newPattern );
@@ -621,12 +641,6 @@ bool MainWindow::loadFile( const QString& fileName )
     // Setting the new tab, the user will see a blank page for the duration
     // of the loading, with no way to switch to another tab
     mainTabWidget_.setCurrentIndex( index );
-
-    signalMux_.setCurrentDocument( crawler_widget );
-    quickFindMux_.registerSelector( crawler_widget );
-
-    // FIXME: is it necessary?
-    emit optionsChanged();
 
     // We start with the empty file
     setCurrentFile( "" );

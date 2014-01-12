@@ -55,7 +55,7 @@ class SessionInfo : public Persistable {
     // List of the loaded files
     std::vector<OpenFile> openFiles() const
     { return openFiles_; }
-    void setOpenFiles( const std::vector<OpenFile>& loaded_files );
+    void setOpenFiles( const std::vector<OpenFile>& loaded_files )
     { openFiles_ = loaded_files; }
 
     // Reads/writes the current config in the QSettings object passed

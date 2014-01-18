@@ -118,7 +118,7 @@ class MainWindow : public QMainWindow
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName );
-    void setCurrentFile( const QString& fileName );
+    void updateTitleBar( const QString& file_name );
     void updateRecentFileActions();
     QString strippedName( const QString& fullFileName ) const;
     CrawlerWidget* currentCrawlerWidget() const;
@@ -127,7 +127,6 @@ class MainWindow : public QMainWindow
     std::unique_ptr<Session> session_;
     RecentFiles& recentFiles;
     QString loadingFileName;
-    QString currentFile;
 
     enum { MaxRecentFiles = 5 };
     QAction *recentFileActions[MaxRecentFiles];

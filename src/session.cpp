@@ -109,6 +109,15 @@ std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
     return result;
 }
 
+std::string Session::getFilename( const ViewInterface* view ) const
+{
+    const OpenFile* file = findOpenFileFromView( view );
+
+    assert( file );
+
+    return file->fileName;
+}
+
 void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
         uint32_t* fileNbLine, QDateTime* lastModified ) const
 {

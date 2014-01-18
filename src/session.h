@@ -76,6 +76,8 @@ class Session {
     void save(
             std::vector<std::pair<const ViewInterface*, uint64_t>> view_list );
 
+    // Get the file name for the passed view.
+    std::string getFilename( const ViewInterface* view ) const;
     // Get the size (in bytes) and number of lines in the current file.
     // The file is identified by the view attached to it.
     void getFileInfo( const ViewInterface* view, uint64_t* fileSize,

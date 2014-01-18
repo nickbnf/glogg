@@ -63,7 +63,6 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
 {
     createActions();
     createMenus();
-    // createContextMenu();
     createToolBars();
     // createStatusBar();
 
@@ -355,8 +354,10 @@ void MainWindow::open()
     QString defaultDir = ".";
 
     // Default to the path of the current file if there is one
-    if ( !currentFile.isEmpty() ) {
-        QFileInfo fileInfo = QFileInfo( currentFile );
+    if ( auto current = currentCrawlerWidget() )
+    {
+        std::string current_file = session_->getFilename( current );
+        QFileInfo fileInfo = QFileInfo( QString( current_file.c_str() ) );
         defaultDir = fileInfo.path();
     }
 
@@ -476,6 +477,8 @@ void MainWindow::updateLoadingProgress( int progress )
 {
     LOG(logDEBUG) << "Loading progress: " << progress;
 
+    // FIXME - should check and set loadingFileName
+
     // We ignore 0% and 100% to avoid a flash when the file (or update)
     // is very short.
     if ( progress > 0 && progress < 100 ) {
@@ -492,8 +495,22 @@ void MainWindow::displayNormalStatus( bool success )
 
     LOG(logDEBUG) << "displayNormalStatus";
 
-    if ( success )
-        setCurrentFile( loadingFileName );
+    // No file is loading
+    loadingFileName.clear();
+
+    // Following should always work as we will only receive enter
+    // this slot if there is a crawler connected.
+    QString current_file =
+        session_->getFilename( currentCrawlerWidget() ).c_str();
+
+    if ( success ) {
+        // Update the recent files list
+        // (reload the list first in case another glogg changed it)
+        GetPersistentInfo().retrieve( "recentFiles" );
+        recentFiles.addRecent( current_file );
+        GetPersistentInfo().save( "recentFiles" );
+        updateRecentFileActions();
+    }
 
     uint64_t fileSize;
     uint32_t fileNbLine;
@@ -505,12 +522,12 @@ void MainWindow::displayNormalStatus( bool success )
         const QString date =
             defaultLocale.toString( lastModified, QLocale::NarrowFormat );
         infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4)" )
-                .arg(currentFile).arg(readableSize(fileSize))
+                .arg(current_file).arg(readableSize(fileSize))
                 .arg(fileNbLine).arg( date ) );
     }
     else {
         infoLine->setText( tr( "%1 (%2 - %3 lines)" )
-                .arg(currentFile).arg(readableSize(fileSize))
+                .arg(current_file).arg(readableSize(fileSize))
                 .arg(fileNbLine) );
     }
 
@@ -547,6 +564,10 @@ void MainWindow::currentTabChanged( int index )
 
         // New tab is set up with fonts etc...
         emit optionsChanged();
+
+        // Update the title bar
+        updateTitleBar( QString(
+                    session_->getFilename( crawler_widget ).c_str() ) );
     }
     else
     {
@@ -642,9 +663,6 @@ bool MainWindow::loadFile( const QString& fileName )
     // of the loading, with no way to switch to another tab
     mainTabWidget_.setCurrentIndex( index );
 
-    // We start with the empty file
-    setCurrentFile( "" );
-
     LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
     return true;
 }
@@ -664,34 +682,19 @@ CrawlerWidget* MainWindow::currentCrawlerWidget() const
     return current;
 }
 
-// Add the filename to the recent files list and update the title bar.
-void MainWindow::setCurrentFile( const QString& fileName )
+// Update the title bar.
+void MainWindow::updateTitleBar( const QString& file_name )
 {
-    if ( fileName != currentFile )
-    {
-        // Change the current file
-        currentFile = fileName;
-        QString shownName = tr( "Untitled" );
-        if ( !currentFile.isEmpty() ) {
-            // (reload the list first in case another glogg changed it)
-            GetPersistentInfo().retrieve( "recentFiles" );
-            recentFiles.addRecent( currentFile );
-            GetPersistentInfo().save( "recentFiles" );
-            updateRecentFileActions();
-            shownName = strippedName( currentFile );
-        }
+    QString shownName = tr( "Untitled" );
+    if ( !file_name.isEmpty() )
+        shownName = strippedName( file_name );
 
-        setWindowTitle(
-                tr("%1 - %2").arg(shownName).arg(tr("glogg"))
+    setWindowTitle(
+            tr("%1 - %2").arg(shownName).arg(tr("glogg"))
 #ifdef GLOGG_COMMIT
-                + " (dev build " GLOGG_VERSION ")"
+            + " (dev build " GLOGG_VERSION ")"
 #endif
-                );
-    }
-    else
-    {
-        // Nothing, happens when e.g., the file is reloaded
-    }
+            );
 }
 
 // Updates the actions for the recent files.

@@ -61,6 +61,10 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     savedSearches_   = nullptr;
     qfSavedFocus_    = nullptr;
 
+    // Until we have received confirmation loading is finished, we
+    // should consider we are loading something.
+    loadingInProgress_ = true;
+
     currentLineNumber_ = 0;
 }
 
@@ -102,8 +106,8 @@ std::vector<QObject*> CrawlerWidget::doGetAllSearchables() const
 void CrawlerWidget::doSendAllStateSignals()
 {
     emit updateLineNumber( currentLineNumber_ );
-    // FIXME, should only be done if loading is finished
-    emit loadingFinished( true );
+    if ( !loadingInProgress_ )
+        emit loadingFinished( true );
 }
 
 //
@@ -315,6 +319,8 @@ void CrawlerWidget::exitingQuickFind()
 
 void CrawlerWidget::loadingFinishedHandler( bool success )
 {
+    loadingInProgress_ = false;
+
     // We need to refresh the main window because the view lines on the
     // overview have probably changed.
     overview_->updateData( logData_->getNbLine() );

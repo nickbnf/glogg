@@ -243,6 +243,10 @@ class CrawlerWidget : public QSplitter,
 
     // Last main line number received
     qint64 currentLineNumber_;
+
+    // Are we loading something?
+    // Set to false when we receive a completion message from the LogData
+    bool            loadingInProgress_;
 };
 
 #endif

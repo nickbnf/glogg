@@ -503,15 +503,6 @@ void MainWindow::displayNormalStatus( bool success )
     QString current_file =
         session_->getFilename( currentCrawlerWidget() ).c_str();
 
-    if ( success ) {
-        // Update the recent files list
-        // (reload the list first in case another glogg changed it)
-        GetPersistentInfo().retrieve( "recentFiles" );
-        recentFiles.addRecent( current_file );
-        GetPersistentInfo().save( "recentFiles" );
-        updateRecentFileActions();
-    }
-
     uint64_t fileSize;
     uint32_t fileNbLine;
     QDateTime lastModified;
@@ -662,6 +653,13 @@ bool MainWindow::loadFile( const QString& fileName )
     // Setting the new tab, the user will see a blank page for the duration
     // of the loading, with no way to switch to another tab
     mainTabWidget_.setCurrentIndex( index );
+
+    // Update the recent files list
+    // (reload the list first in case another glogg changed it)
+    GetPersistentInfo().retrieve( "recentFiles" );
+    recentFiles.addRecent( fileName );
+    GetPersistentInfo().save( "recentFiles" );
+    updateRecentFileActions();
 
     LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
     return true;

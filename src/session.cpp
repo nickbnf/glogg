@@ -100,6 +100,7 @@ std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
 
     for ( auto file: session_files )
     {
+        LOG(logDEBUG) << "Create view for " << file.fileName;
         ViewInterface* view = openAlways( file.fileName, view_factory );
         result.push_back( { file.fileName, view } );
     }

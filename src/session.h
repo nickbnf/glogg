@@ -35,6 +35,9 @@ class LogData;
 class LogFilteredData;
 class SavedSearches;
 
+// File unreadable error
+class FileUnreadableErr {};
+
 // The session is responsible for maintaining the list of open log files
 // and their association with Views.
 // It also maintains the domain objects which are common to all log files

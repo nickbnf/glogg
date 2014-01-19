@@ -636,33 +636,41 @@ bool MainWindow::loadFile( const QString& fileName )
     // Load the file
     loadingFileName = fileName;
 
-    CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
-            session_->open( fileName.toStdString(),
-                []() { return new CrawlerWidget(); } ) );
-    assert( crawler_widget );
+    try {
+        CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+                session_->open( fileName.toStdString(),
+                    []() { return new CrawlerWidget(); } ) );
+        assert( crawler_widget );
 
-    // We won't show the widget until the file is fully loaded
-    crawler_widget->hide();
+        // We won't show the widget until the file is fully loaded
+        crawler_widget->hide();
 
-    // We disable the tab widget to avoid having someone switch
-    // tab during loading. (maybe FIXME)
-    mainTabWidget_.setEnabled( false );
+        // We disable the tab widget to avoid having someone switch
+        // tab during loading. (maybe FIXME)
+        mainTabWidget_.setEnabled( false );
 
-    int index = mainTabWidget_.addTab( crawler_widget, strippedName( fileName ) );
+        int index = mainTabWidget_.addTab(
+                crawler_widget, strippedName( fileName ) );
 
-    // Setting the new tab, the user will see a blank page for the duration
-    // of the loading, with no way to switch to another tab
-    mainTabWidget_.setCurrentIndex( index );
+        // Setting the new tab, the user will see a blank page for the duration
+        // of the loading, with no way to switch to another tab
+        mainTabWidget_.setCurrentIndex( index );
 
-    // Update the recent files list
-    // (reload the list first in case another glogg changed it)
-    GetPersistentInfo().retrieve( "recentFiles" );
-    recentFiles.addRecent( fileName );
-    GetPersistentInfo().save( "recentFiles" );
-    updateRecentFileActions();
+        // Update the recent files list
+        // (reload the list first in case another glogg changed it)
+        GetPersistentInfo().retrieve( "recentFiles" );
+        recentFiles.addRecent( fileName );
+        GetPersistentInfo().save( "recentFiles" );
+        updateRecentFileActions();
+    }
+    catch ( FileUnreadableErr ) {
+        LOG(logDEBUG) << "Can't open file " << fileName.toStdString();
+        return false;
+    }
 
     LOG(logDEBUG) << "Success loading file " << fileName.toStdString();
     return true;
+
 }
 
 // Strips the passed filename from its directory part.

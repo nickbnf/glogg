@@ -53,12 +53,11 @@ ViewInterface* Session::open( const std::string& file_name,
     ViewInterface* view = nullptr;
 
     QFileInfo fileInfo( file_name.c_str() );
-    if ( fileInfo.isReadable() )
-    {
+    if ( fileInfo.isReadable() ) {
         return openAlways( file_name, view_factory );
     }
     else {
-        // FIXME throw
+        throw FileUnreadableErr();
     }
 
     return view;

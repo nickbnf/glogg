@@ -36,11 +36,11 @@
 #include "data/logfiltereddata.h"
 #include "viewinterface.h"
 #include "signalmux.h"
+#include "overview.h"
 
 class InfoLine;
 class QuickFindPattern;
 class SavedSearches;
-class Overview;
 class QStandardItemModel;
 class OverviewWidget;
 
@@ -236,7 +236,7 @@ class CrawlerWidget : public QSplitter,
     SearchState     searchState_;
 
     // Matches overview
-    Overview*       overview_;
+    Overview        overview_;
 
     // Model for the visibility selector
     QStandardItemModel* visibilityModel_;

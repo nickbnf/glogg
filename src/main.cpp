@@ -135,12 +135,12 @@ int main(int argc, char *argv[])
     GetPersistentInfo().retrieve( QString( "settings" ) );
 
     std::unique_ptr<Session> session( new Session() );
-    MainWindow* mw = new MainWindow( std::move( session ) );
+    MainWindow mw( std::move( session ) );
 
     LOG(logDEBUG) << "MainWindow created.";
-    mw->show();
-    mw->reloadSession();
-    mw->loadInitialFile( QString::fromStdString( filename ) );
+    mw.show();
+    mw.reloadSession();
+    mw.loadInitialFile( QString::fromStdString( filename ) );
     return app.exec();
 }
 

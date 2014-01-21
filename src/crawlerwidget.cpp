@@ -52,7 +52,7 @@ const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 // Constructor only does trivial construction. The real work is done once
 // the data is attached.
 CrawlerWidget::CrawlerWidget( QWidget *parent )
-        : QSplitter( parent )
+        : QSplitter( parent ), overview_()
 {
     logData_         = nullptr;
     logFilteredData_ = nullptr;
@@ -211,7 +211,7 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
     filteredView->updateData();
 
     // Update the match overview
-    overview_->updateData( logData_->getNbLine() );
+    overview_.updateData( logData_->getNbLine() );
 
     // Also update the top window for the coloured bullets.
     update();
@@ -240,7 +240,7 @@ void CrawlerWidget::markLineFromMain( qint64 line )
     filteredView->updateData();
 
     // Update the match overview
-    overview_->updateData( logData_->getNbLine() );
+    overview_.updateData( logData_->getNbLine() );
 
     // Also update the top window for the coloured bullets.
     update();
@@ -259,7 +259,7 @@ void CrawlerWidget::markLineFromFiltered( qint64 line )
     filteredView->updateData();
 
     // Update the match overview
-    overview_->updateData( logData_->getNbLine() );
+    overview_.updateData( logData_->getNbLine() );
 
     // Also update the top window for the coloured bullets.
     update();
@@ -285,7 +285,7 @@ void CrawlerWidget::applyConfiguration()
     logMainView->setLineNumbersVisible( config.mainLineNumbersVisible() );
     filteredView->setLineNumbersVisible( config.filteredLineNumbersVisible() );
 
-    overview_->setVisible( config.isOverviewVisible() );
+    overview_.setVisible( config.isOverviewVisible() );
     logMainView->refreshOverview();
 
     logMainView->updateDisplaySize();
@@ -323,7 +323,7 @@ void CrawlerWidget::loadingFinishedHandler( bool success )
 
     // We need to refresh the main window because the view lines on the
     // overview have probably changed.
-    overview_->updateData( logData_->getNbLine() );
+    overview_.updateData( logData_->getNbLine() );
 
     // FIXME, handle topLine
     // logMainView->updateData( logData_, topLine );
@@ -454,18 +454,15 @@ void CrawlerWidget::setup()
     assert( logData_ );
     assert( logFilteredData_ );
 
-    // The matches overview
-    overview_ = new Overview();
-
     // The views
     bottomWindow = new QWidget;
     overviewWidget_ = new OverviewWidget();
     logMainView     = new LogMainView(
-            logData_, quickFindPattern_.get(), overview_, overviewWidget_ );
+            logData_, quickFindPattern_.get(), &overview_, overviewWidget_ );
     filteredView    = new FilteredView(
             logFilteredData_, quickFindPattern_.get() );
 
-    overviewWidget_->setOverview( overview_ );
+    overviewWidget_->setOverview( &overview_ );
     overviewWidget_->setParent( logMainView );
 
     // Construct the visibility button

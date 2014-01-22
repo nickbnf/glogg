@@ -125,7 +125,7 @@ class MainWindow : public QMainWindow
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
 
     std::unique_ptr<Session> session_;
-    RecentFiles& recentFiles;
+    std::shared_ptr<RecentFiles> recentFiles_;
     QString loadingFileName;
 
     enum { MaxRecentFiles = 5 };

@@ -20,6 +20,8 @@
 #ifndef FILTERSDIALOG_H
 #define FILTERSDIALOG_H
 
+#include <memory>
+
 #include <QDialog>
 
 #include "filterset.h"
@@ -51,7 +53,7 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
   private:
     // Temporary filterset modified by the dialog
     // it is copied from the one in Config()
-    FilterSet filterSet;
+    std::shared_ptr<FilterSet> filterSet;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;

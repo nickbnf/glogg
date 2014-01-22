@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2011, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -65,7 +65,7 @@ void PersistentInfo::migrateAndInit()
     initialised_ = true;
 }
 
-void PersistentInfo::registerPersistable( Persistable* object,
+void PersistentInfo::registerPersistable( std::shared_ptr<Persistable> object,
         const QString& name )
 {
     assert( initialised_ );
@@ -73,11 +73,11 @@ void PersistentInfo::registerPersistable( Persistable* object,
     objectList_.insert( name, object );
 }
 
-Persistable* PersistentInfo::getPersistable( const QString& name )
+std::shared_ptr<Persistable> PersistentInfo::getPersistable( const QString& name )
 {
     assert( initialised_ );
 
-    Persistable* object = objectList_.value( name, NULL );
+    std::shared_ptr<Persistable> object = objectList_.value( name, NULL );
 
     return object;
 }

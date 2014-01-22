@@ -35,9 +35,9 @@ Session::Session()
 {
     GetPersistentInfo().retrieve( QString( "savedSearches" ) );
 
-    // Get the global search history
-    savedSearches_ = std::shared_ptr<SavedSearches>(
-            &(Persistent<SavedSearches>( "savedSearches" )) );
+    // Get the global search history (it remains the property
+    // of the Persistent)
+    savedSearches_ = Persistent<SavedSearches>( "savedSearches" );
 
     quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
@@ -82,8 +82,9 @@ void Session::save(
         session_files.push_back( { file->fileName, view.second } );
     }
 
-    SessionInfo& session = Persistent<SessionInfo>( "session" );
-    session.setOpenFiles( session_files );
+    std::shared_ptr<SessionInfo> session =
+        Persistent<SessionInfo>( "session" );
+    session->setOpenFiles( session_files );
     GetPersistentInfo().save( QString( "session" ) );
 }
 
@@ -92,9 +93,10 @@ std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
         int *current_file_index )
 {
     GetPersistentInfo().retrieve( QString( "session" ) );
-    SessionInfo& session = Persistent<SessionInfo>( "session" );
+    std::shared_ptr<SessionInfo> session =
+        Persistent<SessionInfo>( "session" );
 
-    std::vector<SessionInfo::OpenFile> session_files = session.openFiles();
+    std::vector<SessionInfo::OpenFile> session_files = session->openFiles();
     std::vector<std::pair<std::string, ViewInterface*>> result;
 
     for ( auto file: session_files )

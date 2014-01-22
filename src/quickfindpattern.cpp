@@ -36,7 +36,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
 {
     // Determine the type of regexp depending on the config
     QRegExp::PatternSyntax syntax;
-    switch ( Persistent<Configuration>( "settings" ).quickfindRegexpType() ) {
+    switch ( Persistent<Configuration>( "settings" )->quickfindRegexpType() ) {
         case Wildcard:
             syntax = QRegExp::Wildcard;
             break;

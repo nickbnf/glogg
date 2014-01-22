@@ -20,6 +20,8 @@
 #ifndef PERSISTENTINFO_H
 #define PERSISTENTINFO_H
 
+#include <memory>
+
 #include <QSettings>
 #include <QHash>
 
@@ -34,9 +36,10 @@ class PersistentInfo {
     // if needed. Must be called before any other function.
     void migrateAndInit();
     // Register a Persistable
-    void registerPersistable( Persistable* object, const QString& name );
+    void registerPersistable( std::shared_ptr<Persistable> object,
+            const QString& name );
     // Get a Persistable (or NULL if it doesn't exist)
-    Persistable* getPersistable( const QString& name );
+    std::shared_ptr<Persistable> getPersistable( const QString& name );
     // Save a persistable to its permanent storage
     void save( const QString& name );
     // Retrieve a persistable from permanent storage
@@ -52,7 +55,7 @@ class PersistentInfo {
     bool initialised_;
 
     // List of persistables
-    QHash<QString, Persistable*> objectList_;
+    QHash<QString, std::shared_ptr<Persistable>> objectList_;
 
     // Qt setting object
     QSettings* settings_;
@@ -63,12 +66,21 @@ class PersistentInfo {
 
 PersistentInfo& GetPersistentInfo();
 
-// Global function used to get an object from the PersistentInfo store
+// Global function used to get a reference to an object
+// from the PersistentInfo store
 template<typename T>
-T& Persistent( const char* name )
+std::shared_ptr<T> Persistent( const char* name )
 {
-    Persistable* p = GetPersistentInfo().getPersistable( QString( name ) );
-    return dynamic_cast<T&>(*p);
+    std::shared_ptr<Persistable> p =
+        GetPersistentInfo().getPersistable( QString( name ) );
+    return std::dynamic_pointer_cast<T>(p);
 }
 
+template<typename T>
+std::shared_ptr<T> PersistentCopy( const char* name )
+{
+    std::shared_ptr<Persistable> p =
+        GetPersistentInfo().getPersistable( QString( name ) );
+    return std::make_shared<T>( *( std::dynamic_pointer_cast<T>(p) ) );
+}
 #endif

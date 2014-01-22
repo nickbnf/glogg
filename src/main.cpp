@@ -121,15 +121,15 @@ int main(int argc, char *argv[])
     // Register the configuration items
     GetPersistentInfo().migrateAndInit();
     GetPersistentInfo().registerPersistable(
-            new SessionInfo, QString( "session" ) );
+            std::make_shared<SessionInfo>(), QString( "session" ) );
     GetPersistentInfo().registerPersistable(
-            new Configuration, QString( "settings" ) );
+            std::make_shared<Configuration>(), QString( "settings" ) );
     GetPersistentInfo().registerPersistable(
-            new FilterSet, QString( "filterSet" ) );
+            std::make_shared<FilterSet>(), QString( "filterSet" ) );
     GetPersistentInfo().registerPersistable(
-            new SavedSearches, QString( "savedSearches" ) );
+            std::make_shared<SavedSearches>(), QString( "savedSearches" ) );
     GetPersistentInfo().registerPersistable(
-            new RecentFiles, QString( "recentFiles" ) );
+            std::make_shared<RecentFiles>(), QString( "recentFiles" ) );
 
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );

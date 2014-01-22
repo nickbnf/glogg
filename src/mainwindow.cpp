@@ -55,7 +55,7 @@ static QString readableSize( qint64 size );
 
 MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     session_( std::move( session )  ),
-    recentFiles( Persistent<RecentFiles>( "recentFiles" ) ),
+    recentFiles_( Persistent<RecentFiles>( "recentFiles" ) ),
     mainIcon_(),
     signalMux_(),
     quickFindMux_( session_->getQuickFindPattern() ),
@@ -191,7 +191,8 @@ void MainWindow::loadInitialFile( QString fileName )
 // Menu actions
 void MainWindow::createActions()
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
 
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
@@ -231,21 +232,21 @@ void MainWindow::createActions()
 
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
-    overviewVisibleAction->setChecked( config.isOverviewVisible() );
+    overviewVisibleAction->setChecked( config->isOverviewVisible() );
     connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleOverviewVisibility( bool )) );
 
     lineNumbersVisibleInMainAction =
         new QAction( tr("Line &numbers in main view"), this );
     lineNumbersVisibleInMainAction->setCheckable( true );
-    lineNumbersVisibleInMainAction->setChecked( config.mainLineNumbersVisible() );
+    lineNumbersVisibleInMainAction->setChecked( config->mainLineNumbersVisible() );
     connect( lineNumbersVisibleInMainAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleMainLineNumbersVisibility( bool )) );
 
     lineNumbersVisibleInFilteredAction =
         new QAction( tr("Line &numbers in filtered view"), this );
     lineNumbersVisibleInFilteredAction->setCheckable( true );
-    lineNumbersVisibleInFilteredAction->setChecked( config.filteredLineNumbersVisible() );
+    lineNumbersVisibleInFilteredAction->setChecked( config->filteredLineNumbersVisible() );
     connect( lineNumbersVisibleInFilteredAction, SIGNAL( toggled( bool ) ),
             this, SLOT( toggleFilteredLineNumbersVisibility( bool )) );
 
@@ -443,22 +444,25 @@ void MainWindow::aboutQt()
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
-    config.setOverviewVisible( isVisible );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    config->setOverviewVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
-    config.setMainLineNumbersVisible( isVisible );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    config->setMainLineNumbersVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
-    config.setFilteredLineNumbersVisible( isVisible );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    config->setFilteredLineNumbersVisible( isVisible );
     emit optionsChanged();
 }
 
@@ -659,7 +663,7 @@ bool MainWindow::loadFile( const QString& fileName )
         // Update the recent files list
         // (reload the list first in case another glogg changed it)
         GetPersistentInfo().retrieve( "recentFiles" );
-        recentFiles.addRecent( fileName );
+        recentFiles_->addRecent( fileName );
         GetPersistentInfo().save( "recentFiles" );
         updateRecentFileActions();
     }
@@ -707,7 +711,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
 // Must be called after having added a new name to the list.
 void MainWindow::updateRecentFileActions()
 {
-    QStringList recent_files = recentFiles.recentFiles();
+    QStringList recent_files = recentFiles_->recentFiles();
 
     for ( int j = 0; j < MaxRecentFiles; ++j ) {
         if ( j < recent_files.count() ) {

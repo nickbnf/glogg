@@ -267,8 +267,9 @@ void CrawlerWidget::markLineFromFiltered( qint64 line )
 
 void CrawlerWidget::applyConfiguration()
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
-    QFont font = config.mainFont();
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    QFont font = config->mainFont();
 
     LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
 
@@ -282,10 +283,10 @@ void CrawlerWidget::applyConfiguration()
     logMainView->setFont(font);
     filteredView->setFont(font);
 
-    logMainView->setLineNumbersVisible( config.mainLineNumbersVisible() );
-    filteredView->setLineNumbersVisible( config.filteredLineNumbersVisible() );
+    logMainView->setLineNumbersVisible( config->mainLineNumbersVisible() );
+    filteredView->setLineNumbersVisible( config->filteredLineNumbersVisible() );
 
-    overview_.setVisible( config.isOverviewVisible() );
+    overview_.setVisible( config->isOverviewVisible() );
     logMainView->refreshOverview();
 
     logMainView->updateDisplaySize();
@@ -662,8 +663,9 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     if ( !searchText.isEmpty() ) {
         // Determine the type of regexp depending on the config
         QRegExp::PatternSyntax syntax;
-        static Configuration& config = Persistent<Configuration>( "settings" );
-        switch ( config.mainRegexpType() ) {
+        static std::shared_ptr<Configuration> config =
+            Persistent<Configuration>( "settings" );
+        switch ( config->mainRegexpType() ) {
             case Wildcard:
                 syntax = QRegExp::Wildcard;
                 break;

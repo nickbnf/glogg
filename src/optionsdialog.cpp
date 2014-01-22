@@ -102,10 +102,11 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
 
     // Main font
-    QFontInfo fontInfo = QFontInfo( config.mainFont() );
+    QFontInfo fontInfo = QFontInfo( config->mainFont() );
 
     int familyIndex = fontFamilyBox->findText( fontInfo.family() );
     if ( familyIndex != -1 )
@@ -117,11 +118,11 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Regexp types
     mainSearchBox->setCurrentIndex(
-            getRegexpIndex( config.mainRegexpType() ) );
+            getRegexpIndex( config->mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex(
-            getRegexpIndex( config.quickfindRegexpType() ) );
+            getRegexpIndex( config->quickfindRegexpType() ) );
 
-    incrementalCheckBox->setChecked( config.isQuickfindIncremental() );
+    incrementalCheckBox->setChecked( config->isQuickfindIncremental() );
 }
 
 //
@@ -146,18 +147,19 @@ void OptionsDialog::updateFontSize(const QString& fontFamily)
 
 void OptionsDialog::updateConfigFromDialog()
 {
-    Configuration& config = Persistent<Configuration>( "settings" );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
 
     QFont font = QFont(
             fontFamilyBox->currentText(),
             (fontSizeBox->currentText()).toInt() );
-    config.setMainFont(font);
+    config->setMainFont(font);
 
-    config.setMainRegexpType(
+    config->setMainRegexpType(
             getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
-    config.setQuickfindRegexpType(
+    config->setQuickfindRegexpType(
             getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
-    config.setQuickfindIncremental( incrementalCheckBox->isChecked() );
+    config->setQuickfindIncremental( incrementalCheckBox->isChecked() );
 
     emit optionsChanged();
 }

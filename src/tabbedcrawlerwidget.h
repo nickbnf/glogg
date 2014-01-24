@@ -32,11 +32,20 @@ class TabbedCrawlerWidget : public QTabWidget
   Q_OBJECT
     public:
       TabbedCrawlerWidget() : QTabWidget(), myTabBar_() {
+#if WIN32
           myTabBar_.setStyleSheet( "QTabBar::tab {\
-                  height: 20px; \
-                  font-size: 9pt; } \
-                  QTabBar::close-button {\
+                  height: 20px; "
+                  "}" );
+#else
+          // On GTK style, it looks better with a smaller font
+          myTabBar_.setStyleSheet(
+                  "QTabBar::tab {"
+                  " height: 20px; "
+                  " font-size: 9pt; "
+                  "} "
+                  "QTabBar::close-button {\
                   height: 6px; width: 6px; }" );
+#endif
           setTabBar( &myTabBar_ );
       }
       virtual ~TabbedCrawlerWidget() {}

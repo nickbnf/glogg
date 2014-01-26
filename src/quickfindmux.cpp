@@ -48,8 +48,13 @@ void QuickFindMux::registerSelector(
 
     unregisterAllSearchables();
 
-    for ( auto i: selector_->getAllSearchables() )
-        registerSearchable( i );
+    if ( selector ) {
+        for ( auto i: selector_->getAllSearchables() )
+            registerSearchable( i );
+    }
+    else {
+        // null selector, all is well, we don't do anything.
+    }
 }
 
 void QuickFindMux::setDirection( QFDirection direction )
@@ -82,17 +87,17 @@ void QuickFindMux::searchPrevious()
 void QuickFindMux::searchForward()
 {
     LOG(logDEBUG) << "QuickFindMux::searchForward";
-    SearchableWidgetInterface* searchable = getSearchableWidget();
 
-    searchable->searchForward();
+    if ( auto searchable = getSearchableWidget() )
+        searchable->searchForward();
 }
 
 void QuickFindMux::searchBackward()
 {
     LOG(logDEBUG) << "QuickFindMux::searchBackward";
-    SearchableWidgetInterface* searchable = getSearchableWidget();
 
-    searchable->searchBackward();
+    if ( auto searchable = getSearchableWidget() )
+        searchable->searchBackward();
 }
 
 void QuickFindMux::setNewPattern(
@@ -106,11 +111,12 @@ void QuickFindMux::setNewPattern(
 
     // If we must do an incremental search, we do it now
     if ( config->isQuickfindIncremental() ) {
-        SearchableWidgetInterface* searchable = getSearchableWidget();
-        if ( currentDirection_ == Forward )
-            searchable->incrementallySearchForward();
-        else
-            searchable->incrementallySearchBackward();
+        if ( auto searchable = getSearchableWidget() ) {
+            if ( currentDirection_ == Forward )
+                searchable->incrementallySearchForward();
+            else
+                searchable->incrementallySearchBackward();
+        }
     }
 }
 
@@ -127,8 +133,8 @@ void QuickFindMux::confirmPattern(
         searchNext();
     }
     else {
-        SearchableWidgetInterface* searchable = getSearchableWidget();
-        searchable->incrementalSearchStop();
+        if ( auto searchable = getSearchableWidget() )
+            searchable->incrementalSearchStop();
     }
 }
 
@@ -138,8 +144,8 @@ void QuickFindMux::cancelSearch()
         Persistent<Configuration>( "settings" );
 
     if ( config->isQuickfindIncremental() ) {
-        SearchableWidgetInterface* searchable = getSearchableWidget();
-        searchable->incrementalSearchAbort();
+        if ( auto searchable = getSearchableWidget() )
+            searchable->incrementalSearchAbort();
     }
 }
 
@@ -167,12 +173,12 @@ SearchableWidgetInterface* QuickFindMux::getSearchableWidget() const
 {
     LOG(logDEBUG) << "QuickFindMux::getSearchableWidget";
 
-    SearchableWidgetInterface* searchable = NULL;
+    SearchableWidgetInterface* searchable = nullptr;
 
     if ( selector_ )
         searchable = selector_->getActiveSearchable();
     else
-        LOG(logERROR) << "QuickFindMux::getActiveSearchable() no registered selector";
+        LOG(logWARNING) << "QuickFindMux::getActiveSearchable() no registered selector";
 
     return searchable;
 }

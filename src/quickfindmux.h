@@ -83,6 +83,8 @@ class QuickFindMux : public QObject
     // searchables.
     // The previous selector and its associated views are automatically
     // deregistered.
+    // A null selector is accepted, in this case QFM functionalities are
+    // disabled until a valid selector is registered.
     void registerSelector( const QuickFindMuxSelectorInterface* selector );
 
     // Set the direction that will be used by the search when searching

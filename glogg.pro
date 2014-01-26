@@ -43,7 +43,8 @@ SOURCES += \
     src/overviewwidget.cpp \
     src/marks.cpp \
     src/quickfindmux.cpp \
-    src/signalmux.cpp
+    src/signalmux.cpp \
+    src/tabbedcrawlerwidget.cpp
 
 INCLUDEPATH += src/
 

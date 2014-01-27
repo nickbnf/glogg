@@ -103,7 +103,7 @@ void LogData::attachFile( const QString& fileName )
     workerThread_.interrupt();
 
     // If an attach operation is already in progress, the new one will
-    // be delayed untilthe current one is finished (canceled)
+    // be delayed until the current one is finished (canceled)
     std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
     enqueueOperation( std::move( operation ) );
 }
@@ -267,8 +267,8 @@ void LogData::indexingFinished( bool success )
     // else to do, in which case, do it!
     assert( currentOperation_ );
 
-    currentOperation_ = nextOperation_;
-    nextOperation_ = nullptr;
+    currentOperation_ = std::move( nextOperation_ );
+    nextOperation_.reset();
 
     if ( currentOperation_ ) {
         LOG(logDEBUG) << "indexingFinished is performing the next operation";

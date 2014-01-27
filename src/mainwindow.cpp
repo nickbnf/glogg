@@ -481,15 +481,18 @@ void MainWindow::updateLoadingProgress( int progress )
 {
     LOG(logDEBUG) << "Loading progress: " << progress;
 
-    // FIXME - should check and set loadingFileName
+    QString current_file =
+        session_->getFilename( currentCrawlerWidget() ).c_str();
 
     // We ignore 0% and 100% to avoid a flash when the file (or update)
     // is very short.
     if ( progress > 0 && progress < 100 ) {
-        infoLine->setText( loadingFileName + tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
+        infoLine->setText( current_file +
+                tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
         infoLine->displayGauge( progress );
 
         stopAction->setEnabled( true );
+        reloadAction->setEnabled( false );
     }
 }
 
@@ -497,40 +500,49 @@ void MainWindow::displayNormalStatus( bool success )
 {
     QLocale defaultLocale;
 
-    LOG(logDEBUG) << "displayNormalStatus";
+    LOG(logDEBUG) << "displayNormalStatus success=" << success;
 
     // No file is loading
     loadingFileName.clear();
 
-    // Following should always work as we will only receive enter
-    // this slot if there is a crawler connected.
-    QString current_file =
-        session_->getFilename( currentCrawlerWidget() ).c_str();
+    if ( success )
+    {
+        // Following should always work as we will only receive enter
+        // this slot if there is a crawler connected.
+        QString current_file =
+            session_->getFilename( currentCrawlerWidget() ).c_str();
 
-    uint64_t fileSize;
-    uint32_t fileNbLine;
-    QDateTime lastModified;
+        uint64_t fileSize;
+        uint32_t fileNbLine;
+        QDateTime lastModified;
 
-    session_->getFileInfo( currentCrawlerWidget(),
-            &fileSize, &fileNbLine, &lastModified );
-    if ( lastModified.isValid() ) {
-        const QString date =
-            defaultLocale.toString( lastModified, QLocale::NarrowFormat );
-        infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4)" )
-                .arg(current_file).arg(readableSize(fileSize))
-                .arg(fileNbLine).arg( date ) );
+        session_->getFileInfo( currentCrawlerWidget(),
+                &fileSize, &fileNbLine, &lastModified );
+        if ( lastModified.isValid() ) {
+            const QString date =
+                defaultLocale.toString( lastModified, QLocale::NarrowFormat );
+            infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4)" )
+                    .arg(current_file).arg(readableSize(fileSize))
+                    .arg(fileNbLine).arg( date ) );
+        }
+        else {
+            infoLine->setText( tr( "%1 (%2 - %3 lines)" )
+                    .arg(current_file).arg(readableSize(fileSize))
+                    .arg(fileNbLine) );
+        }
+
+        infoLine->hideGauge();
+        stopAction->setEnabled( false );
+        reloadAction->setEnabled( true );
+
+        // Now everything is ready, we can finally show the file!
+        currentCrawlerWidget()->show();
     }
-    else {
-        infoLine->setText( tr( "%1 (%2 - %3 lines)" )
-                .arg(current_file).arg(readableSize(fileSize))
-                .arg(fileNbLine) );
+    else
+    {
+        closeTab( mainTabWidget_.currentIndex()  );
     }
 
-    infoLine->hideGauge();
-    stopAction->setEnabled( false );
-
-    // Now everything is ready, we can finally show the file!
-    currentCrawlerWidget()->show();
     mainTabWidget_.setEnabled( true );
 }
 
@@ -541,6 +553,7 @@ void MainWindow::closeTab( int index )
 
     assert( widget );
 
+    widget->stopLoading();
     mainTabWidget_.removeTab( index );
     session_->close( widget );
     delete widget;

@@ -263,7 +263,7 @@ void MainWindow::createActions()
 
     stopAction = new QAction( tr("&Stop"), this );
     stopAction->setIcon( QIcon(":/images/stop16.png") );
-    stopAction->setEnabled( false );
+    stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL(triggered()), SLOT(stopLoading()) );
 
     filtersAction = new QAction(tr("&Filters..."), this);
@@ -543,7 +543,7 @@ void MainWindow::displayNormalStatus( bool success )
         closeTab( mainTabWidget_.currentIndex()  );
     }
 
-    mainTabWidget_.setEnabled( true );
+    // mainTabWidget_.setEnabled( true );
 }
 
 void MainWindow::closeTab( int index )
@@ -671,7 +671,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
         // We disable the tab widget to avoid having someone switch
         // tab during loading. (maybe FIXME)
-        mainTabWidget_.setEnabled( false );
+        //mainTabWidget_.setEnabled( false );
 
         int index = mainTabWidget_.addTab(
                 crawler_widget, strippedName( fileName ) );

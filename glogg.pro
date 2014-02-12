@@ -1,6 +1,10 @@
 # -------------------------------------------------
 # glogg
 # -------------------------------------------------
+
+# Debug builds: qmake CONFIG+=debug
+# Release builds: qmake
+
 TARGET = glogg
 TEMPLATE = app
 
@@ -145,15 +149,18 @@ target.path = $$PREFIX/bin
 INSTALLS = target icon16 icon32 icon_svg doc desktop
 
 # Build directories
-debug:OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
-release:OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
-debug:MOC_DIR = $${OUT_PWD}/.moc/debug-shared
-release:MOC_DIR = $${OUT_PWD}/.moc/release-shared
-debug:UI_DIR = $${OUT_PWD}/.ui/debug-shared
-release:UI_DIR = $${OUT_PWD}/.ui/release-shared
+CONFIG(debug, debug|release) {
+    DESTDIR = debug
+} else {
+    DESTDIR = release
+}
 
-# Debug symbols in debug builds
-# debug:QMAKE_CXXFLAGS += -g -O0
+OBJECTS_DIR = $${OUT_PWD}/.obj/$${DESTDIR}-shared
+MOC_DIR = $${OUT_PWD}/.moc/$${DESTDIR}-shared
+UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
+
+# Debug symbols even in release build
+QMAKE_CXXFLAGS = -g
 
 # Which compiler are we using
 system( $${QMAKE_CXX} --version | grep -e " 4\.[7-9]" ) {
@@ -176,8 +183,11 @@ GPROF {
 }
 
 isEmpty(LOG_LEVEL) {
-    Release:DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
-    Debug:DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG4\"
+    CONFIG(debug, debug|release) {
+        DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG4\"
+    } else {
+        DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
+    }
 }
 else {
     message("Using specified log level: $$LOG_LEVEL")

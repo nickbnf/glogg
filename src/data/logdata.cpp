@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -74,8 +74,8 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
     // Forward the update signal
     connect( &workerThread_, SIGNAL( indexingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
-    connect( &workerThread_, SIGNAL( indexingFinished( bool ) ),
-            this, SLOT( indexingFinished( bool ) ) );
+    connect( &workerThread_, SIGNAL( indexingFinished( LoadingStatus ) ),
+            this, SLOT( indexingFinished( LoadingStatus ) ) );
 
     // Starts the worker thread
     workerThread_.start();
@@ -218,7 +218,7 @@ void LogData::fileChangedOnDisk()
     // TODO: fileChangedOnDisk_, fileSize_
 }
 
-void LogData::indexingFinished( bool success )
+void LogData::indexingFinished( LoadingStatus status )
 {
     LOG(logDEBUG) << "Entering LogData::indexingFinished.";
 
@@ -230,10 +230,11 @@ void LogData::indexingFinished( bool success )
         nbLines_ = linePosition_.size();
     }
 
-    LOG(logDEBUG) << "indexingFinished: " << success <<
+    LOG(logDEBUG) << "indexingFinished: " <<
+        ( status == LoadingStatus::Successful ) <<
         ", found " << nbLines_ << " lines.";
 
-    if ( success ) {
+    if ( status == LoadingStatus::Successful ) {
         // Use the new filename if needed
         if ( !currentOperation_->getFilename().isNull() ) {
             QString newFileName = currentOperation_->getFilename();
@@ -261,7 +262,7 @@ void LogData::indexingFinished( bool success )
         fileWatcher_.addFile( file_->fileName() );
     }
 
-    emit loadingFinished( success );
+    emit loadingFinished( status );
 
     // So now the operation is done, let's see if there is something
     // else to do, in which case, do it!

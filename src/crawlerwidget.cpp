@@ -107,7 +107,7 @@ void CrawlerWidget::doSendAllStateSignals()
 {
     emit updateLineNumber( currentLineNumber_ );
     if ( !loadingInProgress_ )
-        emit loadingFinished( true );
+        emit loadingFinished( LoadingStatus::Successful );
 }
 
 //
@@ -318,7 +318,7 @@ void CrawlerWidget::exitingQuickFind()
         qfSavedFocus_->setFocus();
 }
 
-void CrawlerWidget::loadingFinishedHandler( bool success )
+void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
 {
     loadingInProgress_ = false;
 
@@ -341,7 +341,7 @@ void CrawlerWidget::loadingFinishedHandler( bool success )
         logFilteredData_->updateSearch();
     }
 
-    emit loadingFinished( success );
+    emit loadingFinished( status );
 }
 
 void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
@@ -634,8 +634,8 @@ void CrawlerWidget::setup()
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
             this, SIGNAL( loadingProgressed( int ) ) );
-    connect( logData_, SIGNAL( loadingFinished( bool ) ),
-            this, SLOT( loadingFinishedHandler( bool ) ) );
+    connect( logData_, SIGNAL( loadingFinished( LoadingStatus ) ),
+            this, SLOT( loadingFinishedHandler( LoadingStatus ) ) );
     connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
             this, SLOT( fileChangedHandler( LogData::MonitoredFileStatus ) ) );
 

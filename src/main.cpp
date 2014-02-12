@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -35,6 +35,7 @@ using namespace std;
 #include "session.h"
 #include "mainwindow.h"
 #include "savedsearches.h"
+#include "loadingstatus.h"
 #include "log.h"
 
 static void print_version();
@@ -117,6 +118,9 @@ int main(int argc, char *argv[])
 #endif
 
     FILELog::setReportingLevel( logLevel );
+
+    // Register types for Qt
+    qRegisterMetaType<LoadingStatus>("LoadingStatus");
 
     // Register the configuration items
     GetPersistentInfo().migrateAndInit();

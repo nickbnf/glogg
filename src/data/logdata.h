@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -32,6 +32,7 @@
 #include "abstractlogdata.h"
 #include "logdataworkerthread.h"
 #include "filewatcher.h"
+#include "loadingstatus.h"
 
 class LogFilteredData;
 
@@ -73,7 +74,7 @@ class LogData : public AbstractLogData {
     // percent being the percentage of completion.
     void loadingProgressed( int percent );
     // Signal the client the file is fully loaded and available.
-    void loadingFinished( bool success );
+    void loadingFinished( LoadingStatus status );
     // Sent when the file on disk has changed, will be followed
     // by loadingProgressed if needed and then a loadingFinished.
     void fileChanged( LogData::MonitoredFileStatus status );
@@ -82,7 +83,7 @@ class LogData : public AbstractLogData {
     // Consider reloading the file when it changes on disk updated
     void fileChangedOnDisk();
     // Called when the worker thread signals the current operation ended
-    void indexingFinished( bool success );
+    void indexingFinished( LoadingStatus status );
 
   private:
     // This class models an indexing operation.

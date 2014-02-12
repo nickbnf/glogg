@@ -86,7 +86,8 @@ class MainWindow : public QMainWindow
     void updateLoadingProgress( int progress );
     // Instructs the widget to display the 'normal' status bar,
     // without the progress gauge and with file info
-    void displayNormalStatus( bool success );
+    // or an error recovery when loading is finished
+    void handleLoadingFinished( LoadingStatus status );
 
     // Close the tab with the passed index
     void closeTab( int index );

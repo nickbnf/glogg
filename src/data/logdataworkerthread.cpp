@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -148,12 +148,18 @@ void LogDataWorkerThread::run()
                     this, SIGNAL( indexingProgressed( int ) ) );
 
             // Run the operation
-            if ( operationRequested_->start( indexingData_ ) ) {
-                LOG(logDEBUG) << "... finished copy in workerThread.";
-                emit indexingFinished( true );
+            try {
+                if ( operationRequested_->start( indexingData_ ) ) {
+                    LOG(logDEBUG) << "... finished copy in workerThread.";
+                    emit indexingFinished( LoadingStatus::Successful );
+                }
+                else {
+                    emit indexingFinished( LoadingStatus::Interrupted );
+                }
             }
-            else {
-                emit indexingFinished( false );
+            catch ( std::bad_alloc& ba ) {
+                LOG(logERROR) << "Out of memory whilst indexing!";
+                emit indexingFinished( LoadingStatus::NoMemory );
             }
 
             delete operationRequested_;

@@ -88,7 +88,8 @@ HEADERS += \
     src/qfnotifications.h \
     src/quickfindmux.h \
     src/signalmux.h \
-    src/tabbedcrawlerwidget.h
+    src/tabbedcrawlerwidget.h \
+    src/loadingstatus.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

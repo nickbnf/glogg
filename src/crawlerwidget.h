@@ -37,6 +37,7 @@
 #include "viewinterface.h"
 #include "signalmux.h"
 #include "overview.h"
+#include "loadingstatus.h"
 
 class InfoLine;
 class QuickFindPattern;
@@ -99,7 +100,7 @@ class CrawlerWidget : public QSplitter,
     void loadingProgressed( int progress );
     // Sent to the client when the loading has finished
     // weither succesfull or not.
-    void loadingFinished( bool success );
+    void loadingFinished( LoadingStatus status );
     // Sent when follow mode is enabled/disabled
     void followSet( bool checked );
     // Sent up to the MainWindow to disable the follow mode
@@ -130,7 +131,7 @@ class CrawlerWidget : public QSplitter,
     // Mark a line that has been clicked on the filtered (bottom) view.
     void markLineFromFiltered( qint64 line );
 
-    void loadingFinishedHandler( bool success );
+    void loadingFinishedHandler( LoadingStatus status );
     // Manages the info lines to inform the user the file has changed.
     void fileChangedHandler( LogData::MonitoredFileStatus );
 

@@ -104,8 +104,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
     // Register for progress status bar
     signalMux_.connect( SIGNAL( loadingProgressed( int ) ),
             this, SLOT( updateLoadingProgress( int ) ) );
-    signalMux_.connect( SIGNAL( loadingFinished( bool ) ),
-            this, SLOT( displayNormalStatus( bool ) ) );
+    signalMux_.connect( SIGNAL( loadingFinished( LoadingStatus ) ),
+            this, SLOT( handleLoadingFinished( LoadingStatus ) ) );
 
     // Configure the main tabbed widget
     mainTabWidget_.setDocumentMode( true );
@@ -496,16 +496,17 @@ void MainWindow::updateLoadingProgress( int progress )
     }
 }
 
-void MainWindow::displayNormalStatus( bool success )
+void MainWindow::handleLoadingFinished( LoadingStatus status )
 {
     QLocale defaultLocale;
 
-    LOG(logDEBUG) << "displayNormalStatus success=" << success;
+    LOG(logDEBUG) << "handleLoadingFinished success=" <<
+        ( status == LoadingStatus::Successful );
 
     // No file is loading
     loadingFileName.clear();
 
-    if ( success )
+    if ( status == LoadingStatus::Successful )
     {
         // Following should always work as we will only receive enter
         // this slot if there is a crawler connected.
@@ -540,6 +541,16 @@ void MainWindow::displayNormalStatus( bool success )
     }
     else
     {
+        if ( status == LoadingStatus::NoMemory )
+        {
+            QMessageBox alertBox;
+            alertBox.setText( "Not enough memory." );
+            alertBox.setInformativeText( "The system does not have enough \
+memory to hold the index for this file. The file will now be closed." );
+            alertBox.setIcon( QMessageBox::Critical );
+            alertBox.exec();
+        }
+
         closeTab( mainTabWidget_.currentIndex()  );
     }
 

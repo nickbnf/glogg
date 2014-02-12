@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2014 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -25,6 +25,8 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QVector>
+
+#include "loadingstatus.h"
 
 // This class is a list of end of lines position,
 // in addition to a list of qint64 (positions within the files)
@@ -186,7 +188,7 @@ class LogDataWorkerThread : public QThread
     void indexingProgressed( int percent );
     // Sent when indexing is finished, signals the client
     // to copy the new data back.
-    void indexingFinished( bool success );
+    void indexingFinished( LoadingStatus status );
 
   protected:
     void run();

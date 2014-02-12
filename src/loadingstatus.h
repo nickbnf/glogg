@@ -20,6 +20,8 @@
 #ifndef LOADINGSTATUS_H
 #define LOADINGSTATUS_H
 
+#include <QMetaType>
+
 // Loading status of a file
 enum class LoadingStatus {
     Successful,

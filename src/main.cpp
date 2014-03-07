@@ -36,6 +36,7 @@ using namespace std;
 #include "mainwindow.h"
 #include "savedsearches.h"
 #include "loadingstatus.h"
+#include "dbusexternalcom.h"
 #include "log.h"
 
 static void print_version();
@@ -118,6 +119,9 @@ int main(int argc, char *argv[])
 #endif
 
     FILELog::setReportingLevel( logLevel );
+
+    ExternalCommunicator* externalCommunicator = new DBusExternalCommunicator();
+    ExternalInstance* externalInstance = externalCommunicator->otherInstance();
 
     // Register types for Qt
     qRegisterMetaType<LoadingStatus>("LoadingStatus");

@@ -10,6 +10,8 @@ TEMPLATE = app
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+QT += dbus
+
 win32:Debug:CONFIG += console
 # Necessary when cross-compiling:
 win32:Release:QMAKE_LFLAGS += "-Wl,-subsystem,windows"
@@ -48,7 +50,8 @@ SOURCES += \
     src/marks.cpp \
     src/quickfindmux.cpp \
     src/signalmux.cpp \
-    src/tabbedcrawlerwidget.cpp
+    src/tabbedcrawlerwidget.cpp \
+    src/dbusexternalcom.cpp
 
 INCLUDEPATH += src/
 
@@ -89,7 +92,9 @@ HEADERS += \
     src/quickfindmux.h \
     src/signalmux.h \
     src/tabbedcrawlerwidget.h \
-    src/loadingstatus.h
+    src/loadingstatus.h \
+    src/externalcom.h \
+    src/dbusexternalcom.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

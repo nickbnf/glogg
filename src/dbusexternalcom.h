@@ -17,35 +17,44 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EXTERNALCOM_H
-#define EXTERNALCOM_H
+#ifndef DBUSEXTERNALCOM_H
+#define DBUSEXTERNALCOM_H
 
-#include <string>
+#include "externalcom.h"
 
-#include <QObject>
+#include <memory>
+#include <QtDBus/QtDBus>
 
-class CantCreateExternalErr {};
-
-class ExternalInstance
-{
+// An implementation of ExternalInstance using D-Bus via Qt
+class DBusExternalInstance : public ExternalInstance {
   public:
-    ExternalInstance() {}
-    virtual ~ExternalInstance() {}
+    DBusExternalInstance();
+    ~DBusExternalInstance() {}
 
-    virtual void loadFile( const std::string& file_name ) const = 0;
+    virtual void loadFile( const std::string& file_name ) const;
+
+  private:
+    std::shared_ptr<QDBusInterface> dbusInterface_;
 };
 
-class ExternalCommunicator : public QObject
+// An implementation of ExternalCommunicator using D-Bus via Qt
+class DBusExternalCommunicator : public ExternalCommunicator
 {
-  Q_OBJECT
-
   public:
-    ExternalCommunicator() : QObject() {}
+    // Constructor: initialise the D-Bus connection,
+    // can throw if D-Bus is not available
+    DBusExternalCommunicator();
+    ~DBusExternalCommunicator() {}
 
-    virtual ExternalInstance* otherInstance() const = 0;
+    virtual ExternalInstance* otherInstance() const;
 
   signals:
     void loadFile( const std::string& file_name );
+
+  public slots:
+    QString version() const;
+
+  private:
 };
 
 #endif

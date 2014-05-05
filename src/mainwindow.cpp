@@ -49,12 +49,15 @@
 #include "persistentinfo.h"
 #include "menuactiontooltipbehavior.h"
 #include "tabbedcrawlerwidget.h"
+#include "externalcom.h"
 
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow( std::unique_ptr<Session> session ) :
+MainWindow::MainWindow( std::unique_ptr<Session> session,
+        std::shared_ptr<ExternalCommunicator> external_communicator ) :
     session_( std::move( session )  ),
+    externalCommunicator_( external_communicator ),
     recentFiles_( Persistent<RecentFiles>( "recentFiles" ) ),
     mainIcon_(),
     signalMux_(),
@@ -140,6 +143,10 @@ MainWindow::MainWindow( std::unique_ptr<Session> session ) :
              &quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
     connect( &quickFindMux_, SIGNAL( clearNotification() ),
              &quickFindWidget_, SLOT( clearNotification() ) );
+
+    // Actions from external instances
+    connect( externalCommunicator_.get(), SIGNAL( loadFile( const QString& ) ),
+             this, SLOT( loadFileNonInteractive( const QString& ) ) );
 
     // Construct the QuickFind bar
     quickFindWidget_.hide();
@@ -604,6 +611,14 @@ void MainWindow::currentTabChanged( int index )
 void MainWindow::changeQFPattern( const QString& newPattern )
 {
     quickFindWidget_.changeDisplayedPattern( newPattern );
+}
+
+void MainWindow::loadFileNonInteractive( const QString& file_name )
+{
+    LOG(logDEBUG) << "loadFileNonInteractive( "
+        << file_name.toStdString() << " )";
+
+    loadFile( file_name );
 }
 
 //

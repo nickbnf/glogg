@@ -122,14 +122,18 @@ int main(int argc, char *argv[])
     FILELog::setReportingLevel( logLevel );
 
     // External communicator
-    ExternalCommunicator* externalCommunicator = new DBusExternalCommunicator();
-    ExternalInstance* externalInstance = externalCommunicator->otherInstance();
+    shared_ptr<ExternalCommunicator> externalCommunicator =
+        make_shared<DBusExternalCommunicator>();
+    auto externalInstance =
+        shared_ptr<ExternalInstance>( externalCommunicator->otherInstance() );
 
     LOG(logDEBUG) << "externalInstance = " << externalInstance;
     if ( externalInstance ) {
         uint32_t version = externalInstance->getVersion();
         LOG(logINFO) << "Found another glogg (version = "
             << std::setbase(16) << version << ")";
+
+        externalInstance->loadFile( QString::fromStdString( filename ) );
 
         return 0;
     }
@@ -160,7 +164,7 @@ int main(int argc, char *argv[])
     GetPersistentInfo().retrieve( QString( "settings" ) );
 
     std::unique_ptr<Session> session( new Session() );
-    MainWindow mw( std::move( session ) );
+    MainWindow mw( std::move( session ), externalCommunicator );
 
     LOG(logDEBUG) << "MainWindow created.";
     mw.show();

@@ -35,6 +35,9 @@ DBusExternalCommunicator::DBusExternalCommunicator()
     }
 
     dbus_iface_object_ = std::make_shared<DBusInterfaceExternalCommunicator>();
+
+    connect( dbus_iface_object_.get(), SIGNAL( signalLoadFile( const QString& ) ),
+             this, SIGNAL( loadFile( const QString& ) ) );
 }
 
 void DBusExternalCommunicator::startListening()
@@ -89,10 +92,9 @@ DBusExternalInstance::DBusExternalInstance()
      }
 }
 
-void DBusExternalInstance::loadFile( const std::string& file_name ) const
+void DBusExternalInstance::loadFile( const QString& file_name ) const
 {
-    QDBusReply<QString> reply =
-        dbusInterface_->call( "loadFile", QString( file_name.c_str() ) );
+    QDBusReply<void> reply = dbusInterface_->call( "loadFile", file_name );
 
     if ( ! reply.isValid() ) {
         LOG( logWARNING ) << "Invalid reply from D-Bus call: "

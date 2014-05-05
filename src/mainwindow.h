@@ -35,6 +35,7 @@ class QAction;
 class Session;
 class RecentFiles;
 class MenuActionToolTipBehavior;
+class ExternalCommunicator;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
@@ -45,7 +46,8 @@ class MainWindow : public QMainWindow
   public:
     // Constructor
     // The ownership of the session is transferred to us
-    MainWindow( std::unique_ptr<Session> session );
+    MainWindow( std::unique_ptr<Session> session,
+            std::shared_ptr<ExternalCommunicator> external_communicator );
 
     // Re-load the files from the previous session
     void reloadSession();
@@ -98,6 +100,10 @@ class MainWindow : public QMainWindow
     // and confirm it.
     void changeQFPattern( const QString& newPattern );
 
+    // Load a file in a new tab (non-interactive)
+    // (for use from e.g. IPC)
+    void loadFileNonInteractive( const QString& file_name );
+
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
@@ -126,6 +132,7 @@ class MainWindow : public QMainWindow
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
 
     std::unique_ptr<Session> session_;
+    std::shared_ptr<ExternalCommunicator> externalCommunicator_;
     std::shared_ptr<RecentFiles> recentFiles_;
     QString loadingFileName;
 

@@ -32,7 +32,7 @@ class DBusExternalInstance : public ExternalInstance {
     DBusExternalInstance();
     ~DBusExternalInstance() {}
 
-    virtual void loadFile( const std::string& file_name ) const;
+    virtual void loadFile( const QString& file_name ) const;
     virtual uint32_t getVersion() const;
 
   private:

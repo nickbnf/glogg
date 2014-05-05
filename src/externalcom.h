@@ -20,8 +20,6 @@
 #ifndef EXTERNALCOM_H
 #define EXTERNALCOM_H
 
-#include <string>
-
 #include <QObject>
 
 class CantCreateExternalErr {};
@@ -37,7 +35,7 @@ class ExternalInstance
     ExternalInstance() {}
     virtual ~ExternalInstance() {}
 
-    virtual void loadFile( const std::string& file_name ) const = 0;
+    virtual void loadFile( const QString& file_name ) const = 0;
     virtual uint32_t getVersion() const = 0;
 };
 
@@ -59,7 +57,7 @@ class ExternalCommunicator : public QObject
     virtual void startListening() = 0;
 
   signals:
-    void loadFile( const std::string& file_name );
+    void loadFile( const QString& file_name );
 
   public slots:
     virtual qint32 version() const = 0;

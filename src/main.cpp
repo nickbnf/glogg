@@ -25,6 +25,7 @@
 namespace po = boost::program_options;
 
 #include <iostream>
+#include <iomanip>
 using namespace std;
 
 #include "persistentinfo.h"
@@ -120,8 +121,24 @@ int main(int argc, char *argv[])
 
     FILELog::setReportingLevel( logLevel );
 
+    // External communicator
     ExternalCommunicator* externalCommunicator = new DBusExternalCommunicator();
     ExternalInstance* externalInstance = externalCommunicator->otherInstance();
+
+    LOG(logDEBUG) << "externalInstance = " << externalInstance;
+    if ( externalInstance ) {
+        uint32_t version = externalInstance->getVersion();
+        LOG(logINFO) << "Found another glogg (version = "
+            << std::setbase(16) << version << ")";
+
+        return 0;
+    }
+    else {
+        // FIXME: there is a race condition here. One glogg could start
+        // between the declaration of externalInstance and here,
+        // is it a problem?
+        externalCommunicator->startListening();
+    }
 
     // Register types for Qt
     qRegisterMetaType<LoadingStatus>("LoadingStatus");

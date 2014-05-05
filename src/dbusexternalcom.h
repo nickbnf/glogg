@@ -32,6 +32,7 @@ class DBusExternalInstance : public ExternalInstance {
     ~DBusExternalInstance() {}
 
     virtual void loadFile( const std::string& file_name ) const;
+    virtual uint32_t getVersion() const;
 
   private:
     std::shared_ptr<QDBusInterface> dbusInterface_;
@@ -46,13 +47,15 @@ class DBusExternalCommunicator : public ExternalCommunicator
     DBusExternalCommunicator();
     ~DBusExternalCommunicator() {}
 
+    virtual void startListening();
+
     virtual ExternalInstance* otherInstance() const;
 
   signals:
     void loadFile( const std::string& file_name );
 
   public slots:
-    QString version() const;
+    virtual qint32 version() const;
 
   private:
 };

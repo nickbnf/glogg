@@ -26,6 +26,11 @@
 
 class CantCreateExternalErr {};
 
+/*
+ * Virtual class representing another instance of glogg.
+ * Sending messages to an object of this class will forward
+ * them to the instance using the underlying IPC.
+ */
 class ExternalInstance
 {
   public:
@@ -33,8 +38,13 @@ class ExternalInstance
     virtual ~ExternalInstance() {}
 
     virtual void loadFile( const std::string& file_name ) const = 0;
+    virtual uint32_t getVersion() const = 0;
 };
 
+/*
+ * Class receiving messages from another instance of glogg.
+ * Messages are forwarded to the application by signals.
+ */
 class ExternalCommunicator : public QObject
 {
   Q_OBJECT
@@ -44,8 +54,15 @@ class ExternalCommunicator : public QObject
 
     virtual ExternalInstance* otherInstance() const = 0;
 
+    /* Instruct the communicator to start listening for
+     * remote initiated operations */
+    virtual void startListening() = 0;
+
   signals:
     void loadFile( const std::string& file_name );
+
+  public slots:
+    virtual qint32 version() const = 0;
 };
 
 #endif

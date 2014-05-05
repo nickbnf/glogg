@@ -33,14 +33,20 @@ DBusExternalCommunicator::DBusExternalCommunicator()
                     << "\teval `dbus-launch --auto-syntax`\n";
         throw CantCreateExternalErr();
     }
+}
 
+void DBusExternalCommunicator::startListening()
+{
     if (!QDBusConnection::sessionBus().registerService( DBUS_SERVICE_NAME )) {
         LOG(logERROR) << qPrintable(QDBusConnection::sessionBus().lastError().message());
         throw CantCreateExternalErr();
     }
 
-    QDBusConnection::sessionBus().registerObject("/session",
-            this, QDBusConnection::ExportAllSlots);
+    if ( !QDBusConnection::sessionBus().registerObject("/",
+            this, QDBusConnection::ExportAllSlots) ) {
+        LOG(logERROR) << qPrintable(QDBusConnection::sessionBus().lastError().message());
+        throw CantCreateExternalErr();
+    }
 }
 
 ExternalInstance* DBusExternalCommunicator::otherInstance() const
@@ -54,15 +60,15 @@ ExternalInstance* DBusExternalCommunicator::otherInstance() const
     }
 }
 
-QString DBusExternalCommunicator::version() const
+qint32 DBusExternalCommunicator::version() const
 {
-    return QString("1.0.0");
+    return 0x010000;
 }
 
 DBusExternalInstance::DBusExternalInstance()
 {
      dbusInterface_ = std::make_shared<QDBusInterface>(
-             DBUS_SERVICE_NAME, "/session", "", QDBusConnection::sessionBus() );
+             DBUS_SERVICE_NAME, "/", "", QDBusConnection::sessionBus() );
 
      if ( ! dbusInterface_->isValid() ) {
         throw CantCreateExternalErr();
@@ -78,4 +84,17 @@ void DBusExternalInstance::loadFile( const std::string& file_name ) const
         LOG( logWARNING ) << "Invalid reply from D-Bus call: "
             << qPrintable( reply.error().message() );
     }
+}
+
+uint32_t DBusExternalInstance::getVersion() const
+{
+    QDBusReply<qint32> reply = dbusInterface_->call( "version" );
+
+    if ( ! reply.isValid() ) {
+        LOG( logWARNING ) << "Invalid reply from D-Bus call: "
+            << qPrintable( reply.error().message() );
+        return 0;
+    }
+
+    return (uint32_t) reply.value();
 }

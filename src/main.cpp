@@ -48,6 +48,10 @@ int main(int argc, char *argv[])
 
     string filename = "";
 
+    // Configuration
+    bool new_session = false;
+    bool multi_instance = false;
+
     TLogLevel logLevel = logWARNING;
 
     try {
@@ -55,6 +59,8 @@ int main(int argc, char *argv[])
         desc.add_options()
             ("help,h", "print out program usage (this message)")
             ("version,v", "print glogg's version information")
+            ("multi,m", "allow multiple instance of glogg to run simultaneously (use together with -s)")
+            ("new-session,s", "do not load the previous session")
             ("debug,d", "output more debug (include multiple times for more verbosity e.g. -dddd")
             ;
         po::options_description desc_hidden("Hidden options");
@@ -95,9 +101,14 @@ int main(int argc, char *argv[])
             return 0;
         }
 
-        if ( vm.count( "debug" ) ) {
+        if ( vm.count( "debug" ) )
             logLevel = logINFO;
-        }
+
+        if ( vm.count( "multi" ) )
+            multi_instance = true;
+
+        if ( vm.count( "new-session" ) )
+            new_session = true;
 
         for ( string s = "dd"; s.length() <= 10; s.append("d") )
             if ( vm.count( s ) )
@@ -122,13 +133,20 @@ int main(int argc, char *argv[])
     FILELog::setReportingLevel( logLevel );
 
     // External communicator
-    shared_ptr<ExternalCommunicator> externalCommunicator =
-        make_shared<DBusExternalCommunicator>();
-    auto externalInstance =
-        shared_ptr<ExternalInstance>( externalCommunicator->otherInstance() );
+    shared_ptr<ExternalCommunicator> externalCommunicator = nullptr;
+    shared_ptr<ExternalInstance> externalInstance = nullptr;
+
+    try {
+        externalCommunicator = make_shared<DBusExternalCommunicator>();
+        externalInstance = shared_ptr<ExternalInstance>(
+                externalCommunicator->otherInstance() );
+    }
+    catch(CantCreateExternalErr& e) {
+        LOG(logWARNING) << "Cannot initialise external communication.";
+    }
 
     LOG(logDEBUG) << "externalInstance = " << externalInstance;
-    if ( externalInstance ) {
+    if ( ( ! multi_instance ) && externalInstance ) {
         uint32_t version = externalInstance->getVersion();
         LOG(logINFO) << "Found another glogg (version = "
             << std::setbase(16) << version << ")";
@@ -141,7 +159,8 @@ int main(int argc, char *argv[])
         // FIXME: there is a race condition here. One glogg could start
         // between the declaration of externalInstance and here,
         // is it a problem?
-        externalCommunicator->startListening();
+        if ( externalCommunicator )
+            externalCommunicator->startListening();
     }
 
     // Register types for Qt
@@ -168,7 +187,8 @@ int main(int argc, char *argv[])
 
     LOG(logDEBUG) << "MainWindow created.";
     mw.show();
-    mw.reloadSession();
+    if ( ! new_session )
+        mw.reloadSession();
     mw.loadInitialFile( QString::fromStdString( filename ) );
     return app.exec();
 }

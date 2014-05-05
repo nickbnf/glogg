@@ -40,17 +40,17 @@ DBusExternalCommunicator::DBusExternalCommunicator()
              this, SIGNAL( loadFile( const QString& ) ) );
 }
 
+// If listening fails (e.g. another glogg is already listening,
+// the function will fail silently and no listening will be done.
 void DBusExternalCommunicator::startListening()
 {
     if (!QDBusConnection::sessionBus().registerService( DBUS_SERVICE_NAME )) {
         LOG(logERROR) << qPrintable(QDBusConnection::sessionBus().lastError().message());
-        throw CantCreateExternalErr();
     }
 
     if ( !QDBusConnection::sessionBus().registerObject( "/",
             dbus_iface_object_.get(), QDBusConnection::ExportAllContents ) ) {
         LOG(logERROR) << qPrintable(QDBusConnection::sessionBus().lastError().message());
-        throw CantCreateExternalErr();
     }
 }
 

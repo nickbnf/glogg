@@ -33,6 +33,8 @@ DBusExternalCommunicator::DBusExternalCommunicator()
                     << "\teval `dbus-launch --auto-syntax`\n";
         throw CantCreateExternalErr();
     }
+
+    dbus_iface_object_ = std::make_shared<DBusInterfaceExternalCommunicator>();
 }
 
 void DBusExternalCommunicator::startListening()
@@ -42,8 +44,8 @@ void DBusExternalCommunicator::startListening()
         throw CantCreateExternalErr();
     }
 
-    if ( !QDBusConnection::sessionBus().registerObject("/",
-            this, QDBusConnection::ExportAllSlots) ) {
+    if ( !QDBusConnection::sessionBus().registerObject( "/",
+            dbus_iface_object_.get(), QDBusConnection::ExportAllContents ) ) {
         LOG(logERROR) << qPrintable(QDBusConnection::sessionBus().lastError().message());
         throw CantCreateExternalErr();
     }
@@ -62,7 +64,19 @@ ExternalInstance* DBusExternalCommunicator::otherInstance() const
 
 qint32 DBusExternalCommunicator::version() const
 {
+    return 3;
+}
+
+qint32 DBusInterfaceExternalCommunicator::version() const
+{
     return 0x010000;
+}
+
+void DBusInterfaceExternalCommunicator::loadFile( const QString& file_name )
+{
+    LOG(logDEBUG) << "DBusInterfaceExternalCommunicator::loadFile()";
+
+    emit signalLoadFile( file_name );
 }
 
 DBusExternalInstance::DBusExternalInstance()

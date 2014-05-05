@@ -23,6 +23,7 @@
 #include "externalcom.h"
 
 #include <memory>
+#include <QObject>
 #include <QtDBus/QtDBus>
 
 // An implementation of ExternalInstance using D-Bus via Qt
@@ -38,9 +39,27 @@ class DBusExternalInstance : public ExternalInstance {
     std::shared_ptr<QDBusInterface> dbusInterface_;
 };
 
+class DBusInterfaceExternalCommunicator : public QObject
+{
+  Q_OBJECT
+
+  public:
+    DBusInterfaceExternalCommunicator() : QObject() {}
+    ~DBusInterfaceExternalCommunicator() {}
+
+  public slots:
+    void loadFile( const QString& file_name );
+    qint32 version() const;
+
+  signals:
+    void signalLoadFile( const QString& file_name );
+};
+
 // An implementation of ExternalCommunicator using D-Bus via Qt
 class DBusExternalCommunicator : public ExternalCommunicator
 {
+  Q_OBJECT
+
   public:
     // Constructor: initialise the D-Bus connection,
     // can throw if D-Bus is not available
@@ -51,13 +70,11 @@ class DBusExternalCommunicator : public ExternalCommunicator
 
     virtual ExternalInstance* otherInstance() const;
 
-  signals:
-    void loadFile( const std::string& file_name );
-
   public slots:
-    virtual qint32 version() const;
+    qint32 version() const;
 
   private:
+    std::shared_ptr<DBusInterfaceExternalCommunicator> dbus_iface_object_;
 };
 
 #endif

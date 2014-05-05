@@ -683,6 +683,16 @@ bool MainWindow::loadFile( const QString& fileName )
 {
     LOG(logDEBUG) << "loadFile ( " << fileName.toStdString() << " )";
 
+    // First check if the file is already open...
+    CrawlerWidget* existing_crawler = dynamic_cast<CrawlerWidget*>(
+            session_->getViewIfOpen( fileName.toStdString() ) );
+    if ( existing_crawler ) {
+        // ... and switch to it.
+        mainTabWidget_.setCurrentWidget( existing_crawler );
+
+        return true;
+    }
+
     // Load the file
     loadingFileName = fileName;
 

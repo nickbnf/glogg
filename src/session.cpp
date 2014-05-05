@@ -47,6 +47,18 @@ Session::~Session()
     // FIXME Clean up all the data objects...
 }
 
+ViewInterface* Session::getViewIfOpen( const std::string& file_name ) const
+{
+    auto result = find_if( openFiles_.begin(), openFiles_.end(),
+            [&](const std::pair<const ViewInterface*, OpenFile>& o)
+            { return ( o.second.fileName == file_name ); } );
+
+    if ( result != openFiles_.end() )
+        return result->second.view;
+    else
+        return nullptr;
+}
+
 ViewInterface* Session::open( const std::string& file_name,
         std::function<ViewInterface*()> view_factory )
 {

@@ -37,7 +37,12 @@ using namespace std;
 #include "mainwindow.h"
 #include "savedsearches.h"
 #include "loadingstatus.h"
+
+#include "externalcom.h"
+#ifdef GLOGG_SUPPORTS_DBUS
 #include "dbusexternalcom.h"
+#endif
+
 #include "log.h"
 
 static void print_version();
@@ -137,9 +142,11 @@ int main(int argc, char *argv[])
     shared_ptr<ExternalInstance> externalInstance = nullptr;
 
     try {
+#ifdef GLOGG_SUPPORTS_DBUS
         externalCommunicator = make_shared<DBusExternalCommunicator>();
         externalInstance = shared_ptr<ExternalInstance>(
                 externalCommunicator->otherInstance() );
+#endif
     }
     catch(CantCreateExternalErr& e) {
         LOG(logWARNING) << "Cannot initialise external communication.";

@@ -10,8 +10,6 @@ TEMPLATE = app
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-QT += dbus
-
 win32:Debug:CONFIG += console
 # Necessary when cross-compiling:
 win32:Release:QMAKE_LFLAGS += "-Wl,-subsystem,windows"
@@ -51,7 +49,6 @@ SOURCES += \
     src/quickfindmux.cpp \
     src/signalmux.cpp \
     src/tabbedcrawlerwidget.cpp \
-    src/dbusexternalcom.cpp
 
 INCLUDEPATH += src/
 
@@ -94,7 +91,6 @@ HEADERS += \
     src/tabbedcrawlerwidget.h \
     src/loadingstatus.h \
     src/externalcom.h \
-    src/dbusexternalcom.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -215,3 +211,14 @@ else {
     QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$$VERSION\\\"
 }
 
+# Optional features (e.g. CONFIG+=no-dbus)
+system(pkg-config --exists QtDBus):!no-dbus {
+    message("Support for D-BUS will be included")
+    QT += dbus
+    QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_DBUS
+    SOURCES += src/dbusexternalcom.cpp
+    HEADERS += src/dbusexternalcom.h
+}
+else {
+    message("Support for D-BUS will NOT be included")
+}

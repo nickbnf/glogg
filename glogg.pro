@@ -221,4 +221,10 @@ system(pkg-config --exists QtDBus):!no-dbus {
 }
 else {
     message("Support for D-BUS will NOT be included")
+    win32 {
+        message("Support for Windows IPC will be included")
+        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
+        SOURCES += src/winexternalcom.cpp
+        HEADERS += src/winexternalcom.h
+    }
 }

@@ -53,7 +53,7 @@ void WinExternalCommunicator::startListening()
 
     message_listener_ = std::make_shared<WinMessageListener>();
 
-    LOG(logDEBUG) << "Listener winID = " << message_listener_->winId();
+    LOG(logERROR) << "Listener winID = " << message_listener_->winId();
 
     connect( message_listener_.get(),
             SIGNAL( messageReceived( MessageId, const QString& ) ),
@@ -123,7 +123,7 @@ WINBOOL WinExternalInstance::enumWindowsCallback( HWND hwnd, LPARAM lParam )
 WinExternalInstance::WinExternalInstance()
 {
     LPCWSTR window_title = (LPCWSTR) WINDOW_TITLE.utf16();
-    HWND window_handle_ = FindWindow( NULL, window_title );
+    window_handle_ = FindWindow( NULL, window_title );
 
     std::vector<HWND> window_handles;
 
@@ -134,15 +134,31 @@ WinExternalInstance::WinExternalInstance()
 
     // LOG(logERROR) << "Window handle = " << window_handles.front();
 
-    LOG(logERROR) << "Window handle = " << window_handle_;
+    LOG(logDEBUG) << "Window handle = " << window_handle_;
 }
 
 void WinExternalInstance::loadFile( const QString& file_name ) const
 {
+    COPYDATASTRUCT data;
+
+    LOG(logDEBUG) << "loadFile: " << file_name.toStdString();
+
+    data.dwData = static_cast<ULONG_PTR>( MessageId::LOAD_FILE );
+    data.lpData = const_cast<char*>( file_name.toUtf8().constData() );
+    data.cbData = file_name.length();
+
+    SendMessage( window_handle_, WM_COPYDATA, 0, (LPARAM) &data );
+
+    QString file_name2 = QString::fromLatin1(
+            static_cast<const char*>( data.lpData ), data.cbData );
+    LOG(logDEBUG) << "length: " << data.cbData;
+    LOG(logDEBUG) << "loadFile2: " << file_name2.toStdString();
+
 }
 
 uint32_t WinExternalInstance::getVersion() const
 {
+    return 6;
 }
 
 /*
@@ -151,20 +167,25 @@ uint32_t WinExternalInstance::getVersion() const
 WinMessageListener::WinMessageListener()
 {
     setWindowTitle( WINDOW_TITLE );
-    //setWindowTitle( "blah" );
 }
 
 bool WinMessageListener::winEvent( MSG* message, long* result )
 {
-    LOG(logERROR) << "winEvent";
-
     if( message->message == WM_COPYDATA ) {
         // Extract the data from Windows' lParam
         COPYDATASTRUCT* data = (COPYDATASTRUCT *) message->lParam;
 
-        emit messageReceived( static_cast<MessageId>( data->dwData ),
-                QString::fromAscii(
-                    static_cast<const char *>( data->lpData ), data->cbData ) );
+        LOG(logDEBUG) << "data->dwData: " << data->dwData;
+        LOG(logDEBUG) << "data->cbData: " << data->cbData;
+        LOG(logDEBUG) << "data->lpData: " << (const char*) data->lpData;
+
+        QString file_name = QString::fromLatin1(
+                static_cast<const char*>( data->lpData ), data->cbData );
+
+        LOG( logERROR ) << "WM_COPYDATA received, param: " << file_name.toStdString();
+
+        emit messageReceived(
+                static_cast<MessageId>( data->dwData ), file_name );
 
         // We process the event here
         *result = 0;

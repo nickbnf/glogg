@@ -42,6 +42,7 @@ class WinExternalInstance : public ExternalInstance {
 
   private:
     static WINBOOL enumWindowsCallback( HWND hwnd, LPARAM lParam );
+    HWND window_handle_;
 };
 
 enum class MessageId {

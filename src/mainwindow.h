@@ -53,6 +53,9 @@ class MainWindow : public QMainWindow
     void reloadSession();
     // Loads the initial file (parameter passed or from config file)
     void loadInitialFile( QString fileName );
+    // Starts the lower priority activities the MW controls such as
+    // version checking etc...
+    void startBackgroundTasks();
 
   protected:
     void closeEvent( QCloseEvent* event );

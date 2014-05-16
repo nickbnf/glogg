@@ -191,6 +191,11 @@ void MainWindow::loadInitialFile( QString fileName )
         loadFile( fileName );
 }
 
+void MainWindow::startBackgroundTasks()
+{
+    LOG(logDEBUG) << "startBackgroundTasks";
+}
+
 //
 // Private functions
 //

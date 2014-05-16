@@ -36,11 +36,11 @@ WinExternalCommunicator::WinExternalCommunicator()
     (void)::CreateMutex( NULL, TRUE, TEXT( GLOGG_UUID ) );
     switch ( ::GetLastError() ) {
         case ERROR_SUCCESS:
-            LOG(logERROR) << "ERROR_SUCCESS";
+            LOG(logINFO) << "Mutex returned ERROR_SUCCESS";
             break;
         case ERROR_ALREADY_EXISTS:
             mutex_held_elsewhere_ = true;
-            LOG(logERROR) << "ERROR_ALREADY_EXISTS";
+            LOG(logINFO) << "Mutex returned ERROR_ALREADY_EXISTS";
             break;
         default:
             break;
@@ -53,7 +53,7 @@ void WinExternalCommunicator::startListening()
 
     message_listener_ = std::make_shared<WinMessageListener>();
 
-    LOG(logERROR) << "Listener winID = " << message_listener_->winId();
+    LOG(logINFO) << "Listener winID = " << message_listener_->winId();
 
     connect( message_listener_.get(),
             SIGNAL( messageReceived( MessageId, const QString& ) ),
@@ -91,48 +91,10 @@ qint32 WinExternalCommunicator::version() const
     return 3;
 }
 
-WINBOOL WinExternalInstance::enumWindowsCallback( HWND hwnd, LPARAM lParam )
-{
-    static const QRegExp window_re("blah");
-    static const QRegExp module_re("glogg.exe$");
-    wchar_t window_name[200] = { 0 };
-    wchar_t module_name[200] = { 0 };
-    auto window_handles = reinterpret_cast<std::vector<HWND>*>( lParam );
-
-    int window_len = GetWindowText( hwnd, window_name,
-            sizeof(window_name) / sizeof(window_name[0]) - 1 );
-    int module_len = GetWindowModuleFileName( hwnd, module_name,
-            sizeof(module_name) / sizeof(module_name[0]) - 1 );
-
-    QString window = QString::fromWCharArray( window_name, window_len );
-    QString module = QString::fromWCharArray( module_name, module_len );
-
-    // if ( window.contains( window_re ) ) // && module.contains( module_re ) )
-    {
-        std::string stdUtf8 = window.toUtf8().constData();
-        std::string module_u8 = module.toUtf8().constData();
-        LOG(logERROR) << "enum (" << hwnd << ") window:" << stdUtf8;
-        LOG(logERROR) << "enum (" << hwnd << ") module:" << module_u8;
-
-        window_handles->push_back( hwnd );
-    }
-
-    return TRUE;
-}
-
 WinExternalInstance::WinExternalInstance()
 {
     LPCWSTR window_title = (LPCWSTR) WINDOW_TITLE.utf16();
     window_handle_ = FindWindow( NULL, window_title );
-
-    std::vector<HWND> window_handles;
-
-    // EnumWindows cannot tell us for sure which window
-    // is the genuine glogg, so we store all of them.
-    EnumWindows( (WNDENUMPROC) enumWindowsCallback,
-            reinterpret_cast<LPARAM>( &window_handles ) );
-
-    // LOG(logERROR) << "Window handle = " << window_handles.front();
 
     LOG(logDEBUG) << "Window handle = " << window_handle_;
 }
@@ -182,7 +144,7 @@ bool WinMessageListener::winEvent( MSG* message, long* result )
         QString file_name = QString::fromLatin1(
                 static_cast<const char*>( data->lpData ), data->cbData );
 
-        LOG( logERROR ) << "WM_COPYDATA received, param: " << file_name.toStdString();
+        LOG(logINFO) << "WM_COPYDATA received, param: " << file_name.toStdString();
 
         emit messageReceived(
                 static_cast<MessageId>( data->dwData ), file_name );

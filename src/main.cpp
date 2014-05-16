@@ -28,6 +28,10 @@ namespace po = boost::program_options;
 #include <iomanip>
 using namespace std;
 
+#ifdef _WIN32
+#include "unistd.h"
+#endif
+
 #include "persistentinfo.h"
 #include "sessioninfo.h"
 #include "configuration.h"
@@ -59,6 +63,9 @@ int main(int argc, char *argv[])
     // Configuration
     bool new_session = false;
     bool multi_instance = false;
+#ifdef _WIN32
+    bool log_to_file = false;
+#endif
 
     TLogLevel logLevel = logWARNING;
 
@@ -69,6 +76,9 @@ int main(int argc, char *argv[])
             ("version,v", "print glogg's version information")
             ("multi,m", "allow multiple instance of glogg to run simultaneously (use together with -s)")
             ("new-session,s", "do not load the previous session")
+#ifdef _WIN32
+            ("log,l", "save the log to a file (Windows only)")
+#endif
             ("debug,d", "output more debug (include multiple times for more verbosity e.g. -dddd")
             ;
         po::options_description desc_hidden("Hidden options");
@@ -118,6 +128,11 @@ int main(int argc, char *argv[])
         if ( vm.count( "new-session" ) )
             new_session = true;
 
+#ifdef _WIN32
+        if ( vm.count( "log" ) )
+            log_to_file = true;
+#endif
+
         for ( string s = "dd"; s.length() <= 10; s.append("d") )
             if ( vm.count( s ) )
                 logLevel = (TLogLevel) (logWARNING + s.length());
@@ -133,9 +148,14 @@ int main(int argc, char *argv[])
         cerr << "Exception of unknown type!\n";
     }
 
-#if 0
-    FILE* file = fopen("glogg.log", "w");
-    Output2FILE::Stream() = file;
+#ifdef _WIN32
+    if ( log_to_file )
+    {
+        char file_name[255];
+        snprintf( file_name, sizeof file_name, "glogg_%d.log", getpid() );
+        FILE* file = fopen(file_name, "w");
+        Output2FILE::Stream() = file;
+    }
 #endif
 
     FILELog::setReportingLevel( logLevel );

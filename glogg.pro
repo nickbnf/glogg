@@ -11,6 +11,7 @@ TEMPLATE = app
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 win32:Debug:CONFIG += console
+
 # Necessary when cross-compiling:
 win32:Release:QMAKE_LFLAGS += "-Wl,-subsystem,windows"
 
@@ -188,7 +189,7 @@ isEmpty(LOG_LEVEL) {
     CONFIG(debug, debug|release) {
         DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG4\"
     } else {
-        DEFINES += FILELOG_MAX_LEVEL=\"logERROR\"
+        DEFINES += FILELOG_MAX_LEVEL=\"logDEBUG\"
     }
 }
 else {

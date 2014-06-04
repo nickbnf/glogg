@@ -85,6 +85,9 @@ class CrawlerWidget : public QSplitter,
             std::shared_ptr<QuickFindPattern> qfp );
     virtual void doSetSavedSearches(
             std::shared_ptr<SavedSearches> saved_searches );
+    virtual void doSetViewContext( const char* view_context );
+    virtual std::shared_ptr<const ViewContextInterface>
+        doGetViewContext( void ) const;
 
     // Implementation of the mux selector interface
     // (for dispatching QuickFind to the right widget)

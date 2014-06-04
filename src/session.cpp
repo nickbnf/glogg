@@ -66,7 +66,7 @@ ViewInterface* Session::open( const std::string& file_name,
 
     QFileInfo fileInfo( file_name.c_str() );
     if ( fileInfo.isReadable() ) {
-        return openAlways( file_name, view_factory );
+        return openAlways( file_name, view_factory, nullptr );
     }
     else {
         throw FileUnreadableErr();
@@ -80,18 +80,27 @@ void Session::close( const ViewInterface* view )
     openFiles_.erase( openFiles_.find( view ) );
 }
 
-void Session::save(
-        std::vector<std::pair<const ViewInterface*, uint64_t>> view_list )
+void Session::save( std::vector<
+        std::tuple<const ViewInterface*,
+            uint64_t,
+            std::shared_ptr<const ViewContextInterface>>
+        > view_list )
 {
     LOG(logDEBUG) << "Session::save";
 
     std::vector<SessionInfo::OpenFile> session_files;
     for ( auto view: view_list ) {
-        const OpenFile* file = findOpenFileFromView( view.first );
+        const ViewInterface* view_object;
+        uint64_t top_line;
+        std::shared_ptr<const ViewContextInterface> view_context;
+
+        std::tie( view_object, top_line, view_context ) = view;
+
+        const OpenFile* file = findOpenFileFromView( view_object );
         assert( file );
 
         LOG(logDEBUG) << "Saving " << file->fileName << " in session.";
-        session_files.push_back( { file->fileName, view.second } );
+        session_files.push_back( { file->fileName, top_line, view_context->toString() } );
     }
 
     std::shared_ptr<SessionInfo> session =
@@ -114,7 +123,7 @@ std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
     for ( auto file: session_files )
     {
         LOG(logDEBUG) << "Create view for " << file.fileName;
-        ViewInterface* view = openAlways( file.fileName, view_factory );
+        ViewInterface* view = openAlways( file.fileName, view_factory, file.viewContext.c_str() );
         result.push_back( { file.fileName, view } );
     }
 
@@ -150,7 +159,8 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
  */
 
 ViewInterface* Session::openAlways( const std::string& file_name,
-        std::function<ViewInterface*()> view_factory )
+        std::function<ViewInterface*()> view_factory,
+        const char* view_context )
 {
     // Create the data objects
     auto log_data          = std::make_shared<LogData>();
@@ -161,6 +171,9 @@ ViewInterface* Session::openAlways( const std::string& file_name,
     view->setData( log_data, log_filtered_data );
     view->setQuickFindPattern( quickFindPattern_ );
     view->setSavedSearches( savedSearches_ );
+
+    if ( view_context )
+        view->setViewContext( view_context );
 
     // Insert in the hash
     openFiles_.insert( { view,

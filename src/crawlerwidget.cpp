@@ -49,6 +49,24 @@
 // Palette for error signaling (yellow background)
 const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 
+// Implementation of the view context for the CrawlerWidget
+class CrawlerWidgetContext : public ViewContextInterface {
+  public:
+    // Construct from the stored string representation
+    CrawlerWidgetContext( const char* string );
+    // Construct from the value passsed
+    CrawlerWidgetContext( QList<int> sizes ) { sizes_ = sizes; };
+
+    // Implementation of the ViewContextInterface function
+    std::string toString() const;
+
+    // Access the Qt sizes array for the QSplitter
+    QList<int> sizes() const { return sizes_; }
+
+  private:
+    QList<int> sizes_;
+};
+
 // Constructor only does trivial construction. The real work is done once
 // the data is attached.
 CrawlerWidget::CrawlerWidget( QWidget *parent )
@@ -155,6 +173,24 @@ void CrawlerWidget::doSetSavedSearches(
     // We do setup now, assuming doSetData has been called before
     // us, that's not great really...
     setup();
+}
+
+void CrawlerWidget::doSetViewContext(
+        const char* view_context )
+{
+    LOG(logDEBUG) << "CrawlerWidget::doSetViewContext: " << view_context;
+
+    CrawlerWidgetContext context = { view_context };
+
+    setSizes( context.sizes() );
+}
+
+std::shared_ptr<const ViewContextInterface>
+CrawlerWidget::doGetViewContext() const
+{
+    auto context = std::make_shared<const CrawlerWidgetContext>( sizes() );
+
+    return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
 }
 
 //
@@ -798,4 +834,34 @@ void CrawlerWidget::SearchState::startSearch()
         state_ = Autorefreshing;
     else
         state_ = Static;
+}
+
+/*
+ * CrawlerWidgetContext
+ */
+CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
+{
+    QRegExp regex = QRegExp( "S(\\d+):(\\d+)" );
+
+    if ( regex.indexIn( string ) > -1 )
+    {
+        sizes_ = { regex.cap(1).toInt(), regex.cap(2).toInt() };
+        LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
+    }
+    else
+    {
+        LOG(logWARNING) << "Unrecognised view context: " << string;
+
+        // Default values;
+        sizes_ = { 100, 400 };
+    }
+}
+
+std::string CrawlerWidgetContext::toString() const
+{
+    char string[160];
+
+    snprintf( string, sizeof string, "S%d:%d", sizes_[0], sizes_[1] );
+
+    return string;
 }

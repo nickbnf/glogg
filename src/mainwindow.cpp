@@ -790,11 +790,17 @@ void MainWindow::writeSettings()
 {
     // Save the session
     // Generate the ordered list of widgets and their topLine
-    std::vector<std::pair<const ViewInterface*, uint64_t>> widget_list;
+    std::vector<
+            std::tuple<const ViewInterface*, uint64_t, std::shared_ptr<const ViewContextInterface>>
+        > widget_list;
     for ( int i = 0; i < mainTabWidget_.count(); ++i )
-        widget_list.push_back( {
-                dynamic_cast<const ViewInterface*>( mainTabWidget_.widget( i ) ),
-                0 } );
+    {
+        auto view = dynamic_cast<const ViewInterface*>( mainTabWidget_.widget( i ) );
+        widget_list.push_back( std::make_tuple(
+                view,
+                0UL,
+                view->context() ) );
+    }
     session_->save( widget_list );
     //SessionInfo& session = Persistent<SessionInfo>( "session" );
     //session.setGeometry( saveGeometry() );

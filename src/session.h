@@ -31,6 +31,7 @@
 #include "quickfindpattern.h"
 
 class ViewInterface;
+class ViewContextInterface;
 class LogData;
 class LogFilteredData;
 class SavedSearches;
@@ -73,11 +74,12 @@ class Session {
             std::function<ViewInterface*()> view_factory,
             int *current_file_index );
     // Save the session to persistent storage. An ordered list of
-    // (view, topLine) is passed, this is because only the main window
-    // know the order in which the views are presented to the user (it might
-    // have changed since file were opened).
-    void save(
-            std::vector<std::pair<const ViewInterface*, uint64_t>> view_list );
+    // (view, topline, ViewContextInterface) is passed, this is because only
+    // the main window // know the order in which the views are presented to
+    // the user (it might // have changed since file were opened).
+    void save( std::vector<
+                   std::tuple<const ViewInterface*, uint64_t, std::shared_ptr<const ViewContextInterface>>
+               > view_list );
 
     // Get the file name for the passed view.
     std::string getFilename( const ViewInterface* view ) const;
@@ -99,7 +101,8 @@ class Session {
 
     // Open a file without checking if it is existing/readable
     ViewInterface* openAlways( const std::string& file_name,
-            std::function<ViewInterface*()> view_factory );
+            std::function<ViewInterface*()> view_factory,
+            const char* view_context );
     // Find an open file from its associated view
     OpenFile* findOpenFileFromView( const ViewInterface* view );
     const OpenFile* findOpenFileFromView( const ViewInterface* view ) const;

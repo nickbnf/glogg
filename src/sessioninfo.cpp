@@ -43,7 +43,9 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 std::string file_name =
                     settings.value( "fileName" ).toString().toStdString();
                 uint64_t top_line = settings.value( "topLine" ).toInt();
-                openFiles_.push_back( { file_name, top_line } );
+                std::string view_context =
+                    settings.value( "viewContext" ).toString().toStdString();
+                openFiles_.push_back( { file_name, top_line, view_context } );
             }
             settings.endArray();
         }
@@ -65,11 +67,12 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
     settings.beginGroup( "OpenFiles" );
     settings.setValue( "version", OPENFILES_VERSION );
     settings.beginWriteArray( "openFiles" );
-    for ( int i = 0; i < openFiles_.size(); ++i ) {
+    for ( unsigned i = 0; i < openFiles_.size(); ++i ) {
         settings.setArrayIndex( i );
         const OpenFile* open_file = &(openFiles_.at( i ));
         settings.setValue( "fileName", QString( open_file->fileName.c_str() ) );
         settings.setValue( "topLine", qint64( open_file->topLine ) );
+        settings.setValue( "viewContext", QString( open_file->viewContext.c_str() ) );
     }
     settings.endArray();
     settings.endGroup();

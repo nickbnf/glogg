@@ -27,7 +27,19 @@ class LogFilteredData;
 class SavedSearches;
 class QuickFindPattern;
 
+// ViewContextInterface represents the private information
+// the concrete view will be able to save and restore.
+// It can be marshalled to persistent storage.
+class ViewContextInterface {
+  public:
+    virtual ~ViewContextInterface() {}
+
+    virtual std::string toString() const = 0;
+};
+
 // ViewInterface represents a high-level view on a log file.
+// This a pure virtual class (interface) which is subclassed
+// for each type of view.
 class ViewInterface {
   public:
     // Set the log data and filtered data to associate to this view
@@ -45,10 +57,11 @@ class ViewInterface {
     { doSetSavedSearches( saved_searches ); }
 
     // For save/restore of the context
-    /*
-    virtual void setViewContext( const ViewContextInterface& view_context ) = 0;
-    virtual ViewContextInterface& getViewContext( void ) = 0;
-    */
+    void setViewContext( const char* view_context )
+    { doSetViewContext( view_context ); }
+    // (returned object ownership is transferred to the caller)
+    std::shared_ptr<const ViewContextInterface> context( void ) const
+    { return doGetViewContext(); }
 
     // To allow polymorphic destruction
     virtual ~ViewInterface() {}
@@ -61,5 +74,9 @@ class ViewInterface {
             std::shared_ptr<QuickFindPattern> qfp ) = 0;
     virtual void doSetSavedSearches(
             std::shared_ptr<SavedSearches> saved_searches ) = 0;
+    virtual void doSetViewContext(
+            const char* view_context ) = 0;
+    virtual std::shared_ptr<const ViewContextInterface>
+        doGetViewContext( void ) const = 0;
 };
 #endif

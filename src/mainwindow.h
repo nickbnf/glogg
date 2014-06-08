@@ -30,6 +30,9 @@
 #include "tabbedcrawlerwidget.h"
 #include "quickfindwidget.h"
 #include "quickfindmux.h"
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+#include "versionchecker.h"
+#endif
 
 class QAction;
 class Session;
@@ -183,6 +186,11 @@ class MainWindow : public QMainWindow
 
     // The main widget
     TabbedCrawlerWidget mainTabWidget_;
+
+    // Version checker
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+    VersionChecker versionChecker_;
+#endif
 };
 
 #endif

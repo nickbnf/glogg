@@ -63,6 +63,9 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     signalMux_(),
     quickFindMux_( session_->getQuickFindPattern() ),
     mainTabWidget_()
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+    ,versionChecker_()
+#endif
 {
     createActions();
     createMenus();
@@ -194,6 +197,10 @@ void MainWindow::loadInitialFile( QString fileName )
 void MainWindow::startBackgroundTasks()
 {
     LOG(logDEBUG) << "startBackgroundTasks";
+
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+    versionChecker_.startCheck();
+#endif
 }
 
 //

@@ -50,6 +50,7 @@ SOURCES += \
     src/quickfindmux.cpp \
     src/signalmux.cpp \
     src/tabbedcrawlerwidget.cpp \
+    src/versionchecker.cpp
 
 INCLUDEPATH += src/
 
@@ -92,6 +93,7 @@ HEADERS += \
     src/tabbedcrawlerwidget.h \
     src/loadingstatus.h \
     src/externalcom.h \
+    src/versionchecker.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -229,3 +231,7 @@ else {
         HEADERS += src/winexternalcom.h
     }
 }
+
+# Version checking
+QT += network
+QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_VERSION_CHECKING

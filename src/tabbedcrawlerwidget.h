@@ -39,6 +39,9 @@ class TabbedCrawlerWidget : public QTabWidget
       int addTab( QWidget* page, const QString& label );
       void removeTab( int index );
 
+    protected:
+      void keyPressEvent( QKeyEvent* event );
+
     private:
       QTabBar myTabBar_;
 };

@@ -19,6 +19,8 @@
 
 #include "tabbedcrawlerwidget.h"
 
+#include <QKeyEvent>
+
 #include "log.h"
 
 TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
@@ -64,4 +66,37 @@ void TabbedCrawlerWidget::removeTab( int index )
 
     if ( count() <= 1 )
         myTabBar_.hide();
+}
+
+void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
+{
+    LOG(logDEBUG) << "TabbedCrawlerWidget::keyPressEvent";
+
+    char c = ( event->text() )[0].toLatin1();
+    Qt::KeyboardModifiers mod = event->modifiers();
+
+    // Ctrl + tab
+    if ( mod == Qt::ControlModifier && c == '\t' ) {
+        setCurrentIndex( ( currentIndex() + 1 ) % count() );
+    }
+    // Ctrl + shift + tab
+    else if ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && c == '\t' ) {
+        LOG(logDEBUG) << "previous...";
+        setCurrentIndex( ( currentIndex() + 1 ) % count() );
+    }
+    // Alt + numbers
+    else if ( mod == Qt::AltModifier && ( c >= '1' && c <= '8' ) ) {
+        LOG(logDEBUG) << "number " << c;
+        int new_index = c - '0';
+        if ( new_index <= count() )
+            setCurrentIndex( new_index - 1 );
+    }
+    // Alt + 9
+    else if ( mod == Qt::AltModifier && c == '9' ) {
+        LOG(logDEBUG) << "last";
+        setCurrentIndex( count() - 1 );
+    }
+    else {
+        QTabWidget::keyPressEvent( event );
+    }
 }

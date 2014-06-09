@@ -530,7 +530,8 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else {
         const char character = (keyEvent->text())[0].toLatin1();
 
-        if ( ( character >= '0' ) && ( character <= '9' ) ) {
+        if ( keyEvent->modifiers() == Qt::NoModifier &&
+                ( character >= '0' ) && ( character <= '9' ) ) {
             // Adds the digit to the timed buffer
             digitsBuffer_.add( character );
         }

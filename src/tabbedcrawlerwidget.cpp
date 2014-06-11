@@ -81,20 +81,22 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
     }
     // Ctrl + shift + tab
     else if ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && c == '\t' ) {
-        LOG(logDEBUG) << "previous...";
         setCurrentIndex( ( currentIndex() + 1 ) % count() );
     }
-    // Alt + numbers
-    else if ( mod == Qt::AltModifier && ( c >= '1' && c <= '8' ) ) {
+    // Ctrl + numbers
+    else if ( mod == Qt::ControlModifier && ( c >= '1' && c <= '8' ) ) {
         LOG(logDEBUG) << "number " << c;
         int new_index = c - '0';
         if ( new_index <= count() )
             setCurrentIndex( new_index - 1 );
     }
-    // Alt + 9
-    else if ( mod == Qt::AltModifier && c == '9' ) {
+    // Ctrl + 9
+    else if ( mod == Qt::ControlModifier && c == '9' ) {
         LOG(logDEBUG) << "last";
         setCurrentIndex( count() - 1 );
+    }
+    else if ( mod == Qt::ControlModifier && (c == 'q' || c == 'w') ) {
+        emit tabCloseRequested( currentIndex() );
     }
     else {
         QTabWidget::keyPressEvent( event );

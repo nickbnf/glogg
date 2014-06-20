@@ -24,6 +24,10 @@
 const char* VersionChecker::VERSION_URL =
     "http://gloggversion.bonnefon.org/latest";
 
+namespace {
+    bool isVersionNewer( const QString& current, const QString& new_version );
+};
+
 VersionChecker::VersionChecker() : QObject(), manager_( this )
 {
 }
@@ -48,4 +52,27 @@ void VersionChecker::startCheck()
 void VersionChecker::downloadFinished( QNetworkReply* reply )
 {
     LOG(logDEBUG) << "VersionChecker::downloadFinished()";
+
+    if ( reply->error() == QNetworkReply::NoError )
+    {
+        QString new_version = { reply->read( 256 ) };
+        LOG(logDEBUG) << "Latest version is " << new_version.toStdString();
+        if ( isVersionNewer( QString( GLOGG_VERSION ), new_version ) )
+        {
+            emit newVersionFound( new_version );
+        }
+    }
+    else
+    {
+        LOG(logWARNING) << "Download failed: err " << reply->error();
+    }
+
+    reply->deleteLater();
 }
+
+namespace {
+    bool isVersionNewer( const QString& current, const QString& new_version )
+    {
+        return false;
+    }
+};

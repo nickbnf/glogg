@@ -212,6 +212,10 @@ int main(int argc, char *argv[])
             std::make_shared<SavedSearches>(), QString( "savedSearches" ) );
     GetPersistentInfo().registerPersistable(
             std::make_shared<RecentFiles>(), QString( "recentFiles" ) );
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+    GetPersistentInfo().registerPersistable(
+            std::make_shared<VersionCheckerConfig>(), QString( "versionChecker" ) );
+#endif
 
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );

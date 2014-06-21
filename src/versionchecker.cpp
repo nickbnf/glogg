@@ -19,14 +19,40 @@
 
 #include "versionchecker.h"
 
+#include "persistentinfo.h"
+
 #include "log.h"
 
 const char* VersionChecker::VERSION_URL =
     "http://gloggversion.bonnefon.org/latest";
 
+const uint64_t VersionChecker::CHECK_INTERVAL_S =
+    3600 * 24 * 7; /* 7 days */
+
 namespace {
     bool isVersionNewer( const QString& current, const QString& new_version );
 };
+
+VersionCheckerConfig::VersionCheckerConfig()
+{
+    enabled_ = true;
+    next_deadline_ = 0;
+}
+
+void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
+{
+    if ( settings.contains( "versionchecker.enabled" ) )
+        enabled_ = settings.value( "versionchecker.enabled" ).toBool();
+    if ( settings.contains( "versionchecker.nextDeadline" ) )
+        next_deadline_ = settings.value( "versionchecker.nextDeadline" ).toLongLong();
+}
+
+void VersionCheckerConfig::saveToStorage( QSettings& settings ) const
+{
+    settings.setValue( "versionchecker.enabled", enabled_ );
+    settings.setValue( "versionchecker.nextDeadline",
+            static_cast<long long>( next_deadline_ ) );
+}
 
 VersionChecker::VersionChecker() : QObject(), manager_( this )
 {
@@ -40,13 +66,29 @@ void VersionChecker::startCheck()
 {
     LOG(logDEBUG) << "VersionChecker::startCheck()";
 
-    connect( &manager_, SIGNAL( finished( QNetworkReply* ) ),
-            this, SLOT( downloadFinished( QNetworkReply* ) ) );
+    GetPersistentInfo().retrieve( "versionChecker" );
 
-    QNetworkRequest request;
-    request.setUrl( QUrl( VERSION_URL ) );
-    request.setRawHeader( "User-Agent", "glogg-" GLOGG_VERSION );
-    manager_.get( request );
+    auto config = Persistent<VersionCheckerConfig>( "versionChecker" );
+
+    if ( config->versionCheckingEnabled() )
+    {
+        // Check the deadline has been reached
+        if ( config->nextDeadline() < std::time( nullptr ) )
+        {
+            connect( &manager_, SIGNAL( finished( QNetworkReply* ) ),
+                    this, SLOT( downloadFinished( QNetworkReply* ) ) );
+
+            QNetworkRequest request;
+            request.setUrl( QUrl( VERSION_URL ) );
+            request.setRawHeader( "User-Agent", "glogg-" GLOGG_VERSION );
+            manager_.get( request );
+        }
+        else
+        {
+            LOG(logDEBUG) << "Deadline not reached yet, next check in "
+                << std::difftime( config->nextDeadline(), std::time( nullptr ) );
+        }
+    }
 }
 
 void VersionChecker::downloadFinished( QNetworkReply* reply )
@@ -70,6 +112,13 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
     }
 
     reply->deleteLater();
+
+    // Extend the deadline
+    auto config = Persistent<VersionCheckerConfig>( "versionChecker" );
+
+    config->setNextDeadline( std::time( nullptr ) + CHECK_INTERVAL_S );
+
+    GetPersistentInfo().save( "versionChecker" );
 }
 
 namespace {

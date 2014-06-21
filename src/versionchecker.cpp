@@ -55,10 +55,12 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 
     if ( reply->error() == QNetworkReply::NoError )
     {
-        QString new_version = { reply->read( 256 ) };
+        QString new_version = QString( reply->read( 256 ) ).remove( '\n' );
+
         LOG(logDEBUG) << "Latest version is " << new_version.toStdString();
         if ( isVersionNewer( QString( GLOGG_VERSION ), new_version ) )
         {
+            LOG(logDEBUG) << "Sending new version notification";
             emit newVersionFound( new_version );
         }
     }
@@ -73,6 +75,37 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 namespace {
     bool isVersionNewer( const QString& current, const QString& new_version )
     {
-        return false;
+        QRegExp version_regex( "(\\d+)\\.(\\d+)\\.(\\d+)(-(\\S+))?",
+                Qt::CaseSensitive,
+                QRegExp::RegExp2 );
+
+        // Main version is the three first digits
+        // Add is the part after '-' if there
+        unsigned current_main_version = 0;
+        unsigned current_add_version = 0;
+        unsigned new_main_version = 0;
+        unsigned new_add_version = 0;
+
+        if ( version_regex.indexIn( current ) != -1 )
+        {
+            current_main_version = version_regex.cap(3).toInt()
+                + version_regex.cap(2).toInt() * 100
+                + version_regex.cap(1).toInt() * 10000;
+            current_add_version = version_regex.cap(5).isEmpty() ? 0 : 1;
+        }
+
+        if ( version_regex.indexIn( new_version ) != -1 )
+        {
+            new_main_version = version_regex.cap(3).toInt()
+                + version_regex.cap(2).toInt() * 100
+                + version_regex.cap(1).toInt() * 10000;
+            new_add_version = version_regex.cap(5).isEmpty() ? 0 : 1;
+        }
+
+        LOG(logDEBUG) << "Current version: " << current_main_version;
+        LOG(logDEBUG) << "New version: " << new_main_version;
+
+        // We only consider the main part for testing for now
+        return new_main_version > current_main_version;
     }
 };

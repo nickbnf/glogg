@@ -151,6 +151,10 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     connect( externalCommunicator_.get(), SIGNAL( loadFile( const QString& ) ),
              this, SLOT( loadFileNonInteractive( const QString& ) ) );
 
+    // Version checker notification
+    connect( &versionChecker_, SIGNAL( newVersionFound( const QString& ) ),
+            this, SLOT( newVersionNotification( const QString& ) ) );
+
     // Construct the QuickFind bar
     quickFindWidget_.hide();
 
@@ -632,6 +636,18 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
         << file_name.toStdString() << " )";
 
     loadFile( file_name );
+}
+
+void MainWindow::newVersionNotification( const QString& new_version )
+{
+    LOG(logDEBUG) << "newVersionNotification( " <<
+        new_version.toStdString() << " )";
+
+    QMessageBox msgBox;
+    msgBox.setText( QString( "A new version of glogg (%1) is available for download <p>"
+                "<a href=\"http://glogg.bonnefon.org/download.html\">http://glogg.bonnefon.org/download.html</a>" 
+                ).arg( new_version ) );
+    msgBox.exec();
 }
 
 //

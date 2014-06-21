@@ -110,6 +110,9 @@ class MainWindow : public QMainWindow
     // (for use from e.g. IPC)
     void loadFileNonInteractive( const QString& file_name );
 
+    // Notify the user a new version is available
+    void newVersionNotification( const QString& new_version );
+
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();

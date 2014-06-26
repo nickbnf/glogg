@@ -151,9 +151,11 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     connect( externalCommunicator_.get(), SIGNAL( loadFile( const QString& ) ),
              this, SLOT( loadFileNonInteractive( const QString& ) ) );
 
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     // Version checker notification
     connect( &versionChecker_, SIGNAL( newVersionFound( const QString& ) ),
             this, SLOT( newVersionNotification( const QString& ) ) );
+#endif
 
     // Construct the QuickFind bar
     quickFindWidget_.hide();

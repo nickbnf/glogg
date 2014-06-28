@@ -166,7 +166,7 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 QMAKE_CXXFLAGS = -g
 
 # Which compiler are we using
-system( $${QMAKE_CXX} --version | grep -e " 4\.[7-9]" ) {
+system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) {
     message ( "g++ version 4.7 or newer, supports C++11" )
     CONFIG += C++11
 }
@@ -232,12 +232,12 @@ else {
 
 # Version checking
 version_checker {
-    message("Version checker is included")
+    message("Version checker will be included")
     QT += network
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_VERSION_CHECKING
     SOURCES += src/versionchecker.cpp
     HEADERS += src/versionchecker.h
 }
 else {
-    message("Version checker is not included")
+    message("Version checker will NOT be included")
 }

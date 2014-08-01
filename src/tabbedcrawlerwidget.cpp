@@ -25,7 +25,7 @@
 
 TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
 {
-#if WIN32
+#ifdef WIN32
     myTabBar_.setStyleSheet( "QTabBar::tab {\
             height: 20px; "
             "}" );

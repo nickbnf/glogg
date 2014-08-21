@@ -93,6 +93,7 @@ Section "Qt4 Runtime libraries" qtlibs
     SetOutPath $INSTDIR
     File release\QtCore4.dll
     File release\QtGui4.dll
+    File release\QtNetwork4.dll
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut
@@ -124,6 +125,7 @@ Section "Uninstall"
     Delete "$INSTDIR\libgcc_s_dw2-1.dll"
     Delete "$INSTDIR\QtCore4.dll"
     Delete "$INSTDIR\QtGui4.dll"
+    Delete "$INSTDIR\QtNetwork4.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

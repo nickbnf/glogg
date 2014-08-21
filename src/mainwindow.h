@@ -70,6 +70,8 @@ class MainWindow : public QMainWindow
   private slots:
     void open();
     void openRecentFile();
+    void closeTab();
+    void closeAll();
     void selectAll();
     void copy();
     void find();
@@ -161,6 +163,8 @@ class MainWindow : public QMainWindow
     QToolBar *toolBar;
 
     QAction *openAction;
+    QAction *closeAction;
+    QAction *closeAllAction;
     QAction *exitAction;
     QAction *copyAction;
     QAction *selectAllAction;

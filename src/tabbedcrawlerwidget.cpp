@@ -68,6 +68,20 @@ void TabbedCrawlerWidget::removeTab( int index )
         myTabBar_.hide();
 }
 
+void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent *event)
+{
+    LOG(logDEBUG) << "TabbedCrawlerWidget::mouseReleaseEvent";
+
+    if (event->button() == Qt::MidButton)
+    {
+        int tab = this->myTabBar_.tabAt( event->pos() );
+        if (-1 != tab)
+        {
+            emit tabCloseRequested( tab );
+        }
+    }
+}
+
 void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
 {
     LOG(logDEBUG) << "TabbedCrawlerWidget::keyPressEvent";
@@ -96,6 +110,7 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
         setCurrentIndex( count() - 1 );
     }
     else if ( mod == Qt::ControlModifier && (c == 'q' || c == 'w') ) {
+        LOG(logDEBUG) << "Close tab " << currentIndex();
         emit tabCloseRequested( currentIndex() );
     }
     else {

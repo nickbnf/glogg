@@ -41,6 +41,7 @@ class TabbedCrawlerWidget : public QTabWidget
 
     protected:
       void keyPressEvent( QKeyEvent* event );
+      void mouseReleaseEvent( QMouseEvent *event);
 
     private:
       QTabBar myTabBar_;

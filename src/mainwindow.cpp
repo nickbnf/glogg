@@ -226,7 +226,7 @@ void MainWindow::createActions()
     connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
 
     closeAction = new QAction(tr("&Close"), this);
-    closeAction->setShortcut(QKeySequence::Close);
+    closeAction->setShortcut(tr("Ctrl+W"));
     closeAction->setStatusTip(tr("Close document"));
     connect(closeAction, SIGNAL(triggered()), this, SLOT(closeTab()));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -17,34 +17,47 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILEWATCHER_H
-#define FILEWATCHER_H
+#ifndef QTFILEWATCHER_H
+#define QTFILEWATCHER_H
 
-#include <QObject>
+#include "filewatcher.h"
+
+#include <QFileSystemWatcher>
 
 // This class encapsulate Qt's QFileSystemWatcher and additionally support
 // watching a file that doesn't exist yet (the class will watch the owning
 // directory)
 // Only supports one file at the moment.
-class FileWatcher : public QObject {
+class QtFileWatcher : public FileWatcher {
   Q_OBJECT
 
   public:
     // Create an empty object
-    FileWatcher() {}
+    QtFileWatcher();
     // Destroy the object
-    virtual ~FileWatcher() {}
+    ~QtFileWatcher();
 
     // Adds the file to the list of file to watch
     // (do nothing if a file is already monitored)
-    virtual void addFile( const QString& fileName ) = 0;
+    void addFile( const QString& fileName );
     // Removes the file to the list of file to watch
     // (do nothing if said file is not monitored)
-    virtual void removeFile( const QString& fileName ) = 0;
+    void removeFile( const QString& fileName );
 
   signals:
     // Sent when the file on disk has changed in any way.
     void fileChanged( const QString& );
+
+  private slots:
+    void fileChangedOnDisk( const QString& filename );
+    void directoryChangedOnDisk( const QString& filename );
+
+  private:
+    enum MonitoringState { None, FileExists, FileRemoved };
+
+    QFileSystemWatcher qtFileWatcher_;
+    QString fileMonitored_;
+    MonitoringState monitoringState_;
 };
 
 #endif

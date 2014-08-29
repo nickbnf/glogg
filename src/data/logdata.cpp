@@ -29,6 +29,11 @@
 
 #include "logdata.h"
 #include "logfiltereddata.h"
+#ifdef GLOGG_SUPPORTS_INOTIFY
+#include "inotifyfilewatcher.h"
+#else
+#include "qtfilewatcher.h"
+#endif
 
 // Implementation of the 'start' functions for each operation
 
@@ -57,7 +62,7 @@ void LogData::PartialIndexOperation::doStart(
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
+LogData::LogData() : AbstractLogData(), linePosition_(),
     fileMutex_(), dataMutex_(), workerThread_()
 {
     // Start with an "empty" log
@@ -68,8 +73,14 @@ LogData::LogData() : AbstractLogData(), fileWatcher_(), linePosition_(),
     currentOperation_ = nullptr;
     nextOperation_    = nullptr;
 
+#ifdef GLOGG_SUPPORTS_INOTIFY
+    fileWatcher_ = std::make_shared<INotifyFileWatcher>();
+#else
+    fileWatcher_ = std::make_shared<QtFileWatcher>();
+#endif
+
     // Initialise the file watcher
-    connect( &fileWatcher_, SIGNAL( fileChanged( const QString& ) ),
+    connect( fileWatcher_.get(), SIGNAL( fileChanged( const QString& ) ),
             this, SLOT( fileChangedOnDisk() ) );
     // Forward the update signal
     connect( &workerThread_, SIGNAL( indexingProgressed( int ) ),
@@ -97,7 +108,7 @@ void LogData::attachFile( const QString& fileName )
 
     if ( file_ ) {
         // Remove the current file from the watch list
-        fileWatcher_.removeFile( file_->fileName() );
+        fileWatcher_->removeFile( file_->fileName() );
     }
 
     workerThread_.interrupt();
@@ -189,7 +200,7 @@ void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
 
-    fileWatcher_.removeFile( file_->fileName() );
+    fileWatcher_->removeFile( file_->fileName() );
 
     const QString name = file_->fileName();
     QFileInfo info( name );
@@ -259,7 +270,7 @@ void LogData::indexingFinished( LoadingStatus status )
     if ( file_ ) {
         // And we watch the file for updates
         fileChangedOnDisk_ = Unchanged;
-        fileWatcher_.addFile( file_->fileName() );
+        fileWatcher_->addFile( file_->fileName() );
     }
 
     emit loadingFinished( status );

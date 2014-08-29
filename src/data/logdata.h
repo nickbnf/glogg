@@ -146,7 +146,7 @@ class LogData : public AbstractLogData {
         qint64 filesize_;
     };
 
-    FileWatcher fileWatcher_;
+    std::shared_ptr<FileWatcher> fileWatcher_;
     MonitoredFileStatus fileChangedOnDisk_;
 
     // Implementation of virtual functions

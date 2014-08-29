@@ -23,6 +23,7 @@
 
 #include <cassert>
 #include <QFileInfo>
+#include <algorithm>
 
 #include "viewinterface.h"
 #include "persistentinfo.h"
@@ -49,7 +50,7 @@ Session::~Session()
 
 ViewInterface* Session::getViewIfOpen( const std::string& file_name ) const
 {
-    auto result = find_if( openFiles_.begin(), openFiles_.end(),
+    auto result = std::find_if( openFiles_.begin(), openFiles_.end(),
             [&](const std::pair<const ViewInterface*, OpenFile>& o)
             { return ( o.second.fileName == file_name ); } );
 

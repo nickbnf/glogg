@@ -172,6 +172,11 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
 
 void MainWindow::reloadSession()
 {
+    QByteArray geometry;
+
+    session_->storedGeometry( &geometry );
+    restoreGeometry( geometry );
+
     int current_file_index = -1;
 
     for ( auto open_file: session_->restore(
@@ -832,11 +837,7 @@ void MainWindow::writeSettings()
                 0UL,
                 view->context() ) );
     }
-    session_->save( widget_list );
-    //SessionInfo& session = Persistent<SessionInfo>( "session" );
-    //session.setGeometry( saveGeometry() );
-    //session.setCrawlerState( crawlerWidget->saveState() );
-    //GetPersistentInfo().save( QString( "session" ) );
+    session_->save( widget_list, saveGeometry() );
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
@@ -848,7 +849,6 @@ void MainWindow::readSettings()
     // Get and restore the session
     // GetPersistentInfo().retrieve( QString( "session" ) );
     // SessionInfo session = Persistent<SessionInfo>( "session" );
-    //restoreGeometry( session.geometry() );
     /*
      * FIXME: should be in the session
     crawlerWidget->restoreState( session.crawlerState() );

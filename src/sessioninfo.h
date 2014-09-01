@@ -35,17 +35,13 @@ class SessionInfo : public Persistable {
     SessionInfo() : openFiles_() { }
 
     // Geometry of the main window
-    /*
+    // (this is an opaque string which is interpreted by the
+    // MainWindow implementation)
     QByteArray geometry() const
     { return geometry_; }
     void setGeometry( const QByteArray& geometry )
     { geometry_ = geometry; }
-    // Geometry of the CrawlerWidget
-    QByteArray crawlerState() const
-    { return crawlerState_; }
-    void setCrawlerState( const QByteArray& geometry )
-    { crawlerState_ = geometry; }
-    */
+
     struct OpenFile
     {
         std::string fileName;

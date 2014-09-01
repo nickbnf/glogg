@@ -29,15 +29,15 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
 {
     LOG(logDEBUG) << "SessionInfo::retrieveFromStorage";
 
-    /*
     geometry_     = settings.value("geometry").toByteArray();
-    crawlerState_ = settings.value("crawlerWidget").toByteArray();
-    */
+
     if ( settings.contains( "OpenFiles/version" ) ) {
+        openFiles_.clear();
         // Unserialise the "new style" stored history
         settings.beginGroup( "OpenFiles" );
         if ( settings.value( "version" ) == OPENFILES_VERSION ) {
             int size = settings.beginReadArray( "openFiles" );
+            LOG(logDEBUG) << "SessionInfo: " << size << " files.";
             for (int i = 0; i < size; ++i) {
                 settings.setArrayIndex(i);
                 std::string file_name =
@@ -60,10 +60,7 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
 {
     LOG(logDEBUG) << "SessionInfo::saveToStorage";
 
-    /*
     settings.setValue( "geometry", geometry_ );
-    settings.setValue( "crawlerWidget", crawlerState_ );
-    */
     settings.beginGroup( "OpenFiles" );
     settings.setValue( "version", OPENFILES_VERSION );
     settings.beginWriteArray( "openFiles" );

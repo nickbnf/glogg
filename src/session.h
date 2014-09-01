@@ -27,6 +27,7 @@
 #include <utility>
 
 #include <QDateTime>
+#include <QByteArray>
 
 #include "quickfindpattern.h"
 
@@ -75,11 +76,16 @@ class Session {
             int *current_file_index );
     // Save the session to persistent storage. An ordered list of
     // (view, topline, ViewContextInterface) is passed, this is because only
-    // the main window // know the order in which the views are presented to
-    // the user (it might // have changed since file were opened).
+    // the main window know the order in which the views are presented to
+    // the user (it might have changed since file were opened).
+    // Also, the geometry information is passed as an opaque string.
     void save( std::vector<
                    std::tuple<const ViewInterface*, uint64_t, std::shared_ptr<const ViewContextInterface>>
-               > view_list );
+               > view_list,
+           const QByteArray& geometry );
+
+    // Get the geometry string from persistent storage for this session.
+    void storedGeometry( QByteArray* geometry ) const;
 
     // Get the file name for the passed view.
     std::string getFilename( const ViewInterface* view ) const;

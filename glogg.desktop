@@ -7,4 +7,14 @@ Icon=glogg
 Type=Application
 Comment=A smart interactive log explorer.
 Terminal=false
-Categories=Qt;Utility;
+Categories=Qt;Utility;TextTools;Development;
+MimeType=text/plain;
+Actions=Session;NewInstance;
+
+[Desktop Action Session]
+Exec=glogg --load-session %f
+Name=Open With Previous Session
+
+[Desktop Action NewInstance]
+Exec=glogg --multi %f
+Name=Open In A New glogg Window

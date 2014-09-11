@@ -59,6 +59,7 @@ class WinMessageListener : public QWidget
 
   public:
     WinMessageListener();
+    ~WinMessageListener() = default;
 
   signals:
     // A message has been received from Windows

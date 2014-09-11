@@ -53,7 +53,12 @@ void WinExternalCommunicator::startListening()
 
     message_listener_ = std::make_shared<WinMessageListener>();
 
-    LOG(logINFO) << "Listener winID = " << message_listener_->winId();
+    // Horrible Hack!!!
+    // Why is it necessary I have no idea, but if winId is not read,
+    // the message_listener_ is never called by Windows.
+    // If some Windows expert could explain me....
+    volatile WId id = message_listener_->winId();
+    LOG(logINFO) << "Listener winID = " << id;
 
     connect( message_listener_.get(),
             SIGNAL( messageReceived( MessageId, const QString& ) ),
@@ -126,7 +131,7 @@ uint32_t WinExternalInstance::getVersion() const
 /*
  * WinMessageListener class
  */
-WinMessageListener::WinMessageListener()
+WinMessageListener::WinMessageListener() : QWidget()
 {
     setWindowTitle( WINDOW_TITLE );
 }

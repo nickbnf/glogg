@@ -28,3 +28,6 @@ debug/
 release/
 object_script.glogg.Debug
 object_script.glogg.Release
+
+# Tests
+tests/build/

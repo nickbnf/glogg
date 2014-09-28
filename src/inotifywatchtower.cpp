@@ -27,7 +27,7 @@
 
 #include "log.h"
 
-#include "src/inotifywatchtower.h"
+#include "inotifywatchtower.h"
 
 namespace {
     bool isSymLink( const std::string& file_name );

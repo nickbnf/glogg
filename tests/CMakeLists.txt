@@ -74,7 +74,7 @@ endif (WIN32)
 # QT4_WRAP_CPP(glogg_HEADERS_MOC ${glogg_HEADERS})
 # INCLUDE(${QT_USE_FILE})
 # ADD_DEFINITIONS(${QT_DEFINITIONS})
-set(CMAKE_CXX_FLAGS "-fPIC -std=c++11 -DGLOGG_VERSION=\\\"unit_tests\\\"")
+set(CMAKE_CXX_FLAGS "-fPIC -std=c++11 -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
 
 # Add test cpp file
 add_executable(glogg_tests

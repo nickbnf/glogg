@@ -136,6 +136,10 @@ class INotifyWatchTower {
     // Only written at initialisation so no protection needed.
     const int inotify_fd;
 
+    // Exist as long as the onject exists, to ensure observers won't try to
+    // call us if we are dead.
+    std::shared_ptr<void> heartBeat_;
+
     // Private member functions
     static void removeNotification( INotifyWatchTower* watch_tower,
             std::shared_ptr<void> notification );

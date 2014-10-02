@@ -142,7 +142,8 @@ INotifyWatchTower::ObservedFileList::addWatchedDirectory( std::string dir_name )
     return dir;
 }
 
-INotifyWatchTower::INotifyWatchTower() : thread_(), inotify_fd( inotify_init() )
+INotifyWatchTower::INotifyWatchTower() : thread_(), inotify_fd( inotify_init() ),
+    heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
     running_ = true;
     thread_ = std::thread( &INotifyWatchTower::run, this );
@@ -214,12 +215,14 @@ INotifyWatchTower::Registration INotifyWatchTower::addFile(
         existing_observed_file->addCallback( ptr );
     }
 
+    std::weak_ptr<void> weakHeartBeat(heartBeat_);
 
     // Returns a shared pointer that removes its own entry
     // from the list of watched stuff when it goes out of scope!
     // Uses a custom deleter to do the work.
-    return std::shared_ptr<void>( 0x0, [this, ptr] (void*) {
-            removeNotification( this, ptr );
+    return std::shared_ptr<void>( 0x0, [this, ptr, weakHeartBeat] (void*) {
+            if ( auto heart_beat = weakHeartBeat.lock() )
+                removeNotification( this, ptr );
             } );
 }
 
@@ -271,7 +274,7 @@ void INotifyWatchTower::run()
             int nb = read( inotify_fd, buffer, sizeof buffer );
             if ( nb > 0 )
             {
-                std::lock_guard<std::mutex> lock( observers_mutex_ );
+                std::unique_lock<std::mutex> lock( observers_mutex_ );
 
                 ObservedFile* file = nullptr;
 

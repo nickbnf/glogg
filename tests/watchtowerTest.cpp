@@ -191,6 +191,58 @@ TEST_F( WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification )
 
 /*****/
 
+class WatchTowerSymlink: public WatchTowerSingleFile {
+  public:
+    string symlink_name;
+
+    void SetUp() override {
+        file_name = createTempEmptyFile();
+        symlink_name = createTempEmptyFile();
+        remove( symlink_name.c_str() );
+        symlink( file_name.c_str(), symlink_name.c_str() );
+
+        registration = registerFile( symlink_name );
+    }
+
+    void TearDown() override {
+        remove( symlink_name.c_str() );
+        remove( file_name.c_str() );
+    }
+};
+
+TEST_F( WatchTowerSymlink, AppendingToTheSymlinkYieldsANotification ) {
+    appendDataToFile( symlink_name );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerSymlink, AppendingToTheTargetYieldsANotification ) {
+    appendDataToFile( file_name );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerSymlink, RemovingTheSymlinkYieldsANotification ) {
+    remove( symlink_name.c_str() );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerSymlink, RemovingTheTargetYieldsANotification ) {
+    remove( file_name.c_str() );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
+    auto new_target = createTempEmptyFile();
+    remove( symlink_name.c_str() );
+    waitNotificationReceived();
+
+    symlink( new_target.c_str(), symlink_name.c_str() );
+    ASSERT_TRUE( waitNotificationReceived() );
+
+    remove( new_target.c_str() );
+}
+
+/*****/
+
 TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
     auto mortal_watch_tower = new INotifyWatchTower();
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );

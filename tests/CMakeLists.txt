@@ -1,12 +1,20 @@
+INCLUDE (CheckSymbolExists)
+
 cmake_minimum_required(VERSION 3.0.0)
 project(glogg_tests)
 
+# Qt
 find_program(QT_QMAKE_EXECUTABLE NAMES qmake PATHS $ENV{QT_DIR}/bin)
 find_package(Qt5Widgets REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Configuration
+check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
+
+configure_file(../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Setup testing
 enable_testing()
@@ -52,7 +60,7 @@ set(glogg_SOURCES
     ../src/qtfilewatcher.cpp
     ../src/tabbedcrawlerwidget.cpp
     ../src/filewatcher.cpp
-    ../src/inotifywatchtower.cpp )
+)
 
 set(glogg_HEADERS
     ../src/mainwindow.h
@@ -61,13 +69,14 @@ set(glogg_HEADERS
 
 set(glogg_TESTS
     testtest.cpp
-    filewatcherTest.cpp
     watchtowerTest.cpp
 )
 
 # Options
 if (WIN32)
-    set(FileWatcherEngine_SOURCES ../src/winfilewatcher.cpp)
+    set(FileWatcherEngine_SOURCES ../src/winwatchtower.cpp)
+else (WIN32)
+    set(FileWatcherEngine_SOURCES ../src/inotifywatchtower.cpp)
 endif (WIN32)
 
 # Qt

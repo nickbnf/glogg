@@ -12,7 +12,7 @@ class FileWatcherBehaviour: public testing::Test {
 
     void SetUp() override {
 #ifdef _WIN32
-        file_watcher = make_shared<WinFileWatcher>();
+        // file_watcher = make_shared<WinFileWatcher>();
 #endif
     }
 };

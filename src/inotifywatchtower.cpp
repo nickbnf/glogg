@@ -142,7 +142,7 @@ INotifyWatchTower::ObservedFileList::addWatchedDirectory( std::string dir_name )
     return dir;
 }
 
-INotifyWatchTower::INotifyWatchTower() : thread_(), inotify_fd( inotify_init() ),
+INotifyWatchTower::INotifyWatchTower() : WatchTower(), thread_(), inotify_fd( inotify_init() ),
     heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
     running_ = true;
@@ -155,7 +155,7 @@ INotifyWatchTower::~INotifyWatchTower()
     thread_.join();
 }
 
-INotifyWatchTower::Registration INotifyWatchTower::addFile(
+WatchTower::Registration INotifyWatchTower::addFile(
         const std::string& file_name,
         std::function<void()> notification )
 {

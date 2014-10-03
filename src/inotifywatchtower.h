@@ -20,38 +20,29 @@
 #ifndef INOTIFYWATCHTOWER_H
 #define INOTIFYWATCHTOWER_H
 
+#include "watchtower.h"
+
 #include <vector>
 #include <list>
-#include <functional>
 #include <map>
 #include <thread>
 #include <atomic>
 #include <mutex>
-#include <string>
-
 
 // The WatchTower keeps track of a set of files and asynchronously
 // signal changes to them.
 // In glogg, there is only one instance of the WatchTower and it
 // keeps track of all the open files.
 // This is implemented using Linux specific inotify.
-class INotifyWatchTower {
+class INotifyWatchTower : public WatchTower {
   public:
-    // Registration object to implement RAII
-    using Registration = std::shared_ptr<void>;
-
     // Create an empty watchtower
     INotifyWatchTower();
     // Destroy the object
     ~INotifyWatchTower();
 
-    // Add a file to the notification list. notification will be called when
-    // the file is modified, moved or deleted.
-    // Lifetime of the notification is tied to the Registration object returned.
-    // Note the notification function is called with a mutex held and in a
-    // third party thread, beware of races!
     Registration addFile( const std::string& file_name,
-            std::function<void()> notification );
+            std::function<void()> notification ) override;
 
   private:
     // List of files and observers

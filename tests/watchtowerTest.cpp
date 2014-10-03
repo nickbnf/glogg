@@ -1,5 +1,7 @@
 #include "gmock/gmock.h"
 
+#include "config.h"
+
 #include <cstdio>
 #include <fcntl.h>
 
@@ -9,20 +11,22 @@
 #include <mutex>
 #include <chrono>
 
-#include "inotifywatchtower.h"
+#ifdef _WIN32
+#  include "winwatchtower.h"
+#else
+#  include "inotifywatchtower.h"
+#endif
 
 using namespace std;
 using namespace testing;
 
 class WatchTowerBehaviour: public testing::Test {
   public:
-    INotifyWatchTower watch_tower;
-
-    void SetUp() override {
 #ifdef _WIN32
-        file_watcher = make_shared<WinFileWatcher>();
+    shared_ptr<WatchTower> watch_tower = make_shared<WinWatchTower>();
+#else
+    shared_ptr<WatchTower> watch_tower = make_shared<INotifyWatchTower>();
 #endif
-    }
 
     string createTempEmptyFile( string file_name = "" ) {
         const char* name;
@@ -48,11 +52,11 @@ class WatchTowerBehaviour: public testing::Test {
 
 TEST_F( WatchTowerBehaviour, AcceptsAnExistingFileToWatch ) {
     auto file_name = createTempEmptyFile();
-    auto registration = watch_tower.addFile( file_name, [] (void) { } );
+    auto registration = watch_tower->addFile( file_name, [] (void) { } );
 }
 
 TEST_F( WatchTowerBehaviour, AcceptsANonExistingFileToWatch ) {
-    auto registration = watch_tower.addFile( getNonExistingFileName(), [] (void) { } );
+    auto registration = watch_tower->addFile( getNonExistingFileName(), [] (void) { } );
 }
 
 /*****/
@@ -62,16 +66,16 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
     static const int TIMEOUT;
 
     string file_name;
-    INotifyWatchTower::Registration registration;
+    WatchTower::Registration registration;
 
     mutex mutex_;
     condition_variable cv_;
     int notification_received = 0;
 
-    INotifyWatchTower::Registration registerFile( const string& file_name ) {
+    WatchTower::Registration registerFile( const string& file_name ) {
         weak_ptr<void> weakHeartbeat( heartbeat_ );
 
-        auto reg = watch_tower.addFile( file_name, [this, weakHeartbeat] (void) {
+        auto reg = watch_tower->addFile( file_name, [this, weakHeartbeat] (void) {
             // Ensure the fixture object is still alive using the heartbeat
             if ( auto keep = weakHeartbeat.lock() ) {
                 unique_lock<mutex> lock(mutex_);
@@ -191,6 +195,7 @@ TEST_F( WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification )
 
 /*****/
 
+#ifdef HAVE_SYMLINK
 class WatchTowerSymlink: public WatchTowerSingleFile {
   public:
     string symlink_name;
@@ -240,13 +245,16 @@ TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
 
     remove( new_target.c_str() );
 }
+#endif //HAVE_SYMLINK
 
 /*****/
 
 TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
+#if 0
     auto mortal_watch_tower = new INotifyWatchTower();
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );
 
     delete mortal_watch_tower;
     // reg will be destroyed after the watch_tower
+#endif
 }

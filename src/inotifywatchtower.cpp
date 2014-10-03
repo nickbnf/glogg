@@ -202,7 +202,7 @@ INotifyWatchTower::Registration INotifyWatchTower::addFile(
             dir = observed_file_list_.addWatchedDirectory( dir_name );
 
             dir->dir_wd_ = inotify_add_watch( inotify_fd, dir_name.c_str(),
-                    IN_CREATE );
+                    IN_CREATE | IN_MOVED_TO );
 
             LOG(logDEBUG) << "INotifyWatchTower::addFile dir watched wd " << dir->dir_wd_;
         }
@@ -278,16 +278,17 @@ void INotifyWatchTower::run()
 
                 ObservedFile* file = nullptr;
 
-                if ( event->mask & ( IN_MODIFY | IN_DELETE_SELF ) )
+                if ( event->mask & ( IN_MODIFY | IN_DELETE_SELF | IN_MOVE_SELF ) )
                 {
-                    LOG(logDEBUG) << "IN_MODIFY | IN_DELETE_SELF for wd " << event->wd;
+                    LOG(logDEBUG) << "IN_MODIFY | IN_DELETE_SELF  | IN_MOVE_SELF for wd " << event->wd;
 
                     // Retrieve the file
                     file = observed_file_list_.searchByFileOrSymlinkWd( event->wd );
                 }
-                else if ( event->mask & IN_CREATE )
+                else if ( event->mask & ( IN_CREATE | IN_MOVED_TO ) )
                 {
-                    LOG(logDEBUG4) << "IN_CREATE for wd " << event->wd << " name: " << event->name;
+                    LOG(logDEBUG4) << "IN_CREATE | IN_MOVED_TO for wd " << event->wd
+                        << " name: " << event->name;
 
                     // Retrieve the file
                     file = observed_file_list_.searchByDirWdAndName( event->wd, event->name );
@@ -299,7 +300,7 @@ void INotifyWatchTower::run()
                 }
                 else
                 {
-                    LOG(logDEBUG) << "Unexpected event: " << event->mask;
+                    LOG(logDEBUG) << "Unexpected event: " << event->mask << " wd " << event->wd;
                 }
 
                 // Call all our observers

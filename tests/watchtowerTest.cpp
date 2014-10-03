@@ -66,7 +66,7 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
 
     mutex mutex_;
     condition_variable cv_;
-    bool notification_received = false;
+    int notification_received = 0;
 
     INotifyWatchTower::Registration registerFile( const string& file_name ) {
         weak_ptr<void> weakHeartbeat( heartbeat_ );
@@ -75,7 +75,7 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
             // Ensure the fixture object is still alive using the heartbeat
             if ( auto keep = weakHeartbeat.lock() ) {
                 unique_lock<mutex> lock(mutex_);
-                notification_received = true;
+                ++notification_received;
                 cv_.notify_one();
             } } );
 
@@ -91,15 +91,15 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
         registration = registerFile( file_name );
     }
 
-    bool waitNotificationReceived() {
+    bool waitNotificationReceived( int number = 1 ) {
         unique_lock<mutex> lock(mutex_);
-        bool success = cv_.wait_for( lock, std::chrono::milliseconds(TIMEOUT),
-                [this] { return notification_received; } );
+        bool result = ( cv_.wait_for( lock, std::chrono::milliseconds(TIMEOUT),
+                [this, number] { return notification_received >= number; } ) );
 
         // Reinit the notification
-        notification_received = false;
+        notification_received = 0;
 
-        return success;
+        return result;
     }
 
     void appendDataToFile( const string& file_name ) {
@@ -152,9 +152,49 @@ TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
     remove( second_file_name.c_str() );
 }
 
+TEST_F( WatchTowerSingleFile, TwoWatchesOnSameFileYieldsTwoNotifications ) {
+    auto second_registration = registerFile( file_name );
+    appendDataToFile( file_name );
+
+    ASSERT_TRUE( waitNotificationReceived( 2 ) );
+}
+
+TEST_F( WatchTowerSingleFile, RemovingOneWatchOfTwoStillYieldsOneNotification ) {
+    {
+        auto second_registration = registerFile( file_name );
+    }
+
+    appendDataToFile( file_name );
+    ASSERT_TRUE( waitNotificationReceived( 1 ) );
+}
+
+TEST_F( WatchTowerSingleFile, RenamingTheFileYieldsANotification ) {
+    auto new_file_name = createTempEmptyFile();
+    remove( new_file_name.c_str() );
+
+    rename( file_name.c_str(), new_file_name.c_str() );
+    ASSERT_TRUE( waitNotificationReceived() );
+
+    rename( new_file_name.c_str(), file_name.c_str() );
+}
+
+TEST_F( WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification ) {
+    remove( file_name.c_str() );
+    waitNotificationReceived();
+
+    auto new_file_name = createTempEmptyFile();
+    appendDataToFile( new_file_name );
+
+    rename( new_file_name.c_str(), file_name.c_str() );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
+/*****/
+
 TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
     auto mortal_watch_tower = new INotifyWatchTower();
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );
 
     delete mortal_watch_tower;
+    // reg will be destroyed after the watch_tower
 }

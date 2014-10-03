@@ -34,114 +34,6 @@ namespace {
     std::string directory_path( const std::string& path );
 };
 
-// ObservedFileList class
-INotifyWatchTower::ObservedFile*
-    INotifyWatchTower::ObservedFileList::searchByName( const std::string& file_name )
-{
-    // Look for an existing observer on this file
-    auto existing_observer = observed_files_.begin();
-    for ( ; existing_observer != observed_files_.end(); ++existing_observer )
-    {
-        if ( existing_observer->file_name_ == file_name )
-        {
-            LOG(logDEBUG) << "Found " << file_name;
-            break;
-        }
-    }
-
-    if ( existing_observer != observed_files_.end() )
-        return &( *existing_observer );
-    else
-        return nullptr;
-}
-
-INotifyWatchTower::ObservedFile*
-    INotifyWatchTower::ObservedFileList::searchByFileOrSymlinkWd( int wd )
-{
-    auto result = find_if( observed_files_.begin(), observed_files_.end(),
-            [wd] (ObservedFile file) -> bool {
-                return ( wd == file.file_wd_ ) || ( wd == file.symlink_wd_ ); } );
-
-    if ( result != observed_files_.end() )
-        return &( *result );
-    else
-        return nullptr;
-}
-
-INotifyWatchTower::ObservedFile*
-    INotifyWatchTower::ObservedFileList::searchByDirWdAndName( int wd, const char* name )
-{
-    auto dir = find_if( observed_dirs_.begin(), observed_dirs_.end(),
-            [wd] (std::pair<std::string,std::weak_ptr<ObservedDir>> d) -> bool {
-            return ( wd == std::shared_ptr<ObservedDir>(d.second)->dir_wd_ ); } );
-
-    std::string path = dir->first + "/" + name;
-
-    // LOG(logDEBUG) << "Testing path: " << path;
-
-    // Looking for the path in the files we are watching
-    return searchByName( path );
-}
-
-INotifyWatchTower::ObservedFile*
-    INotifyWatchTower::ObservedFileList::addNewObservedFile( ObservedFile new_observed )
-{
-    auto new_file = observed_files_.insert( std::begin( observed_files_ ), new_observed );
-
-    return &( *new_file );
-}
-
-std::shared_ptr<INotifyWatchTower::ObservedFile>
-    INotifyWatchTower::ObservedFileList::removeCallback(
-            std::shared_ptr<void> callback )
-{
-    std::shared_ptr<ObservedFile> returned_file = nullptr;
-
-    for ( auto observer = begin( observed_files_ );
-            observer != end( observed_files_ ); )
-    {
-        LOG(logDEBUG) << "Examining entry for " << observer->file_name_;
-
-        std::vector<std::shared_ptr<void>>& callbacks = observer->callbacks;
-        callbacks.erase( std::remove(
-                    std::begin( callbacks ), std::end( callbacks ), callback ),
-                std::end( callbacks ) );
-
-        /* See if all notifications have been deleted for this file */
-        if ( callbacks.empty() ) {
-            LOG(logDEBUG) << "Empty notification list, removing the watched file";
-            returned_file = std::make_shared<ObservedFile>( *observer );
-            observer = observed_files_.erase( observer );
-        }
-        else {
-            ++observer;
-        }
-    }
-
-    return returned_file;
-}
-
-std::shared_ptr<INotifyWatchTower::ObservedDir>
-INotifyWatchTower::ObservedFileList::watchedDirectory( std::string dir_name )
-{
-    std::shared_ptr<ObservedDir> dir = nullptr;
-
-    if ( observed_dirs_.find( dir_name ) != std::end( observed_dirs_ ) )
-        dir = std::shared_ptr<ObservedDir>( observed_dirs_[ dir_name ] );
-
-    return dir;
-}
-
-std::shared_ptr<INotifyWatchTower::ObservedDir>
-INotifyWatchTower::ObservedFileList::addWatchedDirectory( std::string dir_name )
-{
-    auto dir = std::make_shared<ObservedDir>();
-
-    observed_dirs_[ dir_name ] = std::weak_ptr<ObservedDir>( dir );
-
-    return dir;
-}
-
 INotifyWatchTower::INotifyWatchTower() : WatchTower(), thread_(), inotify_fd( inotify_init() ),
     heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
@@ -191,17 +83,14 @@ WatchTower::Registration INotifyWatchTower::addFile(
         auto new_file = observed_file_list_.addNewObservedFile(
                 ObservedFile( file_name, ptr, wd, symlink_wd ) );
 
-        std::string dir_name = directory_path( file_name );
-
-        auto dir = observed_file_list_.watchedDirectory( dir_name );
-
+        auto dir = observed_file_list_.watchedDirectoryForFile( file_name );
         if ( ! dir )
         {
-            LOG(logDEBUG) << "INotifyWatchTower::addFile dir " << dir_name
+            LOG(logDEBUG) << "INotifyWatchTower::addFile dir for " << file_name
                 << " not watched, adding...";
-            dir = observed_file_list_.addWatchedDirectory( dir_name );
+            dir = observed_file_list_.addWatchedDirectoryForFile( file_name );
 
-            dir->dir_wd_ = inotify_add_watch( inotify_fd, dir_name.c_str(),
+            dir->dir_wd_ = inotify_add_watch( inotify_fd, dir->path.c_str(),
                     IN_CREATE | IN_MOVED_TO );
 
             LOG(logDEBUG) << "INotifyWatchTower::addFile dir watched wd " << dir->dir_wd_;
@@ -333,12 +222,5 @@ namespace {
 
         lstat( file_name.c_str(), &buf );
         return ( S_ISLNK(buf.st_mode) );
-    }
-
-    std::string directory_path( const std::string& path )
-    {
-        size_t slash_pos = path.rfind( "/" );
-
-        return std::string( path, 0, slash_pos );
     }
 };

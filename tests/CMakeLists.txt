@@ -22,7 +22,8 @@ include_directories(
     $ENV{GMOCK_HOME}/include
     $ENV{GMOCK_HOME}/gtest/include
     $ENV{BOOST_ROOT}/
-    ../src/ )
+    ../src/
+)
 link_directories($ENV{GMOCK_HOME}/mybuild $ENV{GMOCK_HOME}/mybuild/gtest)
 
 # Sources
@@ -60,6 +61,7 @@ set(glogg_SOURCES
     ../src/qtfilewatcher.cpp
     ../src/tabbedcrawlerwidget.cpp
     ../src/filewatcher.cpp
+    ../src/watchtower.cpp
 )
 
 set(glogg_HEADERS
@@ -69,12 +71,15 @@ set(glogg_HEADERS
 
 set(glogg_TESTS
     testtest.cpp
+    filewatcherTest.cpp
     watchtowerTest.cpp
 )
 
 # Options
 if (WIN32)
-    set(FileWatcherEngine_SOURCES ../src/winwatchtower.cpp)
+    set(FileWatcherEngine_SOURCES
+        ../src/winwatchtower.cpp
+    )
 else (WIN32)
     set(FileWatcherEngine_SOURCES ../src/inotifywatchtower.cpp)
 endif (WIN32)

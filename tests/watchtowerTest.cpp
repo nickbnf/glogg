@@ -20,6 +20,30 @@
 using namespace std;
 using namespace testing;
 
+#ifdef _WIN32
+#if 0
+TEST( WatchTowerBase, NotifyAFile ) {
+    int fd = creat( "c:\\test", S_IRUSR | S_IWUSR );
+    close( fd );
+
+    auto watch_tower = make_shared<WinWatchTower>();
+    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
+    {
+        auto registration = watch_tower->addFile( "c:\\test", [] {} );
+
+        std::this_thread::sleep_for( std::chrono::milliseconds(5000) );
+
+        static const char* string = "Test line\n";
+        fd = open( "c:\\test", O_WRONLY | O_APPEND );
+        write( fd, (void*) string, strlen( string ) );
+        close( fd );
+
+        std::this_thread::sleep_for( std::chrono::milliseconds(10000) );
+    }
+}
+#endif
+#endif
+
 class WatchTowerBehaviour: public testing::Test {
   public:
 #ifdef _WIN32
@@ -37,7 +61,11 @@ class WatchTowerBehaviour: public testing::Test {
         else {
             // I know tmpnam is bad but I need control over the file
             // and it is the only one which exits on Windows.
+#if _WIN32
+            name = _tempnam( "c:\\temp", "glogg_test" );
+#else
             name = tmpnam( nullptr );
+#endif
         }
         int fd = creat( name, S_IRUSR | S_IWUSR );
         close( fd );
@@ -122,7 +150,13 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
     shared_ptr<void> heartbeat_;
 };
 
+#ifdef _WIN32
+const int WatchTowerSingleFile::TIMEOUT = 2000;
+#else
 const int WatchTowerSingleFile::TIMEOUT = 20;
+#endif
+
+#include "log.h"
 
 TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsAppended ) {
     appendDataToFile( file_name );

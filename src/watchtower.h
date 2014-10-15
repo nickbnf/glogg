@@ -24,13 +24,26 @@ class WatchTower {
             std::function<void()> notification ) = 0;
 
   protected:
+    // Win32 notification variables
+    static const int READ_DIR_CHANGE_BUFFER_SIZE = 4096;
+
     // Utility classes
+    struct ProtocolInfo {
+        static const unsigned long buffer_length_ = READ_DIR_CHANGE_BUFFER_SIZE;
+        char buffer_[buffer_length_];
+    };
 
     // List of files and observers
     struct ObservedDir {
         ObservedDir( const std::string this_path ) : path { this_path } {}
+
+        // Returns the address of the protocol specific informations
+        ProtocolInfo* protocolInfo() { return &protocol_info_; }
+
         std::string path;
         int dir_wd_;
+        // Contains data specific to the protocol (inotify/Win32...)
+        ProtocolInfo protocol_info_;
     };
 
     struct ObservedFile {

@@ -6,6 +6,57 @@
 
 #include "log.h"
 
+namespace {
+    std::string shortstringize( const std::wstring& long_string );
+};
+
+// Utility classes
+
+WinNotificationInfoList::WinNotificationInfoList( const char* buffer, size_t buffer_size )
+{
+    pointer_ = buffer;
+    next_ = updateCurrentNotification( pointer_ );
+}
+
+const char* WinNotificationInfoList::updateCurrentNotification(
+        const char* new_position )
+{
+    using Action = WinNotificationInfo::Action;
+
+    static const std::map<uint16_t, Action> int_to_action = {
+        { FILE_ACTION_ADDED, Action::ADDED },
+        { FILE_ACTION_REMOVED, Action::REMOVED },
+        { FILE_ACTION_MODIFIED, Action::MODIFIED },
+        { FILE_ACTION_RENAMED_OLD_NAME, Action::RENAMED_OLD_NAME },
+        { FILE_ACTION_RENAMED_NEW_NAME, Action::RENAMED_NEW_NAME },
+    };
+
+    uint32_t next_offset = *( reinterpret_cast<const uint32_t*>( new_position ) );
+    uint32_t action      = *( reinterpret_cast<const uint32_t*>( new_position ) + 1 );
+    uint32_t length      = *( reinterpret_cast<const uint32_t*>( new_position ) + 2 );
+
+    const std::wstring file_name = { reinterpret_cast<const wchar_t*>( new_position + 12 ), length / 2 };
+
+    LOG(logDEBUG) << "Next: " << next_offset;
+    LOG(logDEBUG) << "Action: " << action;
+    LOG(logDEBUG) << "Length: " << length;
+
+    current_notification_ = WinNotificationInfo( int_to_action.at( action ), file_name );
+
+    return ( next_offset == 0 ) ? nullptr : new_position + next_offset;
+}
+
+const char* WinNotificationInfoList::advanceToNext()
+{
+    pointer_ = next_;
+    if ( pointer_ )
+        next_ = updateCurrentNotification( pointer_ );
+
+    return pointer_;
+}
+
+// WinWatchTower
+
 WinWatchTower::WinWatchTower() : WatchTower(), thread_(), hCompPort_(0)
 {
     running_ = true;
@@ -61,7 +112,7 @@ void WinWatchTower::addFile( const std::string& file_name )
         LOG(logDEBUG) << "Adding dir for: " << file_name;
         auto dir = file_list_.addWatchedDirectoryForFile( file_name );
 
-        // LOG(logDEBUG) << "Dir is: " << dir->path;
+        LOG(logDEBUG) << "Dir is: " << dir->path;
         // Open the directory
         HANDLE hDir = CreateFile( dir->path.c_str(),
                 FILE_LIST_DIRECTORY,
@@ -82,13 +133,13 @@ void WinWatchTower::addFile( const std::string& file_name )
         memset( &overlapped_, 0, sizeof overlapped_ );
 
         bool status = ReadDirectoryChangesW( hDir,
-                &buffer_[0],//<--FILE_NOTIFY_INFORMATION records are put into this buffer
-                READ_DIR_CHANGE_BUFFER_SIZE,
+                dir->protocolInfo()->buffer_,
+                dir->protocolInfo()->buffer_length_,
                 false,
                 FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
-                &buffer_length_,//this var not set when using asynchronous mechanisms...
+                &buffer_length_,// not set when using asynchronous mechanisms...
                 &overlapped_,
-                NULL); //no completion routine!
+                NULL);          // no completion routine
 
         LOG(logDEBUG) << "ReadDirectoryChangesW returned " << status << " (" << GetLastError() << ")";
     }
@@ -116,7 +167,7 @@ void WinWatchTower::run()
                 &num_bytes,
                 &key,
                 &lpOverlapped,
-                INFINITE);
+                2000 );
 
         LOG(logDEBUG) << "One " << status << " " << key;
 
@@ -124,6 +175,29 @@ void WinWatchTower::run()
             // Extract the dir from the completion key
             ObservedDir* dir = reinterpret_cast<ObservedDir*>( key );
             LOG(logDEBUG) << "Got event for dir " << dir->path;
+
+            WinNotificationInfoList notification_info(
+                    dir->protocolInfo()->buffer_,
+                    dir->protocolInfo()->buffer_length_ );
+
+            for ( auto notification : notification_info ) {
+                std::string file_path = dir->path + shortstringize( notification.fileName() );
+                auto file = file_list_.searchByName( file_path );
+
+                if ( file )
+                {
+                    for ( auto observer: file->callbacks )
+                    {
+                        // Here we have to cast our generic pointer back to
+                        // the function pointer in order to perform the call
+                        const std::shared_ptr<std::function<void()>> fptr =
+                            std::static_pointer_cast<std::function<void()>>( observer );
+                        // The observer is called with the mutex held,
+                        // Let's hope it doesn't do anything too funky.
+                        (*fptr)();
+                    }
+                }
+            }
         }
         else {
             LOG(logDEBUG) << "Signaled";
@@ -140,3 +214,20 @@ void WinWatchTower::run()
     }
     LOG(logDEBUG) << "Closing thread";
 }
+
+#include <iostream>
+
+namespace {
+    std::string shortstringize( const std::wstring& long_string )
+    {
+        std::string short_result {};
+
+        for ( wchar_t c : long_string ) {
+            // FIXME: that does not work for non ASCII char!!
+            char short_c = static_cast<char>( c & 0x00FF );
+            short_result += short_c;
+        }
+
+        return short_result;
+    }
+};

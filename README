@@ -44,6 +44,19 @@ extracted.
 The documentation is built and installed automatically if 'markdown'
 is found.
 
+## Tests
+
+The tests are built using CMake, and require Qt5 and the Google Mocks source.
+
+cd tests
+mkdir build
+cd build
+export QT_DIR=/path/to/qt/if/non/standard
+export GMOCK_HOME=/path/to/gmock
+cmake ..
+make
+./glogg_tests
+
 ## Contact
 
 Please visit glogg's website: http://glogg.bonnefon.org/

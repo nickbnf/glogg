@@ -37,7 +37,6 @@ SOURCES += \
     src/savedsearches.cpp \
     src/infoline.cpp \
     src/menuactiontooltipbehavior.cpp \
-    src/inotifywatchtower.cpp \
     src/selection.cpp \
     src/quickfind.cpp \
     src/quickfindpattern.cpp \
@@ -92,6 +91,7 @@ HEADERS += \
     src/tabbedcrawlerwidget.h \
     src/loadingstatus.h \
     src/externalcom.h \
+    src/platformfilewatcher.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -250,10 +250,16 @@ linux-g++ {
 inotify {
     message("File watching using inotify")
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_INOTIFY
-    SOURCES += src/inotifyfilewatcher.cpp
-    HEADERS += src/inotifyfilewatcher.h
+    SOURCES += src/platformfilewatcher.cpp src/inotifywatchtower.cpp
+    HEADERS += src/platformfilewatcher.cpp src/inotifywatchtower.h
 }
 else {
-    SOURCES += src/qtfilewatcher.cpp
-    HEADERS += src/qtfilewatcher.h
+    win32 {
+        SOURCES += src/platformfilewatcher.cpp src/winwatchtower.cpp src/watchtower.cpp
+        HEADERS += src/platformfilewatcher.cpp src/winwatchtower.h src/watchtower.h
+    }
+    else {
+        SOURCES += src/qtfilewatcher.cpp
+        HEADERS += src/qtfilewatcher.h
+    }
 }

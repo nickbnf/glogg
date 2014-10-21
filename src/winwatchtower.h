@@ -90,10 +90,11 @@ class WinWatchTower : public WatchTower {
     // Create an empty watchtower
     WinWatchTower();
     // Destroy the object
-    ~WinWatchTower();
+    ~WinWatchTower() override;
 
     Registration addFile( const std::string& file_name,
             std::function<void()> notification ) override;
+
   private:
     // An action which will be picked up by the worker thread.
     class Action {
@@ -123,8 +124,18 @@ class WinWatchTower : public WatchTower {
 
     // List of followed files/directory
     // (access is only done by the WatchTower thread)
+    std::mutex file_list_mutex_;
     ObservedFileList file_list_;
 
-    void addFile( const std::string& file_name );
+    // Exist as long as the onject exists, to ensure observers won't try to
+    // call us if we are dead.
+    std::shared_ptr<void> heartBeat_;
+
+    // Private member functions
+    void serialisedAddFile(
+            const std::string& file_name,
+           std::shared_ptr<std::function<void()>> notification );
+    static void removeNotification( WinWatchTower* watch_tower,
+            std::shared_ptr<void> notification );
     void run();
 };

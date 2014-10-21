@@ -135,9 +135,12 @@ namespace {
 
 #ifdef _WIN32
         if ( slash_pos == std::string::npos ) {
-            slash_pos = path.rfind( '\\' ) + 1;
-            LOG(logDEBUG) << "Pos = " << slash_pos;
+            slash_pos = path.rfind( '\\' );
         }
+
+        // We need to include the final slash on Windows
+        ++slash_pos;
+        LOG(logDEBUG) << "Pos = " << slash_pos;
 #endif
 
         return std::string( path, 0, slash_pos );

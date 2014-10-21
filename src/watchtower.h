@@ -1,3 +1,6 @@
+#ifndef WATCHTOWER_H
+#define WATCHTOWER_H
+
 #include <memory>
 #include <functional>
 #include <string>
@@ -29,6 +32,7 @@ class WatchTower {
 
     // Utility classes
     struct ProtocolInfo {
+        void* handle_;
         static const unsigned long buffer_length_ = READ_DIR_CHANGE_BUFFER_SIZE;
         char buffer_[buffer_length_];
     };
@@ -52,7 +56,7 @@ class WatchTower {
                 std::shared_ptr<void> callback,
                 int file_wd,
                 int symlink_wd ) : file_name_( file_name ) {
-            callbacks.push_back( callback );
+            addCallback( callback );
 
             file_wd_    = file_wd;
             symlink_wd_ = symlink_wd;
@@ -115,3 +119,5 @@ class WatchTower {
         std::map<int, ObservedFile*> by_dir_wd_;
     };
 };
+
+#endif

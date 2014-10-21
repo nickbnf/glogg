@@ -62,6 +62,7 @@ set(glogg_SOURCES
     ../src/tabbedcrawlerwidget.cpp
     ../src/filewatcher.cpp
     ../src/watchtower.cpp
+    ../src/platformfilewatcher.cpp
 )
 
 set(glogg_HEADERS

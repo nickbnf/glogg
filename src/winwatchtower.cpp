@@ -8,6 +8,7 @@
 
 namespace {
     std::string shortstringize( const std::wstring& long_string );
+    std::wstring longstringize( const std::string& short_string );
 };
 
 // Utility classes
@@ -76,11 +77,13 @@ WatchTower::Registration WinWatchTower::addFile(
         const std::string& file_name,
         std::function<void()> notification )
 {
+    std::shared_ptr<std::function<void()>> ptr( new std::function<void()>(std::move( notification ) ) );
+
     // Add will be done in the watchtower thread
     {
         std::lock_guard<std::mutex> lk( action_mutex_ );
-        scheduled_action_ = std::make_shared<Action>( [this, file_name] {
-            addFile( file_name );
+        scheduled_action_ = std::make_shared<Action>( [this, file_name, ptr] {
+            serialisedAddFile( file_name, ptr );
         } );
     }
 
@@ -93,15 +96,33 @@ WatchTower::Registration WinWatchTower::addFile(
         action_done_cv_.wait( lk,
                 [this]{ return ( scheduled_action_ != nullptr ); } );
     }
+
+    std::weak_ptr<void> weakHeartBeat(heartBeat_);
+
+    // Returns a shared pointer that removes its own entry
+    // from the list of watched stuff when it goes out of scope!
+    // Uses a custom deleter to do the work.
+    return std::shared_ptr<void>( 0x0, [this, ptr, weakHeartBeat] (void*) {
+            if ( auto heart_beat = weakHeartBeat.lock() )
+                removeNotification( this, ptr );
+            } );
 }
 
+//
+// Private functions
+//
+
 // Add a file (run in the context of the WatchTower thread)
-void WinWatchTower::addFile( const std::string& file_name )
+void WinWatchTower::serialisedAddFile(
+        const std::string& file_name,
+        std::shared_ptr<std::function<void()>> notification )
 {
+    std::lock_guard<std::mutex> lock( file_list_mutex_ );
+
     LOG(logDEBUG) << "Adding: " << file_name;
     auto new_file = file_list_.addNewObservedFile( ObservedFile(
                 file_name,
-                nullptr, 0, 0 )
+                notification, 0, 0 )
             );
 
     LOG(logDEBUG) << "new_file = " << new_file;
@@ -114,13 +135,20 @@ void WinWatchTower::addFile( const std::string& file_name )
 
         LOG(logDEBUG) << "Dir is: " << dir->path;
         // Open the directory
-        HANDLE hDir = CreateFile( dir->path.c_str(),
+        HANDLE hDir = CreateFile(
+#ifdef UNICODE
+                longstringize( dir->path ).c_str(),
+#else
+                ( dir->path ).c_str(),
+#endif
                 FILE_LIST_DIRECTORY,
                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                 NULL,
                 OPEN_EXISTING,
                 FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
                 NULL);
+
+        dir->protocolInfo()->handle_ = hDir;
 
         //create a IO completion port/or associate this key with
         //the existing IO completion port
@@ -147,6 +175,30 @@ void WinWatchTower::addFile( const std::string& file_name )
     new_file->dir_ = dir;
 }
 
+// Called by the dtor for a registration object
+void WinWatchTower::removeNotification(
+        WinWatchTower* watch_tower, std::shared_ptr<void> notification )
+{
+    LOG(logDEBUG) << "WinWatchTower::removeNotification";
+
+    std::lock_guard<std::mutex> lock( watch_tower->file_list_mutex_ );
+
+    auto file =
+        watch_tower->file_list_.removeCallback( notification );
+
+    /*
+    if ( file )
+    {
+        LOG(logDEBUG) << "INotifyWatchTower::removeNotification removing inotify wd "
+            << file->file_wd_ << " symlink_wd " << file->symlink_wd_;
+        if ( file->file_wd_ >= 0 )
+            inotify_rm_watch( watch_tower->inotify_fd, file->file_wd_ );
+        if ( file->symlink_wd_ >= 0 )
+            inotify_rm_watch( watch_tower->inotify_fd, file->symlink_wd_ );
+    }
+    */
+}
+
 // Run in its own thread
 void WinWatchTower::run()
 {
@@ -161,13 +213,11 @@ void WinWatchTower::run()
         DWORD num_bytes = 0;
         LPOVERLAPPED lpOverlapped = 0;
 
-        LOG(logDEBUG) << "Thread";
-
         BOOL status = GetQueuedCompletionStatus( hCompPort_,
                 &num_bytes,
                 &key,
                 &lpOverlapped,
-                2000 );
+                INFINITE );
 
         LOG(logDEBUG) << "One " << status << " " << key;
 
@@ -181,7 +231,10 @@ void WinWatchTower::run()
                     dir->protocolInfo()->buffer_length_ );
 
             for ( auto notification : notification_info ) {
+                std::lock_guard<std::mutex> lock( file_list_mutex_ );
+
                 std::string file_path = dir->path + shortstringize( notification.fileName() );
+                LOG(logDEBUG) << "File is " << file_path;
                 auto file = file_list_.searchByName( file_path );
 
                 if ( file )
@@ -198,6 +251,16 @@ void WinWatchTower::run()
                     }
                 }
             }
+
+            // Re-listen for changes
+            bool status = ReadDirectoryChangesW( dir->protocolInfo()->handle_,
+                    dir->protocolInfo()->buffer_,
+                    dir->protocolInfo()->buffer_length_,
+                    false,
+                    FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+                    &buffer_length_,// not set when using asynchronous mechanisms...
+                    &overlapped_,
+                    NULL);          // no completion routine
         }
         else {
             LOG(logDEBUG) << "Signaled";
@@ -213,9 +276,12 @@ void WinWatchTower::run()
         }
     }
     LOG(logDEBUG) << "Closing thread";
-}
 
-#include <iostream>
+    // Just in case someone is waiting for an action to complete
+    std::lock_guard<std::mutex> lk( action_mutex_ );
+    scheduled_action_ = nullptr;
+    action_done_cv_.notify_all();
+}
 
 namespace {
     std::string shortstringize( const std::wstring& long_string )
@@ -229,5 +295,17 @@ namespace {
         }
 
         return short_result;
+    }
+
+    std::wstring longstringize( const std::string& short_string )
+    {
+        std::wstring long_result {};
+
+        for ( char c : short_string ) {
+            wchar_t long_c = static_cast<wchar_t>( c );
+            long_result += long_c;
+        }
+
+        return long_result;
     }
 };

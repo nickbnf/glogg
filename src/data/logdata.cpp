@@ -29,8 +29,8 @@
 
 #include "logdata.h"
 #include "logfiltereddata.h"
-#ifdef GLOGG_SUPPORTS_INOTIFY
-#include "inotifyfilewatcher.h"
+#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+#include "platformfilewatcher.h"
 #else
 #include "qtfilewatcher.h"
 #endif
@@ -73,8 +73,8 @@ LogData::LogData() : AbstractLogData(), linePosition_(),
     currentOperation_ = nullptr;
     nextOperation_    = nullptr;
 
-#ifdef GLOGG_SUPPORTS_INOTIFY
-    fileWatcher_ = std::make_shared<INotifyFileWatcher>();
+#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+    fileWatcher_ = std::make_shared<PlatformFileWatcher>();
 #else
     fileWatcher_ = std::make_shared<QtFileWatcher>();
 #endif

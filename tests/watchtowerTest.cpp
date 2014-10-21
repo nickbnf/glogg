@@ -11,6 +11,8 @@
 #include <mutex>
 #include <chrono>
 
+#include "log.h"
+
 #ifdef _WIN32
 #  include "winwatchtower.h"
 #else
@@ -19,30 +21,6 @@
 
 using namespace std;
 using namespace testing;
-
-#ifdef _WIN32
-#if 0
-TEST( WatchTowerBase, NotifyAFile ) {
-    int fd = creat( "c:\\test", S_IRUSR | S_IWUSR );
-    close( fd );
-
-    auto watch_tower = make_shared<WinWatchTower>();
-    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
-    {
-        auto registration = watch_tower->addFile( "c:\\test", [] {} );
-
-        std::this_thread::sleep_for( std::chrono::milliseconds(5000) );
-
-        static const char* string = "Test line\n";
-        fd = open( "c:\\test", O_WRONLY | O_APPEND );
-        write( fd, (void*) string, strlen( string ) );
-        close( fd );
-
-        std::this_thread::sleep_for( std::chrono::milliseconds(10000) );
-    }
-}
-#endif
-#endif
 
 class WatchTowerBehaviour: public testing::Test {
   public:
@@ -74,11 +52,19 @@ class WatchTowerBehaviour: public testing::Test {
     }
 
     string getNonExistingFileName() {
+#if _WIN32
+        return string( _tempnam( "c:\\temp", "inexistant" ) );
+#else
         return string( tmpnam( nullptr ) );
+#endif
+    }
+
+    WatchTowerBehaviour() {
+        // Default to quiet, but increase to debug
+        FILELog::setReportingLevel( logERROR );
     }
 };
 
-#if 0
 TEST_F( WatchTowerBehaviour, AcceptsAnExistingFileToWatch ) {
     auto file_name = createTempEmptyFile();
     auto registration = watch_tower->addFile( file_name, [] (void) { } );
@@ -87,7 +73,6 @@ TEST_F( WatchTowerBehaviour, AcceptsAnExistingFileToWatch ) {
 TEST_F( WatchTowerBehaviour, AcceptsANonExistingFileToWatch ) {
     auto registration = watch_tower->addFile( getNonExistingFileName(), [] (void) { } );
 }
-#endif
 
 /*****/
 
@@ -102,10 +87,10 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
     condition_variable cv_;
     int notification_received = 0;
 
-    WatchTower::Registration registerFile( const string& file_name ) {
+    WatchTower::Registration registerFile( const string& filename ) {
         weak_ptr<void> weakHeartbeat( heartbeat_ );
 
-        auto reg = watch_tower->addFile( file_name, [this, weakHeartbeat] (void) {
+        auto reg = watch_tower->addFile( filename, [this, weakHeartbeat] (void) {
             // Ensure the fixture object is still alive using the heartbeat
             if ( auto keep = weakHeartbeat.lock() ) {
                 unique_lock<mutex> lock(mutex_);
@@ -116,13 +101,15 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
         return reg;
     }
 
-    WatchTowerSingleFile() : WatchTowerBehaviour(),
-        heartbeat_( shared_ptr<void>( (void*) 0xDEADC0DE, [] (void*) {} ) )
-    { }
-
-    void SetUp() override {
+    WatchTowerSingleFile()
+        : heartbeat_( shared_ptr<void>( (void*) 0xDEADC0DE, [] (void*) {} ) )
+    {
         file_name = createTempEmptyFile();
         registration = registerFile( file_name );
+    }
+
+    ~WatchTowerSingleFile() {
+        remove( file_name.c_str() );
     }
 
     bool waitNotificationReceived( int number = 1 ) {
@@ -143,36 +130,36 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
         close( fd );
     }
 
-    void TearDown() override {
-        remove( file_name.c_str() );
-    }
-
   private:
     // Heartbeat ensures the object is still alive
     shared_ptr<void> heartbeat_;
 };
 
 #ifdef _WIN32
-const int WatchTowerSingleFile::TIMEOUT = 20000;
+const int WatchTowerSingleFile::TIMEOUT = 5000;
 #else
 const int WatchTowerSingleFile::TIMEOUT = 20;
 #endif
 
-#include "log.h"
+TEST_F( WatchTowerSingleFile, Simple ) {
+}
 
-TEST_F( WatchTowerSingleFile, DISABLED_SignalsWhenAWatchedFileIsAppended ) {
+TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsAppended ) {
     appendDataToFile( file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
 TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsRemoved) {
+    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
     remove( file_name.c_str() );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
 TEST_F( WatchTowerSingleFile, SignalsWhenADeletedFileReappears ) {
+    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
     remove( file_name.c_str() );
     waitNotificationReceived();
+    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
     createTempEmptyFile( file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
@@ -286,13 +273,15 @@ TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
 /*****/
 
 TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
-#if 0
+#if _WIN32
+    auto mortal_watch_tower = new WinWatchTower();
+#else
     auto mortal_watch_tower = new INotifyWatchTower();
+#endif
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );
 
     delete mortal_watch_tower;
     // reg will be destroyed after the watch_tower
-#endif
 }
 
 /*****/

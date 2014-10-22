@@ -26,6 +26,8 @@
 #include <atomic>
 #include <mutex>
 
+struct inotify_event;
+
 // The WatchTower keeps track of a set of files and asynchronously
 // signal changes to them.
 // In glogg, there is only one instance of the WatchTower and it
@@ -61,6 +63,7 @@ class INotifyWatchTower : public WatchTower {
     // Private member functions
     static void removeNotification( INotifyWatchTower* watch_tower,
             std::shared_ptr<void> notification );
+    size_t processINotifyEvent( const struct inotify_event* event );
     void run();
 };
 

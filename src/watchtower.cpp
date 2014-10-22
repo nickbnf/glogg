@@ -47,14 +47,23 @@ WatchTower::ObservedFile*
 {
     auto dir = find_if( observed_dirs_.begin(), observed_dirs_.end(),
             [wd] (std::pair<std::string,std::weak_ptr<ObservedDir>> d) -> bool {
-            return ( wd == std::shared_ptr<ObservedDir>(d.second)->dir_wd_ ); } );
+            if ( auto dir = d.second.lock() ) {
+                return ( wd == dir->dir_wd_ );
+            }
+            else {
+                return false; } } );
 
-    std::string path = dir->first + "/" + name;
+    if ( dir != observed_dirs_.end() ) {
+        std::string path = dir->first + "/" + name;
 
-    // LOG(logDEBUG) << "Testing path: " << path;
+        // LOG(logDEBUG) << "Testing path: " << path;
 
-    // Looking for the path in the files we are watching
-    return searchByName( path );
+        // Looking for the path in the files we are watching
+        return searchByName( path );
+    }
+    else {
+        return nullptr;
+    }
 }
 
 WatchTower::ObservedFile*

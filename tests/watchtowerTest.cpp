@@ -30,6 +30,17 @@ class WatchTowerBehaviour: public testing::Test {
     shared_ptr<WatchTower> watch_tower = make_shared<INotifyWatchTower>();
 #endif
 
+    const char* createTempName()
+    {
+        const char* name;
+#if _WIN32
+        name = _tempnam( "c:\\temp", "glogg_test" );
+#else
+        name = tmpnam( nullptr );
+#endif
+        return name;
+    }
+
     string createTempEmptyFile( string file_name = "" ) {
         const char* name;
 
@@ -39,11 +50,7 @@ class WatchTowerBehaviour: public testing::Test {
         else {
             // I know tmpnam is bad but I need control over the file
             // and it is the only one which exits on Windows.
-#if _WIN32
-            name = _tempnam( "c:\\temp", "glogg_test" );
-#else
-            name = tmpnam( nullptr );
-#endif
+            name = createTempName();
         }
         int fd = creat( name, S_IRUSR | S_IWUSR );
         close( fd );
@@ -61,7 +68,7 @@ class WatchTowerBehaviour: public testing::Test {
 
     WatchTowerBehaviour() {
         // Default to quiet, but increase to debug
-        FILELog::setReportingLevel( logERROR );
+        FILELog::setReportingLevel( logDEBUG );
     }
 };
 
@@ -179,14 +186,14 @@ TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
     remove( second_file_name.c_str() );
 }
 
-TEST_F( WatchTowerSingleFile, DISABLED_TwoWatchesOnSameFileYieldsTwoNotifications ) {
+TEST_F( WatchTowerSingleFile, TwoWatchesOnSameFileYieldsTwoNotifications ) {
     auto second_registration = registerFile( file_name );
     appendDataToFile( file_name );
 
     ASSERT_TRUE( waitNotificationReceived( 2 ) );
 }
 
-TEST_F( WatchTowerSingleFile, DISABLED_RemovingOneWatchOfTwoStillYieldsOneNotification ) {
+TEST_F( WatchTowerSingleFile, RemovingOneWatchOfTwoStillYieldsOneNotification ) {
     {
         auto second_registration = registerFile( file_name );
     }
@@ -195,21 +202,20 @@ TEST_F( WatchTowerSingleFile, DISABLED_RemovingOneWatchOfTwoStillYieldsOneNotifi
     ASSERT_TRUE( waitNotificationReceived( 1 ) );
 }
 
-TEST_F( WatchTowerSingleFile, DISABLED_RenamingTheFileYieldsANotification ) {
-    auto new_file_name = createTempEmptyFile();
-    remove( new_file_name.c_str() );
+TEST_F( WatchTowerSingleFile, RenamingTheFileYieldsANotification ) {
+    auto new_file_name = createTempName();
 
-    rename( file_name.c_str(), new_file_name.c_str() );
+    rename( file_name.c_str(), new_file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 
-    rename( new_file_name.c_str(), file_name.c_str() );
+    rename( new_file_name, file_name.c_str() );
 }
 
-TEST_F( WatchTowerSingleFile, DISABLED_RenamingAFileToTheWatchedNameYieldsANotification ) {
+TEST_F( WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification ) {
     remove( file_name.c_str() );
     waitNotificationReceived();
 
-    auto new_file_name = createTempEmptyFile();
+    std::string new_file_name = createTempEmptyFile();
     appendDataToFile( new_file_name );
 
     rename( new_file_name.c_str(), file_name.c_str() );
@@ -286,6 +292,7 @@ TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
 
 /*****/
 
+#ifdef _WIN32
 class WinNotificationInfoListTest : public testing::Test {
   public:
     using Action = WinNotificationInfo::Action;
@@ -336,3 +343,4 @@ TEST_F( WinNotificationInfoListTest, CanBeIteratedByFor ) {
         notification.action();
     }
 }
+#endif

@@ -26,11 +26,15 @@ ObservedFile* ObservedFileList::searchByName( const std::string& file_name )
         return nullptr;
 }
 
-ObservedFile* ObservedFileList::searchByFileOrSymlinkWd( int wd )
+ObservedFile* ObservedFileList::searchByFileOrSymlinkWd(
+        INotifyWatchTowerDriver::FileId file_id,
+        INotifyWatchTowerDriver::SymlinkId symlink_id )
 {
     auto result = find_if( observed_files_.begin(), observed_files_.end(),
-            [wd] (ObservedFile file) -> bool {
-                return ( wd == file.file_wd_ ) || ( wd == file.symlink_wd_ ); } );
+            [file_id, symlink_id] (ObservedFile file) -> bool {
+                return ( file_id == file.file_id_ ) ||
+                    ( symlink_id == file.symlink_id_ );
+                } );
 
     if ( result != observed_files_.end() )
         return &( *result );
@@ -38,12 +42,13 @@ ObservedFile* ObservedFileList::searchByFileOrSymlinkWd( int wd )
         return nullptr;
 }
 
-ObservedFile* ObservedFileList::searchByDirWdAndName( int wd, const char* name )
+ObservedFile* ObservedFileList::searchByDirWdAndName(
+        INotifyWatchTowerDriver::DirId id, const char* name )
 {
     auto dir = find_if( observed_dirs_.begin(), observed_dirs_.end(),
-            [wd] (std::pair<std::string,std::weak_ptr<ObservedDir>> d) -> bool {
+            [id] (std::pair<std::string,std::weak_ptr<ObservedDir>> d) -> bool {
             if ( auto dir = d.second.lock() ) {
-                return ( wd == dir->dir_wd_ );
+                return ( id == dir->dir_id_ );
             }
             else {
                 return false; } } );

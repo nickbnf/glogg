@@ -22,7 +22,7 @@
 #ifdef _WIN32
 #include "winwatchtower.h"
 #else
-#include "inotifywatchtower.h"
+#include "inotifywatchtowerdriver.h"
 #endif
 
 #include "log.h"
@@ -37,7 +37,7 @@ PlatformFileWatcher::PlatformFileWatcher() : FileWatcher()
 #ifdef _WIN32
         watch_tower_ = std::make_shared<WinWatchTower>();
 #else
-        watch_tower_ = std::make_shared<INotifyWatchTower>();
+        watch_tower_ = std::make_shared<WatchTower>();
 #endif
     }
 }

@@ -16,8 +16,10 @@
 #ifdef _WIN32
 #  include "winwatchtower.h"
 #else
-#  include "inotifywatchtower.h"
+#  include "inotifywatchtowerdriver.h"
 #endif
+
+#include "watchtower.h"
 
 using namespace std;
 using namespace testing;
@@ -27,7 +29,7 @@ class WatchTowerBehaviour: public testing::Test {
 #ifdef _WIN32
     shared_ptr<WatchTower> watch_tower = make_shared<WinWatchTower>();
 #else
-    shared_ptr<WatchTower> watch_tower = make_shared<INotifyWatchTower>();
+    shared_ptr<WatchTower> watch_tower = make_shared<WatchTower>();
 #endif
 
     const char* createTempName()
@@ -282,7 +284,7 @@ TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
 #if _WIN32
     auto mortal_watch_tower = new WinWatchTower();
 #else
-    auto mortal_watch_tower = new INotifyWatchTower();
+    auto mortal_watch_tower = new WatchTower();
 #endif
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );
 

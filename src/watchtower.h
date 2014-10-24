@@ -7,19 +7,22 @@
 #include <mutex>
 
 #include "watchtowerlist.h"
-#include "watchtowerdriver.h"
+
+// FIXME
+#include "inotifywatchtowerdriver.h"
 
 // Allow the client to register for notification on an arbitrary number
 // of files. It will be notified to any change (creation/deletion/modification)
 // on those files.
 // It is passed a platform specific driver.
+// template<typename Driver>
 class WatchTower {
   public:
     // Registration object to implement RAII
     using Registration = std::shared_ptr<void>;
 
     // Create an empty watchtower
-    WatchTower( std::shared_ptr<WatchTowerDriver> driver );
+    WatchTower();
     // Destroy the object
     ~WatchTower();
 
@@ -32,7 +35,8 @@ class WatchTower {
             std::function<void()> notification );
 
   private:
-    std::shared_ptr<WatchTowerDriver> driver_;
+    // The driver (parametrised)
+    INotifyWatchTowerDriver driver_;
 
     // List of files/dirs observed
     ObservedFileList observed_file_list_;

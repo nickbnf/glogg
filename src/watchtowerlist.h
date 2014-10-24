@@ -11,6 +11,9 @@
 #include <memory>
 #include <algorithm>
 
+// FIXME
+#include "inotifywatchtowerdriver.h"
+
 // Utility classes
 struct ProtocolInfo {
     // Win32 notification variables
@@ -29,7 +32,7 @@ struct ObservedDir {
     ProtocolInfo* protocolInfo() { return &protocol_info_; }
 
     std::string path;
-    int dir_wd_;
+    INotifyWatchTowerDriver::DirId dir_id_;
     // Contains data specific to the protocol (inotify/Win32...)
     ProtocolInfo protocol_info_;
 };
@@ -38,12 +41,13 @@ struct ObservedFile {
     ObservedFile(
             const std::string& file_name,
             std::shared_ptr<void> callback,
-            int file_wd,
-            int symlink_wd ) : file_name_( file_name ) {
+            INotifyWatchTowerDriver::FileId file_id,
+            INotifyWatchTowerDriver::SymlinkId symlink_id )
+        : file_name_( file_name ) {
         addCallback( callback );
 
-        file_wd_    = file_wd;
-        symlink_wd_ = symlink_wd;
+        file_id_    = file_id;
+        symlink_id_ = symlink_id;
         dir_        = nullptr;
     }
 
@@ -56,9 +60,9 @@ struct ObservedFile {
     std::vector<std::shared_ptr<void>> callbacks;
 
     // watch descriptor for the file itself
-    int file_wd_;
+    INotifyWatchTowerDriver::FileId file_id_;
     // watch descriptor for the symlink (if file is a symlink)
-    int symlink_wd_;
+    INotifyWatchTowerDriver::SymlinkId symlink_id_;
 
     // link to the dir containing the file
     std::shared_ptr<ObservedDir> dir_;
@@ -72,8 +76,11 @@ class ObservedFileList {
         ~ObservedFileList() = default;
 
         ObservedFile* searchByName( const std::string& file_name );
-        ObservedFile* searchByFileOrSymlinkWd( int wd );
-        ObservedFile* searchByDirWdAndName( int wd, const char* name );
+        ObservedFile* searchByFileOrSymlinkWd(
+                INotifyWatchTowerDriver::FileId file_id,
+                INotifyWatchTowerDriver::SymlinkId symlink_id );
+        ObservedFile* searchByDirWdAndName(
+                INotifyWatchTowerDriver::DirId id, const char* name );
 
         ObservedFile* addNewObservedFile( ObservedFile new_observed );
         // Remove a callback, remove and returns the file object if

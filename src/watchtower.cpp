@@ -2,6 +2,10 @@
 
 #include <algorithm>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "log.h"
 
 namespace {
@@ -9,8 +13,8 @@ namespace {
     std::string directory_path( const std::string& path );
 };
 
-WatchTower::WatchTower( std::shared_ptr<WatchTowerDriver> driver )
-    : thread_(), driver_( driver ),
+WatchTower::WatchTower()
+    : thread_(), driver_(),
     heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
     running_ = true;
@@ -38,19 +42,19 @@ WatchTower::Registration WatchTower::addFile(
 
     if ( ! existing_observed_file )
     {
-        WatchTowerDriver::SymlinkId* symlink_id = nullptr;
+        INotifyWatchTowerDriver::SymlinkId symlink_id;
 
-        auto file_id = driver_->addFile( file_name );
+        auto file_id = driver_.addFile( file_name );
 
         if ( isSymLink( file_name ) )
         {
             // We want to follow the name (as opposed to the inode)
             // so we watch the symlink as well.
-            symlink_id = driver_->addSymlink( file_name );
+            symlink_id = driver_.addSymlink( file_name );
         }
 
         auto new_file = observed_file_list_.addNewObservedFile(
-                ObservedFile( file_name, ptr, wd, symlink_wd ) );
+                ObservedFile( file_name, ptr, file_id, symlink_id ) );
 
         auto dir = observed_file_list_.watchedDirectoryForFile( file_name );
         if ( ! dir )
@@ -59,7 +63,7 @@ WatchTower::Registration WatchTower::addFile(
                 << " not watched, adding...";
             dir = observed_file_list_.addWatchedDirectoryForFile( file_name );
 
-            dir->dir_wd_ = driver_->addDir( dir->path );
+            dir->dir_id_ = driver_.addDir( dir->path );
         }
 
         new_file->dir_ = dir;
@@ -97,23 +101,29 @@ void WatchTower::removeNotification(
 
     if ( file )
     {
-        driver_->removeFile( file->file_wd_ );
-        driver_->removeSymlink( file->symlink_wd_ );
+        watch_tower->driver_.removeFile( file->file_id_ );
+        watch_tower->driver_.removeSymlink( file->symlink_id_ );
     }
 }
 
 // Run in its own thread
-void INotifyWatchTower::run()
+void WatchTower::run()
 {
-    struct pollfd fds[1];
+    while ( running_ ) {
+        auto files = driver_.waitAndProcessEvents(
+                &observed_file_list_, &observers_mutex_ );
 
-    fds[0].fd     = inotify_fd;
-    fds[0].events = POLLIN;
-
-    while ( running_ )
-    {
-        std::vector<ObservedFile*> files = waitAndProcessEvents( observed_file_list_, observers_mutex_ );
-
+        for ( auto file: files ) {
+            for ( auto observer: file->callbacks ) {
+                // Here we have to cast our generic pointer back to
+                // the function pointer in order to perform the call
+                const std::shared_ptr<std::function<void()>> fptr =
+                    std::static_pointer_cast<std::function<void()>>( observer );
+                // The observer is called with the mutex held,
+                // Let's hope it doesn't do anything too funky.
+                (*fptr)();
+            }
+        }
     }
 }
 

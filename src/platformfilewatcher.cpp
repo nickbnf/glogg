@@ -27,7 +27,9 @@
 
 #include "log.h"
 
-std::shared_ptr<WatchTower> PlatformFileWatcher::watch_tower_;
+using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+
+std::shared_ptr<PlatformWatchTower> PlatformFileWatcher::watch_tower_;
 
 PlatformFileWatcher::PlatformFileWatcher() : FileWatcher()
 {
@@ -37,7 +39,7 @@ PlatformFileWatcher::PlatformFileWatcher() : FileWatcher()
 #ifdef _WIN32
         watch_tower_ = std::make_shared<WinWatchTower>();
 #else
-        watch_tower_ = std::make_shared<WatchTower>();
+        watch_tower_ = std::make_shared<PlatformWatchTower>();
 #endif
     }
 }
@@ -52,7 +54,7 @@ void PlatformFileWatcher::addFile( const QString& fileName )
 
     watched_file_name_ = fileName;
 
-    notification_ = std::make_shared<WatchTower::Registration>(
+    notification_ = std::make_shared<Registration>(
             watch_tower_->addFile( fileName.toStdString(), [this, fileName] {
                 emit fileChanged( fileName ); } ) );
 }

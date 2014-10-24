@@ -24,12 +24,14 @@
 using namespace std;
 using namespace testing;
 
+using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+
 class WatchTowerBehaviour: public testing::Test {
   public:
 #ifdef _WIN32
     shared_ptr<WatchTower> watch_tower = make_shared<WinWatchTower>();
 #else
-    shared_ptr<WatchTower> watch_tower = make_shared<WatchTower>();
+    shared_ptr<PlatformWatchTower> watch_tower = make_shared<PlatformWatchTower>();
 #endif
 
     const char* createTempName()
@@ -90,13 +92,13 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
     static const int TIMEOUT;
 
     string file_name;
-    WatchTower::Registration registration;
+    Registration registration;
 
     mutex mutex_;
     condition_variable cv_;
     int notification_received = 0;
 
-    WatchTower::Registration registerFile( const string& filename ) {
+    Registration registerFile( const string& filename ) {
         weak_ptr<void> weakHeartbeat( heartbeat_ );
 
         auto reg = watch_tower->addFile( filename, [this, weakHeartbeat] (void) {
@@ -284,7 +286,7 @@ TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
 #if _WIN32
     auto mortal_watch_tower = new WinWatchTower();
 #else
-    auto mortal_watch_tower = new WatchTower();
+    auto mortal_watch_tower = new PlatformWatchTower();
 #endif
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );
 

@@ -26,6 +26,8 @@
 
 #include "watchtower.h"
 
+class INotifyWatchTower;
+
 // An implementation of FileWatcher, as an adapter to INotifyWatchTower.
 // This is Linux only, and require a recent version of the kernel.
 
@@ -47,13 +49,15 @@ class PlatformFileWatcher : public FileWatcher {
     void fileChanged( const QString& );
 
   private:
+    using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+
     // The following variables are protected by watched_files_mutex_
     QString watched_file_name_;
 
     // Reference to the (unique) watchtower.
-    static std::shared_ptr<WatchTower> watch_tower_;
+    static std::shared_ptr<PlatformWatchTower> watch_tower_;
 
-    std::shared_ptr<WatchTower::Registration> notification_;
+    std::shared_ptr<Registration> notification_;
 };
 
 #endif

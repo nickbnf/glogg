@@ -44,27 +44,11 @@ class INotifyWatchTower : public WatchTower {
             std::function<void()> notification ) override;
 
   private:
-    ObservedFileList observed_file_list_;
-
-    // Protects the observed_file_list_
-    std::mutex observers_mutex_;
-
-    // Thread
-    std::atomic_bool running_;
-    std::thread thread_;
-
     // Only written at initialisation so no protection needed.
     const int inotify_fd;
 
-    // Exist as long as the onject exists, to ensure observers won't try to
-    // call us if we are dead.
-    std::shared_ptr<void> heartBeat_;
-
     // Private member functions
-    static void removeNotification( INotifyWatchTower* watch_tower,
-            std::shared_ptr<void> notification );
     size_t processINotifyEvent( const struct inotify_event* event );
-    void run();
 };
 
 #endif

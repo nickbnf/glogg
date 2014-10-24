@@ -5,153 +5,124 @@
 #include "log.h"
 
 namespace {
+    bool isSymLink( const std::string& file_name );
     std::string directory_path( const std::string& path );
 };
 
-// ObservedFileList class
-WatchTower::ObservedFile*
-    WatchTower::ObservedFileList::searchByName( const std::string& file_name )
+WatchTower::WatchTower( std::shared_ptr<WatchTowerDriver> driver )
+    : thread_(), driver_( driver ),
+    heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
-    // Look for an existing observer on this file
-    auto existing_observer = observed_files_.begin();
-    for ( ; existing_observer != observed_files_.end(); ++existing_observer )
+    running_ = true;
+    thread_ = std::thread( &WatchTower::run, this );
+}
+
+WatchTower::~WatchTower()
+{
+    running_ = false;
+    thread_.join();
+}
+
+WatchTower::Registration WatchTower::addFile(
+        const std::string& file_name,
+        std::function<void()> notification )
+{
+    LOG(logDEBUG) << "WatchTower::addFile " << file_name;
+
+    std::lock_guard<std::mutex> lock( observers_mutex_ );
+
+    ObservedFile* existing_observed_file =
+        observed_file_list_.searchByName( file_name );
+
+    std::shared_ptr<std::function<void()>> ptr( new std::function<void()>(std::move( notification ) ) );
+
+    if ( ! existing_observed_file )
     {
-        if ( existing_observer->file_name_ == file_name )
+        WatchTowerDriver::SymlinkId* symlink_id = nullptr;
+
+        auto file_id = driver_->addFile( file_name );
+
+        if ( isSymLink( file_name ) )
         {
-            LOG(logDEBUG) << "Found " << file_name;
-            break;
+            // We want to follow the name (as opposed to the inode)
+            // so we watch the symlink as well.
+            symlink_id = driver_->addSymlink( file_name );
         }
-    }
 
-    if ( existing_observer != observed_files_.end() )
-        return &( *existing_observer );
+        auto new_file = observed_file_list_.addNewObservedFile(
+                ObservedFile( file_name, ptr, wd, symlink_wd ) );
+
+        auto dir = observed_file_list_.watchedDirectoryForFile( file_name );
+        if ( ! dir )
+        {
+            LOG(logDEBUG) << "INotifyWatchTower::addFile dir for " << file_name
+                << " not watched, adding...";
+            dir = observed_file_list_.addWatchedDirectoryForFile( file_name );
+
+            dir->dir_wd_ = driver_->addDir( dir->path );
+        }
+
+        new_file->dir_ = dir;
+    }
     else
-        return nullptr;
-}
-
-WatchTower::ObservedFile*
-    WatchTower::ObservedFileList::searchByFileOrSymlinkWd( int wd )
-{
-    auto result = find_if( observed_files_.begin(), observed_files_.end(),
-            [wd] (ObservedFile file) -> bool {
-                return ( wd == file.file_wd_ ) || ( wd == file.symlink_wd_ ); } );
-
-    if ( result != observed_files_.end() )
-        return &( *result );
-    else
-        return nullptr;
-}
-
-WatchTower::ObservedFile*
-    WatchTower::ObservedFileList::searchByDirWdAndName( int wd, const char* name )
-{
-    auto dir = find_if( observed_dirs_.begin(), observed_dirs_.end(),
-            [wd] (std::pair<std::string,std::weak_ptr<ObservedDir>> d) -> bool {
-            if ( auto dir = d.second.lock() ) {
-                return ( wd == dir->dir_wd_ );
-            }
-            else {
-                return false; } } );
-
-    if ( dir != observed_dirs_.end() ) {
-        std::string path = dir->first + "/" + name;
-
-        // LOG(logDEBUG) << "Testing path: " << path;
-
-        // Looking for the path in the files we are watching
-        return searchByName( path );
-    }
-    else {
-        return nullptr;
-    }
-}
-
-WatchTower::ObservedFile*
-    WatchTower::ObservedFileList::addNewObservedFile( ObservedFile new_observed )
-{
-    auto new_file = observed_files_.insert( std::begin( observed_files_ ), new_observed );
-
-    return &( *new_file );
-}
-
-std::shared_ptr<WatchTower::ObservedFile>
-    WatchTower::ObservedFileList::removeCallback(
-            std::shared_ptr<void> callback )
-{
-    std::shared_ptr<ObservedFile> returned_file = nullptr;
-
-    for ( auto observer = begin( observed_files_ );
-            observer != end( observed_files_ ); )
     {
-        LOG(logDEBUG) << "Examining entry for " << observer->file_name_;
-
-        std::vector<std::shared_ptr<void>>& callbacks = observer->callbacks;
-        callbacks.erase( std::remove(
-                    std::begin( callbacks ), std::end( callbacks ), callback ),
-                std::end( callbacks ) );
-
-        /* See if all notifications have been deleted for this file */
-        if ( callbacks.empty() ) {
-            LOG(logDEBUG) << "Empty notification list, removing the watched file";
-            returned_file = std::make_shared<ObservedFile>( *observer );
-            observer = observed_files_.erase( observer );
-        }
-        else {
-            ++observer;
-        }
+        existing_observed_file->addCallback( ptr );
     }
 
-    return returned_file;
+    std::weak_ptr<void> weakHeartBeat(heartBeat_);
+
+    // Returns a shared pointer that removes its own entry
+    // from the list of watched stuff when it goes out of scope!
+    // Uses a custom deleter to do the work.
+    return std::shared_ptr<void>( 0x0, [this, ptr, weakHeartBeat] (void*) {
+            if ( auto heart_beat = weakHeartBeat.lock() )
+                removeNotification( this, ptr );
+            } );
 }
 
-std::shared_ptr<WatchTower::ObservedDir>
-    WatchTower::ObservedFileList::watchedDirectory( const std::string& dir_name )
+//
+// Private functions
+//
+
+// Called by the dtor for a registration object
+void WatchTower::removeNotification(
+        WatchTower* watch_tower, std::shared_ptr<void> notification )
 {
-    std::shared_ptr<ObservedDir> dir = nullptr;
+    LOG(logDEBUG) << "WatchTower::removeNotification";
 
-    if ( observed_dirs_.find( dir_name ) != std::end( observed_dirs_ ) )
-        dir = observed_dirs_[ dir_name ].lock();
+    std::lock_guard<std::mutex> lock( watch_tower->observers_mutex_ );
 
-    return dir;
+    auto file =
+        watch_tower->observed_file_list_.removeCallback( notification );
+
+    if ( file )
+    {
+        driver_->removeFile( file->file_wd_ );
+        driver_->removeSymlink( file->symlink_wd_ );
+    }
 }
 
-std::shared_ptr<WatchTower::ObservedDir>
-    WatchTower::ObservedFileList::addWatchedDirectory( const std::string& dir_name )
+// Run in its own thread
+void INotifyWatchTower::run()
 {
-    auto dir = std::make_shared<ObservedDir>( dir_name );
+    struct pollfd fds[1];
 
-    observed_dirs_[ dir_name ] = std::weak_ptr<ObservedDir>( dir );
+    fds[0].fd     = inotify_fd;
+    fds[0].events = POLLIN;
 
-    return dir;
-}
+    while ( running_ )
+    {
+        std::vector<ObservedFile*> files = waitAndProcessEvents( observed_file_list_, observers_mutex_ );
 
-std::shared_ptr<WatchTower::ObservedDir>
-    WatchTower::ObservedFileList::watchedDirectoryForFile( const std::string& file_name )
-{
-    return watchedDirectory( directory_path( file_name ) );
-}
-
-std::shared_ptr<WatchTower::ObservedDir>
-    WatchTower::ObservedFileList::addWatchedDirectoryForFile( const std::string& file_name )
-{
-    return addWatchedDirectory( directory_path( file_name ) );
+    }
 }
 
 namespace {
-    std::string directory_path( const std::string& path )
+    bool isSymLink( const std::string& file_name )
     {
-        size_t slash_pos = path.rfind( '/' );
+        struct stat buf;
 
-#ifdef _WIN32
-        if ( slash_pos == std::string::npos ) {
-            slash_pos = path.rfind( '\\' );
-        }
-
-        // We need to include the final slash on Windows
-        ++slash_pos;
-        LOG(logDEBUG) << "Pos = " << slash_pos;
-#endif
-
-        return std::string( path, 0, slash_pos );
+        lstat( file_name.c_str(), &buf );
+        return ( S_ISLNK(buf.st_mode) );
     }
 };

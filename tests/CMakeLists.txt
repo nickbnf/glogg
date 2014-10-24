@@ -61,6 +61,7 @@ set(glogg_SOURCES
     ../src/qtfilewatcher.cpp
     ../src/tabbedcrawlerwidget.cpp
     ../src/filewatcher.cpp
+    ../src/watchtowerlist.cpp
     ../src/watchtower.cpp
     ../src/platformfilewatcher.cpp
 )
@@ -82,7 +83,7 @@ if (WIN32)
         ../src/winwatchtower.cpp
     )
 else (WIN32)
-    set(FileWatcherEngine_SOURCES ../src/inotifywatchtower.cpp)
+    set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)
 endif (WIN32)
 
 # Qt

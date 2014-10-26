@@ -18,7 +18,11 @@
 
 // FIXME: Where to put that so it is not dependant
 // Registration object to implement RAII
+#if __GNUC_MINOR__ < 7
+typedef std::shared_ptr<void> Registration;
+#else
 using Registration = std::shared_ptr<void>;
+#endif
 
 template<typename Driver>
 class WatchTower {
@@ -145,7 +149,7 @@ Registration WatchTower<Driver>::addFile(
     // Uses a custom deleter to do the work.
     return std::shared_ptr<void>( 0x0, [this, ptr, weakHeartBeat] (void*) {
             if ( auto heart_beat = weakHeartBeat.lock() )
-                removeNotification( this, ptr );
+                WatchTower<Driver>::removeNotification( this, ptr );
             } );
 }
 

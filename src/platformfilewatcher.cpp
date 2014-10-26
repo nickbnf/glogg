@@ -27,7 +27,11 @@
 
 #include "log.h"
 
+#if __GNUC_MINOR__ < 7
+typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
+#else
 using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+#endif
 
 std::shared_ptr<PlatformWatchTower> PlatformFileWatcher::watch_tower_;
 

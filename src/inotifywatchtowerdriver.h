@@ -14,34 +14,34 @@ class INotifyWatchTowerDriver {
       public:
         friend class INotifyWatchTowerDriver;
 
-        FileId() {}
+        FileId() { wd_ = -1; }
         bool operator==( const FileId& other ) const
         { return wd_ == other.wd_; }
       private:
         FileId( int wd ) { wd_ = wd; }
-        int wd_ = -1;
+        int wd_;
     };
     class DirId {
       public:
         friend class INotifyWatchTowerDriver;
 
-        DirId() {}
+        DirId() { wd_ = -1; }
         bool operator==( const DirId& other ) const
         { return wd_ == other.wd_; }
       private:
         DirId( int wd ) { wd_ = wd; }
-        int wd_ = -1;
+        int wd_;
     };
     class SymlinkId {
       public:
         friend class INotifyWatchTowerDriver;
 
-        SymlinkId() {}
+        SymlinkId() { wd_ = -1; }
         bool operator==( const SymlinkId& other ) const
         { return wd_ == other.wd_; }
       private:
         SymlinkId( int wd ) { wd_ = wd; }
-        int wd_ = -1;
+        int wd_;
     };
 
     INotifyWatchTowerDriver();

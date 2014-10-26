@@ -40,16 +40,21 @@ class PlatformFileWatcher : public FileWatcher {
     // Create the empty object
     PlatformFileWatcher();
     // Destroy the object
-    ~PlatformFileWatcher() override;
+    ~PlatformFileWatcher();
 
-    void addFile( const QString& fileName ) override;
-    void removeFile( const QString& fileName ) override;
+    void addFile( const QString& fileName );
+    void removeFile( const QString& fileName );
 
   signals:
     void fileChanged( const QString& );
 
   private:
+#if __GNUC_MINOR__ < 7
+    typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
+#else
     using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+#endif
+
 
     // The following variables are protected by watched_files_mutex_
     QString watched_file_name_;

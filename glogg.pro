@@ -91,7 +91,6 @@ HEADERS += \
     src/tabbedcrawlerwidget.h \
     src/loadingstatus.h \
     src/externalcom.h \
-    src/platformfilewatcher.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -250,8 +249,8 @@ linux-g++ {
 inotify {
     message("File watching using inotify")
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_INOTIFY
-    SOURCES += src/platformfilewatcher.cpp src/inotifywatchtower.cpp
-    HEADERS += src/platformfilewatcher.cpp src/inotifywatchtower.h
+    SOURCES += src/platformfilewatcher.cpp src/inotifywatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+    HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
 }
 else {
     win32 {

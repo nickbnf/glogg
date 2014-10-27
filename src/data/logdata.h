@@ -36,6 +36,9 @@
 
 class LogFilteredData;
 
+// Thrown when trying to attach an already attached LogData
+class CantReattachErr {};
+
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
 class LogData : public AbstractLogData {
@@ -49,16 +52,16 @@ class LogData : public AbstractLogData {
 
     enum MonitoredFileStatus { Unchanged, DataAdded, Truncated };
 
-    // Attaches (or reattaches) the LogData to a file on disk
+    // Attaches the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately
-    // Replace the ongoing loading if necessary.
     // Attaching to a non existant file works and the file is reported
     // to be empty.
+    // Reattaching is forbidden and will throw.
     void attachFile( const QString& fileName );
-    // Interrupt the loading and restore the previous file.
+    // Interrupt the loading and report a null file.
     // Does nothing if no loading in progress.
     void interruptLoading();
-    // Creates a new filtered data using the passed regexp
+    // Creates a new filtered data.
     // ownership is passed to the caller
     LogFilteredData* getNewFilteredData() const;
     // Returns the size if the file in bytes
@@ -150,19 +153,19 @@ class LogData : public AbstractLogData {
     MonitoredFileStatus fileChangedOnDisk_;
 
     // Implementation of virtual functions
-    virtual QString doGetLineString( qint64 line ) const;
-    virtual QString doGetExpandedLineString( qint64 line ) const;
-    virtual QStringList doGetLines( qint64 first, int number ) const;
-    virtual QStringList doGetExpandedLines( qint64 first, int number ) const;
-    virtual qint64 doGetNbLine() const;
-    virtual int doGetMaxLength() const;
-    virtual int doGetLineLength( qint64 line ) const;
+    QString doGetLineString( qint64 line ) const override;
+    QString doGetExpandedLineString( qint64 line ) const override;
+    QStringList doGetLines( qint64 first, int number ) const override;
+    QStringList doGetExpandedLines( qint64 first, int number ) const override;
+    qint64 doGetNbLine() const override;
+    int doGetMaxLength() const override;
+    int doGetLineLength( qint64 line ) const override;
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
 
     QString indexingFileName_;
-    std::unique_ptr<QFile> file_;
+    std::unique_ptr<QFile> attached_file_;
     LinePositionArray linePosition_;
     qint64 fileSize_;
     qint64 nbLines_;
@@ -181,5 +184,7 @@ class LogData : public AbstractLogData {
 
     LogDataWorkerThread workerThread_;
 };
+
+Q_DECLARE_METATYPE( LogData::MonitoredFileStatus );
 
 #endif

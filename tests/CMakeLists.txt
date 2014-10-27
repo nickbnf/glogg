@@ -6,8 +6,10 @@ cmake_minimum_required(VERSION 2.8.12)
 project(glogg_tests)
 
 # Qt
+
 find_program(QT_QMAKE_EXECUTABLE NAMES qmake PATHS $ENV{QT_DIR}/bin)
 find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Test REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -88,11 +90,22 @@ set(glogg_HEADERS
     ../src/marks.h
     ../src/filewatcher.h)
 
-set(glogg_TESTS
-    testtest.cpp
+# Unit tests
+set(glogg_UTESTS
     filewatcherTest.cpp
     watchtowerTest.cpp
 )
+
+# Integration tests
+set(glogg_ITESTS
+    logdataTest.cpp
+)
+
+# Performance tests
+set(glogg_PTESTS
+    logdataPerfTest.cpp
+)
+
 
 # Options
 if (WIN32)
@@ -104,21 +117,35 @@ else (WIN32)
 endif (WIN32)
 
 # Qt
-# QT4_WRAP_CPP(glogg_HEADERS_MOC ${glogg_HEADERS})
-# INCLUDE(${QT_USE_FILE})
-# ADD_DEFINITIONS(${QT_DEFINITIONS})
 set(CMAKE_CXX_FLAGS "${PARANOID_FLAGS} -fPIC -std=c++11 -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
 
 # Add test cpp file
 add_executable(glogg_tests
     ${glogg_SOURCES}
     ${FileWatcherEngine_SOURCES}
-    ${glogg_HEADERS_MOC}
-    ${glogg_TESTS}
+    ${glogg_UTESTS}
 )
 
 # Link test executable against gtest & gtest_main
 target_link_libraries(glogg_tests gmock gtest gtest_main pthread Qt5::Widgets)
+
+add_executable(glogg_itests
+    ${glogg_SOURCES}
+    ${FileWatcherEngine_SOURCES}
+    ${glogg_ITESTS}
+    itests.cpp
+)
+
+target_link_libraries(glogg_itests gmock gtest pthread Qt5::Widgets Qt5::Test)
+
+add_executable(glogg_ptests
+    ${glogg_SOURCES}
+    ${FileWatcherEngine_SOURCES}
+    ${glogg_PTESTS}
+    itests.cpp
+)
+
+target_link_libraries(glogg_ptests gmock gtest pthread Qt5::Widgets Qt5::Test)
 
 add_test(
     NAME glogg_tests

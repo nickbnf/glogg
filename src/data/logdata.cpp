@@ -66,10 +66,10 @@ LogData::LogData() : AbstractLogData(), linePosition_(),
     fileMutex_(), dataMutex_(), workerThread_()
 {
     // Start with an "empty" log
-    file_         = nullptr;
-    fileSize_     = 0;
-    nbLines_      = 0;
-    maxLength_    = 0;
+    attached_file_ = nullptr;
+    fileSize_      = 0;
+    nbLines_       = 0;
+    maxLength_     = 0;
     currentOperation_ = nullptr;
     nextOperation_    = nullptr;
 
@@ -94,6 +94,10 @@ LogData::LogData() : AbstractLogData(), linePosition_(),
 
 LogData::~LogData()
 {
+    // Remove the current file from the watch list
+    if ( attached_file_ )
+        fileWatcher_->removeFile( attached_file_->fileName() );
+
     // FIXME
     // workerThread_.stop();
 }
@@ -106,9 +110,9 @@ void LogData::attachFile( const QString& fileName )
 {
     LOG(logDEBUG) << "LogData::attachFile " << fileName.toStdString();
 
-    if ( file_ ) {
-        // Remove the current file from the watch list
-        fileWatcher_->removeFile( file_->fileName() );
+    if ( attached_file_ ) {
+        // We cannot reattach
+        throw CantReattachErr();
     }
 
     workerThread_.interrupt();
@@ -200,9 +204,9 @@ void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
 
-    fileWatcher_->removeFile( file_->fileName() );
+    // fileWatcher_->removeFile( file_->fileName() );
 
-    const QString name = file_->fileName();
+    const QString name = attached_file_->fileName();
     QFileInfo info( name );
 
     std::shared_ptr<LogDataOperation> newOperation;
@@ -250,29 +254,32 @@ void LogData::indexingFinished( LoadingStatus status )
         if ( !currentOperation_->getFilename().isNull() ) {
             QString newFileName = currentOperation_->getFilename();
 
-            if ( file_ ) {
+            if ( attached_file_ ) {
                 QMutexLocker locker( &fileMutex_ );
-                file_->setFileName( newFileName );
+                attached_file_->setFileName( newFileName );
             }
             else {
                 QMutexLocker locker( &fileMutex_ );
-                file_.reset( new QFile( newFileName ) );
+                attached_file_.reset( new QFile( newFileName ) );
+
+                // And we watch the file for updates
+                fileChangedOnDisk_ = Unchanged;
+                fileWatcher_->addFile( attached_file_->fileName() );
             }
         }
 
         // Update the modified date/time if the file exists
         lastModifiedDate_ = QDateTime();
-        QFileInfo fileInfo( *file_ );
+        QFileInfo fileInfo( *attached_file_ );
         if ( fileInfo.exists() )
             lastModifiedDate_ = fileInfo.lastModified();
     }
 
-    if ( file_ ) {
-        // And we watch the file for updates
-        fileChangedOnDisk_ = Unchanged;
-        fileWatcher_->addFile( file_->fileName() );
-    }
+    // FIXME be cleverer here as a notification might have arrived whilst we
+    // were indexing.
+    fileChangedOnDisk_ = Unchanged;
 
+    LOG(logDEBUG) << "Sending indexingFinished.";
     emit loadingFinished( status );
 
     // So now the operation is done, let's see if there is something
@@ -316,13 +323,13 @@ QString LogData::doGetLineString( qint64 line ) const
 
     dataMutex_.lock();
     fileMutex_.lock();
-    file_->open( QIODevice::ReadOnly );
+    attached_file_->open( QIODevice::ReadOnly );
 
-    file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
+    attached_file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
 
-    QString string = QString( file_->readLine() );
+    QString string = QString( attached_file_->readLine() );
 
-    file_->close();
+    attached_file_->close();
     fileMutex_.unlock();
     dataMutex_.unlock();
 
@@ -337,13 +344,13 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
 
     dataMutex_.lock();
     fileMutex_.lock();
-    file_->open( QIODevice::ReadOnly );
+    attached_file_->open( QIODevice::ReadOnly );
 
-    file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
+    attached_file_->seek( (line == 0) ? 0 : linePosition_[line-1] );
 
-    QByteArray rawString = file_->readLine();
+    QByteArray rawString = attached_file_->readLine();
 
-    file_->close();
+    attached_file_->close();
     fileMutex_.unlock();
     dataMutex_.unlock();
 
@@ -375,15 +382,15 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     dataMutex_.lock();
 
     fileMutex_.lock();
-    file_->open( QIODevice::ReadOnly );
+    attached_file_->open( QIODevice::ReadOnly );
 
     const qint64 first_byte = (first_line == 0) ? 0 : linePosition_[first_line-1];
     const qint64 last_byte  = linePosition_[last_line];
     // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " last_byte:" << last_byte;
-    file_->seek( first_byte );
-    QByteArray blob = file_->read( last_byte - first_byte );
+    attached_file_->seek( first_byte );
+    QByteArray blob = attached_file_->read( last_byte - first_byte );
 
-    file_->close();
+    attached_file_->close();
     fileMutex_.unlock();
 
     qint64 beginning = 0;
@@ -419,15 +426,15 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     dataMutex_.lock();
 
     fileMutex_.lock();
-    file_->open( QIODevice::ReadOnly );
+    attached_file_->open( QIODevice::ReadOnly );
 
     const qint64 first_byte = (first_line == 0) ? 0 : linePosition_[first_line-1];
     const qint64 last_byte  = linePosition_[last_line];
     // LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
-    file_->seek( first_byte );
-    QByteArray blob = file_->read( last_byte - first_byte );
+    attached_file_->seek( first_byte );
+    QByteArray blob = attached_file_->read( last_byte - first_byte );
 
-    file_->close();
+    attached_file_->close();
     fileMutex_.unlock();
 
     qint64 beginning = 0;

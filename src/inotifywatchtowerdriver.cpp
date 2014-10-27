@@ -3,6 +3,7 @@
 #include <sys/inotify.h>
 #include <poll.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "log.h"
 
@@ -10,6 +11,18 @@
 
 INotifyWatchTowerDriver::INotifyWatchTowerDriver() : inotify_fd_( inotify_init() )
 {
+    int pipefd[2];
+
+    pipe2( pipefd, O_NONBLOCK );
+
+    breaking_pipe_read_fd_  = pipefd[0];
+    breaking_pipe_write_fd_ = pipefd[1];
+}
+
+INotifyWatchTowerDriver::~INotifyWatchTowerDriver()
+{
+    close( breaking_pipe_read_fd_ );
+    close( breaking_pipe_write_fd_ );
 }
 
 INotifyWatchTowerDriver::FileId INotifyWatchTowerDriver::addFile(
@@ -70,34 +83,47 @@ std::vector<ObservedFile*> INotifyWatchTowerDriver::waitAndProcessEvents(
         std::mutex* list_mutex )
 {
     std::vector<ObservedFile*> files_to_notify;
-    struct pollfd fds[1];
+    struct pollfd fds[2];
 
     fds[0].fd      = inotify_fd_;
     fds[0].events  = POLLIN;
     fds[0].revents = 0;
 
-    int poll_ret = poll( fds, 1, 0 );
+    fds[1].fd      = breaking_pipe_read_fd_;
+    fds[1].events  = POLLIN;
+    fds[1].revents = 0;
 
-    if ( ( poll_ret > 0 ) && ( fds[0].revents & POLLIN ) )
+    int poll_ret = poll( fds, 2, -1 );
+
+    if ( poll_ret > 0 )
     {
-        LOG(logDEBUG4) << "Pollin for inotify";
-        char buffer[ INOTIFY_BUFFER_SIZE ]
-            __attribute__ ((aligned(__alignof__(struct inotify_event))));
-
-        ssize_t nb = read( inotify_fd_, buffer, sizeof( buffer ) );
-        if ( nb > 0 )
+        if ( fds[0].revents & POLLIN )
         {
-            size_t offset = 0;
-            while ( offset < nb ) {
-                const inotify_event* event =
-                    reinterpret_cast<const inotify_event*>( buffer + offset );
+            LOG(logDEBUG4) << "Pollin for inotify";
+            char buffer[ INOTIFY_BUFFER_SIZE ]
+                __attribute__ ((aligned(__alignof__(struct inotify_event))));
 
-                offset += processINotifyEvent( event, list, list_mutex, &files_to_notify );
+            ssize_t nb = read( inotify_fd_, buffer, sizeof( buffer ) );
+            if ( nb > 0 )
+            {
+                size_t offset = 0;
+                while ( offset < nb ) {
+                    const inotify_event* event =
+                        reinterpret_cast<const inotify_event*>( buffer + offset );
+
+                    offset += processINotifyEvent( event, list, list_mutex, &files_to_notify );
+                }
+            }
+            else
+            {
+                LOG(logWARNING) << "Error reading from inotify " << errno;
             }
         }
-        else
+
+        if ( fds[1].revents & POLLIN )
         {
-            LOG(logWARNING) << "Error reading from inotify " << errno;
+            uint8_t byte;
+            read( breaking_pipe_read_fd_, &byte, sizeof byte );
         }
     }
 
@@ -111,7 +137,7 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
         std::mutex* list_mutex,
         std::vector<ObservedFile*>* files_to_notify )
 {
-    LOG(logDEBUG) << "Event received: " << std::hex << event->mask;
+    LOG(logDEBUG4) << "Event received: " << std::hex << event->mask;
 
     std::unique_lock<std::mutex> lock( *list_mutex );
 
@@ -127,7 +153,7 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
     }
     else if ( event->mask & ( IN_CREATE | IN_MOVED_TO | IN_MOVED_FROM ) )
     {
-        LOG(logDEBUG) << "IN_CREATE | IN_MOVED_TO | IN_MOVED_FROM for wd " << event->wd
+        LOG(logDEBUG4) << "IN_CREATE | IN_MOVED_TO | IN_MOVED_FROM for wd " << event->wd
             << " name: " << event->name;
 
         // Retrieve the file
@@ -150,4 +176,11 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
     }
 
     return sizeof( struct inotify_event ) + event->len;
+}
+
+void INotifyWatchTowerDriver::interruptWait()
+{
+    char byte = 'X';
+
+    (void) write( breaking_pipe_write_fd_, (void*) &byte, sizeof byte );
 }

@@ -45,6 +45,13 @@ class INotifyWatchTowerDriver {
     };
 
     INotifyWatchTowerDriver();
+    ~INotifyWatchTowerDriver();
+
+    // No copy/assign/move please
+    INotifyWatchTowerDriver( const INotifyWatchTowerDriver& ) = delete;
+    INotifyWatchTowerDriver& operator=( const INotifyWatchTowerDriver& ) = delete;
+    INotifyWatchTowerDriver( const INotifyWatchTowerDriver&& ) = delete;
+    INotifyWatchTowerDriver& operator=( const INotifyWatchTowerDriver&& ) = delete;
 
     FileId addFile( const std::string& file_name );
     SymlinkId addSymlink( const std::string& file_name );
@@ -56,10 +63,15 @@ class INotifyWatchTowerDriver {
     std::vector<ObservedFile*> waitAndProcessEvents(
             ObservedFileList* list,
             std::mutex* list_mutex );
+    void interruptWait();
 
   private:
     // Only written at initialisation so no protection needed.
     const int inotify_fd_;
+
+    // Breaking pipe
+    int breaking_pipe_read_fd_;
+    int breaking_pipe_write_fd_;
 
     // Private member functions
     size_t processINotifyEvent( const struct inotify_event* event,

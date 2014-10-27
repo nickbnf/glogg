@@ -92,6 +92,7 @@ template<typename Driver>
 WatchTower<Driver>::~WatchTower()
 {
     running_ = false;
+    driver_.interruptWait();
     thread_.join();
 }
 

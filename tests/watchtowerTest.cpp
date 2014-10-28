@@ -13,26 +13,22 @@
 
 #include "log.h"
 
+#include "watchtower.h"
+
 #ifdef _WIN32
-#  include "winwatchtower.h"
+#  include "winwatchtowerdriver.h"
+using PlatformWatchTower = WatchTower<WinWatchTowerDriver>;
 #else
 #  include "inotifywatchtowerdriver.h"
+using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
 #endif
-
-#include "watchtower.h"
 
 using namespace std;
 using namespace testing;
 
-using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
-
 class WatchTowerBehaviour: public testing::Test {
   public:
-#ifdef _WIN32
-    shared_ptr<WatchTower> watch_tower = make_shared<WinWatchTower>();
-#else
     shared_ptr<PlatformWatchTower> watch_tower = make_shared<PlatformWatchTower>();
-#endif
 
     const char* createTempName()
     {
@@ -147,13 +143,10 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
 };
 
 #ifdef _WIN32
-const int WatchTowerSingleFile::TIMEOUT = 5000;
+const int WatchTowerSingleFile::TIMEOUT = 1000;
 #else
 const int WatchTowerSingleFile::TIMEOUT = 20;
 #endif
-
-TEST_F( WatchTowerSingleFile, Simple ) {
-}
 
 TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsAppended ) {
     appendDataToFile( file_name );
@@ -161,16 +154,13 @@ TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsAppended ) {
 }
 
 TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsRemoved) {
-    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
     remove( file_name.c_str() );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
 TEST_F( WatchTowerSingleFile, SignalsWhenADeletedFileReappears ) {
-    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
     remove( file_name.c_str() );
     waitNotificationReceived();
-    std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
     createTempEmptyFile( file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
@@ -181,6 +171,26 @@ TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
         auto second_registration = registerFile( second_file_name );
         appendDataToFile( second_file_name );
         ASSERT_TRUE( waitNotificationReceived() );
+    }
+
+    // The registration will be removed here.
+    appendDataToFile( second_file_name );
+    ASSERT_FALSE( waitNotificationReceived() );
+
+    remove( second_file_name.c_str() );
+}
+
+TEST_F( WatchTowerSingleFile, SignalsWhenSameFileIsFollowedMultipleTimes ) {
+    auto second_file_name = createTempEmptyFile();
+
+    for ( int i = 0; i < 1000; i++ )
+    {
+        std::this_thread::sleep_for( std::chrono::milliseconds( 50 ) );
+        auto second_registration = registerFile( second_file_name );
+        appendDataToFile( second_file_name );
+        ASSERT_TRUE( waitNotificationReceived() );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 50 ) );
+        appendDataToFile( second_file_name );
     }
 
     // The registration will be removed here.
@@ -283,11 +293,7 @@ TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
 /*****/
 
 TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
-#if _WIN32
-    auto mortal_watch_tower = new WinWatchTower();
-#else
     auto mortal_watch_tower = new PlatformWatchTower();
-#endif
     auto reg = mortal_watch_tower->addFile( "/tmp/test_file", [] (void) { } );
 
     delete mortal_watch_tower;

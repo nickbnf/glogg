@@ -254,8 +254,8 @@ inotify {
 }
 else {
     win32 {
-        SOURCES += src/platformfilewatcher.cpp src/winwatchtower.cpp src/watchtower.cpp
-        HEADERS += src/platformfilewatcher.cpp src/winwatchtower.h src/watchtower.h
+        SOURCES += src/platformfilewatcher.cpp src/winwatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+        HEADERS += src/platformfilewatcher.h src/winwatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
     }
     else {
         SOURCES += src/qtfilewatcher.cpp

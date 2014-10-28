@@ -1,15 +1,14 @@
 #ifndef WATCHTOWER_H
 #define WATCHTOWER_H
 
+#include "config.h"
+
 #include <memory>
 #include <atomic>
 #include <thread>
 #include <mutex>
 
 #include "watchtowerlist.h"
-
-// FIXME
-#include "inotifywatchtowerdriver.h"
 
 // Allow the client to register for notification on an arbitrary number
 // of files. It will be notified to any change (creation/deletion/modification)
@@ -45,7 +44,7 @@ class WatchTower {
     Driver driver_;
 
     // List of files/dirs observed
-    ObservedFileList observed_file_list_;
+    ObservedFileList<Driver> observed_file_list_;
 
     // Protects the observed_file_list_
     std::mutex observers_mutex_;
@@ -79,7 +78,7 @@ namespace {
     std::string directory_path( const std::string& path );
 };
 
-template<typename Driver>
+template <typename Driver>
 WatchTower<Driver>::WatchTower()
     : thread_(), driver_(),
     heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
@@ -88,7 +87,7 @@ WatchTower<Driver>::WatchTower()
     thread_ = std::thread( &WatchTower::run, this );
 }
 
-template<typename Driver>
+template <typename Driver>
 WatchTower<Driver>::~WatchTower()
 {
     running_ = false;
@@ -96,23 +95,23 @@ WatchTower<Driver>::~WatchTower()
     thread_.join();
 }
 
-template<typename Driver>
+template <typename Driver>
 Registration WatchTower<Driver>::addFile(
         const std::string& file_name,
         std::function<void()> notification )
 {
-    LOG(logDEBUG) << "WatchTower::addFile " << file_name;
+    // LOG(logDEBUG) << "WatchTower::addFile " << file_name;
 
     std::lock_guard<std::mutex> lock( observers_mutex_ );
 
-    ObservedFile* existing_observed_file =
+    auto existing_observed_file =
         observed_file_list_.searchByName( file_name );
 
-    std::shared_ptr<std::function<void()>> ptr( new std::function<void()>(std::move( notification ) ) );
+    std::shared_ptr<std::function<void()>> ptr( new std::function<void()>(std::move( notification )) );
 
     if ( ! existing_observed_file )
     {
-        INotifyWatchTowerDriver::SymlinkId symlink_id;
+        typename Driver::SymlinkId symlink_id;
 
         auto file_id = driver_.addFile( file_name );
 
@@ -124,19 +123,22 @@ Registration WatchTower<Driver>::addFile(
         }
 
         auto new_file = observed_file_list_.addNewObservedFile(
-                ObservedFile( file_name, ptr, file_id, symlink_id ) );
+                ObservedFile<Driver>( file_name, ptr, file_id, symlink_id ) );
 
         auto dir = observed_file_list_.watchedDirectoryForFile( file_name );
         if ( ! dir )
         {
-            LOG(logDEBUG) << "INotifyWatchTower::addFile dir for " << file_name
+            LOG(logDEBUG) << "WatchTower::addFile dir for " << file_name
                 << " not watched, adding...";
             dir = observed_file_list_.addWatchedDirectoryForFile( file_name );
 
             dir->dir_id_ = driver_.addDir( dir->path );
         }
 
+        // Associate the dir to the file
         new_file->dir_ = dir;
+
+        LOG(logDEBUG) << "dir ref count is " << dir.use_count();
     }
     else
     {
@@ -178,7 +180,7 @@ void WatchTower<Driver>::removeNotification(
 }
 
 // Run in its own thread
-template<typename Driver>
+template <typename Driver>
 void WatchTower<Driver>::run()
 {
     while ( running_ ) {
@@ -202,10 +204,14 @@ void WatchTower<Driver>::run()
 namespace {
     bool isSymLink( const std::string& file_name )
     {
+#ifdef HAVE_SYMLINK
         struct stat buf;
 
         lstat( file_name.c_str(), &buf );
         return ( S_ISLNK(buf.st_mode) );
+#else
+        return false;
+#endif
     }
 };
 

@@ -1,10 +1,12 @@
-#include "watchtower.h"
+#ifndef WINWATCHTOWERDRIVER_H
+#define WINWATCHTOWERDRIVER_H
 
 #include <atomic>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <iterator>
+#include <vector>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -85,15 +87,54 @@ class WinNotificationInfoList {
     const char* updateCurrentNotification( const char* new_position );
 };
 
-class WinWatchTower : public WatchTower {
-  public:
-    // Create an empty watchtower
-    WinWatchTower();
-    // Destroy the object
-    ~WinWatchTower() override;
+template <typename Driver>
+class ObservedFile;
+template <typename Driver>
+class ObservedFileList;
 
-    Registration addFile( const std::string& file_name,
-            std::function<void()> notification ) override;
+class WinWatchTowerDriver {
+  public:
+    struct WinWatchedDirRecord {
+        WinWatchedDirRecord( const std::string& file_name )
+            : path_( file_name ) { }
+
+        static const int READ_DIR_CHANGE_BUFFER_SIZE = 4096;
+
+        std::string path_;
+        void* handle_ = nullptr;
+        static const unsigned long buffer_length_ = READ_DIR_CHANGE_BUFFER_SIZE;
+        char buffer_[buffer_length_];
+    };
+
+    class FileId { };
+    class SymlinkId { };
+    class DirId {
+      public:
+        friend class WinWatchTowerDriver;
+
+        DirId() {}
+        bool operator==( const DirId& other ) const
+        { return dir_record_ == other.dir_record_; }
+      private:
+        std::shared_ptr<WinWatchedDirRecord> dir_record_;
+    };
+
+    // Default constructor
+    WinWatchTowerDriver();
+    ~WinWatchTowerDriver();
+
+    FileId addFile( const std::string& file_name );
+    SymlinkId addSymlink( const std::string& file_name );
+    DirId addDir( const std::string& file_name );
+
+    void removeFile( const FileId& file_id );
+    void removeSymlink( const SymlinkId& symlink_id );
+
+    std::vector<ObservedFile<WinWatchTowerDriver>*> waitAndProcessEvents(
+            ObservedFileList<WinWatchTowerDriver>* list,
+            std::mutex* list_mutex );
+
+    void interruptWait();
 
   private:
     // An action which will be picked up by the worker thread.
@@ -102,40 +143,30 @@ class WinWatchTower : public WatchTower {
         Action( std::function<void()> function ) : function_ { function } {}
         ~Action() {}
 
-        void operator()( HANDLE completion_port ) { function_(); }
+        void operator()() { function_(); }
 
       private:
         std::function<void()> function_;
     };
 
-    // Thread
-    std::atomic_bool running_;
-    std::thread thread_;
-
     // Action
     std::mutex action_mutex_;
     std::condition_variable action_done_cv_;
-    std::shared_ptr<Action> scheduled_action_ = nullptr;
+    std::unique_ptr<Action> scheduled_action_ = nullptr;
 
     // Win32 notification variables
     HANDLE     hCompPort_;
     OVERLAPPED overlapped_;
     unsigned long buffer_length_;
 
-    // List of followed files/directory
-    // (access is only done by the WatchTower thread)
-    std::mutex file_list_mutex_;
-    ObservedFileList file_list_;
-
-    // Exist as long as the onject exists, to ensure observers won't try to
-    // call us if we are dead.
-    std::shared_ptr<void> heartBeat_;
+    // List of directory records
+    // Accessed exclusively in the worker thread context
+    std::vector<std::weak_ptr<WinWatchedDirRecord>> dir_records_ { };
 
     // Private member functions
-    void serialisedAddFile(
+    void serialisedAddDir(
             const std::string& file_name,
-           std::shared_ptr<std::function<void()>> notification );
-    static void removeNotification( WinWatchTower* watch_tower,
-            std::shared_ptr<void> notification );
-    void run();
+            DirId& dir_id );
 };
+
+#endif

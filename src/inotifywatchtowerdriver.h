@@ -5,7 +5,9 @@
 #include <mutex>
 #include <vector>
 
+template <typename Driver>
 class ObservedFile;
+template <typename Driver>
 class ObservedFileList;
 
 class INotifyWatchTowerDriver {
@@ -44,6 +46,10 @@ class INotifyWatchTowerDriver {
         int wd_;
     };
 
+    using INotifyObservedFile = ObservedFile<INotifyWatchTowerDriver>;
+    using INotifyObservedFileList = ObservedFileList<INotifyWatchTowerDriver>;
+
+    // Default constructor
     INotifyWatchTowerDriver();
     ~INotifyWatchTowerDriver();
 
@@ -60,8 +66,8 @@ class INotifyWatchTowerDriver {
     void removeFile( const FileId& file_id );
     void removeSymlink( const SymlinkId& symlink_id );
 
-    std::vector<ObservedFile*> waitAndProcessEvents(
-            ObservedFileList* list,
+    std::vector<INotifyObservedFile*> waitAndProcessEvents(
+            INotifyObservedFileList* list,
             std::mutex* list_mutex );
     void interruptWait();
 
@@ -75,9 +81,9 @@ class INotifyWatchTowerDriver {
 
     // Private member functions
     size_t processINotifyEvent( const struct inotify_event* event,
-            ObservedFileList* list,
+            INotifyObservedFileList* list,
             std::mutex* list_mutex,
-            std::vector<ObservedFile*>* files_to_notify );
+            std::vector<INotifyObservedFile*>* files_to_notify );
 };
 
 #endif

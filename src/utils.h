@@ -20,6 +20,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <QtGlobal>
+
+#include "config.h"
+
 // Use a bisection method to find the given line number
 // in a sorted list.
 // The T type must be a container containing elements that
@@ -91,5 +95,16 @@ class FilePosition
     qint64 line_;
     int column_;
 };
+
+#ifndef HAVE_MAKE_UNIQUE
+#include <memory>
+
+namespace std {
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+}
+#endif
 
 #endif

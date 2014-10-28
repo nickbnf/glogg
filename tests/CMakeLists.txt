@@ -1,6 +1,7 @@
 INCLUDE (CheckSymbolExists)
+INCLUDE (CheckCXXSourceCompiles)
 
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 2.8.12)
 project(glogg_tests)
 
 # Qt
@@ -13,6 +14,15 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Configuration
 check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
+
+check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
+    #include <memory>
+    int main(int, int)
+    {
+        auto test = std::make_unique<void>();
+        return 0;
+    }
+" HAVE_MAKE_UNIQUE)
 
 configure_file(../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
@@ -80,7 +90,7 @@ set(glogg_TESTS
 # Options
 if (WIN32)
     set(FileWatcherEngine_SOURCES
-        ../src/winwatchtower.cpp
+        ../src/winwatchtowerdriver.cpp
     )
 else (WIN32)
     set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)

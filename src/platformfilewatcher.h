@@ -24,6 +24,12 @@
 
 #include <memory>
 
+#ifdef _WIN32
+#  include "winwatchtowerdriver.h"
+#else
+#  include "inotifywatchtowerdriver.h"
+#endif
+
 #include "watchtower.h"
 
 class INotifyWatchTower;
@@ -49,12 +55,19 @@ class PlatformFileWatcher : public FileWatcher {
     void fileChanged( const QString& );
 
   private:
-#if __GNUC_MINOR__ < 7
-    typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
+#ifdef _WIN32
+#  if __GNUC_MINOR__ < 7
+typedef WatchTower<WinWatchTowerDriver> PlatformWatchTower;
+#  else
+using PlatformWatchTower = WatchTower<WinWatchTowerDriver>;
+#  endif
 #else
-    using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+#  if __GNUC_MINOR__ < 7
+typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
+#  else
+using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+#  endif
 #endif
-
 
     // The following variables are protected by watched_files_mutex_
     QString watched_file_name_;

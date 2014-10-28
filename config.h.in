@@ -7,6 +7,9 @@
 #define _CONFIGURATION_HEADER_GUARD_H_
 
 /* Whether the 'symlink' function exists */
-#define HAVE_SYMLINK @HAVE_SYMLINK@
+#cmakedefine HAVE_SYMLINK 1
+
+/* Whether C++14 std::make_unique is available */
+#cmakedefine HAVE_MAKE_UNIQUE 1
 
 #endif

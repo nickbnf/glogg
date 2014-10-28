@@ -78,11 +78,11 @@ void INotifyWatchTowerDriver::removeSymlink( const SymlinkId& symlink_id )
 
 static const size_t INOTIFY_BUFFER_SIZE = 4096;
 
-std::vector<ObservedFile*> INotifyWatchTowerDriver::waitAndProcessEvents(
-        ObservedFileList* list,
+std::vector<INotifyWatchTowerDriver::INotifyObservedFile*> INotifyWatchTowerDriver::waitAndProcessEvents(
+        INotifyWatchTowerDriver::INotifyObservedFileList* list,
         std::mutex* list_mutex )
 {
-    std::vector<ObservedFile*> files_to_notify;
+    std::vector<INotifyObservedFile*> files_to_notify;
     struct pollfd fds[2];
 
     fds[0].fd      = inotify_fd_;
@@ -133,15 +133,15 @@ std::vector<ObservedFile*> INotifyWatchTowerDriver::waitAndProcessEvents(
 // Treats the passed event and returns the number of bytes used
 size_t INotifyWatchTowerDriver::processINotifyEvent(
         const struct inotify_event* event,
-        ObservedFileList* list,
+        INotifyWatchTowerDriver::INotifyObservedFileList* list,
         std::mutex* list_mutex,
-        std::vector<ObservedFile*>* files_to_notify )
+        std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>* files_to_notify )
 {
     LOG(logDEBUG4) << "Event received: " << std::hex << event->mask;
 
     std::unique_lock<std::mutex> lock( *list_mutex );
 
-    ObservedFile* file = nullptr;
+    INotifyObservedFile* file = nullptr;
 
     if ( event->mask & ( IN_MODIFY | IN_DELETE_SELF | IN_MOVE_SELF ) )
     {
@@ -169,7 +169,6 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
         LOG(logDEBUG) << "Unexpected event: " << event->mask << " wd " << event->wd;
     }
 
-    // Call all our observers
     if ( file )
     {
         files_to_notify->push_back( file );

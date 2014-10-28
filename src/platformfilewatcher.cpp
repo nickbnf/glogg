@@ -19,32 +19,16 @@
 
 #include "platformfilewatcher.h"
 
-#ifdef _WIN32
-#include "winwatchtower.h"
-#else
-#include "inotifywatchtowerdriver.h"
-#endif
-
 #include "log.h"
 
-#if __GNUC_MINOR__ < 7
-typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
-#else
-using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
-#endif
-
-std::shared_ptr<PlatformWatchTower> PlatformFileWatcher::watch_tower_;
+std::shared_ptr<PlatformFileWatcher::PlatformWatchTower> PlatformFileWatcher::watch_tower_;
 
 PlatformFileWatcher::PlatformFileWatcher() : FileWatcher()
 {
     // Caution, this is NOT thread-safe or re-entrant!
     if ( !watch_tower_ )
     {
-#ifdef _WIN32
-        watch_tower_ = std::make_shared<WinWatchTower>();
-#else
         watch_tower_ = std::make_shared<PlatformWatchTower>();
-#endif
     }
 }
 

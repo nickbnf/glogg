@@ -56,16 +56,16 @@ class PlatformFileWatcher : public FileWatcher {
 
   private:
 #ifdef _WIN32
-#  if __GNUC_MINOR__ < 7
-typedef WatchTower<WinWatchTowerDriver> PlatformWatchTower;
-#  else
+#  ifdef HAS_TEMPLATE_ALIASES
 using PlatformWatchTower = WatchTower<WinWatchTowerDriver>;
+#  else
+typedef WatchTower<WinWatchTowerDriver> PlatformWatchTower;
 #  endif
 #else
-#  if __GNUC_MINOR__ < 7
-typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
-#  else
+#  ifdef HAS_TEMPLATE_ALIASES
 using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
+#  else
+typedef WatchTower<INotifyWatchTowerDriver> PlatformWatchTower;
 #  endif
 #endif
 

@@ -46,8 +46,13 @@ class INotifyWatchTowerDriver {
         int wd_;
     };
 
+#ifdef HAS_TEMPLATE_ALIASES
     using INotifyObservedFile = ObservedFile<INotifyWatchTowerDriver>;
     using INotifyObservedFileList = ObservedFileList<INotifyWatchTowerDriver>;
+#else
+    typedef ObservedFile<INotifyWatchTowerDriver> INotifyObservedFile;
+    typedef ObservedFileList<INotifyWatchTowerDriver> INotifyObservedFileList;
+#endif
 
     // Default constructor
     INotifyWatchTowerDriver();

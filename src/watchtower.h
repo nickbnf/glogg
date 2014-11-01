@@ -17,10 +17,10 @@
 
 // FIXME: Where to put that so it is not dependant
 // Registration object to implement RAII
-#if __GNUC_MINOR__ < 7
-typedef std::shared_ptr<void> Registration;
-#else
+#ifdef HAS_TEMPLATE_ALIASES
 using Registration = std::shared_ptr<void>;
+#else
+typedef std::shared_ptr<void> Registration;
 #endif
 
 template<typename Driver>

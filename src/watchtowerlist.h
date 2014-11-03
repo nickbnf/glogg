@@ -74,9 +74,13 @@ struct ObservedFile {
 template<typename Driver>
 class ObservedFileList {
     public:
-        ObservedFileList() = default;
+        ObservedFileList() :
+            heartBeat_ { std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}) }
+            { }
         ~ObservedFileList() = default;
 
+        // The functions return a pointer to the existing file (if exists)
+        // but keep ownership of the object.
         ObservedFile<Driver>* searchByName( const std::string& file_name );
         ObservedFile<Driver>* searchByFileOrSymlinkWd(
                 typename Driver::FileId file_id,
@@ -84,6 +88,8 @@ class ObservedFileList {
         ObservedFile<Driver>* searchByDirWdAndName(
                 typename Driver::DirId id, const char* name );
 
+        // Add a new file, the list returns a pointer to the added file,
+        // but has ownership of the file.
         ObservedFile<Driver>* addNewObservedFile( ObservedFile<Driver> new_observed );
         // Remove a callback, remove and returns the file object if
         // it was the last callback on this object, nullptr if not.
@@ -93,11 +99,26 @@ class ObservedFileList {
 
         // Return the watched directory if it is watched, or nullptr
         std::shared_ptr<ObservedDir<Driver>> watchedDirectory( const std::string& dir_name );
-        // Create a new watched directory for dir_name
-        std::shared_ptr<ObservedDir<Driver>> addWatchedDirectory( const std::string& dir_name );
+        // Create a new watched directory for dir_name, the client is passed
+        // shared ownership and have to keep the shared_ptr (the list only
+        // maintain a weak link).
+        // The remove notification is called just before the reference to
+        // the directory is destroyed.
+        std::shared_ptr<ObservedDir<Driver>> addWatchedDirectory(
+            const std::string& dir_name,
+            std::function<void( ObservedDir<Driver>* )> remove_notification );
 
+        // Similar to previous functions but extract the name of the
+        // directory from the file name.
         std::shared_ptr<ObservedDir<Driver>> watchedDirectoryForFile( const std::string& file_name );
-        std::shared_ptr<ObservedDir<Driver>> addWatchedDirectoryForFile( const std::string& file_name );
+        std::shared_ptr<ObservedDir<Driver>> addWatchedDirectoryForFile( const std::string& file_name,
+                std::function<void( ObservedDir<Driver>* )> remove_notification );
+
+        // Removal of directories is done when there is no shared reference
+        // left (RAII)
+
+        // Number of watched directories (for tests)
+        unsigned int numberWatchedDirectories() const;
 
     private:
         // List of observed files
@@ -110,6 +131,12 @@ class ObservedFileList {
         std::map<int, ObservedFile<Driver>*> by_file_wd_;
         // Map the inotify directory wds to the observed files
         std::map<int, ObservedFile<Driver>*> by_dir_wd_;
+
+        // Heartbeat
+        std::shared_ptr<void> heartBeat_;
+
+        // Clean all reference to any expired directory
+        void cleanRefsToExpiredDirs();
 };
 
 namespace {
@@ -198,8 +225,6 @@ std::shared_ptr<ObservedFile<Driver>> ObservedFileList<Driver>::removeCallback(
     for ( auto observer = begin( observed_files_ );
             observer != end( observed_files_ ); )
     {
-        LOG(logDEBUG) << "Examining entry for " << observer->file_name_;
-
         std::vector<std::shared_ptr<void>>& callbacks = observer->callbacks;
         callbacks.erase( std::remove(
                     std::begin( callbacks ), std::end( callbacks ), callback ),
@@ -207,7 +232,8 @@ std::shared_ptr<ObservedFile<Driver>> ObservedFileList<Driver>::removeCallback(
 
         /* See if all notifications have been deleted for this file */
         if ( callbacks.empty() ) {
-            LOG(logDEBUG) << "Empty notification list, removing the watched file";
+            LOG(logDEBUG) << "Empty notification list for " << observer->file_name_
+                << ", removing the watched file";
             returned_file = std::make_shared<ObservedFile<Driver>>( *observer );
             observer = observed_files_.erase( observer );
         }
@@ -233,9 +259,19 @@ std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::watchedDirectory(
 
 template <typename Driver>
 std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::addWatchedDirectory(
-        const std::string& dir_name )
+        const std::string& dir_name,
+        std::function<void( ObservedDir<Driver>* )> remove_notification )
 {
-    auto dir = std::make_shared<ObservedDir<Driver>>( dir_name );
+    std::weak_ptr<void> weakHeartBeat(heartBeat_);
+
+    std::shared_ptr<ObservedDir<Driver>> dir = {
+            new ObservedDir<Driver>( dir_name ),
+            [this, remove_notification, weakHeartBeat] (ObservedDir<Driver>* d) {
+                if ( auto heart_beat = weakHeartBeat.lock() ) {
+                    remove_notification( d );
+                    cleanRefsToExpiredDirs();
+                }
+                delete d; } };
 
     observed_dirs_[ dir_name ] = std::weak_ptr<ObservedDir<Driver>>( dir );
 
@@ -251,9 +287,34 @@ std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::watchedDirectoryF
 
 template <typename Driver>
 std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::addWatchedDirectoryForFile(
-        const std::string& file_name )
+        const std::string& file_name,
+        std::function<void( ObservedDir<Driver>* )> remove_notification )
 {
-    return addWatchedDirectory( directory_path( file_name ) );
+    return addWatchedDirectory( directory_path( file_name ),
+            remove_notification );
+}
+
+template <typename Driver>
+unsigned int ObservedFileList<Driver>::numberWatchedDirectories() const
+{
+    return observed_dirs_.size();
+}
+
+// Private functions
+template <typename Driver>
+void ObservedFileList<Driver>::cleanRefsToExpiredDirs()
+{
+    for ( auto it = std::begin( observed_dirs_ );
+            it != std::end( observed_dirs_ ); )
+    {
+        if ( it->second.expired() ) {
+            LOG(logDEBUG) << "No lock ";
+            it = observed_dirs_.erase( it );
+        }
+        else {
+            ++it;
+        }
+    }
 }
 
 namespace {
@@ -268,7 +329,6 @@ namespace {
 
         // We need to include the final slash on Windows
         ++slash_pos;
-        LOG(logDEBUG) << "Pos = " << slash_pos;
 #endif
 
         return std::string( path, 0, slash_pos );

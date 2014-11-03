@@ -39,6 +39,9 @@ class WatchTower {
     Registration addFile( const std::string& file_name,
             std::function<void()> notification );
 
+    // Number of watched directories (for tests)
+    unsigned int numberWatchedDirectories() const;
+
   private:
     // The driver (parametrised)
     Driver driver_;
@@ -80,7 +83,7 @@ namespace {
 
 template <typename Driver>
 WatchTower<Driver>::WatchTower()
-    : thread_(), driver_(),
+    : driver_(), thread_(),
     heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
     running_ = true;
@@ -101,6 +104,8 @@ Registration WatchTower<Driver>::addFile(
         std::function<void()> notification )
 {
     // LOG(logDEBUG) << "WatchTower::addFile " << file_name;
+
+    std::weak_ptr<void> weakHeartBeat(heartBeat_);
 
     std::lock_guard<std::mutex> lock( observers_mutex_ );
 
@@ -130,7 +135,11 @@ Registration WatchTower<Driver>::addFile(
         {
             LOG(logDEBUG) << "WatchTower::addFile dir for " << file_name
                 << " not watched, adding...";
-            dir = observed_file_list_.addWatchedDirectoryForFile( file_name );
+            dir = observed_file_list_.addWatchedDirectoryForFile( file_name,
+                    [this, weakHeartBeat] (ObservedDir<Driver>* dir) {
+                        if ( auto heart_beat = weakHeartBeat.lock() ) {
+                            driver_.removeDir( dir->dir_id_ );
+                        } } );
 
             dir->dir_id_ = driver_.addDir( dir->path );
         }
@@ -145,8 +154,6 @@ Registration WatchTower<Driver>::addFile(
         existing_observed_file->addCallback( ptr );
     }
 
-    std::weak_ptr<void> weakHeartBeat(heartBeat_);
-
     // Returns a shared pointer that removes its own entry
     // from the list of watched stuff when it goes out of scope!
     // Uses a custom deleter to do the work.
@@ -156,12 +163,18 @@ Registration WatchTower<Driver>::addFile(
             } );
 }
 
+template <typename Driver>
+unsigned int WatchTower<Driver>::numberWatchedDirectories() const
+{
+    return observed_file_list_.numberWatchedDirectories();
+}
+
 //
 // Private functions
 //
 
 // Called by the dtor for a registration object
-template<typename Driver>
+template <typename Driver>
 void WatchTower<Driver>::removeNotification(
         WatchTower* watch_tower, std::shared_ptr<void> notification )
 {
@@ -184,11 +197,16 @@ template <typename Driver>
 void WatchTower<Driver>::run()
 {
     while ( running_ ) {
+        std::unique_lock<std::mutex> lock( observers_mutex_ );
+
         auto files = driver_.waitAndProcessEvents(
-                &observed_file_list_, &observers_mutex_ );
+                &observed_file_list_, &lock );
+        LOG(logDEBUG) << "WatchTower::run: waitAndProcessEvents returned "
+            << files.size() << " files.";
 
         for ( auto file: files ) {
             for ( auto observer: file->callbacks ) {
+                LOG(logDEBUG) << "WatchTower::run: notifying the client!";
                 // Here we have to cast our generic pointer back to
                 // the function pointer in order to perform the call
                 const std::shared_ptr<std::function<void()>> fptr =

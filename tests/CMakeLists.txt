@@ -1,5 +1,6 @@
 INCLUDE (CheckSymbolExists)
 INCLUDE (CheckCXXSourceCompiles)
+INCLUDE (CheckCXXCompilerFlag)
 
 cmake_minimum_required(VERSION 2.8.12)
 project(glogg_tests)
@@ -11,6 +12,12 @@ find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+check_cxx_compiler_flag(-Wall HAS_WALL)
+
+if(HAS_WALL)
+    set(PARANOID_FLAGS "${PARANOID_FLAGS} -Wall")
+endif(HAS_WALL)
 
 # Configuration
 check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
@@ -100,7 +107,7 @@ endif (WIN32)
 # QT4_WRAP_CPP(glogg_HEADERS_MOC ${glogg_HEADERS})
 # INCLUDE(${QT_USE_FILE})
 # ADD_DEFINITIONS(${QT_DEFINITIONS})
-set(CMAKE_CXX_FLAGS "-fPIC -std=c++11 -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
+set(CMAKE_CXX_FLAGS "${PARANOID_FLAGS} -fPIC -std=c++11 -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
 
 # Add test cpp file
 add_executable(glogg_tests
@@ -117,4 +124,3 @@ add_test(
     NAME glogg_tests
     COMMAND glogg_tests
 )
-

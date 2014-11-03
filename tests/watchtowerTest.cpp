@@ -87,11 +87,12 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
   public:
     static const int TIMEOUT;
 
+    mutex mutex_;
+    condition_variable cv_;
+
     string file_name;
     Registration registration;
 
-    mutex mutex_;
-    condition_variable cv_;
     int notification_received = 0;
 
     Registration registerFile( const string& filename ) {
@@ -143,7 +144,7 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
 };
 
 #ifdef _WIN32
-const int WatchTowerSingleFile::TIMEOUT = 1000;
+const int WatchTowerSingleFile::TIMEOUT = 2000;
 #else
 const int WatchTowerSingleFile::TIMEOUT = 20;
 #endif
@@ -167,6 +168,8 @@ TEST_F( WatchTowerSingleFile, SignalsWhenADeletedFileReappears ) {
 
 TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
     auto second_file_name = createTempEmptyFile();
+    std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+    // Ensure file creation has been 'digested'
     {
         auto second_registration = registerFile( second_file_name );
         appendDataToFile( second_file_name );
@@ -183,14 +186,11 @@ TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
 TEST_F( WatchTowerSingleFile, SignalsWhenSameFileIsFollowedMultipleTimes ) {
     auto second_file_name = createTempEmptyFile();
 
-    for ( int i = 0; i < 1000; i++ )
+    for ( int i = 0; i < 100; i++ )
     {
-        std::this_thread::sleep_for( std::chrono::milliseconds( 50 ) );
         auto second_registration = registerFile( second_file_name );
         appendDataToFile( second_file_name );
         ASSERT_TRUE( waitNotificationReceived() );
-        std::this_thread::sleep_for( std::chrono::milliseconds( 50 ) );
-        appendDataToFile( second_file_name );
     }
 
     // The registration will be removed here.
@@ -298,6 +298,83 @@ TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
 
     delete mortal_watch_tower;
     // reg will be destroyed after the watch_tower
+}
+
+/*****/
+
+class WatchTowerDirectories: public WatchTowerSingleFile {
+  public:
+    string second_dir_name;
+    string second_file_name;
+    string third_file_name;
+
+    Registration registration_two;
+    Registration registration_three;
+
+    WatchTowerDirectories() {
+        second_dir_name = createTempDir();
+        second_file_name = createTempEmptyFileInDir( second_dir_name );
+        third_file_name  = createTempEmptyFileInDir( second_dir_name );
+    }
+
+    ~WatchTowerDirectories() {
+        remove( third_file_name.c_str() );
+        remove( second_file_name.c_str() );
+
+        removeDir( second_dir_name );
+    }
+
+    string createTempDir() {
+#ifdef _WIN32
+        static int counter = 1;
+        char temp_dir[255];
+
+        GetTempPath( sizeof temp_dir, temp_dir );
+
+        string dir_name = string { temp_dir } + string { "\\test" } + to_string( counter++ );
+        mkdir( dir_name.c_str() );
+        return dir_name;
+#else
+        char dir_template[] = "/tmp/XXXXXX";
+        return { mkdtemp( dir_template ) };
+#endif
+    }
+
+    string createTempEmptyFileInDir( const string& dir ) {
+        static int counter = 1;
+        return createTempEmptyFile( dir + std::string { "/temp" } + to_string( counter++ ) );
+    }
+
+    void removeDir( const string& name ) {
+        rmdir( name.c_str() );
+    }
+};
+
+TEST_F( WatchTowerDirectories, FollowThreeFilesInTwoDirs ) {
+    registration_two   = registerFile( second_file_name );
+    registration_three = registerFile( third_file_name );
+
+    ASSERT_THAT( watch_tower->numberWatchedDirectories(), Eq( 2 ) );
+}
+
+TEST_F( WatchTowerDirectories, FollowTwoFilesInTwoDirs ) {
+    registration_two   = registerFile( second_file_name );
+    {
+        auto temp_registration_three = registerFile( third_file_name );
+    }
+
+    ASSERT_THAT( watch_tower->numberWatchedDirectories(), Eq( 2 ) );
+}
+
+TEST_F( WatchTowerDirectories, FollowOneFileInOneDir ) {
+    {
+        auto temp_registration_two   = registerFile( second_file_name );
+        auto temp_registration_three = registerFile( third_file_name );
+
+        ASSERT_THAT( watch_tower->numberWatchedDirectories(), Eq( 2 ) );
+    }
+
+    ASSERT_THAT( watch_tower->numberWatchedDirectories(), Eq( 1 ) );
 }
 
 /*****/

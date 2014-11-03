@@ -97,10 +97,13 @@ WinWatchTowerDriver::DirId WinWatchTowerDriver::addDir(
 
     // Add will be done in the watchtower thread
     {
+        /*
         std::lock_guard<std::mutex> lk( action_mutex_ );
         scheduled_action_ = std::make_unique<Action>( [this, file_name, &dir_id] {
             serialisedAddDir( file_name, dir_id );
         } );
+        */
+        serialisedAddDir( file_name, dir_id );
     }
 
     // Poke the thread
@@ -108,9 +111,11 @@ WinWatchTowerDriver::DirId WinWatchTowerDriver::addDir(
 
     // Wait for the add task to be completed
     {
+        /*
         std::unique_lock<std::mutex> lk( action_mutex_ );
         action_done_cv_.wait( lk,
                 [this]{ return ( scheduled_action_ == nullptr ); } );
+                */
     }
 
     LOG(logDEBUG) << "Returned " << dir_id.dir_record_;
@@ -126,6 +131,15 @@ void WinWatchTowerDriver::removeFile(
 
 void WinWatchTowerDriver::removeSymlink( const SymlinkId& symlink_id )
 {
+}
+
+void WinWatchTowerDriver::removeDir( const DirId& dir_id )
+{
+    void* handle = dir_id.dir_record_->handle_;
+
+    LOG(logDEBUG) << "WinWatchTowerDriver::removeDir handle=" << std::hex << handle;
+
+    CloseHandle( handle );
 }
 
 //
@@ -157,6 +171,10 @@ void WinWatchTowerDriver::serialisedAddDir(
             FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
             NULL );
 
+    if ( hDir == INVALID_HANDLE_VALUE ) {
+        LOG(logERROR) << "CreateFile failed for dir " << dir_name;
+    }
+
     dir_record->handle_ = hDir;
 
     //create a IO completion port/or associate this key with
@@ -166,7 +184,6 @@ void WinWatchTowerDriver::serialisedAddDir(
             //if m_hCompPort is NON-NULL, hDir is associated with the existing completion port that the handle m_hCompPort references
             // We use the index (plus 1) of the weak_ptr as a key
             index_record,
-            //the completion 'key' is the address of the dir_id
             0 );
 
     LOG(logDEBUG) << "Weak ptr address stored: " << index_record;
@@ -178,18 +195,20 @@ void WinWatchTowerDriver::serialisedAddDir(
             dir_record->buffer_length_,
             false,
             FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
-            &buffer_length_,// not set when using asynchronous mechanisms...
+            &buffer_length_, // not set when using asynchronous mechanisms...
             &overlapped_,
             NULL );          // no completion routine
 
-    LOG(logDEBUG) << "ReadDirectoryChangesW returned " << status << " (" << GetLastError() << ")";
+    if ( !status ) {
+        LOG(logERROR) << "ReadDirectoryChangesW failed (" << GetLastError() << ")";
+    }
 
     dir_id.dir_record_ = dir_record;
 }
 
 std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProcessEvents(
         ObservedFileList<WinWatchTowerDriver>* list,
-        std::mutex* list_mutex )
+        std::unique_lock<std::mutex>* lock )
 {
     std::vector<ObservedFile<WinWatchTowerDriver>*> files_to_notify { };
 
@@ -197,13 +216,15 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
     DWORD num_bytes = 0;
     LPOVERLAPPED lpOverlapped = 0;
 
+    lock->unlock();
     BOOL status = GetQueuedCompletionStatus( hCompPort_,
             &num_bytes,
             &key,
             &lpOverlapped,
             INFINITE );
+    lock->lock();
 
-    LOG(logDEBUG) << "One " << status << " " << key;
+    LOG(logDEBUG) << "Event (" << status << ") key: " << std::hex << key;
 
     if ( key ) {
         // Extract the dir from the completion key
@@ -219,8 +240,6 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
                     dir_record->buffer_length_ );
 
             for ( auto notification : notification_info ) {
-                std::lock_guard<std::mutex> lock( *list_mutex );
-
                 std::string file_path = dir_record->path_ + shortstringize( notification.fileName() );
                 LOG(logDEBUG) << "File is " << file_path;
                 auto file = list->searchByName( file_path );

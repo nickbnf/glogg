@@ -129,10 +129,11 @@ class WinWatchTowerDriver {
 
     void removeFile( const FileId& file_id );
     void removeSymlink( const SymlinkId& symlink_id );
+    void removeDir( const DirId& dir_id );
 
     std::vector<ObservedFile<WinWatchTowerDriver>*> waitAndProcessEvents(
             ObservedFileList<WinWatchTowerDriver>* list,
-            std::mutex* list_mutex );
+            std::unique_lock<std::mutex>* lock );
 
     void interruptWait();
 

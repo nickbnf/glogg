@@ -76,11 +76,20 @@ void INotifyWatchTowerDriver::removeSymlink( const SymlinkId& symlink_id )
         inotify_rm_watch( inotify_fd_, symlink_id.wd_ );
 }
 
-static const size_t INOTIFY_BUFFER_SIZE = 4096;
+void INotifyWatchTowerDriver::removeDir( const DirId& dir_id )
+{
+   LOG(logDEBUG) << "INotifyWatchTower::removeDir removing inotify wd " << dir_id.wd_;
 
-std::vector<INotifyWatchTowerDriver::INotifyObservedFile*> INotifyWatchTowerDriver::waitAndProcessEvents(
-        INotifyWatchTowerDriver::INotifyObservedFileList* list,
-        std::mutex* list_mutex )
+    if ( dir_id.wd_ >= 0 )
+        inotify_rm_watch( inotify_fd_, dir_id.wd_ );
+}
+
+static constexpr size_t INOTIFY_BUFFER_SIZE = 4096;
+
+std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>
+INotifyWatchTowerDriver::waitAndProcessEvents(
+        INotifyObservedFileList* list,
+        std::unique_lock<std::mutex>* list_lock )
 {
     std::vector<INotifyObservedFile*> files_to_notify;
     struct pollfd fds[2];
@@ -93,25 +102,27 @@ std::vector<INotifyWatchTowerDriver::INotifyObservedFile*> INotifyWatchTowerDriv
     fds[1].events  = POLLIN;
     fds[1].revents = 0;
 
+    list_lock->unlock();
     int poll_ret = poll( fds, 2, -1 );
+    list_lock->lock();
 
     if ( poll_ret > 0 )
     {
         if ( fds[0].revents & POLLIN )
         {
-            LOG(logDEBUG4) << "Pollin for inotify";
+            LOG(logDEBUG) << "Pollin for inotify";
             char buffer[ INOTIFY_BUFFER_SIZE ]
                 __attribute__ ((aligned(__alignof__(struct inotify_event))));
 
             ssize_t nb = read( inotify_fd_, buffer, sizeof( buffer ) );
             if ( nb > 0 )
             {
-                size_t offset = 0;
+                ssize_t offset = 0;
                 while ( offset < nb ) {
                     const inotify_event* event =
                         reinterpret_cast<const inotify_event*>( buffer + offset );
 
-                    offset += processINotifyEvent( event, list, list_mutex, &files_to_notify );
+                    offset += processINotifyEvent( event, list, &files_to_notify );
                 }
             }
             else
@@ -134,12 +145,9 @@ std::vector<INotifyWatchTowerDriver::INotifyObservedFile*> INotifyWatchTowerDriv
 size_t INotifyWatchTowerDriver::processINotifyEvent(
         const struct inotify_event* event,
         INotifyWatchTowerDriver::INotifyObservedFileList* list,
-        std::mutex* list_mutex,
         std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>* files_to_notify )
 {
-    LOG(logDEBUG4) << "Event received: " << std::hex << event->mask;
-
-    std::unique_lock<std::mutex> lock( *list_mutex );
+    LOG(logDEBUG) << "Event received: " << std::hex << event->mask;
 
     INotifyObservedFile* file = nullptr;
 
@@ -171,6 +179,7 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
 
     if ( file )
     {
+        LOG(logDEBUG) << "Adding file: " << std::hex << file;
         files_to_notify->push_back( file );
     }
 

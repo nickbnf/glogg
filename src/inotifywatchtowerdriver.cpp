@@ -89,7 +89,8 @@ static constexpr size_t INOTIFY_BUFFER_SIZE = 4096;
 std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>
 INotifyWatchTowerDriver::waitAndProcessEvents(
         INotifyObservedFileList* list,
-        std::unique_lock<std::mutex>* list_lock )
+        std::unique_lock<std::mutex>* list_lock,
+        std::vector<INotifyObservedFile*>* files_needing_readding )
 {
     std::vector<INotifyObservedFile*> files_to_notify;
     struct pollfd fds[2];
@@ -122,7 +123,8 @@ INotifyWatchTowerDriver::waitAndProcessEvents(
                     const inotify_event* event =
                         reinterpret_cast<const inotify_event*>( buffer + offset );
 
-                    offset += processINotifyEvent( event, list, &files_to_notify );
+                    offset += processINotifyEvent( event, list,
+                            &files_to_notify, files_needing_readding );
                 }
             }
             else
@@ -144,8 +146,9 @@ INotifyWatchTowerDriver::waitAndProcessEvents(
 // Treats the passed event and returns the number of bytes used
 size_t INotifyWatchTowerDriver::processINotifyEvent(
         const struct inotify_event* event,
-        INotifyWatchTowerDriver::INotifyObservedFileList* list,
-        std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>* files_to_notify )
+        INotifyObservedFileList* list,
+        std::vector<INotifyObservedFile*>* files_to_notify,
+        std::vector<INotifyObservedFile*>* files_needing_readding )
 {
     LOG(logDEBUG) << "Event received: " << std::hex << event->mask;
 
@@ -161,7 +164,7 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
     }
     else if ( event->mask & ( IN_CREATE | IN_MOVED_TO | IN_MOVED_FROM ) )
     {
-        LOG(logDEBUG4) << "IN_CREATE | IN_MOVED_TO | IN_MOVED_FROM for wd " << event->wd
+        LOG(logDEBUG) << "IN_CREATE | IN_MOVED_TO | IN_MOVED_FROM for wd " << event->wd
             << " name: " << event->name;
 
         // Retrieve the file
@@ -170,6 +173,7 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
         if ( file )
         {
             LOG(logDEBUG) << "Dir change for watched file " << event->name;
+            files_needing_readding->push_back( file );
         }
     }
     else

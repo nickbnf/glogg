@@ -76,9 +76,12 @@ class INotifyWatchTowerDriver {
     // return a list of files to notify about.
     // This must be called with the lock on the list held,
     // the function will unlock it temporary whilst blocking.
+    // Also returns a list of file that need readding
+    // (because of renames/symlink...)
     std::vector<INotifyObservedFile*> waitAndProcessEvents(
             INotifyObservedFileList* list,
-            std::unique_lock<std::mutex>* list_mutex );
+            std::unique_lock<std::mutex>* list_mutex,
+            std::vector<INotifyObservedFile*>* files_needing_readding );
 
     // Interrupt waitAndProcessEvents if it is blocking.
     void interruptWait();
@@ -94,7 +97,8 @@ class INotifyWatchTowerDriver {
     // Private member functions
     size_t processINotifyEvent( const struct inotify_event* event,
             INotifyObservedFileList* list,
-            std::vector<INotifyObservedFile*>* files_to_notify );
+            std::vector<INotifyObservedFile*>* files_to_notify,
+            std::vector<INotifyObservedFile*>* files_needing_readding );
 };
 
 #endif

@@ -208,7 +208,8 @@ void WinWatchTowerDriver::serialisedAddDir(
 
 std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProcessEvents(
         ObservedFileList<WinWatchTowerDriver>* list,
-        std::unique_lock<std::mutex>* lock )
+        std::unique_lock<std::mutex>* lock,
+        std::vector<ObservedFile<WinWatchTowerDriver>*>* /* not needed in WinWatchTowerDriver */ )
 {
     std::vector<ObservedFile<WinWatchTowerDriver>*> files_to_notify { };
 

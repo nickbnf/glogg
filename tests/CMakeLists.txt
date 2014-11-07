@@ -140,8 +140,8 @@ else (WIN32)
     set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)
 endif (WIN32)
 
-# Qt
-set(CMAKE_CXX_FLAGS "${PARANOID_FLAGS} -fPIC -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
+# Compiler flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PARANOID_FLAGS} -fPIC -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
 
 # Add test cpp file
 add_executable(glogg_tests

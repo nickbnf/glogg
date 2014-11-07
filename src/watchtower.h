@@ -61,6 +61,8 @@ class WatchTower {
     std::shared_ptr<void> heartBeat_;
 
     // Private member functions
+    std::tuple<typename Driver::FileId, typename Driver::SymlinkId>
+        addFileToDriver( const std::string& );
     static void removeNotification( WatchTower* watch_tower,
             std::shared_ptr<void> notification );
     void run();
@@ -116,17 +118,10 @@ Registration WatchTower<Driver>::addFile(
 
     if ( ! existing_observed_file )
     {
+        typename Driver::FileId file_id;
         typename Driver::SymlinkId symlink_id;
 
-        auto file_id = driver_.addFile( file_name );
-
-        if ( isSymLink( file_name ) )
-        {
-            // We want to follow the name (as opposed to the inode)
-            // so we watch the symlink as well.
-            symlink_id = driver_.addSymlink( file_name );
-        }
-
+        std::tie( file_id, symlink_id ) = addFileToDriver( file_name );
         auto new_file = observed_file_list_.addNewObservedFile(
                 ObservedFile<Driver>( file_name, ptr, file_id, symlink_id ) );
 
@@ -173,6 +168,24 @@ unsigned int WatchTower<Driver>::numberWatchedDirectories() const
 // Private functions
 //
 
+// Add the passed file name to the driver, returning the file and symlink id
+template <typename Driver>
+std::tuple<typename Driver::FileId, typename Driver::SymlinkId>
+WatchTower<Driver>::addFileToDriver( const std::string& file_name )
+{
+    typename Driver::SymlinkId symlink_id;
+    auto file_id = driver_.addFile( file_name );
+
+    if ( isSymLink( file_name ) )
+    {
+        // We want to follow the name (as opposed to the inode)
+        // so we watch the symlink as well.
+        symlink_id = driver_.addSymlink( file_name );
+    }
+
+    return std::make_tuple( file_id, symlink_id );
+}
+
 // Called by the dtor for a registration object
 template <typename Driver>
 void WatchTower<Driver>::removeNotification(
@@ -199,10 +212,25 @@ void WatchTower<Driver>::run()
     while ( running_ ) {
         std::unique_lock<std::mutex> lock( observers_mutex_ );
 
+        std::vector<ObservedFile<Driver>*> files_needing_readding;
+
         auto files = driver_.waitAndProcessEvents(
-                &observed_file_list_, &lock );
+                &observed_file_list_, &lock, &files_needing_readding );
         LOG(logDEBUG) << "WatchTower::run: waitAndProcessEvents returned "
-            << files.size() << " files.";
+            << files.size() << " files, " << files_needing_readding.size()
+            << " needing re-adding";
+
+        for ( auto file: files_needing_readding ) {
+            // A file 'needing readding' has the same name,
+            // but probably a different inode, so it needs
+            // to be readded for some drivers that rely on the
+            // inode (e.g. inotify)
+            driver_.removeFile( file->file_id_ );
+            driver_.removeSymlink( file->symlink_id_ );
+
+            std::tie( file->file_id_, file->symlink_id_ ) =
+                addFileToDriver( file->file_name_ );
+        }
 
         for ( auto file: files ) {
             for ( auto observer: file->callbacks ) {

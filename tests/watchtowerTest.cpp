@@ -166,6 +166,16 @@ TEST_F( WatchTowerSingleFile, SignalsWhenADeletedFileReappears ) {
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
+TEST_F( WatchTowerSingleFile, SignalsWhenAReappearedFileIsAppended ) {
+    remove( file_name.c_str() );
+    waitNotificationReceived();
+    createTempEmptyFile( file_name );
+    waitNotificationReceived();
+
+    appendDataToFile( file_name );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
 TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
     auto second_file_name = createTempEmptyFile();
     std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
@@ -284,6 +294,19 @@ TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
     waitNotificationReceived();
 
     symlink( new_target.c_str(), symlink_name.c_str() );
+    ASSERT_TRUE( waitNotificationReceived() );
+
+    remove( new_target.c_str() );
+}
+
+TEST_F( WatchTowerSymlink, DataAddedInAReappearingSymlinkYieldsANotification ) {
+    auto new_target = createTempEmptyFile();
+    remove( symlink_name.c_str() );
+    waitNotificationReceived();
+    symlink( new_target.c_str(), symlink_name.c_str() );
+    waitNotificationReceived();
+
+    appendDataToFile( new_target );
     ASSERT_TRUE( waitNotificationReceived() );
 
     remove( new_target.c_str() );

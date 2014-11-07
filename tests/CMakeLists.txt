@@ -21,8 +21,16 @@ if(HAS_WALL)
     set(PARANOID_FLAGS "${PARANOID_FLAGS} -Wall")
 endif(HAS_WALL)
 
-# Configuration
-check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
+# Compiler
+check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
+check_cxx_compiler_flag("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
+endif()
 
 check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
     #include <memory>
@@ -33,7 +41,24 @@ check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
     }
 " HAVE_MAKE_UNIQUE)
 
+check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
+    #include <memory>
+    struct Base {
+        virtual void func() {}
+    };
+    struct Derived : public Base {
+        void func() override {}
+    }
+    int main(int, int)
+    {
+        return 0;
+    }
+" HAVE_OVERRIDE)
+
 configure_file(../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+# Configuration
+check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
 
 # Setup testing
 enable_testing()
@@ -92,7 +117,6 @@ set(glogg_HEADERS
 
 # Unit tests
 set(glogg_UTESTS
-    filewatcherTest.cpp
     watchtowerTest.cpp
 )
 
@@ -117,7 +141,7 @@ else (WIN32)
 endif (WIN32)
 
 # Qt
-set(CMAKE_CXX_FLAGS "${PARANOID_FLAGS} -fPIC -std=c++11 -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
+set(CMAKE_CXX_FLAGS "${PARANOID_FLAGS} -fPIC -DGLOGG_VERSION=\\\"unit_tests\\\" -g -gdwarf-2")
 
 # Add test cpp file
 add_executable(glogg_tests

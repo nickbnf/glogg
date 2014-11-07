@@ -269,7 +269,7 @@ std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::addWatchedDirecto
             [this, remove_notification, weakHeartBeat] (ObservedDir<Driver>* d) {
                 if ( auto heart_beat = weakHeartBeat.lock() ) {
                     remove_notification( d );
-                    cleanRefsToExpiredDirs();
+                    this->cleanRefsToExpiredDirs();
                 }
                 delete d; } };
 

@@ -70,10 +70,10 @@ TEST_F( PerfLogData, simpleLoad ) {
 
 class PerfLogDataRead : public PerfLogData {
   public:
-    PerfLogDataRead() : PerfLogData(), endSpy(
+    PerfLogDataRead() : PerfLogData(), log_data(), endSpy(
             &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) ) {
         log_data.attachFile( TMPDIR "/verybiglog.txt" );
-        endSpy.safeWait( 10000 );
+        endSpy.wait( 20000 );
     }
 
     LogData log_data;
@@ -81,6 +81,7 @@ class PerfLogDataRead : public PerfLogData {
 };
 
 TEST_F( PerfLogDataRead, sequentialRead ) {
+    ASSERT_THAT( log_data.getNbLine(), VBL_NB_LINES );
     // Read all lines sequentially
     QString s;
     {
@@ -93,6 +94,7 @@ TEST_F( PerfLogDataRead, sequentialRead ) {
 }
 
 TEST_F( PerfLogDataRead, sequentialReadExpanded ) {
+    ASSERT_THAT( log_data.getNbLine(), VBL_NB_LINES );
     // Read all lines sequentially (expanded)
     QString s;
     {
@@ -105,6 +107,7 @@ TEST_F( PerfLogDataRead, sequentialReadExpanded ) {
 }
 
 TEST_F( PerfLogDataRead, randomPageRead ) {
+    ASSERT_THAT( log_data.getNbLine(), VBL_NB_LINES );
     // Read page by page from the beginning and the end, using the QStringList
     // function
     QStringList list;
@@ -114,15 +117,16 @@ TEST_F( PerfLogDataRead, randomPageRead ) {
         for (int page = 0; page < (VBL_NB_LINES/VBL_LINE_PER_PAGE)-1; page++)
         {
             list = log_data.getLines( page*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
-            EXPECT_THAT(list.count(), VBL_LINE_PER_PAGE);
+            ASSERT_THAT(list.count(), VBL_LINE_PER_PAGE);
             int page_from_end = (VBL_NB_LINES/VBL_LINE_PER_PAGE) - page - 1;
             list = log_data.getLines( page_from_end*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
-            EXPECT_THAT(list.count(), VBL_LINE_PER_PAGE);
+            ASSERT_THAT(list.count(), VBL_LINE_PER_PAGE);
         }
     }
 }
 
 TEST_F( PerfLogDataRead, randomPageReadExpanded ) {
+    ASSERT_THAT( log_data.getNbLine(), VBL_NB_LINES );
     // Read page by page from the beginning and the end, using the QStringList
     // function
     QStringList list;
@@ -132,10 +136,10 @@ TEST_F( PerfLogDataRead, randomPageReadExpanded ) {
         for (int page = 0; page < (VBL_NB_LINES/VBL_LINE_PER_PAGE)-1; page++)
         {
             list = log_data.getExpandedLines( page*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
-            EXPECT_THAT(list.count(), VBL_LINE_PER_PAGE);
+            ASSERT_THAT(list.count(), VBL_LINE_PER_PAGE);
             int page_from_end = (VBL_NB_LINES/VBL_LINE_PER_PAGE) - page - 1;
             list = log_data.getExpandedLines( page_from_end*VBL_LINE_PER_PAGE, VBL_LINE_PER_PAGE );
-            EXPECT_THAT(list.count(), VBL_LINE_PER_PAGE);
+            ASSERT_THAT(list.count(), VBL_LINE_PER_PAGE);
         }
     }
 }

@@ -12,4 +12,10 @@
 /* Whether C++14 std::make_unique is available */
 #cmakedefine HAVE_MAKE_UNIQUE 1
 
+/* Whether the keyword override is available */
+#cmakedefine HAVE_OVERRIDE 1
+
+/* Whether the compiler supports template aliases */
+#cmakedefine HAVE_TEMPLATE_ALIASES 1
+
 #endif

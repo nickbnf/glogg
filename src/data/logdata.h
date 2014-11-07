@@ -29,6 +29,8 @@
 #include <QMutex>
 #include <QDateTime>
 
+#include "utils.h"
+
 #include "abstractlogdata.h"
 #include "logdataworkerthread.h"
 #include "filewatcher.h"

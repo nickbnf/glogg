@@ -31,13 +31,23 @@ class TabbedCrawlerWidget : public QTabWidget
 {
   Q_OBJECT
     public:
+      enum class DataStatus {
+          OLD_DATA,
+          NEW_DATA,
+          NEW_FILTERED_DATA
+      };
+
       TabbedCrawlerWidget();
       virtual ~TabbedCrawlerWidget() {}
 
       // "Overridden" addTab/removeTab that automatically
       // show/hide the tab bar
+      // The tab is created with the 'old data' icon.
       int addTab( QWidget* page, const QString& label );
       void removeTab( int index );
+
+      // Set the data status (icon) for the tab number 'index'
+      void setTabDataStatus( int index, DataStatus status );
 
     protected:
       void keyPressEvent( QKeyEvent* event );

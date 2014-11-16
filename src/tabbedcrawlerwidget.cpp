@@ -20,6 +20,7 @@
 #include "tabbedcrawlerwidget.h"
 
 #include <QKeyEvent>
+#include <QLabel>
 
 #include "log.h"
 
@@ -28,7 +29,12 @@ TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
 #ifdef WIN32
     myTabBar_.setStyleSheet( "QTabBar::tab {\
             height: 20px; "
-            "}" );
+            "} "
+            "QTabBar::close-button {\
+              height: 6px; width: 6px;\
+              subcontrol-origin: padding;\
+              subcontrol-position: left;\
+             }" );
 #else
     // On GTK style, it looks better with a smaller font
     myTabBar_.setStyleSheet(
@@ -37,7 +43,10 @@ TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
             " font-size: 9pt; "
             "} "
             "QTabBar::close-button {\
-            height: 6px; width: 6px; }" );
+              height: 6px; width: 6px;\
+              subcontrol-origin: padding;\
+              subcontrol-position: left;\
+             }" );
 #endif
     setTabBar( &myTabBar_ );
     myTabBar_.hide();
@@ -51,6 +60,12 @@ TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
 int TabbedCrawlerWidget::addTab( QWidget* page, const QString& label )
 {
     int index = QTabWidget::addTab( page, label );
+
+    // Display the icon
+    QLabel* icon_label = new QLabel();
+    icon_label->setPixmap( QPixmap( QString::fromUtf8( "newdata_icon.png" ) ) );
+    icon_label->setAlignment( Qt::AlignCenter );
+    myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label );
 
     LOG(logDEBUG) << "addTab, count = " << count();
 
@@ -115,5 +130,27 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
     }
     else {
         QTabWidget::keyPressEvent( event );
+    }
+}
+
+void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
+{
+    QLabel* icon_label = dynamic_cast<QLabel*>(
+            myTabBar_.tabButton( index, QTabBar::RightSide ) );
+
+    if ( icon_label ) {
+        QString icon_file_name;
+        switch ( status ) {
+            case DataStatus::OLD_DATA:
+                icon_file_name = QString::fromUtf8( "olddata_icon16.png" );
+                break;
+            case DataStatus::NEW_DATA:
+                icon_file_name = QString::fromUtf8( "olddata_icon16.png" );
+                break;
+            case DataStatus::NEW_FILTERED_DATA:
+                icon_file_name = QString::fromUtf8( "olddata_icon16.png" );
+                break;
+        }
+        icon_label->setPixmap ( QPixmap( icon_file_name ) );
     }
 }

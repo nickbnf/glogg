@@ -402,6 +402,44 @@ TEST_F( WatchTowerDirectories, FollowOneFileInOneDir ) {
 
 /*****/
 
+class WatchTowerInexistantDirectory: public WatchTowerDirectories {
+  public:
+    WatchTowerInexistantDirectory() {
+        test_dir = createTempDir();
+        rmdir( test_dir.c_str() );
+    }
+
+    ~WatchTowerInexistantDirectory() {
+        rmdir( test_dir.c_str() );
+    }
+
+    string test_dir;
+};
+
+TEST_F( WatchTowerInexistantDirectory, LaterCreatedDirIsFollowed ) {
+    /* Dir (and file) don't exist */
+    auto file_name = createTempEmptyFileInDir( test_dir );
+    {
+        auto registration = registerFile( file_name );
+
+#ifdef _WIN32
+        mkdir( test_dir.c_str() );
+#else
+        mkdir( test_dir.c_str(), 0777 );
+#endif
+        createTempEmptyFile( file_name );
+    }
+
+    auto registration2 = registerFile( file_name );
+
+    appendDataToFile( file_name );
+    ASSERT_TRUE( waitNotificationReceived() );
+
+    remove( file_name.c_str() );
+}
+
+/*****/
+
 #ifdef _WIN32
 class WinNotificationInfoListTest : public testing::Test {
   public:

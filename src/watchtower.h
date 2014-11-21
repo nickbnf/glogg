@@ -126,10 +126,10 @@ Registration WatchTower<Driver>::addFile(
                 ObservedFile<Driver>( file_name, ptr, file_id, symlink_id ) );
 
         auto dir = observed_file_list_.watchedDirectoryForFile( file_name );
-        if ( ! dir )
-        {
+        if ( ! dir ) {
             LOG(logDEBUG) << "WatchTower::addFile dir for " << file_name
                 << " not watched, adding...";
+
             dir = observed_file_list_.addWatchedDirectoryForFile( file_name,
                     [this, weakHeartBeat] (ObservedDir<Driver>* dir) {
                         if ( auto heart_beat = weakHeartBeat.lock() ) {
@@ -137,12 +137,19 @@ Registration WatchTower<Driver>::addFile(
                         } } );
 
             dir->dir_id_ = driver_.addDir( dir->path );
+
+            if ( ! dir->dir_id_.valid() ) {
+                LOG(logWARNING) << "WatchTower::addFile driver failed to add dir";
+                dir = nullptr;
+            }
+        }
+        else {
+            LOG(logDEBUG) << "WatchTower::addFile Found exisiting watch for dir " << file_name;
         }
 
         // Associate the dir to the file
-        new_file->dir_ = dir;
-
-        LOG(logDEBUG) << "dir ref count is " << dir.use_count();
+        if ( dir )
+            new_file->dir_ = dir;
     }
     else
     {

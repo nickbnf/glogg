@@ -125,21 +125,26 @@ WinWatchTowerDriver::DirId WinWatchTowerDriver::addDir(
 
 
 void WinWatchTowerDriver::removeFile(
-        const WinWatchTowerDriver::FileId& file_id )
+        const WinWatchTowerDriver::FileId& )
 {
 }
 
-void WinWatchTowerDriver::removeSymlink( const SymlinkId& symlink_id )
+void WinWatchTowerDriver::removeSymlink( const SymlinkId& )
 {
 }
 
 void WinWatchTowerDriver::removeDir( const DirId& dir_id )
 {
-    void* handle = dir_id.dir_record_->handle_;
+    if ( dir_id.dir_record_ ) {
+        void* handle = dir_id.dir_record_->handle_;
 
-    LOG(logDEBUG) << "WinWatchTowerDriver::removeDir handle=" << std::hex << handle;
+        LOG(logDEBUG) << "WinWatchTowerDriver::removeDir handle=" << std::hex << handle;
 
-    CloseHandle( handle );
+        CloseHandle( handle );
+    }
+    else {
+        /* Happens when an error occured when creating the dir_record_ */
+    }
 }
 
 //
@@ -201,9 +206,11 @@ void WinWatchTowerDriver::serialisedAddDir(
 
     if ( !status ) {
         LOG(logERROR) << "ReadDirectoryChangesW failed (" << GetLastError() << ")";
+        dir_records_.pop_back();
     }
-
-    dir_id.dir_record_ = dir_record;
+    else {
+        dir_id.dir_record_ = dir_record;
+    }
 }
 
 std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProcessEvents(

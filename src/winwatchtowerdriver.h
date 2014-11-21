@@ -115,6 +115,8 @@ class WinWatchTowerDriver {
         DirId() {}
         bool operator==( const DirId& other ) const
         { return dir_record_ == other.dir_record_; }
+        bool valid() const
+        { return ( dir_record_ != nullptr ); }
       private:
         std::shared_ptr<WinWatchedDirRecord> dir_record_;
     };

@@ -30,6 +30,8 @@ class INotifyWatchTowerDriver {
         DirId() { wd_ = -1; }
         bool operator==( const DirId& other ) const
         { return wd_ == other.wd_; }
+        bool valid() const
+        { return (wd_ != -1); }
       private:
         DirId( int wd ) { wd_ = wd; }
         int wd_;

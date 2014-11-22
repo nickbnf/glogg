@@ -674,6 +674,22 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
         << file_name.toStdString() << " )";
 
     loadFile( file_name );
+
+    // Try to get the window to the front
+    // This is a bit of a hack but has been tested on:
+    // Qt 5.3 / Gnome / Linux
+    Qt::WindowFlags window_flags = windowFlags();
+    window_flags |= Qt::WindowStaysOnTopHint;
+    setWindowFlags( window_flags );
+
+    activateWindow();
+    raise();
+
+    window_flags = windowFlags();
+    window_flags &= ~Qt::WindowStaysOnTopHint;
+    setWindowFlags( window_flags );
+
+    show();
 }
 
 void MainWindow::newVersionNotification( const QString& new_version )

@@ -166,6 +166,7 @@ class CrawlerWidget : public QSplitter,
             Static,
             Autorefreshing,
             FileTruncated,
+            TruncatedAutorefreshing,
         };
 
         SearchState() { state_ = NoSearch; autoRefreshRequested_ = false; }
@@ -187,7 +188,9 @@ class CrawlerWidget : public QSplitter,
         State getState() const { return state_; }
         // Is auto-refresh allowed
         bool isAutorefreshAllowed() const
-            { return ( state_ == Autorefreshing ); }
+        { return ( state_ == Autorefreshing || state_ == TruncatedAutorefreshing ); }
+        bool isFileTruncated() const
+        { return ( state_ == FileTruncated || state_ == TruncatedAutorefreshing ); }
 
       private:
         State state_;

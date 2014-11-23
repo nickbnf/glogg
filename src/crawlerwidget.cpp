@@ -373,8 +373,11 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
 
     // See if we need to auto-refresh the search
     if ( searchState_.isAutorefreshAllowed() ) {
-        LOG(logDEBUG) << "Refreshing the search";
-        logFilteredData_->updateSearch();
+        if ( searchState_.isFileTruncated() )
+            // We need to restart the search
+            replaceCurrentSearch( searchLineEdit->currentText() );
+        else
+            logFilteredData_->updateSearch();
     }
 
     emit loadingFinished( status );
@@ -781,6 +784,7 @@ void CrawlerWidget::printSearchInfoMessage( int nbMatches )
                 .arg( nbMatches > 1 ? "es" : "" );
             break;
         case SearchState::FileTruncated:
+        case SearchState::TruncatedAutorefreshing:
             text = tr("File truncated on disk, previous search results are not valid anymore.");
             break;
     }
@@ -804,16 +808,27 @@ void CrawlerWidget::SearchState::setAutorefresh( bool refresh )
     if ( refresh ) {
         if ( state_ == Static )
             state_ = Autorefreshing;
+        /*
+        else if ( state_ == FileTruncated )
+            state_ = TruncatedAutorefreshing;
+        */
     }
     else {
         if ( state_ == Autorefreshing )
             state_ = Static;
+        else if ( state_ == TruncatedAutorefreshing )
+            state_ = FileTruncated;
     }
 }
 
 void CrawlerWidget::SearchState::truncateFile()
 {
-    state_ = FileTruncated;
+    if ( state_ == Autorefreshing || state_ == TruncatedAutorefreshing ) {
+        state_ = TruncatedAutorefreshing;
+    }
+    else {
+        state_ = FileTruncated;
+    }
 }
 
 void CrawlerWidget::SearchState::changeExpression()

@@ -149,10 +149,8 @@ OverviewWidget::OverviewWidget( QWidget* parent ) :
     hide();
 }
 
-void OverviewWidget::paintEvent( QPaintEvent* paintEvent )
+void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
 {
-    LOG(logDEBUG) << "OverviewWidget::paintEvent";
-
     static const QColor match_color("red");
     static const QColor mark_color("dodgerblue");
 

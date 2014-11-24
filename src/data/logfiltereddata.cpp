@@ -98,11 +98,8 @@ void LogFilteredData::runSearch( const QRegExp& regExp )
 {
     LOG(logDEBUG) << "Entering runSearch";
 
-    // Reset the search
+    clearSearch();
     currentRegExp_ = regExp;
-    matchingLineList.clear();
-    maxLength_ = 0;
-    maxLengthMarks_ = 0;
 
     workerThread_.search( currentRegExp_ );
 }
@@ -125,7 +122,9 @@ void LogFilteredData::clearSearch()
 {
     currentRegExp_ = QRegExp();
     matchingLineList.clear();
-    maxLength_ = 0;
+    maxLength_        = 0;
+    maxLengthMarks_   = 0;
+    nbLinesProcessed_ = 0;
     filteredItemsCacheDirty_ = true;
 }
 

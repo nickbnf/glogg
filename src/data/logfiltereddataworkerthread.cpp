@@ -87,7 +87,8 @@ void SearchData::clear()
 {
     QMutexLocker locker( &dataMutex_ );
 
-    maxLength_ = 0;
+    maxLength_        = 0;
+    nbLinesProcessed_ = 0;
     matches_.clear();
 }
 
@@ -217,6 +218,8 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
     int maxLength = 0;
     int nbMatches = searchData.getNbMatches();
     SearchResultArray currentList = SearchResultArray();
+
+    LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
     for ( qint64 i = initialLine; i < nbSourceLines; i += nbLinesInChunk ) {
         if ( *interruptRequested_ )

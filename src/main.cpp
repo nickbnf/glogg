@@ -222,6 +222,12 @@ int main(int argc, char *argv[])
             std::make_shared<VersionCheckerConfig>(), QString( "versionChecker" ) );
 #endif
 
+#ifdef _WIN32
+    // Allow the app to raise it's own windows (in case an external
+    // glogg send us a file to open)
+    AllowSetForegroundWindow(ASFW_ANY);
+#endif
+
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );
 

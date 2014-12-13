@@ -308,7 +308,6 @@ void ObservedFileList<Driver>::cleanRefsToExpiredDirs()
             it != std::end( observed_dirs_ ); )
     {
         if ( it->second.expired() ) {
-            LOG(logDEBUG) << "No lock ";
             it = observed_dirs_.erase( it );
         }
         else {

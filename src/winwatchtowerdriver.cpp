@@ -118,7 +118,7 @@ WinWatchTowerDriver::DirId WinWatchTowerDriver::addDir(
                 */
     }
 
-    LOG(logDEBUG) << "Returned " << dir_id.dir_record_;
+    LOG(logDEBUG) << "addDir returned " << dir_id.dir_record_;
 
     return dir_id;
 }
@@ -135,6 +135,7 @@ void WinWatchTowerDriver::removeSymlink( const SymlinkId& )
 
 void WinWatchTowerDriver::removeDir( const DirId& dir_id )
 {
+    LOG(logDEBUG) << "Entering driver::removeDir";
     if ( dir_id.dir_record_ ) {
         void* handle = dir_id.dir_record_->handle_;
 
@@ -156,9 +157,11 @@ void WinWatchTowerDriver::serialisedAddDir(
         const std::string& dir_name,
         DirId& dir_id )
 {
+    bool inserted = false;
     auto dir_record = std::make_shared<WinWatchedDirRecord>( dir_name );
-    dir_records_.push_back( std::weak_ptr<WinWatchedDirRecord>( dir_record ) );
-    unsigned int index_record = dir_records_.size();
+    // The index we will be inserting this record (if success), plus 1 (to avoid
+    // 0 which is used as a magic value)
+    unsigned int index_record = dir_records_.size() + 1;
 
     LOG(logDEBUG) << "Adding dir for: " << dir_name;
 
@@ -179,37 +182,42 @@ void WinWatchTowerDriver::serialisedAddDir(
     if ( hDir == INVALID_HANDLE_VALUE ) {
         LOG(logERROR) << "CreateFile failed for dir " << dir_name;
     }
-
-    dir_record->handle_ = hDir;
-
-    //create a IO completion port/or associate this key with
-    //the existing IO completion port
-    hCompPort_ = CreateIoCompletionPort( hDir,
-            hCompPort_, //if m_hCompPort is NULL, hDir is associated with a NEW completion port,
-            //if m_hCompPort is NON-NULL, hDir is associated with the existing completion port that the handle m_hCompPort references
-            // We use the index (plus 1) of the weak_ptr as a key
-            index_record,
-            0 );
-
-    LOG(logDEBUG) << "Weak ptr address stored: " << index_record;
-
-    memset( &overlapped_, 0, sizeof overlapped_ );
-
-    bool status = ReadDirectoryChangesW( hDir,
-            dir_record->buffer_,
-            dir_record->buffer_length_,
-            false,
-            FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
-            &buffer_length_, // not set when using asynchronous mechanisms...
-            &overlapped_,
-            NULL );          // no completion routine
-
-    if ( !status ) {
-        LOG(logERROR) << "ReadDirectoryChangesW failed (" << GetLastError() << ")";
-        dir_records_.pop_back();
-    }
     else {
-        dir_id.dir_record_ = dir_record;
+        dir_record->handle_ = hDir;
+
+        //create a IO completion port/or associate this key with
+        //the existing IO completion port
+        hCompPort_ = CreateIoCompletionPort( hDir,
+                hCompPort_, //if m_hCompPort is NULL, hDir is associated with a NEW completion port,
+                //if m_hCompPort is NON-NULL, hDir is associated with the existing completion port that the handle m_hCompPort references
+                // We use the index (plus 1) of the weak_ptr as a key
+                index_record,
+                0 );
+
+        LOG(logDEBUG) << "Weak ptr address stored: " << index_record;
+
+        memset( &overlapped_, 0, sizeof overlapped_ );
+
+        inserted = ReadDirectoryChangesW( hDir,
+                dir_record->buffer_,
+                dir_record->buffer_length_,
+                false,
+                FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+                &buffer_length_, // not set when using asynchronous mechanisms...
+                &overlapped_,
+                NULL );          // no completion routine
+
+        if ( ! inserted ) {
+            LOG(logERROR) << "ReadDirectoryChangesW failed (" << GetLastError() << ")";
+            CloseHandle( hDir );
+        }
+        else {
+            dir_id.dir_record_ = dir_record;
+        }
+    }
+
+    if ( inserted ) {
+        dir_records_.push_back( std::weak_ptr<WinWatchedDirRecord>( dir_record ) );
     }
 }
 
@@ -225,6 +233,7 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
     LPOVERLAPPED lpOverlapped = 0;
 
     lock->unlock();
+    LOG(logDEBUG) << "waitAndProcessEvents now blocking...";
     BOOL status = GetQueuedCompletionStatus( hCompPort_,
             &num_bytes,
             &key,
@@ -297,6 +306,7 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
 
 void WinWatchTowerDriver::interruptWait()
 {
+    LOG(logDEBUG) << "Driver::interruptWait()";
     PostQueuedCompletionStatus( hCompPort_, 0, 0, NULL );
 }
 

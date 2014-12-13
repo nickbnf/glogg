@@ -681,9 +681,9 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     // Qt 4.8 / Win7
 #ifdef _WIN32
     // Hack copied from http://qt-project.org/forums/viewthread/6164
-    ::SetWindowPos(effectiveWinId(), HWND_TOPMOST,
+    ::SetWindowPos((HWND) effectiveWinId(), HWND_TOPMOST,
             0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-    ::SetWindowPos(effectiveWinId(), HWND_NOTOPMOST,
+    ::SetWindowPos((HWND) effectiveWinId(), HWND_NOTOPMOST,
             0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 #else
     Qt::WindowFlags window_flags = windowFlags();

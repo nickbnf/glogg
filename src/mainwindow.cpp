@@ -113,6 +113,12 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     signalMux_.connect( SIGNAL( loadingFinished( LoadingStatus ) ),
             this, SLOT( handleLoadingFinished( LoadingStatus ) ) );
 
+    // Register for checkbox changes
+    signalMux_.connect( SIGNAL( searchRefreshChanged( int ) ),
+            this, SLOT( handleSearchRefreshChanged( int ) ) );
+    signalMux_.connect( SIGNAL( ignoreCaseChanged( int ) ),
+            this, SLOT( handleIgnoreCaseChanged( int ) ) );
+
     // Configure the main tabbed widget
     mainTabWidget_.setDocumentMode( true );
     mainTabWidget_.setMovable( true );
@@ -617,6 +623,18 @@ memory to hold the index for this file. The file will now be closed." );
     }
 
     // mainTabWidget_.setEnabled( true );
+}
+
+void MainWindow::handleSearchRefreshChanged( int state )
+{
+    auto config = Persistent<Configuration>( "settings" );
+    config->setSearchAutoRefreshDefault( state == Qt::Checked );
+}
+
+void MainWindow::handleIgnoreCaseChanged( int state )
+{
+    auto config = Persistent<Configuration>( "settings" );
+    config->setSearchIgnoreCaseDefault( state == Qt::Checked );
 }
 
 void MainWindow::closeTab( int index )

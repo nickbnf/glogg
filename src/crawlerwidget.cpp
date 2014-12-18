@@ -55,7 +55,12 @@ class CrawlerWidgetContext : public ViewContextInterface {
     // Construct from the stored string representation
     CrawlerWidgetContext( const char* string );
     // Construct from the value passsed
-    CrawlerWidgetContext( QList<int> sizes ) { sizes_ = sizes; };
+    CrawlerWidgetContext( QList<int> sizes,
+           bool ignore_case,
+           bool auto_refresh )
+        : sizes_( sizes ),
+          ignore_case_( ignore_case ),
+          auto_refresh_( auto_refresh ) {}
 
     // Implementation of the ViewContextInterface function
     std::string toString() const;
@@ -63,8 +68,14 @@ class CrawlerWidgetContext : public ViewContextInterface {
     // Access the Qt sizes array for the QSplitter
     QList<int> sizes() const { return sizes_; }
 
+    bool ignoreCase() const { return ignore_case_; }
+    bool autoRefresh() const { return auto_refresh_; }
+
   private:
     QList<int> sizes_;
+
+    bool ignore_case_;
+    bool auto_refresh_;
 };
 
 // Constructor only does trivial construction. The real work is done once
@@ -183,12 +194,17 @@ void CrawlerWidget::doSetViewContext(
     CrawlerWidgetContext context = { view_context };
 
     setSizes( context.sizes() );
+    ignoreCaseCheck->setCheckState( context.ignoreCase() ? Qt::Checked : Qt::Unchecked );
+    searchRefreshCheck->setCheckState( context.autoRefresh() ? Qt::Checked : Qt::Unchecked );
 }
 
 std::shared_ptr<const ViewContextInterface>
 CrawlerWidget::doGetViewContext() const
 {
-    auto context = std::make_shared<const CrawlerWidgetContext>( sizes() );
+    auto context = std::make_shared<const CrawlerWidgetContext>(
+            sizes(),
+            ( ignoreCaseCheck->checkState() == Qt::Checked ),
+            ( searchRefreshCheck->checkState() == Qt::Checked ) );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
 }
@@ -621,6 +637,13 @@ void CrawlerWidget::setup()
     splitterSizes += 100;
     setSizes( splitterSizes );
 
+    // Default search checkboxes
+    auto config = Persistent<Configuration>( "settings" );
+    searchRefreshCheck->setCheckState( config->isSearchAutoRefreshDefault() ?
+            Qt::Checked : Qt::Unchecked );
+    ignoreCaseCheck->setCheckState( config->isSearchIgnoreCaseDefault() ?
+            Qt::Checked : Qt::Unchecked );
+
     // Connect the signals
     connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),
             searchButton, SIGNAL( clicked() ));
@@ -681,6 +704,13 @@ void CrawlerWidget::setup()
     // Search auto-refresh
     connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
             this, SLOT( searchRefreshChangedHandler( int ) ) );
+
+    // Advise the parent the checkboxes have been changed
+    // (for maintaining default config)
+    connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
+            this, SIGNAL( searchRefreshChanged( int ) ) );
+    connect( ignoreCaseCheck, SIGNAL( stateChanged( int ) ),
+            this, SIGNAL( ignoreCaseChanged( int ) ) );
 }
 
 // Create a new search using the text passed, replace the currently
@@ -858,17 +888,30 @@ CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
 {
     QRegExp regex = QRegExp( "S(\\d+):(\\d+)" );
 
-    if ( regex.indexIn( string ) > -1 )
-    {
+    if ( regex.indexIn( string ) > -1 ) {
         sizes_ = { regex.cap(1).toInt(), regex.cap(2).toInt() };
         LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
     }
-    else
-    {
-        LOG(logWARNING) << "Unrecognised view context: " << string;
+    else {
+        LOG(logWARNING) << "Unrecognised view size: " << string;
 
         // Default values;
         sizes_ = { 100, 400 };
+    }
+
+    QRegExp case_refresh_regex = QRegExp( "IC(\\d+):AR(\\d+)" );
+
+    if ( case_refresh_regex.indexIn( string ) > -1 ) {
+        ignore_case_ = ( case_refresh_regex.cap(1).toInt() == 1 );
+        auto_refresh_ = ( case_refresh_regex.cap(2).toInt() == 1 );
+
+        LOG(logDEBUG) << "ignore_case_: " << ignore_case_ << " auto_refresh_: "
+            << auto_refresh_;
+    }
+    else {
+        LOG(logWARNING) << "Unrecognised case/refresh: " << string;
+        ignore_case_ = false;
+        auto_refresh_ = false;
     }
 }
 
@@ -876,7 +919,9 @@ std::string CrawlerWidgetContext::toString() const
 {
     char string[160];
 
-    snprintf( string, sizeof string, "S%d:%d", sizes_[0], sizes_[1] );
+    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d",
+            sizes_[0], sizes_[1],
+            ignore_case_, auto_refresh_ );
 
-    return string;
+    return { string };
 }

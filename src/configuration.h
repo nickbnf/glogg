@@ -69,6 +69,16 @@ class Configuration : public Persistable {
     void setFilteredLineNumbersVisible( bool lineNumbersVisible )
     { lineNumbersVisibleInFiltered_ = lineNumbersVisible; }
 
+    // Default settings for new views
+    bool isSearchAutoRefreshDefault() const
+    { return searchAutoRefresh_; }
+    void setSearchAutoRefreshDefault( bool auto_refresh )
+    { searchAutoRefresh_ = auto_refresh; }
+    bool isSearchIgnoreCaseDefault() const
+    { return searchIgnoreCase_; }
+    void setSearchIgnoreCaseDefault( bool ignore_case )
+    { searchIgnoreCase_ = ignore_case; }
+
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
     virtual void retrieveFromStorage( QSettings& settings );
@@ -84,6 +94,10 @@ class Configuration : public Persistable {
     bool overviewVisible_;
     bool lineNumbersVisibleInMain_;
     bool lineNumbersVisibleInFiltered_;
+
+    // Default settings for new views
+    bool searchAutoRefresh_;
+    bool searchIgnoreCase_;
 };
 
 #endif

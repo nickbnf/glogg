@@ -111,6 +111,11 @@ class CrawlerWidget : public QSplitter,
     // Sent up when the current line number is updated
     void updateLineNumber( int line );
 
+    // "auto-refresh" check has been changed
+    void searchRefreshChanged( int state );
+    // "ignore case" check has been changed
+    void ignoreCaseChanged( int state );
+
   private slots:
     // Instructs the widget to start a search using the current search line.
     void startNewSearch();

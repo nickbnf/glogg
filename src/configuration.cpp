@@ -39,6 +39,9 @@ Configuration::Configuration()
 
     QFontInfo fi(mainFont_);
     LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
+
+    searchAutoRefresh_ = false;
+    searchIgnoreCase_  = false;
 }
 
 // Accessor functions
@@ -87,6 +90,12 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // Some sanity check (mainly for people upgrading)
     if ( quickfindIncremental_ )
         quickfindRegexpType_ = FixedString;
+
+    // Default crawler settings
+    if ( settings.contains( "defaultView.searchAutoRefresh" ) )
+        searchAutoRefresh_ = settings.value( "defaultView.searchAutoRefresh" ).toBool();
+    if ( settings.contains( "defaultView.searchIgnoreCase" ) )
+        searchIgnoreCase_ = settings.value( "defaultView.searchIgnoreCase" ).toBool();
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -103,4 +112,6 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );
+    settings.setValue( "defaultView.searchAutoRefresh", searchAutoRefresh_ );
+    settings.setValue( "defaultView.searchIgnoreCase", searchIgnoreCase_ );
 }

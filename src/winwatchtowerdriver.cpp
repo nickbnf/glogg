@@ -228,7 +228,7 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
 {
     std::vector<ObservedFile<WinWatchTowerDriver>*> files_to_notify { };
 
-    unsigned long long key = 0;
+    ULONG_PTR key = 0;
     DWORD num_bytes = 0;
     LPOVERLAPPED lpOverlapped = 0;
 

@@ -3,7 +3,7 @@
 # Build glogg for win32 using the cross-compiler
 
 QTXDIR=$HOME/qt-x-win32
-QTVERSION=4.8.2
+QTVERSION=4.8.6-32
 BOOSTDIR=$QTXDIR/boost_1_50_0
 
 make clean
@@ -18,8 +18,8 @@ else
     qmake-qt4 glogg.pro -spec win32-x-g++ -r CONFIG+="release win32 rtti no-dbus version_checker" BOOST_PATH=$BOOSTDIR VERSION="$VERSION"
 fi
 make -j3
-cp $QTXDIR/$QTVERSION/bin/{QtCore4,QtGui4,QtNetwork4}.dll release/
-cp $QTXDIR/$QTVERSION/bin/{QtCored4,QtGuid4,QtNetworkd4}.dll debug/
+cp $QTXDIR/$QTVERSION/lib/{QtCore4,QtGui4,QtNetwork4}.dll release/
+cp $QTXDIR/$QTVERSION/lib/{QtCored4,QtGuid4,QtNetworkd4}.dll debug/
 if [ -z "$VERSION" ]; then
     VERSION=`git describe`;
 fi

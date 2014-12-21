@@ -165,6 +165,12 @@ int main(int argc, char *argv[])
 
     FILELog::setReportingLevel( logLevel );
 
+    if ( ! filename.empty() ) {
+        // Convert to absolute path
+        QFileInfo file( QString::fromStdString( filename ) );
+        filename = file.absoluteFilePath().toStdString();
+    }
+
     // External communicator
     shared_ptr<ExternalCommunicator> externalCommunicator = nullptr;
     shared_ptr<ExternalInstance> externalInstance = nullptr;

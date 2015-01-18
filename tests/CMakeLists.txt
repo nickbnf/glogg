@@ -128,6 +128,7 @@ set(glogg_ITESTS
 # Performance tests
 set(glogg_PTESTS
     logdataPerfTest.cpp
+    logfiltereddataPerfTest.cpp
 )
 
 

@@ -25,12 +25,12 @@
 #include <QObject>
 #include <QByteArray>
 #include <QList>
-#include <QVector>
 #include <QStringList>
 #include <QRegExp>
 
 #include "abstractlogdata.h"
 #include "logfiltereddataworkerthread.h"
+#include "marks.h"
 
 class LogData;
 class Marks;
@@ -70,11 +70,11 @@ class LogFilteredData : public AbstractLogData {
     bool isLineInMatchingList( qint64 lineNumber );
 
     // Returns the number of lines in the source log data
-    qint64 getNbTotalLines() const;
+    LineNumber getNbTotalLines() const;
     // Returns the number of matches (independently of the visibility)
-    int getNbMatches() const;
+    LineNumber getNbMatches() const;
     // Returns the number of marks (independently of the visibility)
-    int getNbMarks() const;
+    LineNumber getNbMarks() const;
 
     // Returns the reason why the line at the passed index is in the filtered
     // data.  It can be because it is either a mark or a match.
@@ -123,7 +123,8 @@ class LogFilteredData : public AbstractLogData {
     int doGetMaxLength() const;
     int doGetLineLength( qint64 line ) const;
 
-    QList<MatchingLine> matchingLineList;
+    // List of the matching line numbers
+    SearchResultArray matching_lines_;
 
     const LogData* sourceLogData_;
     QRegExp currentRegExp_;
@@ -138,14 +139,14 @@ class LogFilteredData : public AbstractLogData {
     // Cache used to combine Marks and Matches
     // when visibility_ == MarksAndMatches
     // (QVector store actual objects instead of pointers)
-    mutable QVector<FilteredItem> filteredItemsCache_;
+    mutable std::vector<FilteredItem> filteredItemsCache_;
     mutable bool filteredItemsCacheDirty_;
 
     LogFilteredDataWorkerThread workerThread_;
-    std::unique_ptr<Marks> marks_;
+    Marks marks_;
 
     // Utility functions
-    qint64 findLogDataLine( qint64 lineNum ) const;
+    LineNumber findLogDataLine( LineNumber lineNum ) const;
     void regenerateFilteredItemsCache() const;
 };
 
@@ -160,16 +161,16 @@ class LogFilteredData::FilteredItem {
     // A default ctor seems to be necessary for QVector
     FilteredItem()
     { lineNumber_ = 0; }
-    FilteredItem( qint64 lineNumber, FilteredLineType type )
+    FilteredItem( LineNumber lineNumber, FilteredLineType type )
     { lineNumber_ = lineNumber; type_ = type; }
 
-    qint64 lineNumber() const
+    LineNumber lineNumber() const
     { return lineNumber_; }
     FilteredLineType type() const
     { return type_; }
 
   private:
-    qint64 lineNumber_;
+    LineNumber lineNumber_;
     FilteredLineType type_;
 };
 

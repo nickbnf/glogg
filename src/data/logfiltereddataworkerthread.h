@@ -29,20 +29,26 @@
 
 class LogData;
 
+// Line number are unsigned 32 bits for now.
+typedef uint32_t LineNumber;
+
 // Class encapsulating a single matching line
 // Contains the line number the line was found in and its content.
 class MatchingLine {
   public:
-    MatchingLine( int line ) { lineNumber_ = line; };
+    MatchingLine( LineNumber line ) { lineNumber_ = line; };
 
     // Accessors
-    int lineNumber() const { return lineNumber_; }
+    LineNumber lineNumber() const { return lineNumber_; }
 
   private:
-    int lineNumber_;
+    LineNumber lineNumber_;
 };
 
-typedef QList<MatchingLine> SearchResultArray;
+// This is an array of matching lines.
+// It shall be implemented for random lookup speed, so
+// a fixed "in-place" array (vector) is probably fine.
+typedef std::vector<MatchingLine> SearchResultArray;
 
 // This class is a mutex protected set of search result data.
 // It is thread safe.
@@ -56,13 +62,14 @@ class SearchData
             qint64* nbLinesProcessed ) const;
     // Atomically set all the search data
     // (overwriting the existing)
-    void setAll( int length, const SearchResultArray& matches );
+    // (the matches are always moved)
+    void setAll( int length, SearchResultArray&& matches );
     // Atomically add to all the existing search data.
-    void addAll( int length, const SearchResultArray& matches, qint64 nbLinesProcessed );
+    void addAll( int length, const SearchResultArray& matches, LineNumber nbLinesProcessed );
     // Get the number of matches
-    int getNbMatches() const;
+    LineNumber getNbMatches() const;
     // Delete the match for the passed line (if it exist)
-    void deleteMatch( qint64 line );
+    void deleteMatch( LineNumber line );
     // Atomically clear the data.
     void clear();
 
@@ -71,7 +78,7 @@ class SearchData
 
     SearchResultArray matches_;
     int maxLength_;
-    qint64 nbLinesProcessed_;
+    LineNumber nbLinesProcessed_;
 };
 
 class SearchOperation : public QObject

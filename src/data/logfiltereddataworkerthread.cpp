@@ -33,12 +33,14 @@ void SearchData::getAll( int* length, SearchResultArray* matches,
     QMutexLocker locker( &dataMutex_ );
 
     *length  = maxLength_;
-    *matches = matches_;
     *lines   = nbLinesProcessed_;
+
+    // This is a copy (potentially slow)
+    *matches = matches_;
 }
 
 void SearchData::setAll( int length,
-        const SearchResultArray& matches )
+        SearchResultArray&& matches )
 {
     QMutexLocker locker( &dataMutex_ );
 
@@ -47,32 +49,36 @@ void SearchData::setAll( int length,
 }
 
 void SearchData::addAll( int length,
-        const SearchResultArray& matches, qint64 lines )
+        const SearchResultArray& matches, LineNumber lines )
 {
     QMutexLocker locker( &dataMutex_ );
 
     maxLength_        = qMax( maxLength_, length );
-    matches_          += matches;
     nbLinesProcessed_ = lines;
+
+    // This does a copy as we want the final array to be
+    // linear.
+    matches_.insert( std::end( matches_ ),
+            std::begin( matches ), std::end( matches ) );
 }
 
-int SearchData::getNbMatches() const
+LineNumber SearchData::getNbMatches() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    return matches_.count();
+    return matches_.size();
 }
 
 // This function starts searching from the end since we use it
 // to remove the final match.
-void SearchData::deleteMatch( qint64 line )
+void SearchData::deleteMatch( LineNumber line )
 {
     QMutexLocker locker( &dataMutex_ );
 
     SearchResultArray::iterator i = matches_.end();
     while ( i != matches_.begin() ) {
         i--;
-        const int this_line = i->lineNumber();
+        const LineNumber this_line = i->lineNumber();
         if ( this_line == line ) {
             matches_.erase(i);
             break;
@@ -91,8 +97,6 @@ void SearchData::clear()
     nbLinesProcessed_ = 0;
     matches_.clear();
 }
-
-
 
 LogFilteredDataWorkerThread::LogFilteredDataWorkerThread(
         const LogData* sourceLogData )
@@ -163,7 +167,6 @@ void LogFilteredDataWorkerThread::interrupt()
 }
 
 // This will do an atomic copy of the object
-// (hopefully fast as we use Qt containers)
 void LogFilteredDataWorkerThread::getSearchResult(
         int* maxLength, SearchResultArray* searchMatches, qint64* nbLinesProcessed )
 {
@@ -219,6 +222,9 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
     int nbMatches = searchData.getNbMatches();
     SearchResultArray currentList = SearchResultArray();
 
+    // Ensure no re-alloc will be done
+    currentList.reserve( nbLinesInChunk );
+
     LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
     for ( qint64 i = initialLine; i < nbSourceLines; i += nbLinesInChunk ) {
@@ -236,11 +242,11 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
         int j = 0;
         for ( ; j < lines.size(); j++ ) {
             if ( regexp_.indexIn( lines[j] ) != -1 ) {
+                // FIXME: increase perf by removing temporary
                 const int length = sourceLogData_->getExpandedLineString(i+j).length();
                 if ( length > maxLength )
                     maxLength = length;
-                MatchingLine match( i+j );
-                currentList.append( match );
+                currentList.push_back( MatchingLine( i+j ) );
                 nbMatches++;
             }
         }

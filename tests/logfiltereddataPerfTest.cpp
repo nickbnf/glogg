@@ -44,7 +44,7 @@ class PerfLogFilteredData : public testing::Test {
                 percent = qvariant_cast<int>(progressSpy.last().at(1));
             else
                 std::cout << "Missed...\n";
-            std::cout << "Progress " << percent << std::endl;
+            // std::cout << "Progress " << percent << std::endl;
         } while ( percent < 100 );
     }
 

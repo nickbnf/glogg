@@ -35,14 +35,13 @@
 // Creates an empty set. It must be possible to display it without error.
 // FIXME
 LogFilteredData::LogFilteredData() : AbstractLogData(),
-    matchingLineList( QList<MatchingLine>() ),
+    matching_lines_(),
     currentRegExp_(),
     visibility_(),
     filteredItemsCache_(),
     workerThread_( nullptr ),
-    marks_( new Marks() )
+    marks_()
 {
-    matchingLineList = QList<MatchingLine>();
     /* Prevent any more searching */
     maxLength_ = 0;
     maxLengthMarks_ = 0;
@@ -55,12 +54,12 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
 // Usual constructor: just copy the data, the search is started by runSearch()
 LogFilteredData::LogFilteredData( const LogData* logData )
     : AbstractLogData(),
-    matchingLineList( SearchResultArray() ),
+    matching_lines_( SearchResultArray() ),
     currentRegExp_(),
     visibility_(),
     filteredItemsCache_(),
     workerThread_( logData ),
-    marks_( new Marks() )
+    marks_()
 {
     // Starts with an empty result list
     maxLength_ = 0;
@@ -121,7 +120,7 @@ void LogFilteredData::interruptSearch()
 void LogFilteredData::clearSearch()
 {
     currentRegExp_ = QRegExp();
-    matchingLineList.clear();
+    matching_lines_.clear();
     maxLength_        = 0;
     maxLengthMarks_   = 0;
     nbLinesProcessed_ = 0;
@@ -140,23 +139,23 @@ bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
 {
     int index;                                    // Not used
     return lookupLineNumber<SearchResultArray>(
-            matchingLineList, lineNumber, &index);
+            matching_lines_, lineNumber, &index);
 }
 
 
-qint64 LogFilteredData::getNbTotalLines() const
+LineNumber LogFilteredData::getNbTotalLines() const
 {
     return sourceLogData_->getNbLine();
 }
 
-int LogFilteredData::getNbMatches() const
+LineNumber LogFilteredData::getNbMatches() const
 {
-    return matchingLineList.size();
+    return matching_lines_.size();
 }
 
-int LogFilteredData::getNbMarks() const
+LineNumber LogFilteredData::getNbMarks() const
 {
-    return marks_->size();
+    return marks_.size();
 }
 
 LogFilteredData::FilteredLineType
@@ -182,10 +181,8 @@ LogFilteredData::FilteredLineType
 
 void LogFilteredData::addMark( qint64 line, QChar mark )
 {
-    assert( marks_ );
-
     if ( ( line >= 0 ) && ( line < sourceLogData_->getNbLine() ) ) {
-        marks_->addMark( line, mark );
+        marks_.addMark( line, mark );
         maxLengthMarks_ = qMax( maxLengthMarks_,
                 sourceLogData_->getLineLength( line ) );
         filteredItemsCacheDirty_ = true;
@@ -197,23 +194,17 @@ void LogFilteredData::addMark( qint64 line, QChar mark )
 
 qint64 LogFilteredData::getMark( QChar mark ) const
 {
-    assert( marks_ );
-
-    return marks_->getMark( mark );
+    return marks_.getMark( mark );
 }
 
 bool LogFilteredData::isLineMarked( qint64 line ) const
 {
-    assert( marks_ );
-
-    return marks_->isLineMarked( line );
+    return marks_.isLineMarked( line );
 }
 
 void LogFilteredData::deleteMark( QChar mark )
 {
-    assert( marks_ );
-
-    marks_->deleteMark( mark );
+    marks_.deleteMark( mark );
     filteredItemsCacheDirty_ = true;
 
     // FIXME: maxLengthMarks_
@@ -221,17 +212,15 @@ void LogFilteredData::deleteMark( QChar mark )
 
 void LogFilteredData::deleteMark( qint64 line )
 {
-    assert( marks_ );
-
-    marks_->deleteMark( line );
+    marks_.deleteMark( line );
     filteredItemsCacheDirty_ = true;
 
     // Now update the max length if needed
     if ( sourceLogData_->getLineLength( line ) >= maxLengthMarks_ ) {
         LOG(logDEBUG) << "deleteMark recalculating longest mark";
         maxLengthMarks_ = 0;
-        for ( Marks::const_iterator i = marks_->begin();
-                i != marks_->end(); ++i ) {
+        for ( Marks::const_iterator i = marks_.begin();
+                i != marks_.end(); ++i ) {
             LOG(logDEBUG) << "line " << i->lineNumber();
             maxLengthMarks_ = qMax( maxLengthMarks_,
                     sourceLogData_->getLineLength( i->lineNumber() ) );
@@ -241,9 +230,7 @@ void LogFilteredData::deleteMark( qint64 line )
 
 void LogFilteredData::clearMarks()
 {
-    assert( marks_ );
-
-    marks_->clear();
+    marks_.clear();
     filteredItemsCacheDirty_ = true;
     maxLengthMarks_ = 0;
 }
@@ -262,26 +249,26 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
         << nbMatches << " progress=" << progress;
 
     // searchDone_ = true;
-    workerThread_.getSearchResult( &maxLength_, &matchingLineList, &nbLinesProcessed_ );
+    workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
     emit searchProgressed( nbMatches, progress );
 }
 
-qint64 LogFilteredData::findLogDataLine( qint64 lineNum ) const
+LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
-    qint64 line = 0;
+    LineNumber line = 0;
     if ( visibility_ == MatchesOnly ) {
-        if ( lineNum < matchingLineList.size() ) {
-            line = matchingLineList[lineNum].lineNumber();
+        if ( lineNum < matching_lines_.size() ) {
+            line = matching_lines_[lineNum].lineNumber();
         }
         else {
             LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
         }
     }
     else if ( visibility_ == MarksOnly ) {
-        if ( lineNum < marks_->size() )
-            line = marks_->getLineMarkedByIndex( lineNum );
+        if ( lineNum < marks_.size() )
+            line = marks_.getLineMarkedByIndex( lineNum );
         else
             LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
     }
@@ -347,9 +334,9 @@ qint64 LogFilteredData::doGetNbLine() const
     qint64 nbLines;
 
     if ( visibility_ == MatchesOnly )
-        nbLines = matchingLineList.size();
+        nbLines = matching_lines_.size();
     else if ( visibility_ == MarksOnly )
-        nbLines = marks_->size();
+        nbLines = marks_.size();
     else {
         // Regenerate the cache if needed (hopefully most of the time
         // it won't be necessarily)
@@ -390,30 +377,30 @@ void LogFilteredData::regenerateFilteredItemsCache() const
     LOG(logDEBUG) << "regenerateFilteredItemsCache";
 
     filteredItemsCache_.clear();
-    filteredItemsCache_.reserve( matchingLineList.size() + marks_->size() );
+    filteredItemsCache_.reserve( matching_lines_.size() + marks_.size() );
     // (it's an overestimate but probably not by much so it's fine)
 
-    QList<MatchingLine>::const_iterator i = matchingLineList.begin();
-    Marks::const_iterator j = marks_->begin();
+    auto i = matching_lines_.cbegin();
+    Marks::const_iterator j = marks_.begin();
 
-    while ( ( i != matchingLineList.end() ) || ( j != marks_->end() ) ) {
+    while ( ( i != matching_lines_.cend() ) || ( j != marks_.end() ) ) {
         qint64 next_mark =
-            ( j != marks_->end() ) ? j->lineNumber() : std::numeric_limits<qint64>::max();
+            ( j != marks_.end() ) ? j->lineNumber() : std::numeric_limits<qint64>::max();
         qint64 next_match =
-            ( i != matchingLineList.end() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
+            ( i != matching_lines_.cend() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
         // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
         if ( next_mark <= next_match ) {
             // LOG(logDEBUG) << "Add mark at " << next_mark;
-            filteredItemsCache_.append( FilteredItem( next_mark, Mark ) );
-            if ( j != marks_->end() )
+            filteredItemsCache_.push_back( FilteredItem( next_mark, Mark ) );
+            if ( j != marks_.end() )
                 ++j;
-            if ( ( next_mark == next_match ) && ( i != matchingLineList.end() ) )
+            if ( ( next_mark == next_match ) && ( i != matching_lines_.cend() ) )
                 ++i;  // Case when it's both match and mark.
         }
         else {
             // LOG(logDEBUG) << "Add match at " << next_match;
-            filteredItemsCache_.append( FilteredItem( next_match, Match ) );
-            if ( i != matchingLineList.end() )
+            filteredItemsCache_.push_back( FilteredItem( next_match, Match ) );
+            if ( i != matching_lines_.cend() )
                 ++i;
         }
     }

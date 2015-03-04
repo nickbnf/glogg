@@ -118,6 +118,7 @@ set(glogg_HEADERS
 # Unit tests
 set(glogg_UTESTS
     watchtowerTest.cpp
+    linepositionarrayTest.cpp
 )
 
 # Integration tests

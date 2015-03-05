@@ -21,6 +21,8 @@
 #include <cstdlib>
 #include <arpa/inet.h>
 
+#include <iostream>
+
 #include "data/compressedlinestorage.h"
 
 namespace {
@@ -149,6 +151,7 @@ CompressedLinePositionStorage::~CompressedLinePositionStorage()
 {
     for ( char* block : block32_index_ ) {
         void* p = static_cast<void*>( block );
+        std::cerr << "block = " << p << std::endl;
         free( p );
     }
 }
@@ -185,6 +188,18 @@ void CompressedLinePositionStorage::append( uint64_t pos )
 
     if ( nb_lines_ % BLOCK_SIZE == 0 ) {
         // We have finished the block
+
+        // Let's reduce its size to what is actually used
+        int block_index = nb_lines_ / BLOCK_SIZE - 1;
+        char* block = block32_index_[block_index];
+        // We allocate extra space for the last element in case it
+        // is replaced by an absolute value in the future (following a pop_back)
+        size_t new_size = ( previous_block_pointer_
+                + sizeof( uint16_t ) + sizeof( uint32_t ) ) - block;
+        void* new_location = realloc( block, new_size );
+        if ( new_location )
+            block32_index_[block_index] = static_cast<char*>( new_location );
+
         block_pointer_ = nullptr;
     }
 }

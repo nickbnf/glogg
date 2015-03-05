@@ -45,7 +45,7 @@ class IndexingData
     void setAll( qint64 size, int length,
             const LinePositionArray& linePosition );
 
-    // Atomically add to all the existing 
+    // Atomically add to all the existing
     // indexing data.
     void addAll( qint64 size, int length,
             const LinePositionArray& linePosition );

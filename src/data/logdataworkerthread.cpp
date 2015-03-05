@@ -54,7 +54,7 @@ void IndexingData::addAll( qint64 size, int length,
 
     indexedSize_  += size;
     maxLength_     = qMax( maxLength_, length );
-    linePosition_ += linePosition;
+    linePosition_.append_list( linePosition );
 }
 
 LogDataWorkerThread::LogDataWorkerThread()

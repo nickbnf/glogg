@@ -78,6 +78,7 @@ set(glogg_SOURCES
     ../src/data/logfiltereddata.cpp
     ../src/data/logfiltereddataworkerthread.cpp
     ../src/data/logdataworkerthread.cpp
+    ../src/data/compressedlinestorage.cpp
     ../src/mainwindow.cpp
     ../src/crawlerwidget.cpp
     ../src/abstractlogview.cpp

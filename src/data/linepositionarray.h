@@ -17,21 +17,29 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LINEPOSITIONARRAY_H
+#define LINEPOSITIONARRAY_H
+
 #include <QtGlobal>
 #include <QVector>
+
+#include "data/compressedlinestorage.h"
+
+typedef QVector<qint64> SimpleLinePositionStorage;
 
 // This class is a list of end of lines position,
 // in addition to a list of qint64 (positions within the files)
 // it can keep track of whether the final LF was added (for non-LF terminated
 // files) and remove it when more data are added.
-class LinePositionArray
+template <typename Storage>
+class LinePosition
 {
   public:
     // Default constructor
-    LinePositionArray() : array()
+    LinePosition() : array()
     { fakeFinalLF_ = false; }
     // Copy constructor
-    inline LinePositionArray( const LinePositionArray& orig )
+    inline LinePosition( const LinePosition& orig )
         : array(orig.array)
     { fakeFinalLF_ = orig.fakeFinalLF_; }
 
@@ -46,7 +54,7 @@ class LinePositionArray
         array.append( pos );
     }
     // Size of the array
-    inline int size()
+    inline int size() const
     { return array.size(); }
     // Extract an element
     inline qint64 at( int i ) const
@@ -61,24 +69,27 @@ class LinePositionArray
     // Add another list to this one, removing any fake LF on this list.
     // Invariant: all pos in other must be greater than any pos in this
     // (this is NOT checked!)
-    LinePositionArray& operator+= ( const LinePositionArray& other )
+    void append_list( const LinePosition<Storage>& other )
     {
         // If our final LF is fake, we remove it
         if ( fakeFinalLF_ )
             this->array.pop_back();
 
         // Append the arrays
-        this->array += other.array;
+        this->array.append_list( other.array );
 
         // In case the 'other' object has a fake LF
         this->fakeFinalLF_ = other.fakeFinalLF_;
-
-        return *this;
     }
 
   private:
-    QVector<qint64> array;
+    Storage array;
     bool fakeFinalLF_;
 };
 
+// Use the non-optimised storage
+// typedef LinePosition<SimpleLinePositionStorage> FastLinePositionArray;
 
+typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
+
+#endif

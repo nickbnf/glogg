@@ -17,10 +17,9 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cassert>
 #include <cstdlib>
 #include <arpa/inet.h>
-
-#include <iostream>
 
 #include "data/compressedlinestorage.h"
 
@@ -116,9 +115,50 @@ namespace {
     }
 }
 
+void CompressedLinePositionStorage::move_from(
+        CompressedLinePositionStorage&& orig )
+{
+    nb_lines_        = orig.nb_lines_;
+    first_long_line_ = orig.first_long_line_;
+    current_pos_     = orig.current_pos_;
+    block_pointer_   = orig.block_pointer_;
+    previous_block_pointer_ = orig.previous_block_pointer_;
+
+    orig.nb_lines_   = 0;
+}
+
+// Move constructor
+CompressedLinePositionStorage::CompressedLinePositionStorage(
+        CompressedLinePositionStorage&& orig )
+    : block32_index_( std::move( orig.block32_index_ ) )
+{
+    move_from( std::move( orig ) );
+}
+
+// Move assignement
+CompressedLinePositionStorage& CompressedLinePositionStorage::operator=(
+        CompressedLinePositionStorage&& orig )
+{
+    block32_index_ = std::move( orig.block32_index_ );
+    move_from( std::move( orig ) );
+
+    return *this;
+}
+
+CompressedLinePositionStorage::~CompressedLinePositionStorage()
+{
+    for ( char* block : block32_index_ ) {
+        void* p = static_cast<void*>( block );
+        free( p );
+    }
+}
+
 // template<int BLOCK_SIZE>
 void CompressedLinePositionStorage::append( uint64_t pos )
 {
+    // Save the pointer in case we need to "pop_back"
+    previous_block_pointer_ = block_pointer_;
+
     if ( ! block_pointer_ ) {
         // We need to start a new block
         block32_index_.push_back(
@@ -176,4 +216,28 @@ void CompressedLinePositionStorage::append_list(
 // template<int BLOCK_SIZE>
 void CompressedLinePositionStorage::pop_back()
 {
+    // Removing the last entered data, there are two cases
+    if ( previous_block_pointer_ ) {
+        // The last append was a normal entry in an existing block,
+        // so we can just revert the pointer
+        block_pointer_ = previous_block_pointer_;
+        previous_block_pointer_ = nullptr;
+    }
+    else {
+        // A new block has been created for the last entry, we need
+        // to de-alloc it.
+
+        // If we try to pop_back() twice, we're dead!
+        assert( ( nb_lines_ - 1 ) % BLOCK_SIZE == 0 );
+
+        char* block = block32_index_.back();
+        block32_index_.pop_back();
+        free( block );
+
+
+        block_pointer_ = nullptr;
+    }
+
+    --nb_lines_;
+    current_pos_ = at( nb_lines_ - 1 );
 }

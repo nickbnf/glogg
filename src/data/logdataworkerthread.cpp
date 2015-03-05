@@ -34,17 +34,17 @@ void IndexingData::getAll( qint64* size, int* length,
 
     *size         = indexedSize_;
     *length       = maxLength_;
-    *linePosition = linePosition_;
+    *linePosition = std::move( linePosition_ );
 }
 
 void IndexingData::setAll( qint64 size, int length,
-        const LinePositionArray& linePosition )
+        LinePositionArray& linePosition )
 {
     QMutexLocker locker( &dataMutex_ );
 
     indexedSize_  = size;
     maxLength_    = length;
-    linePosition_ = linePosition;
+    linePosition_ = std::move( linePosition );
 }
 
 void IndexingData::addAll( qint64 size, int length,
@@ -276,7 +276,7 @@ bool FullIndexOperation::start( IndexingData& sharedData )
 
     LOG(logDEBUG) << "FullIndexOperation: Starting the count...";
     int maxLength = 0;
-    LinePositionArray linePosition = LinePositionArray();
+    LinePositionArray linePosition = {};
 
     emit indexingProgressed( 0 );
 
@@ -302,7 +302,7 @@ bool PartialIndexOperation::start( IndexingData& sharedData )
     LOG(logDEBUG) << "PartialIndexOperation: Starting the count at "
         << initialPosition_ << " ...";
     int maxLength = 0;
-    LinePositionArray linePosition = LinePositionArray();
+    LinePositionArray linePosition = {};
 
     emit indexingProgressed( 0 );
 

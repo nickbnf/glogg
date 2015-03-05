@@ -38,10 +38,13 @@ class LinePosition
     // Default constructor
     LinePosition() : array()
     { fakeFinalLF_ = false; }
-    // Copy constructor
-    inline LinePosition( const LinePosition& orig )
-        : array(orig.array)
-    { fakeFinalLF_ = orig.fakeFinalLF_; }
+    // Copy constructor (slow: deleted)
+    LinePosition( const LinePosition& orig ) = delete;
+    // Move assignement
+    LinePosition& operator=( LinePosition&& orig )
+    { array = std::move( orig.array );
+      fakeFinalLF_ = orig.fakeFinalLF_;
+      return *this; }
 
     // Add a new line position at the given position
     // Invariant: pos must be greater than the previous one

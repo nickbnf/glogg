@@ -83,10 +83,17 @@ class CompressedLinePositionStorage
     // Default constructor
     CompressedLinePositionStorage()
     { nb_lines_ = 0; first_long_line_ = UINT32_MAX;
-      current_pos_ = 0; block_pointer_ = nullptr; }
-    // Copy constructor
-    CompressedLinePositionStorage( const CompressedLinePositionStorage& orig );
-    // TODO: do we need move constructor?
+      current_pos_ = 0; block_pointer_ = nullptr;
+      previous_block_pointer_ = nullptr; }
+    // Copy constructor would be slow, delete!
+    CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
+    // Move constructor
+    CompressedLinePositionStorage( CompressedLinePositionStorage&& orig );
+    // Move assignement
+    CompressedLinePositionStorage& operator=(
+            CompressedLinePositionStorage&& orig );
+    // Destructor
+    ~CompressedLinePositionStorage();
 
     // Append the passed end-of-line to the storage
     void append( uint64_t pos );
@@ -104,6 +111,9 @@ class CompressedLinePositionStorage
     void pop_back();
 
   private:
+    // Utility for move ctor/assign
+    void move_from( CompressedLinePositionStorage&& orig );
+
     // The two indexes
     std::vector<char*> block32_index_;
     std::vector<char*> block64_index_;
@@ -121,6 +131,14 @@ class CompressedLinePositionStorage
     // The index of the first line whose end is stored in a block64
     // Initialised at UINT32_MAX, meaning "unset"
     uint32_t first_long_line_;
+
+    // For pop_back:
+
+    // Previous pointer to block element, it is restored when we
+    // "pop_back" the last element.
+    // A null pointer here means pop_back need to free the block
+    // that has just been created.
+    char* previous_block_pointer_;
 };
 
 #endif

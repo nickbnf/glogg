@@ -41,9 +41,9 @@ TEST_F( LinePositionArraySmall, RememberAddedLines ) {
 
 TEST_F( LinePositionArraySmall, FakeLFisNotKeptWhenAddingAfterIt ) {
     line_array.setFakeFinalLF();
-    ASSERT_THAT( line_array[2], Eq( 10 ) );
-    line_array.append( 15 );
-    ASSERT_THAT( line_array[2], Eq( 15 ) );
+    ASSERT_THAT( line_array[5], Eq( 20020 ) );
+    line_array.append( 20030 );
+    ASSERT_THAT( line_array[5], Eq( 20030 ) );
 }
 
 class LinePositionArrayConcatOperation: public LinePositionArraySmall {
@@ -51,31 +51,59 @@ class LinePositionArrayConcatOperation: public LinePositionArraySmall {
     LinePositionArray other_array;
 
     LinePositionArrayConcatOperation() {
-        other_array.append( 15 );
-        other_array.append( 23 );
+        other_array.append( 150000 );
+        other_array.append( 150023 );
     }
 };
 
 TEST_F( LinePositionArrayConcatOperation, SimpleConcat ) {
     line_array.append_list( other_array );
 
-    ASSERT_THAT( line_array.size(), Eq( 5 ) );
+    ASSERT_THAT( line_array.size(), Eq( 8 ) );
 
     ASSERT_THAT( line_array[0], Eq( 4 ) );
     ASSERT_THAT( line_array[1], Eq( 8 ) );
-    ASSERT_THAT( line_array[2], Eq( 10 ) );
-    ASSERT_THAT( line_array[3], Eq( 15 ) );
-    ASSERT_THAT( line_array[4], Eq( 23 ) );
+
+    ASSERT_THAT( line_array[5], Eq( 20020 ) );
+    ASSERT_THAT( line_array[6], Eq( 150000 ) );
+    ASSERT_THAT( line_array[7], Eq( 150023 ) );
 }
 
 TEST_F( LinePositionArrayConcatOperation, DoesNotKeepFakeLf ) {
     line_array.setFakeFinalLF();
-    ASSERT_THAT( line_array[2], Eq( 10 ) );
+    ASSERT_THAT( line_array[5], Eq( 20020 ) );
 
     line_array.append_list( other_array );
-    ASSERT_THAT( line_array[2], Eq( 15 ) );
-    ASSERT_THAT( line_array.size(), Eq( 4 ) );
+    ASSERT_THAT( line_array[5], Eq( 150000 ) );
+    ASSERT_THAT( line_array.size(), Eq( 7 ) );
 }
+
+class LinePositionArrayLong: public testing::Test {
+  public:
+    LinePositionArray line_array;
+
+    LinePositionArrayLong() {
+        // Add 126 lines (of various sizes
+        for ( int i = 0; i < 127; i++ )
+            line_array.append( i * 4 );
+        // Line no 127
+        line_array.append( 514 );
+    }
+};
+
+TEST_F( LinePositionArrayLong, LineNo128HasRightValue ) {
+    line_array.append( 524 );
+    ASSERT_THAT( line_array[128], Eq( 524 ) );
+}
+
+TEST_F( LinePositionArrayLong, FakeLFisNotKeptWhenAddingAfterIt ) {
+    line_array.append( 524 );
+    line_array.setFakeFinalLF();
+    ASSERT_THAT( line_array[128], Eq( 524 ) );
+    line_array.append( 600 );
+    ASSERT_THAT( line_array[128], Eq( 600 ) );
+}
+
 
 class LinePositionArrayBig: public testing::Test {
   public:

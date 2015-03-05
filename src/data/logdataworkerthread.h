@@ -41,9 +41,9 @@ class IndexingData
             LinePositionArray* linePosition );
 
     // Atomically set all the indexing data
-    // (overwriting the existing)
+    // (overwriting the existing, linePosition is moved)
     void setAll( qint64 size, int length,
-            const LinePositionArray& linePosition );
+            LinePositionArray& linePosition );
 
     // Atomically add to all the existing
     // indexing data.

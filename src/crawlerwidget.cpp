@@ -195,7 +195,11 @@ void CrawlerWidget::doSetViewContext(
 
     setSizes( context.sizes() );
     ignoreCaseCheck->setCheckState( context.ignoreCase() ? Qt::Checked : Qt::Unchecked );
-    searchRefreshCheck->setCheckState( context.autoRefresh() ? Qt::Checked : Qt::Unchecked );
+
+    auto auto_refresh_check_state = context.autoRefresh() ? Qt::Checked : Qt::Unchecked;
+    searchRefreshCheck->setCheckState( auto_refresh_check_state );
+    // Manually call the handler as it is not called when changing the state programmatically
+    searchRefreshChangedHandler( auto_refresh_check_state );
 }
 
 std::shared_ptr<const ViewContextInterface>

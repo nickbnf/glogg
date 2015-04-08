@@ -114,29 +114,31 @@ void Overview::recalculatesLines()
         matchLines_.clear();
         markLines_.clear();
 
-        for ( int i = 0; i < logFilteredData_->getNbLine(); i++ ) {
-            LogFilteredData::FilteredLineType line_type =
-                logFilteredData_->filteredLineTypeByIndex( i );
-            int line = (int) logFilteredData_->getMatchingLineNumber( i );
-            int position = (int)( (qint64)line * height_ / linesInFile_ );
-            if ( line_type == LogFilteredData::Match ) {
-                if ( ( ! matchLines_.isEmpty() ) && matchLines_.last().position() == position ) {
-                    // If the line is already there, we increase its weight
-                    matchLines_.last().load();
+        if ( linesInFile_ > 0 ) {
+            for ( int i = 0; i < logFilteredData_->getNbLine(); i++ ) {
+                LogFilteredData::FilteredLineType line_type =
+                    logFilteredData_->filteredLineTypeByIndex( i );
+                int line = (int) logFilteredData_->getMatchingLineNumber( i );
+                int position = (int)( (qint64)line * height_ / linesInFile_ );
+                if ( line_type == LogFilteredData::Match ) {
+                    if ( ( ! matchLines_.isEmpty() ) && matchLines_.last().position() == position ) {
+                        // If the line is already there, we increase its weight
+                        matchLines_.last().load();
+                    }
+                    else {
+                        // If not we just add it
+                        matchLines_.append( WeightedLine( position ) );
+                    }
                 }
                 else {
-                    // If not we just add it
-                    matchLines_.append( WeightedLine( position ) );
-                }
-            }
-            else {
-                if ( ( ! markLines_.isEmpty() ) && markLines_.last().position() == position ) {
-                    // If the line is already there, we increase its weight
-                    markLines_.last().load();
-                }
-                else {
-                    // If not we just add it
-                    markLines_.append( WeightedLine( position ) );
+                    if ( ( ! markLines_.isEmpty() ) && markLines_.last().position() == position ) {
+                        // If the line is already there, we increase its weight
+                        markLines_.last().load();
+                    }
+                    else {
+                        // If not we just add it
+                        markLines_.append( WeightedLine( position ) );
+                    }
                 }
             }
         }

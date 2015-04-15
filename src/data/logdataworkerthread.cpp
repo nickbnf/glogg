@@ -34,7 +34,8 @@ void IndexingData::getAll( qint64* size, int* length,
 
     *size         = indexedSize_;
     *length       = maxLength_;
-    *linePosition = std::move( linePosition_ );
+    // FIXME: slooooooooow
+    *linePosition = linePosition_;
 }
 
 void IndexingData::setAll( qint64 size, int length,

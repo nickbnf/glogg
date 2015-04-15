@@ -86,7 +86,12 @@ class CompressedLinePositionStorage
       current_pos_ = 0; block_pointer_ = nullptr;
       previous_block_pointer_ = nullptr; }
     // Copy constructor would be slow, delete!
-    CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
+    //CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
+    // FIXME, let's implement it for now
+    CompressedLinePositionStorage( const CompressedLinePositionStorage& orig );
+    CompressedLinePositionStorage& operator=(
+            const CompressedLinePositionStorage& orig );
+
     // Move constructor
     CompressedLinePositionStorage( CompressedLinePositionStorage&& orig );
     // Move assignement

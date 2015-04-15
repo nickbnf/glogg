@@ -39,7 +39,13 @@ class LinePosition
     LinePosition() : array()
     { fakeFinalLF_ = false; }
     // Copy constructor (slow: deleted)
-    LinePosition( const LinePosition& orig ) = delete;
+    // FIXME
+    //LinePosition( const LinePosition& orig ) = delete;
+    LinePosition& operator=( const LinePosition& orig )
+    { array = orig.array;
+      fakeFinalLF_ = orig.fakeFinalLF_;
+      return *this; }
+
     // Move assignement
     LinePosition& operator=( LinePosition&& orig )
     { array = std::move( orig.array );

@@ -18,6 +18,7 @@
  */
 
 #include <QApplication>
+#include <QFileInfo>
 
 #include <memory>
 

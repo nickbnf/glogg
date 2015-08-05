@@ -20,6 +20,7 @@
 // This file implements classes Filter and FilterSet
 
 #include <QSettings>
+#include <QDataStream>
 
 #include "log.h"
 #include "filterset.h"

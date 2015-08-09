@@ -659,6 +659,12 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         ", " << invalidRect.bottomRight().x() <<
         ", " << invalidRect.bottomRight().y();
 
+    if ( ! perfCounter_.addEvent() ) {
+        LOG(logWARNING) << "Redraw per second: " << perfCounter_.readAndReset()
+            << " lines: " << logData->getNbLine();
+        perfCounter_.addEvent();
+    }
+
     {
         // Repaint the viewport
         QPainter painter( viewport() );

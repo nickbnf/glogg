@@ -144,7 +144,7 @@ void Overview::recalculatesLines()
         }
     }
     else
-        LOG(logERROR) << "Overview::recalculatesLines: logFilteredData_ == NULL";
+        LOG(logDEBUG) << "Overview::recalculatesLines: logFilteredData_ == NULL";
 
     dirty_ = false;
 }

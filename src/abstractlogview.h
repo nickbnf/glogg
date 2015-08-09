@@ -24,6 +24,8 @@
 #include <QAbstractScrollArea>
 #include <QBasicTimer>
 
+#include "perfcounter.h"
+
 #include "selection.h"
 #include "quickfind.h"
 #include "overviewwidget.h"
@@ -330,6 +332,9 @@ class AbstractLogView :
     const QuickFindPattern* const quickFindPattern_;
     // Our own QuickFind object
     QuickFind quickFind_;
+
+    // Performance measurement
+    PerfCounter perfCounter_;
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

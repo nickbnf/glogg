@@ -262,3 +262,8 @@ else {
         HEADERS += src/qtfilewatcher.h
     }
 }
+
+# Performance measurement
+perf {
+    QMAKE_CXXFLAGS += -DGLOGG_PERF_MEASURE_FPS
+}

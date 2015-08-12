@@ -659,11 +659,15 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         ", " << invalidRect.bottomRight().x() <<
         ", " << invalidRect.bottomRight().y();
 
-    if ( ! perfCounter_.addEvent() ) {
+#ifdef GLOGG_PERF_MEASURE_FPS
+    static uint32_t maxline = logData->getNbLine();
+    if ( ! perfCounter_.addEvent() && logData->getNbLine() > maxline ) {
         LOG(logWARNING) << "Redraw per second: " << perfCounter_.readAndReset()
             << " lines: " << logData->getNbLine();
         perfCounter_.addEvent();
+        maxline = logData->getNbLine();
     }
+#endif
 
     {
         // Repaint the viewport

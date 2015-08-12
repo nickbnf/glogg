@@ -24,7 +24,9 @@
 #include <QAbstractScrollArea>
 #include <QBasicTimer>
 
-#include "perfcounter.h"
+#ifdef GLOGG_PERF_MEASURE_FPS
+#  include "perfcounter.h"
+#endif
 
 #include "selection.h"
 #include "quickfind.h"
@@ -333,8 +335,10 @@ class AbstractLogView :
     // Our own QuickFind object
     QuickFind quickFind_;
 
+#ifdef GLOGG_PERF_MEASURE_FPS
     // Performance measurement
     PerfCounter perfCounter_;
+#endif
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;

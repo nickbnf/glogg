@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -27,19 +27,36 @@
 // Size of the chunk to read (5 MiB)
 const int IndexOperation::sizeChunk = 5*1024*1024;
 
-void IndexingData::getAll( qint64* size, int* length,
-        LinePositionArray* linePosition )
+qint64 IndexingData::getSize() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    *size         = indexedSize_;
-    *length       = maxLength_;
-    // FIXME: slooooooooow
-    *linePosition = linePosition_;
+    return indexedSize_;
+}
+
+int IndexingData::getMaxLength() const
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    return maxLength_;
+}
+
+LineNumber IndexingData::getNbLines() const
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    return linePosition_.size();
+}
+
+qint64 IndexingData::getPosForLine( LineNumber line ) const
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    return linePosition_.at( line );
 }
 
 void IndexingData::setAll( qint64 size, int length,
-        LinePositionArray& linePosition )
+        const FastLinePositionArray& linePosition )
 {
     QMutexLocker locker( &dataMutex_ );
 
@@ -49,7 +66,7 @@ void IndexingData::setAll( qint64 size, int length,
 }
 
 void IndexingData::addAll( qint64 size, int length,
-        const LinePositionArray& linePosition )
+        const FastLinePositionArray& linePosition )
 {
     QMutexLocker locker( &dataMutex_ );
 
@@ -58,9 +75,16 @@ void IndexingData::addAll( qint64 size, int length,
     linePosition_.append_list( linePosition );
 }
 
-LogDataWorkerThread::LogDataWorkerThread()
+void IndexingData::clear()
+{
+    maxLength_   = 0;
+    indexedSize_ = 0;
+    linePosition_ = LinePositionArray();
+}
+
+LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
     : QThread(), mutex_(), operationRequestedCond_(),
-    nothingToDoCond_(), fileName_(), indexingData_()
+    nothingToDoCond_(), fileName_(), indexing_data_( indexing_data )
 {
     terminate_          = false;
     interruptRequested_ = false;
@@ -95,7 +119,8 @@ void LogDataWorkerThread::indexAll()
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_ = false;
-    operationRequested_ = new FullIndexOperation( fileName_, &interruptRequested_ );
+    operationRequested_ = new FullIndexOperation( fileName_,
+            indexing_data_, &interruptRequested_ );
     operationRequestedCond_.wakeAll();
 }
 
@@ -110,7 +135,8 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_ = false;
-    operationRequested_ = new PartialIndexOperation( fileName_, &interruptRequested_, position );
+    operationRequested_ = new PartialIndexOperation( fileName_,
+            indexing_data_, &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
 }
 
@@ -120,14 +146,6 @@ void LogDataWorkerThread::interrupt()
 
     // No mutex here, setting a bool is probably atomic!
     interruptRequested_ = true;
-}
-
-// This will do an atomic copy of the object
-// (hopefully fast as we use Qt containers)
-void LogDataWorkerThread::getIndexingData(
-        qint64* indexedSize, int* maxLength, LinePositionArray* linePosition )
-{
-    indexingData_.getAll( indexedSize, maxLength, linePosition );
 }
 
 // This is the thread's main loop
@@ -150,7 +168,7 @@ void LogDataWorkerThread::run()
 
             // Run the operation
             try {
-                if ( operationRequested_->start( indexingData_ ) ) {
+                if ( operationRequested_->start() ) {
                     LOG(logDEBUG) << "... finished copy in workerThread.";
                     emit indexingFinished( LoadingStatus::Successful );
                 }
@@ -174,23 +192,23 @@ void LogDataWorkerThread::run()
 // Operations implementation
 //
 
-IndexOperation::IndexOperation( QString& fileName, bool* interruptRequest )
+IndexOperation::IndexOperation( const QString& fileName,
+       IndexingData* indexingData, bool* interruptRequest )
     : fileName_( fileName )
 {
     interruptRequest_ = interruptRequest;
+    indexing_data_ = indexingData;
 }
 
-PartialIndexOperation::PartialIndexOperation( QString& fileName,
-        bool* interruptRequest, qint64 position )
-    : IndexOperation( fileName, interruptRequest )
+PartialIndexOperation::PartialIndexOperation( const QString& fileName,
+        IndexingData* indexingData, bool* interruptRequest, qint64 position )
+    : IndexOperation( fileName, indexingData, interruptRequest )
 {
     initialPosition_ = position;
 }
 
-qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
-        qint64 initialPosition )
+void IndexOperation::doIndex( IndexingData* indexing_data, qint64 initialPosition )
 {
-    int max_length = *maxLength;
     qint64 pos = initialPosition; // Absolute position of the start of current line
     qint64 end = 0;               // Absolute position of the end of current line
     int additional_spaces = 0;    // Additional spaces due to tabs
@@ -201,6 +219,9 @@ qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
         // (read big chunks to speed up reading from disk)
         file.seek( pos );
         while ( !file.atEnd() ) {
+            FastLinePositionArray line_positions;
+            int max_length = 0;
+
             if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
                 break;
 
@@ -238,9 +259,12 @@ qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
                         max_length = length;
                     pos = end + 1;
                     additional_spaces = 0;
-                    linePosition.append( pos );
+                    line_positions.append( pos );
                 }
             }
+
+            // Update the shared data
+            indexing_data->addAll( block.length(), max_length, line_positions );
 
             // Update the caller for progress indication
             int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
@@ -248,11 +272,16 @@ qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
         }
 
         // Check if there is a non LF terminated line at the end of the file
-        if ( file.size() > pos ) {
+        qint64 file_size = file.size();
+        if ( !*interruptRequest_ && file_size > pos ) {
             LOG( logWARNING ) <<
                 "Non LF terminated file, adding a fake end of line";
-            linePosition.append( file.size() + 1 );
-            linePosition.setFakeFinalLF();
+
+            FastLinePositionArray line_position;
+            line_position.append( file_size + 1 );
+            line_position.setFakeFinalLF();
+
+            indexing_data->addAll( 0, 0, line_position );
         }
     }
     else {
@@ -262,32 +291,22 @@ qint64 IndexOperation::doIndex( LinePositionArray& linePosition, int* maxLength,
 
         emit indexingProgressed( 100 );
     }
-
-    *maxLength = max_length;
-
-    return file.size();
 }
 
 // Called in the worker thread's context
-// Should not use any shared variable
-bool FullIndexOperation::start( IndexingData& sharedData )
+bool FullIndexOperation::start()
 {
     LOG(logDEBUG) << "FullIndexOperation::start(), file "
         << fileName_.toStdString();
 
     LOG(logDEBUG) << "FullIndexOperation: Starting the count...";
-    int maxLength = 0;
-    LinePositionArray linePosition = {};
 
     emit indexingProgressed( 0 );
 
-    qint64 size = doIndex( linePosition, &maxLength, 0 );
+    // First empty the index
+    indexing_data_->clear();
 
-    if ( *interruptRequest_ == false )
-    {
-        // Commit the results to the shared data (atomically)
-        sharedData.setAll( size, maxLength, linePosition );
-    }
+    doIndex( indexing_data_, 0 );
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
         "interrupt = " << *interruptRequest_;
@@ -295,25 +314,17 @@ bool FullIndexOperation::start( IndexingData& sharedData )
     return ( *interruptRequest_ ? false : true );
 }
 
-bool PartialIndexOperation::start( IndexingData& sharedData )
+bool PartialIndexOperation::start()
 {
     LOG(logDEBUG) << "PartialIndexOperation::start(), file "
         << fileName_.toStdString();
 
     LOG(logDEBUG) << "PartialIndexOperation: Starting the count at "
         << initialPosition_ << " ...";
-    int maxLength = 0;
-    LinePositionArray linePosition = {};
 
     emit indexingProgressed( 0 );
 
-    qint64 size = doIndex( linePosition, &maxLength, initialPosition_ );
-
-    if ( *interruptRequest_ == false )
-    {
-        // Commit the results to the shared data (atomically)
-        sharedData.addAll( size - initialPosition_, maxLength, linePosition );
-    }
+    doIndex( indexing_data_, initialPosition_ );
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 

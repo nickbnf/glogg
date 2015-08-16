@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2013, 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013, 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -103,7 +103,6 @@ class LogData : public AbstractLogData {
         void start( LogDataWorkerThread& workerThread ) const
         { doStart( workerThread ); }
         const QString& getFilename() const { return filename_; }
-        virtual bool isFull() const { return true; }
 
       protected:
         virtual void doStart( LogDataWorkerThread& workerThread ) const = 0;
@@ -117,8 +116,6 @@ class LogData : public AbstractLogData {
             : LogDataOperation( fileName ) {}
         ~AttachOperation() {};
 
-        bool isFull() const { return true; }
-
       protected:
         void doStart( LogDataWorkerThread& workerThread ) const;
     };
@@ -128,8 +125,6 @@ class LogData : public AbstractLogData {
       public:
         FullIndexOperation() : LogDataOperation( QString() ) {}
         ~FullIndexOperation() {};
-
-        bool isFull() const { return false; }
 
       protected:
         void doStart( LogDataWorkerThread& workerThread ) const;
@@ -141,8 +136,6 @@ class LogData : public AbstractLogData {
         PartialIndexOperation( qint64 fileSize )
             : LogDataOperation( QString() ), filesize_( fileSize ) {}
         ~PartialIndexOperation() {};
-
-        bool isFull() const { return false; }
 
       protected:
         void doStart( LogDataWorkerThread& workerThread ) const;
@@ -168,18 +161,23 @@ class LogData : public AbstractLogData {
 
     QString indexingFileName_;
     std::unique_ptr<QFile> attached_file_;
+
+    // Indexing data, read by us, written by the worker thread
+    IndexingData indexing_data_;
+
+    /*
     LinePositionArray linePosition_;
     qint64 fileSize_;
     qint64 nbLines_;
     int maxLength_;
+    */
+
     QDateTime lastModifiedDate_;
     std::shared_ptr<const LogDataOperation> currentOperation_;
     std::shared_ptr<const LogDataOperation> nextOperation_;
 
     // To protect the file:
     mutable QMutex fileMutex_;
-    // To protect linePosition_, fileSize_ and maxLength_:
-    mutable QMutex dataMutex_;
     // (are mutable to allow 'const' function to touch it,
     // while remaining const)
     // When acquiring both, data should be help before locking file.

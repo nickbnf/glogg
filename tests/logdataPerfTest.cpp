@@ -55,17 +55,17 @@ TEST_F( PerfLogData, simpleLoad ) {
         ASSERT_TRUE( endSpy.wait( 20000 ) );
     }
 
+    ASSERT_THAT( log_data.getNbLine(), VBL_NB_LINES );
+    ASSERT_THAT( log_data.getMaxLength(), VBL_VISIBLE_LINE_LENGTH );
+    ASSERT_THAT( log_data.getLineLength( 123 ), VBL_VISIBLE_LINE_LENGTH );
+    ASSERT_THAT( log_data.getFileSize(), VBL_NB_LINES * (VBL_LINE_LENGTH+1LL) );
+
     // Blocks of 5 MiB + 1 for the start notification (0%)
     ASSERT_THAT( progressSpy.count(), log_data.getFileSize() / (5LL*1024*1024) + 2 );
     ASSERT_THAT( endSpy.count(), 1 );
     QList<QVariant> arguments = endSpy.takeFirst();
     ASSERT_THAT( arguments.at(0).toInt(),
             static_cast<int>( LoadingStatus::Successful ) );
-
-    ASSERT_THAT( log_data.getNbLine(), VBL_NB_LINES );
-    ASSERT_THAT( log_data.getMaxLength(), VBL_VISIBLE_LINE_LENGTH );
-    ASSERT_THAT( log_data.getLineLength( 123 ), VBL_VISIBLE_LINE_LENGTH );
-    ASSERT_THAT( log_data.getFileSize(), VBL_NB_LINES * (VBL_LINE_LENGTH+1LL) );
 }
 
 class PerfLogDataRead : public PerfLogData {

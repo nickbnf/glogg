@@ -29,29 +29,43 @@
 #include "loadingstatus.h"
 #include "linepositionarray.h"
 
-// This class is a mutex protected set of indexing data.
-// It is thread safe.
+// Line number are unsigned 32 bits for now.
+typedef uint32_t LineNumber;
+
+// This class is a thread-safe set of indexing data.
 class IndexingData
 {
   public:
     IndexingData() : dataMutex_(), linePosition_(), maxLength_(0), indexedSize_(0) { }
 
-    // Atomically get all the indexing data
-    void getAll( qint64* size, int* length,
-            LinePositionArray* linePosition );
+    // Get the total indexed size
+    qint64 getSize() const;
+
+    // Get the length of the longest line
+    int getMaxLength() const;
+
+    // Get the total number of lines
+    LineNumber getNbLines() const;
+
+    // Get the position (in byte from the beginning of the file)
+    // of the end of the passed line.
+    qint64 getPosForLine( LineNumber line ) const;
 
     // Atomically set all the indexing data
     // (overwriting the existing, linePosition is moved)
     void setAll( qint64 size, int length,
-            LinePositionArray& linePosition );
+            const FastLinePositionArray& linePosition );
 
     // Atomically add to all the existing
     // indexing data.
     void addAll( qint64 size, int length,
-            const LinePositionArray& linePosition );
+            const FastLinePositionArray& linePosition );
+
+    // Completely clear the indexing data.
+    void clear();
 
   private:
-    QMutex dataMutex_;
+    mutable QMutex dataMutex_;
 
     LinePositionArray linePosition_;
     int maxLength_;
@@ -62,13 +76,14 @@ class IndexOperation : public QObject
 {
   Q_OBJECT
   public:
-    IndexOperation( QString& fileName, bool* interruptRequest );
+    IndexOperation( const QString& fileName,
+            IndexingData* indexingData, bool* interruptRequest );
 
     virtual ~IndexOperation() { }
 
     // Start the indexing operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
-    virtual bool start( IndexingData& result ) = 0;
+    virtual bool start() = 0;
 
   signals:
     void indexingProgressed( int );
@@ -77,26 +92,29 @@ class IndexOperation : public QObject
     static const int sizeChunk;
 
     // Returns the total size indexed
-    qint64 doIndex( LinePositionArray& linePosition, int* maxLength,
-            qint64 initialPosition );
+    // Modify the passed linePosition and maxLength
+    void doIndex( IndexingData* linePosition, qint64 initialPosition );
 
     QString fileName_;
     bool* interruptRequest_;
+    IndexingData* indexing_data_;
 };
 
 class FullIndexOperation : public IndexOperation
 {
   public:
-    FullIndexOperation( QString& fileName, bool* interruptRequest )
-        : IndexOperation( fileName, interruptRequest ) { }
-    virtual bool start( IndexingData& result );
+    FullIndexOperation( const QString& fileName,
+            IndexingData* indexingData, bool* interruptRequest )
+        : IndexOperation( fileName, indexingData, interruptRequest ) { }
+    virtual bool start();
 };
 
 class PartialIndexOperation : public IndexOperation
 {
   public:
-    PartialIndexOperation( QString& fileName, bool* interruptRequest, qint64 position );
-    virtual bool start( IndexingData& result );
+    PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
+            bool* interruptRequest, qint64 position );
+    virtual bool start();
 
   private:
     qint64 initialPosition_;
@@ -112,7 +130,9 @@ class LogDataWorkerThread : public QThread
   Q_OBJECT
 
   public:
-    LogDataWorkerThread();
+    // Pass a pointer to the IndexingData (initially empty)
+    // This object will change it when indexing (IndexingData must be thread safe!)
+    LogDataWorkerThread( IndexingData* indexing_data );
     ~LogDataWorkerThread();
 
     // Attaches to a file on disk. Attaching to a non existant file
@@ -156,8 +176,8 @@ class LogDataWorkerThread : public QThread
     bool interruptRequested_;
     IndexOperation* operationRequested_;
 
-    // Shared indexing data
-    IndexingData indexingData_;
+    // Pointer to the owner's indexing data (we modify it)
+    IndexingData* indexing_data_;
 };
 
 #endif

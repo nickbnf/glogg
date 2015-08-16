@@ -78,14 +78,15 @@ class LinePosition
     // Add another list to this one, removing any fake LF on this list.
     // Invariant: all pos in other must be greater than any pos in this
     // (this is NOT checked!)
-    void append_list( const LinePosition<Storage>& other )
+    void append_list( const LinePosition<SimpleLinePositionStorage>& other )
     {
         // If our final LF is fake, we remove it
         if ( fakeFinalLF_ )
             this->array.pop_back();
 
         // Append the arrays
-        this->array.append_list( other.array );
+        //this->array.append_list( other.array );
+        array += other.array;
 
         // In case the 'other' object has a fake LF
         this->fakeFinalLF_ = other.fakeFinalLF_;
@@ -97,8 +98,9 @@ class LinePosition
 };
 
 // Use the non-optimised storage
-// typedef LinePosition<SimpleLinePositionStorage> FastLinePositionArray;
+typedef LinePosition<SimpleLinePositionStorage> FastLinePositionArray;
+typedef LinePosition<SimpleLinePositionStorage> LinePositionArray;
 
-typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
+//typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
 
 #endif

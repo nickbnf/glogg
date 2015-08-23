@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -50,11 +50,6 @@ class IndexingData
     // Get the position (in byte from the beginning of the file)
     // of the end of the passed line.
     qint64 getPosForLine( LineNumber line ) const;
-
-    // Atomically set all the indexing data
-    // (overwriting the existing, linePosition is moved)
-    void setAll( qint64 size, int length,
-            const FastLinePositionArray& linePosition );
 
     // Atomically add to all the existing
     // indexing data.

@@ -117,36 +117,6 @@ namespace {
     }
 }
 
-// FIXME: painfully slow temporary copy constructor
-CompressedLinePositionStorage::CompressedLinePositionStorage(
-        const CompressedLinePositionStorage& orig )
-{
-    this->append_list( orig );
-}
-
-// FIXME too
-CompressedLinePositionStorage& CompressedLinePositionStorage::operator=(
-        const CompressedLinePositionStorage& orig )
-{
-    nb_lines_ = 0;
-    first_long_line_ = UINT32_MAX;
-    current_pos_ = 0;
-    block_pointer_ = nullptr;
-    previous_block_pointer_ = nullptr;
-
-    for ( char* block : block32_index_ ) {
-        void* p = static_cast<void*>( block );
-        // std::cerr << "block = " << p << std::endl;
-        free( p );
-    }
-
-    block32_index_.clear();
-
-    this->append_list( orig );
-
-    return *this;
-}
-
 void CompressedLinePositionStorage::move_from(
         CompressedLinePositionStorage&& orig )
 {
@@ -250,12 +220,12 @@ uint64_t CompressedLinePositionStorage::at( int index ) const
 }
 
 void CompressedLinePositionStorage::append_list(
-        const CompressedLinePositionStorage& other )
+        const std::vector<uint64_t>& positions )
 {
     // This is not very clever, but caching should make it
     // reasonably fast.
-    for ( uint32_t i = 0; i < other.size(); i++ )
-        append( other.at( i ) );
+    for ( uint32_t i = 0; i < positions.size(); i++ )
+        append( positions.at( i ) );
 }
 
 // template<int BLOCK_SIZE>

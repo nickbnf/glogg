@@ -55,16 +55,6 @@ qint64 IndexingData::getPosForLine( LineNumber line ) const
     return linePosition_.at( line );
 }
 
-void IndexingData::setAll( qint64 size, int length,
-        const FastLinePositionArray& linePosition )
-{
-    QMutexLocker locker( &dataMutex_ );
-
-    indexedSize_  = size;
-    maxLength_    = length;
-    linePosition_ = std::move( linePosition );
-}
-
 void IndexingData::addAll( qint64 size, int length,
         const FastLinePositionArray& linePosition )
 {

@@ -20,12 +20,11 @@
 #ifndef LINEPOSITIONARRAY_H
 #define LINEPOSITIONARRAY_H
 
-#include <QtGlobal>
-#include <QVector>
+#include <vector>
 
 #include "data/compressedlinestorage.h"
 
-typedef QVector<qint64> SimpleLinePositionStorage;
+typedef std::vector<uint64_t> SimpleLinePositionStorage;
 
 // This class is a list of end of lines position,
 // in addition to a list of qint64 (positions within the files)
@@ -35,17 +34,13 @@ template <typename Storage>
 class LinePosition
 {
   public:
+    template <typename> friend class LinePosition;
+
     // Default constructor
     LinePosition() : array()
     { fakeFinalLF_ = false; }
     // Copy constructor (slow: deleted)
-    // FIXME
-    //LinePosition( const LinePosition& orig ) = delete;
-    LinePosition& operator=( const LinePosition& orig )
-    { array = orig.array;
-      fakeFinalLF_ = orig.fakeFinalLF_;
-      return *this; }
-
+    LinePosition( const LinePosition& orig ) = delete;
     // Move assignement
     LinePosition& operator=( LinePosition&& orig )
     { array = std::move( orig.array );
@@ -60,7 +55,7 @@ class LinePosition
         if ( fakeFinalLF_ )
             array.pop_back();
 
-        array.append( pos );
+        array.push_back( pos );
     }
     // Size of the array
     inline int size() const
@@ -85,8 +80,8 @@ class LinePosition
             this->array.pop_back();
 
         // Append the arrays
-        //this->array.append_list( other.array );
-        array += other.array;
+        this->array.append_list( other.array );
+        //array += other.array;
 
         // In case the 'other' object has a fake LF
         this->fakeFinalLF_ = other.fakeFinalLF_;
@@ -99,8 +94,8 @@ class LinePosition
 
 // Use the non-optimised storage
 typedef LinePosition<SimpleLinePositionStorage> FastLinePositionArray;
-typedef LinePosition<SimpleLinePositionStorage> LinePositionArray;
+//typedef LinePosition<SimpleLinePositionStorage> LinePositionArray;
 
-//typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
+typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
 
 #endif

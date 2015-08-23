@@ -86,11 +86,7 @@ class CompressedLinePositionStorage
       current_pos_ = 0; block_pointer_ = nullptr;
       previous_block_pointer_ = nullptr; }
     // Copy constructor would be slow, delete!
-    //CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
-    // FIXME, let's implement it for now
-    CompressedLinePositionStorage( const CompressedLinePositionStorage& orig );
-    CompressedLinePositionStorage& operator=(
-            const CompressedLinePositionStorage& orig );
+    CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
 
     // Move constructor
     CompressedLinePositionStorage( CompressedLinePositionStorage&& orig );
@@ -109,8 +105,7 @@ class CompressedLinePositionStorage
     uint64_t at( int i ) const;
 
     // Add one list to the other
-    // TODO: do we need a move version?
-    void append_list( const CompressedLinePositionStorage& other );
+    void append_list( const std::vector<uint64_t>& positions );
 
     // Pop the last element of the storage
     void pop_back();

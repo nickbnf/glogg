@@ -20,6 +20,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "threadprivatestore.h"
+
 // This class is a compressed storage backend for LinePositionArray
 // It emulates the interface of a vector, but take advantage of the nature
 // of the stored data (increasing end of line addresses) to apply some
@@ -74,7 +76,7 @@
 #ifndef COMPRESSEDLINESTORAGE_H
 #define COMPRESSEDLINESTORAGE_H
 
-#define BLOCK_SIZE 128
+#define BLOCK_SIZE 256
 
 //template<int BLOCK_SIZE = 128>
 class CompressedLinePositionStorage
@@ -98,11 +100,13 @@ class CompressedLinePositionStorage
 
     // Append the passed end-of-line to the storage
     void append( uint64_t pos );
+    void push_back( uint64_t pos )
+    { append( pos ); }
     // Size of the array
     uint32_t size() const
     { return nb_lines_; }
     // Element at index
-    uint64_t at( int i ) const;
+    uint64_t at( uint32_t i ) const;
 
     // Add one list to the other
     void append_list( const std::vector<uint64_t>& positions );
@@ -139,6 +143,16 @@ class CompressedLinePositionStorage
     // A null pointer here means pop_back need to free the block
     // that has just been created.
     char* previous_block_pointer_;
+
+    // Cache the last position read
+    // This is to speed up consecutive reads (whole page)
+    struct Cache {
+        uint32_t index;
+        uint64_t position;
+        char* ptr;
+    };
+    mutable ThreadPrivateStore<Cache,2> last_read_; // = { UINT32_MAX - 1U, 0, nullptr };
+    // mutable Cache last_read;
 };
 
 #endif

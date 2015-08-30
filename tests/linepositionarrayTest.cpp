@@ -48,7 +48,7 @@ TEST_F( LinePositionArraySmall, FakeLFisNotKeptWhenAddingAfterIt ) {
 
 class LinePositionArrayConcatOperation: public LinePositionArraySmall {
   public:
-    LinePositionArray other_array;
+    FastLinePositionArray other_array;
 
     LinePositionArrayConcatOperation() {
         other_array.append( 150000 );
@@ -134,7 +134,7 @@ TEST_F( LinePositionArrayBig, HasRightData ) {
 class LinePositionArrayBigConcat: public testing::Test {
   public:
     LinePositionArray line_array;
-    LinePositionArray other_array;
+    FastLinePositionArray other_array;
 
     LinePositionArrayBigConcat() {
         line_array.append( 4 );

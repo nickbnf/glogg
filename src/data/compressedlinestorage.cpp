@@ -205,16 +205,33 @@ void CompressedLinePositionStorage::append( uint64_t pos )
 }
 
 // template<int BLOCK_SIZE>
-uint64_t CompressedLinePositionStorage::at( int index ) const
+uint64_t CompressedLinePositionStorage::at( uint32_t index ) const
 {
-    char* block = block32_index_[ index / BLOCK_SIZE ];
     char* ptr;
-    uint64_t position = block32_initial_pos( block, &ptr );
+    uint64_t position;
 
-    for ( int i = 0; i < index % BLOCK_SIZE; i++ ) {
-        // Go through all the lines in the block till the one we want
+    Cache* last_read = last_read_.getPtr();
+
+    if ( ( index == last_read->index + 1 ) && ( index % BLOCK_SIZE != 0 ) ) {
+        position = last_read->position;
+        ptr      = last_read->ptr;
+
         position = block32_next_pos( &ptr, position );
     }
+    else {
+        char* block = block32_index_[ index / BLOCK_SIZE ];
+        position = block32_initial_pos( block, &ptr );
+
+        for ( uint32_t i = 0; i < index % BLOCK_SIZE; i++ ) {
+            // Go through all the lines in the block till the one we want
+            position = block32_next_pos( &ptr, position );
+        }
+    }
+
+    // Populate our cache ready for next consecutive read
+    last_read->index    = index;
+    last_read->position = position;
+    last_read->ptr      = ptr;
 
     return position;
 }

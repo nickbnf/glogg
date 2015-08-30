@@ -27,7 +27,7 @@
 typedef std::vector<uint64_t> SimpleLinePositionStorage;
 
 // This class is a list of end of lines position,
-// in addition to a list of qint64 (positions within the files)
+// in addition to a list of uint64_t (positions within the files)
 // it can keep track of whether the final LF was added (for non-LF terminated
 // files) and remove it when more data are added.
 template <typename Storage>
@@ -50,7 +50,7 @@ class LinePosition
     // Add a new line position at the given position
     // Invariant: pos must be greater than the previous one
     // (this is NOT checked!)
-    inline void append( qint64 pos )
+    inline void append( uint64_t pos )
     {
         if ( fakeFinalLF_ )
             array.pop_back();
@@ -61,9 +61,9 @@ class LinePosition
     inline int size() const
     { return array.size(); }
     // Extract an element
-    inline qint64 at( int i ) const
+    inline uint64_t at( int i ) const
     { return array.at( i ); }
-    inline qint64 operator[]( int i ) const
+    inline uint64_t operator[]( int i ) const
     { return array.at( i ); }
     // Set the presence of a fake final LF
     // Must be used after 'append'-ing a fake LF at the end.

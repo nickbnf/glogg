@@ -645,6 +645,8 @@ void CrawlerWidget::setup()
     auto config = Persistent<Configuration>( "settings" );
     searchRefreshCheck->setCheckState( config->isSearchAutoRefreshDefault() ?
             Qt::Checked : Qt::Unchecked );
+    // Manually call the handler as it is not called when changing the state programmatically
+    searchRefreshChangedHandler( searchRefreshCheck->checkState() );
     ignoreCaseCheck->setCheckState( config->isSearchIgnoreCaseDefault() ?
             Qt::Checked : Qt::Unchecked );
 

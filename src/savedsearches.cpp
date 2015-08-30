@@ -20,6 +20,7 @@
 // This file implements class SavedSearch
 
 #include <QSettings>
+#include <QDataStream>
 
 #include "log.h"
 #include "savedsearches.h"

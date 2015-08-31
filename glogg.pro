@@ -243,7 +243,7 @@ else {
 }
 
 # File watching
-linux-g++ {
+linux-g++ || linux-g++-64 {
     CONFIG += inotify
 }
 
@@ -255,10 +255,12 @@ inotify {
 }
 else {
     win32 {
+        message("File watching using Windows")
         SOURCES += src/platformfilewatcher.cpp src/winwatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
         HEADERS += src/platformfilewatcher.h src/winwatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
     }
     else {
+        message("File watching using Qt")
         SOURCES += src/qtfilewatcher.cpp
         HEADERS += src/qtfilewatcher.h
     }

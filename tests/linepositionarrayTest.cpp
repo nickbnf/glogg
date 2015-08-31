@@ -37,6 +37,9 @@ TEST_F( LinePositionArraySmall, RememberAddedLines ) {
     ASSERT_THAT( line_array[3], Eq( 345 ) );
     ASSERT_THAT( line_array[4], Eq( 20000 ) );
     ASSERT_THAT( line_array[5], Eq( 20020 ) );
+
+    // This one again to eliminate caching effects
+    ASSERT_THAT( line_array[3], Eq( 345 ) );
 }
 
 TEST_F( LinePositionArraySmall, FakeLFisNotKeptWhenAddingAfterIt ) {
@@ -114,21 +117,29 @@ class LinePositionArrayBig: public testing::Test {
         line_array.append( 8 );
         // A very big line
         line_array.append( UINT32_MAX - 10 );
-        line_array.append( UINT32_MAX + 10 );
-        line_array.append( UINT32_MAX + 30 );
+        line_array.append( (uint64_t) UINT32_MAX + 10LL );
+        line_array.append( (uint64_t) UINT32_MAX + 30LL );
+        line_array.append( (uint64_t) 2*UINT32_MAX );
+        line_array.append( (uint64_t) 2*UINT32_MAX + 10LL );
+        line_array.append( (uint64_t) 2*UINT32_MAX + 1000LL );
+        line_array.append( (uint64_t) 3*UINT32_MAX );
     }
 };
 
 TEST_F( LinePositionArrayBig, IsTheRightSize ) {
-    ASSERT_THAT( line_array.size(), 5 );
+    ASSERT_THAT( line_array.size(), 9 );
 }
 
 TEST_F( LinePositionArrayBig, HasRightData ) {
     ASSERT_THAT( line_array[0], Eq( 4 ) );
     ASSERT_THAT( line_array[1], Eq( 8 ) );
     ASSERT_THAT( line_array[2], Eq( UINT32_MAX - 10 ) );
-    ASSERT_THAT( line_array[3], Eq( UINT32_MAX + 10 ) );
-    ASSERT_THAT( line_array[4], Eq( UINT32_MAX + 30 ) );
+    ASSERT_THAT( line_array[3], Eq( (uint64_t) UINT32_MAX + 10LL ) );
+    ASSERT_THAT( line_array[4], Eq( (uint64_t) UINT32_MAX + 30LL ) );
+    ASSERT_THAT( line_array[5], Eq( (uint64_t) 2*UINT32_MAX ) );
+    ASSERT_THAT( line_array[6], Eq( (uint64_t) 2*UINT32_MAX + 10LL ) );
+    ASSERT_THAT( line_array[7], Eq( (uint64_t) 2*UINT32_MAX + 1000LL ) );
+    ASSERT_THAT( line_array[8], Eq( (uint64_t) 3*UINT32_MAX ) );
 }
 
 class LinePositionArrayBigConcat: public testing::Test {

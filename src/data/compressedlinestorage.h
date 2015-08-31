@@ -71,6 +71,8 @@
  * Absolute addressing has been adopted for line > 16383 to bound memory usage in case
  * of pathologically long (MBs or GBs) lines, even if it is a bit less efficient for
  * long-ish (30 KB) lines.
+ *
+ * The table32 always starts at 0, the table64 starts at first_long_line_
  */
 
 #ifndef COMPRESSEDLINESTORAGE_H
@@ -134,6 +136,7 @@ class CompressedLinePositionStorage
 
     // The index of the first line whose end is stored in a block64
     // Initialised at UINT32_MAX, meaning "unset"
+    // this is the origin point for all calculations in block64
     uint32_t first_long_line_;
 
     // For pop_back:

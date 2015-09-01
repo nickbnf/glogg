@@ -107,10 +107,10 @@ void QuickFindMux::setNewPattern(
         Persistent<Configuration>( "settings" );
 
     LOG(logDEBUG) << "QuickFindMux::setNewPattern";
-    pattern_->changeSearchPattern( new_pattern, ignore_case );
 
     // If we must do an incremental search, we do it now
     if ( config->isQuickfindIncremental() ) {
+        pattern_->changeSearchPattern( new_pattern, ignore_case );
         if ( auto searchable = getSearchableWidget() ) {
             if ( currentDirection_ == Forward )
                 searchable->incrementallySearchForward();

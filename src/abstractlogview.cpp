@@ -494,13 +494,29 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
     QAbstractScrollArea::timerEvent( timerEvent );
 }
 
+void AbstractLogView::moveSelectionUp() {
+    int delta = qMin( -1, - digitsBuffer_.content() );
+    emit followDisabled();
+    moveSelection( delta );
+}
+
+void AbstractLogView::moveSelectionDown() {
+    int delta = qMax( 1, digitsBuffer_.content() );
+    emit followDisabled();
+    moveSelection( delta );
+}
+
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
     bool controlModifier = (keyEvent->modifiers() & Qt::ControlModifier) == Qt::ControlModifier;
     bool shiftModifier = (keyEvent->modifiers() & Qt::ShiftModifier) == Qt::ShiftModifier;
 
-    if ( keyEvent->key() == Qt::Key_Left )
+    if ( keyEvent->key() == Qt::Key_Up)
+        moveSelectionUp();
+    else if ( keyEvent->key() == Qt::Key_Down)
+        moveSelectionDown();
+    else if ( keyEvent->key() == Qt::Key_Left )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
     else if ( keyEvent->key() == Qt::Key_Right )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
@@ -539,20 +555,12 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             switch ( (keyEvent->text())[0].toLatin1() ) {
                 case 'j':
                     {
-                        int delta = qMax( 1, digitsBuffer_.content() );
-                        emit followDisabled();
-                        //verticalScrollBar()->triggerAction(
-                        //QScrollBar::SliderSingleStepAdd);
-                        moveSelection( delta );
+                        moveSelectionDown();
                         break;
                     }
                 case 'k':
                     {
-                        int delta = qMin( -1, - digitsBuffer_.content() );
-                        emit followDisabled();
-                        //verticalScrollBar()->triggerAction(
-                        //QScrollBar::SliderSingleStepSub);
-                        moveSelection( delta );
+                        moveSelectionUp();
                         break;
                     }
                 case 'h':

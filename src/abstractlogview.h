@@ -374,6 +374,8 @@ class AbstractLogView :
     int convertCoordToColumn( int xPos ) const;
     void displayLine( LineNumber line );
     void moveSelection( int y );
+    void moveSelectionUp();
+    void moveSelectionDown();
     void jumpToStartOfLine();
     void jumpToEndOfLine();
     void jumpToRightOfScreen();

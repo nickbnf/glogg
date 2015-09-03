@@ -521,16 +521,20 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
     QAbstractScrollArea::timerEvent( timerEvent );
 }
 
-void AbstractLogView::moveSelectionUp() {
-    int delta = qMin( -1, - digitsBuffer_.content() );
+void AbstractLogView::moveSelectionAndEmit(int delta) {
     disableFollow();
     moveSelection( delta );
+    emit newSelection( selection_.selectedLine() );
+}
+
+void AbstractLogView::moveSelectionUp() {
+    int delta = qMin( -1, - digitsBuffer_.content() );
+    moveSelectionAndEmit(delta);
 }
 
 void AbstractLogView::moveSelectionDown() {
     int delta = qMax( 1, digitsBuffer_.content() );
-    disableFollow();
-    moveSelection( delta );
+    moveSelectionAndEmit(delta);
 }
 
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )

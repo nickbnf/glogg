@@ -125,6 +125,7 @@ set(glogg_UTESTS
 # Integration tests
 set(glogg_ITESTS
     logdataTest.cpp
+    logfiltereddataTest.cpp
 )
 
 # Performance tests

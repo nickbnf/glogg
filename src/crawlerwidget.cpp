@@ -525,6 +525,9 @@ void CrawlerWidget::setup()
     overviewWidget_->setOverview( &overview_ );
     overviewWidget_->setParent( logMainView );
 
+    // Connect the search to the top view
+    logMainView->useNewFiltering( logFilteredData_ );
+
     // Construct the visibility button
     visibilityModel_ = new QStandardItemModel( this );
 
@@ -787,8 +790,6 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         searchState_.resetState();
         printSearchInfoMessage();
     }
-    // Connect the search to the top view
-    logMainView->useNewFiltering( logFilteredData_ );
 }
 
 // Updates the content of the drop down list for the saved searches,

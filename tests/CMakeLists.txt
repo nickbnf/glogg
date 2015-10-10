@@ -32,7 +32,8 @@ else()
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
 endif()
 
-check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
+set(CMAKE_REQUIRED_FLAGS "-std=c++11")
+check_cxx_source_compiles("
     #include <memory>
     int main(int, int)
     {
@@ -41,7 +42,7 @@ check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
     }
 " HAVE_MAKE_UNIQUE)
 
-check_cxx_source_compiles(CMAKE_REQUIRED_FLAGS="-std=c++11" "
+check_cxx_source_compiles("
     #include <memory>
     struct Base {
         virtual void func() {}
@@ -59,6 +60,13 @@ configure_file(../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Configuration
 check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
+check_symbol_exists( htons "arpa/inet.h" HAVE_HTONS )
+
+# find_library(WS2_LIBRARY NAMES ws2_32)
+
+# Libs
+
+set(LIBS gmock gtest)
 
 # Setup testing
 enable_testing()
@@ -155,7 +163,7 @@ add_executable(glogg_tests
 )
 
 # Link test executable against gtest & gtest_main
-target_link_libraries(glogg_tests gmock gtest gtest_main pthread Qt5::Widgets)
+target_link_libraries(glogg_tests ${LIBS} gtest_main pthread Qt5::Widgets)
 
 add_executable(glogg_itests
     ${glogg_SOURCES}
@@ -164,7 +172,7 @@ add_executable(glogg_itests
     itests.cpp
 )
 
-target_link_libraries(glogg_itests gmock gtest pthread Qt5::Widgets Qt5::Test)
+target_link_libraries(glogg_itests ${LIBS} pthread Qt5::Widgets Qt5::Test)
 
 add_executable(glogg_ptests
     ${glogg_SOURCES}
@@ -173,7 +181,7 @@ add_executable(glogg_ptests
     itests.cpp
 )
 
-target_link_libraries(glogg_ptests gmock gtest pthread Qt5::Widgets Qt5::Test)
+target_link_libraries(glogg_ptests ${LIBS} pthread Qt5::Widgets Qt5::Test)
 
 add_test(
     NAME glogg_tests

@@ -94,6 +94,7 @@ Section "Qt4 Runtime libraries" qtlibs
     File release\QtCore4.dll
     File release\QtGui4.dll
     File release\QtNetwork4.dll
+    File release\libwinpthread-1.dll
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut
@@ -126,6 +127,7 @@ Section "Uninstall"
     Delete "$INSTDIR\QtCore4.dll"
     Delete "$INSTDIR\QtGui4.dll"
     Delete "$INSTDIR\QtNetwork4.dll"
+    Delete "$INSTDIR\libwinpthread-1.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

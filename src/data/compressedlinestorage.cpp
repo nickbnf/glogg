@@ -19,11 +19,17 @@
 
 #include <cassert>
 #include <cstdlib>
-#include <arpa/inet.h>
-
 #include <iostream>
 
+#include "utils.h"
+
 #include "data/compressedlinestorage.h"
+
+#ifdef HAVE_HTONS
+#  include <arpa/inet.h>
+#else
+#  define htons(a) glogg_htons(a)
+#endif
 
 namespace {
     // Functions to manipulate blocks

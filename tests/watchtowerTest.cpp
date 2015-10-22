@@ -120,9 +120,9 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
         remove( file_name.c_str() );
     }
 
-    bool waitNotificationReceived( int number = 1 ) {
+    bool waitNotificationReceived( int number = 1, int timeout_ms = TIMEOUT ) {
         unique_lock<mutex> lock(mutex_);
-        bool result = ( cv_.wait_for( lock, std::chrono::milliseconds(TIMEOUT),
+        bool result = ( cv_.wait_for( lock, std::chrono::milliseconds(timeout_ms),
                 [this, number] { return notification_received >= number; } ) );
 
         // Reinit the notification
@@ -491,4 +491,62 @@ TEST_F( WinNotificationInfoListTest, CanBeIteratedByFor ) {
         notification.action();
     }
 }
+#endif
+
+/*****/
+
+#ifdef _WIN32
+class WatchTowerPolling : public WatchTowerSingleFile {
+  public:
+    WatchTowerPolling() : WatchTowerSingleFile() {
+        // FILELog::setReportingLevel( logDEBUG );
+
+        fd_ = open( file_name.c_str(), O_WRONLY | O_APPEND );
+    }
+
+    ~WatchTowerPolling() {
+        close( fd_ );
+    }
+
+    void appendDataToFileWoClosing() {
+        static const char* string = "Test line\n";
+        write( fd_, (void*) string, strlen( string ) );
+    }
+
+    int fd_;
+};
+
+TEST_F( WatchTowerPolling, OpenFileDoesNotGenerateImmediateNotification ) {
+    appendDataToFileWoClosing();
+    ASSERT_FALSE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerPolling, OpenFileYieldsAPollNotification ) {
+    std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
+    watch_tower->setPollingInterval( 500 );
+    appendDataToFileWoClosing();
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerPolling, UnchangedFileDoesNotYieldANotification ) {
+    watch_tower->setPollingInterval( 500 );
+    ASSERT_FALSE( waitNotificationReceived() );
+}
+
+TEST_F( WatchTowerPolling, FileYieldsAnImmediateNotification ) {
+    watch_tower->setPollingInterval( 4000 );
+    appendDataToFile( file_name );
+    ASSERT_TRUE( waitNotificationReceived( 1, 2000 ) );
+}
+
+TEST_F( WatchTowerPolling, PollIsDelayedIfImmediateNotification ) {
+    watch_tower->setPollingInterval( 500 );
+    appendDataToFile( file_name );
+    waitNotificationReceived();
+    appendDataToFileWoClosing();
+    std::this_thread::sleep_for( std::chrono::milliseconds( 400 ) );
+    ASSERT_FALSE( waitNotificationReceived( 1, 250 ) );
+    ASSERT_TRUE( waitNotificationReceived() );
+}
+
 #endif

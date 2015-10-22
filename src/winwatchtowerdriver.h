@@ -121,6 +121,26 @@ class WinWatchTowerDriver {
         std::shared_ptr<WinWatchedDirRecord> dir_record_;
     };
 
+    // On Windows, the token is the "last write" time
+    class FileChangeToken {
+      public:
+        FileChangeToken() {}
+        FileChangeToken( const std::string& file_name )
+        { readFromFile( file_name ); }
+
+        void readFromFile( const std::string& file_name );
+
+        bool operator==( const FileChangeToken& other )
+        { return ( low_date_time_ == other.low_date_time_ ) &&
+            ( high_date_time_ == other.high_date_time_ ); }
+        bool operator!=( const FileChangeToken& other )
+        { return ! operator==( other ); }
+
+      private:
+        DWORD low_date_time_ = 0;
+        DWORD high_date_time_ = 0;
+    };
+
     // Default constructor
     WinWatchTowerDriver();
     ~WinWatchTowerDriver();
@@ -136,7 +156,8 @@ class WinWatchTowerDriver {
     std::vector<ObservedFile<WinWatchTowerDriver>*> waitAndProcessEvents(
             ObservedFileList<WinWatchTowerDriver>* list,
             std::unique_lock<std::mutex>* lock,
-            std::vector<ObservedFile<WinWatchTowerDriver>*>* files_needing_readding );
+            std::vector<ObservedFile<WinWatchTowerDriver>*>* files_needing_readding,
+            int timout_ms );
 
     void interruptWait();
 

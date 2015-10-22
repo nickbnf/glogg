@@ -10,6 +10,7 @@
 #include <list>
 #include <memory>
 #include <algorithm>
+#include <chrono>
 
 #include "log.h"
 
@@ -50,10 +51,30 @@ struct ObservedFile {
         file_id_    = file_id;
         symlink_id_ = symlink_id;
         dir_        = nullptr;
+
+        markAsChanged();
     }
 
     void addCallback( std::shared_ptr<void> callback ) {
         callbacks.push_back( callback );
+    }
+
+    // Records the file has changed
+    void markAsChanged() {
+        change_token_.readFromFile( file_name_ );
+        last_check_time_ = std::chrono::steady_clock::now();
+    }
+
+    // Returns whether a file has changed
+    // (for polling)
+    bool hasChanged() {
+        typename Driver::FileChangeToken new_token( file_name_ );
+        last_check_time_ = std::chrono::steady_clock::now();
+        return change_token_ != new_token;
+    }
+
+    std::chrono::steady_clock::time_point timeForLastCheck() {
+        return last_check_time_;
     }
 
     std::string file_name_;
@@ -67,6 +88,14 @@ struct ObservedFile {
 
     // link to the dir containing the file
     std::shared_ptr<ObservedDir<Driver>> dir_;
+
+    // token to identify modification
+    // (the token change when the file is modified, this is used when polling)
+    typename Driver::FileChangeToken change_token_;
+
+    // Last time a check has been done
+    std::chrono::steady_clock::time_point last_check_time_ =
+        std::chrono::steady_clock::time_point::min();
 };
 
 // A list of the observed files and directories
@@ -119,6 +148,36 @@ class ObservedFileList {
 
         // Number of watched directories (for tests)
         unsigned int numberWatchedDirectories() const;
+
+        // Iterator
+        template<typename Container>
+        class iterator : std::iterator<std::input_iterator_tag, ObservedFile<Driver>> {
+          public:
+            iterator( Container* list,
+                   const typename Container::iterator& iter )
+            { list_ = list; pos_ = iter; }
+
+            iterator operator++()
+            { ++pos_; return *this; }
+
+            bool operator==( const iterator& other )
+            { return ( pos_ == other.pos_ ); }
+
+            bool operator!=( const iterator& other )
+            { return ! operator==( other ); }
+
+            typename Container::iterator operator*()
+            { return pos_; }
+
+          private:
+            Container* list_;
+            typename Container::iterator pos_;
+        };
+
+        iterator<std::list<ObservedFile<Driver>>> begin()
+        { return iterator<std::list<ObservedFile<Driver>>>( &observed_files_, observed_files_.begin() ); }
+        iterator<std::list<ObservedFile<Driver>>> end()
+        { return iterator<std::list<ObservedFile<Driver>>>( &observed_files_, observed_files_.end() ); }
 
     private:
         // List of observed files
@@ -222,8 +281,8 @@ std::shared_ptr<ObservedFile<Driver>> ObservedFileList<Driver>::removeCallback(
 {
     std::shared_ptr<ObservedFile<Driver>> returned_file = nullptr;
 
-    for ( auto observer = begin( observed_files_ );
-            observer != end( observed_files_ ); )
+    for ( auto observer = std::begin( observed_files_ );
+            observer != std::end( observed_files_ ); )
     {
         std::vector<std::shared_ptr<void>>& callbacks = observer->callbacks;
         callbacks.erase( std::remove(

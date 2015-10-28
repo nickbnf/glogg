@@ -25,13 +25,22 @@
 #include "persistentinfo.h"
 #include "configuration.h"
 
+static const uint32_t POLL_INTERVAL_MIN = 10;
+static const uint32_t POLL_INTERVAL_MAX = 3600000;
+
 // Constructor
 OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
 {
     setupUi( this );
 
+    setupTabs();
     setupFontList();
     setupRegexp();
+
+    // Validators
+    QValidator* polling_interval_validator_ = new QIntValidator(
+           POLL_INTERVAL_MIN, POLL_INTERVAL_MAX, this );
+    pollIntervalLineEdit->setValidator( polling_interval_validator_ );
 
     connect(buttonBox, SIGNAL( clicked( QAbstractButton* ) ),
             this, SLOT( onButtonBoxClicked( QAbstractButton* ) ) );
@@ -39,15 +48,26 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
             this, SLOT( updateFontSize( const QString& ) ));
     connect(incrementalCheckBox, SIGNAL( toggled( bool ) ),
             this, SLOT( onIncrementalChanged() ) );
+    connect(pollingCheckBox, SIGNAL( toggled( bool ) ),
+            this, SLOT( onPollingChanged() ) );
 
     updateDialogFromConfig();
 
     setupIncremental();
+    setupPolling();
 }
 
 //
 // Private functions
 //
+
+// Setups the tabs depending on the configuration
+void OptionsDialog::setupTabs()
+{
+#ifndef GLOGG_SUPPORTS_POLLING
+    tabWidget->removeTab( 1 );
+#endif
+}
 
 // Populates the 'family' ComboBox
 void OptionsDialog::setupFontList()
@@ -87,6 +107,11 @@ void OptionsDialog::setupIncremental()
     }
 }
 
+void OptionsDialog::setupPolling()
+{
+    pollIntervalLineEdit->setEnabled( pollingCheckBox->isChecked() );
+}
+
 // Convert a regexp type to its index in the list
 int OptionsDialog::getRegexpIndex( SearchRegexpType syntax ) const
 {
@@ -123,6 +148,10 @@ void OptionsDialog::updateDialogFromConfig()
             getRegexpIndex( config->quickfindRegexpType() ) );
 
     incrementalCheckBox->setChecked( config->isQuickfindIncremental() );
+
+    // Polling
+    pollingCheckBox->setChecked( config->pollingEnabled() );
+    pollIntervalLineEdit->setText( QString::number( config->pollIntervalMs() ) );
 }
 
 //
@@ -141,7 +170,7 @@ void OptionsDialog::updateFontSize(const QString& fontFamily)
     }
     // Now restore the size we had before
     int i = fontSizeBox->findText(oldFontSize);
-    if ( i != -1 ) 
+    if ( i != -1 )
         fontSizeBox->setCurrentIndex(i);
 }
 
@@ -160,6 +189,15 @@ void OptionsDialog::updateConfigFromDialog()
     config->setQuickfindRegexpType(
             getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
     config->setQuickfindIncremental( incrementalCheckBox->isChecked() );
+
+    config->setPollingEnabled( pollingCheckBox->isChecked() );
+    uint32_t poll_interval = pollIntervalLineEdit->text().toUInt();
+    if ( poll_interval < POLL_INTERVAL_MIN )
+        poll_interval = POLL_INTERVAL_MIN;
+    else if (poll_interval > POLL_INTERVAL_MAX )
+        poll_interval = POLL_INTERVAL_MAX;
+
+    config->setPollIntervalMs( poll_interval );
 
     emit optionsChanged();
 }
@@ -181,4 +219,9 @@ void OptionsDialog::onButtonBoxClicked( QAbstractButton* button )
 void OptionsDialog::onIncrementalChanged()
 {
     setupIncremental();
+}
+
+void OptionsDialog::onPollingChanged()
+{
+    setupPolling();
 }

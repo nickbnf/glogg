@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -52,4 +52,9 @@ void PlatformFileWatcher::removeFile( const QString& fileName )
     LOG(logDEBUG) << "FileWatcher::removeFile " << fileName.toStdString();
 
     notification_ = nullptr;
+}
+
+void PlatformFileWatcher::setPollingInterval( uint32_t interval_ms )
+{
+    watch_tower_->setPollingInterval( interval_ms );
 }

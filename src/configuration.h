@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -55,6 +55,16 @@ class Configuration : public Persistable {
     void setQuickfindIncremental( bool is_incremental )
     { quickfindIncremental_ = is_incremental; }
 
+    // "Advanced" settings
+    bool pollingEnabled() const
+    { return pollingEnabled_; }
+    void setPollingEnabled( bool enabled )
+    { pollingEnabled_ = enabled; }
+    uint32_t pollIntervalMs() const
+    { return pollIntervalMs_; }
+    void setPollIntervalMs( uint32_t interval )
+    { pollIntervalMs_ = interval; }
+
     // View settings
     bool isOverviewVisible() const
     { return overviewVisible_; }
@@ -89,6 +99,8 @@ class Configuration : public Persistable {
     SearchRegexpType mainRegexpType_;
     SearchRegexpType quickfindRegexpType_;
     bool quickfindIncremental_;
+    bool pollingEnabled_;
+    uint32_t pollIntervalMs_;
 
     // View settings
     bool overviewVisible_;

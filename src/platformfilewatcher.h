@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -34,9 +34,6 @@
 
 class INotifyWatchTower;
 
-// An implementation of FileWatcher, as an adapter to INotifyWatchTower.
-// This is Linux only, and require a recent version of the kernel.
-
 // Please note that due to the implementation of the constructor
 // this class is not thread safe and shall always be used from the main UI thread.
 class PlatformFileWatcher : public FileWatcher {
@@ -50,6 +47,9 @@ class PlatformFileWatcher : public FileWatcher {
 
     void addFile( const QString& fileName );
     void removeFile( const QString& fileName );
+
+    // Set the polling interval (0 means disabled)
+    void setPollingInterval( uint32_t interval_ms );
 
   signals:
     void fileChanged( const QString& );

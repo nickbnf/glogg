@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>411</width>
-    <height>303</height>
+    <width>420</width>
+    <height>320</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -22,8 +22,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>60</x>
-     <y>260</y>
+     <x>50</x>
+     <y>280</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -35,104 +35,202 @@
     <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="QGroupBox" name="searchBox">
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
-     <x>11</x>
-     <y>89</y>
-     <width>389</width>
-     <height>161</height>
+     <x>10</x>
+     <y>10</y>
+     <width>401</width>
+     <height>261</height>
     </rect>
    </property>
-   <property name="title">
-    <string>Search options</string>
+   <property name="currentIndex">
+    <number>0</number>
    </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>371</width>
-      <height>111</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Main search type: </string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="mainSearchBox"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>QuickFind search type: </string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="quickFindSearchBox"/>
-     </item>
-     <item row="4" column="1">
-      <widget class="QCheckBox" name="incrementalCheckBox">
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Incremental QuickFind</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
+   <widget class="QWidget" name="general_tab">
+    <attribute name="title">
+     <string>General</string>
+    </attribute>
+    <widget class="QGroupBox" name="searchBox">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>78</y>
+       <width>389</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Search options</string>
+     </property>
+     <widget class="QWidget" name="layoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>371</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Main search type: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="mainSearchBox"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>QuickFind search type: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="quickFindSearchBox"/>
+       </item>
+       <item row="4" column="1">
+        <widget class="QCheckBox" name="incrementalCheckBox">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string>Incremental QuickFind</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="fontBox">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>389</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Font</string>
+     </property>
+     <widget class="QWidget" name="horizontalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>371</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Family: </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="fontFamilyBox"/>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Size: </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="fontSizeBox"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </widget>
-  </widget>
-  <widget class="QGroupBox" name="fontBox">
-   <property name="geometry">
-    <rect>
-     <x>11</x>
-     <y>11</y>
-     <width>389</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Font</string>
-   </property>
-   <widget class="QWidget" name="horizontalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>371</width>
-      <height>31</height>
-     </rect>
+   <widget class="QWidget" name="advanced_tab">
+    <property name="enabled">
+     <bool>true</bool>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Family: </string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="fontFamilyBox"/>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Size: </string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="fontSizeBox"/>
-     </item>
-    </layout>
+    <attribute name="title">
+     <string>Advanced</string>
+    </attribute>
+    <widget class="QGroupBox" name="pollBox">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>389</width>
+       <height>121</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>File polling</string>
+     </property>
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>371</width>
+        <height>91</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QCheckBox" name="pollingCheckBox">
+         <property name="text">
+          <string>Enable Polling</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Time Interval (ms):</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="pollIntervalLineEdit">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="inputMethodHints">
+            <set>Qt::ImhDigitsOnly</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item alignment="Qt::AlignTop">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Files will be polled at the interval specified here. A value of 0 disables polling altogether.</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::AutoText</enum>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </widget>
   </widget>
  </widget>

@@ -350,6 +350,10 @@ void CrawlerWidget::applyConfiguration()
     filteredView->updateDisplaySize();
     filteredView->update();
 
+    // Polling interval
+    logData_->setPollingInterval(
+            config->pollingEnabled() ? config->pollIntervalMs() : 0 );
+
     // Update the SearchLine (history)
     updateSearchCombo();
 }

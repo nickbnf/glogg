@@ -74,6 +74,9 @@ class LogData : public AbstractLogData {
     // Throw away all the file data and reload/reindex.
     void reload();
 
+    // Update the polling interval (in ms, 0 means disabled)
+    void setPollingInterval( uint32_t interval_ms );
+
   signals:
     // Sent during the 'attach' process to signal progress
     // percent being the percentage of completion.

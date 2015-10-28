@@ -149,6 +149,11 @@ void LogData::reload()
     enqueueOperation( std::make_shared<FullIndexOperation>() );
 }
 
+void LogData::setPollingInterval( uint32_t interval_ms )
+{
+    fileWatcher_->setPollingInterval( interval_ms );
+}
+
 //
 // Private functions
 //

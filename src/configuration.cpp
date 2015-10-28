@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2013, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -32,6 +32,13 @@ Configuration::Configuration()
     mainRegexpType_               = ExtendedRegexp;
     quickfindRegexpType_          = FixedString;
     quickfindIncremental_         = true;
+
+#ifdef GLOGG_SUPPORTS_POLLING
+    pollingEnabled_               = true;
+#else
+    pollingEnabled_               = false;
+#endif
+    pollIntervalMs_               = 2000;
 
     overviewVisible_              = true;
     lineNumbersVisibleInMain_     = false;
@@ -77,6 +84,12 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "quickfind.incremental" ) )
         quickfindIncremental_ = settings.value( "quickfind.incremental" ).toBool();
 
+    // "Advanced" settings
+    if ( settings.contains( "polling.enabled" ) )
+        pollingEnabled_ = settings.value( "polling.enabled" ).toBool();
+    if ( settings.contains( "polling.intervalMs" ) )
+        pollIntervalMs_ = settings.value( "polling.intervalMs" ).toInt();
+
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
@@ -109,6 +122,9 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
+    settings.setValue( "polling.enabled", pollingEnabled_ );
+    settings.setValue( "polling.intervalMs", pollIntervalMs_ );
+
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );

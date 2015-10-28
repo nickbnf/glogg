@@ -42,6 +42,9 @@ class FileWatcher : public QObject {
     // (do nothing if said file is not monitored)
     virtual void removeFile( const QString& fileName ) = 0;
 
+    // Set the polling interval (0 means disabled)
+    virtual void setPollingInterval( uint32_t ) {}
+
   signals:
     // Sent when the file on disk has changed in any way.
     void fileChanged( const QString& );

@@ -49,16 +49,22 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void onButtonBoxClicked( QAbstractButton* button );
     // Called when the 'incremental' button is toggled.
     void onIncrementalChanged();
+    // Called when the 'polling' checkbox is toggled.
+    void onPollingChanged();
 
   private:
+    void setupTabs();
     void setupFontList();
     void setupRegexp();
     void setupIncremental();
+    void setupPolling();
 
     int getRegexpIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;
 
     void updateDialogFromConfig();
+
+    QValidator* polling_interval_validator_;
 };
 
 #endif

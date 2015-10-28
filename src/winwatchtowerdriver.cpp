@@ -69,7 +69,11 @@ void WinWatchTowerDriver::FileChangeToken::readFromFile(
     // That seems to work alright in my tests, but who knows for sure?
 
     HANDLE hFile = CreateFile(
-            file_name.c_str(),
+#ifdef UNICODE
+            longstringize( file_name ).c_str(),
+#else
+            ( file_name ).c_str(),
+#endif
             0,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             NULL,

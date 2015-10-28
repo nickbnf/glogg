@@ -109,7 +109,8 @@ std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>
 INotifyWatchTowerDriver::waitAndProcessEvents(
         INotifyObservedFileList* list,
         std::unique_lock<std::mutex>* list_lock,
-        std::vector<INotifyObservedFile*>* files_needing_readding )
+        std::vector<INotifyObservedFile*>* files_needing_readding,
+        int timeout_ms )
 {
     std::vector<INotifyObservedFile*> files_to_notify;
     struct pollfd fds[2];
@@ -123,7 +124,7 @@ INotifyWatchTowerDriver::waitAndProcessEvents(
     fds[1].revents = 0;
 
     list_lock->unlock();
-    int poll_ret = poll( fds, 2, -1 );
+    int poll_ret = poll( fds, 2, timeout_ms ? timeout_ms : -1 );
     list_lock->lock();
 
     if ( poll_ret > 0 )

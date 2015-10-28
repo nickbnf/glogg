@@ -67,6 +67,18 @@ class INotifyWatchTowerDriver {
         int wd_;
     };
 
+    // Dummy class for inotify
+    class FileChangeToken {
+      public:
+        FileChangeToken() {}
+        FileChangeToken( const std::string& ) {}
+
+        void readFromFile( const std::string& ) {}
+
+        bool operator!=( const FileChangeToken& )
+        { return true; }
+    };
+
 #ifdef HAS_TEMPLATE_ALIASES
     using INotifyObservedFile = ObservedFile<INotifyWatchTowerDriver>;
     using INotifyObservedFileList = ObservedFileList<INotifyWatchTowerDriver>;
@@ -102,7 +114,8 @@ class INotifyWatchTowerDriver {
     std::vector<INotifyObservedFile*> waitAndProcessEvents(
             INotifyObservedFileList* list,
             std::unique_lock<std::mutex>* list_mutex,
-            std::vector<INotifyObservedFile*>* files_needing_readding );
+            std::vector<INotifyObservedFile*>* files_needing_readding,
+            int timeout_ms );
 
     // Interrupt waitAndProcessEvents if it is blocking.
     void interruptWait();

@@ -57,9 +57,9 @@
     <widget class="QGroupBox" name="searchBox">
      <property name="geometry">
       <rect>
-       <x>0</x>
+       <x>8</x>
        <y>78</y>
-       <width>389</width>
+       <width>381</width>
        <height>151</height>
       </rect>
      </property>
@@ -71,7 +71,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>371</width>
+        <width>361</width>
         <height>111</height>
        </rect>
       </property>
@@ -112,9 +112,9 @@
     <widget class="QGroupBox" name="fontBox">
      <property name="geometry">
       <rect>
-       <x>0</x>
+       <x>8</x>
        <y>0</y>
-       <width>389</width>
+       <width>381</width>
        <height>71</height>
       </rect>
      </property>
@@ -126,7 +126,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>371</width>
+        <width>361</width>
         <height>31</height>
        </rect>
       </property>
@@ -165,10 +165,10 @@
     <widget class="QGroupBox" name="pollBox">
      <property name="geometry">
       <rect>
-       <x>0</x>
+       <x>8</x>
        <y>0</y>
-       <width>389</width>
-       <height>121</height>
+       <width>381</width>
+       <height>111</height>
       </rect>
      </property>
      <property name="title">
@@ -179,7 +179,7 @@
        <rect>
         <x>10</x>
         <y>20</y>
-        <width>371</width>
+        <width>361</width>
         <height>91</height>
        </rect>
       </property>
@@ -218,7 +218,7 @@
        <item alignment="Qt::AlignTop">
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>Files will be polled at the interval specified here. A value of 0 disables polling altogether.</string>
+          <string>Files will be polled at the interval specified here.</string>
          </property>
          <property name="textFormat">
           <enum>Qt::AutoText</enum>

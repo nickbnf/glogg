@@ -17,7 +17,11 @@ XpStyle on
 SetCompressor /SOLID lzma
 
 ; Registry key to keep track of the directory we are installed in
-InstallDir "$PROGRAMFILES\glogg"
+!ifdef ARCH32
+  InstallDir "$PROGRAMFILES\glogg"
+!else
+  InstallDir "$PROGRAMFILES64\glogg"
+!endif
 InstallDirRegKey HKLM Software\glogg ""
 
 ; glogg icon

@@ -25,4 +25,4 @@ if [ -z "$VERSION" ]; then
     VERSION=`git describe`;
 fi
 echo Generating installer for glogg-$VERSION
-wine $QTXDIR/NSIS/makensis -DVERSION=$VERSION glogg.nsi
+wine $QTXDIR/NSIS/makensis -DVERSION=$VERSION -DARCH32 glogg.nsi

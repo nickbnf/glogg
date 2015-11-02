@@ -8,7 +8,7 @@
 TARGET = glogg
 TEMPLATE = app
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += core widgets
 
 win32:Debug:CONFIG += console
 
@@ -95,7 +95,14 @@ HEADERS += \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
-    LIBS += -lboost_program_options
+    macx {
+      # Path for brew installed libs
+      INCLUDEPATH += /usr/local/include
+      LIBS += -L/usr/local/lib -lboost_program_options-mt
+    }
+    else {
+      LIBS += -lboost_program_options
+    }
 }
 else {
     message(Building using static Boost libraries at $$BOOST_PATH)
@@ -166,7 +173,7 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 QMAKE_CXXFLAGS = -g
 
 # Which compiler are we using
-system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) {
+system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) || macx {
     message ( "g++ version 4.7 or newer, supports C++11" )
     CONFIG += C++11
 }
@@ -195,6 +202,11 @@ isEmpty(LOG_LEVEL) {
 else {
     message("Using specified log level: $$LOG_LEVEL")
     DEFINES += FILELOG_MAX_LEVEL=\"$$LOG_LEVEL\"
+}
+
+macx {
+    QMAKE_CXXFLAGS += -stdlib=libc++
+    QMAKE_LFLAGS += -stdlib=libc++
 }
 
 # Official builds can be generated with `qmake VERSION="1.2.3"'

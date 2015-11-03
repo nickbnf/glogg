@@ -23,6 +23,18 @@
 
 #include "log.h"
 
+#if defined(_WIN64)
+#  define GLOGG_OS "win64"
+#elif defined(_WIN32)
+#  define GLOGG_OS "win32"
+#elif defined(__APPLE__)
+#  define GLOGG_OS "OSX"
+#elif defined(__linux__)
+#  define GLOGG_OS "linux"
+#else
+#  define GLOGG_OS "other"
+#endif
+
 const char* VersionChecker::VERSION_URL =
     "http://gloggversion.bonnefon.org/latest";
 
@@ -80,7 +92,7 @@ void VersionChecker::startCheck()
 
             QNetworkRequest request;
             request.setUrl( QUrl( VERSION_URL ) );
-            request.setRawHeader( "User-Agent", "glogg-" GLOGG_VERSION );
+            request.setRawHeader( "User-Agent", "glogg-" GLOGG_VERSION " (" GLOGG_OS ")" );
             manager_.get( request );
         }
         else

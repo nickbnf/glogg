@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013, 2014 Nicolas Bonnefon
+ * Copyright (C) 2009, 2010, 2011, 2013, 2014, 2015 Nicolas Bonnefon
  * and other contributors
  *
  * This file is part of glogg.
@@ -116,6 +116,10 @@ class CrawlerWidget : public QSplitter,
     // "ignore case" check has been changed
     void ignoreCaseChanged( int state );
 
+    // Sent when the data status (whether new not seen data are
+    // available) has changed
+    void dataStatusChanged( DataStatus status );
+
   private slots:
     // Instructs the widget to start a search using the current search line.
     void startNewSearch();
@@ -160,6 +164,9 @@ class CrawlerWidget : public QSplitter,
 
     // Called when a match is hovered on in the filtered view
     void mouseHoveredOverMatch( qint64 line );
+
+    // Called when there was activity in the views
+    void activityDetected();
 
   private:
     // State machine holding the state of the search, used to allow/disallow
@@ -208,6 +215,7 @@ class CrawlerWidget : public QSplitter,
     void updateSearchCombo();
     AbstractLogView* activeView() const;
     void printSearchInfoMessage( int nbMatches = 0 );
+    void changeDataStatus( DataStatus status );
 
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;
@@ -259,6 +267,12 @@ class CrawlerWidget : public QSplitter,
     // Are we loading something?
     // Set to false when we receive a completion message from the LogData
     bool            loadingInProgress_;
+
+    // Is it not the first time we are loading something?
+    bool            firstLoadDone_;
+
+    // the current dataStatus (whether we have new, not seen, data)
+    DataStatus      dataStatus_;
 };
 
 #endif

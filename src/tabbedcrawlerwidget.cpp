@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -21,6 +21,8 @@
 
 #include <QKeyEvent>
 #include <QLabel>
+
+#include "crawlerwidget.h"
 
 #include "log.h"
 
@@ -61,9 +63,18 @@ int TabbedCrawlerWidget::addTab( QWidget* page, const QString& label )
 {
     int index = QTabWidget::addTab( page, label );
 
+    if ( auto crawler = dynamic_cast<CrawlerWidget*>( page ) ) {
+        // Mmmmhhhh... new Qt5 signal syntax create tight coupling between
+        // us and the sender, baaaaad....
+
+        // Listen for a changing data status:
+        connect( crawler, &CrawlerWidget::dataStatusChanged,
+                [ this, index ]( DataStatus status ) { setTabDataStatus( index, status ); } );
+    }
+
     // Display the icon
     QLabel* icon_label = new QLabel();
-    icon_label->setPixmap( QPixmap( QString::fromUtf8( "newdata_icon.png" ) ) );
+    icon_label->setPixmap( QPixmap( QString::fromUtf8( "olddata_icon.png" ) ) );
     icon_label->setAlignment( Qt::AlignCenter );
     myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label );
 
@@ -135,6 +146,8 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
 
 void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 {
+    LOG(logDEBUG) << "TabbedCrawlerWidget::setTabDataStatus";
+
     QLabel* icon_label = dynamic_cast<QLabel*>(
             myTabBar_.tabButton( index, QTabBar::RightSide ) );
 
@@ -142,13 +155,13 @@ void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
         QString icon_file_name;
         switch ( status ) {
             case DataStatus::OLD_DATA:
-                icon_file_name = QString::fromUtf8( "olddata_icon16.png" );
+                icon_file_name = QString::fromUtf8( "olddata_icon.png" );
                 break;
             case DataStatus::NEW_DATA:
-                icon_file_name = QString::fromUtf8( "olddata_icon16.png" );
+                icon_file_name = QString::fromUtf8( "newdata_icon.png" );
                 break;
             case DataStatus::NEW_FILTERED_DATA:
-                icon_file_name = QString::fromUtf8( "olddata_icon16.png" );
+                icon_file_name = QString::fromUtf8( "newfiltered_icon.png" );
                 break;
         }
         icon_label->setPixmap ( QPixmap( icon_file_name ) );

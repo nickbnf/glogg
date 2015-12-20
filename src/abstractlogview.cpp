@@ -379,6 +379,8 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         // Display the popup (blocking)
         popupMenu_->exec( QCursor::pos() );
     }
+
+    emit activity();
 }
 
 void AbstractLogView::mouseMoveEvent( QMouseEvent* mouseEvent )
@@ -455,6 +457,8 @@ void AbstractLogView::mouseDoubleClickEvent( QMouseEvent* mouseEvent )
         const QPoint pos = convertCoordToFilePos( mouseEvent->pos() );
         selectWordAtPosition( pos );
     }
+
+    emit activity();
 }
 
 void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
@@ -605,13 +609,18 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         }
     }
 
-    if ( !keyEvent->isAccepted() )
+    if ( keyEvent->isAccepted() ) {
+        emit activity();
+    }
+    else {
         QAbstractScrollArea::keyPressEvent( keyEvent );
+    }
 }
 
 void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
 {
     emit followDisabled();
+    emit activity();
 
     QAbstractScrollArea::wheelEvent( wheelEvent );
 }

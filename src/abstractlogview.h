@@ -225,6 +225,8 @@ class AbstractLogView :
     // Sent up for view initiated quickfind searches
     void searchNext();
     void searchPrevious();
+    // Sent up when the user has moved within the view
+    void activity();
 
   public slots:
     // Makes the widget select and display the passed line.

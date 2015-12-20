@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -93,6 +93,9 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     // Until we have received confirmation loading is finished, we
     // should consider we are loading something.
     loadingInProgress_ = true;
+    // and it's the first time
+    firstLoadDone_     = false;
+    dataStatus_        = DataStatus::OLD_DATA;
 
     currentLineNumber_ = 0;
 }
@@ -157,6 +160,10 @@ void CrawlerWidget::reload()
     printSearchInfoMessage();
 
     logData_->reload();
+
+    // A reload is considered as a first load,
+    // this is to prevent the "new data" icon to be triggered.
+    firstLoadDone_ = false;
 }
 
 //
@@ -405,6 +412,12 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
     }
 
     emit loadingFinished( status );
+
+    // Also change the data available icon
+    if ( firstLoadDone_ )
+        changeDataStatus( DataStatus::NEW_DATA );
+    else
+        firstLoadDone_ = true;
 }
 
 void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
@@ -503,6 +516,11 @@ void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
     qint64 line_in_mainview = logFilteredData_->getMatchingLineNumber( line );
 
     overviewWidget_->highlightLine( line_in_mainview );
+}
+
+void CrawlerWidget::activityDetected()
+{
+    changeDataStatus( DataStatus::OLD_DATA );
 }
 
 //
@@ -703,6 +721,12 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( followDisabled() ),
             this, SIGNAL( followDisabled() ) );
 
+    // Detect activity in the views
+    connect(logMainView, SIGNAL( activity() ),
+            this, SLOT( activityDetected() ) );
+    connect(filteredView, SIGNAL( activity() ),
+            this, SLOT( activityDetected() ) );
+
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
 
@@ -832,6 +856,15 @@ void CrawlerWidget::printSearchInfoMessage( int nbMatches )
 
     searchInfoLine->setPalette( searchInfoLineDefaultPalette );
     searchInfoLine->setText( text );
+}
+
+// Change the data status and, if needed, advise upstream.
+void CrawlerWidget::changeDataStatus( DataStatus status )
+{
+    if ( status != dataStatus_ ) {
+        dataStatus_ = status;
+        emit dataStatusChanged( dataStatus_ );
+    }
 }
 
 //

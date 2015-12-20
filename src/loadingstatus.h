@@ -29,6 +29,14 @@ enum class LoadingStatus {
     NoMemory
 };
 
+// Data status (whether new, not seen, data is available)
+enum class DataStatus {
+    OLD_DATA,
+    NEW_DATA,
+    NEW_FILTERED_DATA
+};
+
+Q_DECLARE_METATYPE( DataStatus )
 Q_DECLARE_METATYPE( LoadingStatus )
 
 #endif

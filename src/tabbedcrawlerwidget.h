@@ -23,6 +23,8 @@
 #include <QTabWidget>
 #include <QTabBar>
 
+#include "loadingstatus.h"
+
 // This class represents glogg's main widget, a tabbed
 // group of CrawlerWidgets.
 // This is a very slightly customised QTabWidget, with
@@ -31,12 +33,6 @@ class TabbedCrawlerWidget : public QTabWidget
 {
   Q_OBJECT
     public:
-      enum class DataStatus {
-          OLD_DATA,
-          NEW_DATA,
-          NEW_FILTERED_DATA
-      };
-
       TabbedCrawlerWidget();
       virtual ~TabbedCrawlerWidget() {}
 

@@ -50,6 +50,7 @@ SOURCES += \
     src/quickfindmux.cpp \
     src/signalmux.cpp \
     src/tabbedcrawlerwidget.cpp \
+    src/viewtools.cpp \
 
 INCLUDEPATH += src/
 
@@ -92,6 +93,7 @@ HEADERS += \
     src/tabbedcrawlerwidget.h \
     src/loadingstatus.h \
     src/externalcom.h \
+    src/viewtools.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

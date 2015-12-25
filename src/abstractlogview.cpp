@@ -49,6 +49,10 @@
 #include "configuration.h"
 
 namespace {
+int mapPullToFollowLength( int length );
+};
+
+namespace {
 
 int countDigits( quint64 n )
 {
@@ -233,7 +237,8 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
 }
 
 // Graphic parameters
-const int AbstractLogView::OVERVIEW_WIDTH = 27;
+constexpr int AbstractLogView::OVERVIEW_WIDTH = 27;
+constexpr int AbstractLogView::HOOK_THRESHOLD = 100;
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
@@ -244,7 +249,8 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     autoScrollTimer_(),
     selection_(),
     quickFindPattern_( quickFindPattern ),
-    quickFind_( newLogData, &selection_, quickFindPattern )
+    quickFind_( newLogData, &selection_, quickFindPattern ),
+    followElasticHook_( HOOK_THRESHOLD )
 {
     logData = newLogData;
 
@@ -289,6 +295,8 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
             this, SIGNAL( notifyQuickFind( const QFNotification& ) ) );
     connect( &quickFind_, SIGNAL( clearNotification() ),
             this, SIGNAL( clearQuickFindNotification() ) );
+    connect( &followElasticHook_, SIGNAL( lengthChanged() ),
+            this, SLOT( repaint() ) );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -622,7 +630,18 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
     emit followDisabled();
     emit activity();
 
-    QAbstractScrollArea::wheelEvent( wheelEvent );
+    LOG(logDEBUG) << "wheelEvent";
+
+    if ( verticalScrollBar()->value() == verticalScrollBar()->maximum() ) {
+        LOG(logDEBUG) << "Elastic " << wheelEvent->pixelDelta().y();
+        followElasticHook_.move( - wheelEvent->pixelDelta().y() );
+    }
+
+    LOG(logDEBUG) << "Length = " << followElasticHook_.length();
+    if ( followElasticHook_.length() == 0 ) {
+        LOG(logDEBUG) << "Up " << wheelEvent->pixelDelta().y();
+        QAbstractScrollArea::wheelEvent( wheelEvent );
+    }
 }
 
 void AbstractLogView::resizeEvent( QResizeEvent* )
@@ -637,11 +656,21 @@ void AbstractLogView::resizeEvent( QResizeEvent* )
 
 void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
-    LOG(logDEBUG4) << "scrollContentsBy received";
+    LOG(logDEBUG) << "scrollContentsBy received " << dy;
 
-    firstLine = (firstLine - dy) > 0 ? firstLine - dy : 0;
+    /*
+    LineNumber visible_lines = std::max(
+            static_cast<LineNumber>( logData->getNbLine() ),
+            static_cast<LineNumber>( getNbVisibleLines() ) );
+    firstLine = std::min( std::max( firstLine - dy, 0LL ),
+            logData->getNbLine() - visible_lines );
+
+    LOG(logDEBUG) << "scrollContentsBy " << visible_lines << " " << firstLine;
+    */
+
+    firstLine = std::max( firstLine - dy, 0LL );
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
-    lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
+    lastLine  = firstLine + getNbVisibleLines();
 
     // Update the overview if we have one
     if ( overview_ != NULL )
@@ -688,6 +717,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         std::shared_ptr<const FilterSet> filterSet =
             Persistent<FilterSet>( "filterSet" );
         QColor foreColor, backColor;
+        // Height in pixels of the "pull to follow" bottom bar.
+        const int pullToFollowHeight = mapPullToFollowLength( followElasticHook_.length() );
 
         static const QBrush normalBulletBrush = QBrush( Qt::white );
         static const QBrush matchBulletBrush = QBrush( Qt::red );
@@ -697,6 +728,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         static const int BULLET_AREA_WIDTH = 11;
         static const int CONTENT_MARGIN_WIDTH = 1;
         static const int LINE_NUMBER_PADDING = 3;
+
+        const int bottomOfTextPx =
+            ( lastLine - firstLine + 1 ) * fontHeight - pullToFollowHeight;
 
         // First check the lines to be drawn are within range (might not be the case if
         // the file has just changed)
@@ -717,9 +751,9 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         // First draw the bullet left margin
         painter.setPen(palette.color(QPalette::Text));
         painter.drawLine( BULLET_AREA_WIDTH, 0,
-                          BULLET_AREA_WIDTH, viewport()->height() );
+                          BULLET_AREA_WIDTH, bottomOfTextPx - 1 );
         painter.fillRect( 0, 0,
-                          BULLET_AREA_WIDTH, viewport()->height(),
+                          BULLET_AREA_WIDTH, bottomOfTextPx,
                           Qt::darkGray );
 
         // Column at which the content should start (pixels)
@@ -744,7 +778,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                               viewport()->height() );
             */
             painter.fillRect( contentStartPosX, 0,
-                              lineNumberAreaWidth, viewport()->height(),
+                              lineNumberAreaWidth, bottomOfTextPx,
                               Qt::lightGray );
 
             // Update for drawing the actual text
@@ -761,7 +795,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         // Then draw each line
         for (int i = firstLine; i <= lastLine; i++) {
             // Position in pixel of the base line of the line to print
-            const int yPos = (i-firstLine) * fontHeight;
+            const int yPos = (i-firstLine) * fontHeight - pullToFollowHeight;
             const int xPos = contentStartPosX + CONTENT_MARGIN_WIDTH;
 
             // string to print, cut to fit the length and position of the view
@@ -910,8 +944,28 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 painter.drawText( lineNumberAreaStartX + LINE_NUMBER_PADDING,
                                   yPos + fontAscent, lineNumberStr );
             }
-
         } // For each line
+
+        // Draw the "pull to follow" zone if needed
+        if ( pullToFollowHeight ) {
+            static const int barWidth = 40;
+            const int nbBars = viewport()->width() / (barWidth * 2) + 1;
+
+            LOG(logDEBUG) << "Drawing pull to follow";
+
+            for ( int i = 0; i < nbBars; ++i ) {
+                QPoint points[4] = {
+                    { (i*2+1)*barWidth, bottomOfTextPx },
+                    { 0, bottomOfTextPx + (i*2+1)*barWidth },
+                    { 0, bottomOfTextPx + (i+1)*2*barWidth },
+                    { (i+1)*2*barWidth, bottomOfTextPx }
+                };
+                painter.setPen( QPen( QColor( 0, 0, 0, 0 ) ) );
+                painter.setBrush( QBrush( QColor( "lightyellow" ) ) );
+                painter.drawConvexPolygon( points, 4 );
+            }
+
+        }
     }
     LOG(logDEBUG4) << "End of repaint";
 }
@@ -1084,10 +1138,7 @@ void AbstractLogView::updateData()
     selection_.crop( logData->getNbLine() - 1 );
 
     // Adapt the scroll bars to the new content
-    verticalScrollBar()->setRange( 0, logData->getNbLine()-1 );
-    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
-        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
+    updateScrollBars();
 
     lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
@@ -1121,11 +1172,8 @@ void AbstractLogView::updateDisplaySize()
     lastLine = qMin( logData->getNbLine(), firstLine + getNbVisibleLines() );
 
     // Update the scroll bars
+    updateScrollBars();
     verticalScrollBar()->setPageStep( getNbVisibleLines() );
-
-    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
-        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
-    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 
     LOG(logDEBUG) << "viewport.width()=" << viewport()->width();
     LOG(logDEBUG) << "viewport.height()=" << viewport()->height();
@@ -1443,3 +1491,23 @@ void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
         }
     }
 }
+
+void AbstractLogView::updateScrollBars()
+{
+    verticalScrollBar()->setRange( 0, std::max( 0LL,
+            logData->getNbLine() - getNbVisibleLines() ) );
+
+    const int hScrollMaxValue = ( logData->getMaxLength() - getNbVisibleCols() + 1 ) > 0 ?
+        ( logData->getMaxLength() - getNbVisibleCols() + 1 ) : 0;
+    horizontalScrollBar()->setRange( 0, hScrollMaxValue );
+}
+
+namespace {
+
+// Convert the length of the pull to follow bar to pixels
+int mapPullToFollowLength( int length )
+{
+    return length / 14;
+}
+
+};

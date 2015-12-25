@@ -32,6 +32,7 @@
 #include "quickfind.h"
 #include "overviewwidget.h"
 #include "quickfindmux.h"
+#include "viewtools.h"
 
 class QMenu;
 class QAction;
@@ -271,6 +272,7 @@ class AbstractLogView :
   private:
     // Constants
     static const int OVERVIEW_WIDTH;
+    static const int HOOK_THRESHOLD;
 
     // Width of the bullet zone, including decoration
     int bulletZoneWidthPx_;
@@ -286,6 +288,9 @@ class AbstractLogView :
 
     // Follow mode
     bool followMode_;
+
+    // ElasticHook for follow mode
+    ElasticHook followElasticHook_;
 
     // Whether to show line numbers or not
     bool lineNumbersVisible_;
@@ -361,7 +366,9 @@ class AbstractLogView :
     void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
-    void searchUsingFunction ( qint64 (QuickFind::*search_function)() );
+    void searchUsingFunction( qint64 (QuickFind::*search_function)() );
+
+    void updateScrollBars();
 
     // Utils functions
     bool isCharWord( char c );

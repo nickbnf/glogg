@@ -20,6 +20,8 @@
 #ifndef VIEWTOOLS_H
 #define VIEWTOOLS_H
 
+#include <chrono>
+
 #include <QObject>
 
 // This class is a controller for an elastic hook manipulated with
@@ -49,11 +51,14 @@ class ElasticHook : public QObject {
     void hooked( bool is_hooked );
 
   private:
+    void decreasePosition();
+
     static constexpr int TIMER_PERIOD_MS = 10;
-    static constexpr int DECREASE_RATE = 2;
+    static constexpr int DECREASE_RATE = 4;
     int hook_threshold_;
     int position_ = 0;
     int timer_id_ = 0;
+    std::chrono::time_point<std::chrono::steady_clock> last_update_;
 };
 
 #endif

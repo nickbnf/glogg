@@ -248,6 +248,10 @@ int main(int argc, char *argv[])
         mw.reloadSession();
     mw.loadInitialFile( QString::fromStdString( filename ) );
     mw.startBackgroundTasks();
+
+    // We support hi-dpi (aka Retina)
+    app.setAttribute(Qt::AA_UseHighDpiPixmaps);
+
     return app.exec();
 }
 

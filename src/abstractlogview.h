@@ -347,6 +347,16 @@ class AbstractLogView :
     PerfCounter perfCounter_;
 #endif
 
+    // Cache pixmap and associated info
+    struct TextAreaCache {
+        QPixmap pixmap_;
+        bool invalid_;
+        int first_line_;
+        int last_line_;
+        int first_column_;
+    };
+    TextAreaCache textAreaCache_;
+
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;
@@ -369,6 +379,8 @@ class AbstractLogView :
     void searchUsingFunction( qint64 (QuickFind::*search_function)() );
 
     void updateScrollBars();
+
+    void drawTextArea( QPaintDevice* paint_device );
 
     // Utils functions
     bool isCharWord( char c );

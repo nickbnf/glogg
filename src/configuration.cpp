@@ -26,7 +26,7 @@
 Configuration::Configuration()
 {
     // Should have some sensible default values.
-    mainFont_ = QFont("mono", 10);
+    mainFont_ = QFont("monaco", 10);
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
     mainRegexpType_               = ExtendedRegexp;

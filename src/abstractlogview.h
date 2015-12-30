@@ -355,7 +355,12 @@ class AbstractLogView :
         int last_line_;
         int first_column_;
     };
-    TextAreaCache textAreaCache_;
+    struct PullToFollowCache {
+        QPixmap pixmap_;
+        int nb_columns_;
+    };
+    TextAreaCache textAreaCache_ = { {}, true, 0, 0, 0 };
+    PullToFollowCache pullToFollowCache_ = { {}, 0 };
 
     int getNbVisibleLines() const;
     int getNbVisibleCols() const;
@@ -380,7 +385,8 @@ class AbstractLogView :
 
     void updateScrollBars();
 
-    void drawTextArea( QPaintDevice* paint_device );
+    void drawTextArea( QPaintDevice* paint_device, int32_t delta_y );
+    QPixmap drawPullToFollowBar( int width, float pixel_ratio );
 
     // Utils functions
     bool isCharWord( char c );

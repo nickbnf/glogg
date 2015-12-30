@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2015 Nicolas Bonnefon
+ * and other contributors
  *
  * This file is part of glogg.
  *
@@ -238,7 +239,7 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
 
 // Graphic parameters
 constexpr int AbstractLogView::OVERVIEW_WIDTH = 27;
-constexpr int AbstractLogView::HOOK_THRESHOLD = 100;
+constexpr int AbstractLogView::HOOK_THRESHOLD = 300;
 
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
@@ -651,7 +652,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
     }
 
     // LOG(logDEBUG) << "Length = " << followElasticHook_.length();
-    if ( followElasticHook_.length() == 0 ) {
+    if ( followElasticHook_.length() == 0 && !followElasticHook_.isHooked() ) {
         QAbstractScrollArea::wheelEvent( wheelEvent );
     }
 }
@@ -722,47 +723,49 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     auto start = std::chrono::system_clock::now();
 
     // Can we use our cache?
-    if ( ( ! textAreaCache_.invalid_ )
-            && ( textAreaCache_.first_line_ == firstLine )
-            && ( textAreaCache_.last_line_  == lastLine ) ) {
-    }
-    else {
-        // Full redraw
-        drawTextArea( &textAreaCache_.pixmap_ );
+    int32_t delta_y = textAreaCache_.first_line_ - firstLine;
 
-        textAreaCache_.invalid_ = false;
-        textAreaCache_.first_line_ = firstLine;
-        textAreaCache_.last_line_  = lastLine;
+    if ( textAreaCache_.invalid_ || ( textAreaCache_.first_column_ != firstCol ) ) {
+        // Force a full redraw
+        delta_y = INT32_MAX;
+    }
+
+    if ( delta_y != 0 ) {
+        // Full or partial redraw
+        drawTextArea( &textAreaCache_.pixmap_, delta_y );
+
+        textAreaCache_.invalid_      = false;
+        textAreaCache_.first_line_   = firstLine;
+        textAreaCache_.last_line_    = lastLine;
+        textAreaCache_.first_column_ = firstCol;
 
         LOG(logDEBUG) << "End of writing " <<
             std::chrono::duration_cast<std::chrono::microseconds>
             ( std::chrono::system_clock::now() - start ).count();
     }
+    else {
+        // Use the cache as is: nothing to do!
+    }
 
     // Height in pixels of the "pull to follow" bottom bar.
-    const int pullToFollowHeight = mapPullToFollowLength( followElasticHook_.length() );
+    const int pullToFollowHeight = mapPullToFollowLength( followElasticHook_.length() )
+        + ( followElasticHook_.isHooked() ? 12 : 0 );
+
+    if ( pullToFollowHeight
+            && ( pullToFollowCache_.nb_columns_ != getNbVisibleCols() ) ) {
+        LOG(logDEBUG) << "Drawing pull to follow bar";
+        pullToFollowCache_.pixmap_ = drawPullToFollowBar(
+                viewport()->width(), viewport()->devicePixelRatio() );
+        pullToFollowCache_.nb_columns_ = getNbVisibleCols();
+    }
 
     QPainter devicePainter( viewport() );
     devicePainter.drawPixmap( 0, - pullToFollowHeight, textAreaCache_.pixmap_ );
 
     // Draw the "pull to follow" zone if needed
     if ( pullToFollowHeight ) {
-        static constexpr int barWidth = 40;
-        const int nbBars = viewport()->width() / (barWidth * 2) + 1;
-        const int bottomOfTextPx = viewport()->height() - pullToFollowHeight;
-
-        devicePainter.setPen( QPen( QColor( 0, 0, 0, 0 ) ) );
-        devicePainter.setBrush( QBrush( QColor( "lightyellow" ) ) );
-
-        for ( int i = 0; i < nbBars; ++i ) {
-            QPoint points[4] = {
-                { (i*2+1)*barWidth, bottomOfTextPx },
-                { 0, bottomOfTextPx + (i*2+1)*barWidth },
-                { 0, bottomOfTextPx + (i+1)*2*barWidth },
-                { (i+1)*2*barWidth, bottomOfTextPx }
-            };
-            devicePainter.drawConvexPolygon( points, 4 );
-        }
+        devicePainter.drawPixmap( 0, viewport()->height() - pullToFollowHeight,
+                pullToFollowCache_.pixmap_ );
     }
 
     LOG(logDEBUG) << "End of repaint " <<
@@ -1308,7 +1311,7 @@ void AbstractLogView::updateScrollBars()
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 }
 
-void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
+void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y )
 {
     // LOG( logDEBUG ) << "devicePixelRatio: " << viewport()->devicePixelRatio();
     // LOG( logDEBUG ) << "viewport size: " << viewport()->size().width();
@@ -1555,7 +1558,33 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
                               yPos + fontAscent, lineNumberStr );
         }
     } // For each line
+}
 
+// Draw the "pull to follow" bar and return a pixmap.
+// The width is passed in "logic" pixels.
+QPixmap AbstractLogView::drawPullToFollowBar( int width, float pixel_ratio )
+{
+    static constexpr int barWidth = 40;
+    QPixmap pixmap ( static_cast<float>( width ) * pixel_ratio, barWidth * 6.0 );
+    pixmap.setDevicePixelRatio( pixel_ratio );
+    pixmap.fill( this->palette().color( this->backgroundRole() ) );
+    const int nbBars = width / (barWidth * 2) + 1;
+
+    QPainter painter( &pixmap );
+    painter.setPen( QPen( QColor( 0, 0, 0, 0 ) ) );
+    painter.setBrush( QBrush( QColor( "lightyellow" ) ) );
+
+    for ( int i = 0; i < nbBars; ++i ) {
+        QPoint points[4] = {
+            { (i*2+1)*barWidth, 0 },
+            { 0, (i*2+1)*barWidth },
+            { 0, (i+1)*2*barWidth },
+            { (i+1)*2*barWidth, 0 }
+        };
+        painter.drawConvexPolygon( points, 4 );
+    }
+
+    return pixmap;
 }
 
 namespace {

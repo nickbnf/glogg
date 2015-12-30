@@ -31,15 +31,14 @@ class ElasticHook : public QObject {
   Q_OBJECT
 
   public:
-    ElasticHook( int hook_threshold ) {
-        hook_threshold_ = hook_threshold;
-    }
+    ElasticHook( int hook_threshold ) : hook_threshold_( hook_threshold ) {}
 
     // Instruct the elastic to move by the passed pixels
     // (a positive value increase the elastic tension)
     void move( int value );
 
     int length() const { return position_; }
+    bool isHooked() const { return hooked_; }
 
   protected:
     void timerEvent( QTimerEvent *event );
@@ -55,7 +54,8 @@ class ElasticHook : public QObject {
 
     static constexpr int TIMER_PERIOD_MS = 10;
     static constexpr int DECREASE_RATE = 4;
-    int hook_threshold_;
+    const int hook_threshold_;
+    bool hooked_  = false;
     int position_ = 0;
     int timer_id_ = 0;
     std::chrono::time_point<std::chrono::steady_clock> last_update_;

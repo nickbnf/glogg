@@ -106,8 +106,8 @@ class CrawlerWidget : public QSplitter,
     void loadingFinished( LoadingStatus status );
     // Sent when follow mode is enabled/disabled
     void followSet( bool checked );
-    // Sent up to the MainWindow to disable the follow mode
-    void followDisabled();
+    // Sent up to the MainWindow to enable/disable the follow mode
+    void followModeChanged( bool follow );
     // Sent up when the current line number is updated
     void updateLineNumber( int line );
 

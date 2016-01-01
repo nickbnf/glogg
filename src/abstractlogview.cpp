@@ -290,14 +290,14 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     // Signals
     connect( quickFindPattern_, SIGNAL( patternUpdated() ),
             this, SLOT ( handlePatternUpdated() ) );
-    connect( verticalScrollBar(), SIGNAL( sliderMoved( int ) ),
-            this, SIGNAL( followDisabled() ) );
     connect( &quickFind_, SIGNAL( notify( const QFNotification& ) ),
             this, SIGNAL( notifyQuickFind( const QFNotification& ) ) );
     connect( &quickFind_, SIGNAL( clearNotification() ),
             this, SIGNAL( clearQuickFindNotification() ) );
     connect( &followElasticHook_, SIGNAL( lengthChanged() ),
             this, SLOT( repaint() ) );
+    connect( &followElasticHook_, SIGNAL( hooked( bool ) ),
+            this, SIGNAL( followModeChanged( bool ) ) );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -537,7 +537,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( (keyEvent->key() == Qt::Key_PageDown && controlModifier)
            || (keyEvent->key() == Qt::Key_End && controlModifier) )
     {
-        emit followDisabled(); // duplicate of 'G' action.
+        disableFollow(); // duplicate of 'G' action.
         selection_.selectLine( logData->getNbLine() - 1 );
         emit updateLineNumber( logData->getNbLine() - 1 );
         jumpToBottom();
@@ -545,7 +545,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
     {
-        emit followDisabled(); // like 'g' but 0 input first line action.
+        disableFollow(); // like 'g' but 0 input first line action.
         selectAndDisplayLine( 0 );
         emit updateLineNumber( 0 );
     }
@@ -566,7 +566,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 case 'j':
                     {
                         int delta = qMax( 1, digitsBuffer_.content() );
-                        emit followDisabled();
+                        disableFollow();
                         //verticalScrollBar()->triggerAction(
                         //QScrollBar::SliderSingleStepAdd);
                         moveSelection( delta );
@@ -575,7 +575,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 case 'k':
                     {
                         int delta = qMin( -1, - digitsBuffer_.content() );
-                        emit followDisabled();
+                        disableFollow();
                         //verticalScrollBar()->triggerAction(
                         //QScrollBar::SliderSingleStepSub);
                         moveSelection( delta );
@@ -600,13 +600,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                         int newLine = qMax( 0, digitsBuffer_.content() - 1 );
                         if ( newLine >= logData->getNbLine() )
                             newLine = logData->getNbLine() - 1;
-                        emit followDisabled();
+                        disableFollow();
                         selectAndDisplayLine( newLine );
                         emit updateLineNumber( newLine );
                         break;
                     }
                 case 'G':
-                    emit followDisabled();
+                    disableFollow();
                     selection_.selectLine( logData->getNbLine() - 1 );
                     emit updateLineNumber( logData->getNbLine() - 1 );
                     jumpToBottom();
@@ -641,7 +641,6 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 
 void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
 {
-    emit followDisabled();
     emit activity();
 
     // LOG(logDEBUG) << "wheelEvent";
@@ -747,9 +746,12 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         // Use the cache as is: nothing to do!
     }
 
+    // Height including the potentially invisible last line
+    const int wholeHeight = getNbVisibleLines() * charHeight_;
     // Height in pixels of the "pull to follow" bottom bar.
     const int pullToFollowHeight = mapPullToFollowLength( followElasticHook_.length() )
-        + ( followElasticHook_.isHooked() ? 12 : 0 );
+        + ( followElasticHook_.isHooked() ?
+                ( wholeHeight - viewport()->height() ) + 10 : 0 );
 
     if ( pullToFollowHeight
             && ( pullToFollowCache_.nb_columns_ != getNbVisibleCols() ) ) {
@@ -764,7 +766,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
     // Draw the "pull to follow" zone if needed
     if ( pullToFollowHeight ) {
-        devicePainter.drawPixmap( 0, viewport()->height() - pullToFollowHeight,
+        devicePainter.drawPixmap( 0,
+                getNbVisibleLines() * charHeight_ - pullToFollowHeight,
                 pullToFollowCache_.pixmap_ );
     }
 
@@ -804,7 +807,7 @@ void AbstractLogView::setOverview( Overview* overview,
 void AbstractLogView::searchUsingFunction(
         qint64 (QuickFind::*search_function)() )
 {
-    emit followDisabled();
+    disableFollow();
 
     int line = (quickFind_.*search_function)();
     if ( line >= 0 ) {
@@ -850,6 +853,8 @@ void AbstractLogView::incrementalSearchStop()
 void AbstractLogView::followSet( bool checked )
 {
     followMode_ = checked;
+    followElasticHook_.hook( checked );
+    update();
     if ( checked )
         jumpToBottom();
 }
@@ -978,6 +983,9 @@ void AbstractLogView::updateDisplaySize()
     updateScrollBars();
     verticalScrollBar()->setPageStep( getNbVisibleLines() );
 
+    if ( followMode_ )
+        jumpToBottom();
+
     LOG(logDEBUG) << "viewport.width()=" << viewport()->width();
     LOG(logDEBUG) << "viewport.height()=" << viewport()->height();
     LOG(logDEBUG) << "width()=" << width();
@@ -990,7 +998,8 @@ void AbstractLogView::updateDisplaySize()
     // Our text area cache is now invalid
     textAreaCache_.invalid_ = true;
     textAreaCache_.pixmap_  = QPixmap {
-        viewport()->size() * viewport()->devicePixelRatio() };
+        viewport()->width() * viewport()->devicePixelRatio(),
+        getNbVisibleLines() * charHeight_ * viewport()->devicePixelRatio() };
     textAreaCache_.pixmap_.setDevicePixelRatio( viewport()->devicePixelRatio() );
 }
 
@@ -1012,7 +1021,7 @@ void AbstractLogView::selectAll()
 
 void AbstractLogView::selectAndDisplayLine( int line )
 {
-    emit followDisabled();
+    disableFollow();
     selection_.selectLine( line );
     displayLine( line );
     emit updateLineNumber( line );
@@ -1585,6 +1594,12 @@ QPixmap AbstractLogView::drawPullToFollowBar( int width, float pixel_ratio )
     }
 
     return pixmap;
+}
+
+void AbstractLogView::disableFollow()
+{
+    emit followModeChanged( false );
+    followElasticHook_.hook( false );
 }
 
 namespace {

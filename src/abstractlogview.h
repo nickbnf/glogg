@@ -203,8 +203,8 @@ class AbstractLogView :
   signals:
     // Sent when a new line has been selected by the user.
     void newSelection(int line);
-    // Sent up to the MainWindow to disable the follow mode
-    void followDisabled();
+    // Sent up to the MainWindow to enable/disable the follow mode
+    void followModeChanged( bool enabled );
     // Sent when the view wants the QuickFind widget pattern to change.
     void changeQuickFind( const QString& newPattern,
             QuickFindMux::QFDirection newDirection );
@@ -387,6 +387,8 @@ class AbstractLogView :
 
     void drawTextArea( QPaintDevice* paint_device, int32_t delta_y );
     QPixmap drawPullToFollowBar( int width, float pixel_ratio );
+
+    void disableFollow();
 
     // Utils functions
     bool isCharWord( char c );

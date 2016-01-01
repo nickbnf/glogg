@@ -31,7 +31,6 @@
 #include <QFile>
 #include <QLineEdit>
 #include <QFileInfo>
-#include <QKeyEvent>
 #include <QStandardItemModel>
 #include <QHeaderView>
 #include <QListView>
@@ -716,10 +715,10 @@ void CrawlerWidget::setup()
             logMainView, SLOT( followSet( bool ) ) );
     connect(this, SIGNAL( followSet( bool ) ),
             filteredView, SLOT( followSet( bool ) ) );
-    connect(logMainView, SIGNAL( followDisabled() ),
-            this, SIGNAL( followDisabled() ) );
-    connect(filteredView, SIGNAL( followDisabled() ),
-            this, SIGNAL( followDisabled() ) );
+    connect(logMainView, SIGNAL( followModeChanged( bool ) ),
+            this, SIGNAL( followModeChanged( bool ) ) );
+    connect(filteredView, SIGNAL( followModeChanged( bool ) ),
+            this, SIGNAL( followModeChanged( bool ) ) );
 
     // Detect activity in the views
     connect(logMainView, SIGNAL( activity() ),

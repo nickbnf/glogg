@@ -85,8 +85,8 @@ class MainWindow : public QMainWindow
     void toggleMainLineNumbersVisibility( bool isVisible );
     void toggleFilteredLineNumbersVisibility( bool isVisible );
 
-    // Disable the follow mode checkbox and send the followSet signal down
-    void disableFollow();
+    // Change the follow mode checkbox and send the followSet signal down
+    void changeFollowMode( bool follow );
 
     // Update the line number displayed in the status bar.
     // Must be passed as the internal (starts at 0) line number.

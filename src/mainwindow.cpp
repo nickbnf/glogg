@@ -102,8 +102,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
             SLOT( exitingQuickFind() ) );
 
     // Actions from the CrawlerWidget
-    signalMux_.connect( SIGNAL( followDisabled() ),
-            this, SLOT( disableFollow() ) );
+    signalMux_.connect( SIGNAL( followModeChanged( bool ) ),
+            this, SLOT( changeFollowMode( bool ) ) );
     signalMux_.connect( SIGNAL( updateLineNumber( int ) ),
             this, SLOT( lineNumberHandler( int ) ) );
 
@@ -534,9 +534,9 @@ void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
     emit optionsChanged();
 }
 
-void MainWindow::disableFollow()
+void MainWindow::changeFollowMode( bool follow )
 {
-    followAction->setChecked( false );
+    followAction->setChecked( follow );
 }
 
 void MainWindow::lineNumberHandler( int line )

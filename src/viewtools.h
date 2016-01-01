@@ -37,6 +37,11 @@ class ElasticHook : public QObject {
     // (a positive value increase the elastic tension)
     void move( int value );
 
+    // Programmatically force the hook hooked or not.
+    void hook( bool hooked )
+    { hooked_ = hooked; }
+
+    // Return the "length" of the elastic hook.
     int length() const { return position_; }
     bool isHooked() const { return hooked_; }
 

@@ -174,17 +174,18 @@ class AbstractLogView :
     void selectAll();
 
   protected:
-    void mousePressEvent( QMouseEvent* mouseEvent );
-    void mouseMoveEvent( QMouseEvent* mouseEvent );
-    void mouseReleaseEvent( QMouseEvent* );
-    void mouseDoubleClickEvent( QMouseEvent* mouseEvent );
-    void timerEvent( QTimerEvent* timerEvent );
-    void changeEvent( QEvent* changeEvent );
-    void paintEvent( QPaintEvent* paintEvent );
-    void resizeEvent( QResizeEvent* resizeEvent );
-    void scrollContentsBy( int dx, int dy );
-    void keyPressEvent( QKeyEvent* keyEvent );
-    void wheelEvent( QWheelEvent* wheelEvent );
+    virtual void mousePressEvent( QMouseEvent* mouseEvent );
+    virtual void mouseMoveEvent( QMouseEvent* mouseEvent );
+    virtual void mouseReleaseEvent( QMouseEvent* );
+    virtual void mouseDoubleClickEvent( QMouseEvent* mouseEvent );
+    virtual void timerEvent( QTimerEvent* timerEvent );
+    virtual void changeEvent( QEvent* changeEvent );
+    virtual void paintEvent( QPaintEvent* paintEvent );
+    virtual void resizeEvent( QResizeEvent* resizeEvent );
+    virtual void scrollContentsBy( int dx, int dy );
+    virtual void keyPressEvent( QKeyEvent* keyEvent );
+    virtual void wheelEvent( QWheelEvent* wheelEvent );
+    virtual bool event( QEvent * e );
 
     // Must be implemented to return wether the line number is
     // a match, a mark or just a normal line (used for coloured bullets)

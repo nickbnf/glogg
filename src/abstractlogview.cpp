@@ -38,6 +38,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QtCore>
+#include <QGestureEvent>
 
 #include "log.h"
 
@@ -666,19 +667,31 @@ void AbstractLogView::resizeEvent( QResizeEvent* )
     updateDisplaySize();
 }
 
+bool AbstractLogView::event(QEvent * e)
+{
+    LOG(logDEBUG4) << "Event! Type: " << e->type();
+
+    // Make sure we ignore the gesture events as
+    // they seem to be accepted by default.
+    if ( e->type() == QEvent::Gesture ) {
+        auto gesture_event = dynamic_cast<QGestureEvent*>( e );
+        if ( gesture_event ) {
+            foreach( QGesture* gesture, gesture_event->gestures() ) {
+                LOG(logWARNING) << "Gesture: " << gesture->gestureType();
+                gesture_event->ignore( gesture );
+            }
+
+            // Ensure the event is sent up to parents who might care
+            return false;
+        }
+    }
+
+    return QAbstractScrollArea::event( e );
+}
+
 void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
     LOG(logDEBUG) << "scrollContentsBy received " << dy;
-
-    /*
-    LineNumber visible_lines = std::max(
-            static_cast<LineNumber>( logData->getNbLine() ),
-            static_cast<LineNumber>( getNbVisibleLines() ) );
-    firstLine = std::min( std::max( firstLine - dy, 0LL ),
-            logData->getNbLine() - visible_lines );
-
-    LOG(logDEBUG) << "scrollContentsBy " << visible_lines << " " << firstLine;
-    */
 
     firstLine = std::max( firstLine - dy, 0LL );
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;

@@ -24,6 +24,9 @@
 
 #include "config.h"
 
+// Line number are unsigned 32 bits for now.
+typedef uint32_t LineNumber;
+
 // Use a bisection method to find the given line number
 // in a sorted list.
 // The T type must be a container containing elements that

@@ -257,7 +257,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
-    LineNumber line = 0;
+    LineNumber line = std::numeric_limits<LineNumber>::max();
     if ( visibility_ == MatchesOnly ) {
         if ( lineNum < matching_lines_.size() ) {
             line = matching_lines_[lineNum].lineNumber();

@@ -274,15 +274,13 @@ class AbstractLogView :
     // Constants
     static const int OVERVIEW_WIDTH;
     static const int HOOK_THRESHOLD;
+    static const int PULL_TO_FOLLOW_HOOKED_HEIGHT;
 
     // Width of the bullet zone, including decoration
     int bulletZoneWidthPx_;
 
     // Total size of all margins and decorations in pixels
     int leftMarginPx_;
-
-    // Number of digits to display in line numbers
-    int nbDigitsInLineNumber_;
 
     // Digits buffer (for numeric keyboard entry)
     DigitsBuffer digitsBuffer_;
@@ -323,8 +321,7 @@ class AbstractLogView :
     qint64 markingClickLine_;
 
     Selection selection_;
-    qint64 firstLine;
-    qint64 lastLine;
+    LineNumber firstLine;
     int firstCol;
 
     // Text handling
@@ -348,6 +345,9 @@ class AbstractLogView :
     PerfCounter perfCounter_;
 #endif
 
+    // Current "pull to follow" bar height
+    int pullToFollowHeight_;
+
     // Cache pixmap and associated info
     struct TextAreaCache {
         QPixmap pixmap_;
@@ -363,12 +363,12 @@ class AbstractLogView :
     TextAreaCache textAreaCache_ = { {}, true, 0, 0, 0 };
     PullToFollowCache pullToFollowCache_ = { {}, 0 };
 
-    int getNbVisibleLines() const;
+    LineNumber getNbVisibleLines() const;
     int getNbVisibleCols() const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;
     int convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;
-    void displayLine( int line );
+    void displayLine( LineNumber line );
     void moveSelection( int y );
     void jumpToStartOfLine();
     void jumpToEndOfLine();

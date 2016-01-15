@@ -28,9 +28,7 @@
 
 #include "loadingstatus.h"
 #include "linepositionarray.h"
-
-// Line number are unsigned 32 bits for now.
-typedef uint32_t LineNumber;
+#include "utils.h"
 
 // This class is a thread-safe set of indexing data.
 class IndexingData

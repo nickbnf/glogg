@@ -293,38 +293,42 @@ void CrawlerWidget::updateLineNumberHandler( int line )
 
 void CrawlerWidget::markLineFromMain( qint64 line )
 {
-    if ( logFilteredData_->isLineMarked( line ) )
-        logFilteredData_->deleteMark( line );
-    else
-        logFilteredData_->addMark( line );
+    if ( line < logData_->getNbLine() ) {
+        if ( logFilteredData_->isLineMarked( line ) )
+            logFilteredData_->deleteMark( line );
+        else
+            logFilteredData_->addMark( line );
 
-    // Recompute the content of the filtered window.
-    filteredView->updateData();
+        // Recompute the content of the filtered window.
+        filteredView->updateData();
 
-    // Update the match overview
-    overview_.updateData( logData_->getNbLine() );
+        // Update the match overview
+        overview_.updateData( logData_->getNbLine() );
 
-    // Also update the top window for the coloured bullets.
-    update();
+        // Also update the top window for the coloured bullets.
+        update();
+    }
 }
 
 void CrawlerWidget::markLineFromFiltered( qint64 line )
 {
-    qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
-    if ( logFilteredData_->filteredLineTypeByIndex( line )
-            == LogFilteredData::Mark )
-        logFilteredData_->deleteMark( line_in_file );
-    else
-        logFilteredData_->addMark( line_in_file );
+    if ( line < logFilteredData_->getNbLine() ) {
+        qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
+        if ( logFilteredData_->filteredLineTypeByIndex( line )
+                == LogFilteredData::Mark )
+            logFilteredData_->deleteMark( line_in_file );
+        else
+            logFilteredData_->addMark( line_in_file );
 
-    // Recompute the content of the filtered window.
-    filteredView->updateData();
+        // Recompute the content of the filtered window.
+        filteredView->updateData();
 
-    // Update the match overview
-    overview_.updateData( logData_->getNbLine() );
+        // Update the match overview
+        overview_.updateData( logData_->getNbLine() );
 
-    // Also update the top window for the coloured bullets.
-    update();
+        // Also update the top window for the coloured bullets.
+        update();
+    }
 }
 
 void CrawlerWidget::applyConfiguration()

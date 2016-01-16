@@ -1350,8 +1350,6 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     // LOG( logDEBUG ) << "font: " << viewport()->font().family().toStdString();
     // LOG( logDEBUG ) << "font painter: " << painter.font().family().toStdString();
 
-    // For pretty circles
-    painter.setRenderHint( QPainter::Antialiasing );
     painter.setFont( this->font() );
 
     const int fontHeight = charHeight_;
@@ -1369,7 +1367,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     static const QBrush markBrush = QBrush( "dodgerblue" );
 
     static const int SEPARATOR_WIDTH = 1;
-    static const int BULLET_AREA_WIDTH = 11;
+    static const int BULLET_AREA_WIDTH = 10;
     static const int CONTENT_MARGIN_WIDTH = 1;
     static const int LINE_NUMBER_PADDING = 3;
 
@@ -1552,28 +1550,31 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
 
         // Then draw the bullet
         painter.setPen( palette.color( QPalette::Text ) );
-        const int circleSize = 3;
-        const int arrowHeight = 4;
-        const int middleXLine = BULLET_AREA_WIDTH / 2;
-        const int middleYLine = yPos + (fontHeight / 2);
+        const qreal circleSize = 3;
+        const qreal arrowHeight = 4;
+        const qreal middleXLine = BULLET_AREA_WIDTH / 2;
+        const qreal middleYLine = yPos + (fontHeight / 2);
 
         const LineType line_type = lineType( line_index );
         if ( line_type == Marked ) {
             // A pretty arrow if the line is marked
-            const QPoint points[7] = {
-                QPoint(1, middleYLine - 2),
-                QPoint(middleXLine, middleYLine - 2),
-                QPoint(middleXLine, middleYLine - arrowHeight),
-                QPoint(BULLET_AREA_WIDTH - 2, middleYLine),
-                QPoint(middleXLine, middleYLine + arrowHeight),
-                QPoint(middleXLine, middleYLine + 2),
-                QPoint(1, middleYLine + 2 ),
+            const QPointF points[7] = {
+                QPointF(1, middleYLine - 2),
+                QPointF(middleXLine, middleYLine - 2),
+                QPointF(middleXLine, middleYLine - arrowHeight),
+                QPointF(BULLET_AREA_WIDTH - 1, middleYLine),
+                QPointF(middleXLine, middleYLine + arrowHeight),
+                QPointF(middleXLine, middleYLine + 2),
+                QPointF(1, middleYLine + 2 ),
             };
 
             painter.setBrush( markBrush );
             painter.drawPolygon( points, 7 );
         }
         else {
+            // For pretty circles
+            painter.setRenderHint( QPainter::Antialiasing );
+
             if ( lineType( line_index ) == Match )
                 painter.setBrush( matchBulletBrush );
             else

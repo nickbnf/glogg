@@ -170,6 +170,8 @@ void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
     {
         QPainter painter( this );
 
+        painter.fillRect( painter.viewport(), painter.background() );
+
         // The line separating from the main view
         painter.setPen( palette().color(QPalette::Text) );
         painter.drawLine( 0, 0, 0, height() );

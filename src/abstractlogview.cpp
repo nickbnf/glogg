@@ -273,8 +273,6 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     // Create the viewport QWidget
     setViewport( 0 );
 
-    setAttribute( Qt::WA_StaticContents );  // Does it work?
-
     // Hovering
     setMouseTracking( true );
     lastHoveredLine_ = -1;
@@ -1367,7 +1365,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     static const QBrush markBrush = QBrush( "dodgerblue" );
 
     static const int SEPARATOR_WIDTH = 1;
-    static const int BULLET_AREA_WIDTH = 10;
+    static const qreal BULLET_AREA_WIDTH = 11;
     static const int CONTENT_MARGIN_WIDTH = 1;
     static const int LINE_NUMBER_PADDING = 3;
 
@@ -1395,11 +1393,9 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     painter.fillRect( 0, 0,
                       BULLET_AREA_WIDTH, paintDeviceHeight,
                       Qt::darkGray );
-    painter.drawLine( BULLET_AREA_WIDTH, 0,
-                      BULLET_AREA_WIDTH, paintDeviceHeight - 1 );
 
     // Column at which the content should start (pixels)
-    int contentStartPosX = BULLET_AREA_WIDTH + SEPARATOR_WIDTH;
+    qreal contentStartPosX = BULLET_AREA_WIDTH + SEPARATOR_WIDTH;
 
     // This is also the bullet zone width, used for marking clicks
     bulletZoneWidthPx_ = contentStartPosX;
@@ -1422,20 +1418,26 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
                           contentStartPosX + lineNumberAreaWidth,
                           viewport()->height() );
         */
-        painter.fillRect( contentStartPosX, 0,
-                          lineNumberAreaWidth, paintDeviceHeight,
+        painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0,
+                          lineNumberAreaWidth + SEPARATOR_WIDTH, paintDeviceHeight,
                           Qt::lightGray );
 
         // Update for drawing the actual text
         contentStartPosX += lineNumberAreaWidth;
     }
     else {
-        contentStartPosX += SEPARATOR_WIDTH;
+        painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0,
+                          SEPARATOR_WIDTH + 1, paintDeviceHeight,
+                          Qt::lightGray );
+        // contentStartPosX += SEPARATOR_WIDTH;
     }
+
+    painter.drawLine( BULLET_AREA_WIDTH, 0,
+                      BULLET_AREA_WIDTH, paintDeviceHeight - 1 );
 
     // This is the total width of the 'margin' (including line number if any)
     // used for mouse calculation etc...
-    leftMarginPx_ = contentStartPosX;
+    leftMarginPx_ = contentStartPosX + SEPARATOR_WIDTH;
 
     // Then draw each line
     for (int i = 0; i < nbLines; i++) {

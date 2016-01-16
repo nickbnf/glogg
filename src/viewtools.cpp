@@ -25,17 +25,19 @@
 
 void ElasticHook::move( int value )
 {
+    static constexpr int MAX_POSITION = 2000;
+
     if ( timer_id_ == 0 )
         timer_id_ = startTimer( TIMER_PERIOD_MS );
 
     int resistance = 0;
-    if ( position_ * value > 0 ) // value and resistance have the same sign
-        resistance = position_ / 12;
+    if ( !held_ && ( position_ * value > 0 ) ) // value and resistance have the same sign
+        resistance = position_ / 10;
 
-    position_ += value - resistance;
+    position_ = std::min( position_ + ( value - resistance ), MAX_POSITION );
 
-    if ( std::chrono::duration_cast<std::chrono::milliseconds>
-            ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS )
+    if ( !held_ && ( std::chrono::duration_cast<std::chrono::milliseconds>
+            ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) )
         decreasePosition();
 
     if ( ( ! hooked_ ) && position_ >= hook_threshold_ ) {
@@ -61,8 +63,8 @@ void ElasticHook::move( int value )
 
 void ElasticHook::timerEvent( QTimerEvent* event )
 {
-    if ( std::chrono::duration_cast<std::chrono::milliseconds>
-            ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) {
+    if ( !held_ && ( std::chrono::duration_cast<std::chrono::milliseconds>
+            ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) ) {
         decreasePosition();
         last_update_ = std::chrono::steady_clock::now();
     }

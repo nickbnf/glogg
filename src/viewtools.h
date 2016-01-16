@@ -37,6 +37,12 @@ class ElasticHook : public QObject {
     // (a positive value increase the elastic tension)
     void move( int value );
 
+    // Hold the elastic and prevent automatic decrease.
+    void hold() { held_ = true; }
+
+    // Release the elastic.
+    void release() { held_ = false; }
+
     // Programmatically force the hook hooked or not.
     void hook( bool hooked )
     { hooked_ = hooked; }
@@ -61,6 +67,7 @@ class ElasticHook : public QObject {
     static constexpr int DECREASE_RATE = 4;
     const int hook_threshold_;
     bool hooked_  = false;
+    bool held_ = false;
     int position_ = 0;
     int timer_id_ = 0;
     std::chrono::time_point<std::chrono::steady_clock> last_update_;

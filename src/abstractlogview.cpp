@@ -1121,6 +1121,9 @@ void AbstractLogView::displayLine( LineNumber line )
     // If the line is already the screen
     if ( ( line >= firstLine ) &&
          ( line < ( firstLine + getNbVisibleLines() ) ) ) {
+        // Invalidate our cache
+        textAreaCache_.invalid_ = true;
+
         // ... don't scroll and just repaint
         update();
     } else {

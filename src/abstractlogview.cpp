@@ -643,9 +643,19 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
     if ( followMode_ )
         jumpToBottom();
 
+    int y_delta = 0;
     if ( verticalScrollBar()->value() == verticalScrollBar()->maximum() ) {
-        // LOG(logDEBUG) << "Elastic " << wheelEvent->pixelDelta().y();
-        followElasticHook_.move( - wheelEvent->pixelDelta().y() );
+        auto pixel_delta = wheelEvent->pixelDelta();
+
+        if ( pixel_delta.isNull() ) {
+            y_delta = wheelEvent->angleDelta().y() / 1.4;
+        }
+        else {
+            y_delta = pixel_delta.y();
+        }
+
+        // LOG(logDEBUG) << "Elastic " << y_delta;
+        followElasticHook_.move( - y_delta );
     }
 
     // LOG(logDEBUG) << "Length = " << followElasticHook_.length();

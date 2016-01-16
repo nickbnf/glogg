@@ -238,11 +238,6 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
     }
 }
 
-// Graphic parameters
-constexpr int AbstractLogView::OVERVIEW_WIDTH = 27;
-constexpr int AbstractLogView::HOOK_THRESHOLD = 300;
-constexpr int AbstractLogView::PULL_TO_FOLLOW_HOOKED_HEIGHT = 10;
-
 AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
     QAbstractScrollArea( parent ),
@@ -972,7 +967,7 @@ void AbstractLogView::updateData()
     updateScrollBars();
 
     // Calculate the index of the last line shown
-    LineNumber last_line = std::min( logData->getNbLine(),
+    LineNumber last_line = std::min( static_cast<int64_t>( logData->getNbLine() ),
             static_cast<int64_t>( firstLine + getNbVisibleLines() ) );
 
     // Reset the QuickFind in case we have new stuff to search into

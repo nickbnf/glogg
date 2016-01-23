@@ -94,6 +94,7 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     loadingInProgress_ = true;
     // and it's the first time
     firstLoadDone_     = false;
+    nbMatches_         = 0;
     dataStatus_        = DataStatus::OLD_DATA;
 
     currentLineNumber_ = 0;
@@ -269,14 +270,22 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         }
     }
 
-    // Recompute the content of the filtered window.
-    filteredView->updateData();
+    // If more matches have been found
+    if ( nbMatches > nbMatches_ ) {
+        nbMatches_ = nbMatches;
 
-    // Update the match overview
-    overview_.updateData( logData_->getNbLine() );
+        // Recompute the content of the filtered window.
+        filteredView->updateData();
 
-    // Also update the top window for the coloured bullets.
-    update();
+        // Update the match overview
+        overview_.updateData( logData_->getNbLine() );
+
+        // New data found icon
+        changeDataStatus( DataStatus::NEW_FILTERED_DATA );
+
+        // Also update the top window for the coloured bullets.
+        update();
+    }
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
@@ -435,6 +444,7 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
             filteredView->updateData();
             searchState_.truncateFile();
             printSearchInfoMessage();
+            nbMatches_ = 0;
         }
     }
 }
@@ -760,6 +770,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     // Interrupt the search if it's ongoing
     logFilteredData_->interruptSearch();
 
+    nbMatches_ = 0;
+
     // We have to wait for the last search update (100%)
     // before clearing/restarting to avoid having remaining results.
 
@@ -864,7 +876,9 @@ void CrawlerWidget::printSearchInfoMessage( int nbMatches )
 // Change the data status and, if needed, advise upstream.
 void CrawlerWidget::changeDataStatus( DataStatus status )
 {
-    if ( status != dataStatus_ ) {
+    if ( ( status != dataStatus_ )
+            && (! ( dataStatus_ == DataStatus::NEW_FILTERED_DATA
+                    && status == DataStatus::NEW_DATA ) ) ) {
         dataStatus_ = status;
         emit dataStatusChanged( dataStatus_ );
     }

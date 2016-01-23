@@ -50,6 +50,10 @@ class TabbedCrawlerWidget : public QTabWidget
       void mouseReleaseEvent( QMouseEvent *event);
 
     private:
+      const QIcon olddata_icon_;
+      const QIcon newdata_icon_;
+      const QIcon newfiltered_icon_;
+
       QTabBar myTabBar_;
 };
 

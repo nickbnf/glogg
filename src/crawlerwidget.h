@@ -271,6 +271,9 @@ class CrawlerWidget : public QSplitter,
     // Is it not the first time we are loading something?
     bool            firstLoadDone_;
 
+    // Current number of matches
+    int             nbMatches_;
+
     // the current dataStatus (whether we have new, not seen, data)
     DataStatus      dataStatus_;
 };

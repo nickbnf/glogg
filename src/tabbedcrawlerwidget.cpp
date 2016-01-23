@@ -26,7 +26,11 @@
 
 #include "log.h"
 
-TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
+TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(),
+    olddata_icon_( "olddata_icon.png" ),
+    newdata_icon_( "newdata_icon.png" ),
+    newfiltered_icon_( "newfiltered_icon.png" ),
+    myTabBar_()
 {
 #ifdef WIN32
     myTabBar_.setStyleSheet( "QTabBar::tab {\
@@ -52,6 +56,7 @@ TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(), myTabBar_()
 #endif
     setTabBar( &myTabBar_ );
     myTabBar_.hide();
+
 }
 
 // I know hiding non-virtual functions from the base class is bad form
@@ -74,11 +79,12 @@ int TabbedCrawlerWidget::addTab( QWidget* page, const QString& label )
 
     // Display the icon
     QLabel* icon_label = new QLabel();
-    icon_label->setPixmap( QPixmap( QString::fromUtf8( "olddata_icon.png" ) ) );
+    icon_label->setPixmap( olddata_icon_.pixmap( 11, 12 ) );
     icon_label->setAlignment( Qt::AlignCenter );
     myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label );
 
     LOG(logDEBUG) << "addTab, count = " << count();
+    LOG(logDEBUG) << "width = " << olddata_icon_.pixmap( 11, 12 ).devicePixelRatio();
 
     if ( count() > 1 )
         myTabBar_.show();
@@ -146,24 +152,24 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
 
 void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 {
-    LOG(logDEBUG) << "TabbedCrawlerWidget::setTabDataStatus";
+    LOG(logDEBUG) << "TabbedCrawlerWidget::setTabDataStatus " << index;
 
     QLabel* icon_label = dynamic_cast<QLabel*>(
             myTabBar_.tabButton( index, QTabBar::RightSide ) );
 
     if ( icon_label ) {
-        QString icon_file_name;
+        const QIcon* icon;
         switch ( status ) {
             case DataStatus::OLD_DATA:
-                icon_file_name = QString::fromUtf8( "olddata_icon.png" );
+                icon = &olddata_icon_;
                 break;
             case DataStatus::NEW_DATA:
-                icon_file_name = QString::fromUtf8( "newdata_icon.png" );
+                icon = &newdata_icon_;
                 break;
             case DataStatus::NEW_FILTERED_DATA:
-                icon_file_name = QString::fromUtf8( "newfiltered_icon.png" );
+                icon = &newfiltered_icon_;
                 break;
         }
-        icon_label->setPixmap ( QPixmap( icon_file_name ) );
+        icon_label->setPixmap ( icon->pixmap(12,12) );
     }
 }

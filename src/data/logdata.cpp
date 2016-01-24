@@ -200,6 +200,9 @@ void LogData::fileChangedOnDisk()
     const QString name = attached_file_->fileName();
     QFileInfo info( name );
 
+    // Need to open the file in case it was absent
+    attached_file_->open( QIODevice::ReadOnly );
+
     std::shared_ptr<LogDataOperation> newOperation;
 
     qint64 file_size = indexing_data_.getSize();
@@ -384,6 +387,7 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
         0 : indexing_data_.getPosForLine( first_line-1 );
     const qint64 last_byte  = indexing_data_.getPosForLine( last_line );
     // LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
+
     attached_file_->seek( first_byte );
     QByteArray blob = attached_file_->read( last_byte - first_byte );
 

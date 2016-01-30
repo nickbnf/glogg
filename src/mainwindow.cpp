@@ -232,7 +232,7 @@ void MainWindow::createActions()
 
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
-    openAction->setIcon( QIcon(":/images/open16.png") );
+    openAction->setIcon( QIcon( ":/images/open14.png" ) );
     openAction->setStatusTip(tr("Open a file"));
     connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
 
@@ -303,11 +303,11 @@ void MainWindow::createActions()
 
     reloadAction = new QAction( tr("&Reload"), this );
     reloadAction->setShortcut(QKeySequence::Refresh);
-    reloadAction->setIcon( QIcon(":/images/reload16.png") );
+    reloadAction->setIcon( QIcon(":/images/reload14.png") );
     signalMux_.connect( reloadAction, SIGNAL(triggered()), SLOT(reload()) );
 
     stopAction = new QAction( tr("&Stop"), this );
-    stopAction->setIcon( QIcon(":/images/stop16.png") );
+    stopAction->setIcon( QIcon(":/images/stop14.png") );
     stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL(triggered()), SLOT(stopLoading()) );
 
@@ -383,7 +383,7 @@ void MainWindow::createToolBars()
             lineNbField->fontMetrics().size( 0, "Line 0000000") );
 
     toolBar = addToolBar( tr("&Toolbar") );
-    toolBar->setIconSize( QSize( 16, 16 ) );
+    toolBar->setIconSize( QSize( 14, 14 ) );
     toolBar->setMovable( false );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );

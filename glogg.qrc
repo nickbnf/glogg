@@ -4,11 +4,17 @@
     <file>images/hicolor/24x24/glogg.png</file>
     <file>images/hicolor/32x32/glogg.png</file>
     <file>images/hicolor/48x48/glogg.png</file>
-    <file>images/open16.png</file>
-    <file>images/open.xpm</file>
-    <file>images/reload.png</file>
-    <file>images/reload16.png</file>
-    <file>images/stop16.png</file>
+    <file>images/open14.png</file>
+    <file>images/open14@2x.png</file>
+    <file>images/reload14.png</file>
+    <file>images/reload14@2x.png</file>
+    <file>images/olddata_icon.png</file>
+    <file>images/olddata_icon@2x.png</file>
+    <file>images/newdata_icon.png</file>
+    <file>images/newdata_icon@2x.png</file>
+    <file>images/newfiltered_icon.png</file>
+    <file>images/newfiltered_icon@2x.png</file>
+    <file>images/stop14.png</file>
     <file>images/plus.png</file>
     <file>images/minus.png</file>
     <file>images/down.png</file>

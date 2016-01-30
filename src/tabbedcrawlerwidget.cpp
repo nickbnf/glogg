@@ -27,9 +27,9 @@
 #include "log.h"
 
 TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(),
-    olddata_icon_( "olddata_icon.png" ),
-    newdata_icon_( "newdata_icon.png" ),
-    newfiltered_icon_( "newfiltered_icon.png" ),
+    olddata_icon_( ":/images/olddata_icon.png" ),
+    newdata_icon_( ":/images/newdata_icon.png" ),
+    newfiltered_icon_( ":/images/newfiltered_icon.png" ),
     myTabBar_()
 {
 #ifdef WIN32

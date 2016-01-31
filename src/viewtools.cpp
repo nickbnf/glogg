@@ -32,7 +32,7 @@ void ElasticHook::move( int value )
 
     int resistance = 0;
     if ( !held_ && ( position_ * value > 0 ) ) // value and resistance have the same sign
-        resistance = position_ / 10;
+        resistance = position_ / 8;
 
     position_ = std::min( position_ + ( value - resistance ), MAX_POSITION );
 

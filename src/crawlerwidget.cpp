@@ -643,7 +643,7 @@ void CrawlerWidget::setup()
     searchButton->setAutoRaise( true );
 
     stopButton = new QToolButton();
-    stopButton->setIcon( QIcon(":/images/stop16.png") );
+    stopButton->setIcon( QIcon(":/images/stop14.png") );
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
 

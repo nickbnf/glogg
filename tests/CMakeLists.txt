@@ -116,7 +116,9 @@ set(glogg_SOURCES
     ../src/filewatcher.cpp
     ../src/watchtowerlist.cpp
     ../src/watchtower.cpp
-    ../src/platformfilewatcher.cpp
+    ../src/viewtools.cpp
+    ../src/encodingspeculator.cpp
+    # ../src/platformfilewatcher.cpp
 )
 
 set(glogg_HEADERS
@@ -126,8 +128,9 @@ set(glogg_HEADERS
 
 # Unit tests
 set(glogg_UTESTS
-    watchtowerTest.cpp
+    # watchtowerTest.cpp
     linepositionarrayTest.cpp
+    encodingspeculatorTest.cpp
 )
 
 # Integration tests
@@ -148,8 +151,8 @@ if (WIN32)
     set(FileWatcherEngine_SOURCES
         ../src/winwatchtowerdriver.cpp
     )
-else (WIN32)
-    set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)
+elseif (LINUX)
+    # set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)
 endif (WIN32)
 
 # Compiler flags

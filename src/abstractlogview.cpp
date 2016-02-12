@@ -654,7 +654,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
         auto pixel_delta = wheelEvent->pixelDelta();
 
         if ( pixel_delta.isNull() ) {
-            y_delta = wheelEvent->angleDelta().y() / 1.4;
+            y_delta = wheelEvent->angleDelta().y() / 0.7;
         }
         else {
             y_delta = pixel_delta.y();

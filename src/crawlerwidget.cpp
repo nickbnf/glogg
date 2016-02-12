@@ -119,6 +119,16 @@ void CrawlerWidget::selectAll()
     activeView()->selectAll();
 }
 
+CrawlerWidget::Encoding CrawlerWidget::encodingSetting() const
+{
+    return encodingSetting_;
+}
+
+QString CrawlerWidget::encodingText() const
+{
+    return encoding_text_;
+}
+
 // Return a pointer to the view in which we should do the QuickFind
 SearchableWidgetInterface* CrawlerWidget::doGetActiveSearchable() const
 {
@@ -164,6 +174,14 @@ void CrawlerWidget::reload()
     // A reload is considered as a first load,
     // this is to prevent the "new data" icon to be triggered.
     firstLoadDone_ = false;
+}
+
+void CrawlerWidget::setEncoding( Encoding encoding )
+{
+    encodingSetting_ = encoding;
+    updateEncoding();
+
+    update();
 }
 
 //
@@ -422,6 +440,9 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
         else
             logFilteredData_->updateSearch();
     }
+
+    // Set the encoding for the views
+    updateEncoding();
 
     emit loadingFinished( status );
 
@@ -882,6 +903,48 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
         dataStatus_ = status;
         emit dataStatusChanged( dataStatus_ );
     }
+}
+
+// Determine the right encoding and set the views.
+void CrawlerWidget::updateEncoding()
+{
+    static const char* latin1_encoding = "iso-8859-1";
+    static const char* utf8_encoding   = "utf-8";
+
+    const char* encoding;
+
+    switch ( encodingSetting_ ) {
+        case ENCODING_AUTO:
+            switch ( logData_->getDetectedEncoding() ) {
+                case EncodingSpeculator::Encoding::ASCII7:
+                    encoding = latin1_encoding;
+                    encoding_text_ = tr( "US-ASCII" );
+                    break;
+                case EncodingSpeculator::Encoding::ASCII8:
+                    encoding = latin1_encoding;
+                    encoding_text_ = tr( "ISO-8859-1" );
+                    break;
+                case EncodingSpeculator::Encoding::UTF8:
+                    encoding = utf8_encoding;
+                    encoding_text_ = tr( "UTF-8" );
+                    break;
+            }
+            break;
+        case ENCODING_UTF8:
+            encoding = utf8_encoding;
+            encoding_text_ = tr( "Displayed as UTF-8" );
+            break;
+        case ENCODING_ISO_8859_1:
+        default:
+            encoding = latin1_encoding;
+            encoding_text_ = tr( "Displayed as ISO-8859-1" );
+            break;
+    }
+
+    logData_->setDisplayEncoding( encoding );
+    logMainView->forceRefresh();
+    logFilteredData_->setDisplayEncoding( encoding );
+    filteredView->forceRefresh();
 }
 
 //

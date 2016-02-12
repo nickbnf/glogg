@@ -370,6 +370,11 @@ int LogFilteredData::doGetLineLength( qint64 lineNum ) const
     return sourceLogData_->getExpandedLineString( line ).length();
 }
 
+void LogFilteredData::doSetDisplayEncoding( const char* encoding )
+{
+    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
+}
+
 // TODO: We might be a bit smarter and not regenerate the whole thing when
 // e.g. stuff is added at the end of the search.
 void LogFilteredData::regenerateFilteredItemsCache() const

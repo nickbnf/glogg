@@ -263,6 +263,10 @@ class AbstractLogView :
     // Configure the setting of whether to show line number margin
     void setLineNumbersVisible( bool lineNumbersVisible );
 
+    // Force the next refresh to fully redraw the view by invalidating the cache.
+    // To be used if the data might have changed.
+    void forceRefresh();
+
   private slots:
     void handlePatternUpdated();
     void addToSearch();

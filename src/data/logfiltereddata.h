@@ -122,6 +122,7 @@ class LogFilteredData : public AbstractLogData {
     qint64 doGetNbLine() const;
     int doGetMaxLength() const;
     int doGetLineLength( qint64 line ) const;
+    void doSetDisplayEncoding( const char* encoding );
 
     // List of the matching line numbers
     SearchResultArray matching_lines_;

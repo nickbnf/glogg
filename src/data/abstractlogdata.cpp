@@ -70,3 +70,8 @@ int AbstractLogData::getLineLength( qint64 line ) const
 {
     return doGetLineLength( line );
 }
+
+void AbstractLogData::setDisplayEncoding( const char* encoding )
+{
+    doSetDisplayEncoding( encoding );
+}

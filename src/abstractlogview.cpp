@@ -1076,6 +1076,12 @@ void AbstractLogView::setLineNumbersVisible( bool lineNumbersVisible )
     lineNumbersVisible_ = lineNumbersVisible;
 }
 
+void AbstractLogView::forceRefresh()
+{
+    // Invalidate our cache
+    textAreaCache_.invalid_ = true;
+}
+
 //
 // Private functions
 //

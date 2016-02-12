@@ -55,14 +55,25 @@ qint64 IndexingData::getPosForLine( LineNumber line ) const
     return linePosition_.at( line );
 }
 
+EncodingSpeculator::Encoding IndexingData::getEncodingGuess() const
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    return encoding_;
+}
+
 void IndexingData::addAll( qint64 size, int length,
-        const FastLinePositionArray& linePosition )
+        const FastLinePositionArray& linePosition,
+        EncodingSpeculator::Encoding encoding )
+
 {
     QMutexLocker locker( &dataMutex_ );
 
     indexedSize_  += size;
     maxLength_     = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
+
+    encoding_      = encoding;
 }
 
 void IndexingData::clear()
@@ -70,6 +81,7 @@ void IndexingData::clear()
     maxLength_   = 0;
     indexedSize_ = 0;
     linePosition_ = LinePositionArray();
+    encoding_    = EncodingSpeculator::Encoding::ASCII7;
 }
 
 LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
@@ -110,7 +122,7 @@ void LogDataWorkerThread::indexAll()
 
     interruptRequested_ = false;
     operationRequested_ = new FullIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_ );
+            indexing_data_, &interruptRequested_, &encodingSpeculator_ );
     operationRequestedCond_.wakeAll();
 }
 
@@ -126,7 +138,7 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
 
     interruptRequested_ = false;
     operationRequested_ = new PartialIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, position );
+            indexing_data_, &interruptRequested_, &encodingSpeculator_, position );
     operationRequestedCond_.wakeAll();
 }
 
@@ -183,21 +195,25 @@ void LogDataWorkerThread::run()
 //
 
 IndexOperation::IndexOperation( const QString& fileName,
-       IndexingData* indexingData, bool* interruptRequest )
+        IndexingData* indexingData, bool* interruptRequest,
+        EncodingSpeculator* encodingSpeculator )
     : fileName_( fileName )
 {
     interruptRequest_ = interruptRequest;
     indexing_data_ = indexingData;
+    encoding_speculator_ = encodingSpeculator;
 }
 
 PartialIndexOperation::PartialIndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest, qint64 position )
-    : IndexOperation( fileName, indexingData, interruptRequest )
+        IndexingData* indexingData, bool* interruptRequest,
+        EncodingSpeculator* speculator, qint64 position )
+    : IndexOperation( fileName, indexingData, interruptRequest, speculator )
 {
     initialPosition_ = position;
 }
 
-void IndexOperation::doIndex( IndexingData* indexing_data, qint64 initialPosition )
+void IndexOperation::doIndex( IndexingData* indexing_data,
+        EncodingSpeculator* encoding_speculator, qint64 initialPosition )
 {
     qint64 pos = initialPosition; // Absolute position of the start of current line
     qint64 end = 0;               // Absolute position of the end of current line
@@ -227,6 +243,7 @@ void IndexOperation::doIndex( IndexingData* indexing_data, qint64 initialPositio
                 do {
                     if ( pos_within_block < block.length() ) {
                         const char c = block.at(pos_within_block);
+                        encoding_speculator->inject_byte( c );
                         if ( c == '\n' )
                             break;
                         else if ( c == '\t' )
@@ -254,7 +271,8 @@ void IndexOperation::doIndex( IndexingData* indexing_data, qint64 initialPositio
             }
 
             // Update the shared data
-            indexing_data->addAll( block.length(), max_length, line_positions );
+            indexing_data->addAll( block.length(), max_length, line_positions,
+                   encoding_speculator->guess() );
 
             // Update the caller for progress indication
             int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
@@ -271,7 +289,7 @@ void IndexOperation::doIndex( IndexingData* indexing_data, qint64 initialPositio
             line_position.append( file_size + 1 );
             line_position.setFakeFinalLF();
 
-            indexing_data->addAll( 0, 0, line_position );
+            indexing_data->addAll( 0, 0, line_position, encoding_speculator->guess() );
         }
     }
     else {
@@ -296,7 +314,7 @@ bool FullIndexOperation::start()
     // First empty the index
     indexing_data_->clear();
 
-    doIndex( indexing_data_, 0 );
+    doIndex( indexing_data_, encoding_speculator_, 0 );
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
         "interrupt = " << *interruptRequest_;
@@ -314,7 +332,7 @@ bool PartialIndexOperation::start()
 
     emit indexingProgressed( 0 );
 
-    doIndex( indexing_data_, initialPosition_ );
+    doIndex( indexing_data_, encoding_speculator_, initialPosition_ );
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 

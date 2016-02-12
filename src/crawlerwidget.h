@@ -69,12 +69,27 @@ class CrawlerWidget : public QSplitter,
     // is interacting with
     void selectAll();
 
+    enum Encoding {
+        ENCODING_AUTO = 0,
+        ENCODING_ISO_8859_1,
+        ENCODING_UTF8,
+        ENCODING_MAX,
+    };
+
+    Encoding encodingSetting() const;
+
+    // Get the text description of the encoding effectively used,
+    // suitable to display to the user.
+    QString encodingText() const;
+
   public slots:
     // Stop the asynchoronous loading of the file if one is in progress
     // The file is identified by the view attached to it.
     void stopLoading();
     // Reload the displayed file
     void reload();
+    // Set the encoding
+    void setEncoding( Encoding encoding );
 
   protected:
     // Implementation of the ViewInterface functions
@@ -216,6 +231,7 @@ class CrawlerWidget : public QSplitter,
     AbstractLogView* activeView() const;
     void printSearchInfoMessage( int nbMatches = 0 );
     void changeDataStatus( DataStatus status );
+    void updateEncoding();
 
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;
@@ -276,6 +292,10 @@ class CrawlerWidget : public QSplitter,
 
     // the current dataStatus (whether we have new, not seen, data)
     DataStatus      dataStatus_;
+
+    // Current encoding setting;
+    Encoding        encodingSetting_ = ENCODING_AUTO;
+    QString         encoding_text_;
 };
 
 #endif

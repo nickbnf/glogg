@@ -51,6 +51,7 @@ SOURCES += \
     src/signalmux.cpp \
     src/tabbedcrawlerwidget.cpp \
     src/viewtools.cpp \
+    src/encodingspeculator.cpp \
 
 INCLUDEPATH += src/
 
@@ -94,6 +95,7 @@ HEADERS += \
     src/loadingstatus.h \
     src/externalcom.h \
     src/viewtools.h \
+    src/encodingspeculator.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

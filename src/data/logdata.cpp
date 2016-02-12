@@ -70,6 +70,8 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
     currentOperation_ = nullptr;
     nextOperation_    = nullptr;
 
+    codec_ = QTextCodec::codecForName( "ISO-8859-1" );
+
 #if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
     fileWatcher_ = std::make_shared<PlatformFileWatcher>();
 #else
@@ -288,6 +290,12 @@ int LogData::doGetLineLength( qint64 line ) const
     return length;
 }
 
+void LogData::doSetDisplayEncoding( const char* encoding )
+{
+    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
+    codec_ = QTextCodec::codecForName( encoding );
+}
+
 QString LogData::doGetLineString( qint64 line ) const
 {
     if ( line >= indexing_data_.getNbLines() ) { return 0; /* exception? */ }
@@ -296,7 +304,7 @@ QString LogData::doGetLineString( qint64 line ) const
 
     attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
 
-    QString string = QString( attached_file_->readLine() );
+    QString string = codec_->toUnicode( attached_file_->readLine() );
 
     fileMutex_.unlock();
 
@@ -317,7 +325,7 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
 
     fileMutex_.unlock();
 
-    QString string = QString( untabify( rawString.constData() ) );
+    QString string = untabify( codec_->toUnicode( rawString ) );
     string.chop( 1 );
 
     return string;
@@ -360,7 +368,7 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( QString( this_line ) );
+        list.append( codec_->toUnicode( this_line ) );
         beginning = end;
     }
 
@@ -400,9 +408,14 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( untabify( this_line.constData() ) );
+        list.append( untabify( codec_->toUnicode( this_line ) ) );
         beginning = end;
     }
 
     return list;
+}
+
+EncodingSpeculator::Encoding LogData::getDetectedEncoding() const
+{
+    return indexing_data_.getEncodingGuess();
 }

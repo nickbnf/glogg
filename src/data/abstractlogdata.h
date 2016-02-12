@@ -20,8 +20,6 @@
 #ifndef ABSTRACTLOGDATA_H
 #define ABSTRACTLOGDATA_H
 
-// #include "log.h"
-
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -53,6 +51,9 @@ class AbstractLogData : public QObject {
     // Tabs are expanded
     int getLineLength( qint64 line ) const;
 
+    // Set the view to use the passed encoding for display
+    void setDisplayEncoding( const char* encoding_name );
+
     // Length of a tab stop
     static const int tabStop = 8;
 
@@ -71,6 +72,8 @@ class AbstractLogData : public QObject {
     virtual int doGetMaxLength() const = 0;
     // Internal function called to get the line length
     virtual int doGetLineLength( qint64 line ) const = 0;
+    // Internal function called to set the encoding
+    virtual void doSetDisplayEncoding( const char* encoding ) = 0;
 
     static inline QString untabify( const QString& line ) {
         QString untabified_line;

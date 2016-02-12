@@ -28,6 +28,7 @@
 #include <QVector>
 #include <QMutex>
 #include <QDateTime>
+#include <QTextCodec>
 
 #include "utils.h"
 
@@ -76,6 +77,9 @@ class LogData : public AbstractLogData {
 
     // Update the polling interval (in ms, 0 means disabled)
     void setPollingInterval( uint32_t interval_ms );
+
+    // Get the auto-detected encoding for the indexed text.
+    EncodingSpeculator::Encoding getDetectedEncoding() const;
 
   signals:
     // Sent during the 'attach' process to signal progress
@@ -158,6 +162,7 @@ class LogData : public AbstractLogData {
     qint64 doGetNbLine() const override;
     int doGetMaxLength() const override;
     int doGetLineLength( qint64 line ) const override;
+    void doSetDisplayEncoding( const char* encoding ) override;
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
@@ -168,16 +173,12 @@ class LogData : public AbstractLogData {
     // Indexing data, read by us, written by the worker thread
     IndexingData indexing_data_;
 
-    /*
-    LinePositionArray linePosition_;
-    qint64 fileSize_;
-    qint64 nbLines_;
-    int maxLength_;
-    */
-
     QDateTime lastModifiedDate_;
     std::shared_ptr<const LogDataOperation> currentOperation_;
     std::shared_ptr<const LogDataOperation> nextOperation_;
+
+    // Codec to decode text
+    QTextCodec* codec_;
 
     // To protect the file:
     mutable QMutex fileMutex_;

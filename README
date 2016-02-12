@@ -9,6 +9,7 @@ combination of grep and less.
 
 * Runs on Unix-like systems, Windows and Mac thanks to Qt
 * Provides a second window showing the result of the current search
+* Reads UTF-8 and ISO-8859-1 files
 * Supports grep/egrep like regular expressions
 * Colorizes the log and search results
 * Displays a context view of where in the log the lines of interest are
@@ -17,8 +18,8 @@ combination of grep and less.
 
 ## Requirements
 
-* GCC version 4.6.0 or later
-* Qt libraries (version 4.5.0 or later)
+* GCC version 4.8.0 or later
+* Qt libraries (version 5.2.0 or later)
 * Boost "program-options" development libraries
 * Markdown HTML processor (optional, to generate HTML documentation)
 
@@ -31,7 +32,7 @@ The build system uses qmake. Building and installation is done this way:
 
 tar xzf glogg-X.X.X.tar.gz
 cd glogg-X.X.X
-qmake (or qmake-qt4)
+qmake
 make
 make install INSTALL_ROOT=/usr/local (as root if needed)
 

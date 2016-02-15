@@ -236,7 +236,10 @@ int main(int argc, char *argv[])
 #endif
 
     // We support high-dpi (aka Retina) displays
-    app.setAttribute(Qt::AA_UseHighDpiPixmaps);
+    app.setAttribute( Qt::AA_UseHighDpiPixmaps );
+
+    // No icon in menus
+    app.setAttribute( Qt::AA_DontShowIconsInMenus );
 
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );

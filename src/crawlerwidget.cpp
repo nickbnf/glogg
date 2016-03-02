@@ -288,8 +288,8 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         }
     }
 
-    // If more matches have been found
-    if ( nbMatches > nbMatches_ ) {
+    // If more (or less, e.g. come back to 0) matches have been found
+    if ( nbMatches != nbMatches_ ) {
         nbMatches_ = nbMatches;
 
         // Recompute the content of the filtered window.
@@ -791,8 +791,6 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     // Interrupt the search if it's ongoing
     logFilteredData_->interruptSearch();
 
-    nbMatches_ = 0;
-
     // We have to wait for the last search update (100%)
     // before clearing/restarting to avoid having remaining results.
 
@@ -801,6 +799,15 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     // the search update event sent by logFilteredData_. It saves
     // us the overhead of having proper sync.
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+
+    nbMatches_ = 0;
+
+    // Clear and recompute the content of the filtered window.
+    logFilteredData_->clearSearch();
+    filteredView->updateData();
+
+    // Update the match overview
+    overview_.updateData( logData_->getNbLine() );
 
     if ( !searchText.isEmpty() ) {
         // Determine the type of regexp depending on the config
@@ -849,8 +856,6 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         }
     }
     else {
-        logFilteredData_->clearSearch();
-        filteredView->updateData();
         searchState_.resetState();
         printSearchInfoMessage();
     }

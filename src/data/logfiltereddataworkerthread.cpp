@@ -102,10 +102,7 @@ LogFilteredDataWorkerThread::LogFilteredDataWorkerThread(
         const LogData* sourceLogData )
     : QThread(), mutex_(), operationRequestedCond_(), nothingToDoCond_(), searchData_()
 {
-    terminate_          = false;
-    interruptRequested_ = false;
-    operationRequested_ = NULL;
-
+    operationRequested_ = nullptr;
     sourceLogData_ = sourceLogData;
 }
 
@@ -113,7 +110,7 @@ LogFilteredDataWorkerThread::~LogFilteredDataWorkerThread()
 {
     {
         QMutexLocker locker( &mutex_ );
-        terminate_ = true;
+        terminate_.set();
         operationRequestedCond_.wakeAll();
     }
     wait();
@@ -129,7 +126,7 @@ void LogFilteredDataWorkerThread::search( const QRegExp& regExp )
     while ( (operationRequested_ != NULL) )
         nothingToDoCond_.wait( &mutex_ );
 
-    interruptRequested_ = false;
+    interruptRequested_.clear();
     operationRequested_ = new FullSearchOperation( sourceLogData_,
             regExp, &interruptRequested_ );
     operationRequestedCond_.wakeAll();
@@ -145,7 +142,7 @@ void LogFilteredDataWorkerThread::updateSearch( const QRegExp& regExp, qint64 po
     while ( (operationRequested_ != NULL) )
         nothingToDoCond_.wait( &mutex_ );
 
-    interruptRequested_ = false;
+    interruptRequested_.clear();
     operationRequested_ = new UpdateSearchOperation( sourceLogData_,
             regExp, &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
@@ -155,8 +152,7 @@ void LogFilteredDataWorkerThread::interrupt()
 {
     LOG(logDEBUG) << "Search interruption requested";
 
-    // No mutex here, setting a bool is probably atomic!
-    interruptRequested_ = true;
+    interruptRequested_.set();
 
     // We wait for the interruption to be done
     {
@@ -179,7 +175,7 @@ void LogFilteredDataWorkerThread::run()
     QMutexLocker locker( &mutex_ );
 
     forever {
-        while ( (terminate_ == false) && (operationRequested_ == NULL) )
+        while ( !terminate_ && (operationRequested_ == NULL) )
             operationRequestedCond_.wait( &mutex_ );
         LOG(logDEBUG) << "Worker thread signaled";
 
@@ -209,7 +205,7 @@ void LogFilteredDataWorkerThread::run()
 //
 
 SearchOperation::SearchOperation( const LogData* sourceLogData,
-        const QRegExp& regExp, bool* interruptRequest )
+        const QRegExp& regExp, AtomicFlag* interruptRequest )
     : regexp_( regExp ), sourceLogData_( sourceLogData )
 {
     interruptRequested_ = interruptRequest;

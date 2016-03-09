@@ -96,6 +96,7 @@ HEADERS += \
     src/externalcom.h \
     src/viewtools.h \
     src/encodingspeculator.h \
+    src/data/atomicflag.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

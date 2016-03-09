@@ -88,16 +88,14 @@ LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
     : QThread(), mutex_(), operationRequestedCond_(),
     nothingToDoCond_(), fileName_(), indexing_data_( indexing_data )
 {
-    terminate_          = false;
-    interruptRequested_ = false;
-    operationRequested_ = NULL;
+    operationRequested_ = nullptr;
 }
 
 LogDataWorkerThread::~LogDataWorkerThread()
 {
     {
         QMutexLocker locker( &mutex_ );
-        terminate_ = true;
+        terminate_.set();
         operationRequestedCond_.wakeAll();
     }
     wait();
@@ -120,7 +118,7 @@ void LogDataWorkerThread::indexAll()
     while ( (operationRequested_ != NULL) )
         nothingToDoCond_.wait( &mutex_ );
 
-    interruptRequested_ = false;
+    interruptRequested_.clear();
     operationRequested_ = new FullIndexOperation( fileName_,
             indexing_data_, &interruptRequested_, &encodingSpeculator_ );
     operationRequestedCond_.wakeAll();
@@ -136,7 +134,7 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
     while ( (operationRequested_ != NULL) )
         nothingToDoCond_.wait( &mutex_ );
 
-    interruptRequested_ = false;
+    interruptRequested_.clear();
     operationRequested_ = new PartialIndexOperation( fileName_,
             indexing_data_, &interruptRequested_, &encodingSpeculator_, position );
     operationRequestedCond_.wakeAll();
@@ -145,9 +143,7 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
 void LogDataWorkerThread::interrupt()
 {
     LOG(logDEBUG) << "Load interrupt requested";
-
-    // No mutex here, setting a bool is probably atomic!
-    interruptRequested_ = true;
+    interruptRequested_.set();
 }
 
 // This is the thread's main loop
@@ -156,7 +152,7 @@ void LogDataWorkerThread::run()
     QMutexLocker locker( &mutex_ );
 
     forever {
-        while ( (terminate_ == false) && (operationRequested_ == NULL) )
+        while ( !terminate_ && (operationRequested_ == NULL) )
             operationRequestedCond_.wait( &mutex_ );
         LOG(logDEBUG) << "Worker thread signaled";
 
@@ -195,7 +191,7 @@ void LogDataWorkerThread::run()
 //
 
 IndexOperation::IndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest,
+        IndexingData* indexingData, AtomicFlag* interruptRequest,
         EncodingSpeculator* encodingSpeculator )
     : fileName_( fileName )
 {
@@ -205,7 +201,7 @@ IndexOperation::IndexOperation( const QString& fileName,
 }
 
 PartialIndexOperation::PartialIndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest,
+        IndexingData* indexingData, AtomicFlag* interruptRequest,
         EncodingSpeculator* speculator, qint64 position )
     : IndexOperation( fileName, indexingData, interruptRequest, speculator )
 {
@@ -228,7 +224,7 @@ void IndexOperation::doIndex( IndexingData* indexing_data,
             FastLinePositionArray line_positions;
             int max_length = 0;
 
-            if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
+            if ( *interruptRequest_ )
                 break;
 
             // Read a chunk of 5MB
@@ -317,7 +313,7 @@ bool FullIndexOperation::start()
     doIndex( indexing_data_, encoding_speculator_, 0 );
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
-        "interrupt = " << *interruptRequest_;
+        "interrupt = " << static_cast<bool>(*interruptRequest_);
 
     return ( *interruptRequest_ ? false : true );
 }

@@ -30,6 +30,7 @@
 #include "linepositionarray.h"
 #include "encodingspeculator.h"
 #include "utils.h"
+#include "atomicflag.h"
 
 // This class is a thread-safe set of indexing data.
 class IndexingData
@@ -78,7 +79,7 @@ class IndexOperation : public QObject
   Q_OBJECT
   public:
     IndexOperation( const QString& fileName,
-            IndexingData* indexingData, bool* interruptRequest,
+			IndexingData* indexingData, AtomicFlag* interruptRequest,
             EncodingSpeculator* encodingSpeculator );
 
     virtual ~IndexOperation() { }
@@ -99,7 +100,7 @@ class IndexOperation : public QObject
             qint64 initialPosition );
 
     QString fileName_;
-    bool* interruptRequest_;
+	AtomicFlag* interruptRequest_;
     IndexingData* indexing_data_;
 
     EncodingSpeculator* encoding_speculator_;
@@ -109,7 +110,7 @@ class FullIndexOperation : public IndexOperation
 {
   public:
     FullIndexOperation( const QString& fileName,
-            IndexingData* indexingData, bool* interruptRequest,
+			IndexingData* indexingData, AtomicFlag* interruptRequest,
             EncodingSpeculator* speculator )
         : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
     virtual bool start();
@@ -119,7 +120,7 @@ class PartialIndexOperation : public IndexOperation
 {
   public:
     PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
-            bool* interruptRequest, EncodingSpeculator* speculator, qint64 position );
+			AtomicFlag* interruptRequest, EncodingSpeculator* speculator, qint64 position );
     virtual bool start();
 
   private:
@@ -178,8 +179,8 @@ class LogDataWorkerThread : public QThread
     QString fileName_;
 
     // Set when the thread must die
-    bool terminate_;
-    bool interruptRequested_;
+	AtomicFlag terminate_;
+	AtomicFlag interruptRequested_;
     IndexOperation* operationRequested_;
 
     // Pointer to the owner's indexing data (we modify it)

@@ -25,33 +25,33 @@
 class AtomicFlag
 {
 public:
-	explicit AtomicFlag(bool initialState = false)
-	{
-		flag_.storeRelease(initialState ? 1 : 0);
-	}
+    explicit AtomicFlag(bool initialState = false)
+    {
+        flag_.storeRelease(initialState ? 1 : 0);
+    }
 
-	inline void set()
-	{
-		flag_.storeRelease(1);
-	}
+    inline void set()
+    {
+        flag_.storeRelease(1);
+    }
 
-	inline void clear()
-	{
-		flag_.storeRelease(0);
-	}
+    inline void clear()
+    {
+        flag_.storeRelease(0);
+    }
 
-	inline operator bool() const
-	{
-		return !!flag_.loadAcquire();
-	}
+    inline operator bool() const
+    {
+        return !!flag_.loadAcquire();
+    }
 
-	inline bool operator!() const
-	{
-		return !flag_.loadAcquire();
-	}
+    inline bool operator!() const
+    {
+        return !flag_.loadAcquire();
+    }
 
 private:
-	QAtomicInt flag_;
+    QAtomicInt flag_;
 };
 
 #endif // ATOMICFLAG_H

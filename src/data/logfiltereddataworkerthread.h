@@ -87,7 +87,7 @@ class SearchOperation : public QObject
   Q_OBJECT
   public:
     SearchOperation( const LogData* sourceLogData,
-			const QRegExp& regExp, AtomicFlag* interruptRequest );
+            const QRegExp& regExp, AtomicFlag* interruptRequest );
 
     virtual ~SearchOperation() { }
 
@@ -105,7 +105,7 @@ class SearchOperation : public QObject
     // the shared results and the line to begin the search from.
     void doSearch( SearchData& result, qint64 initialLine );
 
-	AtomicFlag* interruptRequested_;
+    AtomicFlag* interruptRequested_;
     const QRegExp regexp_;
     const LogData* sourceLogData_;
 };
@@ -114,7 +114,7 @@ class FullSearchOperation : public SearchOperation
 {
   public:
     FullSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
-			AtomicFlag* interruptRequest )
+            AtomicFlag* interruptRequest )
         : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
     virtual void start( SearchData& result );
 };
@@ -123,7 +123,7 @@ class UpdateSearchOperation : public SearchOperation
 {
   public:
     UpdateSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
-			AtomicFlag* interruptRequest, qint64 position )
+            AtomicFlag* interruptRequest, qint64 position )
         : SearchOperation( sourceLogData, regExp, interruptRequest ),
         initialPosition_( position ) {}
     virtual void start( SearchData& result );
@@ -177,8 +177,8 @@ class LogFilteredDataWorkerThread : public QThread
     QWaitCondition nothingToDoCond_;
 
     // Set when the thread must die
-	AtomicFlag terminate_;
-	AtomicFlag interruptRequested_;
+    AtomicFlag terminate_;
+    AtomicFlag interruptRequested_;
     SearchOperation* operationRequested_;
 
     // Shared indexing data

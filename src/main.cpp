@@ -246,9 +246,13 @@ int main(int argc, char *argv[])
 
     LOG(logDEBUG) << "MainWindow created.";
     mw.show();
+
     // Load the existing session if needed
-    if ( load_session || ( filename.empty() && !new_session ) )
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    if ( load_session || ( filename.empty() && !new_session && config->loadLastSession() ) )
         mw.reloadSession();
+
     mw.loadInitialFile( QString::fromStdString( filename ) );
     mw.startBackgroundTasks();
 

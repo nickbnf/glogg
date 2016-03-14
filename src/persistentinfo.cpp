@@ -24,6 +24,9 @@
 
 #include <cassert>
 #include <QStringList>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 
 #include "log.h"
 #include "persistable.h"
@@ -43,25 +46,34 @@ PersistentInfo::~PersistentInfo()
 void PersistentInfo::migrateAndInit()
 {
     assert( initialised_ == false );
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-    // On Windows, we use .ini files and import from the registry if no
-    // .ini file is found (glogg <= 0.9 used the registry).
 
-    // This store the config file in %appdata%
-    settings_ = new QSettings( QSettings::IniFormat,
-            QSettings::UserScope, "glogg", "glogg" );
+    QString configurationFile = QDir::cleanPath( qApp->applicationDirPath() +
+                                       QDir::separator() + "glogg.conf" );
 
-    if ( settings_->childKeys().count() == 0 ) {
-        LOG(logWARNING) << "INI file empty, trying to import from registry";
-        QSettings registry( "glogg", "glogg" );
-        foreach ( QString key, registry.allKeys() ) {
-            settings_->setValue( key, registry.value( key ) );
-        }
+    if ( QFileInfo::exists(configurationFile) ) {
+        settings_ = new QSettings(configurationFile, QSettings::IniFormat);
     }
+    else {
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+        // On Windows, we use .ini files and import from the registry if no
+        // .ini file is found (glogg <= 0.9 used the registry).
+
+        // This store the config file in %appdata%
+        settings_ = new QSettings( QSettings::IniFormat,
+                QSettings::UserScope, "glogg", "glogg" );
+
+        if ( settings_->childKeys().count() == 0 ) {
+            LOG(logWARNING) << "INI file empty, trying to import from registry";
+            QSettings registry( "glogg", "glogg" );
+            foreach ( QString key, registry.allKeys() ) {
+                settings_->setValue( key, registry.value( key ) );
+            }
+        }
 #else
-    // We use default Qt storage on proper OSes
-    settings_ = new QSettings( "glogg", "glogg" );
+        // We use default Qt storage on proper OSes
+        settings_ = new QSettings( "glogg", "glogg" );
 #endif
+    }
     initialised_ = true;
 }
 

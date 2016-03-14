@@ -40,6 +40,8 @@ Configuration::Configuration()
 #endif
     pollIntervalMs_               = 2000;
 
+    loadLastSession_              = true;
+
     overviewVisible_              = true;
     lineNumbersVisibleInMain_     = false;
     lineNumbersVisibleInFiltered_ = true;
@@ -90,6 +92,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "polling.intervalMs" ) )
         pollIntervalMs_ = settings.value( "polling.intervalMs" ).toInt();
 
+    if ( settings.contains( "session.loadLast" ) )
+        loadLastSession_ = settings.value( "session.loadLast" ).toBool();
+
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
@@ -124,6 +129,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
+    settings.setValue( "session.loadLast", loadLastSession_);
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );

@@ -60,8 +60,8 @@ class Marks {
     qint64 getLineMarkedByIndex( int index ) const
     { return marks_[index].lineNumber(); }
     // Return the total number of marks
-    int size() const
-    { return marks_.size(); }
+    uint32_t size() const
+    { return static_cast<uint32_t>(marks_.size()); }
     // Completely clear the marks list.
     void clear();
 

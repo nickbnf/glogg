@@ -910,7 +910,8 @@ void CrawlerWidget::updateEncoding()
     static const char* latin1_encoding = "iso-8859-1";
     static const char* utf8_encoding   = "utf-8";
 
-    const char* encoding;
+    const char* encoding = latin1_encoding;
+    encoding_text_ = tr( "Displayed as ISO-8859-1" );
 
     switch ( encodingSetting_ ) {
         case ENCODING_AUTO:
@@ -935,9 +936,9 @@ void CrawlerWidget::updateEncoding()
             break;
         case ENCODING_ISO_8859_1:
         default:
-            encoding = latin1_encoding;
-            encoding_text_ = tr( "Displayed as ISO-8859-1" );
             break;
+
+
     }
 
     logData_->setDisplayEncoding( encoding );

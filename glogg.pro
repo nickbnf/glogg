@@ -61,6 +61,9 @@ HEADERS += \
     src/data/logfiltereddata.h \
     src/data/logfiltereddataworkerthread.h \
     src/data/logdataworkerthread.h \
+    src/data/threadprivatestore.h \
+    src/data/compressedlinestorage.h \
+    src/data/linepositionarray.h \
     src/mainwindow.h \
     src/session.h \
     src/viewinterface.h \

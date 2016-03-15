@@ -29,12 +29,12 @@
 
 #include "logdata.h"
 #include "logfiltereddata.h"
-#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-#include "platformfilewatcher.h"
-#else
-#include "qtfilewatcher.h"
-#endif
 
+#if defined(GLOGG_USES_QTFILEWATCHER)
+#include "qtfilewatcher.h"
+#elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+#include "platformfilewatcher.h"
+#endif
 // Implementation of the 'start' functions for each operation
 
 void LogData::AttachOperation::doStart(
@@ -72,10 +72,10 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
 
     codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
-#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-    fileWatcher_ = std::make_shared<PlatformFileWatcher>();
-#else
+#if defined(GLOGG_USES_QTFILEWATCHER)
     fileWatcher_ = std::make_shared<QtFileWatcher>();
+#elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+    fileWatcher_ = std::make_shared<PlatformFileWatcher>();
 #endif
 
     // Initialise the file watcher

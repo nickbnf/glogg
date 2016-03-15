@@ -259,28 +259,37 @@ else {
     message("Version checker will NOT be included")
 }
 
-# File watching
-linux-g++ || linux-g++-64 {
-    CONFIG += inotify
-}
-
-win32 {
-    message("File watching using Windows")
-    SOURCES += src/platformfilewatcher.cpp src/winwatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
-    HEADERS += src/platformfilewatcher.h src/winwatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
-    QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_POLLING
+# File watching (e.g. CONFIG+=no-native-filewatch)
+no-native-filewatch {
+    message("File watching using Qt")
+    QMAKE_CXXFLAGS += -DGLOGG_USES_QTFILEWATCHER
+    SOURCES += src/qtfilewatcher.cpp
+    HEADERS += src/qtfilewatcher.h
 }
 else {
-    inotify {
-        message("File watching using inotify")
-        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_INOTIFY
-        SOURCES += src/platformfilewatcher.cpp src/inotifywatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
-        HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
+    linux-g++ || linux-g++-64 {
+        CONFIG += inotify
+    }
+
+    win32 {
+        message("File watching using Windows")
+        SOURCES += src/platformfilewatcher.cpp src/winwatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+        HEADERS += src/platformfilewatcher.h src/winwatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
+        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_POLLING
     }
     else {
-        message("File watching using Qt")
-        SOURCES += src/qtfilewatcher.cpp
-        HEADERS += src/qtfilewatcher.h
+        inotify {
+            message("File watching using inotify")
+            QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_INOTIFY
+            SOURCES += src/platformfilewatcher.cpp src/inotifywatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+            HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
+        }
+        else {
+            message("File watching using Qt")
+            QMAKE_CXXFLAGS += -DGLOGG_USES_QTFILEWATCHER
+            SOURCES += src/qtfilewatcher.cpp
+            HEADERS += src/qtfilewatcher.h
+        }
     }
 }
 

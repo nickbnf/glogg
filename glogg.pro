@@ -224,8 +224,8 @@ isEmpty(VERSION):system(date >/dev/null) {
     }
     else {
         QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date +'\"%F\"'`\\\"
-        QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git describe`\\\"
-        QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git rev-parse --short HEAD`\\\"
+        QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git --git-dir=$$PWD/.git describe`\\\"
+        QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git --git-dir=$$PWD/.git rev-parse --short HEAD`\\\"
     }
 }
 else {

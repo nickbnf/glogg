@@ -52,7 +52,7 @@ const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 class CrawlerWidgetContext : public ViewContextInterface {
   public:
     // Construct from the stored string representation
-    CrawlerWidgetContext( const char* string );
+    CrawlerWidgetContext( const QString& string );
     // Construct from the value passsed
     CrawlerWidgetContext( QList<int> sizes,
            bool ignore_case,
@@ -62,7 +62,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
           auto_refresh_( auto_refresh ) {}
 
     // Implementation of the ViewContextInterface function
-    std::string toString() const;
+    QString toString() const;
 
     // Access the Qt sizes array for the QSplitter
     QList<int> sizes() const { return sizes_; }
@@ -211,10 +211,9 @@ void CrawlerWidget::doSetSavedSearches(
     setup();
 }
 
-void CrawlerWidget::doSetViewContext(
-        const char* view_context )
+void CrawlerWidget::doSetViewContext(const QString &view_context )
 {
-    LOG(logDEBUG) << "CrawlerWidget::doSetViewContext: " << view_context;
+    LOG(logDEBUG) << "CrawlerWidget::doSetViewContext: " << view_context.toLocal8Bit().data();
 
     CrawlerWidgetContext context = { view_context };
 
@@ -1008,7 +1007,7 @@ void CrawlerWidget::SearchState::startSearch()
 /*
  * CrawlerWidgetContext
  */
-CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
+CrawlerWidgetContext::CrawlerWidgetContext(const QString &string )
 {
     QRegExp regex = QRegExp( "S(\\d+):(\\d+)" );
 
@@ -1017,7 +1016,7 @@ CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
         LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
     }
     else {
-        LOG(logWARNING) << "Unrecognised view size: " << string;
+        LOG(logWARNING) << "Unrecognised view size: " << string.toLocal8Bit().data();
 
         // Default values;
         sizes_ = { 100, 400 };
@@ -1033,19 +1032,16 @@ CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
             << auto_refresh_;
     }
     else {
-        LOG(logWARNING) << "Unrecognised case/refresh: " << string;
+        LOG(logWARNING) << "Unrecognised case/refresh: " << string.toLocal8Bit().data();
         ignore_case_ = false;
         auto_refresh_ = false;
     }
 }
 
-std::string CrawlerWidgetContext::toString() const
+QString CrawlerWidgetContext::toString() const
 {
-    char string[160];
-
-    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d",
-            sizes_[0], sizes_[1],
-            ignore_case_, auto_refresh_ );
-
-    return { string };
+    return QString("S%1:%2IC%3:AR%4").arg(
+                sizes_[0], sizes_[1],
+                static_cast<quint8>(ignore_case_),
+                static_cast<quint8>(auto_refresh_) );
 }

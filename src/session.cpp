@@ -48,7 +48,7 @@ Session::~Session()
     // FIXME Clean up all the data objects...
 }
 
-ViewInterface* Session::getViewIfOpen( const std::string& file_name ) const
+ViewInterface* Session::getViewIfOpen( const QString& file_name ) const
 {
     auto result = std::find_if( openFiles_.begin(), openFiles_.end(),
             [&](const std::pair<const ViewInterface*, OpenFile>& o)
@@ -60,12 +60,12 @@ ViewInterface* Session::getViewIfOpen( const std::string& file_name ) const
         return nullptr;
 }
 
-ViewInterface* Session::open( const std::string& file_name,
+ViewInterface* Session::open( const QString& file_name,
         std::function<ViewInterface*()> view_factory )
 {
     ViewInterface* view = nullptr;
 
-    QFileInfo fileInfo( file_name.c_str() );
+    QFileInfo fileInfo( file_name );
     if ( fileInfo.isReadable() ) {
         return openAlways( file_name, view_factory, nullptr );
     }
@@ -101,7 +101,7 @@ void Session::save( std::vector<
         const OpenFile* file = findOpenFileFromView( view_object );
         assert( file );
 
-        LOG(logDEBUG) << "Saving " << file->fileName << " in session.";
+        LOG(logDEBUG) << "Saving " << file->fileName.toLocal8Bit().data() << " in session.";
         session_files.push_back( { file->fileName, top_line, view_context->toString() } );
     }
 
@@ -112,7 +112,7 @@ void Session::save( std::vector<
     GetPersistentInfo().save( QString( "session" ) );
 }
 
-std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
+std::vector<std::pair<QString, ViewInterface*>> Session::restore(
         std::function<ViewInterface*()> view_factory,
         int *current_file_index )
 {
@@ -122,12 +122,12 @@ std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
 
     std::vector<SessionInfo::OpenFile> session_files = session->openFiles();
     LOG(logDEBUG) << "Session returned " << session_files.size();
-    std::vector<std::pair<std::string, ViewInterface*>> result;
+    std::vector<std::pair<QString, ViewInterface*>> result;
 
     for ( auto file: session_files )
     {
-        LOG(logDEBUG) << "Create view for " << file.fileName;
-        ViewInterface* view = openAlways( file.fileName, view_factory, file.viewContext.c_str() );
+        LOG(logDEBUG) << "Create view for " << file.fileName.toLocal8Bit().data();
+        ViewInterface* view = openAlways( file.fileName, view_factory, file.viewContext );
         result.push_back( { file.fileName, view } );
     }
 
@@ -145,7 +145,7 @@ void Session::storedGeometry( QByteArray* geometry ) const
     *geometry = session->geometry();
 }
 
-std::string Session::getFilename( const ViewInterface* view ) const
+QString Session::getFilename( const ViewInterface* view ) const
 {
     const OpenFile* file = findOpenFileFromView( view );
 
@@ -171,9 +171,9 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
  * Private methods
  */
 
-ViewInterface* Session::openAlways( const std::string& file_name,
+ViewInterface* Session::openAlways(const QString& file_name,
         std::function<ViewInterface*()> view_factory,
-        const char* view_context )
+        const QString& view_context )
 {
     // Create the data objects
     auto log_data          = std::make_shared<LogData>();
@@ -185,7 +185,7 @@ ViewInterface* Session::openAlways( const std::string& file_name,
     view->setQuickFindPattern( quickFindPattern_ );
     view->setSavedSearches( savedSearches_ );
 
-    if ( view_context )
+    if ( !view_context.isEmpty() )
         view->setViewContext( view_context );
 
     // Insert in the hash
@@ -196,7 +196,7 @@ ViewInterface* Session::openAlways( const std::string& file_name,
             view } } );
 
     // Start loading the file
-    log_data->attachFile( QString( file_name.c_str() ) );
+    log_data->attachFile( file_name );
 
     return view;
 }

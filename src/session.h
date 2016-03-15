@@ -56,12 +56,12 @@ class Session {
     // Return the view associated to a file if it is open
     // The filename must be strictly identical to trigger a match
     // (no match in case of e.g. relative vs. absolute pathname.
-    ViewInterface* getViewIfOpen( const std::string& file_name ) const;
+    ViewInterface* getViewIfOpen( const QString& file_name ) const;
     // Open a new file, starts its asynchronous loading, and construct a new
     // view for it (the caller passes a factory to build the concrete view)
     // The ownership of the view is given to the caller
     // Throw exceptions if the file is already open or if it cannot be open.
-    ViewInterface* open( const std::string& file_name,
+    ViewInterface* open( const QString& file_name,
             std::function<ViewInterface*()> view_factory );
     // Close the file identified by the view passed
     // Throw an exception if it does not exist.
@@ -71,7 +71,7 @@ class Session {
     // (see ::open)
     // returns a vector of pairs (file_name, view) and the index of the
     // current file (or -1 if none).
-    std::vector<std::pair<std::string, ViewInterface*>> restore(
+    std::vector<std::pair<QString, ViewInterface*>> restore(
             std::function<ViewInterface*()> view_factory,
             int *current_file_index );
     // Save the session to persistent storage. An ordered list of
@@ -88,7 +88,7 @@ class Session {
     void storedGeometry( QByteArray* geometry ) const;
 
     // Get the file name for the passed view.
-    std::string getFilename( const ViewInterface* view ) const;
+    QString getFilename( const ViewInterface* view ) const;
     // Get the size (in bytes) and number of lines in the current file.
     // The file is identified by the view attached to it.
     void getFileInfo( const ViewInterface* view, uint64_t* fileSize,
@@ -99,16 +99,16 @@ class Session {
 
   private:
     struct OpenFile {
-        std::string fileName;
+        QString fileName;
         std::shared_ptr<LogData> logData;
         std::shared_ptr<LogFilteredData> logFilteredData;
         ViewInterface* view;
     };
 
     // Open a file without checking if it is existing/readable
-    ViewInterface* openAlways( const std::string& file_name,
+    ViewInterface* openAlways( const QString& file_name,
             std::function<ViewInterface*()> view_factory,
-            const char* view_context );
+            const QString& view_context );
     // Find an open file from its associated view
     OpenFile* findOpenFileFromView( const ViewInterface* view );
     const OpenFile* findOpenFileFromView( const ViewInterface* view ) const;

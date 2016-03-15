@@ -44,11 +44,11 @@ class SessionInfo : public Persistable {
 
     struct OpenFile
     {
-        std::string fileName;
+        QString fileName;
         uint64_t    topLine;
         // The view context contains parameter specific to the view's
         // implementation (such as geometry...)
-        std::string viewContext;
+        QString viewContext;
     };
 
     // List of the loaded files

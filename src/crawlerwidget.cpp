@@ -1041,7 +1041,8 @@ CrawlerWidgetContext::CrawlerWidgetContext(const QString &string )
 QString CrawlerWidgetContext::toString() const
 {
     return QString("S%1:%2IC%3:AR%4").arg(
-                sizes_[0], sizes_[1],
-                static_cast<quint8>(ignore_case_),
-                static_cast<quint8>(auto_refresh_) );
+                QString::number(sizes_[0]),
+                QString::number(sizes_[1]),
+                QString::number( static_cast<quint8>( ignore_case_ ) ),
+                QString::number( static_cast<quint8>( auto_refresh_) ) );
 }

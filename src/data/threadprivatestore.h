@@ -20,8 +20,8 @@
 #ifndef THREADPRIVATESTORE_H
 #define THREADPRIVATESTORE_H
 
-#include <atomic>
-#include <thread>
+#include <QAtomicInt>
+#include <QThread>
 #include <cassert>
 
 #include "log.h"
@@ -61,20 +61,21 @@ class ThreadPrivateStore
     // The actual data array (one element per thread from 0 to nb_threads_)
     T data_[MAX_THREADS];
 
-    mutable std::atomic<size_t> thread_ids_[MAX_THREADS+1];
+    mutable QAtomicInt thread_ids_[MAX_THREADS+1];
 
     int threadIndex() const {
+
+        const int thread_id = std::hash<Qt::HANDLE>()( QThread::currentThreadId() );
+
         int i;
         for ( i=0; thread_ids_[i]; ++i ) {
-            if ( thread_ids_[i].load() ==
-                    std::hash<std::thread::id>()(std::this_thread::get_id() ) ) { return i; }
+            if ( thread_ids_[i].loadAcquire() == thread_id ) { return i; }
         }
 
         // Current thread is missing, let's add it
-        size_t thread_id = std::hash<std::thread::id>()( std::this_thread::get_id() );
         while ( i < MAX_THREADS ) {
             size_t expected = 0;
-            if ( thread_ids_[i++].compare_exchange_weak( expected, thread_id ) ) {
+            if ( thread_ids_[i++].testAndSetOrdered( expected, thread_id ) ) {
                 LOG(logDEBUG) << "Created thread for " << thread_id << " at index " << i-1;
                 return i-1;
             }

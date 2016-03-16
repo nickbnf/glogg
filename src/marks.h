@@ -30,8 +30,10 @@ class Mark {
     Mark( int line ) { lineNumber_ = line; };
 
     // Accessors
-    int lineNumber() const { return lineNumber_; }
+    uint32_t lineNumber() const { return lineNumber_; }
 
+    bool operator <( const Mark& other ) const
+    { return lineNumber_ < other.lineNumber_; }
   private:
     int lineNumber_;
 };
@@ -67,7 +69,13 @@ class Marks {
 
     // Iterator
     // Provide a const_iterator for the client to iterate through the marks.
-    class const_iterator {
+    class const_iterator
+            : public std::iterator<std::forward_iterator_tag,
+            QList<Mark>::const_iterator::value_type,
+            QList<Mark>::const_iterator::difference_type,
+            QList<Mark>::const_iterator::pointer,
+            QList<Mark>::const_iterator::reference>
+    {
       public:
         const_iterator( QList<Mark>::const_iterator iter )
         { internal_iter_ = iter; }
@@ -81,6 +89,8 @@ class Marks {
         { return ( internal_iter_ != other.internal_iter_ ); }
         const_iterator& operator++()
         { ++internal_iter_ ; return *this; }
+        int operator-( const const_iterator& other ) const
+        { return ( internal_iter_ - other.internal_iter_ ); }
 
       private:
         QList<Mark>::const_iterator internal_iter_;

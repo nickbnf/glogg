@@ -42,6 +42,9 @@ class MatchingLine {
     // Accessors
     LineNumber lineNumber() const { return lineNumber_; }
 
+    bool operator <( const MatchingLine& other) const
+    { return lineNumber_ < other.lineNumber_; }
+
   private:
     LineNumber lineNumber_;
 };

@@ -159,7 +159,7 @@ class LogFilteredData : public AbstractLogData {
     {
         LineNumber lineIndex = std::numeric_limits<LineNumber>::max();
         Iterator lowerBound = std::lower_bound( begin, end, lineNum );
-        if ( lowerBound != end && lowerBound->lineNumber() == lineNum ) {
+        if ( lowerBound != end ) {
             lineIndex = std::distance(begin, lowerBound);
         }
 

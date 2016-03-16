@@ -82,6 +82,21 @@ template <typename T> bool lookupLineNumber(
     return false;
 }
 
+template<typename Iterator>
+LineNumber lookupLineNumber( Iterator begin, Iterator end, LineNumber lineNum )
+{
+    LineNumber lineIndex = 0;
+    Iterator lowerBound = std::lower_bound( begin, end, lineNum );
+    if ( lowerBound != end ) {
+        lineIndex = std::distance(begin, lowerBound);
+    }
+    else if (begin != end) {
+        lineIndex = begin->lineNumber();
+    }
+
+    return lineIndex;
+}
+
 // Represents a position in a file (line, column)
 class FilePosition
 {

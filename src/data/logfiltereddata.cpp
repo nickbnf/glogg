@@ -297,25 +297,23 @@ LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
     LineNumber lineIndex = std::numeric_limits<LineNumber>::max();
 
     if ( visibility_ == MatchesOnly ) {
-        lineIndex = findLineIndex( matching_lines_.begin(),
-                                   matching_lines_.end(),
-                                   lineNum );
+        lineIndex = lookupLineNumber( matching_lines_.begin(),
+                                      matching_lines_.end(),
+                                      lineNum );
     }
     else if ( visibility_ == MarksOnly ) {
-        // TODO: as there are usualy not many marks
-        // it is not very slow to do linear search
-        lineIndex = findLineIndex( marks_.begin(),
-                                   marks_.end(),
-                                   lineNum );
+        lineIndex = lookupLineNumber( marks_.begin(),
+                                      marks_.end(),
+                                      lineNum );
     }
     else {
         // Regenerate the cache if needed
         if ( filteredItemsCacheDirty_ )
             regenerateFilteredItemsCache();
 
-        lineIndex = findLineIndex( filteredItemsCache_.begin(),
-                                   filteredItemsCache_.end(),
-                                   lineNum );
+        lineIndex = lookupLineNumber( filteredItemsCache_.begin(),
+                                      filteredItemsCache_.end(),
+                                      lineNum );
     }
 
     return lineIndex;

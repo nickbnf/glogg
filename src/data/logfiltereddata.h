@@ -154,18 +154,6 @@ class LogFilteredData : public AbstractLogData {
     LineNumber findLogDataLine( LineNumber lineNum ) const;
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
-    template<typename Iterator>
-    LineNumber findLineIndex( Iterator begin, Iterator end, LineNumber lineNum ) const
-    {
-        LineNumber lineIndex = std::numeric_limits<LineNumber>::max();
-        Iterator lowerBound = std::lower_bound( begin, end, lineNum );
-        if ( lowerBound != end ) {
-            lineIndex = std::distance(begin, lowerBound);
-        }
-
-        return lineIndex;
-    }
-
     void regenerateFilteredItemsCache() const;
 };
 

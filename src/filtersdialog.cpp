@@ -26,6 +26,7 @@
 #include "filtersdialog.h"
 
 static const QString DEFAULT_PATTERN = "New Filter";
+static const bool    DEFAULT_IGNORE_CASE = false;
 static const QString DEFAULT_FORE_COLOUR = "black";
 static const QString DEFAULT_BACK_COLOUR = "white";
 
@@ -61,10 +62,16 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
             this, SLOT( updatePropertyFields() ) );
     connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
             this, SLOT( updateFilterProperties() ) );
+    connect( ignoreCaseCheckBox, SIGNAL( toggled(bool) ),
+            this, SLOT( updateFilterProperties() ) );
     connect( foreColorBox, SIGNAL( activated( int ) ),
             this, SLOT( updateFilterProperties() ) );
     connect( backColorBox, SIGNAL( activated( int ) ),
             this, SLOT( updateFilterProperties() ) );
+
+    if ( !filterSet->filterList.empty() ) {
+        filterListWidget->setCurrentItem( filterListWidget->item( 0 ) );
+    }
 }
 
 //
@@ -75,7 +82,7 @@ void FiltersDialog::on_addFilterButton_clicked()
 {
     LOG(logDEBUG) << "on_addFilterButton_clicked()";
 
-    Filter newFilter = Filter( DEFAULT_PATTERN,
+    Filter newFilter = Filter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
             DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR );
     filterSet->filterList << newFilter;
 
@@ -162,6 +169,9 @@ void FiltersDialog::updatePropertyFields()
         patternEdit->setText( currentFilter.pattern() );
         patternEdit->setEnabled( true );
 
+        ignoreCaseCheckBox->setChecked( currentFilter.ignoreCase() );
+        ignoreCaseCheckBox->setEnabled( true );
+
         int index = foreColorBox->findText( currentFilter.foreColorName() );
         if ( index != -1 ) {
             LOG(logDEBUG) << "fore index = " << index;
@@ -186,6 +196,7 @@ void FiltersDialog::updatePropertyFields()
         patternEdit->setEnabled( false );
         foreColorBox->setEnabled( false );
         backColorBox->setEnabled( false );
+        ignoreCaseCheckBox->setEnabled( false );
     }
 }
 
@@ -199,6 +210,7 @@ void FiltersDialog::updateFilterProperties()
 
         // Update the internal data
         currentFilter.setPattern( patternEdit->text() );
+        currentFilter.setIgnoreCase( ignoreCaseCheckBox->isChecked() );
         currentFilter.setForeColor( foreColorBox->currentText() );
         currentFilter.setBackColor( backColorBox->currentText() );
 

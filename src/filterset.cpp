@@ -27,13 +27,19 @@
 
 const int FilterSet::FILTERSET_VERSION = 1;
 
+Qt::CaseSensitivity getCaseSensivity( bool ignoreCase )
+{
+    return ignoreCase ? Qt::CaseInsensitive : Qt::CaseSensitive;
+}
+
 Filter::Filter()
 {
 }
 
-Filter::Filter( const QString& pattern,
+Filter::Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColorName, const QString& backColorName ) :
-    regexp_( pattern ), foreColorName_( foreColorName ),
+    regexp_( pattern,  getCaseSensivity( ignoreCase ) ),
+    foreColorName_( foreColorName ),
     backColorName_( backColorName ), enabled_( true )
 {
     LOG(logDEBUG) << "New Filter, fore: " << foreColorName_.toStdString()
@@ -48,6 +54,16 @@ QString Filter::pattern() const
 void Filter::setPattern( const QString& pattern )
 {
     regexp_.setPattern( pattern );
+}
+
+bool Filter::ignoreCase() const
+{
+    return regexp_.caseSensitivity() == Qt::CaseInsensitive;
+}
+
+void Filter::setIgnoreCase( bool ignoreCase )
+{
+    regexp_.setCaseSensitivity( getCaseSensivity(ignoreCase) );
 }
 
 const QString& Filter::foreColorName() const
@@ -152,6 +168,7 @@ void Filter::saveToStorage( QSettings& settings ) const
     LOG(logDEBUG) << "Filter::saveToStorage";
 
     settings.setValue( "regexp", regexp_.pattern() );
+    settings.setValue( "ignore_case", regexp_.caseSensitivity() == Qt::CaseInsensitive);
     settings.setValue( "fore_colour", foreColorName_ );
     settings.setValue( "back_colour", backColorName_ );
 }
@@ -160,7 +177,8 @@ void Filter::retrieveFromStorage( QSettings& settings )
 {
     LOG(logDEBUG) << "Filter::retrieveFromStorage";
 
-    regexp_ = QRegExp( settings.value( "regexp" ).toString() );
+    regexp_ = QRegExp( settings.value( "regexp" ).toString(),
+                       getCaseSensivity( settings.value( "ignore_case", false ).toBool() ) );
     foreColorName_ = settings.value( "fore_colour" ).toString();
     backColorName_ = settings.value( "back_colour" ).toString();
 }

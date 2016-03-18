@@ -33,7 +33,7 @@ class Filter
   public:
     // Construct an uninitialized Filter (when reading from a config file)
     Filter();
-    Filter( const QString& pattern,
+    Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColor, const QString& backColor );
 
     // Tests the string passed for a match, returns a value just like
@@ -43,6 +43,8 @@ class Filter
     // Accessor functions
     QString pattern() const;
     void setPattern( const QString& pattern );
+    bool ignoreCase() const;
+    void setIgnoreCase( bool ignoreCase );
     const QString& foreColorName() const;
     void setForeColor( const QString& foreColorName );
     const QString& backColorName() const;

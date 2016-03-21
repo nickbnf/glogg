@@ -93,7 +93,7 @@ LogFilteredData::~LogFilteredData()
 //
 
 // Run the search and send newDataAvailable() signals.
-void LogFilteredData::runSearch( const QRegExp& regExp )
+void LogFilteredData::runSearch( const QRegularExpression& regExp )
 {
     LOG(logDEBUG) << "Entering runSearch";
 
@@ -119,7 +119,7 @@ void LogFilteredData::interruptSearch()
 
 void LogFilteredData::clearSearch()
 {
-    currentRegExp_ = QRegExp();
+    currentRegExp_ = QRegularExpression();
     matching_lines_.clear();
     maxLength_        = 0;
     maxLengthMarks_   = 0;

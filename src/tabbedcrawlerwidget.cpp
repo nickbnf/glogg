@@ -168,7 +168,11 @@ void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
             case DataStatus::NEW_FILTERED_DATA:
                 icon = &newfiltered_icon_;
                 break;
+        default:
+            return;
         }
+
         icon_label->setPixmap ( icon->pixmap(12,12) );
+
     }
 }

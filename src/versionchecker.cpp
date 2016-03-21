@@ -136,9 +136,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 namespace {
     bool isVersionNewer( const QString& current, const QString& new_version )
     {
-        QRegExp version_regex( "(\\d+)\\.(\\d+)\\.(\\d+)(-(\\S+))?",
-                Qt::CaseSensitive,
-                QRegExp::RegExp2 );
+        QRegularExpression version_regex( "(\\d+)\\.(\\d+)\\.(\\d+)(-(\\S+))?" );
 
         // Main version is the three first digits
         // Add is the part after '-' if there
@@ -147,20 +145,22 @@ namespace {
         unsigned new_main_version = 0;
         unsigned new_add_version = 0;
 
-        if ( version_regex.indexIn( current ) != -1 )
+        QRegularExpressionMatch currentMatch = version_regex.match( current );
+        if ( currentMatch.hasMatch() )
         {
-            current_main_version = version_regex.cap(3).toInt()
-                + version_regex.cap(2).toInt() * 100
-                + version_regex.cap(1).toInt() * 10000;
-            current_add_version = version_regex.cap(5).isEmpty() ? 0 : 1;
+            current_main_version = currentMatch.captured(3).toInt()
+                + currentMatch.captured(2).toInt() * 100
+                + currentMatch.captured(1).toInt() * 10000;
+            current_add_version = currentMatch.captured(5).isEmpty() ? 0 : 1;
         }
 
+        QRegularExpressionMatch newMatch = version_regex.match( new_version );
         if ( version_regex.indexIn( new_version ) != -1 )
         {
-            new_main_version = version_regex.cap(3).toInt()
-                + version_regex.cap(2).toInt() * 100
-                + version_regex.cap(1).toInt() * 10000;
-            new_add_version = version_regex.cap(5).isEmpty() ? 0 : 1;
+            new_main_version = newMatch.captured(3).toInt()
+                + newMatch.captured(2).toInt() * 100
+                + newMatch.captured(1).toInt() * 10000;
+            new_add_version = newMatch.captured(5).isEmpty() ? 0 : 1;
         }
 
         LOG(logDEBUG) << "Current version: " << current_main_version;

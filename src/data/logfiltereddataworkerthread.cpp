@@ -116,7 +116,7 @@ LogFilteredDataWorkerThread::~LogFilteredDataWorkerThread()
     wait();
 }
 
-void LogFilteredDataWorkerThread::search( const QRegExp& regExp )
+void LogFilteredDataWorkerThread::search( const QRegularExpression& regExp )
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -132,7 +132,7 @@ void LogFilteredDataWorkerThread::search( const QRegExp& regExp )
     operationRequestedCond_.wakeAll();
 }
 
-void LogFilteredDataWorkerThread::updateSearch( const QRegExp& regExp, qint64 position )
+void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp, qint64 position )
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -205,7 +205,7 @@ void LogFilteredDataWorkerThread::run()
 //
 
 SearchOperation::SearchOperation( const LogData* sourceLogData,
-        const QRegExp& regExp, AtomicFlag* interruptRequest )
+        const QRegularExpression& regExp, AtomicFlag* interruptRequest )
     : regexp_( regExp ), sourceLogData_( sourceLogData )
 {
     interruptRequested_ = interruptRequest;
@@ -237,7 +237,7 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 
         int j = 0;
         for ( ; j < lines.size(); j++ ) {
-            if ( regexp_.indexIn( lines[j] ) != -1 ) {
+            if ( regexp_.match( lines[j] ).hasMatch() ) {
                 // FIXME: increase perf by removing temporary
                 const int length = sourceLogData_->getExpandedLineString(i+j).length();
                 if ( length > maxLength )

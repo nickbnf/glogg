@@ -70,7 +70,7 @@ class PerfLogFilteredData : public testing::Test {
 TEST_F( PerfLogFilteredData, allMatchingSearch ) {
     {
         TestTimer t;
-        filtered_data_->runSearch( QRegExp( "glogg.*this" ) );
+        filtered_data_->runSearch( QRegularExpression( "glogg.*this" ) );
         search();
     }
     ASSERT_THAT( filtered_data_->getNbLine(), VBL_NB_LINES );
@@ -79,7 +79,7 @@ TEST_F( PerfLogFilteredData, allMatchingSearch ) {
 TEST_F( PerfLogFilteredData, someMatchingSearch ) {
     {
         TestTimer t;
-        filtered_data_->runSearch( QRegExp( "1?3|34" ) );
+        filtered_data_->runSearch( QRegularExpression( "1?3|34" ) );
         search();
     }
     ASSERT_THAT( filtered_data_->getNbLine(), 2874236 );
@@ -88,14 +88,14 @@ TEST_F( PerfLogFilteredData, someMatchingSearch ) {
 TEST_F( PerfLogFilteredData, noneMatchingSearch ) {
     {
         TestTimer t;
-        filtered_data_->runSearch( QRegExp( "a1?3|(w|f)f34|blah" ) );
+        filtered_data_->runSearch( QRegularExpression( "a1?3|(w|f)f34|blah" ) );
         search();
     }
     ASSERT_THAT( filtered_data_->getNbLine(), 0 );
 }
 
 TEST_F( PerfLogFilteredData, browsingSearchResults ) {
-    filtered_data_->runSearch( QRegExp( "1?3|34" ) );
+    filtered_data_->runSearch( QRegularExpression( "1?3|34" ) );
     search();
     ASSERT_THAT( filtered_data_->getNbLine(), 2874236 );
 

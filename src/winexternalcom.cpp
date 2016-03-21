@@ -20,7 +20,6 @@
 #include "winexternalcom.h"
 
 #include <QString>
-#include <QRegExp>
 
 #include "log.h"
 

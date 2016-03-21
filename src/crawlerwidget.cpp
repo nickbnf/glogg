@@ -545,7 +545,7 @@ void CrawlerWidget::addToSearch( const QString& string )
         text = string;
     else {
         // Escape the regexp chars from the string before adding it.
-        text += ( '|' + QRegExp::escape( string ) );
+        text += ( '|' + QRegularExpression::escape( string ) );
     }
 
     searchLineEdit->setEditText( text );
@@ -812,29 +812,35 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 
     if ( !searchText.isEmpty() ) {
+
+        QString pattern;
+
         // Determine the type of regexp depending on the config
-        QRegExp::PatternSyntax syntax;
         static std::shared_ptr<Configuration> config =
             Persistent<Configuration>( "settings" );
         switch ( config->mainRegexpType() ) {
             case Wildcard:
-                syntax = QRegExp::Wildcard;
+                pattern = searchText;
+                pattern.replace('*', ".*").replace('?', ".");
                 break;
             case FixedString:
-                syntax = QRegExp::FixedString;
+                pattern = QRegularExpression::escape(searchText);
                 break;
             default:
-                syntax = QRegExp::RegExp2;
+                pattern = searchText;
                 break;
         }
 
         // Set the pattern case insensitive if needed
-        Qt::CaseSensitivity case_sensitivity = Qt::CaseSensitive;
+        QRegularExpression::PatternOptions patternOptions =
+                QRegularExpression::UseUnicodePropertiesOption
+                | QRegularExpression::OptimizeOnFirstUsageOption;
+
         if ( ignoreCaseCheck->checkState() == Qt::Checked )
-            case_sensitivity = Qt::CaseInsensitive;
+            patternOptions |= QRegularExpression::CaseInsensitiveOption;
 
         // Constructs the regexp
-        QRegExp regexp( searchText, case_sensitivity, syntax );
+        QRegularExpression regexp( pattern, patternOptions );
 
         if ( regexp.isValid() ) {
             // Activate the stop button
@@ -851,7 +857,13 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             searchState_.resetState();
 
             // Inform the user
-            QString errorMessage = tr("Error in expression: ");
+            QString errorMessage = tr("Error in expression");
+            const int offset = regexp.patternErrorOffset();
+            if (offset != -1) {
+                errorMessage += " at position ";
+                errorMessage += QString::number(offset);
+            }
+            errorMessage += ": ";
             errorMessage += regexp.errorString();
             searchInfoLine->setPalette( errorPalette );
             searchInfoLine->setText( errorMessage );
@@ -1020,10 +1032,10 @@ void CrawlerWidget::SearchState::startSearch()
  */
 CrawlerWidgetContext::CrawlerWidgetContext(const QString &string )
 {
-    QRegExp regex = QRegExp( "S(\\d+):(\\d+)" );
-
-    if ( regex.indexIn( string ) > -1 ) {
-        sizes_ = { regex.cap(1).toInt(), regex.cap(2).toInt() };
+    QRegularExpression regex( "S(\\d+):(\\d+)" );
+    QRegularExpressionMatch match = regex.match( string );
+    if ( match.hasMatch() ) {
+        sizes_ = { match.captured(1).toInt(), match.captured(2).toInt() };
         LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
     }
     else {
@@ -1033,11 +1045,11 @@ CrawlerWidgetContext::CrawlerWidgetContext(const QString &string )
         sizes_ = { 100, 400 };
     }
 
-    QRegExp case_refresh_regex = QRegExp( "IC(\\d+):AR(\\d+)" );
-
-    if ( case_refresh_regex.indexIn( string ) > -1 ) {
-        ignore_case_ = ( case_refresh_regex.cap(1).toInt() == 1 );
-        auto_refresh_ = ( case_refresh_regex.cap(2).toInt() == 1 );
+    QRegularExpression case_refresh_regex( "IC(\\d+):AR(\\d+)" );
+    match = case_refresh_regex.match( string );
+    if ( match.hasMatch() ) {
+        ignore_case_ = ( match.captured(1).toInt() == 1 );
+        auto_refresh_ = ( match.captured(2).toInt() == 1 );
 
         LOG(logDEBUG) << "ignore_case_: " << ignore_case_ << " auto_refresh_: "
             << auto_refresh_;

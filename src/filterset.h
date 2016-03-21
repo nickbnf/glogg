@@ -20,7 +20,7 @@
 #ifndef FILTERSET_H
 #define FILTERSET_H
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QColor>
 #include <QMetaType>
 
@@ -36,9 +36,7 @@ class Filter
     Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColor, const QString& backColor );
 
-    // Tests the string passed for a match, returns a value just like
-    // QRegExp::indexIn (i.e. -1 if no match)
-    int indexIn( const QString& string ) const;
+    bool hasMatch( const QString& string ) const;
 
     // Accessor functions
     QString pattern() const;
@@ -60,7 +58,7 @@ class Filter
     void retrieveFromStorage( QSettings& settings );
 
   private:
-    QRegExp regexp_;
+    QRegularExpression regexp_;
     QString foreColorName_;
     QString backColorName_;
     bool enabled_;

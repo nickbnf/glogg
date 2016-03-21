@@ -24,7 +24,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QList>
 #include "atomicflag.h"
 
@@ -89,8 +89,8 @@ class SearchOperation : public QObject
 {
   Q_OBJECT
   public:
-    SearchOperation( const LogData* sourceLogData,
-            const QRegExp& regExp, AtomicFlag* interruptRequest );
+    SearchOperation(const LogData* sourceLogData,
+            const QRegularExpression &regExp, AtomicFlag* interruptRequest );
 
     virtual ~SearchOperation() { }
 
@@ -109,14 +109,14 @@ class SearchOperation : public QObject
     void doSearch( SearchData& result, qint64 initialLine );
 
     AtomicFlag* interruptRequested_;
-    const QRegExp regexp_;
+    const QRegularExpression regexp_;
     const LogData* sourceLogData_;
 };
 
 class FullSearchOperation : public SearchOperation
 {
   public:
-    FullSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
+    FullSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
             AtomicFlag* interruptRequest )
         : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
     virtual void start( SearchData& result );
@@ -125,7 +125,7 @@ class FullSearchOperation : public SearchOperation
 class UpdateSearchOperation : public SearchOperation
 {
   public:
-    UpdateSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
+    UpdateSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
             AtomicFlag* interruptRequest, qint64 position )
         : SearchOperation( sourceLogData, regExp, interruptRequest ),
         initialPosition_( position ) {}
@@ -149,10 +149,10 @@ class LogFilteredDataWorkerThread : public QThread
     ~LogFilteredDataWorkerThread();
 
     // Start the search with the passed regexp
-    void search( const QRegExp& regExp );
+    void search(const QRegularExpression &regExp );
     // Continue the previous search starting at the passed position
     // in the source file (line number)
-    void updateSearch( const QRegExp& regExp, qint64 position );
+    void updateSearch( const QRegularExpression& regExp, qint64 position );
     // Interrupts the search if one is in progress
     void interrupt();
 

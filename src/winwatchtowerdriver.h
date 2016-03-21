@@ -21,11 +21,12 @@
 #define WINWATCHTOWERDRIVER_H
 
 #include <atomic>
-#include <thread>
-#include <mutex>
 #include <condition_variable>
 #include <iterator>
 #include <vector>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QWaitCondition>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -174,7 +175,7 @@ class WinWatchTowerDriver {
 
     std::vector<ObservedFile<WinWatchTowerDriver>*> waitAndProcessEvents(
             ObservedFileList<WinWatchTowerDriver>* list,
-            std::unique_lock<std::mutex>* lock,
+            QMutexLocker* lock,
             std::vector<ObservedFile<WinWatchTowerDriver>*>* files_needing_readding,
             int timout_ms );
 
@@ -195,8 +196,8 @@ class WinWatchTowerDriver {
     };
 
     // Action
-    std::mutex action_mutex_;
-    std::condition_variable action_done_cv_;
+    QMutex action_mutex_;
+    QWaitCondition action_done_cv_;
     std::unique_ptr<Action> scheduled_action_ = nullptr;
 
     // Win32 notification variables

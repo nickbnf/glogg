@@ -23,12 +23,14 @@
 #include "config.h"
 
 #include <memory>
-#include <atomic>
-#include <thread>
-#include <mutex>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QRunnable>
+#include <QThreadPool>
+
+#include "data/atomicflag.h"
 
 #include "watchtowerlist.h"
-
 // Allow the client to register for notification on an arbitrary number
 // of files. It will be notified to any change (creation/deletion/modification)
 // on those files.
@@ -43,7 +45,7 @@ typedef std::shared_ptr<void> Registration;
 #endif
 
 template<typename Driver>
-class WatchTower {
+class WatchTower : public QRunnable {
   public:
     // Create an empty watchtower
     WatchTower();
@@ -73,18 +75,19 @@ class WatchTower {
     ObservedFileList<Driver> observed_file_list_;
 
     // Protects the observed_file_list_
-    std::mutex observers_mutex_;
+    QMutex observers_mutex_;
 
     // Polling interval (0 disables polling)
     uint32_t polling_interval_ms_ = 0;
 
-    // Thread
-    std::atomic_bool running_;
-    std::thread thread_;
-
     // Exist as long as the onject exists, to ensure observers won't try to
     // call us if we are dead.
     std::shared_ptr<void> heartBeat_;
+
+    //Thread
+    AtomicFlag running_;
+    QThreadPool threadPool_;
+
 
     // Private member functions
     std::tuple<typename Driver::FileId, typename Driver::SymlinkId>
@@ -111,19 +114,20 @@ namespace {
 
 template <typename Driver>
 WatchTower<Driver>::WatchTower()
-    : driver_(), thread_(),
+    : driver_(),
     heartBeat_(std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}))
 {
-    running_ = true;
-    thread_ = std::thread( &WatchTower::run, this );
+    setAutoDelete(false);
+    running_.set();
+    threadPool_.start(this);
 }
 
 template <typename Driver>
 WatchTower<Driver>::~WatchTower()
 {
-    running_ = false;
+    running_.clear();
     driver_.interruptWait();
-    thread_.join();
+    threadPool_.waitForDone();
 }
 
 template <typename Driver>
@@ -146,7 +150,7 @@ Registration WatchTower<Driver>::addFile(
 
     std::weak_ptr<void> weakHeartBeat(heartBeat_);
 
-    std::lock_guard<std::mutex> lock( observers_mutex_ );
+    QMutexLocker lock( &observers_mutex_ );
 
     auto existing_observed_file =
         observed_file_list_.searchByName( file_name );
@@ -237,7 +241,7 @@ void WatchTower<Driver>::removeNotification(
 {
     LOG(logDEBUG) << "WatchTower::removeNotification";
 
-    std::lock_guard<std::mutex> lock( watch_tower->observers_mutex_ );
+    QMutexLocker lock( &watch_tower->observers_mutex_ );
 
     auto file =
         watch_tower->observed_file_list_.removeCallback( notification );
@@ -254,7 +258,7 @@ template <typename Driver>
 void WatchTower<Driver>::run()
 {
     while ( running_ ) {
-        std::unique_lock<std::mutex> lock( observers_mutex_ );
+        QMutexLocker lock( &observers_mutex_ );
 
         std::vector<ObservedFile<Driver>*> files_needing_readding;
 

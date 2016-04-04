@@ -54,10 +54,10 @@ class LogFilteredData : public AbstractLogData {
     // Starts the async search, sending newDataAvailable() when new data found.
     // If a search is already in progress this function will block until
     // it is done, so the application should call interruptSearch() first.
-    void runSearch(const QRegularExpression &regExp );
+    void runSearch(const QRegularExpression &regExp, qint64 startLine, qint64 endLine);
     // Add to the existing search, starting at the line when the search was
     // last stopped. Used when the file on disk has been added too.
-    void updateSearch();
+    void updateSearch(qint64 startLine, qint64 endLine);
     // Interrupt the running search if one is in progress.
     // Nothing is done if no search is in progress.
     void interruptSearch();

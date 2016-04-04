@@ -183,6 +183,7 @@ class CrawlerWidget : public QSplitter,
     // Called when there was activity in the views
     void activityDetected();
 
+    void setSearchLimits( qint64 startLine, qint64 endLine );
   private:
     // State machine holding the state of the search, used to allow/disallow
     // auto-refresh and inform the user via the info line.
@@ -279,6 +280,9 @@ class CrawlerWidget : public QSplitter,
 
     // Last main line number received
     qint64 currentLineNumber_;
+
+    qint64 searchStartLine_;
+    qint64 searchEndLine_;
 
     // Are we loading something?
     // Set to false when we receive a completion message from the LogData

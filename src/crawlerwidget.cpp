@@ -445,7 +445,8 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
             // We need to restart the search
             replaceCurrentSearch( searchLineEdit->currentText() );
         else
-            logFilteredData_->updateSearch();
+            logFilteredData_->updateSearch( searchStartLine_,
+                                            searchEndLine_ );
     }
 
     // Set the encoding for the views
@@ -564,6 +565,15 @@ void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
 void CrawlerWidget::activityDetected()
 {
     changeDataStatus( DataStatus::OLD_DATA );
+}
+
+void CrawlerWidget::setSearchLimits( qint64 startLine, qint64 endLine )
+{
+    searchStartLine_ = startLine;
+    searchEndLine_ = endLine;
+
+    logMainView->setSearchLimits(startLine, endLine);
+    filteredView->setSearchLimits(startLine, endLine);
 }
 
 //
@@ -770,6 +780,11 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( activity() ),
             this, SLOT( activityDetected() ) );
 
+    connect(logMainView, SIGNAL(changeSearchLimits(qint64,qint64)),
+            this, SLOT(setSearchLimits(qint64,qint64)));
+    connect(filteredView, SIGNAL(changeSearchLimits(qint64,qint64)),
+            this, SLOT(setSearchLimits(qint64,qint64)));
+
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
 
@@ -846,7 +861,9 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             // Activate the stop button
             stopButton->setEnabled( true );
             // Start a new asynchronous search
-            logFilteredData_->runSearch( regexp );
+            logFilteredData_->runSearch( regexp,
+                                         searchStartLine_,
+                                         searchEndLine_ );
             // Accept auto-refresh of the search
             searchState_.startSearch();
         }

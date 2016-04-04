@@ -173,6 +173,8 @@ class AbstractLogView :
     // Instructs the widget to select the whole text.
     void selectAll();
 
+
+
   protected:
     virtual void mousePressEvent( QMouseEvent* mouseEvent );
     virtual void mouseMoveEvent( QMouseEvent* mouseEvent );
@@ -194,6 +196,7 @@ class AbstractLogView :
 
     // Line number to display for line at the given index
     virtual qint64 displayLineNumber( int lineNumber ) const;
+    virtual qint64 lineIndex( int lineNumber ) const;
     virtual qint64 maxDisplayLineNumber() const;
 
     // Get the overview associated with this view, or NULL if there is none
@@ -229,6 +232,8 @@ class AbstractLogView :
     void searchPrevious();
     // Sent up when the user has moved within the view
     void activity();
+
+    void changeSearchLimits( qint64 startLine, qint64 endLine );
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -267,12 +272,17 @@ class AbstractLogView :
     // To be used if the data might have changed.
     void forceRefresh();
 
+    void setSearchLimits( qint64 startLine, qint64 endLine );
+
   private slots:
     void handlePatternUpdated();
     void addToSearch();
     void findNextSelected();
     void findPreviousSelected();
     void copy();
+    void setSearchStart();
+    void setSearchEnd();
+    void clearSearchLimit();
 
   private:
     // Graphic parameters
@@ -328,6 +338,9 @@ class AbstractLogView :
     LineNumber firstLine;
     int firstCol;
 
+    LineNumber searchStart_;
+    LineNumber searchEnd_;
+
     // Text handling
     int charWidth_;
     int charHeight_;
@@ -338,6 +351,9 @@ class AbstractLogView :
     QAction* findNextAction_;
     QAction* findPreviousAction_;
     QAction* addToSearchAction_;
+    QAction* setSearchStartAction_;
+    QAction* setSearchEndAction_;
+    QAction* clearSearchLimitAction_;
 
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;
@@ -380,6 +396,8 @@ class AbstractLogView :
     void jumpToTop();
     void jumpToBottom();
     void selectWordAtPosition( const QPoint& pos );
+
+    void updateSearchLimits();
 
     void createMenu();
 

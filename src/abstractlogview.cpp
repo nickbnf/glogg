@@ -247,10 +247,12 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     selectionCurrentEndPos_(),
     autoScrollTimer_(),
     selection_(),
+    searchStart_(),
     quickFindPattern_( quickFindPattern ),
     quickFind_( newLogData, &selection_, quickFindPattern )
 {
     logData = newLogData;
+    searchEnd_ = logData->getNbLine();
 
     followMode_ = false;
 
@@ -360,10 +362,16 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         // Prepare the popup depending on selection type
         if ( selection_.isSingleLine() ) {
             copyAction_->setText( "&Copy this line" );
+
+            setSearchStartAction_->setEnabled( true );
+            setSearchEndAction_->setEnabled( true );
         }
         else {
             copyAction_->setText( "&Copy" );
             copyAction_->setStatusTip( tr("Copy the selection") );
+
+            setSearchStartAction_->setEnabled( false );
+            setSearchEndAction_->setEnabled( false );
         }
 
         if ( selection_.isPortion() ) {
@@ -816,6 +824,11 @@ qint64 AbstractLogView::displayLineNumber( int lineNumber ) const
     return lineNumber + 1; // show a 1-based index
 }
 
+qint64 AbstractLogView::lineIndex( int lineNumber ) const
+{
+    return lineNumber;
+}
+
 qint64 AbstractLogView::maxDisplayLineNumber() const
 {
     return logData->getNbLine();
@@ -958,6 +971,34 @@ void AbstractLogView::copy()
     clipboard->setText( selection_.getSelectedText( logData ) );
 }
 
+void AbstractLogView::updateSearchLimits()
+{
+    emit changeSearchLimits(displayLineNumber(searchStart_) - 1,
+                         displayLineNumber(searchEnd_) - 1);
+
+    textAreaCache_.invalid_ = true;
+    update();
+}
+
+void AbstractLogView::setSearchStart()
+{
+    searchStart_ = selection_.selectedLine();
+    updateSearchLimits();
+}
+
+void AbstractLogView::setSearchEnd()
+{
+    searchEnd_ =  selection_.selectedLine() + 1;
+    updateSearchLimits();
+}
+
+void AbstractLogView::clearSearchLimit()
+{
+    searchStart_ = 0;
+    searchEnd_ = logData->getNbLine();
+    updateSearchLimits();
+}
+
 //
 // Public functions
 //
@@ -996,6 +1037,8 @@ void AbstractLogView::updateData()
 
     // Invalidate our cache
     textAreaCache_.invalid_ = true;
+
+    searchEnd_ = logData->getNbLine();
 
     // Repaint!
     update();
@@ -1080,6 +1123,12 @@ void AbstractLogView::forceRefresh()
 {
     // Invalidate our cache
     textAreaCache_.invalid_ = true;
+}
+
+void AbstractLogView::setSearchLimits( qint64 startLine, qint64 endLine )
+{
+    searchStart_ = lineIndex( startLine );
+    searchEnd_ = lineIndex( endLine );
 }
 
 //
@@ -1320,12 +1369,29 @@ void AbstractLogView::createMenu()
     connect( addToSearchAction_, SIGNAL( triggered() ),
             this, SLOT( addToSearch() ) );
 
+    setSearchStartAction_ = new QAction( tr("Set search start"), this );
+    connect( setSearchStartAction_, SIGNAL( triggered() ),
+            this, SLOT( setSearchStart() ) );
+
+    setSearchEndAction_ = new QAction( tr("Set search end"), this );
+    connect( setSearchEndAction_, SIGNAL( triggered() ),
+            this, SLOT( setSearchEnd() ) );
+
+    clearSearchLimitAction_ = new QAction( tr("Clear search limit"), this );
+    connect( clearSearchLimitAction_, SIGNAL( triggered() ),
+            this, SLOT( clearSearchLimit() ) );
+
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );
     popupMenu_->addSeparator();
     popupMenu_->addAction( findNextAction_ );
     popupMenu_->addAction( findPreviousAction_ );
     popupMenu_->addAction( addToSearchAction_ );
+    popupMenu_->addSeparator();
+    popupMenu_->addAction( setSearchStartAction_ );
+    popupMenu_->addAction( setSearchEndAction_ );
+    popupMenu_->addAction( clearSearchLimitAction_ );
+
 }
 
 void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
@@ -1485,7 +1551,14 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
         }
         else {
             // Use the default colors
-            foreColor = palette.color( QPalette::Text );
+            if ( line_index < searchStart_ ||
+                    line_index >= searchEnd_ ) {
+                 foreColor = palette.brush( QPalette::Disabled, QPalette::Text ).color();
+            }
+            else {
+                 foreColor = palette.color( QPalette::Text );
+            }
+
             backColor = palette.color( QPalette::Base );
         }
 

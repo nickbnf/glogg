@@ -73,6 +73,11 @@ qint64 FilteredView::displayLineNumber( int lineNumber ) const
     return logFilteredData_->getMatchingLineNumber( lineNumber ) + 1;
 }
 
+qint64 FilteredView::lineIndex( int lineNumber ) const
+{
+    return logFilteredData_->getLineIndexNumber( lineNumber );
+}
+
 qint64 FilteredView::maxDisplayLineNumber() const
 {
     return logFilteredData_->getNbTotalLines();

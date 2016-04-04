@@ -116,7 +116,8 @@ LogFilteredDataWorkerThread::~LogFilteredDataWorkerThread()
     wait();
 }
 
-void LogFilteredDataWorkerThread::search( const QRegularExpression& regExp )
+void LogFilteredDataWorkerThread::search(const QRegularExpression& regExp,
+                                         qint64 startLine, qint64 endLine)
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -128,11 +129,11 @@ void LogFilteredDataWorkerThread::search( const QRegularExpression& regExp )
 
     interruptRequested_.clear();
     operationRequested_ = new FullSearchOperation( sourceLogData_,
-            regExp, &interruptRequested_ );
+            regExp, startLine, endLine, &interruptRequested_ );
     operationRequestedCond_.wakeAll();
 }
 
-void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp, qint64 position )
+void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp, qint64 startLine, qint64 endLine, qint64 position )
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -144,7 +145,7 @@ void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp,
 
     interruptRequested_.clear();
     operationRequested_ = new UpdateSearchOperation( sourceLogData_,
-            regExp, &interruptRequested_, position );
+            regExp, startLine, endLine,  &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
 }
 
@@ -205,8 +206,11 @@ void LogFilteredDataWorkerThread::run()
 //
 
 SearchOperation::SearchOperation( const LogData* sourceLogData,
-        const QRegularExpression& regExp, AtomicFlag* interruptRequest )
-    : regexp_( regExp ), sourceLogData_( sourceLogData )
+        const QRegularExpression& regExp,
+        qint64 startLine, qint64 endLine,
+        AtomicFlag* interruptRequest )
+    : regexp_( regExp ), startLine_(startLine), endLine_(endLine),
+      sourceLogData_( sourceLogData )
 {
     interruptRequested_ = interruptRequest;
 }
@@ -223,15 +227,21 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 
     LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
-    for ( qint64 i = initialLine; i < nbSourceLines; i += nbLinesInChunk ) {
+    if (initialLine < startLine_) {
+        initialLine = startLine_;
+    }
+
+    const qint64 endLine = qMin(nbSourceLines, endLine_);
+
+    for ( qint64 i = initialLine; i < endLine; i += nbLinesInChunk ) {
         if ( *interruptRequested_ )
             break;
 
-        const int percentage = ( i - initialLine ) * 100 / ( nbSourceLines - initialLine );
+        const int percentage = ( i - initialLine ) * 100 / ( endLine - initialLine );
         emit searchProgressed( nbMatches, percentage );
 
         const QStringList lines = sourceLogData_->getLines( i,
-                qMin( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
+                qMin( nbLinesInChunk, (int) ( endLine - i ) ) );
         LOG(logDEBUG) << "Chunk starting at " << i <<
             ", " << lines.size() << " lines read.";
 

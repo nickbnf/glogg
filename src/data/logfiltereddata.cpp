@@ -93,21 +93,23 @@ LogFilteredData::~LogFilteredData()
 //
 
 // Run the search and send newDataAvailable() signals.
-void LogFilteredData::runSearch( const QRegularExpression& regExp )
+void LogFilteredData::runSearch(const QRegularExpression& regExp,
+                                qint64 startLine, qint64 endLine)
 {
     LOG(logDEBUG) << "Entering runSearch";
 
     clearSearch();
     currentRegExp_ = regExp;
 
-    workerThread_.search( currentRegExp_ );
+    workerThread_.search( currentRegExp_, startLine, endLine );
 }
 
-void LogFilteredData::updateSearch()
+void LogFilteredData::updateSearch(qint64 startLine, qint64 endLine)
 {
     LOG(logDEBUG) << "Entering updateSearch";
 
-    workerThread_.updateSearch( currentRegExp_, nbLinesProcessed_ );
+    workerThread_.updateSearch( currentRegExp_, startLine, endLine,
+                                nbLinesProcessed_ );
 }
 
 void LogFilteredData::interruptSearch()

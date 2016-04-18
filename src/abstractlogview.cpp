@@ -622,7 +622,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     // Use the selected 'word' and search forward
                     findNextSelected();
                     break;
-                case '#':
+                case '/':
                     // Use the selected 'word' and search backward
                     findPreviousSelected();
                     break;

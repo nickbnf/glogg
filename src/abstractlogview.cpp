@@ -973,11 +973,11 @@ void AbstractLogView::copy()
 
 void AbstractLogView::updateSearchLimits()
 {
-    emit changeSearchLimits(displayLineNumber(searchStart_) - 1,
-                         displayLineNumber(searchEnd_) - 1);
-
     textAreaCache_.invalid_ = true;
     update();
+
+    emit changeSearchLimits(displayLineNumber(searchStart_) - 1,
+                         displayLineNumber(searchEnd_) - 1);
 }
 
 void AbstractLogView::setSearchStart()
@@ -989,13 +989,6 @@ void AbstractLogView::setSearchStart()
 void AbstractLogView::setSearchEnd()
 {
     searchEnd_ =  selection_.selectedLine() + 1;
-    updateSearchLimits();
-}
-
-void AbstractLogView::clearSearchLimit()
-{
-    searchStart_ = 0;
-    searchEnd_ = logData->getNbLine();
     updateSearchLimits();
 }
 
@@ -1035,12 +1028,7 @@ void AbstractLogView::updateData()
     if ( overview_ != NULL )
         overview_->updateCurrentPosition( firstLine, last_line );
 
-    // Invalidate our cache
     textAreaCache_.invalid_ = true;
-
-    searchEnd_ = logData->getNbLine();
-
-    // Repaint!
     update();
 }
 
@@ -1129,6 +1117,9 @@ void AbstractLogView::setSearchLimits( qint64 startLine, qint64 endLine )
 {
     searchStart_ = lineIndex( startLine );
     searchEnd_ = lineIndex( endLine );
+
+    textAreaCache_.invalid_ = true;
+    update();
 }
 
 //
@@ -1379,7 +1370,7 @@ void AbstractLogView::createMenu()
 
     clearSearchLimitAction_ = new QAction( tr("Clear search limit"), this );
     connect( clearSearchLimitAction_, SIGNAL( triggered() ),
-            this, SLOT( clearSearchLimit() ) );
+            this, SIGNAL( clearSearchLimits() ) );
 
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );

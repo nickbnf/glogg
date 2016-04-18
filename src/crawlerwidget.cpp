@@ -310,6 +310,7 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
                       << " absolute line number (0based) " << currentLineNumber_
                       << " index " << currenLineIndex;
         filteredView->selectAndDisplayLine(currenLineIndex);
+        filteredView->setSearchLimits(searchStartLine_, searchEndLine_);
     }
 }
 
@@ -452,6 +453,8 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
     // Set the encoding for the views
     updateEncoding();
 
+    clearSearchLimits();
+
     emit loadingFinished( status );
 
     // Also change the data available icon
@@ -574,6 +577,11 @@ void CrawlerWidget::setSearchLimits( qint64 startLine, qint64 endLine )
 
     logMainView->setSearchLimits(startLine, endLine);
     filteredView->setSearchLimits(startLine, endLine);
+}
+
+void CrawlerWidget::clearSearchLimits()
+{
+    setSearchLimits(0, logData_->getNbLine());
 }
 
 //
@@ -784,6 +792,11 @@ void CrawlerWidget::setup()
             this, SLOT(setSearchLimits(qint64,qint64)));
     connect(filteredView, SIGNAL(changeSearchLimits(qint64,qint64)),
             this, SLOT(setSearchLimits(qint64,qint64)));
+
+    connect(logMainView, SIGNAL( clearSearchLimits() ),
+            this, SLOT(clearSearchLimits()));
+    connect(filteredView, SIGNAL(clearSearchLimits()),
+            this, SLOT(clearSearchLimits()));
 
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );

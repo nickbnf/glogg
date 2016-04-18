@@ -234,6 +234,7 @@ class AbstractLogView :
     void activity();
 
     void changeSearchLimits( qint64 startLine, qint64 endLine );
+    void clearSearchLimits();
 
   public slots:
     // Makes the widget select and display the passed line.
@@ -282,7 +283,6 @@ class AbstractLogView :
     void copy();
     void setSearchStart();
     void setSearchEnd();
-    void clearSearchLimit();
 
   private:
     // Graphic parameters

@@ -67,7 +67,7 @@ class WinMessageListener : public QWidget
 
   private:
     // Override the default event message
-    bool winEvent( MSG* message, long* result );
+    bool nativeEvent( const QByteArray& event_type, void* message_ptr, long* result ) override;
 };
 
 // An implementation of ExternalCommunicator using Windows IPC

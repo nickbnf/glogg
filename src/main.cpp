@@ -143,8 +143,9 @@ int main(int argc, char *argv[])
             if ( vm.count( s ) )
                 logLevel = (TLogLevel) (logWARNING + s.length());
 
-        if ( vm.count("input-file") )
+        if ( vm.count("input-file") ) {
             filename = vm["input-file"].as<string>();
+        }
     }
     catch(exception& e) {
         cerr << "Option processing error: " << e.what() << endl;
@@ -168,8 +169,9 @@ int main(int argc, char *argv[])
 
     if ( ! filename.empty() ) {
         // Convert to absolute path
-        QFileInfo file( QString::fromStdString( filename ) );
+        QFileInfo file( QString::fromLocal8Bit( filename.c_str() ) );
         filename = file.absoluteFilePath().toStdString();
+        LOG( logDEBUG ) << "Filename: " << filename;
     }
 
     // External communicator

@@ -115,12 +115,6 @@ void WinExternalInstance::loadFile( const QString& file_name ) const
     data.cbData = file_name.length();
 
     SendMessage( window_handle_, WM_COPYDATA, 0, (LPARAM) &data );
-
-    QString file_name2 = QString::fromLatin1(
-            static_cast<const char*>( data.lpData ), data.cbData );
-    LOG(logDEBUG) << "length: " << data.cbData;
-    LOG(logDEBUG) << "loadFile2: " << file_name2.toStdString();
-
 }
 
 uint32_t WinExternalInstance::getVersion() const
@@ -136,17 +130,20 @@ WinMessageListener::WinMessageListener() : QWidget()
     setWindowTitle( WINDOW_TITLE );
 }
 
-bool WinMessageListener::winEvent( MSG* message, long* result )
+bool WinMessageListener::nativeEvent( const QByteArray& ,
+        void* message_ptr, long* result )
 {
+    const MSG* message = static_cast<MSG*>( message_ptr );
+
     if( message->message == WM_COPYDATA ) {
         // Extract the data from Windows' lParam
-        COPYDATASTRUCT* data = (COPYDATASTRUCT *) message->lParam;
+        const COPYDATASTRUCT* data = (const COPYDATASTRUCT *) message->lParam;
 
         LOG(logDEBUG) << "data->dwData: " << data->dwData;
         LOG(logDEBUG) << "data->cbData: " << data->cbData;
         LOG(logDEBUG) << "data->lpData: " << (const char*) data->lpData;
 
-        QString file_name = QString::fromLatin1(
+        QString file_name = QString::fromUtf8(
                 static_cast<const char*>( data->lpData ), data->cbData );
 
         LOG(logINFO) << "WM_COPYDATA received, param: " << file_name.toStdString();

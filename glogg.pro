@@ -53,8 +53,7 @@ SOURCES += \
     src/signalmux.cpp \
     src/tabbedcrawlerwidget.cpp \
     src/viewtools.cpp \
-    src/encodingspeculator.cpp \
-    src/singleapplication.cpp
+    src/encodingspeculator.cpp
 
 INCLUDEPATH += src/
 
@@ -102,8 +101,7 @@ HEADERS += \
     src/externalcom.h \
     src/viewtools.h \
     src/encodingspeculator.h \
-    src/data/atomicflag.h \
-    src/singleapplication.h
+    src/data/atomicflag.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -196,9 +194,9 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 #C++0x:QMAKE_CXXFLAGS += -std=c++0x
 #C++11:QMAKE_CXXFLAGS += -std=c++11
 CONFIG += c++11
-#release:QMAKE_CXXFLAGS += -O2
+release:QMAKE_CXXFLAGS += -O2
 # Debug symbols even in release build
-QMAKE_CXXFLAGS += -g
+#QMAKE_CXXFLAGS += -g
 GPROF {
     QMAKE_CXXFLAGS += -pg
     QMAKE_LFLAGS   += -pg

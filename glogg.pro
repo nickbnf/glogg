@@ -8,6 +8,8 @@
 TARGET = glogg
 TEMPLATE = app
 
+QT += network
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += core widgets
 
 win32:Debug:CONFIG += console
@@ -52,6 +54,7 @@ SOURCES += \
     src/tabbedcrawlerwidget.cpp \
     src/viewtools.cpp \
     src/encodingspeculator.cpp \
+    src/singleapplication.cpp
 
 INCLUDEPATH += src/
 
@@ -99,7 +102,8 @@ HEADERS += \
     src/externalcom.h \
     src/viewtools.h \
     src/encodingspeculator.h \
-    src/data/atomicflag.h
+    src/data/atomicflag.h \
+    src/singleapplication.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -177,24 +181,24 @@ OBJECTS_DIR = $${OUT_PWD}/.obj/$${DESTDIR}-shared
 MOC_DIR = $${OUT_PWD}/.moc/$${DESTDIR}-shared
 UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 
-# Debug symbols even in release build
-QMAKE_CXXFLAGS = -g
-
 # Which compiler are we using
-system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) || macx {
-    message ( "g++ version 4.7 or newer, supports C++11" )
-    CONFIG += C++11
-}
-else {
-    CONFIG += C++0x
-}
+#system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) || macx {
+#    message ( "g++ version 4.7 or newer, supports C++11" )
+#    CONFIG += C++11
+#}
+#else {
+#    CONFIG += C++0x
+#}
 
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
-QMAKE_CXXFLAGS += -Wextra
-C++0x:QMAKE_CXXFLAGS += -std=c++0x
-C++11:QMAKE_CXXFLAGS += -std=c++11
-
+#QMAKE_CXXFLAGS += -Wextra
+#C++0x:QMAKE_CXXFLAGS += -std=c++0x
+#C++11:QMAKE_CXXFLAGS += -std=c++11
+CONFIG += c++11
+#release:QMAKE_CXXFLAGS += -O2
+# Debug symbols even in release build
+QMAKE_CXXFLAGS += -g
 GPROF {
     QMAKE_CXXFLAGS += -pg
     QMAKE_LFLAGS   += -pg
@@ -243,10 +247,10 @@ system(pkg-config --exists QtDBus):!no-dbus {
 else {
     message("Support for D-BUS will NOT be included")
     win32 {
-        message("Support for Windows IPC will be included")
+        message("Support for cross-platform IPC will be included")
         QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
-        SOURCES += src/winexternalcom.cpp
-        HEADERS += src/winexternalcom.h
+        SOURCES += src/socketexternalcom.cpp
+        HEADERS += src/socketexternalcom.h
     }
 }
 

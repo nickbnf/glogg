@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Build glogg for OSX and make a DMG installer
-# (uses https://github.com/andreyvit/create-dmg.git)
+# (uses https://github.com/LinusU/node-appdmg)
+#
+# brew install node
+# npm install -g appdmg
+#
+# QTDIR is built -static
 
 QTDIR=$HOME/Sandbox/qt-5.5.1-release-static
 BOOST_PATH=$HOME/Sandbox/boost_1_59_0

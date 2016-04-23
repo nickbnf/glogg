@@ -93,11 +93,12 @@ Section "glogg" glogg
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
-Section "Qt4 Runtime libraries" qtlibs
+Section "Qt5 Runtime libraries" qtlibs
     SetOutPath $INSTDIR
-    File release\QtCore4.dll
-    File release\QtGui4.dll
-    File release\QtNetwork4.dll
+    File release\Qt5Core.dll
+    File release\Qt5Gui.dll
+    File release\Qt5Network.dll
+    File release\Qt5Widgets.dll
     File release\libwinpthread-1.dll
 SectionEnd
 
@@ -131,6 +132,10 @@ Section "Uninstall"
     Delete "$INSTDIR\QtCore4.dll"
     Delete "$INSTDIR\QtGui4.dll"
     Delete "$INSTDIR\QtNetwork4.dll"
+    Delete "$INSTDIR\Qt5Core.dll"
+    Delete "$INSTDIR\Qt5Gui.dll"
+    Delete "$INSTDIR\Qt5Network.dll"
+    Delete "$INSTDIR\Qt5Widgets.dll"
     Delete "$INSTDIR\libwinpthread-1.dll"
     RMDir "$INSTDIR"
 

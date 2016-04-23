@@ -8,6 +8,8 @@
 TARGET = glogg
 TEMPLATE = app
 
+QT += network
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += core widgets
 
 win32:Debug:CONFIG += console
@@ -61,6 +63,9 @@ HEADERS += \
     src/data/logfiltereddata.h \
     src/data/logfiltereddataworkerthread.h \
     src/data/logdataworkerthread.h \
+    src/data/threadprivatestore.h \
+    src/data/compressedlinestorage.h \
+    src/data/linepositionarray.h \
     src/mainwindow.h \
     src/session.h \
     src/viewinterface.h \
@@ -245,11 +250,11 @@ system(pkg-config --exists QtDBus):!no-dbus {
 }
 else {
     message("Support for D-BUS will NOT be included")
-    win32 {
-        message("Support for Windows IPC will be included")
+    win32 || macx {
+        message("Support for cross-platform IPC will be included")
         QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
-        SOURCES += src/winexternalcom.cpp
-        HEADERS += src/winexternalcom.h
+        SOURCES += src/socketexternalcom.cpp
+        HEADERS += src/socketexternalcom.h
     }
 }
 

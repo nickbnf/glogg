@@ -967,40 +967,26 @@ void CrawlerWidget::updateEncoding()
     static const char* latin1_encoding = "iso-8859-1";
     static const char* utf8_encoding   = "utf-8";
 
-    const char* encoding = latin1_encoding;
+    QTextCodec* textCodec = QTextCodec::codecForName(latin1_encoding);
     encoding_text_ = tr( "Displayed as ISO-8859-1" );
 
     switch ( encodingSetting_ ) {
         case ENCODING_AUTO:
-            switch ( logData_->getDetectedEncoding() ) {
-                case EncodingSpeculator::Encoding::ASCII7:
-                    encoding = latin1_encoding;
-                    encoding_text_ = tr( "US-ASCII" );
-                    break;
-                case EncodingSpeculator::Encoding::ASCII8:
-                    encoding = latin1_encoding;
-                    encoding_text_ = tr( "ISO-8859-1" );
-                    break;
-                case EncodingSpeculator::Encoding::UTF8:
-                    encoding = utf8_encoding;
-                    encoding_text_ = tr( "UTF-8" );
-                    break;
-            }
+            textCodec = logData_->getDetectedEncoding();
+            encoding_text_ = tr(textCodec->name().data());
             break;
         case ENCODING_UTF8:
-            encoding = utf8_encoding;
+            textCodec = QTextCodec::codecForName(utf8_encoding);
             encoding_text_ = tr( "Displayed as UTF-8" );
             break;
         case ENCODING_ISO_8859_1:
         default:
             break;
-
-
     }
 
-    logData_->setDisplayEncoding( encoding );
+    logData_->setDisplayEncoding( textCodec->name().data() );
     logMainView->forceRefresh();
-    logFilteredData_->setDisplayEncoding( encoding );
+    logFilteredData_->setDisplayEncoding( textCodec->name().data() );
     filteredView->forceRefresh();
 }
 

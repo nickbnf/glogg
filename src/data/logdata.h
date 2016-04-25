@@ -79,7 +79,7 @@ class LogData : public AbstractLogData {
     void setPollingInterval( uint32_t interval_ms );
 
     // Get the auto-detected encoding for the indexed text.
-    EncodingSpeculator::Encoding getDetectedEncoding() const;
+    QTextCodec* getDetectedEncoding() const;
 
   signals:
     // Sent during the 'attach' process to signal progress

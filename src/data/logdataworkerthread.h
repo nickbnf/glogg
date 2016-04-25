@@ -25,10 +25,11 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QVector>
+#include <QTextCodec>
 
 #include "loadingstatus.h"
 #include "linepositionarray.h"
-#include "encodingspeculator.h"
+
 #include "utils.h"
 #include "atomicflag.h"
 
@@ -37,7 +38,7 @@ class IndexingData
 {
   public:
     IndexingData() : dataMutex_(), linePosition_(), maxLength_(0),
-        indexedSize_(0), encoding_(EncodingSpeculator::Encoding::ASCII7) { }
+        indexedSize_(0), encoding_(QTextCodec::codecForLocale()) { }
 
     // Get the total indexed size
     qint64 getSize() const;
@@ -53,13 +54,13 @@ class IndexingData
     qint64 getPosForLine( LineNumber line ) const;
 
     // Get the guessed encoding for the content.
-    EncodingSpeculator::Encoding getEncodingGuess() const;
+    QTextCodec* getEncodingGuess() const;
 
     // Atomically add to all the existing
     // indexing data.
     void addAll( qint64 size, int length,
             const FastLinePositionArray& linePosition,
-            EncodingSpeculator::Encoding encoding );
+            QTextCodec* encoding );
 
     // Completely clear the indexing data.
     void clear();
@@ -71,16 +72,15 @@ class IndexingData
     int maxLength_;
     qint64 indexedSize_;
 
-    EncodingSpeculator::Encoding encoding_;
+    QTextCodec* encoding_;
 };
 
 class IndexOperation : public QObject
 {
   Q_OBJECT
   public:
-    IndexOperation( const QString& fileName,
-            IndexingData* indexingData, AtomicFlag* interruptRequest,
-            EncodingSpeculator* encodingSpeculator );
+    IndexOperation(const QString& fileName,
+            IndexingData* indexingData, AtomicFlag* interruptRequest);
 
     virtual ~IndexOperation() { }
 
@@ -96,23 +96,19 @@ class IndexOperation : public QObject
 
     // Returns the total size indexed
     // Modify the passed linePosition and maxLength
-    void doIndex( IndexingData* linePosition, EncodingSpeculator* encodingSpeculator,
-            qint64 initialPosition );
+    void doIndex( IndexingData* linePosition, qint64 initialPosition );
 
     QString fileName_;
     AtomicFlag* interruptRequest_;
     IndexingData* indexing_data_;
-
-    EncodingSpeculator* encoding_speculator_;
 };
 
 class FullIndexOperation : public IndexOperation
 {
   public:
     FullIndexOperation( const QString& fileName,
-            IndexingData* indexingData, AtomicFlag* interruptRequest,
-            EncodingSpeculator* speculator )
-        : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
+            IndexingData* indexingData, AtomicFlag* interruptRequest)
+        : IndexOperation( fileName, indexingData, interruptRequest ) { }
     virtual bool start();
 };
 
@@ -120,7 +116,7 @@ class PartialIndexOperation : public IndexOperation
 {
   public:
     PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
-            AtomicFlag* interruptRequest, EncodingSpeculator* speculator, qint64 position );
+            AtomicFlag* interruptRequest, qint64 position );
     virtual bool start();
 
   private:
@@ -185,9 +181,6 @@ class LogDataWorkerThread : public QThread
 
     // Pointer to the owner's indexing data (we modify it)
     IndexingData* indexing_data_;
-
-    // To guess the encoding
-    EncodingSpeculator encodingSpeculator_;
 };
 
 #endif

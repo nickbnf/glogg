@@ -415,7 +415,7 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     return list;
 }
 
-EncodingSpeculator::Encoding LogData::getDetectedEncoding() const
+QTextCodec* LogData::getDetectedEncoding() const
 {
     return indexing_data_.getEncodingGuess();
 }

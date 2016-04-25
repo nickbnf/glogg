@@ -126,8 +126,15 @@ else {
 FORMS += src/optionsdialog.ui
 FORMS += src/filtersdialog.ui
 
-# For Windows icon
-RC_FILE = glogg.rc
+macx {
+    # Icon for Mac
+    ICON = images/glogg.icns
+}
+else {
+    # For Windows icon
+    RC_FILE = glogg.rc
+}
+
 RESOURCES = glogg.qrc
 
 # Build HTML documentation (if 'markdown' is available)

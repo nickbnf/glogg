@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
                 logLevel = (TLogLevel) (logWARNING + s.length());
 
         if ( vm.count("input-file") ) {
-            std::string file = vm["input-file"].as<string>();
+            const std::string file = vm["input-file"].as<string>();
             filename = QString::fromLocal8Bit(file.c_str(), file.size());
         }
     }
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 
     if ( ! filename.isEmpty() ) {
         // Convert to absolute path
-        QFileInfo file( filename );
+        const QFileInfo file( filename );
         filename = file.absoluteFilePath();
     }
 
@@ -237,7 +237,10 @@ int main(int argc, char *argv[])
 #endif
 
     // We support high-dpi (aka Retina) displays
-    app.setAttribute(Qt::AA_UseHighDpiPixmaps);
+    app.setAttribute( Qt::AA_UseHighDpiPixmaps );
+
+    // No icon in menus
+    app.setAttribute( Qt::AA_DontShowIconsInMenus );
 
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );

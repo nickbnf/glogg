@@ -1,0 +1,10 @@
+{
+    "title": "glogg",
+    "icon": "images/glogg.icns",
+    "background": "images/osx_installer.png",
+    "icon-size": 128,
+    "contents": [
+        { "x": 415, "y": 234, "type": "link", "path": "/Applications" },
+        { "x": 150, "y": 234, "type": "file", "path": "release/glogg.app" }
+    ]
+}

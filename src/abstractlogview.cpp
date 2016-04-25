@@ -662,7 +662,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
         auto pixel_delta = wheelEvent->pixelDelta();
 
         if ( pixel_delta.isNull() ) {
-            y_delta = wheelEvent->angleDelta().y() / 1.4;
+            y_delta = wheelEvent->angleDelta().y() / 0.7;
         }
         else {
             y_delta = pixel_delta.y();
@@ -1453,7 +1453,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     const int64_t lines_in_file = logData->getNbLine();
 
     if ( firstLine > lines_in_file )
-        firstLine = lines_in_file - 1;
+        firstLine = lines_in_file ? lines_in_file - 1 : 0;
 
     const int64_t nbLines = std::min(
             static_cast<int64_t>( getNbVisibleLines() ), lines_in_file - firstLine );

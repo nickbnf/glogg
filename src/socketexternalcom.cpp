@@ -130,7 +130,7 @@ void SocketExternalCommunicator::onConnection()
 
 void SocketExternalCommunicator::onReadyRead()
 {
-    QLocalSocket* socket = qobject_cast<QLocalSocket>(sender());
+    QLocalSocket* socket = qobject_cast<QLocalSocket*>(sender());
     QByteArray data;
     data.append(socket->readAll());
     socket->close();

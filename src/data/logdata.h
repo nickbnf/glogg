@@ -73,7 +73,7 @@ class LogData : public AbstractLogData {
     // Null if the file is not on disk.
     QDateTime getLastModifiedDate() const;
     // Throw away all the file data and reload/reindex.
-    void reload();
+    void reload(QTextCodec* forcedEncoding = nullptr);
 
     // Update the polling interval (in ms, 0 means disabled)
     void setPollingInterval( uint32_t interval_ms );
@@ -130,11 +130,17 @@ class LogData : public AbstractLogData {
     // Reindexing the current file
     class FullIndexOperation : public LogDataOperation {
       public:
-        FullIndexOperation() : LogDataOperation( QString() ) {}
+        explicit FullIndexOperation(QTextCodec* forcedEncoding = nullptr)
+            : LogDataOperation( QString() )
+            , forcedEncoding_(forcedEncoding)
+        {}
         ~FullIndexOperation() {};
 
       protected:
         void doStart( LogDataWorkerThread& workerThread ) const;
+
+      private:
+        QTextCodec* forcedEncoding_;
     };
 
     // Indexing part of the current file (from fileSize)

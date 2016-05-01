@@ -228,6 +228,12 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "&Auto" },
     { "ASCII / &ISO-8859-1" },
     { "&UTF-8" },
+    { "CP1251" },
+    { "UTF-16LE" },
+    { "UTF-16BE" },
+    { "UTF-32LE" },
+    { "UTF-32BE" },
+    { "Local" },
 };
 
 // Menu actions
@@ -736,6 +742,7 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
 #endif
 
     showNormal();
+    currentCrawlerWidget()->setFocus();
 }
 
 void MainWindow::newVersionNotification( const QString& new_version )

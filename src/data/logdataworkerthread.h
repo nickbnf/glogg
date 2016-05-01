@@ -33,12 +33,35 @@
 #include "utils.h"
 #include "atomicflag.h"
 
+struct EncodingParameters
+{
+    EncodingParameters():lineFeedWidth(1),lineFeedIndex(0){}
+    explicit EncodingParameters(const QTextCodec* codec);
+
+    int lineFeedWidth;
+    int lineFeedIndex;
+
+    bool operator ==(const EncodingParameters& other) const
+    {
+        return  lineFeedWidth == other.lineFeedWidth &&
+                lineFeedIndex == other.lineFeedIndex;
+    }
+
+    bool operator !=(const EncodingParameters& other) const
+    {
+        return !operator ==(other);
+    }
+};
+
 // This class is a thread-safe set of indexing data.
 class IndexingData
 {
   public:
     IndexingData() : dataMutex_(), linePosition_(), maxLength_(0),
-        indexedSize_(0), encoding_(QTextCodec::codecForLocale()) { }
+        indexedSize_(0),
+        encodingGuess_(QTextCodec::codecForLocale()),
+        encodingForced_(nullptr)
+    { }
 
     // Get the total indexed size
     qint64 getSize() const;
@@ -56,6 +79,10 @@ class IndexingData
     // Get the guessed encoding for the content.
     QTextCodec* getEncodingGuess() const;
 
+    QTextCodec* getForcedEncoding() const;
+    void forceEncoding(QTextCodec* codec);
+
+
     // Atomically add to all the existing
     // indexing data.
     void addAll( qint64 size, int length,
@@ -72,7 +99,8 @@ class IndexingData
     int maxLength_;
     qint64 indexedSize_;
 
-    QTextCodec* encoding_;
+    QTextCodec* encodingGuess_;
+    QTextCodec* encodingForced_;
 };
 
 class IndexOperation : public QObject
@@ -107,9 +135,14 @@ class FullIndexOperation : public IndexOperation
 {
   public:
     FullIndexOperation( const QString& fileName,
-            IndexingData* indexingData, AtomicFlag* interruptRequest)
-        : IndexOperation( fileName, indexingData, interruptRequest ) { }
+            IndexingData* indexingData, AtomicFlag* interruptRequest,
+            QTextCodec* forcedEncoding = nullptr)
+        : IndexOperation( fileName, indexingData, interruptRequest )
+        , forcedEncoding_(forcedEncoding)
+    { }
     virtual bool start();
+  private:
+    QTextCodec* forcedEncoding_;
 };
 
 class PartialIndexOperation : public IndexOperation
@@ -143,7 +176,7 @@ class LogDataWorkerThread : public QThread
     void attachFile( const QString& fileName );
     // Instructs the thread to start a new full indexing of the file, sending
     // signals as it progresses.
-    void indexAll();
+    void indexAll(QTextCodec *forcedEncoding = nullptr);
     // Instructs the thread to start a partial indexing (starting at
     // the index passed).
     void indexAdditionalLines( qint64 position );

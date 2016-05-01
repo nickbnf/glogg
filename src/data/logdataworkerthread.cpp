@@ -25,6 +25,16 @@
 #include "logdata.h"
 #include "logdataworkerthread.h"
 
+EncodingParameters::EncodingParameters(const QTextCodec *codec)
+{
+    static const QChar lineFeed(QChar::LineFeed);
+    QTextCodec::ConverterState convertState(QTextCodec::IgnoreHeader);
+    QByteArray encodedLineFeed = codec->fromUnicode(&lineFeed, 1, &convertState);
+
+    lineFeedWidth = encodedLineFeed.length();
+    lineFeedIndex = encodedLineFeed[0] == '\n' ? 0 : (encodedLineFeed.length() - 1);
+}
+
 // Size of the chunk to read (5 MiB)
 const int IndexOperation::sizeChunk = 1*1024*1024;
 
@@ -59,8 +69,19 @@ qint64 IndexingData::getPosForLine( LineNumber line ) const
 QTextCodec *IndexingData::getEncodingGuess() const
 {
     QMutexLocker locker( &dataMutex_ );
+    return encodingGuess_;
+}
 
-    return encoding_;
+void IndexingData::forceEncoding(QTextCodec *codec)
+{
+     QMutexLocker locker( &dataMutex_ );
+     encodingForced_ = codec;
+}
+
+QTextCodec* IndexingData::getForcedEncoding() const
+{
+     QMutexLocker locker( &dataMutex_ );
+     return encodingForced_;
 }
 
 void IndexingData::addAll(qint64 size, int length,
@@ -74,7 +95,7 @@ void IndexingData::addAll(qint64 size, int length,
     maxLength_     = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
-    encoding_      = encoding;
+    encodingGuess_      = encoding;
 }
 
 void IndexingData::clear()
@@ -82,7 +103,8 @@ void IndexingData::clear()
     maxLength_   = 0;
     indexedSize_ = 0;
     linePosition_ = LinePositionArray();
-    encoding_    = QTextCodec::codecForLocale();
+    encodingGuess_    = QTextCodec::codecForLocale();
+    encodingForced_ = nullptr;
 }
 
 LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
@@ -109,7 +131,7 @@ void LogDataWorkerThread::attachFile( const QString& fileName )
     fileName_ = fileName;
 }
 
-void LogDataWorkerThread::indexAll()
+void LogDataWorkerThread::indexAll(QTextCodec* forcedEncoding)
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -121,7 +143,7 @@ void LogDataWorkerThread::indexAll()
 
     interruptRequested_.clear();
     operationRequested_ = new FullIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_ );
+            indexing_data_, &interruptRequested_, forcedEncoding );
     operationRequestedCond_.wakeAll();
 }
 
@@ -212,7 +234,9 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
     qint64 end = 0;               // Absolute position of the end of current line
     int additional_spaces = 0;    // Additional spaces due to tabs
 
-    QTextCodec* fileTextCodec= nullptr;
+    QTextCodec* fileTextCodec = nullptr;
+    QTextCodec* encodingGuess = nullptr;
+    EncodingParameters encodingParams;
 
     QFile file( fileName_ );
 
@@ -232,21 +256,14 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
             const QByteArray block = file.read( sizeChunk );
 
             if (!fileTextCodec) {
-                fileTextCodec = QTextCodec::codecForUtfText(block);
+                fileTextCodec = indexing_data->getForcedEncoding();
+                if (!fileTextCodec) fileTextCodec = QTextCodec::codecForUtfText(block);
+                encodingParams = EncodingParameters(fileTextCodec);
+                LOG(logWARNING) << "Encoding " << fileTextCodec->name().data() <<", Char width " << encodingParams.lineFeedWidth;
             }
 
-            quint8 charWidth = 1;
-            switch(fileTextCodec->mibEnum())
-            {
-                case 1013:
-                case 1014:
-                case 1015:
-                    charWidth = 2;
-                break;
-                case 1017:
-                case 1018:
-                case 1019:
-                    charWidth = 4;
+            if (!encodingGuess) {
+                encodingGuess = QTextCodec::codecForUtfText(block);
             }
 
             // Count the number of lines in each chunk
@@ -257,18 +274,16 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
                 // Looking for the next \n, expanding tabs in the process
                 do {
                     if ( pos_within_block < block.length() ) {
+                        const char c =  block.at(pos_within_block + encodingParams.lineFeedIndex);
 
-                        const char c1 =  block.at(pos_within_block);
-                        const char c2 =  block.at(pos_within_block + charWidth - 1);
-
-                        if ( c1 == '\n' || c2 == '\n')
+                        if ( c == '\n')
                             break;
-                        else if ( c1 == '\t' || c2 == '\t' )
+                        else if ( c == '\t')
                             additional_spaces += AbstractLogData::tabStop -
                                 ( ( ( block_beginning - pos ) + pos_within_block
                                     + additional_spaces ) % AbstractLogData::tabStop ) - 1;
 
-                        pos_within_block += charWidth;
+                        pos_within_block += encodingParams.lineFeedWidth;
                     }
                     else {
                         pos_within_block = -1;
@@ -282,7 +297,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
                     if ( length > max_length )
                         max_length = length;
 
-                    pos = end + charWidth;
+                    pos = end + encodingParams.lineFeedWidth;
                     additional_spaces = 0;
                     line_positions.append( pos );
                 }
@@ -290,7 +305,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
 
             // Update the shared data
             indexing_data->addAll( block.length(), max_length, line_positions,
-                   fileTextCodec );
+                   encodingGuess );
 
             // Update the caller for progress indication
             int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
@@ -307,7 +322,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
             line_position.append( file_size + 1 );
             line_position.setFakeFinalLF();
 
-            indexing_data->addAll( 0, 0, line_position, fileTextCodec );
+            indexing_data->addAll( 0, 0, line_position, encodingGuess );
         }
     }
     else {
@@ -332,6 +347,7 @@ bool FullIndexOperation::start()
 
     // First empty the index
     indexing_data_->clear();
+    indexing_data_->forceEncoding(forcedEncoding_);
 
     doIndex( indexing_data_, 0 );
 

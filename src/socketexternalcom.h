@@ -32,6 +32,7 @@ public slots:
 
 private slots:
     void onConnection();
+    void onReadyRead();
 
 private:
      QSharedMemory* memory_;

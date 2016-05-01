@@ -686,6 +686,8 @@ void CrawlerWidget::setup()
 
     searchLabel->setBuddy( searchLineEdit );
 
+    setFocusProxy(searchLineEdit);
+
     searchButton = new QToolButton();
     searchButton->setText( tr("&Search") );
     searchButton->setAutoRaise( true );
@@ -964,24 +966,41 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 // Determine the right encoding and set the views.
 void CrawlerWidget::updateEncoding()
 {
-    static const char* latin1_encoding = "iso-8859-1";
-    static const char* utf8_encoding   = "utf-8";
-
-    QTextCodec* textCodec = QTextCodec::codecForName(latin1_encoding);
-    encoding_text_ = tr( "Displayed as ISO-8859-1" );
-
+    QTextCodec* textCodec = QTextCodec::codecForName("iso-8859-1");
     switch ( encodingSetting_ ) {
         case ENCODING_AUTO:
             textCodec = logData_->getDetectedEncoding();
             encoding_text_ = tr(textCodec->name().data());
             break;
         case ENCODING_UTF8:
-            textCodec = QTextCodec::codecForName(utf8_encoding);
-            encoding_text_ = tr( "Displayed as UTF-8" );
+            textCodec = QTextCodec::codecForName("utf-8");
+            break;
+        case ENCODING_CP1251:
+            textCodec = QTextCodec::codecForName("windows-1251");
+            break;
+        case ENCODING_UTF16LE:
+            textCodec = QTextCodec::codecForName("utf-16le");
+            break;
+        case ENCODING_UTF16BE:
+            textCodec = QTextCodec::codecForName("utf-16be");
+            break;
+        case ENCODING_UTF32LE:
+            textCodec = QTextCodec::codecForName("utf-32le");
+            break;
+        case ENCODING_UTF32BE:
+            textCodec = QTextCodec::codecForName("utf-32be");
+            break;
+        case ENCODING_LOCAL:
+            textCodec = QTextCodec::codecForLocale();
             break;
         case ENCODING_ISO_8859_1:
         default:
             break;
+    }
+
+    if (encodingSetting_ != ENCODING_AUTO) {
+        QString displayedAs("Displayed as %1");
+        encoding_text_ = tr (displayedAs.arg(textCodec->name().data()).toLocal8Bit().data());
     }
 
     logData_->setDisplayEncoding( textCodec->name().data() );

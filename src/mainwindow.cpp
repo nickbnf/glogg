@@ -739,9 +739,9 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     window_flags = windowFlags();
     window_flags &= ~Qt::WindowStaysOnTopHint;
     setWindowFlags( window_flags );
+    showNormal();
 #endif
 
-    showNormal();
     currentCrawlerWidget()->setFocus();
 }
 

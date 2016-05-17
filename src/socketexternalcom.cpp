@@ -56,6 +56,9 @@ SocketExternalInstance::SocketExternalInstance()
 
 void SocketExternalInstance::loadFile(const QString &file_name) const
 {
+#ifdef _WIN32
+    ::AllowSetForegroundWindow(-1);
+#endif
     QLocalSocket socket;
     socket.connectToServer(GLOG_SERVICE_NAME);
     if (!socket.waitForConnected(1000)) {

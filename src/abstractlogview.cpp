@@ -1071,6 +1071,7 @@ QString AbstractLogView::getSelection() const
 void AbstractLogView::selectAll()
 {
     selection_.selectRange( 0, logData->getNbLine() - 1 );
+    textAreaCache_.invalid_ = true;
     update();
 }
 

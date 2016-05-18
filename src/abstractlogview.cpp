@@ -1410,7 +1410,7 @@ void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
 void AbstractLogView::updateScrollBars()
 {
     verticalScrollBar()->setRange( 0, std::max( 0LL,
-            logData->getNbLine() - getNbVisibleLines() ) );
+            logData->getNbLine() - getNbVisibleLines() + 1 ) );
 
     const int hScrollMaxValue = std::max( 0,
             logData->getMaxLength() - getNbVisibleCols() + 1 );

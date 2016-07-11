@@ -173,6 +173,7 @@ int main(int argc, char *argv[])
         // Convert to absolute path
         const QFileInfo file( filename );
         filename = file.absoluteFilePath();
+        LOG(logDEBUG) << "Filename: " << filename.toStdString();
     }
 
     // External communicator

@@ -68,7 +68,7 @@ class ThreadPrivateStore
         const int thread_id = std::hash<Qt::HANDLE>()( QThread::currentThreadId() );
 
         int i;
-        for ( i=0; thread_ids_[i]; ++i ) {
+        for ( i=0; thread_ids_[i].load(); ++i ) {
             if ( thread_ids_[i].loadAcquire() == thread_id ) { return i; }
         }
 

@@ -870,8 +870,11 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 
         // Set the pattern case insensitive if needed
         QRegularExpression::PatternOptions patternOptions =
-                QRegularExpression::UseUnicodePropertiesOption
-                | QRegularExpression::OptimizeOnFirstUsageOption;
+                QRegularExpression::UseUnicodePropertiesOption;
+
+#if QT_VERSION >= 0x050400
+        patternOptions |= QRegularExpression::OptimizeOnFirstUsageOption;
+#endif
 
         if ( ignoreCaseCheck->checkState() == Qt::Checked )
             patternOptions |= QRegularExpression::CaseInsensitiveOption;

@@ -330,6 +330,8 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
         // If the file cannot be open, we do as if it was empty
         LOG(logWARNING) << "Cannot open file " << fileName_.toStdString();
 
+        indexing_data->clear();
+
         emit indexingProgressed( 100 );
     }
     LOG(logINFO) << "Detected encoding " << fileTextCodec->name().data();

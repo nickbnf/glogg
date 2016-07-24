@@ -34,7 +34,7 @@ class ViewContextInterface {
   public:
     virtual ~ViewContextInterface() {}
 
-    virtual std::string toString() const = 0;
+    virtual QString toString() const = 0;
 };
 
 // ViewInterface represents a high-level view on a log file.
@@ -57,7 +57,7 @@ class ViewInterface {
     { doSetSavedSearches( saved_searches ); }
 
     // For save/restore of the context
-    void setViewContext( const char* view_context )
+    void setViewContext( const QString& view_context )
     { doSetViewContext( view_context ); }
     // (returned object ownership is transferred to the caller)
     std::shared_ptr<const ViewContextInterface> context( void ) const
@@ -75,7 +75,7 @@ class ViewInterface {
     virtual void doSetSavedSearches(
             std::shared_ptr<SavedSearches> saved_searches ) = 0;
     virtual void doSetViewContext(
-            const char* view_context ) = 0;
+            const QString& view_context ) = 0;
     virtual std::shared_ptr<const ViewContextInterface>
         doGetViewContext( void ) const = 0;
 };

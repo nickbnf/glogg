@@ -108,7 +108,7 @@ static constexpr size_t INOTIFY_BUFFER_SIZE = 4096;
 std::vector<INotifyWatchTowerDriver::INotifyObservedFile*>
 INotifyWatchTowerDriver::waitAndProcessEvents(
         INotifyObservedFileList* list,
-        std::unique_lock<std::mutex>* list_lock,
+        QMutexLocker* list_lock,
         std::vector<INotifyObservedFile*>* files_needing_readding,
         int timeout_ms )
 {
@@ -125,7 +125,7 @@ INotifyWatchTowerDriver::waitAndProcessEvents(
 
     list_lock->unlock();
     int poll_ret = poll( fds, 2, timeout_ms ? timeout_ms : -1 );
-    list_lock->lock();
+    list_lock->relock();
 
     if ( poll_ret > 0 )
     {

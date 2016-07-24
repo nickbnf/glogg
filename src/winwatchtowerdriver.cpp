@@ -171,7 +171,7 @@ WinWatchTowerDriver::DirId WinWatchTowerDriver::addDir(
     // Add will be done in the watchtower thread
     {
         /*
-        std::lock_guard<std::mutex> lk( action_mutex_ );
+        QMutexLocker lk( &action_mutex_ );
         scheduled_action_ = std::make_unique<Action>( [this, file_name, &dir_id] {
             serialisedAddDir( file_name, dir_id );
         } );
@@ -185,10 +185,11 @@ WinWatchTowerDriver::DirId WinWatchTowerDriver::addDir(
     // Wait for the add task to be completed
     {
         /*
-        std::unique_lock<std::mutex> lk( action_mutex_ );
-        action_done_cv_.wait( lk,
-                [this]{ return ( scheduled_action_ == nullptr ); } );
-                */
+        QMutexLocker lk( &action_mutex_ );
+        while( scheduled_action_ != nullptr ) {
+            action_done_cv_.wait( &action_mutex_ );
+        }
+        */
     }
 
     LOG(logDEBUG) << "addDir returned " << dir_id.dir_record_;
@@ -296,7 +297,7 @@ void WinWatchTowerDriver::serialisedAddDir(
 
 std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProcessEvents(
         ObservedFileList<WinWatchTowerDriver>* list,
-        std::unique_lock<std::mutex>* lock,
+        QMutexLocker* lock,
         std::vector<ObservedFile<WinWatchTowerDriver>*>* /* not needed in WinWatchTowerDriver */,
         int timeout_ms )
 {
@@ -316,7 +317,7 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
             &key,
             &lpOverlapped,
             timeout_ms );
-    lock->lock();
+    lock->relock();
 
     LOG(logDEBUG) << "Event (" << status << ") key: " << std::hex << key;
 
@@ -364,19 +365,19 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
     }
 
     {
-        std::lock_guard<std::mutex> lk( action_mutex_ );
+        QMutexLocker lk( &action_mutex_ );
         if ( scheduled_action_ ) {
             (*scheduled_action_)();
             scheduled_action_ = nullptr;
-            action_done_cv_.notify_all();
+            action_done_cv_.wakeAll();
         }
     }
 
     /*
     // Just in case someone is waiting for an action to complete
-    std::lock_guard<std::mutex> lk( action_mutex_ );
+    QMutexLocker lk( &action_mutex_ );
     scheduled_action_ = nullptr;
-    action_done_cv_.notify_all();
+    action_done_cv_.wakeAll();
     */
     return files_to_notify;
 }

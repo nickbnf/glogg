@@ -189,7 +189,7 @@ void MainWindow::reloadSession()
                []() { return new CrawlerWidget(); },
                &current_file_index ) )
     {
-        QString file_name = { open_file.first.c_str() };
+        QString file_name = { open_file.first };
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
                 open_file.second );
 
@@ -228,6 +228,12 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "&Auto" },
     { "ASCII / &ISO-8859-1" },
     { "&UTF-8" },
+    { "CP1251" },
+    { "UTF-16LE" },
+    { "UTF-16BE" },
+    { "UTF-32LE" },
+    { "UTF-32BE" },
+    { "Local" },
 };
 
 // Menu actions
@@ -431,8 +437,8 @@ void MainWindow::open()
     // Default to the path of the current file if there is one
     if ( auto current = currentCrawlerWidget() )
     {
-        std::string current_file = session_->getFilename( current );
-        QFileInfo fileInfo = QFileInfo( QString( current_file.c_str() ) );
+        QString current_file = session_->getFilename( current );
+        QFileInfo fileInfo = QFileInfo( current_file );
         defaultDir = fileInfo.path();
     }
 
@@ -589,7 +595,7 @@ void MainWindow::updateLoadingProgress( int progress )
     LOG(logDEBUG) << "Loading progress: " << progress;
 
     QString current_file =
-        session_->getFilename( currentCrawlerWidget() ).c_str();
+        session_->getFilename( currentCrawlerWidget() );
 
     // We ignore 0% and 100% to avoid a flash when the file (or update)
     // is very short.
@@ -683,8 +689,7 @@ void MainWindow::currentTabChanged( int index )
         updateMenuBarFromDocument( crawler_widget );
 
         // Update the title bar
-        updateTitleBar( QString(
-                    session_->getFilename( crawler_widget ).c_str() ) );
+        updateTitleBar( session_->getFilename( crawler_widget ) );
     }
     else
     {
@@ -734,9 +739,10 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     window_flags = windowFlags();
     window_flags &= ~Qt::WindowStaysOnTopHint;
     setWindowFlags( window_flags );
+    showNormal();
 #endif
 
-    showNormal();
+    currentCrawlerWidget()->setFocus();
 }
 
 void MainWindow::newVersionNotification( const QString& new_version )
@@ -815,7 +821,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     // First check if the file is already open...
     CrawlerWidget* existing_crawler = dynamic_cast<CrawlerWidget*>(
-            session_->getViewIfOpen( fileName.toStdString() ) );
+            session_->getViewIfOpen( fileName ) );
     if ( existing_crawler ) {
         // ... and switch to it.
         mainTabWidget_.setCurrentWidget( existing_crawler );
@@ -828,7 +834,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     try {
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
-                session_->open( fileName.toStdString(),
+                session_->open( fileName,
                     []() { return new CrawlerWidget(); } ) );
         assert( crawler_widget );
 
@@ -931,7 +937,7 @@ void MainWindow::updateInfoLine()
     // Following should always work as we will only receive enter
     // this slot if there is a crawler connected.
     QString current_file =
-        session_->getFilename( currentCrawlerWidget() ).c_str();
+        session_->getFilename( currentCrawlerWidget() );
 
     uint64_t fileSize;
     uint32_t fileNbLine;

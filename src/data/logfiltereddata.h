@@ -26,7 +26,7 @@
 #include <QByteArray>
 #include <QList>
 #include <QStringList>
-#include <QRegExp>
+#include <QRegularExpression>
 
 #include "abstractlogdata.h"
 #include "logfiltereddataworkerthread.h"
@@ -54,10 +54,10 @@ class LogFilteredData : public AbstractLogData {
     // Starts the async search, sending newDataAvailable() when new data found.
     // If a search is already in progress this function will block until
     // it is done, so the application should call interruptSearch() first.
-    void runSearch( const QRegExp& regExp );
+    void runSearch(const QRegularExpression &regExp, qint64 startLine, qint64 endLine);
     // Add to the existing search, starting at the line when the search was
     // last stopped. Used when the file on disk has been added too.
-    void updateSearch();
+    void updateSearch(qint64 startLine, qint64 endLine);
     // Interrupt the running search if one is in progress.
     // Nothing is done if no search is in progress.
     void interruptSearch();
@@ -68,6 +68,10 @@ class LogFilteredData : public AbstractLogData {
     qint64 getMatchingLineNumber( int index ) const;
     // Returns whether the line number passed is in our list of matching ones.
     bool isLineInMatchingList( qint64 lineNumber );
+
+    // Returns the line 'index' in filterd log data that matches
+    // given original line number
+    int getLineIndexNumber( quint64 lineNumber ) const;
 
     // Returns the number of lines in the source log data
     LineNumber getNbTotalLines() const;
@@ -128,7 +132,7 @@ class LogFilteredData : public AbstractLogData {
     SearchResultArray matching_lines_;
 
     const LogData* sourceLogData_;
-    QRegExp currentRegExp_;
+    QRegularExpression currentRegExp_;
     bool searchDone_;
     int maxLength_;
     int maxLengthMarks_;
@@ -148,6 +152,8 @@ class LogFilteredData : public AbstractLogData {
 
     // Utility functions
     LineNumber findLogDataLine( LineNumber lineNum ) const;
+    LineNumber findFilteredLine( LineNumber lineNum ) const;
+
     void regenerateFilteredItemsCache() const;
 };
 
@@ -169,6 +175,12 @@ class LogFilteredData::FilteredItem {
     { return lineNumber_; }
     FilteredLineType type() const
     { return type_; }
+
+    bool operator <( const LogFilteredData::FilteredItem& other ) const
+    { return lineNumber_ < other.lineNumber_; }
+
+    bool operator <( const LineNumber& lineNumber ) const
+    { return lineNumber_ < lineNumber; }
 
   private:
     LineNumber lineNumber_;

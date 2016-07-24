@@ -22,7 +22,7 @@
 
 #include <QObject>
 #include <QString>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QList>
 
 // Represents a match result for QuickFind
@@ -88,7 +88,7 @@ class QuickFindPattern : public QObject
 
   private:
     bool active_;
-    QRegExp regexp_;
+    QRegularExpression regexp_;
 
     mutable int lastMatchStart_;
     mutable int lastMatchEnd_;

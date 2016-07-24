@@ -73,6 +73,12 @@ class CrawlerWidget : public QSplitter,
         ENCODING_AUTO = 0,
         ENCODING_ISO_8859_1,
         ENCODING_UTF8,
+        ENCODING_CP1251,
+        ENCODING_UTF16LE,
+        ENCODING_UTF16BE,
+        ENCODING_UTF32LE,
+        ENCODING_UTF32BE,
+        ENCODING_LOCAL,
         ENCODING_MAX,
     };
 
@@ -100,7 +106,7 @@ class CrawlerWidget : public QSplitter,
             std::shared_ptr<QuickFindPattern> qfp );
     virtual void doSetSavedSearches(
             std::shared_ptr<SavedSearches> saved_searches );
-    virtual void doSetViewContext( const char* view_context );
+    virtual void doSetViewContext( const QString& view_context );
     virtual std::shared_ptr<const ViewContextInterface>
         doGetViewContext( void ) const;
 
@@ -182,6 +188,9 @@ class CrawlerWidget : public QSplitter,
 
     // Called when there was activity in the views
     void activityDetected();
+
+    void setSearchLimits( qint64 startLine, qint64 endLine );
+    void clearSearchLimits();
 
   private:
     // State machine holding the state of the search, used to allow/disallow
@@ -279,6 +288,9 @@ class CrawlerWidget : public QSplitter,
 
     // Last main line number received
     qint64 currentLineNumber_;
+
+    qint64 searchStartLine_;
+    qint64 searchEndLine_;
 
     // Are we loading something?
     // Set to false when we receive a completion message from the LogData

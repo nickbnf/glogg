@@ -152,6 +152,9 @@ void OptionsDialog::updateDialogFromConfig()
     // Polling
     pollingCheckBox->setChecked( config->pollingEnabled() );
     pollIntervalLineEdit->setText( QString::number( config->pollIntervalMs() ) );
+
+    // Last session
+    loadLastSessionCheckBox->setChecked( config->loadLastSession() );
 }
 
 //
@@ -199,6 +202,7 @@ void OptionsDialog::updateConfigFromDialog()
 
     config->setPollIntervalMs( poll_interval );
 
+    config->setLoadLastSession( loadLastSessionCheckBox->isChecked() );
     emit optionsChanged();
 }
 

@@ -93,21 +93,23 @@ LogFilteredData::~LogFilteredData()
 //
 
 // Run the search and send newDataAvailable() signals.
-void LogFilteredData::runSearch( const QRegExp& regExp )
+void LogFilteredData::runSearch(const QRegularExpression& regExp,
+                                qint64 startLine, qint64 endLine)
 {
     LOG(logDEBUG) << "Entering runSearch";
 
     clearSearch();
     currentRegExp_ = regExp;
 
-    workerThread_.search( currentRegExp_ );
+    workerThread_.search( currentRegExp_, startLine, endLine );
 }
 
-void LogFilteredData::updateSearch()
+void LogFilteredData::updateSearch(qint64 startLine, qint64 endLine)
 {
     LOG(logDEBUG) << "Entering updateSearch";
 
-    workerThread_.updateSearch( currentRegExp_, nbLinesProcessed_ );
+    workerThread_.updateSearch( currentRegExp_, startLine, endLine,
+                                nbLinesProcessed_ );
 }
 
 void LogFilteredData::interruptSearch()
@@ -119,7 +121,7 @@ void LogFilteredData::interruptSearch()
 
 void LogFilteredData::clearSearch()
 {
-    currentRegExp_ = QRegExp();
+    currentRegExp_ = QRegularExpression();
     matching_lines_.clear();
     maxLength_        = 0;
     maxLengthMarks_   = 0;
@@ -132,6 +134,12 @@ qint64 LogFilteredData::getMatchingLineNumber( int matchNum ) const
     qint64 matchingLine = findLogDataLine( matchNum );
 
     return matchingLine;
+}
+
+int LogFilteredData::getLineIndexNumber( quint64 lineNumber ) const
+{
+    int lineIndex = findFilteredLine( lineNumber );
+    return lineIndex;
 }
 
 // Scan the list for the 'lineNumber' passed
@@ -284,6 +292,33 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
     }
 
     return line;
+}
+
+LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
+{
+    LineNumber lineIndex = std::numeric_limits<LineNumber>::max();
+
+    if ( visibility_ == MatchesOnly ) {
+        lineIndex = lookupLineNumber( matching_lines_.begin(),
+                                      matching_lines_.end(),
+                                      lineNum );
+    }
+    else if ( visibility_ == MarksOnly ) {
+        lineIndex = lookupLineNumber( marks_.begin(),
+                                      marks_.end(),
+                                      lineNum );
+    }
+    else {
+        // Regenerate the cache if needed
+        if ( filteredItemsCacheDirty_ )
+            regenerateFilteredItemsCache();
+
+        lineIndex = lookupLineNumber( filteredItemsCache_.begin(),
+                                      filteredItemsCache_.end(),
+                                      lineNum );
+    }
+
+    return lineIndex;
 }
 
 // Implementation of the virtual function.

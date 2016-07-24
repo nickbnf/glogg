@@ -18,14 +18,25 @@
  */
 
 #include <QFile>
+#include <QTextStream>
 
 #include "log.h"
 
 #include "logdata.h"
 #include "logdataworkerthread.h"
 
+EncodingParameters::EncodingParameters(const QTextCodec *codec)
+{
+    static const QChar lineFeed(QChar::LineFeed);
+    QTextCodec::ConverterState convertState(QTextCodec::IgnoreHeader);
+    QByteArray encodedLineFeed = codec->fromUnicode(&lineFeed, 1, &convertState);
+
+    lineFeedWidth = encodedLineFeed.length();
+    lineFeedIndex = encodedLineFeed[0] == '\n' ? 0 : (encodedLineFeed.length() - 1);
+}
+
 // Size of the chunk to read (5 MiB)
-const int IndexOperation::sizeChunk = 5*1024*1024;
+const int IndexOperation::sizeChunk = 1*1024*1024;
 
 qint64 IndexingData::getSize() const
 {
@@ -55,16 +66,27 @@ qint64 IndexingData::getPosForLine( LineNumber line ) const
     return linePosition_.at( line );
 }
 
-EncodingSpeculator::Encoding IndexingData::getEncodingGuess() const
+QTextCodec *IndexingData::getEncodingGuess() const
 {
     QMutexLocker locker( &dataMutex_ );
-
-    return encoding_;
+    return encodingGuess_;
 }
 
-void IndexingData::addAll( qint64 size, int length,
+void IndexingData::forceEncoding(QTextCodec *codec)
+{
+     QMutexLocker locker( &dataMutex_ );
+     encodingForced_ = codec;
+}
+
+QTextCodec* IndexingData::getForcedEncoding() const
+{
+     QMutexLocker locker( &dataMutex_ );
+     return encodingForced_;
+}
+
+void IndexingData::addAll(qint64 size, int length,
         const FastLinePositionArray& linePosition,
-        EncodingSpeculator::Encoding encoding )
+        QTextCodec *encoding )
 
 {
     QMutexLocker locker( &dataMutex_ );
@@ -73,7 +95,7 @@ void IndexingData::addAll( qint64 size, int length,
     maxLength_     = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
-    encoding_      = encoding;
+    encodingGuess_      = encoding;
 }
 
 void IndexingData::clear()
@@ -81,23 +103,22 @@ void IndexingData::clear()
     maxLength_   = 0;
     indexedSize_ = 0;
     linePosition_ = LinePositionArray();
-    encoding_    = EncodingSpeculator::Encoding::ASCII7;
+    encodingGuess_    = QTextCodec::codecForLocale();
+    encodingForced_ = nullptr;
 }
 
 LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
     : QThread(), mutex_(), operationRequestedCond_(),
     nothingToDoCond_(), fileName_(), indexing_data_( indexing_data )
 {
-    terminate_          = false;
-    interruptRequested_ = false;
-    operationRequested_ = NULL;
+    operationRequested_ = nullptr;
 }
 
 LogDataWorkerThread::~LogDataWorkerThread()
 {
     {
         QMutexLocker locker( &mutex_ );
-        terminate_ = true;
+        terminate_.set();
         operationRequestedCond_.wakeAll();
     }
     wait();
@@ -110,7 +131,7 @@ void LogDataWorkerThread::attachFile( const QString& fileName )
     fileName_ = fileName;
 }
 
-void LogDataWorkerThread::indexAll()
+void LogDataWorkerThread::indexAll(QTextCodec* forcedEncoding)
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -120,9 +141,9 @@ void LogDataWorkerThread::indexAll()
     while ( (operationRequested_ != NULL) )
         nothingToDoCond_.wait( &mutex_ );
 
-    interruptRequested_ = false;
+    interruptRequested_.clear();
     operationRequested_ = new FullIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, &encodingSpeculator_ );
+            indexing_data_, &interruptRequested_, forcedEncoding );
     operationRequestedCond_.wakeAll();
 }
 
@@ -136,18 +157,16 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
     while ( (operationRequested_ != NULL) )
         nothingToDoCond_.wait( &mutex_ );
 
-    interruptRequested_ = false;
+    interruptRequested_.clear();
     operationRequested_ = new PartialIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, &encodingSpeculator_, position );
+            indexing_data_, &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
 }
 
 void LogDataWorkerThread::interrupt()
 {
     LOG(logDEBUG) << "Load interrupt requested";
-
-    // No mutex here, setting a bool is probably atomic!
-    interruptRequested_ = true;
+    interruptRequested_.set();
 }
 
 // This is the thread's main loop
@@ -156,7 +175,7 @@ void LogDataWorkerThread::run()
     QMutexLocker locker( &mutex_ );
 
     forever {
-        while ( (terminate_ == false) && (operationRequested_ == NULL) )
+        while ( !terminate_ && (operationRequested_ == NULL) )
             operationRequestedCond_.wait( &mutex_ );
         LOG(logDEBUG) << "Worker thread signaled";
 
@@ -195,31 +214,32 @@ void LogDataWorkerThread::run()
 //
 
 IndexOperation::IndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest,
-        EncodingSpeculator* encodingSpeculator )
+        IndexingData* indexingData, AtomicFlag* interruptRequest)
     : fileName_( fileName )
 {
     interruptRequest_ = interruptRequest;
     indexing_data_ = indexingData;
-    encoding_speculator_ = encodingSpeculator;
 }
 
 PartialIndexOperation::PartialIndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest,
-        EncodingSpeculator* speculator, qint64 position )
-    : IndexOperation( fileName, indexingData, interruptRequest, speculator )
+        IndexingData* indexingData, AtomicFlag* interruptRequest, qint64 position )
+    : IndexOperation( fileName, indexingData, interruptRequest )
 {
     initialPosition_ = position;
 }
 
-void IndexOperation::doIndex( IndexingData* indexing_data,
-        EncodingSpeculator* encoding_speculator, qint64 initialPosition )
+void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition )
 {
     qint64 pos = initialPosition; // Absolute position of the start of current line
     qint64 end = 0;               // Absolute position of the end of current line
     int additional_spaces = 0;    // Additional spaces due to tabs
 
+    QTextCodec* fileTextCodec = nullptr;
+    QTextCodec* encodingGuess = nullptr;
+    EncodingParameters encodingParams;
+
     QFile file( fileName_ );
+
     if ( file.open( QIODevice::ReadOnly ) ) {
         // Count the number of lines and max length
         // (read big chunks to speed up reading from disk)
@@ -228,30 +248,42 @@ void IndexOperation::doIndex( IndexingData* indexing_data,
             FastLinePositionArray line_positions;
             int max_length = 0;
 
-            if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
+            if ( *interruptRequest_ )
                 break;
 
             // Read a chunk of 5MB
             const qint64 block_beginning = file.pos();
             const QByteArray block = file.read( sizeChunk );
 
+            if (!fileTextCodec) {
+                fileTextCodec = indexing_data->getForcedEncoding();
+                if (!fileTextCodec) fileTextCodec = QTextCodec::codecForUtfText(block);
+                encodingParams = EncodingParameters(fileTextCodec);
+                LOG(logWARNING) << "Encoding " << fileTextCodec->name().data() <<", Char width " << encodingParams.lineFeedWidth;
+            }
+
+            if (!encodingGuess) {
+                encodingGuess = QTextCodec::codecForUtfText(block);
+            }
+
             // Count the number of lines in each chunk
             qint64 pos_within_block = 0;
             while ( pos_within_block != -1 ) {
                 pos_within_block = qMax( pos - block_beginning, 0LL);
+
                 // Looking for the next \n, expanding tabs in the process
                 do {
                     if ( pos_within_block < block.length() ) {
-                        const char c = block.at(pos_within_block);
-                        encoding_speculator->inject_byte( c );
-                        if ( c == '\n' )
+                        const char c =  block.at(pos_within_block + encodingParams.lineFeedIndex);
+
+                        if ( c == '\n')
                             break;
-                        else if ( c == '\t' )
+                        else if ( c == '\t')
                             additional_spaces += AbstractLogData::tabStop -
                                 ( ( ( block_beginning - pos ) + pos_within_block
                                     + additional_spaces ) % AbstractLogData::tabStop ) - 1;
 
-                        pos_within_block++;
+                        pos_within_block += encodingParams.lineFeedWidth;
                     }
                     else {
                         pos_within_block = -1;
@@ -264,7 +296,8 @@ void IndexOperation::doIndex( IndexingData* indexing_data,
                     const int length = end-pos + additional_spaces;
                     if ( length > max_length )
                         max_length = length;
-                    pos = end + 1;
+
+                    pos = end + encodingParams.lineFeedWidth;
                     additional_spaces = 0;
                     line_positions.append( pos );
                 }
@@ -272,7 +305,7 @@ void IndexOperation::doIndex( IndexingData* indexing_data,
 
             // Update the shared data
             indexing_data->addAll( block.length(), max_length, line_positions,
-                   encoding_speculator->guess() );
+                   encodingGuess );
 
             // Update the caller for progress indication
             int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
@@ -289,7 +322,7 @@ void IndexOperation::doIndex( IndexingData* indexing_data,
             line_position.append( file_size + 1 );
             line_position.setFakeFinalLF();
 
-            indexing_data->addAll( 0, 0, line_position, encoding_speculator->guess() );
+            indexing_data->addAll( 0, 0, line_position, encodingGuess );
         }
     }
     else {
@@ -297,8 +330,11 @@ void IndexOperation::doIndex( IndexingData* indexing_data,
         // If the file cannot be open, we do as if it was empty
         LOG(logWARNING) << "Cannot open file " << fileName_.toStdString();
 
+        indexing_data->clear();
+
         emit indexingProgressed( 100 );
     }
+    LOG(logINFO) << "Detected encoding " << fileTextCodec->name().data();
 }
 
 // Called in the worker thread's context
@@ -313,11 +349,12 @@ bool FullIndexOperation::start()
 
     // First empty the index
     indexing_data_->clear();
+    indexing_data_->forceEncoding(forcedEncoding_);
 
-    doIndex( indexing_data_, encoding_speculator_, 0 );
+    doIndex( indexing_data_, 0 );
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
-        "interrupt = " << *interruptRequest_;
+        "interrupt = " << static_cast<bool>(*interruptRequest_);
 
     return ( *interruptRequest_ ? false : true );
 }
@@ -332,7 +369,7 @@ bool PartialIndexOperation::start()
 
     emit indexingProgressed( 0 );
 
-    doIndex( indexing_data_, encoding_speculator_, initialPosition_ );
+    doIndex( indexing_data_, initialPosition_ );
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 

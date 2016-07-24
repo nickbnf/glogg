@@ -94,7 +94,7 @@ void TestLogFilteredData::simpleSearchTest()
     qint64 matches[] = { 0, 15, 20, 135 };
     QBENCHMARK {
         // Start the search
-        filteredData_->runSearch( QRegExp( "123" ) );
+        filteredData_->runSearch( QRegularExpression( "123" ) );
 
         // And check we receive data in 4 chunks (the first being empty)
         for ( int i = 0; i < 4; i++ ) {
@@ -118,7 +118,7 @@ void TestLogFilteredData::simpleSearchTest()
     QCOMPARE( filteredData_->getMatchingLineNumber( 0 ), 123LL );
 
     // Now let's try interrupting a search
-    filteredData_->runSearch( QRegExp( "123" ) );
+    filteredData_->runSearch( QRegularExpression( "123" ) );
     // ... wait for two chunks.
     waitSearchProgressed();
     signalSearchProgressedRead();
@@ -175,8 +175,8 @@ void TestLogFilteredData::multipleSearchTest()
     // Performs two searches in a row
     // Start the search, and immediately another one
     // (the second call should block until the first search is done)
-    filteredData_->runSearch( QRegExp( "1234" ) );
-    filteredData_->runSearch( QRegExp( "123" ) );
+    filteredData_->runSearch( QRegularExpression( "1234" ) );
+    filteredData_->runSearch( QRegularExpression( "123" ) );
 
     for ( int i = 0; i < 3; i++ ) {
         waitSearchProgressed();
@@ -191,7 +191,7 @@ void TestLogFilteredData::multipleSearchTest()
     // Now a tricky one: we run a search and immediately attach a new file
     /* FIXME: sometimes we receive loadingFinished before searchProgressed
      * -> deadlock in the test.
-    filteredData_->runSearch( QRegExp( "123" ) );
+    filteredData_->runSearch( QRegularExpression( "123" ) );
     waitSearchProgressed();
     signalSearchProgressedRead();
     logData_->attachFile( TMPDIR "/mediumlog.txt" );
@@ -241,7 +241,7 @@ void TestLogFilteredData::updateSearchTest()
     signalLoadingFinishedRead();
 
     // Perform a first search
-    filteredData_->runSearch( QRegExp( "123" ) );
+    filteredData_->runSearch( QRegularExpression( "123" ) );
 
     for ( int i = 0; i < 2; i++ ) {
         waitSearchProgressed();
@@ -413,7 +413,7 @@ void TestLogFilteredData::marksTest()
     // Performs a search
     QSignalSpy progressSpy( filteredData_,
             SIGNAL( searchProgressed( int, int ) ) );
-    filteredData_->runSearch( QRegExp( "0000.4" ) );
+    filteredData_->runSearch( QRegularExpression( "0000.4" ) );
 
     for ( int i = 0; i < 1; i++ ) {
         waitSearchProgressed();
@@ -512,7 +512,7 @@ void TestLogFilteredData::lineLengthTest()
 
     // Performs a search (the two middle lines matche)
     filteredData_->setVisibility( LogFilteredData::MatchesOnly );
-    filteredData_->runSearch( QRegExp( "longer" ) );
+    filteredData_->runSearch( QRegularExpression( "longer" ) );
 
     std::pair<int,int> progress;
     do {

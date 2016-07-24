@@ -247,10 +247,12 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     selectionCurrentEndPos_(),
     autoScrollTimer_(),
     selection_(),
+    searchStart_(),
     quickFindPattern_( quickFindPattern ),
     quickFind_( newLogData, &selection_, quickFindPattern )
 {
     logData = newLogData;
+    searchEnd_ = logData->getNbLine();
 
     followMode_ = false;
 
@@ -360,10 +362,16 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         // Prepare the popup depending on selection type
         if ( selection_.isSingleLine() ) {
             copyAction_->setText( "&Copy this line" );
+
+            setSearchStartAction_->setEnabled( true );
+            setSearchEndAction_->setEnabled( true );
         }
         else {
             copyAction_->setText( "&Copy" );
             copyAction_->setStatusTip( tr("Copy the selection") );
+
+            setSearchStartAction_->setEnabled( false );
+            setSearchEndAction_->setEnabled( false );
         }
 
         if ( selection_.isPortion() ) {
@@ -513,13 +521,33 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
     QAbstractScrollArea::timerEvent( timerEvent );
 }
 
+void AbstractLogView::moveSelectionAndEmit(int delta) {
+    disableFollow();
+    moveSelection( delta );
+    emit newSelection( selection_.selectedLine() );
+}
+
+void AbstractLogView::moveSelectionUp() {
+    int delta = qMin( -1, - digitsBuffer_.content() );
+    moveSelectionAndEmit(delta);
+}
+
+void AbstractLogView::moveSelectionDown() {
+    int delta = qMax( 1, digitsBuffer_.content() );
+    moveSelectionAndEmit(delta);
+}
+
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
     bool controlModifier = (keyEvent->modifiers() & Qt::ControlModifier) == Qt::ControlModifier;
     bool shiftModifier = (keyEvent->modifiers() & Qt::ShiftModifier) == Qt::ShiftModifier;
 
-    if ( keyEvent->key() == Qt::Key_Left )
+    if ( keyEvent->key() == Qt::Key_Up)
+        moveSelectionUp();
+    else if ( keyEvent->key() == Qt::Key_Down)
+        moveSelectionDown();
+    else if ( keyEvent->key() == Qt::Key_Left )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
     else if ( keyEvent->key() == Qt::Key_Right )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
@@ -558,20 +586,12 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             switch ( (keyEvent->text())[0].toLatin1() ) {
                 case 'j':
                     {
-                        int delta = qMax( 1, digitsBuffer_.content() );
-                        disableFollow();
-                        //verticalScrollBar()->triggerAction(
-                        //QScrollBar::SliderSingleStepAdd);
-                        moveSelection( delta );
+                        moveSelectionDown();
                         break;
                     }
                 case 'k':
                     {
-                        int delta = qMin( -1, - digitsBuffer_.content() );
-                        disableFollow();
-                        //verticalScrollBar()->triggerAction(
-                        //QScrollBar::SliderSingleStepSub);
-                        moveSelection( delta );
+                        moveSelectionUp();
                         break;
                     }
                 case 'h':
@@ -614,7 +634,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     // Use the selected 'word' and search forward
                     findNextSelected();
                     break;
-                case '#':
+                case '/':
                     // Use the selected 'word' and search backward
                     findPreviousSelected();
                     break;
@@ -816,6 +836,11 @@ qint64 AbstractLogView::displayLineNumber( int lineNumber ) const
     return lineNumber + 1; // show a 1-based index
 }
 
+qint64 AbstractLogView::lineIndex( int lineNumber ) const
+{
+    return lineNumber;
+}
+
 qint64 AbstractLogView::maxDisplayLineNumber() const
 {
     return logData->getNbLine();
@@ -958,6 +983,27 @@ void AbstractLogView::copy()
     clipboard->setText( selection_.getSelectedText( logData ) );
 }
 
+void AbstractLogView::updateSearchLimits()
+{
+    textAreaCache_.invalid_ = true;
+    update();
+
+    emit changeSearchLimits(displayLineNumber(searchStart_) - 1,
+                         displayLineNumber(searchEnd_) - 1);
+}
+
+void AbstractLogView::setSearchStart()
+{
+    searchStart_ = selection_.selectedLine();
+    updateSearchLimits();
+}
+
+void AbstractLogView::setSearchEnd()
+{
+    searchEnd_ =  selection_.selectedLine() + 1;
+    updateSearchLimits();
+}
+
 //
 // Public functions
 //
@@ -994,10 +1040,7 @@ void AbstractLogView::updateData()
     if ( overview_ != NULL )
         overview_->updateCurrentPosition( firstLine, last_line );
 
-    // Invalidate our cache
     textAreaCache_.invalid_ = true;
-
-    // Repaint!
     update();
 }
 
@@ -1080,6 +1123,15 @@ void AbstractLogView::forceRefresh()
 {
     // Invalidate our cache
     textAreaCache_.invalid_ = true;
+}
+
+void AbstractLogView::setSearchLimits( qint64 startLine, qint64 endLine )
+{
+    searchStart_ = lineIndex( startLine );
+    searchEnd_ = lineIndex( endLine );
+
+    textAreaCache_.invalid_ = true;
+    update();
 }
 
 //
@@ -1320,12 +1372,29 @@ void AbstractLogView::createMenu()
     connect( addToSearchAction_, SIGNAL( triggered() ),
             this, SLOT( addToSearch() ) );
 
+    setSearchStartAction_ = new QAction( tr("Set search start"), this );
+    connect( setSearchStartAction_, SIGNAL( triggered() ),
+            this, SLOT( setSearchStart() ) );
+
+    setSearchEndAction_ = new QAction( tr("Set search end"), this );
+    connect( setSearchEndAction_, SIGNAL( triggered() ),
+            this, SLOT( setSearchEnd() ) );
+
+    clearSearchLimitAction_ = new QAction( tr("Clear search limit"), this );
+    connect( clearSearchLimitAction_, SIGNAL( triggered() ),
+            this, SIGNAL( clearSearchLimits() ) );
+
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );
     popupMenu_->addSeparator();
     popupMenu_->addAction( findNextAction_ );
     popupMenu_->addAction( findPreviousAction_ );
     popupMenu_->addAction( addToSearchAction_ );
+    popupMenu_->addSeparator();
+    popupMenu_->addAction( setSearchStartAction_ );
+    popupMenu_->addAction( setSearchEndAction_ );
+    popupMenu_->addAction( clearSearchLimitAction_ );
+
 }
 
 void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
@@ -1353,7 +1422,7 @@ void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
 void AbstractLogView::updateScrollBars()
 {
     verticalScrollBar()->setRange( 0, std::max( 0LL,
-            logData->getNbLine() - getNbVisibleLines() ) );
+            logData->getNbLine() - getNbVisibleLines() + 1 ) );
 
     const int hScrollMaxValue = std::max( 0,
             logData->getMaxLength() - getNbVisibleCols() + 1 );
@@ -1485,7 +1554,14 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
         }
         else {
             // Use the default colors
-            foreColor = palette.color( QPalette::Text );
+            if ( line_index < searchStart_ ||
+                    line_index >= searchEnd_ ) {
+                 foreColor = palette.brush( QPalette::Disabled, QPalette::Text ).color();
+            }
+            else {
+                 foreColor = palette.color( QPalette::Text );
+            }
+
             backColor = palette.color( QPalette::Base );
         }
 

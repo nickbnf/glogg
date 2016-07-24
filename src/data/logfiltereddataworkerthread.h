@@ -24,8 +24,9 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QList>
+#include "atomicflag.h"
 
 class LogData;
 
@@ -40,6 +41,9 @@ class MatchingLine {
 
     // Accessors
     LineNumber lineNumber() const { return lineNumber_; }
+
+    bool operator <( const MatchingLine& other) const
+    { return lineNumber_ < other.lineNumber_; }
 
   private:
     LineNumber lineNumber_;
@@ -85,8 +89,10 @@ class SearchOperation : public QObject
 {
   Q_OBJECT
   public:
-    SearchOperation( const LogData* sourceLogData,
-            const QRegExp& regExp, bool* interruptRequest );
+    SearchOperation(const LogData* sourceLogData,
+            const QRegularExpression &regExp,
+            qint64 startLine, qint64 endLine,
+            AtomicFlag* interruptRequest );
 
     virtual ~SearchOperation() { }
 
@@ -104,26 +110,28 @@ class SearchOperation : public QObject
     // the shared results and the line to begin the search from.
     void doSearch( SearchData& result, qint64 initialLine );
 
-    bool* interruptRequested_;
-    const QRegExp regexp_;
+    AtomicFlag* interruptRequested_;
+    const QRegularExpression regexp_;
+    qint64 startLine_;
+    qint64 endLine_;
     const LogData* sourceLogData_;
 };
 
 class FullSearchOperation : public SearchOperation
 {
   public:
-    FullSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
-            bool* interruptRequest )
-        : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
+    FullSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
+                         qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest )
+        : SearchOperation( sourceLogData, regExp, startLine, endLine, interruptRequest ) {}
     virtual void start( SearchData& result );
 };
 
 class UpdateSearchOperation : public SearchOperation
 {
   public:
-    UpdateSearchOperation( const LogData* sourceLogData, const QRegExp& regExp,
-            bool* interruptRequest, qint64 position )
-        : SearchOperation( sourceLogData, regExp, interruptRequest ),
+    UpdateSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
+            qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest, qint64 position )
+        : SearchOperation( sourceLogData, regExp, startLine, endLine, interruptRequest ),
         initialPosition_( position ) {}
     virtual void start( SearchData& result );
 
@@ -145,10 +153,10 @@ class LogFilteredDataWorkerThread : public QThread
     ~LogFilteredDataWorkerThread();
 
     // Start the search with the passed regexp
-    void search( const QRegExp& regExp );
+    void search(const QRegularExpression &regExp, qint64 startLine, qint64 endLine );
     // Continue the previous search starting at the passed position
     // in the source file (line number)
-    void updateSearch( const QRegExp& regExp, qint64 position );
+    void updateSearch( const QRegularExpression& regExp, qint64 startLine, qint64 endLine, qint64 position );
     // Interrupts the search if one is in progress
     void interrupt();
 
@@ -176,8 +184,8 @@ class LogFilteredDataWorkerThread : public QThread
     QWaitCondition nothingToDoCond_;
 
     // Set when the thread must die
-    bool terminate_;
-    bool interruptRequested_;
+    AtomicFlag terminate_;
+    AtomicFlag interruptRequested_;
     SearchOperation* operationRequested_;
 
     // Shared indexing data

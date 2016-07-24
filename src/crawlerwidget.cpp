@@ -52,7 +52,7 @@ const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 class CrawlerWidgetContext : public ViewContextInterface {
   public:
     // Construct from the stored string representation
-    CrawlerWidgetContext( const char* string );
+    CrawlerWidgetContext( const QString& string );
     // Construct from the value passsed
     CrawlerWidgetContext( QList<int> sizes,
            bool ignore_case,
@@ -62,7 +62,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
           auto_refresh_( auto_refresh ) {}
 
     // Implementation of the ViewContextInterface function
-    std::string toString() const;
+    QString toString() const;
 
     // Access the Qt sizes array for the QSplitter
     QList<int> sizes() const { return sizes_; }
@@ -211,10 +211,9 @@ void CrawlerWidget::doSetSavedSearches(
     setup();
 }
 
-void CrawlerWidget::doSetViewContext(
-        const char* view_context )
+void CrawlerWidget::doSetViewContext(const QString &view_context )
 {
-    LOG(logDEBUG) << "CrawlerWidget::doSetViewContext: " << view_context;
+    LOG(logDEBUG) << "CrawlerWidget::doSetViewContext: " << view_context.toLocal8Bit().data();
 
     CrawlerWidgetContext context = { view_context };
 
@@ -303,6 +302,15 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
 
         // Also update the top window for the coloured bullets.
         update();
+    }
+
+    if ( progress == 100 ) {
+        const int currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
+        LOG(logDEBUG) << "updateFilteredView: restoring selection: "
+                      << " absolute line number (0based) " << currentLineNumber_
+                      << " index " << currenLineIndex;
+        filteredView->selectAndDisplayLine(currenLineIndex);
+        filteredView->setSearchLimits(searchStartLine_, searchEndLine_);
     }
 }
 
@@ -438,11 +446,14 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
             // We need to restart the search
             replaceCurrentSearch( searchLineEdit->currentText() );
         else
-            logFilteredData_->updateSearch();
+            logFilteredData_->updateSearch( searchStartLine_,
+                                            searchEndLine_ );
     }
 
     // Set the encoding for the views
     updateEncoding();
+
+    clearSearchLimits();
 
     emit loadingFinished( status );
 
@@ -526,6 +537,8 @@ void CrawlerWidget::changeFilteredViewVisibility( int index )
         static_cast< FilteredView::Visibility>( item->data().toInt() );
 
     filteredView->setVisibility( visibility );
+    const int lineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
+    filteredView->selectAndDisplayLine( lineIndex );
 }
 
 void CrawlerWidget::addToSearch( const QString& string )
@@ -536,7 +549,7 @@ void CrawlerWidget::addToSearch( const QString& string )
         text = string;
     else {
         // Escape the regexp chars from the string before adding it.
-        text += ( '|' + QRegExp::escape( string ) );
+        text += ( '|' + QRegularExpression::escape( string ) );
     }
 
     searchLineEdit->setEditText( text );
@@ -555,6 +568,20 @@ void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
 void CrawlerWidget::activityDetected()
 {
     changeDataStatus( DataStatus::OLD_DATA );
+}
+
+void CrawlerWidget::setSearchLimits( qint64 startLine, qint64 endLine )
+{
+    searchStartLine_ = startLine;
+    searchEndLine_ = endLine;
+
+    logMainView->setSearchLimits(startLine, endLine);
+    filteredView->setSearchLimits(startLine, endLine);
+}
+
+void CrawlerWidget::clearSearchLimits()
+{
+    setSearchLimits(0, logData_->getNbLine());
 }
 
 //
@@ -659,6 +686,8 @@ void CrawlerWidget::setup()
 
     searchLabel->setBuddy( searchLineEdit );
 
+    setFocusProxy(searchLineEdit);
+
     searchButton = new QToolButton();
     searchButton->setText( tr("&Search") );
     searchButton->setAutoRaise( true );
@@ -761,6 +790,16 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( activity() ),
             this, SLOT( activityDetected() ) );
 
+    connect(logMainView, SIGNAL(changeSearchLimits(qint64,qint64)),
+            this, SLOT(setSearchLimits(qint64,qint64)));
+    connect(filteredView, SIGNAL(changeSearchLimits(qint64,qint64)),
+            this, SLOT(setSearchLimits(qint64,qint64)));
+
+    connect(logMainView, SIGNAL( clearSearchLimits() ),
+            this, SLOT(clearSearchLimits()));
+    connect(filteredView, SIGNAL(clearSearchLimits()),
+            this, SLOT(clearSearchLimits()));
+
     connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
             this, SLOT( updateFilteredView( int, int ) ) );
 
@@ -810,35 +849,46 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     overview_.updateData( logData_->getNbLine() );
 
     if ( !searchText.isEmpty() ) {
+
+        QString pattern;
+
         // Determine the type of regexp depending on the config
-        QRegExp::PatternSyntax syntax;
         static std::shared_ptr<Configuration> config =
             Persistent<Configuration>( "settings" );
         switch ( config->mainRegexpType() ) {
             case Wildcard:
-                syntax = QRegExp::Wildcard;
+                pattern = searchText;
+                pattern.replace('*', ".*").replace('?', ".");
                 break;
             case FixedString:
-                syntax = QRegExp::FixedString;
+                pattern = QRegularExpression::escape(searchText);
                 break;
             default:
-                syntax = QRegExp::RegExp2;
+                pattern = searchText;
                 break;
         }
 
         // Set the pattern case insensitive if needed
-        Qt::CaseSensitivity case_sensitivity = Qt::CaseSensitive;
+        QRegularExpression::PatternOptions patternOptions =
+                QRegularExpression::UseUnicodePropertiesOption;
+
+#if QT_VERSION >= 0x050400
+        patternOptions |= QRegularExpression::OptimizeOnFirstUsageOption;
+#endif
+
         if ( ignoreCaseCheck->checkState() == Qt::Checked )
-            case_sensitivity = Qt::CaseInsensitive;
+            patternOptions |= QRegularExpression::CaseInsensitiveOption;
 
         // Constructs the regexp
-        QRegExp regexp( searchText, case_sensitivity, syntax );
+        QRegularExpression regexp( pattern, patternOptions );
 
         if ( regexp.isValid() ) {
             // Activate the stop button
             stopButton->setEnabled( true );
             // Start a new asynchronous search
-            logFilteredData_->runSearch( regexp );
+            logFilteredData_->runSearch( regexp,
+                                         searchStartLine_,
+                                         searchEndLine_ );
             // Accept auto-refresh of the search
             searchState_.startSearch();
         }
@@ -849,7 +899,13 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             searchState_.resetState();
 
             // Inform the user
-            QString errorMessage = tr("Error in expression: ");
+            QString errorMessage = tr("Error in expression");
+            const int offset = regexp.patternErrorOffset();
+            if (offset != -1) {
+                errorMessage += " at position ";
+                errorMessage += QString::number(offset);
+            }
+            errorMessage += ": ";
             errorMessage += regexp.errorString();
             searchInfoLine->setPalette( errorPalette );
             searchInfoLine->setText( errorMessage );
@@ -913,42 +969,46 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 // Determine the right encoding and set the views.
 void CrawlerWidget::updateEncoding()
 {
-    static const char* latin1_encoding = "iso-8859-1";
-    static const char* utf8_encoding   = "utf-8";
-
-    const char* encoding;
-
+    QTextCodec* textCodec = QTextCodec::codecForName("iso-8859-1");
     switch ( encodingSetting_ ) {
         case ENCODING_AUTO:
-            switch ( logData_->getDetectedEncoding() ) {
-                case EncodingSpeculator::Encoding::ASCII7:
-                    encoding = latin1_encoding;
-                    encoding_text_ = tr( "US-ASCII" );
-                    break;
-                case EncodingSpeculator::Encoding::ASCII8:
-                    encoding = latin1_encoding;
-                    encoding_text_ = tr( "ISO-8859-1" );
-                    break;
-                case EncodingSpeculator::Encoding::UTF8:
-                    encoding = utf8_encoding;
-                    encoding_text_ = tr( "UTF-8" );
-                    break;
-            }
+            textCodec = logData_->getDetectedEncoding();
+            encoding_text_ = tr(textCodec->name().data());
             break;
         case ENCODING_UTF8:
-            encoding = utf8_encoding;
-            encoding_text_ = tr( "Displayed as UTF-8" );
+            textCodec = QTextCodec::codecForName("utf-8");
+            break;
+        case ENCODING_CP1251:
+            textCodec = QTextCodec::codecForName("windows-1251");
+            break;
+        case ENCODING_UTF16LE:
+            textCodec = QTextCodec::codecForName("utf-16le");
+            break;
+        case ENCODING_UTF16BE:
+            textCodec = QTextCodec::codecForName("utf-16be");
+            break;
+        case ENCODING_UTF32LE:
+            textCodec = QTextCodec::codecForName("utf-32le");
+            break;
+        case ENCODING_UTF32BE:
+            textCodec = QTextCodec::codecForName("utf-32be");
+            break;
+        case ENCODING_LOCAL:
+            textCodec = QTextCodec::codecForLocale();
             break;
         case ENCODING_ISO_8859_1:
         default:
-            encoding = latin1_encoding;
-            encoding_text_ = tr( "Displayed as ISO-8859-1" );
             break;
     }
 
-    logData_->setDisplayEncoding( encoding );
+    if (encodingSetting_ != ENCODING_AUTO) {
+        QString displayedAs("Displayed as %1");
+        encoding_text_ = tr (displayedAs.arg(textCodec->name().data()).toLocal8Bit().data());
+    }
+
+    logData_->setDisplayEncoding( textCodec->name().data() );
     logMainView->forceRefresh();
-    logFilteredData_->setDisplayEncoding( encoding );
+    logFilteredData_->setDisplayEncoding( textCodec->name().data() );
     filteredView->forceRefresh();
 }
 
@@ -1013,44 +1073,42 @@ void CrawlerWidget::SearchState::startSearch()
 /*
  * CrawlerWidgetContext
  */
-CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
+CrawlerWidgetContext::CrawlerWidgetContext(const QString &string )
 {
-    QRegExp regex = QRegExp( "S(\\d+):(\\d+)" );
-
-    if ( regex.indexIn( string ) > -1 ) {
-        sizes_ = { regex.cap(1).toInt(), regex.cap(2).toInt() };
+    QRegularExpression regex( "S(\\d+):(\\d+)" );
+    QRegularExpressionMatch match = regex.match( string );
+    if ( match.hasMatch() ) {
+        sizes_ = { match.captured(1).toInt(), match.captured(2).toInt() };
         LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
     }
     else {
-        LOG(logWARNING) << "Unrecognised view size: " << string;
+        LOG(logWARNING) << "Unrecognised view size: " << string.toLocal8Bit().data();
 
         // Default values;
         sizes_ = { 100, 400 };
     }
 
-    QRegExp case_refresh_regex = QRegExp( "IC(\\d+):AR(\\d+)" );
-
-    if ( case_refresh_regex.indexIn( string ) > -1 ) {
-        ignore_case_ = ( case_refresh_regex.cap(1).toInt() == 1 );
-        auto_refresh_ = ( case_refresh_regex.cap(2).toInt() == 1 );
+    QRegularExpression case_refresh_regex( "IC(\\d+):AR(\\d+)" );
+    match = case_refresh_regex.match( string );
+    if ( match.hasMatch() ) {
+        ignore_case_ = ( match.captured(1).toInt() == 1 );
+        auto_refresh_ = ( match.captured(2).toInt() == 1 );
 
         LOG(logDEBUG) << "ignore_case_: " << ignore_case_ << " auto_refresh_: "
             << auto_refresh_;
     }
     else {
-        LOG(logWARNING) << "Unrecognised case/refresh: " << string;
+        LOG(logWARNING) << "Unrecognised case/refresh: " << string.toLocal8Bit().data();
         ignore_case_ = false;
         auto_refresh_ = false;
     }
 }
 
-std::string CrawlerWidgetContext::toString() const
+QString CrawlerWidgetContext::toString() const
 {
-    char string[160];
-
-    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d",
-            sizes_[0], sizes_[1],
-            ignore_case_, auto_refresh_ );
-
-    return { string };
+    return QString("S%1:%2IC%3:AR%4").arg(
+                QString::number(sizes_[0]),
+                QString::number(sizes_[1]),
+                QString::number( static_cast<quint8>( ignore_case_ ) ),
+                QString::number( static_cast<quint8>( auto_refresh_) ) );
 }

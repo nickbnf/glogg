@@ -29,12 +29,12 @@
 
 #include "logdata.h"
 #include "logfiltereddata.h"
-#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-#include "platformfilewatcher.h"
-#else
-#include "qtfilewatcher.h"
-#endif
 
+#if defined(GLOGG_USES_QTFILEWATCHER)
+#include "qtfilewatcher.h"
+#elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+#include "platformfilewatcher.h"
+#endif
 // Implementation of the 'start' functions for each operation
 
 void LogData::AttachOperation::doStart(
@@ -49,7 +49,7 @@ void LogData::FullIndexOperation::doStart(
         LogDataWorkerThread& workerThread ) const
 {
     LOG(logDEBUG) << "Reindexing (full)";
-    workerThread.indexAll();
+    workerThread.indexAll(forcedEncoding_);
 }
 
 void LogData::PartialIndexOperation::doStart(
@@ -72,10 +72,10 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
 
     codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
-#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-    fileWatcher_ = std::make_shared<PlatformFileWatcher>();
-#else
+#if defined(GLOGG_USES_QTFILEWATCHER)
     fileWatcher_ = std::make_shared<QtFileWatcher>();
+#elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+    fileWatcher_ = std::make_shared<PlatformFileWatcher>();
 #endif
 
     // Initialise the file watcher
@@ -144,11 +144,11 @@ LogFilteredData* LogData::getNewFilteredData() const
     return newFilteredData;
 }
 
-void LogData::reload()
+void LogData::reload(QTextCodec* forcedEncoding)
 {
     workerThread_.interrupt();
 
-    enqueueOperation( std::make_shared<FullIndexOperation>() );
+    enqueueOperation( std::make_shared<FullIndexOperation>(forcedEncoding) );
 }
 
 void LogData::setPollingInterval( uint32_t interval_ms )
@@ -294,6 +294,17 @@ void LogData::doSetDisplayEncoding( const char* encoding )
 {
     LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
     codec_ = QTextCodec::codecForName( encoding );
+
+    const QTextCodec* currentIndexCodec = indexing_data_.getForcedEncoding();
+    if (!currentIndexCodec) currentIndexCodec = indexing_data_.getEncodingGuess();
+
+    if (codec_->mibEnum() != currentIndexCodec->mibEnum())
+    {
+        if (EncodingParameters(codec_) != EncodingParameters(currentIndexCodec)) {
+            bool isGuessedCodec = codec_->mibEnum() == indexing_data_.getEncodingGuess()->mibEnum();
+            reload( isGuessedCodec  ? nullptr : codec_);
+        }
+    }
 }
 
 QString LogData::doGetLineString( qint64 line ) const
@@ -415,7 +426,7 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     return list;
 }
 
-EncodingSpeculator::Encoding LogData::getDetectedEncoding() const
+QTextCodec* LogData::getDetectedEncoding() const
 {
     return indexing_data_.getEncodingGuess();
 }

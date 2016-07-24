@@ -23,11 +23,11 @@
 #include "filewatcher.h"
 
 #include <QFileSystemWatcher>
+#include <QMap>
 
 // This class encapsulate Qt's QFileSystemWatcher and additionally support
 // watching a file that doesn't exist yet (the class will watch the owning
 // directory)
-// Only supports one file at the moment.
 class QtFileWatcher : public FileWatcher {
   Q_OBJECT
 
@@ -56,8 +56,7 @@ class QtFileWatcher : public FileWatcher {
     enum MonitoringState { None, FileExists, FileRemoved };
 
     QFileSystemWatcher qtFileWatcher_;
-    QString fileMonitored_;
-    MonitoringState monitoringState_;
+    QMap<QString, MonitoringState> monitoredFiles_;
 };
 
 #endif

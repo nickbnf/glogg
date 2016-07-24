@@ -44,10 +44,11 @@ using namespace std;
 #include "loadingstatus.h"
 
 #include "externalcom.h"
+
 #ifdef GLOGG_SUPPORTS_DBUS
 #include "dbusexternalcom.h"
 #elif GLOGG_SUPPORTS_WINIPC
-#include "winexternalcom.h"
+#include "socketexternalcom.h"
 #endif
 
 
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    string filename = "";
+    QString filename;
 
     // Configuration
     bool new_session = false;
@@ -144,7 +145,8 @@ int main(int argc, char *argv[])
                 logLevel = (TLogLevel) (logWARNING + s.length());
 
         if ( vm.count("input-file") ) {
-            filename = vm["input-file"].as<string>();
+            const std::string file = vm["input-file"].as<string>();
+            filename = QString::fromLocal8Bit(file.c_str(), file.size());
         }
     }
     catch(exception& e) {
@@ -167,11 +169,11 @@ int main(int argc, char *argv[])
 
     FILELog::setReportingLevel( logLevel );
 
-    if ( ! filename.empty() ) {
+    if ( ! filename.isEmpty() ) {
         // Convert to absolute path
-        QFileInfo file( QString::fromLocal8Bit( filename.c_str() ) );
-        filename = file.absoluteFilePath().toStdString();
-        LOG( logDEBUG ) << "Filename: " << filename;
+        const QFileInfo file( filename );
+        filename = file.absoluteFilePath();
+        LOG(logDEBUG) << "Filename: " << filename.toStdString();
     }
 
     // External communicator
@@ -181,13 +183,11 @@ int main(int argc, char *argv[])
     try {
 #ifdef GLOGG_SUPPORTS_DBUS
         externalCommunicator = make_shared<DBusExternalCommunicator>();
-        externalInstance = shared_ptr<ExternalInstance>(
-                externalCommunicator->otherInstance() );
 #elif GLOGG_SUPPORTS_WINIPC
-        externalCommunicator = make_shared<WinExternalCommunicator>();
+        externalCommunicator = make_shared<SocketExternalCommunicator>();
+#endif
         externalInstance = shared_ptr<ExternalInstance>(
                 externalCommunicator->otherInstance() );
-#endif
     }
     catch(CantCreateExternalErr& e) {
         LOG(logWARNING) << "Cannot initialise external communication.";
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
         LOG(logINFO) << "Found another glogg (version = "
             << std::setbase(16) << version << ")";
 
-        externalInstance->loadFile( QString::fromStdString( filename ) );
+        externalInstance->loadFile( filename );
 
         return 0;
     }
@@ -251,10 +251,14 @@ int main(int argc, char *argv[])
 
     LOG(logDEBUG) << "MainWindow created.";
     mw.show();
+
     // Load the existing session if needed
-    if ( load_session || ( filename.empty() && !new_session ) )
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    if ( load_session || ( filename.isEmpty() && !new_session && config->loadLastSession() ) )
         mw.reloadSession();
-    mw.loadInitialFile( QString::fromStdString( filename ) );
+
+    mw.loadInitialFile( filename );
     mw.startBackgroundTasks();
 
     return app.exec();

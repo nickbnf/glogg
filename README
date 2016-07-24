@@ -1,4 +1,13 @@
-glogg - the fast, smart log explorer
+klogg is the fork of glogg - the fast, smart log explorer
+
+The main reason for this fork is that we use glogg a lot
+and feel that usability can be improved here and there
+
+## Features of klogg
+* Support for non-latin simbols in file paths
+* Keeps selected lines visible after changing search pattern
+
+## About glogg
 
 glogg is a multi-platform GUI application that helps browse and search
 through long and complex log files.  It is designed with programmers and

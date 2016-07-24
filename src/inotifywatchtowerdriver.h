@@ -21,8 +21,8 @@
 #define INOTIFYWATCHTOWERDRIVER_H
 
 #include <memory>
-#include <mutex>
 #include <vector>
+#include <QMutexLocker>
 
 template <typename Driver>
 class ObservedFile;
@@ -113,7 +113,7 @@ class INotifyWatchTowerDriver {
     // (because of renames/symlink...)
     std::vector<INotifyObservedFile*> waitAndProcessEvents(
             INotifyObservedFileList* list,
-            std::unique_lock<std::mutex>* list_mutex,
+            QMutexLocker* list_mutex,
             std::vector<INotifyObservedFile*>* files_needing_readding,
             int timeout_ms );
 

@@ -1,9 +1,17 @@
 language: cpp
 sudo: true
-dist: trusty
 
-compiler:
- - gcc
+
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env: COMPILER=g++-4.9
 
 before_install:
  - sudo add-apt-repository -y ppa:beineri/opt-qt561

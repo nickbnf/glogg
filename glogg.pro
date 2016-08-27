@@ -199,9 +199,10 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 #C++0x:QMAKE_CXXFLAGS += -std=c++0x
 #C++11:QMAKE_CXXFLAGS += -std=c++11
 CONFIG += c++11
-#release:QMAKE_CXXFLAGS += -O2
+release:QMAKE_CXXFLAGS += -O2
+#release:QMAKE_CXXFLAGS += -O0
 # Debug symbols even in release build
-QMAKE_CXXFLAGS += -g
+#QMAKE_CXXFLAGS += -g
 GPROF {
     QMAKE_CXXFLAGS += -pg
     QMAKE_LFLAGS   += -pg
@@ -249,12 +250,10 @@ system(pkg-config --exists QtDBus):!no-dbus {
 }
 else {
     message("Support for D-BUS will NOT be included")
-    win32 {
-        message("Support for cross-platform IPC will be included")
-        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
-        SOURCES += src/socketexternalcom.cpp
-        HEADERS += src/socketexternalcom.h
-    }
+    message("Support for cross-platform IPC will be included")
+    QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
+    SOURCES += src/socketexternalcom.cpp
+    HEADERS += src/socketexternalcom.h
 }
 
 # Version checking

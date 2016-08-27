@@ -1,16 +1,20 @@
 language: cpp
+sudo: true
 
 compiler:
  - gcc
 
-addons:
- apt:
-  packages:
-   - qt5-default
+before_install:
+ - sudo add-apt-repository -y ppa:beineri/opt-qt561
 
+install:
+ - sudo apt-get -qq update
+ - sudo apt-get -qq install qt56base qt56tools qt56svg
 
+before_script:
+ - source /opt/qt56/bin/qt56-env.sh
 
 script:
- - qmake -qt=qt5 -v
- - qmake -qt=qt5 
+ - qmake -v
+ - qmake glogg.pro
  - make -j$(nproc)

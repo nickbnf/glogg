@@ -10,6 +10,7 @@ before_install:
 install:
  - sudo apt-get -qq update
  - sudo apt-get -qq install qt56base qt56tools qt56svg
+ - sudo apt-get -qq install libboost-program-options-dev
 
 before_script:
  - source /opt/qt56/bin/qt56-env.sh

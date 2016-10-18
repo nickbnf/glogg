@@ -1,4 +1,5 @@
 glogg - the fast, smart log explorer
+=====================================
 
 glogg is a multi-platform GUI application that helps browse and search
 through long and complex log files.  It is designed with programmers and

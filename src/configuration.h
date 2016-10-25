@@ -64,6 +64,10 @@ class Configuration : public Persistable {
     { return pollIntervalMs_; }
     void setPollIntervalMs( uint32_t interval )
     { pollIntervalMs_ = interval; }
+    bool loadLastSession() const
+    { return loadLastSession_; }
+    void setLoadLastSession( bool enabled )
+    { loadLastSession_ = enabled; }
 
     // View settings
     bool isOverviewVisible() const
@@ -101,6 +105,7 @@ class Configuration : public Persistable {
     bool quickfindIncremental_;
     bool pollingEnabled_;
     uint32_t pollIntervalMs_;
+    bool loadLastSession_;
 
     // View settings
     bool overviewVisible_;

@@ -258,6 +258,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     markingClickInitiated_ = false;
 
     firstLine = 0;
+    lastLineAligned = false;
     firstCol = 0;
 
     overview_ = NULL;
@@ -704,9 +705,21 @@ bool AbstractLogView::event( QEvent* e )
 
 void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
-    LOG(logDEBUG) << "scrollContentsBy received " << dy;
+    LOG(logDEBUG) << "scrollContentsBy received " << dy
+        << "position " << verticalScrollBar()->value();
 
-    firstLine = std::max( static_cast<int32_t>( firstLine ) - dy, 0 );
+    int32_t last_top_line = ( logData->getNbLine() - getNbVisibleLines() );
+    if ( ( last_top_line > 0 ) && verticalScrollBar()->value() > last_top_line ) {
+        // The user is going further than the last line, we need to lock the last line at the bottom
+        LOG(logDEBUG) << "scrollContentsBy beyond!";
+        firstLine = last_top_line;
+        lastLineAligned = true;
+    }
+    else {
+        firstLine = verticalScrollBar()->value();
+        lastLineAligned = false;
+    }
+
     firstCol  = (firstCol - dx) > 0 ? firstCol - dx : 0;
     LineNumber last_line  = firstLine + getNbVisibleLines();
 
@@ -729,6 +742,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         return;
 
     LOG(logDEBUG4) << "paintEvent received, firstLine=" << firstLine
+        << " lastLineAligned=" << lastLineAligned
         << " rect: " << invalidRect.topLeft().x() <<
         ", " << invalidRect.topLeft().y() <<
         ", " << invalidRect.bottomRight().x() <<
@@ -771,11 +785,11 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     }
 
     // Height including the potentially invisible last line
-    const int wholeHeight = getNbVisibleLines() * charHeight_;
+    const int whole_height = getNbVisibleLines() * charHeight_;
     // Height in pixels of the "pull to follow" bottom bar.
     pullToFollowHeight_ = mapPullToFollowLength( followElasticHook_.length() )
         + ( followElasticHook_.isHooked() ?
-                ( wholeHeight - viewport()->height() ) + PULL_TO_FOLLOW_HOOKED_HEIGHT : 0 );
+                ( whole_height - viewport()->height() ) + PULL_TO_FOLLOW_HOOKED_HEIGHT : 0 );
 
     if ( pullToFollowHeight_
             && ( pullToFollowCache_.nb_columns_ != getNbVisibleCols() ) ) {
@@ -787,19 +801,29 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
     QPainter devicePainter( viewport() );
     int drawingTopPosition = - pullToFollowHeight_;
+    int drawingPullToFollowTopPosition = drawingTopPosition + whole_height;
 
     // This is to cover the special case where there is less than a screenful
     // worth of data, we want to see the document from the top, rather than
     // pushing the first couple of lines above the viewport.
-    if ( followElasticHook_.isHooked() && ( logData->getNbLine() < getNbVisibleLines() ) )
-        drawingTopPosition += ( wholeHeight - viewport()->height() + PULL_TO_FOLLOW_HOOKED_HEIGHT );
+    if ( followElasticHook_.isHooked() && ( logData->getNbLine() < getNbVisibleLines() ) ) {
+        drawingTopPosition += ( whole_height - viewport()->height() ) + PULL_TO_FOLLOW_HOOKED_HEIGHT;
+        drawingPullToFollowTopPosition = drawingTopPosition + viewport()->height() - PULL_TO_FOLLOW_HOOKED_HEIGHT;
+    }
+
+    // This is the case where the user is on the 'extra' slot at the end
+    // and is aligned on the last line (but no elastic shown)
+    if ( lastLineAligned && !followElasticHook_.isHooked() ) {
+        drawingTopPosition -= ( whole_height - viewport()->height() );
+        drawingPullToFollowTopPosition = drawingTopPosition + whole_height;
+    }
 
     devicePainter.drawPixmap( 0, drawingTopPosition, textAreaCache_.pixmap_ );
 
     // Draw the "pull to follow" zone if needed
     if ( pullToFollowHeight_ ) {
         devicePainter.drawPixmap( 0,
-                getNbVisibleLines() * charHeight_ - pullToFollowHeight_,
+                drawingPullToFollowTopPosition,
                 pullToFollowCache_.pixmap_ );
     }
 
@@ -1353,7 +1377,7 @@ void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
 void AbstractLogView::updateScrollBars()
 {
     verticalScrollBar()->setRange( 0, std::max( 0LL,
-            logData->getNbLine() - getNbVisibleLines() ) );
+            logData->getNbLine() - getNbVisibleLines() + 1 ) );
 
     const int hScrollMaxValue = std::max( 0,
             logData->getMaxLength() - getNbVisibleCols() + 1 );

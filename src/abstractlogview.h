@@ -325,7 +325,13 @@ class AbstractLogView :
     qint64 markingClickLine_;
 
     Selection selection_;
+
+    // Position of the view, those are crucial to control drawing
+    // firstLine gives the position of the view,
+    // lastLineAligned == true make the bottom of the last line aligned
+    // rather than the top of the top one.
     LineNumber firstLine;
+    bool lastLineAligned;
     int firstCol;
 
     // Text handling

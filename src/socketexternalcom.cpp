@@ -44,6 +44,7 @@ SocketExternalInstance::SocketExternalInstance()
     : ExternalInstance(), memory_(new QSharedMemory(GLOG_SERVICE_NAME) )
 {
     if ( !memory_->attach( QSharedMemory::ReadOnly ) ) {
+        LOG( logERROR ) << "attach failed!";
         throw CantCreateExternalErr();
     }
 

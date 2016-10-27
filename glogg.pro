@@ -252,7 +252,7 @@ else {
     message("Support for D-BUS will NOT be included")
     win32 || macx {
         message("Support for cross-platform IPC will be included")
-        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
+        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_SOCKETIPC
         SOURCES += src/socketexternalcom.cpp
         HEADERS += src/socketexternalcom.h
     }

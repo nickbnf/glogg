@@ -47,7 +47,7 @@ using namespace std;
 
 #ifdef GLOGG_SUPPORTS_DBUS
 #include "dbusexternalcom.h"
-#elif GLOGG_SUPPORTS_WINIPC
+#elif GLOGG_SUPPORTS_SOCKETIPC
 #include "socketexternalcom.h"
 #endif
 
@@ -182,11 +182,13 @@ int main(int argc, char *argv[])
     try {
 #ifdef GLOGG_SUPPORTS_DBUS
         externalCommunicator = make_shared<DBusExternalCommunicator>();
-#elif GLOGG_SUPPORTS_WINIPC
-        externalCommunicator = make_shared<SocketExternalCommunicator>();
-#endif
         externalInstance = shared_ptr<ExternalInstance>(
                 externalCommunicator->otherInstance() );
+#elif GLOGG_SUPPORTS_SOCKETIPC
+        externalCommunicator = make_shared<SocketExternalCommunicator>();
+        auto ptr = externalCommunicator->otherInstance();
+        externalInstance = shared_ptr<ExternalInstance>( ptr );
+#endif
     }
     catch(CantCreateExternalErr& e) {
         LOG(logWARNING) << "Cannot initialise external communication.";

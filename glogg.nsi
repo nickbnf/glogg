@@ -64,7 +64,7 @@ Section "glogg" glogg
     SetOutPath $INSTDIR
     File release\glogg.exe
     File COPYING
-    File README
+    File README.md
 
     ; Create the 'sendto' link
     CreateShortCut "$SENDTO\glogg.lnk" "$INSTDIR\glogg,exe" "" "$INSTDIR\glogg.exe" 0
@@ -100,6 +100,8 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Network.dll
     File release\Qt5Widgets.dll
     File release\libwinpthread-1.dll
+    SetOutPath $INSTDIR\platforms
+    File release\qwindows.dll
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut
@@ -115,7 +117,7 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${glogg} "The core files required to use glogg."
     !insertmacro MUI_DESCRIPTION_TEXT ${qtlibs} "Needed by glogg, you have to install these unless \
-you already have the Qt4 development kit installed."
+you already have the Qt5 development kit installed."
     !insertmacro MUI_DESCRIPTION_TEXT ${shortcut} "Create a shortcut in the Start menu for glogg."
     !insertmacro MUI_DESCRIPTION_TEXT ${associate} "Make glogg the default viewer for .log files."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
@@ -137,6 +139,7 @@ Section "Uninstall"
     Delete "$INSTDIR\Qt5Network.dll"
     Delete "$INSTDIR\Qt5Widgets.dll"
     Delete "$INSTDIR\libwinpthread-1.dll"
+    Delete "$INSTDIR\platforms\qwindows.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

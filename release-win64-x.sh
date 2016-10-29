@@ -20,6 +20,7 @@ else
 fi
 make -j3
 cp $QTXDIR/$QTVERSION/bin/{Qt5Core,Qt5Gui,Qt5Network,Qt5Widgets}.dll release/
+cp $QTXDIR/$QTVERSION/plugins/platforms/qwindows.dll release/
 cp $QTXDIR/$QTVERSION/bin/{Qt5Core,Qt5Gui,Qt5Network,Qt5Widgets}d.dll debug/
 cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll release/
 if [ -z "$VERSION" ]; then

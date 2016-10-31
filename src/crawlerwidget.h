@@ -78,6 +78,9 @@ class CrawlerWidget : public QSplitter,
 
     Encoding encodingSetting() const;
 
+    // Returns whether follow is enabled in this crawler
+    bool isFollowEnabled() const;
+
     // Get the text description of the encoding effectively used,
     // suitable to display to the user.
     QString encodingText() const;

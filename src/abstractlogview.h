@@ -173,6 +173,8 @@ class AbstractLogView :
     // Instructs the widget to select the whole text.
     void selectAll();
 
+    bool isFollowEnabled() const { return followMode_; }
+
   protected:
     virtual void mousePressEvent( QMouseEvent* mouseEvent );
     virtual void mouseMoveEvent( QMouseEvent* mouseEvent );

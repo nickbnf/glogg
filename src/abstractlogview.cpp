@@ -1201,6 +1201,7 @@ void AbstractLogView::moveSelection( int delta )
     selection_.selectLine( new_line );
     displayLine( new_line );
     emit updateLineNumber( new_line );
+    emit newSelection( new_line );
 }
 
 // Make the start of the lines visible

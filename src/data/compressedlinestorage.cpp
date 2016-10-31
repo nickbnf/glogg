@@ -215,10 +215,27 @@ CompressedLinePositionStorage::CompressedLinePositionStorage(
     move_from( std::move( orig ) );
 }
 
+void CompressedLinePositionStorage::free_blocks()
+{
+    for ( char* block : block32_index_ ) {
+        void* p = static_cast<void*>( block );
+        std::cerr << "free block = " << p << std::endl;
+        free( p );
+    }
+
+    for ( char* block : block64_index_ ) {
+        void* p = static_cast<void*>( block );
+        std::cerr << "block = " << p << std::endl;
+        free( p );
+    }
+}
+
 // Move assignement
 CompressedLinePositionStorage& CompressedLinePositionStorage::operator=(
         CompressedLinePositionStorage&& orig )
 {
+    free_blocks();
+
     block32_index_ = std::move( orig.block32_index_ );
     move_from( std::move( orig ) );
 
@@ -227,17 +244,8 @@ CompressedLinePositionStorage& CompressedLinePositionStorage::operator=(
 
 CompressedLinePositionStorage::~CompressedLinePositionStorage()
 {
-    for ( char* block : block32_index_ ) {
-        void* p = static_cast<void*>( block );
-        // std::cerr << "block = " << p << std::endl;
-        free( p );
-    }
 
-    for ( char* block : block64_index_ ) {
-        void* p = static_cast<void*>( block );
-        // std::cerr << "block = " << p << std::endl;
-        free( p );
-    }
+    free_blocks();
 }
 
 // template<int BLOCK_SIZE>

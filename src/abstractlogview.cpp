@@ -267,9 +267,9 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     // Display
     leftMarginPx_ = 0;
 
-    // Fonts
+    // Fonts (sensible default for overview widget)
     charWidth_ = 1;
-    charHeight_ = 1;
+    charHeight_ = 10;
 
     // Create the viewport QWidget
     setViewport( 0 );

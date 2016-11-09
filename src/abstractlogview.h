@@ -357,8 +357,8 @@ class AbstractLogView :
     PerfCounter perfCounter_;
 #endif
 
-    // Current "pull to follow" bar height
-    int pullToFollowHeight_;
+    // Vertical offset (in pixels) at which the first line of text is written
+    int drawingTopOffset_ = 0;
 
     // Cache pixmap and associated info
     struct TextAreaCache {

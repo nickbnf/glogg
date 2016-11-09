@@ -787,11 +787,11 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     // Height including the potentially invisible last line
     const int whole_height = getNbVisibleLines() * charHeight_;
     // Height in pixels of the "pull to follow" bottom bar.
-    pullToFollowHeight_ = mapPullToFollowLength( followElasticHook_.length() )
+    int pullToFollowHeight = mapPullToFollowLength( followElasticHook_.length() )
         + ( followElasticHook_.isHooked() ?
                 ( whole_height - viewport()->height() ) + PULL_TO_FOLLOW_HOOKED_HEIGHT : 0 );
 
-    if ( pullToFollowHeight_
+    if ( pullToFollowHeight
             && ( pullToFollowCache_.nb_columns_ != getNbVisibleCols() ) ) {
         LOG(logDEBUG) << "Drawing pull to follow bar";
         pullToFollowCache_.pixmap_ = drawPullToFollowBar(
@@ -800,28 +800,32 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     }
 
     QPainter devicePainter( viewport() );
-    int drawingTopPosition = - pullToFollowHeight_;
+    int drawingTopPosition = - pullToFollowHeight;
     int drawingPullToFollowTopPosition = drawingTopPosition + whole_height;
 
     // This is to cover the special case where there is less than a screenful
     // worth of data, we want to see the document from the top, rather than
     // pushing the first couple of lines above the viewport.
     if ( followElasticHook_.isHooked() && ( logData->getNbLine() < getNbVisibleLines() ) ) {
+        drawingTopOffset_ = 0;
         drawingTopPosition += ( whole_height - viewport()->height() ) + PULL_TO_FOLLOW_HOOKED_HEIGHT;
         drawingPullToFollowTopPosition = drawingTopPosition + viewport()->height() - PULL_TO_FOLLOW_HOOKED_HEIGHT;
     }
-
     // This is the case where the user is on the 'extra' slot at the end
     // and is aligned on the last line (but no elastic shown)
-    if ( lastLineAligned && !followElasticHook_.isHooked() ) {
-        drawingTopPosition -= ( whole_height - viewport()->height() );
+    else if ( lastLineAligned && !followElasticHook_.isHooked() ) {
+        drawingTopOffset_ = - ( whole_height - viewport()->height() );
+        drawingTopPosition += drawingTopOffset_;
         drawingPullToFollowTopPosition = drawingTopPosition + whole_height;
+    }
+    else {
+        drawingTopOffset_ = - pullToFollowHeight;
     }
 
     devicePainter.drawPixmap( 0, drawingTopPosition, textAreaCache_.pixmap_ );
 
     // Draw the "pull to follow" zone if needed
-    if ( pullToFollowHeight_ ) {
+    if ( pullToFollowHeight ) {
         devicePainter.drawPixmap( 0,
                 drawingPullToFollowTopPosition,
                 pullToFollowCache_.pixmap_ );
@@ -1126,7 +1130,7 @@ int AbstractLogView::getNbVisibleCols() const
 // Converts the mouse x, y coordinates to the line number in the file
 int AbstractLogView::convertCoordToLine(int yPos) const
 {
-    int line = firstLine + ( yPos + pullToFollowHeight_ ) / charHeight_;
+    int line = firstLine + ( yPos - drawingTopOffset_ ) / charHeight_;
 
     return line;
 }
@@ -1135,7 +1139,7 @@ int AbstractLogView::convertCoordToLine(int yPos) const
 // This function ensure the pos exists in the file.
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
-    int line = firstLine + ( pos.y() + pullToFollowHeight_ ) / charHeight_;
+    int line = convertCoordToLine( pos.y() );
     if ( line >= logData->getNbLine() )
         line = logData->getNbLine() - 1;
     if ( line < 0 )

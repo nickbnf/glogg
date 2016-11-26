@@ -19,7 +19,6 @@
 
 #include <cassert>
 #include <cstdlib>
-#include <iostream>
 
 #include "utils.h"
 
@@ -210,7 +209,8 @@ void CompressedLinePositionStorage::move_from(
 // Move constructor
 CompressedLinePositionStorage::CompressedLinePositionStorage(
         CompressedLinePositionStorage&& orig )
-    : block32_index_( std::move( orig.block32_index_ ) )
+    : block32_index_( std::move( orig.block32_index_ ) ),
+      block64_index_( std::move( orig.block64_index_ ) )
 {
     move_from( std::move( orig ) );
 }
@@ -219,13 +219,11 @@ void CompressedLinePositionStorage::free_blocks()
 {
     for ( char* block : block32_index_ ) {
         void* p = static_cast<void*>( block );
-        // std::cerr << "free block = " << p << std::endl;
         free( p );
     }
 
     for ( char* block : block64_index_ ) {
         void* p = static_cast<void*>( block );
-        // std::cerr << "block = " << p << std::endl;
         free( p );
     }
 }
@@ -237,6 +235,7 @@ CompressedLinePositionStorage& CompressedLinePositionStorage::operator=(
     free_blocks();
 
     block32_index_ = std::move( orig.block32_index_ );
+    block64_index_ = std::move( orig.block64_index_ );
     move_from( std::move( orig ) );
 
     return *this;
@@ -250,6 +249,9 @@ CompressedLinePositionStorage::~CompressedLinePositionStorage()
 // template<int BLOCK_SIZE>
 void CompressedLinePositionStorage::append( uint64_t pos )
 {
+    // Lines must be stored in order
+    assert( ( pos > current_pos_ ) || ( pos == 0 ) );
+
     // Save the pointer in case we need to "pop_back"
     previous_block_pointer_ = block_pointer_;
 
@@ -407,12 +409,22 @@ void CompressedLinePositionStorage::pop_back()
         // A new block has been created for the last entry, we need
         // to de-alloc it.
 
-        // If we try to pop_back() twice, we're dead!
-        assert( ( nb_lines_ - 1 ) % BLOCK_SIZE == 0 );
+        if ( first_long_line_ == UINT32_MAX ) {
+            // If we try to pop_back() twice, we're dead!
+            assert( ( nb_lines_ - 1 ) % BLOCK_SIZE == 0 );
 
-        char* block = block32_index_.back();
-        block32_index_.pop_back();
-        free( block );
+            char* block = block32_index_.back();
+            block32_index_.pop_back();
+            free( block );
+        }
+        else {
+            // If we try to pop_back() twice, we're dead!
+            assert( ( nb_lines_ - first_long_line_ - 1 ) % BLOCK_SIZE == 0 );
+
+            char* block = block64_index_.back();
+            block64_index_.pop_back();
+            free( block );
+        }
 
         block_pointer_ = nullptr;
     }

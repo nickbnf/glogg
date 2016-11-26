@@ -56,6 +56,7 @@ class LinePosition
             array.pop_back();
 
         array.push_back( pos );
+        fakeFinalLF_ = false;
     }
     // Size of the array
     inline int size() const

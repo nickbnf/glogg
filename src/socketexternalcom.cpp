@@ -44,6 +44,9 @@ SocketExternalInstance::SocketExternalInstance()
     : ExternalInstance(), memory_(new QSharedMemory(GLOG_SERVICE_NAME) )
 {
     if ( !memory_->attach( QSharedMemory::ReadOnly ) ) {
+        LOG( logERROR ) << "attach failed! Error: "
+                        << memory_->errorString().toLocal8Bit().data()
+                        << ". Are this first instance?";
         throw CantCreateExternalErr();
     }
 

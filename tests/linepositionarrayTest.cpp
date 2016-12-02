@@ -100,11 +100,14 @@ TEST_F( LinePositionArrayLong, LineNo128HasRightValue ) {
 }
 
 TEST_F( LinePositionArrayLong, FakeLFisNotKeptWhenAddingAfterIt ) {
-    line_array.append( 524 );
-    line_array.setFakeFinalLF();
-    ASSERT_THAT( line_array[128], Eq( 524 ) );
-    line_array.append( 600 );
-    ASSERT_THAT( line_array[128], Eq( 600 ) );
+    for ( uint64_t i = 0; i < 1000; ++i ) {
+        uint64_t pos = 524LL + i*35LL;
+        line_array.append( pos );
+        line_array.setFakeFinalLF();
+        ASSERT_THAT( line_array[128 + i], Eq( pos ) );
+        line_array.append( pos + 21LL );
+        ASSERT_THAT( line_array[128 + i], Eq( pos + 21LL ) );
+    }
 }
 
 
@@ -136,11 +139,23 @@ TEST_F( LinePositionArrayBig, HasRightData ) {
     ASSERT_THAT( line_array[2], Eq( UINT32_MAX - 10 ) );
     ASSERT_THAT( line_array[3], Eq( (uint64_t) UINT32_MAX + 10LL ) );
     ASSERT_THAT( line_array[4], Eq( (uint64_t) UINT32_MAX + 30LL ) );
-    ASSERT_THAT( line_array[5], Eq( (uint64_t) 2*UINT32_MAX ) );
-    ASSERT_THAT( line_array[6], Eq( (uint64_t) 2*UINT32_MAX + 10LL ) );
-    ASSERT_THAT( line_array[7], Eq( (uint64_t) 2*UINT32_MAX + 1000LL ) );
-    ASSERT_THAT( line_array[8], Eq( (uint64_t) 3*UINT32_MAX ) );
+    ASSERT_THAT( line_array[5], Eq( (uint64_t) 2LL*UINT32_MAX ) );
+    ASSERT_THAT( line_array[6], Eq( (uint64_t) 2LL*UINT32_MAX + 10LL ) );
+    ASSERT_THAT( line_array[7], Eq( (uint64_t) 2LL*UINT32_MAX + 1000LL ) );
+    ASSERT_THAT( line_array[8], Eq( (uint64_t) 3LL*UINT32_MAX ) );
 }
+
+TEST_F( LinePositionArrayBig, FakeLFisNotKeptWhenAddingAfterIt ) {
+    for ( uint64_t i = 0; i < 1000; ++i ) {
+        uint64_t pos = 3LL*UINT32_MAX + 524LL + i*35LL;
+        line_array.append( pos );
+        line_array.setFakeFinalLF();
+        ASSERT_THAT( line_array[9 + i], Eq( pos ) );
+        line_array.append( pos + 21LL );
+        ASSERT_THAT( line_array[9 + i], Eq( pos + 21LL ) );
+    }
+}
+
 
 class LinePositionArrayBigConcat: public testing::Test {
   public:

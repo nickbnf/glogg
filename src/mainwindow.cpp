@@ -927,6 +927,8 @@ void MainWindow::updateMenuBarFromDocument( const CrawlerWidget* crawler )
 {
     auto encoding = crawler->encodingSetting();
     encodingAction[static_cast<int>( encoding )]->setChecked( true );
+    bool follow = crawler->isFollowEnabled();
+    followAction->setChecked( follow );
 }
 
 // Update the top info line from the session

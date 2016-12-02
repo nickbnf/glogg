@@ -124,6 +124,11 @@ CrawlerWidget::Encoding CrawlerWidget::encodingSetting() const
     return encodingSetting_;
 }
 
+bool CrawlerWidget::isFollowEnabled() const
+{
+    return logMainView->isFollowEnabled();
+}
+
 QString CrawlerWidget::encodingText() const
 {
     return encoding_text_;

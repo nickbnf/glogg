@@ -173,7 +173,7 @@ class AbstractLogView :
     // Instructs the widget to select the whole text.
     void selectAll();
 
-
+    bool isFollowEnabled() const { return followMode_; }
 
   protected:
     virtual void mousePressEvent( QMouseEvent* mouseEvent );
@@ -335,7 +335,13 @@ class AbstractLogView :
     qint64 markingClickLine_;
 
     Selection selection_;
+
+    // Position of the view, those are crucial to control drawing
+    // firstLine gives the position of the view,
+    // lastLineAligned == true make the bottom of the last line aligned
+    // rather than the top of the top one.
     LineNumber firstLine;
+    bool lastLineAligned;
     int firstCol;
 
     LineNumber searchStart_;
@@ -365,8 +371,8 @@ class AbstractLogView :
     PerfCounter perfCounter_;
 #endif
 
-    // Current "pull to follow" bar height
-    int pullToFollowHeight_;
+    // Vertical offset (in pixels) at which the first line of text is written
+    int drawingTopOffset_ = 0;
 
     // Cache pixmap and associated info
     struct TextAreaCache {

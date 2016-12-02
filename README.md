@@ -6,8 +6,14 @@ and feel that usability can be improved here and there
 ## Features of klogg
 * Support for non-latin simbols in file paths
 * Keeps selected lines visible after changing search pattern
+* Support UTF16/32 encodings
+* Support limiting search to a part of open file
 
 ## About glogg
+=======
+
+glogg - the fast, smart log explorer
+=====================================
 
 glogg is a multi-platform GUI application that helps browse and search
 through long and complex log files.  It is designed with programmers and
@@ -39,13 +45,15 @@ build on an older platform.
 
 The build system uses qmake. Building and installation is done this way:
 
+```
 tar xzf glogg-X.X.X.tar.gz
 cd glogg-X.X.X
 qmake
 make
 make install INSTALL_ROOT=/usr/local (as root if needed)
+```
 
-qmake BOOST_PATH=/path/to/boost/ will statically compile the required parts of
+`qmake BOOST_PATH=/path/to/boost/` will statically compile the required parts of
 the Boost libraries whose source are found at the specified path.
 The path should be the directory where the tarball from www.boost.org is
 extracted.
@@ -58,6 +66,7 @@ is found.
 
 The tests are built using CMake, and require Qt5 and the Google Mocks source.
 
+```
 cd tests
 mkdir build
 cd build
@@ -66,6 +75,7 @@ export GMOCK_HOME=/path/to/gmock
 cmake ..
 make
 ./glogg_tests
+```
 
 ## Contact
 

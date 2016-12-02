@@ -119,6 +119,7 @@ class CompressedLinePositionStorage
   private:
     // Utility for move ctor/assign
     void move_from( CompressedLinePositionStorage&& orig );
+    void free_blocks();
 
     // The two indexes
     std::vector<char*> block32_index_;

@@ -128,18 +128,12 @@ ExternalInstance* SocketExternalCommunicator::otherInstance() const
 void SocketExternalCommunicator::onConnection()
 {
      QLocalSocket *socket = server_->nextPendingConnection();
-     connect(socket, SIGNAL(readyRead()), SLOT(onReadyRead()));
+     QByteArray data;
+     while(socket->waitForReadyRead(100)) {
+         data.append(socket->readAll());
+     }
+
+     socket->close();
+
+     emit loadFile(QString::fromUtf8(data));
 }
-
-void SocketExternalCommunicator::onReadyRead()
-{
-    QLocalSocket* socket = qobject_cast<QLocalSocket*>(sender());
-    QByteArray data;
-    data.append(socket->readAll());
-    socket->close();
-
-    emit loadFile(QString::fromUtf8(data));
-}
-
-
-

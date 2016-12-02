@@ -223,6 +223,8 @@ else {
 macx {
     QMAKE_CXXFLAGS += -stdlib=libc++
     QMAKE_LFLAGS += -stdlib=libc++
+
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 }
 
 # Official builds can be generated with `qmake VERSION="1.2.3"'
@@ -251,7 +253,7 @@ system(pkg-config --exists QtDBus):!no-dbus {
 else {
     message("Support for D-BUS will NOT be included")
     message("Support for cross-platform IPC will be included")
-    QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_WINIPC
+    QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_SOCKETIPC
     SOURCES += src/socketexternalcom.cpp
     HEADERS += src/socketexternalcom.h
 }

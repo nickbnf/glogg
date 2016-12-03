@@ -18,6 +18,7 @@
  */
 
 #include <QFile>
+#include <QtConcurrent>
 
 #include "log.h"
 
@@ -26,6 +27,21 @@
 
 // Number of lines in each chunk to read
 const int SearchOperation::nbLinesInChunk = 5000;
+
+namespace
+{
+    typedef std::pair<int, QString> NumberedLine;
+
+    void reduceMaxLength( int& max, int next )
+    {
+        max = qMax(max, next);
+    }
+
+    int getUntabifiedLength( const NumberedLine& line )
+    {
+        return AbstractLogData::getUntabifiedLength(line.second);
+    }
+}
 
 void SearchData::getAll( int* length, SearchResultArray* matches,
         qint64* lines) const
@@ -220,10 +236,13 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
     const qint64 nbSourceLines = sourceLogData_->getNbLine();
     int maxLength = 0;
     int nbMatches = searchData.getNbMatches();
-    SearchResultArray currentList = SearchResultArray();
+    SearchResultArray currentList;
+
+    std::vector<NumberedLine> numberedLines;
 
     // Ensure no re-alloc will be done
     currentList.reserve( nbLinesInChunk );
+    numberedLines.reserve( nbLinesInChunk );
 
     LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
@@ -233,35 +252,49 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 
     const qint64 endLine = qMin(nbSourceLines, endLine_);
 
-    for ( qint64 i = initialLine; i < endLine; i += nbLinesInChunk ) {
-        if ( *interruptRequested_ )
-            break;
+     for ( qint64 chunkStart = initialLine; chunkStart < endLine; chunkStart += nbLinesInChunk ) {
+         if ( *interruptRequested_ )
+             break;
 
-        const int percentage = ( i - initialLine ) * 100 / ( endLine - initialLine );
-        emit searchProgressed( nbMatches, percentage );
+         const int percentage = ( chunkStart - initialLine ) * 100 / ( endLine - initialLine );
+         emit searchProgressed( nbMatches, percentage );
 
-        const QStringList lines = sourceLogData_->getLines( i,
-                qMin( nbLinesInChunk, (int) ( endLine - i ) ) );
-        LOG(logDEBUG) << "Chunk starting at " << i <<
-            ", " << lines.size() << " lines read.";
+         const int linesInChunk = qMin( nbLinesInChunk, (int) ( endLine - chunkStart ) );
+         const QStringList lines = sourceLogData_->getLines( chunkStart, linesInChunk );
 
-        int j = 0;
-        for ( ; j < lines.size(); j++ ) {
-            if ( regexp_.match( lines[j] ).hasMatch() ) {
-                // FIXME: increase perf by removing temporary
-                const int length = sourceLogData_->getExpandedLineString(i+j).length();
-                if ( length > maxLength )
-                    maxLength = length;
-                currentList.push_back( MatchingLine( i+j ) );
-                nbMatches++;
-            }
-        }
+         LOG(logDEBUG) << "Chunk starting at " << chunkStart <<
+             ", " << lines.size() << " lines read.";
 
-        // After each block, copy the data to shared data
-        // and update the client
-        searchData.addAll( maxLength, currentList, i+j );
-        currentList.clear();
-    }
+         for ( int j = 0; j < lines.size(); ++j ) {
+             numberedLines.emplace_back( j, std::move( lines[j] ) );
+         }
+         QtConcurrent::blockingFilter( numberedLines,
+             [this]( const NumberedLine& line ) {
+                 // implicitly shared, internal data access is thread-safe
+                 auto localRegexp = regexp_;
+                 return localRegexp.match( line.second ).hasMatch();
+             }
+         );
+
+         maxLength = qMax( maxLength,
+                           QtConcurrent::blockingMappedReduced( numberedLines, getUntabifiedLength, reduceMaxLength ) );
+
+         std::transform( numberedLines.begin(), numberedLines.end(),
+                         std::back_inserter( currentList ),
+                         [&chunkStart]( const NumberedLine& matchedLine ) {
+                             return MatchingLine( chunkStart + matchedLine.first );
+                         }
+         );
+
+         nbMatches += numberedLines.size();
+
+         // After each block, copy the data to shared data
+         // and update the client
+         searchData.addAll( maxLength, currentList, chunkStart + linesInChunk );
+         currentList.clear();
+         numberedLines.clear();
+
+     }
 
     emit searchProgressed( nbMatches, 100 );
 }

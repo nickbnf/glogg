@@ -10,7 +10,7 @@ TEMPLATE = app
 
 QT += network
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += core widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += core widgets concurrent
 
 win32:Debug:CONFIG += console
 

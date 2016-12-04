@@ -1,20 +1,21 @@
 language: cpp
 sudo: true
 
-
 matrix:
   include:
     - compiler: gcc
+      env: COMPILER=g++-5
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
-      env: COMPILER=g++-4.9
+            - gcc-5
+            - g++-5
+     
 
 before_install:
- - sudo add-apt-repository -y ppa:beineri/opt-qt561
+ - sudo add-apt-repository -y ppa:beineri/opt-qt562
 
 install:
  - sudo apt-get -qq update
@@ -23,8 +24,9 @@ install:
 
 before_script:
  - source /opt/qt56/bin/qt56-env.sh
+ - g++-5 --version
+ - qmake -v
 
 script:
- - qmake -v
- - qmake glogg.pro
+ - qmake QMAKE_CXX=g++-5 glogg.pro
  - make -j$(nproc)

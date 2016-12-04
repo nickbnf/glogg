@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
+ [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
+
 klogg is the fork of glogg - the fast, smart log explorer
 
 The main reason for this fork is that we use glogg a lot

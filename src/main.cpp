@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    QString filename;
+    vector<QString> filenames;
 
     // Configuration
     bool new_session = false;
@@ -91,14 +91,14 @@ int main(int argc, char *argv[])
             desc_hidden.add_options()(s.c_str(), "debug");
 
         desc_hidden.add_options()
-            ("input-file", po::value<string>(), "input file")
+            ("input-file", po::value<vector<string>>(), "input file")
             ;
 
         po::options_description all_options("all options");
         all_options.add(desc).add(desc_hidden);
 
         po::positional_options_description positional;
-        positional.add("input-file", 1);
+        positional.add("input-file", -1);
 
         int command_line_style = (((po::command_line_style::unix_style ^
                 po::command_line_style::allow_guessing) |
@@ -145,8 +145,9 @@ int main(int argc, char *argv[])
                 logLevel = (TLogLevel) (logWARNING + s.length());
 
         if ( vm.count("input-file") ) {
-            const std::string file = vm["input-file"].as<string>();
-            filename = QString::fromLocal8Bit(file.c_str(), file.size());
+            for ( const auto& file: vm["input-file"].as<vector<string>>() ) {
+                filenames.push_back(QString::fromLocal8Bit(file.c_str(), file.size()));
+            }
         }
     }
     catch(exception& e) {
@@ -169,10 +170,13 @@ int main(int argc, char *argv[])
 
     FILELog::setReportingLevel( logLevel );
 
-    if ( ! filename.isEmpty() ) {
-        // Convert to absolute path
-        const QFileInfo file( filename );
-        filename = file.absoluteFilePath();
+    for ( auto& filename: filenames ) {
+        if ( ! filename.isEmpty() ) {
+            // Convert to absolute path
+            const QFileInfo file( filename );
+            filename = file.absoluteFilePath();
+            LOG( logDEBUG ) << "Filename: " << filename.toStdString();
+        }
     }
 
     // External communicator
@@ -200,7 +204,9 @@ int main(int argc, char *argv[])
         LOG(logINFO) << "Found another glogg (version = "
             << std::setbase(16) << version << ")";
 
-        externalInstance->loadFile( filename );
+        for ( const auto& filename: filenames ) {
+            externalInstance->loadFile( filename );
+        }
 
         return 0;
     }
@@ -256,10 +262,13 @@ int main(int argc, char *argv[])
     // Load the existing session if needed
     std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
-    if ( load_session || ( filename.isEmpty() && !new_session && config->loadLastSession() ) )
+    if ( load_session || ( filenames.empty() && !new_session && config->loadLastSession() ) )
         mw.reloadSession();
 
-    mw.loadInitialFile( filename );
+    for ( const auto& filename: filenames ) {
+        mw.loadInitialFile( filename );
+    }
+
     mw.startBackgroundTasks();
 
     return app.exec();

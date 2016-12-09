@@ -5,7 +5,7 @@
 # Debug builds: qmake CONFIG+=debug
 # Release builds: qmake
 
-TARGET = glogg
+TARGET = klogg
 TEMPLATE = app
 
 QT += network

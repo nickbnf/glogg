@@ -48,30 +48,18 @@ void PersistentInfo::migrateAndInit()
     assert( initialised_ == false );
 
     QString configurationFile = QDir::cleanPath( qApp->applicationDirPath() +
-                                       QDir::separator() + "glogg.conf" );
+                                       QDir::separator() + "klogg.conf" );
 
     if ( QFileInfo::exists(configurationFile) ) {
         settings_ = new QSettings(configurationFile, QSettings::IniFormat);
     }
     else {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-        // On Windows, we use .ini files and import from the registry if no
-        // .ini file is found (glogg <= 0.9 used the registry).
-
-        // This store the config file in %appdata%
         settings_ = new QSettings( QSettings::IniFormat,
-                QSettings::UserScope, "glogg", "glogg" );
-
-        if ( settings_->childKeys().count() == 0 ) {
-            LOG(logWARNING) << "INI file empty, trying to import from registry";
-            QSettings registry( "glogg", "glogg" );
-            foreach ( QString key, registry.allKeys() ) {
-                settings_->setValue( key, registry.value( key ) );
-            }
-        }
+                QSettings::UserScope, "klogg", "klogg" );
 #else
         // We use default Qt storage on proper OSes
-        settings_ = new QSettings( "glogg", "glogg" );
+        settings_ = new QSettings( "klogg", "klogg" );
 #endif
     }
     initialised_ = true;

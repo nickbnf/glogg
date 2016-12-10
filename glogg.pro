@@ -199,7 +199,7 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 #C++0x:QMAKE_CXXFLAGS += -std=c++0x
 #C++11:QMAKE_CXXFLAGS += -std=c++11
 CONFIG += c++11
-release:QMAKE_CXXFLAGS += -O2
+release:QMAKE_CXXFLAGS += -O2 -Werror
 #release:QMAKE_CXXFLAGS += -O0
 # Debug symbols even in release build
 #QMAKE_CXXFLAGS += -g

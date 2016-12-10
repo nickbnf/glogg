@@ -36,7 +36,7 @@ namespace {
 
 // Utility classes
 
-WinNotificationInfoList::WinNotificationInfoList( const char* buffer, size_t buffer_size )
+WinNotificationInfoList::WinNotificationInfoList( const char* buffer )
 {
     pointer_ = buffer;
     next_ = updateCurrentNotification( pointer_ );
@@ -59,7 +59,7 @@ const char* WinNotificationInfoList::updateCurrentNotification(
     uint32_t action      = *( reinterpret_cast<const uint32_t*>( new_position ) + 1 );
     uint32_t length      = *( reinterpret_cast<const uint32_t*>( new_position ) + 2 );
 
-    const std::wstring file_name = { reinterpret_cast<const wchar_t*>( new_position + 12 ), length / 2 };
+    const std::wstring file_name { reinterpret_cast<const wchar_t*>( new_position + 12 ), length / 2 };
 
     LOG(logDEBUG) << "Next: " << next_offset;
     LOG(logDEBUG) << "Action: " << action;
@@ -148,14 +148,14 @@ WinWatchTowerDriver::~WinWatchTowerDriver()
 }
 
 WinWatchTowerDriver::FileId WinWatchTowerDriver::addFile(
-        const std::string& file_name )
+        const std::string& )
 {
     // Nothing for Windows
     return { };
 }
 
 WinWatchTowerDriver::SymlinkId WinWatchTowerDriver::addSymlink(
-        const std::string& file_name )
+        const std::string& )
 {
     // Nothing for Windows
     return { };
@@ -330,9 +330,7 @@ std::vector<ObservedFile<WinWatchTowerDriver>*> WinWatchTowerDriver::waitAndProc
         {
             LOG(logDEBUG) << "Got event for dir " << dir_record.get();
 
-            WinNotificationInfoList notification_info(
-                    dir_record->buffer_,
-                    dir_record->buffer_length_ );
+            WinNotificationInfoList notification_info { dir_record->buffer_ };
 
             for ( auto notification : notification_info ) {
                 std::string file_path = dir_record->path_ + shortstringize( notification.fileName() );

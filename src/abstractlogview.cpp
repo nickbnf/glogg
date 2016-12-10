@@ -1453,6 +1453,7 @@ void AbstractLogView::updateScrollBars()
 
 void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y )
 {
+    Q_UNUSED(delta_y);
     // LOG( logDEBUG ) << "devicePixelRatio: " << viewport()->devicePixelRatio();
     // LOG( logDEBUG ) << "viewport size: " << viewport()->size().width();
     // LOG( logDEBUG ) << "pixmap size: " << textPixmap.width();

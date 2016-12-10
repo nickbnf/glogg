@@ -58,7 +58,7 @@ class WinNotificationInfo {
 
 class WinNotificationInfoList {
   public:
-    WinNotificationInfoList( const char* buffer, size_t buffer_size );
+    explicit WinNotificationInfoList( const char* buffer );
 
     // Iterator
     class iterator : std::iterator<std::input_iterator_tag, WinNotificationInfo> {
@@ -104,7 +104,7 @@ class WinNotificationInfoList {
     const char* next_;
     WinNotificationInfo current_notification_;
 
-    const char* updateCurrentNotification( const char* new_position );
+    const char* updateCurrentNotification(const char* new_position );
 };
 
 template <typename Driver>

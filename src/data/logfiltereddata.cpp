@@ -431,7 +431,7 @@ void LogFilteredData::regenerateFilteredItemsCache() const
         // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
         if ( next_mark <= next_match ) {
             // LOG(logDEBUG) << "Add mark at " << next_mark;
-            filteredItemsCache_.push_back( FilteredItem( next_mark, Mark ) );
+            filteredItemsCache_.emplace_back( next_mark, Mark );
             if ( j != marks_.end() )
                 ++j;
             if ( ( next_mark == next_match ) && ( i != matching_lines_.cend() ) )
@@ -439,7 +439,7 @@ void LogFilteredData::regenerateFilteredItemsCache() const
         }
         else {
             // LOG(logDEBUG) << "Add match at " << next_match;
-            filteredItemsCache_.push_back( FilteredItem( next_match, Match ) );
+            filteredItemsCache_.emplace_back( next_match, Match );
             if ( i != matching_lines_.cend() )
                 ++i;
         }

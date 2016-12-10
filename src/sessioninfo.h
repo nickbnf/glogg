@@ -44,6 +44,12 @@ class SessionInfo : public Persistable {
 
     struct OpenFile
     {
+        OpenFile( const QString& fileName, uint64_t topLine, const QString& viewContext )
+            : fileName{ fileName }
+            , topLine{ topLine }
+            , viewContext{ viewContext }
+        {}
+
         QString fileName;
         uint64_t    topLine;
         // The view context contains parameter specific to the view's

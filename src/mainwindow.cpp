@@ -974,10 +974,10 @@ void MainWindow::writeSettings()
     for ( int i = 0; i < mainTabWidget_.count(); ++i )
     {
         auto view = dynamic_cast<const ViewInterface*>( mainTabWidget_.widget( i ) );
-        widget_list.push_back( std::make_tuple(
+        widget_list.emplace_back(
                 view,
                 0UL,
-                view->context() ) );
+                view->context() );
     }
     session_->save( widget_list, saveGeometry() );
 

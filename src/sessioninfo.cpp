@@ -45,7 +45,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 uint64_t top_line = settings.value( "topLine" ).toInt();
                 QString view_context =
                     settings.value( "viewContext" ).toString();
-                openFiles_.push_back( { file_name, top_line, view_context } );
+                openFiles_.emplace_back( file_name, top_line, view_context );
             }
             settings.endArray();
         }

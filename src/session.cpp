@@ -102,7 +102,7 @@ void Session::save( std::vector<
         assert( file );
 
         LOG(logDEBUG) << "Saving " << file->fileName.toLocal8Bit().data() << " in session.";
-        session_files.push_back( { file->fileName, top_line, view_context->toString() } );
+        session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
     std::shared_ptr<SessionInfo> session =
@@ -128,7 +128,7 @@ std::vector<std::pair<QString, ViewInterface*>> Session::restore(
     {
         LOG(logDEBUG) << "Create view for " << file.fileName.toLocal8Bit().data();
         ViewInterface* view = openAlways( file.fileName, view_factory, file.viewContext );
-        result.push_back( { file.fileName, view } );
+        result.emplace_back( file.fileName, view );
     }
 
     *current_file_index = -1;

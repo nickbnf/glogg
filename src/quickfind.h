@@ -41,7 +41,7 @@ class SearchingNotifier : public QObject
   Q_OBJECT
 
   public:
-    SearchingNotifier() {};
+    SearchingNotifier() : dotToDisplay_{ 0 } {}
 
     // Reset internal timers at the beiginning of the processing
     void reset();

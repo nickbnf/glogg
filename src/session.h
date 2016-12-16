@@ -62,7 +62,8 @@ class Session {
     // The ownership of the view is given to the caller
     // Throw exceptions if the file is already open or if it cannot be open.
     ViewInterface* open( const QString& file_name,
-            std::function<ViewInterface*()> view_factory );
+            const std::function<ViewInterface*()>& view_factory );
+
     // Close the file identified by the view passed
     // Throw an exception if it does not exist.
     void close( const ViewInterface* view );
@@ -72,16 +73,16 @@ class Session {
     // returns a vector of pairs (file_name, view) and the index of the
     // current file (or -1 if none).
     std::vector<std::pair<QString, ViewInterface*>> restore(
-            std::function<ViewInterface*()> view_factory,
+            const std::function<ViewInterface*()>& view_factory,
             int *current_file_index );
     // Save the session to persistent storage. An ordered list of
     // (view, topline, ViewContextInterface) is passed, this is because only
     // the main window know the order in which the views are presented to
     // the user (it might have changed since file were opened).
     // Also, the geometry information is passed as an opaque string.
-    void save( std::vector<
+    void save( const std::vector<
                    std::tuple<const ViewInterface*, uint64_t, std::shared_ptr<const ViewContextInterface>>
-               > view_list,
+               >& view_list,
            const QByteArray& geometry );
 
     // Get the geometry string from persistent storage for this session.
@@ -107,8 +108,9 @@ class Session {
 
     // Open a file without checking if it is existing/readable
     ViewInterface* openAlways( const QString& file_name,
-            std::function<ViewInterface*()> view_factory,
+            const std::function<ViewInterface*()>& view_factory,
             const QString& view_context );
+
     // Find an open file from its associated view
     OpenFile* findOpenFileFromView( const ViewInterface* view );
     const OpenFile* findOpenFileFromView( const ViewInterface* view ) const;

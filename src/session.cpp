@@ -61,7 +61,7 @@ ViewInterface* Session::getViewIfOpen( const std::string& file_name ) const
 }
 
 ViewInterface* Session::open( const std::string& file_name,
-        std::function<ViewInterface*()> view_factory )
+        const std::function<ViewInterface*()>& view_factory )
 {
     ViewInterface* view = nullptr;
 
@@ -81,17 +81,17 @@ void Session::close( const ViewInterface* view )
     openFiles_.erase( openFiles_.find( view ) );
 }
 
-void Session::save( std::vector<
+void Session::save( const std::vector<
         std::tuple<const ViewInterface*,
             uint64_t,
             std::shared_ptr<const ViewContextInterface>>
-        > view_list,
+        >& view_list,
         const QByteArray& geometry )
 {
     LOG(logDEBUG) << "Session::save";
 
     std::vector<SessionInfo::OpenFile> session_files;
-    for ( auto view: view_list ) {
+    for ( const auto& view: view_list ) {
         const ViewInterface* view_object;
         uint64_t top_line;
         std::shared_ptr<const ViewContextInterface> view_context;
@@ -113,7 +113,7 @@ void Session::save( std::vector<
 }
 
 std::vector<std::pair<std::string, ViewInterface*>> Session::restore(
-        std::function<ViewInterface*()> view_factory,
+        const std::function<ViewInterface*()>& view_factory,
         int *current_file_index )
 {
     GetPersistentInfo().retrieve( QString( "session" ) );
@@ -172,7 +172,7 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
  */
 
 ViewInterface* Session::openAlways( const std::string& file_name,
-        std::function<ViewInterface*()> view_factory,
+        const std::function<ViewInterface*()>& view_factory,
         const char* view_context )
 {
     // Create the data objects

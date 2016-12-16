@@ -101,7 +101,7 @@ class Overview
     // Current height of view window.
     int height_;
     // Does the cache (matchesLines, markLines) need to be recalculated.
-    int dirty_;
+    bool dirty_;
 
     // List of lines representing matches and marks (are shared with the client)
     QVector<WeightedLine> matchLines_;

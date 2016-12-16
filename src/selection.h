@@ -30,9 +30,14 @@ class AbstractLogData;
 class Portion
 {
   public:
-    Portion() { line_ = -1; }
+    Portion() : line_{ -1 }, startColumn_{ -1 }, endColumn_{ -1 }
+    {}
+
     Portion( int line, int start_column, int end_column )
-    { line_ = line; startColumn_ = start_column; endColumn_ = end_column; }
+        : line_{ line }
+        , startColumn_{ start_column }
+        , endColumn_{ end_column }
+    {}
 
     int line() const { return line_; }
     int startColumn() const { return startColumn_; }
@@ -54,15 +59,15 @@ class Selection
     Selection();
 
     // Clear the selection
-    void clear() { selectedPartial_.line = -1; selectedLine_ = -1; };
+    void clear() { selectedPartial_.line = -1; selectedLine_ = -1; }
 
     // Select one line
     void selectLine( int line )
       { selectedPartial_.line = -1; selectedRange_.startLine = -1;
-        selectedLine_ = line; };
+        selectedLine_ = line; }
     // Select a portion of line (both start and end included)
     void selectPortion( int line, int start_column, int end_column );
-    void selectPortion( Portion selection )
+    void selectPortion( const Portion& selection )
       { selectPortion( selection.line(), selection.startColumn(),
               selection.endColumn() ); }
     // Select a range of lines (both start and end included)

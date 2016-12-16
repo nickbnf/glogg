@@ -128,7 +128,7 @@ bool FilterSet::matchLine( const QString& line,
         QColor* foreColor, QColor* backColor ) const
 {
     for ( QList<Filter>::const_iterator i = filterList.constBegin();
-          i != filterList.constEnd(); i++ ) {
+          i != filterList.constEnd(); ++i ) {
         if ( i->indexIn( line ) != -1 ) {
             foreColor->setNamedColor( i->foreColorName() );
             backColor->setNamedColor( i->backColorName() );

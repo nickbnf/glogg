@@ -27,7 +27,7 @@ struct ProtocolInfo {
 // List of files and observers
 template <typename Driver>
 struct ObservedDir {
-    ObservedDir( const std::string this_path ) : path { this_path } {}
+    ObservedDir( const std::string& this_path ) : path { this_path } {}
 
     // Returns the address of the protocol specific informations
     ProtocolInfo* protocolInfo() { return &protocol_info_; }

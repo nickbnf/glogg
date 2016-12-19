@@ -150,6 +150,14 @@ class LogFilteredData : public AbstractLogData {
     LogFilteredDataWorkerThread workerThread_;
     Marks marks_;
 
+    struct CachedSearchResult
+    {
+        SearchResultArray matching_lines;
+        int maxLength;
+    };
+
+    QHash<QRegularExpression, CachedSearchResult> searchResultsCache_;
+
     // Utility functions
     LineNumber findLogDataLine( LineNumber lineNum ) const;
     LineNumber findFilteredLine( LineNumber lineNum ) const;

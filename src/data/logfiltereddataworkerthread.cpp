@@ -52,7 +52,12 @@ void SearchData::getAll( int* length, SearchResultArray* matches,
     *lines   = nbLinesProcessed_;
 
     // This is a copy (potentially slow)
-    *matches = matches_;
+    const auto originalSize = matches->size();
+    matches->insert(matches->end(),
+                    matches_.begin() + originalSize,
+                    matches_.end());
+
+    //*matches = matches_;
 }
 
 void SearchData::setAll( int length,
@@ -268,6 +273,7 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
          for ( int j = 0; j < lines.size(); ++j ) {
              numberedLines.emplace_back( j, std::move( lines[j] ) );
          }
+
          QtConcurrent::blockingFilter( numberedLines,
              [this]( const NumberedLine& line ) {
                  // implicitly shared, internal data access is thread-safe

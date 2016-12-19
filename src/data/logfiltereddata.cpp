@@ -32,6 +32,10 @@
 #include "marks.h"
 #include "logfiltereddata.h"
 
+namespace {
+    const size_t MaxSearchCacheSize = 100*1024*1024; // 100Mib
+}
+
 // Creates an empty set. It must be possible to display it without error.
 // FIXME
 LogFilteredData::LogFilteredData() : AbstractLogData(),
@@ -101,7 +105,15 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
     clearSearch();
     currentRegExp_ = regExp;
 
-    workerThread_.search( currentRegExp_, startLine, endLine );
+    auto cachedResults = searchResultsCache_.find(regExp);
+    if (cachedResults != std::end(searchResultsCache_)) {
+        matching_lines_ = cachedResults.value().matching_lines;
+        maxLength_ = cachedResults.value().maxLength;
+        emit searchProgressed(matching_lines_.size(), 100);
+    }
+    else {
+        workerThread_.search( currentRegExp_, startLine, endLine );
+    }
 }
 
 void LogFilteredData::updateSearch(qint64 startLine, qint64 endLine)
@@ -259,6 +271,25 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
     // searchDone_ = true;
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
+
+    if (progress == 100) {
+        searchResultsCache_[currentRegExp_] = {matching_lines_, maxLength_};
+
+        size_t cacheSize = 0;
+        for (const auto& results: searchResultsCache_) {
+            cacheSize += results.matching_lines.size();
+        }
+
+        auto cachedResult = std::begin(searchResultsCache_);
+        while(cachedResult != std::end(searchResultsCache_)
+              && cacheSize > MaxSearchCacheSize) {
+
+            if (cachedResult.key() == currentRegExp_)
+                ++cachedResult;
+
+            cachedResult = searchResultsCache_.erase(cachedResult);
+        }
+    }
 
     emit searchProgressed( nbMatches, progress );
 }

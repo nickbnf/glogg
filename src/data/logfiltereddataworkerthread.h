@@ -37,7 +37,8 @@ typedef uint32_t LineNumber;
 // Contains the line number the line was found in and its content.
 class MatchingLine {
   public:
-    MatchingLine( LineNumber line ) { lineNumber_ = line; };
+    MatchingLine( LineNumber line ) : lineNumber_{ line }
+    {}
 
     // Accessors
     LineNumber lineNumber() const { return lineNumber_; }
@@ -62,6 +63,7 @@ class SearchData
     SearchData() : dataMutex_(), matches_(), maxLength_(0) { }
 
     // Atomically get all the search data
+    // appending more results to passed array
     void getAll( int* length, SearchResultArray* matches,
             qint64* nbLinesProcessed ) const;
     // Atomically set all the search data

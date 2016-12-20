@@ -105,11 +105,12 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
     clearSearch();
     currentRegExp_ = regExp;
 
-    auto cachedResults = searchResultsCache_.find(regExp);
-    if (cachedResults != std::end(searchResultsCache_)) {
+    auto cachedResults = searchResultsCache_.find( regExp );
+    if ( cachedResults != std::end( searchResultsCache_ ) ) {
+        LOG(logDEBUG) << "Got result from cache";
         matching_lines_ = cachedResults.value().matching_lines;
         maxLength_ = cachedResults.value().maxLength;
-        emit searchProgressed(matching_lines_.size(), 100);
+        emit searchProgressed( matching_lines_.size(), 100 );
     }
     else {
         workerThread_.search( currentRegExp_, startLine, endLine );
@@ -272,22 +273,36 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
-    if (progress == 100) {
-        searchResultsCache_[currentRegExp_] = {matching_lines_, maxLength_};
+    if ( progress == 100 ) {
 
-        size_t cacheSize = 0;
-        for (const auto& results: searchResultsCache_) {
-            cacheSize += results.matching_lines.size();
+        if ( matching_lines_.size() > MaxSearchCacheSize ) {
+            LOG(logDEBUG) << "LogFilteredData: too many matches to place in cache";
         }
+        else {
+            LOG(logDEBUG) << "LogFilteredData: caching results for pattern "
+                          << currentRegExp_.pattern().toStdString();
 
-        auto cachedResult = std::begin(searchResultsCache_);
-        while(cachedResult != std::end(searchResultsCache_)
-              && cacheSize > MaxSearchCacheSize) {
+            searchResultsCache_[currentRegExp_] = {matching_lines_, maxLength_};
 
-            if (cachedResult.key() == currentRegExp_)
-                ++cachedResult;
+            size_t cacheSize = 0;
+            for (const auto& results: searchResultsCache_) {
+                cacheSize += results.matching_lines.size();
+            }
 
-            cachedResult = searchResultsCache_.erase(cachedResult);
+            LOG(logDEBUG) << "LogFilteredData: cache size " << cacheSize;
+
+            auto cachedResult = std::begin(searchResultsCache_);
+            while(cachedResult != std::end(searchResultsCache_)
+                  && cacheSize > MaxSearchCacheSize) {
+
+                if (cachedResult.key() == currentRegExp_) {
+                    ++cachedResult;
+                    continue;
+                }
+
+                cacheSize -= cachedResult.value().matching_lines.size();
+                cachedResult = searchResultsCache_.erase(cachedResult);
+            }
         }
     }
 

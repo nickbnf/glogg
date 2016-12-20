@@ -33,7 +33,7 @@
 #include "logfiltereddata.h"
 
 namespace {
-    const size_t MaxSearchCacheSize = 100*1024*1024; // 100Mib
+    const size_t MaxSearchCacheSize = 1000000; // 1M lines
 }
 
 // Creates an empty set. It must be possible to display it without error.

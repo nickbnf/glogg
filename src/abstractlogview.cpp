@@ -517,12 +517,14 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
+
     bool controlModifier = (keyEvent->modifiers() & Qt::ControlModifier) == Qt::ControlModifier;
     bool shiftModifier = (keyEvent->modifiers() & Qt::ShiftModifier) == Qt::ShiftModifier;
+    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
-    if ( keyEvent->key() == Qt::Key_Left )
+    if ( keyEvent->key() == Qt::Key_Left && noModifier )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
-    else if ( keyEvent->key() == Qt::Key_Right )
+    else if ( keyEvent->key() == Qt::Key_Right  && noModifier )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
     else if ( keyEvent->key() == Qt::Key_Home && !controlModifier)
         jumpToStartOfLine();
@@ -629,7 +631,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         emit activity();
     }
     else {
-        QAbstractScrollArea::keyPressEvent( keyEvent );
+        // Only pass bare keys to the superclass this is so that
+        // shortcuts such as Ctrl+Alt+Arrow are handled by the parent.
+        LOG(logDEBUG) << std::hex << keyEvent->modifiers();
+        if ( keyEvent->modifiers() == Qt::NoModifier ||
+                keyEvent->modifiers() == Qt::KeypadModifier ) {
+            QAbstractScrollArea::keyPressEvent( keyEvent );
+        }
     }
 }
 

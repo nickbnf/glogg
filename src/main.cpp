@@ -250,14 +250,17 @@ int main(int argc, char *argv[])
     std::unique_ptr<Session> session( new Session() );
     MainWindow mw( std::move( session ), externalCommunicator );
 
-    LOG(logDEBUG) << "MainWindow created.";
-    mw.show();
+    // Geometry
+    mw.reloadGeometry();
 
     // Load the existing session if needed
     std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
     if ( load_session || ( filename.empty() && !new_session && config->loadLastSession() ) )
         mw.reloadSession();
+
+    LOG(logDEBUG) << "MainWindow created.";
+    mw.show();
 
     mw.loadInitialFile( QString::fromStdString( filename ) );
     mw.startBackgroundTasks();

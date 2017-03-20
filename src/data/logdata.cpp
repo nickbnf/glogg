@@ -296,13 +296,19 @@ void LogData::doSetDisplayEncoding( const char* encoding )
     codec_ = QTextCodec::codecForName( encoding );
 }
 
+void LogData::doSetMultibyteEncodingOffsets( int before_cr, int after_cr )
+{
+    before_cr_offset_ = before_cr;
+    after_cr_offset_ = after_cr;
+}
+
 QString LogData::doGetLineString( qint64 line ) const
 {
     if ( line >= indexing_data_.getNbLines() ) { return 0; /* exception? */ }
 
     fileMutex_.lock();
 
-    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
+    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
 
     QString string = codec_->toUnicode( attached_file_->readLine() );
 
@@ -319,7 +325,8 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
 
     fileMutex_.lock();
 
-    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
+    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
+    // length!!
 
     QByteArray rawString = attached_file_->readLine();
 
@@ -353,8 +360,8 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     fileMutex_.lock();
 
     const qint64 first_byte = (first_line == 0) ?
-        0 : indexing_data_.getPosForLine( first_line-1 );
-    const qint64 last_byte  = indexing_data_.getPosForLine( last_line );
+        0 : ( indexing_data_.getPosForLine( first_line-1 ) + after_cr_offset_ );
+    const qint64 last_byte  = indexing_data_.getPosForLine( last_line ) + before_cr_offset_;
     // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " last_byte:" << last_byte;
     attached_file_->seek( first_byte );
     QByteArray blob = attached_file_->read( last_byte - first_byte );
@@ -364,7 +371,7 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) - first_byte;
+        end = indexing_data_.getPosForLine( line ) + before_cr_offset_ - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
@@ -392,9 +399,9 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     fileMutex_.lock();
 
     const qint64 first_byte = (first_line == 0) ?
-        0 : indexing_data_.getPosForLine( first_line-1 );
-    const qint64 last_byte  = indexing_data_.getPosForLine( last_line );
-    // LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
+        0 : ( indexing_data_.getPosForLine( first_line-1 ) + after_cr_offset_ );
+    const qint64 last_byte  = indexing_data_.getPosForLine( last_line ) + before_cr_offset_;
+    LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
 
     attached_file_->seek( first_byte );
     QByteArray blob = attached_file_->read( last_byte - first_byte );
@@ -404,12 +411,12 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) - first_byte;
-        // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
+        end = indexing_data_.getPosForLine( line ) + before_cr_offset_ - first_byte;
+        LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
-        // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
+        LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
         list.append( untabify( codec_->toUnicode( this_line ) ) );
-        beginning = end;
+        beginning = end + after_cr_offset_;
     }
 
     return list;

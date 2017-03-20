@@ -73,6 +73,8 @@ class CrawlerWidget : public QSplitter,
         ENCODING_AUTO = 0,
         ENCODING_ISO_8859_1,
         ENCODING_UTF8,
+        ENCODING_UTF16LE,
+        ENCODING_UTF16BE,
         ENCODING_MAX,
     };
 

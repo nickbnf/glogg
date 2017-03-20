@@ -947,6 +947,8 @@ void CrawlerWidget::updateEncoding()
 {
     static const char* latin1_encoding = "iso-8859-1";
     static const char* utf8_encoding   = "utf-8";
+    static const char* utf16le_encoding   = "utf-16le";
+    static const char* utf16be_encoding   = "utf-16be";
 
     const char* encoding;
 
@@ -971,6 +973,14 @@ void CrawlerWidget::updateEncoding()
             encoding = utf8_encoding;
             encoding_text_ = tr( "Displayed as UTF-8" );
             break;
+        case ENCODING_UTF16LE:
+            encoding = utf16le_encoding;
+            encoding_text_ = tr( "Displayed as UTF-16LE" );
+            break;
+        case ENCODING_UTF16BE:
+            encoding = utf16be_encoding;
+            encoding_text_ = tr( "Displayed as UTF-16BE" );
+            break;
         case ENCODING_ISO_8859_1:
         default:
             encoding = latin1_encoding;
@@ -978,9 +988,27 @@ void CrawlerWidget::updateEncoding()
             break;
     }
 
+    // Determine the newline offsets for the encoding
+    int before_cr;
+    int after_cr;
+    if ( encodingSetting_ == ENCODING_UTF16LE ) {
+        before_cr = 0;
+        after_cr  = 1;
+    }
+    else if ( encodingSetting_ == ENCODING_UTF16BE ) {
+        before_cr = -1;
+        after_cr  = 1;
+    }
+    else {
+        before_cr = 0;
+        after_cr  = 0;
+    }
+
     logData_->setDisplayEncoding( encoding );
+    logData_->setMultibyteEncodingOffsets( before_cr, after_cr );
     logMainView->forceRefresh();
     logFilteredData_->setDisplayEncoding( encoding );
+    logFilteredData_->setMultibyteEncodingOffsets( before_cr, after_cr );
     filteredView->forceRefresh();
 }
 

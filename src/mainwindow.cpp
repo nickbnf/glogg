@@ -231,6 +231,8 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "&Auto" },
     { "ASCII / &ISO-8859-1" },
     { "&UTF-8" },
+    { "UTF-16LE" },
+    { "UTF-16BE" },
 };
 
 // Menu actions

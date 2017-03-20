@@ -159,6 +159,7 @@ class LogData : public AbstractLogData {
     int doGetMaxLength() const override;
     int doGetLineLength( qint64 line ) const override;
     void doSetDisplayEncoding( const char* encoding ) override;
+    void doSetMultibyteEncodingOffsets( int before_cr, int after_cr ) override;
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
@@ -175,6 +176,10 @@ class LogData : public AbstractLogData {
 
     // Codec to decode text
     QTextCodec* codec_;
+
+    // Offset to apply to the newline character
+    int before_cr_offset_ = 0;
+    int after_cr_offset_  = 0;
 
     // To protect the file:
     mutable QMutex fileMutex_;

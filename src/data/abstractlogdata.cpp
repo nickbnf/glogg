@@ -75,3 +75,8 @@ void AbstractLogData::setDisplayEncoding( const char* encoding )
 {
     doSetDisplayEncoding( encoding );
 }
+
+void AbstractLogData::setMultibyteEncodingOffsets( int before_cr, int after_cr )
+{
+    doSetMultibyteEncodingOffsets( before_cr, after_cr );
+}

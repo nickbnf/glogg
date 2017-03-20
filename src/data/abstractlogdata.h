@@ -53,6 +53,10 @@ class AbstractLogData : public QObject {
 
     // Set the view to use the passed encoding for display
     void setDisplayEncoding( const char* encoding_name );
+    // Configure how the view shall interpret newline characters
+    // this should be non zero for encodings where \n is encoded
+    // in multiple bytes (e.g. UTF-16)
+    void setMultibyteEncodingOffsets( int before_cr, int after_cr );
 
     // Length of a tab stop
     static const int tabStop = 8;
@@ -74,6 +78,8 @@ class AbstractLogData : public QObject {
     virtual int doGetLineLength( qint64 line ) const = 0;
     // Internal function called to set the encoding
     virtual void doSetDisplayEncoding( const char* encoding ) = 0;
+    // Internal function called to set the newline offsets
+    virtual void doSetMultibyteEncodingOffsets( int before_cr, int after_cr ) = 0;
 
     static inline QString untabify( const QString& line ) {
         QString untabified_line;

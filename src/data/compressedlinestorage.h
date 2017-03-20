@@ -151,6 +151,12 @@ class CompressedLinePositionStorage
     // Cache the last position read
     // This is to speed up consecutive reads (whole page)
     struct Cache {
+        Cache() {
+            index = UINT32_MAX - 1U;
+            position = 0;
+            ptr = nullptr;
+        }
+
         uint32_t index;
         uint64_t position;
         char* ptr;

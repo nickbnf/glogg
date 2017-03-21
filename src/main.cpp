@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     TLogLevel logLevel = logWARNING;
 
     try {
-        po::options_description desc("Usage: glogg [options] [file]");
+        po::options_description desc("Usage: glogg [options] [files]");
         desc.add_options()
             ("help,h", "print out program usage (this message)")
             ("version,v", "print glogg's version information")
@@ -266,7 +266,6 @@ int main(int argc, char *argv[])
     LOG(logDEBUG) << "MainWindow created.";
     mw.show();
 
-    mw.loadInitialFile( QString::fromStdString( filename ) );
     for ( const auto& filename: filenames ) {
         mw.loadInitialFile( QString::fromStdString( filename ) );
     }

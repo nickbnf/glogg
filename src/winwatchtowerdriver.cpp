@@ -87,6 +87,11 @@ void WinWatchTowerDriver::FileChangeToken::readFromFile(
     // On Windows, we open the file and get its last written date/time
     // That seems to work alright in my tests, but who knows for sure?
 
+    // On further investigation, in some situations (e.g. putty logging that
+    // has been stop/re-started), the size of the file is being updated but not
+    // the date (confirmed by "Properties" in the file explorer), so we add the
+    // file size to the token. Ha the joy of Windows programming...
+
     HANDLE hFile = CreateFile(
 #ifdef UNICODE
             longstringize( file_name ).c_str(),
@@ -104,8 +109,10 @@ void WinWatchTowerDriver::FileChangeToken::readFromFile(
         DWORD err = GetLastError();
         LOG(logERROR) << "FileChangeToken::readFromFile: failed with " << err;
 
-        low_date_time_ = 0;
+        low_date_time_  = 0;
         high_date_time_ = 0;
+        low_file_size_  = 0;
+        high_file_size_ = 0;
 
         return;
     }
@@ -115,8 +122,10 @@ void WinWatchTowerDriver::FileChangeToken::readFromFile(
         if ( GetFileInformationByHandle(
                     hFile,
                     &file_info ) ) {
-            low_date_time_ = file_info.ftLastWriteTime.dwLowDateTime;
+            low_date_time_  = file_info.ftLastWriteTime.dwLowDateTime;
             high_date_time_ = file_info.ftLastWriteTime.dwHighDateTime;
+            low_file_size_  = file_info.nFileSizeLow;
+            high_file_size_ = file_info.nFileSizeHigh;
 
             LOG(logDEBUG) << "FileChangeToken::readFromFile: low_date_time_ " << low_date_time_;
             LOG(logDEBUG) << "FileChangeToken::readFromFile: high_date_time_ " << high_date_time_;

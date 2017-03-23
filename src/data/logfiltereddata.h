@@ -156,7 +156,14 @@ class LogFilteredData : public AbstractLogData {
         int maxLength;
     };
 
-    QHash<QRegularExpression, CachedSearchResult> searchResultsCache_;
+    typedef QPair<QRegularExpression, QPair<qint64, qint64>> SearchCacheKey;
+
+    SearchCacheKey makeCacheKey( const QRegularExpression& regExp, qint64 startLine, qint64 endLine ) {
+      return qMakePair( regExp, qMakePair( startLine, endLine ) );
+    }
+
+    QHash<SearchCacheKey, CachedSearchResult> searchResultsCache_;
+    SearchCacheKey currentSearchKey_;
 
     // Utility functions
     LineNumber findLogDataLine( LineNumber lineNum ) const;

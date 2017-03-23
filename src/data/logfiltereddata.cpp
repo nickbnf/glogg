@@ -104,8 +104,9 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
 
     clearSearch();
     currentRegExp_ = regExp;
+    currentSearchKey_ = makeCacheKey( regExp, startLine, endLine );
 
-    auto cachedResults = searchResultsCache_.find( regExp );
+    const auto cachedResults = searchResultsCache_.find( currentSearchKey_ );
     if ( cachedResults != std::end( searchResultsCache_ ) ) {
         LOG(logDEBUG) << "Got result from cache";
         matching_lines_ = cachedResults.value().matching_lines;
@@ -121,6 +122,7 @@ void LogFilteredData::updateSearch(qint64 startLine, qint64 endLine)
 {
     LOG(logDEBUG) << "Entering updateSearch";
 
+    currentSearchKey_ = makeCacheKey( currentRegExp_, startLine, endLine );
     workerThread_.updateSearch( currentRegExp_, startLine, endLine,
                                 nbLinesProcessed_ );
 }
@@ -282,7 +284,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
             LOG(logDEBUG) << "LogFilteredData: caching results for pattern "
                           << currentRegExp_.pattern().toStdString();
 
-            searchResultsCache_[currentRegExp_] = {matching_lines_, maxLength_};
+            searchResultsCache_[currentSearchKey_] = {matching_lines_, maxLength_};
 
             size_t cacheSize = 0;
             for (const auto& results: searchResultsCache_) {
@@ -295,7 +297,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
             while(cachedResult != std::end(searchResultsCache_)
                   && cacheSize > MaxSearchCacheSize) {
 
-                if (cachedResult.key() == currentRegExp_) {
+                if (cachedResult.key() == currentSearchKey_) {
                     ++cachedResult;
                     continue;
                 }

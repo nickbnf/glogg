@@ -116,33 +116,32 @@ void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent *event)
 
 void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
 {
+    const auto mod = event->modifiers();
+    const auto key = event->key();
+
     LOG(logDEBUG) << "TabbedCrawlerWidget::keyPressEvent";
 
-    char c = ( event->text() )[0].toLatin1();
-    Qt::KeyboardModifiers mod = event->modifiers();
-
     // Ctrl + tab
-    if ( mod == Qt::ControlModifier && c == '\t' ) {
+    if ( ( mod == Qt::ControlModifier && key == Qt::Key_Tab ) ||
+         ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier ) && key == Qt::Key_Right ) ) {
         setCurrentIndex( ( currentIndex() + 1 ) % count() );
     }
     // Ctrl + shift + tab
-    else if ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && c == '\t' ) {
-        setCurrentIndex( ( currentIndex() + 1 ) % count() );
+    else if ( ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && key == Qt::Key_Tab ) ||
+              ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier ) && key == Qt::Key_Left ) ) {
+        setCurrentIndex( ( currentIndex() - 1 >= 0 ) ? currentIndex() - 1 : count() - 1 );
     }
     // Ctrl + numbers
-    else if ( mod == Qt::ControlModifier && ( c >= '1' && c <= '8' ) ) {
-        LOG(logDEBUG) << "number " << c;
-        int new_index = c - '0';
+    else if ( mod == Qt::ControlModifier && ( key >= Qt::Key_1 && key <= Qt::Key_8 ) ) {
+        int new_index = key - Qt::Key_0;
         if ( new_index <= count() )
             setCurrentIndex( new_index - 1 );
     }
     // Ctrl + 9
-    else if ( mod == Qt::ControlModifier && c == '9' ) {
-        LOG(logDEBUG) << "last";
+    else if ( mod == Qt::ControlModifier && key == Qt::Key_9 ) {
         setCurrentIndex( count() - 1 );
     }
-    else if ( mod == Qt::ControlModifier && (c == 'q' || c == 'w') ) {
-        LOG(logDEBUG) << "Close tab " << currentIndex();
+    else if ( mod == Qt::ControlModifier && (key == Qt::Key_Q || key == Qt::Key_W) ) {
         emit tabCloseRequested( currentIndex() );
     }
     else {

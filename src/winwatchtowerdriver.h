@@ -152,13 +152,17 @@ class WinWatchTowerDriver {
 
         bool operator==( const FileChangeToken& other )
         { return ( low_date_time_ == other.low_date_time_ ) &&
-            ( high_date_time_ == other.high_date_time_ ); }
+            ( high_date_time_ == other.high_date_time_ ) &&
+            ( low_file_size_  == other.low_file_size_ ) &&
+            ( high_file_size_ == other.high_file_size_); }
         bool operator!=( const FileChangeToken& other )
         { return ! operator==( other ); }
 
       private:
-        DWORD low_date_time_ = 0;
+        DWORD low_date_time_  = 0;
         DWORD high_date_time_ = 0;
+        DWORD low_file_size_  = 0;
+        DWORD high_file_size_ = 0;
     };
 
     // Default constructor

@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     TLogLevel logLevel = logWARNING;
 
     try {
-        po::options_description desc("Usage: glogg [options] [file]");
+        po::options_description desc("Usage: glogg [options] [files]");
         desc.add_options()
             ("help,h", "print out program usage (this message)")
             ("version,v", "print glogg's version information")
@@ -256,14 +256,17 @@ int main(int argc, char *argv[])
     std::unique_ptr<Session> session( new Session() );
     MainWindow mw( std::move( session ), externalCommunicator );
 
-    LOG(logDEBUG) << "MainWindow created.";
-    mw.show();
+    // Geometry
+    mw.reloadGeometry();
 
     // Load the existing session if needed
     std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
     if ( load_session || ( filenames.empty() && !new_session && config->loadLastSession() ) )
         mw.reloadSession();
+
+    LOG(logDEBUG) << "MainWindow created.";
+    mw.show();
 
     for ( const auto& filename: filenames ) {
         mw.loadInitialFile( filename );

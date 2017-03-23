@@ -1,8 +1,7 @@
 [Desktop Entry]
 Name=glogg
 GenericName=Log file browser
-# %f because glogg supports only one file for now
-Exec=glogg %f
+Exec=glogg %F
 Icon=glogg
 Type=Application
 Comment=A smart interactive log explorer.
@@ -12,9 +11,9 @@ MimeType=text/plain;
 Actions=Session;NewInstance;
 
 [Desktop Action Session]
-Exec=glogg --load-session %f
+Exec=glogg --load-session %F
 Name=Open With Previous Session
 
 [Desktop Action NewInstance]
-Exec=glogg --multi %f
+Exec=glogg --multi %F
 Name=Open In A New glogg Window

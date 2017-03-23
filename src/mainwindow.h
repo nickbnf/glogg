@@ -53,6 +53,9 @@ class MainWindow : public QMainWindow
     MainWindow( std::unique_ptr<Session> session,
             std::shared_ptr<ExternalCommunicator> external_communicator );
 
+    // Re-install the geometry stored in config file
+    // (should be done before 'Widget::show()')
+    void reloadGeometry();
     // Re-load the files from the previous session
     void reloadSession();
     // Loads the initial file (parameter passed or from config file)

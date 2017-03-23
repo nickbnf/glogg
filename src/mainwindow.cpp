@@ -176,13 +176,16 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     setCentralWidget( central_widget );
 }
 
-void MainWindow::reloadSession()
+void MainWindow::reloadGeometry()
 {
     QByteArray geometry;
 
     session_->storedGeometry( &geometry );
     restoreGeometry( geometry );
+}
 
+void MainWindow::reloadSession()
+{
     int current_file_index = -1;
 
     for ( auto open_file: session_->restore(

@@ -101,8 +101,10 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Gui.dll
     File release\Qt5Network.dll
     File release\Qt5Widgets.dll
+    File release\Qt5Concurrent.dll
     SetOutPath $INSTDIR\platforms
-    File release\qwindows.dll
+    File release\platforms\qwindows.dll
+    File release\platforms\qminimal.dll
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut
@@ -131,13 +133,14 @@ Section "Uninstall"
     Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\libstdc++-6.dll"
-    Delete "$INSTDIR\libgcc_s_seh-1.dll
+    Delete "$INSTDIR\libgcc_s_seh-1.dll"
     Delete "$INSTDIR\Qt5Widgets.dll"
     Delete "$INSTDIR\Qt5Core.dll"
     Delete "$INSTDIR\Qt5Gui.dll"
     Delete "$INSTDIR\Qt5Network.dll"
-    Delete "$INSTDIR\Qt5Widgets.dll"
+    Delete "$INSTDIR\Qt5Concurrent.dll"
     Delete "$INSTDIR\platforms\qwindows.dll"
+    Delete "$INSTDIR\platforms\qminimal.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

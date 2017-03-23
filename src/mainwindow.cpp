@@ -527,12 +527,14 @@ void MainWindow::options()
 // Opens the 'About' dialog box.
 void MainWindow::about()
 {
-    QMessageBox::about(this, tr("About glogg"),
-            tr("<h2>glogg " GLOGG_VERSION "</h2>"
+    QMessageBox::about(this, tr("About klogg"),
+            tr("<h2>klogg " GLOGG_VERSION "</h2>"
                 "<p>A fast, advanced log explorer."
 #ifdef GLOGG_COMMIT
                 "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT
 #endif
+                "<p><a href=\"https://github.com/variar/klogg\">https://github.com/variar/klogg</a></p>"
+                "<p>This is fork of glogg</p>"
                 "<p><a href=\"http://glogg.bonnefon.org/\">http://glogg.bonnefon.org/</a></p>"
                 "<p>Copyright &copy; 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Nicolas Bonnefon and other contributors"
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
@@ -892,7 +894,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
         shownName = strippedName( file_name );
 
     setWindowTitle(
-            tr("%1 - %2").arg(shownName).arg(tr("glogg"))
+            tr("%1 - %2").arg(shownName).arg(tr("klogg"))
 #ifdef GLOGG_COMMIT
             + " (dev build " GLOGG_VERSION ")"
 #endif

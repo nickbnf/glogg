@@ -118,12 +118,11 @@ class FullIndexOperation : public IndexOperation
 class PartialIndexOperation : public IndexOperation
 {
   public:
-    PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
-            bool* interruptRequest, EncodingSpeculator* speculator, qint64 position );
+    PartialIndexOperation( const QString& fileName,
+            IndexingData* indexingData, bool* interruptRequest,
+            EncodingSpeculator* speculator )
+        : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
     virtual bool start();
-
-  private:
-    qint64 initialPosition_;
 };
 
 // Create and manage the thread doing loading/indexing for
@@ -148,8 +147,8 @@ class LogDataWorkerThread : public QThread
     // signals as it progresses.
     void indexAll();
     // Instructs the thread to start a partial indexing (starting at
-    // the index passed).
-    void indexAdditionalLines( qint64 position );
+    // the end of the file as indexed).
+    void indexAdditionalLines();
     // Interrupts the indexing if one is in progress
     void interrupt();
 

@@ -56,7 +56,7 @@ void LogData::PartialIndexOperation::doStart(
         LogDataWorkerThread& workerThread ) const
 {
     LOG(logDEBUG) << "Reindexing (partial)";
-    workerThread.indexAdditionalLines( filesize_ );
+    workerThread.indexAdditionalLines();
 }
 
 
@@ -218,7 +218,7 @@ void LogData::fileChangedOnDisk()
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
         LOG(logINFO) << "New data on disk";
-        newOperation = std::make_shared<PartialIndexOperation>( file_size );
+        newOperation = std::make_shared<PartialIndexOperation>();
     }
 
     if ( newOperation )

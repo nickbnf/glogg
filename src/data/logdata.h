@@ -140,15 +140,11 @@ class LogData : public AbstractLogData {
     // Indexing part of the current file (from fileSize)
     class PartialIndexOperation : public LogDataOperation {
       public:
-        PartialIndexOperation( qint64 fileSize )
-            : LogDataOperation( QString() ), filesize_( fileSize ) {}
+        PartialIndexOperation() : LogDataOperation( QString() ) {}
         ~PartialIndexOperation() {};
 
       protected:
         void doStart( LogDataWorkerThread& workerThread ) const;
-
-      private:
-        qint64 filesize_;
     };
 
     std::shared_ptr<FileWatcher> fileWatcher_;

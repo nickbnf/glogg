@@ -126,7 +126,7 @@ void LogDataWorkerThread::indexAll()
     operationRequestedCond_.wakeAll();
 }
 
-void LogDataWorkerThread::indexAdditionalLines( qint64 position )
+void LogDataWorkerThread::indexAdditionalLines()
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -138,7 +138,7 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
 
     interruptRequested_ = false;
     operationRequested_ = new PartialIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, &encodingSpeculator_, position );
+            indexing_data_, &interruptRequested_, &encodingSpeculator_ );
     operationRequestedCond_.wakeAll();
 }
 
@@ -202,14 +202,6 @@ IndexOperation::IndexOperation( const QString& fileName,
     interruptRequest_ = interruptRequest;
     indexing_data_ = indexingData;
     encoding_speculator_ = encodingSpeculator;
-}
-
-PartialIndexOperation::PartialIndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest,
-        EncodingSpeculator* speculator, qint64 position )
-    : IndexOperation( fileName, indexingData, interruptRequest, speculator )
-{
-    initialPosition_ = position;
 }
 
 void IndexOperation::doIndex( IndexingData* indexing_data,
@@ -327,12 +319,14 @@ bool PartialIndexOperation::start()
     LOG(logDEBUG) << "PartialIndexOperation::start(), file "
         << fileName_.toStdString();
 
+    qint64 initial_position = indexing_data_->getSize();
+
     LOG(logDEBUG) << "PartialIndexOperation: Starting the count at "
-        << initialPosition_ << " ...";
+        << initial_position << " ...";
 
     emit indexingProgressed( 0 );
 
-    doIndex( indexing_data_, encoding_speculator_, initialPosition_ );
+    doIndex( indexing_data_, encoding_speculator_, initial_position );
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 

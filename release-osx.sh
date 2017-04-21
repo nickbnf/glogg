@@ -19,9 +19,10 @@ elif [ -z "$VERSION" ]; then
     echo Please specify a version to build: VERSION=1.2.3 $0
     exit 1
 else
-    $QTDIR/qtbase/bin/qmake glogg.pro CONFIG+="release no-dbus version_checker" BOOST_PATH=$BOOSTDIR VERSION="$VERSION"
+    $QTDIR/qtbase/bin/qmake glogg.pro LIBS+="-dead_strip" CONFIG+="release no-dbus version_checker" BOOST_PATH=$BOOSTDIR VERSION="$VERSION"
 fi
 make -j8
+dsymutil release/glogg.app/Contents/MacOS/glogg
 mv release/glogg.app/Contents/MacOS/glogg.dSYM release/glogg-$VERSION.dSYM
 
 sed -e "s/\"glogg\"/\"glogg $VERSION\"/" osx_installer.json >osx_${VERSION}_installer.json

@@ -104,6 +104,11 @@ void QuickFindWidget::userActivate()
     editQuickFind_->setFocus( Qt::ShortcutFocusReason );
 }
 
+void QuickFindWidget::userClose()
+{
+    closeHandler();
+}
+
 //
 // SLOTS
 //

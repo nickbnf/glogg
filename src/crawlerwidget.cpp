@@ -511,6 +511,17 @@ void CrawlerWidget::searchBackward()
     activeView()->searchBackward();
 }
 
+void CrawlerWidget::ignoreCaseChangeHandler( int state )
+{
+    // Advise the parent the checkboxes have been changed (for maintaining default config)
+    emit ignoreCaseChanged( state );
+
+    // Restart the search
+    if ( !searchLineEdit->currentText().isEmpty() ) {
+        replaceCurrentSearch( searchLineEdit->currentText() );
+    }
+}
+
 void CrawlerWidget::searchRefreshChangedHandler( int state )
 {
     searchState_.setAutorefresh( state == Qt::Checked );
@@ -777,6 +788,10 @@ void CrawlerWidget::setup()
     connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
             this, SLOT( fileChangedHandler( LogData::MonitoredFileStatus ) ) );
 
+    // Auto refresh changed, update search results
+    connect( ignoreCaseCheck, SIGNAL( stateChanged( int ) ),
+            this, SLOT( ignoreCaseChangeHandler( int ) ) );
+
     // Search auto-refresh
     connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
             this, SLOT( searchRefreshChangedHandler( int ) ) );
@@ -785,8 +800,6 @@ void CrawlerWidget::setup()
     // (for maintaining default config)
     connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
             this, SIGNAL( searchRefreshChanged( int ) ) );
-    connect( ignoreCaseCheck, SIGNAL( stateChanged( int ) ),
-            this, SIGNAL( ignoreCaseChanged( int ) ) );
 }
 
 // Create a new search using the text passed, replace the currently

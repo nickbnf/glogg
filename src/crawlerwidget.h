@@ -168,6 +168,9 @@ class CrawlerWidget : public QSplitter,
     void searchForward();
     void searchBackward();
 
+    // Called when the checkbox for case insensitivity is changed
+    void ignoreCaseChangeHandler( int state );
+
     // Called when the checkbox for search auto-refresh is changed
     void searchRefreshChangedHandler( int state );
 

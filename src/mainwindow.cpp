@@ -790,15 +790,19 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
 
-    switch ( (keyEvent->text())[0].toLatin1() ) {
-        case '/':
-            displayQuickFindBar( QuickFindMux::Forward );
-            break;
-        case '?':
-            displayQuickFindBar( QuickFindMux::Backward );
-            break;
-        default:
-            keyEvent->ignore();
+    if (keyEvent->key() == Qt::Key_Escape) {
+         quickFindWidget_.userClose();
+    } else {
+        switch ( (keyEvent->text())[0].toLatin1() ) {
+            case '/':
+                displayQuickFindBar( QuickFindMux::Forward );
+                break;
+            case '?':
+                displayQuickFindBar( QuickFindMux::Backward );
+                break;
+            default:
+                keyEvent->ignore();
+        }
     }
 
     if ( !keyEvent->isAccepted() )

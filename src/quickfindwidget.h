@@ -46,6 +46,9 @@ class QuickFindWidget : public QWidget
     // when requested by the user (the widget won't timeout)
     void userActivate();
 
+    // Close the widget (called when pressing the escape key)
+    void userClose();
+
   public slots:
     // Instructs the widget to change the pattern displayed
     void changeDisplayedPattern( const QString& newPattern );

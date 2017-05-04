@@ -274,7 +274,9 @@ else {
 
 # File watching
 linux-g++ || linux-g++-64 {
-    CONFIG += inotify
+    !macx {
+      CONFIG += inotify
+    }
 }
 
 win32 {

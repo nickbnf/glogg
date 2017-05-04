@@ -26,6 +26,7 @@
 #include <QWaitCondition>
 #include <QRegExp>
 #include <QList>
+#include <vector>
 
 class LogData;
 

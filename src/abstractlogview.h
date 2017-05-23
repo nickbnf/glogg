@@ -235,6 +235,9 @@ class AbstractLogView :
     void searchPrevious();
     // Sent up when the user has moved within the view
     void activity();
+    // Sent up when the user want to exit this view
+    // (switch to the next one)
+    void exitView();
 
   public slots:
     // Makes the widget select and display the passed line.

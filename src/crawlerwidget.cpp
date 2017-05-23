@@ -331,8 +331,9 @@ void CrawlerWidget::markLineFromMain( qint64 line )
         else
             logFilteredData_->addMark( line );
 
-        // Recompute the content of the filtered window.
+        // Recompute the content of both window.
         filteredView->updateData();
+        logMainView->updateData();
 
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
@@ -352,8 +353,9 @@ void CrawlerWidget::markLineFromFiltered( qint64 line )
         else
             logFilteredData_->addMark( line_in_file );
 
-        // Recompute the content of the filtered window.
+        // Recompute the content of both window.
         filteredView->updateData();
+        logMainView->updateData();
 
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
@@ -787,6 +789,12 @@ void CrawlerWidget::setup()
             this, SIGNAL( searchRefreshChanged( int ) ) );
     connect( ignoreCaseCheck, SIGNAL( stateChanged( int ) ),
             this, SIGNAL( ignoreCaseChanged( int ) ) );
+
+    // Switch between views
+    connect( logMainView, SIGNAL( exitView() ),
+            filteredView, SLOT( setFocus() ) );
+    connect( filteredView, SIGNAL( exitView() ),
+            logMainView, SLOT( setFocus() ) );
 }
 
 // Create a new search using the text passed, replace the currently

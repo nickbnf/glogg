@@ -545,6 +545,8 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         searchNext(); // duplicate of 'n' action.
     else if ( keyEvent->key() == Qt::Key_F3 && shiftModifier )
         searchPrevious(); // duplicate of 'N' action.
+    else if ( keyEvent->key() == Qt::Key_Space && noModifier )
+        emit exitView();
     else {
         const char character = (keyEvent->text())[0].toLatin1();
 
@@ -616,6 +618,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     // Use the selected 'word' and search backward
                     findPreviousSelected();
                     break;
+                case 'm':
+                    {
+                        qint64 line = selection_.selectedLine();
+                        if ( line >= 0 )
+                            emit markLine( line );
+                        break;
+                    }
                 default:
                     keyEvent->ignore();
             }

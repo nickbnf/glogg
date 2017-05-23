@@ -540,11 +540,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     }
     else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
-    {
-        disableFollow(); // like 'g' but 0 input first line action.
         selectAndDisplayLine( 0 );
-        emit updateLineNumber( 0 );
-    }
     else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
         searchNext(); // duplicate of 'n' action.
     else if ( keyEvent->key() == Qt::Key_F3 && shiftModifier )
@@ -596,15 +592,14 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                         int newLine = qMax( 0, digitsBuffer_.content() - 1 );
                         if ( newLine >= logData->getNbLine() )
                             newLine = logData->getNbLine() - 1;
-                        disableFollow();
                         selectAndDisplayLine( newLine );
-                        emit updateLineNumber( newLine );
                         break;
                     }
                 case 'G':
                     disableFollow();
                     selection_.selectLine( logData->getNbLine() - 1 );
                     emit updateLineNumber( logData->getNbLine() - 1 );
+                    emit newSelection( logData->getNbLine() - 1 );
                     jumpToBottom();
                     break;
                 case 'n':
@@ -872,6 +867,22 @@ void AbstractLogView::setOverview( Overview* overview,
     refreshOverview();
 }
 
+LineNumber AbstractLogView::getViewPosition() const
+{
+    LineNumber line;
+
+    qint64 m_line = selection_.selectedLine();
+    if ( m_line >= 0 ) {
+        line = m_line;
+    }
+    else {
+        // Middle of the view
+        line = firstLine + getNbVisibleLines() / 2;
+    }
+
+    return line;
+}
+
 void AbstractLogView::searchUsingFunction(
         qint64 (QuickFind::*search_function)() )
 {
@@ -1093,6 +1104,7 @@ void AbstractLogView::selectAndDisplayLine( int line )
     selection_.selectLine( line );
     displayLine( line );
     emit updateLineNumber( line );
+    emit newSelection( line );
 }
 
 // The difference between this function and displayLine() is quite

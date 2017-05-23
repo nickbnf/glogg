@@ -24,6 +24,8 @@
 
 #include "data/logfiltereddata.h"
 
+#include <QKeyEvent>
+
 // Class implementing the filtered (bottom) view widget.
 class FilteredView : public AbstractLogView
 {
@@ -42,6 +44,8 @@ class FilteredView : public AbstractLogView
     // Number of the filtered line relative to the unfiltered source
     virtual qint64 displayLineNumber( int lineNumber ) const;
     virtual qint64 maxDisplayLineNumber() const;
+
+    virtual void keyPressEvent( QKeyEvent* keyEvent );
 
   private:
     LogFilteredData* logFilteredData_;

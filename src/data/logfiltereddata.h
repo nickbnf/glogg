@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2017 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -90,6 +90,10 @@ class LogFilteredData : public AbstractLogData {
     qint64 getMark( QChar mark ) const;
     // Returns wheither the passed line has a mark on it.
     bool isLineMarked( qint64 line ) const;
+    // Get the first mark after the line passed (-1 if none)
+    qint64 getMarkAfter( qint64 line ) const;
+    // Get the first mark before the line passed (-1 if none)
+    qint64 getMarkBefore( qint64 line ) const;
     // Delete the mark identified by the passed char.
     void deleteMark( QChar mark );
     // Delete the mark present on the passed line or do nothing if there is

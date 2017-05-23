@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017 Nicolas Bonnefon
  * and other contributors
  *
  * This file is part of glogg.
@@ -202,6 +202,10 @@ class AbstractLogView :
     Overview* getOverview() const { return overview_; }
     // Set the Overview and OverviewWidget
     void setOverview( Overview* overview, OverviewWidget* overview_widget );
+
+    // Returns the current "position" of the view as a line number,
+    // it is either the selected line or the middle of the view.
+    LineNumber getViewPosition() const;
 
   signals:
     // Sent when a new line has been selected by the user.

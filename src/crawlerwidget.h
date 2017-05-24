@@ -115,6 +115,8 @@ class CrawlerWidget : public QSplitter,
     // Implementation of the MuxableDocumentInterface
     virtual void doSendAllStateSignals();
 
+    virtual void keyPressEvent( QKeyEvent* keyEvent );
+
   signals:
     // Sent to signal the client load has progressed,
     // passing the completion percentage.
@@ -235,6 +237,7 @@ class CrawlerWidget : public QSplitter,
     void printSearchInfoMessage( int nbMatches = 0 );
     void changeDataStatus( DataStatus status );
     void updateEncoding();
+    void changeTopViewSize( int32_t delta );
 
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;

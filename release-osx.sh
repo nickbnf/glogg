@@ -8,7 +8,7 @@
 #
 # QTDIR is built -static
 
-QTDIR=$HOME/Sandbox/qt-5.5.1-release-static
+QTDIR=$HOME/Sandbox/qt-5.8.0-release-static
 BOOSTDIR=$HOME/Sandbox/boost_1_59_0
 
 make clean

@@ -312,6 +312,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
                 block32_index_[block_index] = static_cast<char*>( new_location );
 
             block_pointer_ = nullptr;
+            previous_block_pointer_ = static_cast<char*>( new_location ) + ( previous_block_pointer_ - block );
         }
     }
     else {
@@ -330,6 +331,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
                 block64_index_[block_index] = static_cast<char*>( new_location );
 
             block_pointer_ = nullptr;
+            previous_block_pointer_ = static_cast<char*>( new_location ) + ( previous_block_pointer_ - block );
         }
     }
 }

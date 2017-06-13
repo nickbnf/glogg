@@ -403,7 +403,7 @@ void LogFilteredData::doSetDisplayEncoding( const char* encoding )
     LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
 }
 
-void LogFilteredData::doSetMultibyteEncodingOffsets( int before_cr, int after_cr )
+void LogFilteredData::doSetMultibyteEncodingOffsets( int, int )
 {
 }
 

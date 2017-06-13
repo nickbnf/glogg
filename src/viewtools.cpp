@@ -61,7 +61,7 @@ void ElasticHook::move( int value )
     emit lengthChanged();
 }
 
-void ElasticHook::timerEvent( QTimerEvent* event )
+void ElasticHook::timerEvent( QTimerEvent* )
 {
     if ( !held_ && ( std::chrono::duration_cast<std::chrono::milliseconds>
             ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) ) {

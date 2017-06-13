@@ -960,7 +960,7 @@ void CrawlerWidget::updateEncoding()
     static const char* cp1251_encoding   = "CP1251";
     static const char* cp1252_encoding   = "CP1252";
 
-    const char* encoding;
+    const char* encoding = latin1_encoding;
 
     switch ( encodingSetting_ ) {
         case ENCODING_AUTO:

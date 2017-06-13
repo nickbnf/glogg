@@ -70,7 +70,6 @@ AbstractLogView::LineType LogMainView::lineType( int lineNumber ) const
 
 void LogMainView::keyPressEvent( QKeyEvent* keyEvent )
 {
-    bool shiftModifier = (keyEvent->modifiers() & Qt::ShiftModifier) == Qt::ShiftModifier;
     bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
     if ( keyEvent->key() == Qt::Key_BracketLeft && noModifier ) {

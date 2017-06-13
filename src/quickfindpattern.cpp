@@ -106,8 +106,6 @@ bool QuickFindPattern::isLineMatching( const QString& line, int column ) const
 bool QuickFindPattern::isLineMatchingBackward(
         const QString& line, int column ) const
 {
-    int pos = 0;
-
     if ( ! active_ )
         return false;
 

@@ -106,7 +106,9 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
             case State::ValidUTF16BE:
                 // We don't verify UTF16 and assume it's all fine for now.
                 break;
-        }
+            case State::Unknown8Bit:
+                state_ = State::Unknown8Bit;
+         }
     }
 }
 

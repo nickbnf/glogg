@@ -52,7 +52,7 @@ class WatchTower {
 
     // Set the polling interval (in ms)
     // 0 disables polling and is the default
-    void setPollingInterval( int interval_ms );
+    void setPollingInterval( uint32_t interval_ms );
 
     // Add a file to the notification list. notification will be called when
     // the file is modified, moved or deleted.
@@ -127,7 +127,7 @@ WatchTower<Driver>::~WatchTower()
 }
 
 template <typename Driver>
-void WatchTower<Driver>::setPollingInterval( int interval_ms )
+void WatchTower<Driver>::setPollingInterval( uint32_t interval_ms )
 {
     if ( polling_interval_ms_ != interval_ms ) {
         polling_interval_ms_ = interval_ms;

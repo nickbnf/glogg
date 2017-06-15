@@ -32,6 +32,8 @@ InfoLine::InfoLine() :
     darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
 {
     setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
+    setTextInteractionFlags(Qt::TextSelectableByMouse |
+                            Qt::TextSelectableByKeyboard);
 }
 
 void InfoLine::displayGauge( int completion )

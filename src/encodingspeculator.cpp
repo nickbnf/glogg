@@ -25,9 +25,24 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
 {
     if ( ! ( byte & 0x80 ) ) {
         // 7-bit character, all fine
+        if ( state_ == State::Start )
+            state_ = State::ASCIIOnly;
     }
     else {
         switch ( state_ ) {
+            case State::Start:
+                if ( byte == 0xFE ) {
+                    state_ = State::UTF16BELeadingBOMByteSeen;
+                    break;
+                }
+                else if ( byte == 0xFF ) {
+                    state_ = State::UTF16LELeadingBOMByteSeen;
+                    break;
+                }
+                else {
+                    state_ = State::ASCIIOnly;
+                    // And carry on...
+                }
             case State::ASCIIOnly:
             case State::ValidUTF8:
                 if ( ( byte & 0xE0 ) == 0xC0 ) {
@@ -71,8 +86,27 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
                     state_ = State::Unknown8Bit;
                 }
                 break;
+            case State::UTF16BELeadingBOMByteSeen:
+                if ( byte == 0xFF ) {
+                    state_ = State::ValidUTF16BE;
+                }
+                else {
+                    state_ = State::Unknown8Bit;
+                }
+                break;
+            case State::UTF16LELeadingBOMByteSeen:
+                if ( byte == 0xFE ) {
+                    state_ = State::ValidUTF16LE;
+                }
+                else {
+                    state_ = State::Unknown8Bit;
+                }
+                break;
+            case State::ValidUTF16LE:
+            case State::ValidUTF16BE:
+                // We don't verify UTF16 and assume it's all fine for now.
+                break;
         }
-        // state_ = State::Unknown8Bit;
     }
 }
 
@@ -81,6 +115,7 @@ EncodingSpeculator::Encoding EncodingSpeculator::guess() const
     Encoding guess;
 
     switch ( state_ ) {
+        case State::Start:
         case State::ASCIIOnly:
             guess = Encoding::ASCII7;
             break;
@@ -90,6 +125,12 @@ EncodingSpeculator::Encoding EncodingSpeculator::guess() const
             break;
         case State::ValidUTF8:
             guess = Encoding::UTF8;
+            break;
+        case State::ValidUTF16LE:
+            guess = Encoding::UTF16LE;
+            break;
+        case State::ValidUTF16BE:
+            guess = Encoding::UTF16BE;
             break;
         default:
             guess = Encoding::ASCII8;

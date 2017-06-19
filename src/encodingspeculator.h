@@ -30,10 +30,12 @@ class EncodingSpeculator {
     enum class Encoding {
         ASCII7,
         ASCII8,
-        UTF8
+        UTF8,
+        UTF16LE,
+        UTF16BE
     };
 
-    EncodingSpeculator() : state_( State::ASCIIOnly ) {}
+    EncodingSpeculator() : state_( State::Start ) {}
 
     // Inject one byte into the speculator
     void inject_byte( uint8_t byte );
@@ -43,10 +45,15 @@ class EncodingSpeculator {
 
   private:
     enum class State {
+        Start,
         ASCIIOnly,
         Unknown8Bit,
         UTF8LeadingByteSeen,
         ValidUTF8,
+        UTF16BELeadingBOMByteSeen,
+        UTF16LELeadingBOMByteSeen,
+        ValidUTF16LE,
+        ValidUTF16BE,
     };
 
     State state_;

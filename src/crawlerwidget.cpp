@@ -967,6 +967,14 @@ void CrawlerWidget::updateEncoding()
                     encoding = utf8_encoding;
                     encoding_text_ = tr( "UTF-8" );
                     break;
+                case EncodingSpeculator::Encoding::UTF16LE:
+                    encoding = utf16le_encoding;
+                    encoding_text_ = tr( "UTF-16LE" );
+                    break;
+                case EncodingSpeculator::Encoding::UTF16BE:
+                    encoding = utf16be_encoding;
+                    encoding_text_ = tr( "UTF-16BE" );
+                    break;
             }
             break;
         case ENCODING_UTF8:
@@ -991,11 +999,11 @@ void CrawlerWidget::updateEncoding()
     // Determine the newline offsets for the encoding
     int before_cr;
     int after_cr;
-    if ( encodingSetting_ == ENCODING_UTF16LE ) {
+    if ( encoding == utf16le_encoding ) {
         before_cr = 0;
         after_cr  = 1;
     }
-    else if ( encodingSetting_ == ENCODING_UTF16BE ) {
+    else if ( encoding == utf16be_encoding ) {
         before_cr = -1;
         after_cr  = 1;
     }

@@ -308,13 +308,16 @@ QString LogData::doGetLineString( qint64 line ) const
 
     fileMutex_.lock();
 
-    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
+    // end_byte is non-inclusive.(is not read)
+    const qint64 first_byte = (line == 0) ?
+        0 : ( indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
+    const qint64 end_byte  = indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_;
 
-    QString string = codec_->toUnicode( attached_file_->readLine() );
+    attached_file_->seek( first_byte );
+
+    QString string = codec_->toUnicode( attached_file_->read( end_byte - first_byte ) );
 
     fileMutex_.unlock();
-
-    string.chop( 1 );
 
     return string;
 }
@@ -325,15 +328,21 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
 
     fileMutex_.lock();
 
-    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
-    // length!!
+    // end_byte is non-inclusive.(is not read) We also exclude the final \r.
+    const qint64 first_byte = (line == 0) ?
+        0 : ( indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
+    const qint64 end_byte  = indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_;
 
-    QByteArray rawString = attached_file_->readLine();
+    attached_file_->seek( first_byte );
+
+    // LOG(logDEBUG) << "LogData::doGetExpandedLineString first_byte:" << first_byte << " end_byte:" << end_byte;
+    QByteArray rawString = attached_file_->read( end_byte - first_byte );
 
     fileMutex_.unlock();
 
     QString string = untabify( codec_->toUnicode( rawString ) );
-    string.chop( 1 );
+
+    // LOG(logDEBUG) << "doGetExpandedLineString Line is: " << string.toStdString();
 
     return string;
 }
@@ -361,22 +370,22 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
 
     const qint64 first_byte = (first_line == 0) ?
         0 : ( indexing_data_.getPosForLine( first_line-1 ) + after_cr_offset_ );
-    const qint64 last_byte  = indexing_data_.getPosForLine( last_line ) + before_cr_offset_;
-    // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " last_byte:" << last_byte;
+    const qint64 end_byte  = indexing_data_.getPosForLine( last_line ) - 1 - before_cr_offset_;
+    // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " end_byte:" << end_byte;
     attached_file_->seek( first_byte );
-    QByteArray blob = attached_file_->read( last_byte - first_byte );
+    QByteArray blob = attached_file_->read( end_byte - first_byte );
 
     fileMutex_.unlock();
 
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) + before_cr_offset_ - first_byte;
+        end = indexing_data_.getPosForLine( line ) + after_cr_offset_ - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
-        QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
+        QByteArray this_line = blob.mid( beginning, end - beginning );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
         list.append( codec_->toUnicode( this_line ) );
-        beginning = end;
+        beginning = end + 1 + before_cr_offset_ + after_cr_offset_;
     }
 
     return list;
@@ -398,25 +407,33 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 
     fileMutex_.lock();
 
+    // end_byte is non-inclusive.(is not read)
     const qint64 first_byte = (first_line == 0) ?
         0 : ( indexing_data_.getPosForLine( first_line-1 ) + after_cr_offset_ );
-    const qint64 last_byte  = indexing_data_.getPosForLine( last_line ) + before_cr_offset_;
-    LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
+    const qint64 end_byte  = indexing_data_.getPosForLine( last_line ) - 1 - before_cr_offset_;
+    LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " end_byte:" << end_byte;
 
     attached_file_->seek( first_byte );
-    QByteArray blob = attached_file_->read( last_byte - first_byte );
+    QByteArray blob = attached_file_->read( end_byte - first_byte );
 
     fileMutex_.unlock();
+
+    for ( auto cod: QTextCodec::availableCodecs() ) {
+        // LOG(logDEBUG) << "C: " << std::string( cod.data() );
+    }
 
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) + before_cr_offset_ - first_byte;
-        LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
-        QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
-        LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( untabify( codec_->toUnicode( this_line ) ) );
-        beginning = end + after_cr_offset_;
+        // end is non-inclusive
+        // LOG(logDEBUG) << "EoL " << line << ": " << indexing_data_.getPosForLine( line );
+        end = indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_ - first_byte;
+        // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
+        QByteArray this_line = blob.mid( beginning, end - beginning );
+        QString conv_line = codec_->toUnicode( this_line );
+        // LOG(logDEBUG) << "Line is: " << conv_line.toStdString();
+        list.append( untabify( conv_line ) );
+        beginning = end + 1 + before_cr_offset_ + after_cr_offset_;
     }
 
     return list;

@@ -1004,8 +1004,8 @@ void CrawlerWidget::updateEncoding()
         after_cr  = 1;
     }
     else if ( encoding == utf16be_encoding ) {
-        before_cr = -1;
-        after_cr  = 1;
+        before_cr = 1;
+        after_cr  = 0;
     }
     else {
         before_cr = 0;

@@ -24,7 +24,7 @@ before_install:
 install:
  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt56base qt56tools qt56svg'
  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libboost-program-options-dev'
- - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt5 boost'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt5'
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt5'
 
 before_script:

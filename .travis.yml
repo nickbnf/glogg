@@ -1,11 +1,9 @@
 language: cpp
-sudo: true
 
 matrix:
   include:
     - os: linux
       compiler: gcc
-      env: COMPILER=g++-5
       addons:
         apt:
           sources:
@@ -33,9 +31,9 @@ before_script:
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
   - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt56/bin/qt56-env.sh'
-  - $CXX --version
+  - g++-5 --version
   - qmake -v
 
 script:
- - qmake glogg.pro
+ - '[ "$TRAVIS_OS_NAME" != linux ] || qmake QMAKE_CXX=g++-5 glogg.pro'
  - make -j$(nproc)

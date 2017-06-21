@@ -9,10 +9,13 @@ and feel that usability can be improved here and there
 ## Features of klogg
 * Support for non-latin simbols in file paths
 * Keeps selected lines visible after changing search pattern
-* Support UTF16/32 encodings
+* Support UTF16/32, CP1251 encodings
 * Support limiting search to a part of open file
+* Cache some search results in memory to avoid rereading original file
+* Uses several cores for searching through input file
 
-## About glogg
+
+## About original glogg
 =======
 
 glogg - the fast, smart log explorer

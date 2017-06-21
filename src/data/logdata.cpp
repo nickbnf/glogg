@@ -418,10 +418,6 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 
     fileMutex_.unlock();
 
-    for ( auto cod: QTextCodec::availableCodecs() ) {
-        // LOG(logDEBUG) << "C: " << std::string( cod.data() );
-    }
-
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {

@@ -949,6 +949,8 @@ void CrawlerWidget::updateEncoding()
     static const char* utf8_encoding   = "utf-8";
     static const char* utf16le_encoding   = "utf-16le";
     static const char* utf16be_encoding   = "utf-16be";
+    static const char* cp1251_encoding   = "CP1251";
+    static const char* cp1252_encoding   = "CP1252";
 
     const char* encoding;
 
@@ -988,6 +990,14 @@ void CrawlerWidget::updateEncoding()
         case ENCODING_UTF16BE:
             encoding = utf16be_encoding;
             encoding_text_ = tr( "Displayed as UTF-16BE" );
+            break;
+        case ENCODING_CP1251:
+            encoding = cp1251_encoding;
+            encoding_text_ = tr( "Displayed as CP1251" );
+            break;
+        case ENCODING_CP1252:
+            encoding = cp1252_encoding;
+            encoding_text_ = tr( "Displayed as CP1252" );
             break;
         case ENCODING_ISO_8859_1:
         default:

@@ -233,6 +233,8 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "&UTF-8" },
     { "UTF-16LE" },
     { "UTF-16BE" },
+    { "CP1251" },
+    { "CP1252" },
 };
 
 // Menu actions

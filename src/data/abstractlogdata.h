@@ -93,6 +93,9 @@ class AbstractLogData : public QObject {
                 untabified_line.append( blanks );
                 total_spaces += spaces - 1;
             }
+            else if ( line[j] == '\0' ) {
+                untabified_line.append( QChar(' ') );
+            }
             else {
                 untabified_line.append( line[j] );
             }
@@ -112,6 +115,9 @@ class AbstractLogData : public QObject {
                 QString blanks( spaces, QChar(' ') );
                 untabified_line.append( blanks );
                 total_spaces += spaces - 1;
+            }
+            else if ( *i == '\0' ) {
+                untabified_line.append( QChar(' ') );
             }
             else {
                 untabified_line.append( *i );

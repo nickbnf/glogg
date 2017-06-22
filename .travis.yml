@@ -35,4 +35,5 @@ before_script:
 
 script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || qmake QMAKE_CXX=g++-5 glogg.pro'
- - make -j$(nproc)
+ - '[ "$TRAVIS_OS_NAME" != osx ] || qmake glogg.pro'
+ - make

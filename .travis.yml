@@ -31,7 +31,6 @@ before_script:
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
   - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt56/bin/qt56-env.sh'
-  - g++-5 --version
   - qmake -v
 
 script:

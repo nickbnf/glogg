@@ -869,8 +869,6 @@ void AbstractLogView::setOverview( Overview* overview,
 
     if ( overviewWidget_ ) {
         connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
-                this, SIGNAL( followDisabled() ) );
-        connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
                 this, SLOT( jumpToLine( int ) ) );
     }
     refreshOverview();

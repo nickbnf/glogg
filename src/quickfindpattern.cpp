@@ -32,15 +32,13 @@ QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
     active_ = false;
 }
 
+#include <iostream>
+
 void QuickFindPattern::changeSearchPattern( const QString& pattern )
 {
     // Determine the type of regexp depending on the config
     QString searchPattern;
     switch ( Persistent<Configuration>( "settings" )->quickfindRegexpType() ) {
-        case Wildcard:
-            searchPattern = pattern;
-            searchPattern.replace('*', ".*").replace('?', ".");
-            break;
         case FixedString:
             searchPattern = QRegularExpression::escape(pattern);
             break;
@@ -49,7 +47,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
             break;
     }
 
-    regexp_.setPattern( pattern );
+    regexp_.setPattern( searchPattern );
 
     if ( regexp_.isValid() && ( ! searchPattern.isEmpty() ) )
         active_ = true;

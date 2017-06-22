@@ -849,10 +849,6 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         static std::shared_ptr<Configuration> config =
             Persistent<Configuration>( "settings" );
         switch ( config->mainRegexpType() ) {
-            case Wildcard:
-                pattern = searchText;
-                pattern.replace('*', ".*").replace('?', ".");
-                break;
             case FixedString:
                 pattern = QRegularExpression::escape(searchText);
                 break;

@@ -61,6 +61,19 @@ class AbstractLogData : public QObject {
     // Length of a tab stop
     static const int tabStop = 8;
 
+    static inline int getUntabifiedLength( const QString& line ) {
+        int total_spaces = 0;
+
+        for ( int j = 0; j < line.length(); j++ ) {
+            if ( line[j] == '\t' ) {
+                int spaces = tabStop - ( ( j + total_spaces ) % tabStop );
+                total_spaces += spaces - 1;
+            }
+        }
+
+        return line.length() + total_spaces;
+    }
+
   protected:
     // Internal function called to get a given line
     virtual QString doGetLineString( qint64 line ) const = 0;

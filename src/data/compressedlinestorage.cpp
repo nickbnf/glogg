@@ -19,16 +19,11 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <QtEndian>
 
 #include "utils.h"
 
 #include "data/compressedlinestorage.h"
-
-#ifdef HAVE_HTONS
-#  include <arpa/inet.h>
-#else
-#  define htons(a) glogg_htons(a)
-#endif
 
 namespace {
     // Functions to manipulate blocks
@@ -85,7 +80,7 @@ namespace {
         // Stored in big endian format in order to recognise the initial pattern:
         // 10xx xxxx xxxx xxxx
         //  HO byte | LO byte
-        *(reinterpret_cast<uint16_t*>(*ptr)) = htons( value | (1 << 15) );
+        *(reinterpret_cast<uint16_t*>(*ptr)) = qToBigEndian( value | (1 << 15) );
         *ptr += sizeof( value );
     }
 

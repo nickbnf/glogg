@@ -230,53 +230,7 @@ void FiltersDialog::updateFilterProperties()
 // Fills the color selection combo boxes
 void FiltersDialog::populateColors()
 {
-    const QStringList colorNames = QStringList()
-        // Basic 16 HTML colors (minus greys):
-        << "black"
-        << "white"
-        << "maroon"
-        << "red"
-        << "purple"
-        << "fuchsia"
-        << "green"
-        << "lime"
-        << "olive"
-        << "yellow"
-        << "navy"
-        << "blue"
-        << "teal"
-        << "aqua"
-        // Greys
-        << "gainsboro"
-        << "lightgrey"
-        << "silver"
-        << "darkgrey"
-        << "grey"
-        << "dimgrey"
-        // Reds
-        << "tomato"
-        << "orangered"
-        << "orange"
-        << "crimson"
-        << "darkred"
-        // Greens
-        << "greenyellow"
-        << "lightgreen"
-        << "darkgreen"
-        << "lightseagreen"
-        // Blues
-        << "lightcyan"
-        << "darkturquoise"
-        << "steelblue"
-        << "lightblue"
-        << "royalblue"
-        << "darkblue"
-        << "midnightblue"
-        // Browns
-        << "bisque"
-        << "tan"
-        << "sandybrown"
-        << "chocolate";
+    const QStringList colorNames = QColor::colorNames();
 
     for ( QStringList::const_iterator i = colorNames.constBegin();
             i != colorNames.constEnd(); ++i ) {

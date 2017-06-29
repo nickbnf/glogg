@@ -80,7 +80,7 @@ namespace {
         // Stored in big endian format in order to recognise the initial pattern:
         // 10xx xxxx xxxx xxxx
         //  HO byte | LO byte
-        *(reinterpret_cast<uint16_t*>(*ptr)) = qToBigEndian( value | (1 << 15) );
+        *(reinterpret_cast<uint16_t*>(*ptr)) = qToBigEndian( static_cast<uint16_t>( value | (1 << 15) ) );
         *ptr += sizeof( value );
     }
 
@@ -307,6 +307,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
                 block32_index_[block_index] = static_cast<char*>( new_location );
 
             block_pointer_ = nullptr;
+            previous_block_pointer_ = static_cast<char*>( new_location ) + ( previous_block_pointer_ - block );
         }
     }
     else {
@@ -325,6 +326,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
                 block64_index_[block_index] = static_cast<char*>( new_location );
 
             block_pointer_ = nullptr;
+            previous_block_pointer_ = static_cast<char*>( new_location ) + ( previous_block_pointer_ - block );
         }
     }
 }

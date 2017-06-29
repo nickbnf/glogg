@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013 Nicolas Bonnefon
+ * Copyright (C) 2009, 2010, 2011, 2013, 2017 Nicolas Bonnefon
  * and other contributors
  *
  * This file is part of glogg.
@@ -26,6 +26,8 @@
 
 #include "data/logfiltereddata.h"
 #include "overview.h"
+
+#include <QKeyEvent>
 
 LogMainView::LogMainView( const LogData* newLogData,
         const QuickFindPattern* const quickFindPattern,
@@ -64,4 +66,28 @@ AbstractLogView::LineType LogMainView::lineType( int lineNumber ) const
     }
     else
         return Normal;
+}
+
+void LogMainView::keyPressEvent( QKeyEvent* keyEvent )
+{
+    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+
+    if ( keyEvent->key() == Qt::Key_BracketLeft && noModifier ) {
+        qint64 line = filteredData_->getMarkBefore( getViewPosition() );
+        if ( line >= 0 ) {
+            selectAndDisplayLine( static_cast<LineNumber>( line ) );
+        }
+        keyEvent->accept();
+    }
+    else if ( keyEvent->key() == Qt::Key_BracketRight && noModifier ) {
+        qint64 line = filteredData_->getMarkAfter( getViewPosition() );
+        if ( line >= 0 ) {
+            selectAndDisplayLine( static_cast<LineNumber>( line ) );
+        }
+        keyEvent->accept();
+    }
+    else {
+        keyEvent->ignore();
+        AbstractLogView::keyPressEvent( keyEvent );
+    }
 }

@@ -86,8 +86,7 @@ void OptionsDialog::setupRegexp()
 {
     QStringList regexpTypes;
 
-    regexpTypes << tr("Extended Regexp")
-        << tr("Wildcards") << tr("Fixed Strings");
+    regexpTypes << tr("Extended Regexp") << tr("Fixed Strings");
 
     mainSearchBox->addItems( regexpTypes );
     quickFindSearchBox->addItems( regexpTypes );
@@ -115,13 +114,35 @@ void OptionsDialog::setupPolling()
 // Convert a regexp type to its index in the list
 int OptionsDialog::getRegexpIndex( SearchRegexpType syntax ) const
 {
-    return static_cast<int>( syntax );
+    int index;
+
+    switch ( syntax ) {
+        case FixedString:
+            index = 1;
+            break;
+        default:
+            index = 0;
+            break;
+    }
+
+    return index;
 }
 
 // Convert the index of a regexp type to its type
 SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 {
-    return static_cast<SearchRegexpType>( index );;
+    SearchRegexpType type;
+
+    switch ( index ) {
+        case 1:
+            type = FixedString;
+            break;
+        default:
+            type = ExtendedRegexp;
+            break;
+    }
+
+    return type;
 }
 
 // Updates the dialog box using values in global Config()

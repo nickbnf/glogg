@@ -25,16 +25,6 @@
 #include "logdata.h"
 #include "logdataworkerthread.h"
 
-EncodingParameters::EncodingParameters(const QTextCodec *codec)
-{
-    static const QChar lineFeed(QChar::LineFeed);
-    QTextCodec::ConverterState convertState(QTextCodec::IgnoreHeader);
-    QByteArray encodedLineFeed = codec->fromUnicode(&lineFeed, 1, &convertState);
-
-    lineFeedWidth = encodedLineFeed.length();
-    lineFeedIndex = encodedLineFeed[0] == '\n' ? 0 : (encodedLineFeed.length() - 1);
-}
-
 // Size of the chunk to read (5 MiB)
 const int IndexOperation::sizeChunk = 1*1024*1024;
 
@@ -147,7 +137,7 @@ void LogDataWorkerThread::indexAll(QTextCodec* forcedEncoding)
     operationRequestedCond_.wakeAll();
 }
 
-void LogDataWorkerThread::indexAdditionalLines( qint64 position )
+void LogDataWorkerThread::indexAdditionalLines()
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -159,7 +149,8 @@ void LogDataWorkerThread::indexAdditionalLines( qint64 position )
 
     interruptRequested_.clear();
     operationRequested_ = new PartialIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, position );
+            indexing_data_, &interruptRequested_ );
+
     operationRequestedCond_.wakeAll();
 }
 
@@ -222,10 +213,9 @@ IndexOperation::IndexOperation( const QString& fileName,
 }
 
 PartialIndexOperation::PartialIndexOperation( const QString& fileName,
-        IndexingData* indexingData, AtomicFlag* interruptRequest, qint64 position )
+        IndexingData* indexingData, AtomicFlag* interruptRequest )
     : IndexOperation( fileName, indexingData, interruptRequest )
 {
-    initialPosition_ = position;
 }
 
 void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition )
@@ -364,12 +354,14 @@ bool PartialIndexOperation::start()
     LOG(logDEBUG) << "PartialIndexOperation::start(), file "
         << fileName_.toStdString();
 
+    qint64 initial_position = indexing_data_->getSize();
+
     LOG(logDEBUG) << "PartialIndexOperation: Starting the count at "
-        << initialPosition_ << " ...";
+        << initial_position << " ...";
 
     emit indexingProgressed( 0 );
 
-    doIndex( indexing_data_, initialPosition_ );
+    doIndex( indexing_data_, initial_position );
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 

@@ -53,6 +53,10 @@ class AbstractLogData : public QObject {
 
     // Set the view to use the passed encoding for display
     void setDisplayEncoding( const char* encoding_name );
+    // Configure how the view shall interpret newline characters
+    // this should be non zero for encodings where \n is encoded
+    // in multiple bytes (e.g. UTF-16)
+    void setMultibyteEncodingOffsets( int before_cr, int after_cr );
 
     // Length of a tab stop
     static const int tabStop = 8;
@@ -100,6 +104,9 @@ class AbstractLogData : public QObject {
                 untabified_line.append( blanks );
                 total_spaces += spaces - 1;
             }
+            else if ( line[j] == '\0' ) {
+                untabified_line.append( QChar(' ') );
+            }
             else {
                 untabified_line.append( line[j] );
             }
@@ -119,6 +126,9 @@ class AbstractLogData : public QObject {
                 QString blanks( spaces, QChar(' ') );
                 untabified_line.append( blanks );
                 total_spaces += spaces - 1;
+            }
+            else if ( *i == '\0' ) {
+                untabified_line.append( QChar(' ') );
             }
             else {
                 untabified_line.append( *i );

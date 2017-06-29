@@ -54,7 +54,7 @@ class WatchTower : public QRunnable {
 
     // Set the polling interval (in ms)
     // 0 disables polling and is the default
-    void setPollingInterval(uint32_t interval_ms );
+    void setPollingInterval( uint32_t interval_ms );
 
     // Add a file to the notification list. notification will be called when
     // the file is modified, moved or deleted.

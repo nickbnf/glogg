@@ -114,9 +114,10 @@ class SearchOperation : public QObject
 
     AtomicFlag* interruptRequested_;
     const QRegularExpression regexp_;
+    const LogData* sourceLogData_;
     qint64 startLine_;
     qint64 endLine_;
-    const LogData* sourceLogData_;
+
 };
 
 class FullSearchOperation : public SearchOperation
@@ -125,6 +126,7 @@ class FullSearchOperation : public SearchOperation
     FullSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
                          qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest )
         : SearchOperation( sourceLogData, regExp, startLine, endLine, interruptRequest ) {}
+
     virtual void start( SearchData& result );
 };
 
@@ -135,6 +137,7 @@ class UpdateSearchOperation : public SearchOperation
             qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest, qint64 position )
         : SearchOperation( sourceLogData, regExp, startLine, endLine, interruptRequest ),
         initialPosition_( position ) {}
+
     virtual void start( SearchData& result );
 
   private:
@@ -159,6 +162,7 @@ class LogFilteredDataWorkerThread : public QThread
     // Continue the previous search starting at the passed position
     // in the source file (line number)
     void updateSearch( const QRegularExpression& regExp, qint64 startLine, qint64 endLine, qint64 position );
+
     // Interrupts the search if one is in progress
     void interrupt();
 

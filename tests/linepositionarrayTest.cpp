@@ -86,27 +86,28 @@ class LinePositionArrayLong: public testing::Test {
     LinePositionArray line_array;
 
     LinePositionArrayLong() {
-        // Add 126 lines (of various sizes
-        for ( int i = 0; i < 127; i++ )
+        // Add 255 lines (of various sizes
+        for ( int i = 0; i < 255; i++ )
             line_array.append( i * 4 );
-        // Line no 127
-        line_array.append( 514 );
+        // Line no 256
+        line_array.append( 255 * 4 );
     }
 };
 
 TEST_F( LinePositionArrayLong, LineNo128HasRightValue ) {
-    line_array.append( 524 );
-    ASSERT_THAT( line_array[128], Eq( 524 ) );
+    // Add line no 257
+    line_array.append( 255 * 4 + 10 );
+    ASSERT_THAT( line_array[256], Eq( 255 * 4 + 10 ) );
 }
 
 TEST_F( LinePositionArrayLong, FakeLFisNotKeptWhenAddingAfterIt ) {
     for ( uint64_t i = 0; i < 1000; ++i ) {
-        uint64_t pos = 524LL + i*35LL;
+        uint64_t pos = ( 257LL * 4 ) + i*35LL;
         line_array.append( pos );
         line_array.setFakeFinalLF();
-        ASSERT_THAT( line_array[128 + i], Eq( pos ) );
+        ASSERT_THAT( line_array[256 + i], Eq( pos ) );
         line_array.append( pos + 21LL );
-        ASSERT_THAT( line_array[128 + i], Eq( pos + 21LL ) );
+        ASSERT_THAT( line_array[256 + i], Eq( pos + 21LL ) );
     }
 }
 

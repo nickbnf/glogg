@@ -26,6 +26,45 @@
 
 typedef std::vector<uint64_t> SimpleLinePositionStorage;
 
+class VectorLinePositionStorage
+{
+public:
+    void pop_back()
+    {
+        pos_.pop_back();
+    }
+
+    void push_back(uint64_t p)
+    {
+        pos_.push_back(p);
+    }
+
+    void append_list(const VectorLinePositionStorage& other)
+    {
+        pos_.reserve(pos_.size() + other.pos_.size());
+        std::copy(other.pos_.begin(), other.pos_.end(), std::back_inserter(pos_));
+    }
+
+    void append_list(const SimpleLinePositionStorage& other)
+    {
+        pos_.reserve(pos_.size() + other.size());
+        std::copy(other.begin(), other.end(), std::back_inserter(pos_));
+    }
+
+    size_t size() const
+    {
+        return pos_.size();
+    }
+
+    qint64 at(size_t n) const
+    {
+        return pos_.at(n);
+    }
+
+private:
+    std::vector<uint64_t> pos_;
+};
+
 // This class is a list of end of lines position,
 // in addition to a list of uint64_t (positions within the files)
 // it can keep track of whether the final LF was added (for non-LF terminated
@@ -52,6 +91,7 @@ class LinePosition
     // (this is NOT checked!)
     inline void append( uint64_t pos )
     {
+        LOG(logDEBUG) << "Next line at " << pos;
         if ( fakeFinalLF_ )
             array.pop_back();
 
@@ -63,7 +103,11 @@ class LinePosition
     { return array.size(); }
     // Extract an element
     inline uint64_t at( int i ) const
-    { return array.at( i ); }
+    {
+        const auto pos = array.at( i );
+        LOG(logDEBUG) << "Line pos at " << i << " is " << pos;
+        return pos;
+    }
     inline uint64_t operator[]( int i ) const
     { return array.at( i ); }
     // Set the presence of a fake final LF
@@ -95,7 +139,7 @@ class LinePosition
 
 // Use the non-optimised storage
 typedef LinePosition<SimpleLinePositionStorage> FastLinePositionArray;
-//typedef LinePosition<SimpleLinePositionStorage> LinePositionArray;
+//typedef LinePosition<VectorLinePositionStorage> LinePositionArray;
 
 typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
 

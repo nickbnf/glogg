@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2017 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -55,6 +55,7 @@ class LogFilteredData : public AbstractLogData {
     // If a search is already in progress this function will block until
     // it is done, so the application should call interruptSearch() first.
     void runSearch(const QRegularExpression &regExp, qint64 startLine, qint64 endLine);
+
     // Add to the existing search, starting at the line when the search was
     // last stopped. Used when the file on disk has been added too.
     void updateSearch(qint64 startLine, qint64 endLine);
@@ -94,6 +95,10 @@ class LogFilteredData : public AbstractLogData {
     qint64 getMark( QChar mark ) const;
     // Returns wheither the passed line has a mark on it.
     bool isLineMarked( qint64 line ) const;
+    // Get the first mark after the line passed (-1 if none)
+    qint64 getMarkAfter( qint64 line ) const;
+    // Get the first mark before the line passed (-1 if none)
+    qint64 getMarkBefore( qint64 line ) const;
     // Delete the mark identified by the passed char.
     void deleteMark( QChar mark );
     // Delete the mark present on the passed line or do nothing if there is

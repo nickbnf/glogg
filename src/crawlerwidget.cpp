@@ -157,6 +157,25 @@ void CrawlerWidget::doSendAllStateSignals()
         emit loadingFinished( LoadingStatus::Successful );
 }
 
+void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
+{
+    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+
+    if ( keyEvent->key() == Qt::Key_V && noModifier )
+        visibilityBox->setCurrentIndex(
+                ( visibilityBox->currentIndex() + 1 ) % visibilityBox->count() );
+    else {
+        const char character = (keyEvent->text())[0].toLatin1();
+
+        if ( character == '+' )
+            changeTopViewSize( 1 );
+        else if ( character == '-' )
+            changeTopViewSize( -1 );
+        else
+            QSplitter::keyPressEvent( keyEvent );
+    }
+}
+
 //
 // Public slots
 //
@@ -339,8 +358,9 @@ void CrawlerWidget::markLineFromMain( qint64 line )
         else
             logFilteredData_->addMark( line );
 
-        // Recompute the content of the filtered window.
+        // Recompute the content of both window.
         filteredView->updateData();
+        logMainView->updateData();
 
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
@@ -360,8 +380,9 @@ void CrawlerWidget::markLineFromFiltered( qint64 line )
         else
             logFilteredData_->addMark( line_in_file );
 
-        // Recompute the content of the filtered window.
+        // Recompute the content of both window.
         filteredView->updateData();
+        logMainView->updateData();
 
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
@@ -826,6 +847,12 @@ void CrawlerWidget::setup()
             this, SIGNAL( searchRefreshChanged( int ) ) );
     connect( ignoreCaseCheck, SIGNAL( stateChanged( int ) ),
             this, SIGNAL( ignoreCaseChanged( int ) ) );
+
+    // Switch between views
+    connect( logMainView, SIGNAL( exitView() ),
+            filteredView, SLOT( setFocus() ) );
+    connect( filteredView, SIGNAL( exitView() ),
+            logMainView, SLOT( setFocus() ) );
 }
 
 // Create a new search using the text passed, replace the currently
@@ -1012,6 +1039,16 @@ void CrawlerWidget::updateEncoding()
     logMainView->forceRefresh();
     logFilteredData_->setDisplayEncoding( textCodec->name().data() );
     filteredView->forceRefresh();
+}
+
+// Change the respective size of the two views
+void CrawlerWidget::changeTopViewSize( int32_t delta )
+{
+    int min, max;
+    getRange( 1, &min, &max );
+    LOG(logDEBUG) << "CrawlerWidget::changeTopViewSize " << sizes()[0] << " " << min << " " << max;
+    moveSplitter( closestLegalPosition( sizes()[0] + ( delta * 10 ), 1 ), 1 );
+    LOG(logDEBUG) << "CrawlerWidget::changeTopViewSize " << sizes()[0];
 }
 
 //

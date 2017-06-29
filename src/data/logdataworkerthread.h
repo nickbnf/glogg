@@ -33,26 +33,6 @@
 #include "utils.h"
 #include "atomicflag.h"
 
-struct EncodingParameters
-{
-    EncodingParameters():lineFeedWidth(1),lineFeedIndex(0){}
-    explicit EncodingParameters(const QTextCodec* codec);
-
-    int lineFeedWidth;
-    int lineFeedIndex;
-
-    bool operator ==(const EncodingParameters& other) const
-    {
-        return  lineFeedWidth == other.lineFeedWidth &&
-                lineFeedIndex == other.lineFeedIndex;
-    }
-
-    bool operator !=(const EncodingParameters& other) const
-    {
-        return !operator ==(other);
-    }
-};
-
 // This class is a thread-safe set of indexing data.
 class IndexingData
 {
@@ -149,11 +129,9 @@ class PartialIndexOperation : public IndexOperation
 {
   public:
     PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
-            AtomicFlag* interruptRequest, qint64 position );
-    virtual bool start();
+            AtomicFlag* interruptRequest );
 
-  private:
-    qint64 initialPosition_;
+    virtual bool start();
 };
 
 // Create and manage the thread doing loading/indexing for
@@ -178,8 +156,8 @@ class LogDataWorkerThread : public QThread
     // signals as it progresses.
     void indexAll(QTextCodec *forcedEncoding = nullptr);
     // Instructs the thread to start a partial indexing (starting at
-    // the index passed).
-    void indexAdditionalLines( qint64 position );
+    // the end of the file as indexed).
+    void indexAdditionalLines();
     // Interrupts the indexing if one is in progress
     void interrupt();
 

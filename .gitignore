@@ -31,3 +31,7 @@ object_script.glogg.Release
 
 # Tests
 tests/build/
+
+# Qt-specific
+/.moc
+/.qmake.stash

@@ -184,3 +184,29 @@ TEST_F( EncodingSpeculatorBehaviour, RecogniseOverlong4BytesUTF8 ) {
     ASSERT_THAT( speculator.guess(), Eq( EncodingSpeculator::Encoding::ASCII8 ) );
 }
 
+TEST_F( EncodingSpeculatorBehaviour, RecogniseUTF16LEBOM ) {
+    speculator.inject_byte( 0xFF );
+    speculator.inject_byte( 0xFE );
+    speculator.inject_byte( 0x10 );
+    speculator.inject_byte( 0x10 );
+
+    ASSERT_THAT( speculator.guess(), Eq( EncodingSpeculator::Encoding::UTF16LE ) );
+}
+
+TEST_F( EncodingSpeculatorBehaviour, RecogniseUTF16BEBOM ) {
+    speculator.inject_byte( 0xFE );
+    speculator.inject_byte( 0xFF );
+    speculator.inject_byte( 0x10 );
+    speculator.inject_byte( 0x10 );
+
+    ASSERT_THAT( speculator.guess(), Eq( EncodingSpeculator::Encoding::UTF16BE ) );
+}
+
+TEST_F( EncodingSpeculatorBehaviour, IgnoreNonInitialBOM ) {
+    speculator.inject_byte( 0x10 );
+    speculator.inject_byte( 0x10 );
+    speculator.inject_byte( 0xFE );
+    speculator.inject_byte( 0xFF );
+
+    ASSERT_THAT( speculator.guess(), Eq( EncodingSpeculator::Encoding::ASCII8 ) );
+}

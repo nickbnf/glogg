@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017 Nicolas Bonnefon
  * and other contributors
  *
  * This file is part of glogg.
@@ -204,6 +204,10 @@ class AbstractLogView :
     // Set the Overview and OverviewWidget
     void setOverview( Overview* overview, OverviewWidget* overview_widget );
 
+    // Returns the current "position" of the view as a line number,
+    // it is either the selected line or the middle of the view.
+    LineNumber getViewPosition() const;
+
   signals:
     // Sent when a new line has been selected by the user.
     void newSelection(int line);
@@ -232,6 +236,9 @@ class AbstractLogView :
     void searchPrevious();
     // Sent up when the user has moved within the view
     void activity();
+    // Sent up when the user want to exit this view
+    // (switch to the next one)
+    void exitView();
 
     void changeSearchLimits( qint64 startLine, qint64 endLine );
     void clearSearchLimits();

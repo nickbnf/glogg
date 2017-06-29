@@ -27,7 +27,7 @@
 // Contains the line number the mark is identifying.
 class Mark {
   public:
-    Mark( int line ) { lineNumber_ = line; };
+    Mark( int line ) { lineNumber_ = line; }
 
     // Accessors
     uint32_t lineNumber() const { return lineNumber_; }
@@ -62,8 +62,8 @@ class Marks {
     qint64 getLineMarkedByIndex( int index ) const
     { return marks_[index].lineNumber(); }
     // Return the total number of marks
-    uint32_t size() const
-    { return static_cast<uint32_t>(marks_.size()); }
+    unsigned size() const
+    { return static_cast<unsigned>( marks_.size() ); }
     // Completely clear the marks list.
     void clear();
 

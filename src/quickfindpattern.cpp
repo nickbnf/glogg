@@ -32,6 +32,8 @@ QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
     active_ = false;
 }
 
+#include <iostream>
+
 void QuickFindPattern::changeSearchPattern( const QString& pattern )
 {
     // Determine the type of regexp depending on the config
@@ -49,7 +51,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
             break;
     }
 
-    regexp_.setPattern( pattern );
+    regexp_.setPattern( searchPattern );
 
     if ( regexp_.isValid() && ( ! searchPattern.isEmpty() ) )
         active_ = true;

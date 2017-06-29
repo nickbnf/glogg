@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -223,6 +223,34 @@ qint64 LogFilteredData::getMark( QChar mark ) const
 bool LogFilteredData::isLineMarked( qint64 line ) const
 {
     return marks_.isLineMarked( line );
+}
+
+qint64 LogFilteredData::getMarkAfter( qint64 line ) const
+{
+    qint64 marked_line = -1;
+
+    for ( auto i = marks_.begin(); i != marks_.end(); ++i ) {
+        if ( i->lineNumber() > line ) {
+            marked_line = i->lineNumber();
+            break;
+        }
+    }
+
+    return marked_line;
+}
+
+qint64 LogFilteredData::getMarkBefore( qint64 line ) const
+{
+    qint64 marked_line = -1;
+
+    for ( auto i = marks_.begin(); i != marks_.end(); ++i ) {
+        if ( i->lineNumber() >= line ) {
+            break;
+        }
+        marked_line = i->lineNumber();
+    }
+
+    return marked_line;
 }
 
 void LogFilteredData::deleteMark( QChar mark )

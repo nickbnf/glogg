@@ -565,15 +565,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     }
     else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
-    {
-        disableFollow(); // like 'g' but 0 input first line action.
         selectAndDisplayLine( 0 );
-        emit updateLineNumber( 0 );
-    }
     else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
         searchNext(); // duplicate of 'n' action.
     else if ( keyEvent->key() == Qt::Key_F3 && shiftModifier )
         searchPrevious(); // duplicate of 'N' action.
+    else if ( keyEvent->key() == Qt::Key_Space && noModifier )
+        emit exitView();
     else {
         const char character = (keyEvent->text())[0].toLatin1();
 
@@ -609,15 +607,14 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                         int newLine = qMax( 0, digitsBuffer_.content() - 1 );
                         if ( newLine >= logData->getNbLine() )
                             newLine = logData->getNbLine() - 1;
-                        disableFollow();
                         selectAndDisplayLine( newLine );
-                        emit updateLineNumber( newLine );
                         break;
                     }
                 case 'G':
                     disableFollow();
                     selection_.selectLine( logData->getNbLine() - 1 );
                     emit updateLineNumber( logData->getNbLine() - 1 );
+                    emit newSelection( logData->getNbLine() - 1 );
                     jumpToBottom();
                     break;
                 case 'n':
@@ -634,6 +631,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     // Use the selected 'word' and search backward
                     findPreviousSelected();
                     break;
+                case 'm':
+                    {
+                        qint64 line = selection_.selectedLine();
+                        if ( line >= 0 )
+                            emit markLine( line );
+                        break;
+                    }
                 default:
                     keyEvent->ignore();
             }
@@ -883,11 +887,25 @@ void AbstractLogView::setOverview( Overview* overview,
 
     if ( overviewWidget_ ) {
         connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
-                this, SIGNAL( followDisabled() ) );
-        connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
                 this, SLOT( jumpToLine( int ) ) );
     }
     refreshOverview();
+}
+
+LineNumber AbstractLogView::getViewPosition() const
+{
+    LineNumber line;
+
+    qint64 m_line = selection_.selectedLine();
+    if ( m_line >= 0 ) {
+        line = m_line;
+    }
+    else {
+        // Middle of the view
+        line = firstLine + getNbVisibleLines() / 2;
+    }
+
+    return line;
 }
 
 void AbstractLogView::searchUsingFunction(
@@ -1129,6 +1147,7 @@ void AbstractLogView::selectAndDisplayLine( int line )
     selection_.selectLine( line );
     displayLine( line );
     emit updateLineNumber( line );
+    emit newSelection( line );
 }
 
 // The difference between this function and displayLine() is quite

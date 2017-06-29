@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, 2010, 2012 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2012, 2017 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -81,4 +81,33 @@ qint64 FilteredView::lineIndex( int lineNumber ) const
 qint64 FilteredView::maxDisplayLineNumber() const
 {
     return logFilteredData_->getNbTotalLines();
+}
+
+void FilteredView::keyPressEvent( QKeyEvent* keyEvent )
+{
+    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+
+    if ( keyEvent->key() == Qt::Key_BracketLeft && noModifier ) {
+        for ( qint64 i = static_cast<qint64>( getViewPosition() ) - 1; i >= 0; --i ) {
+            if ( lineType( i ) == Marked ) {
+                selectAndDisplayLine( static_cast<LineNumber>( i ) );
+                break;
+            }
+        }
+        keyEvent->accept();
+    }
+    else if ( keyEvent->key() == Qt::Key_BracketRight && noModifier ) {
+        for ( qint64 i = getViewPosition() + 1;
+                i < logFilteredData_->getNbLine(); ++i ) {
+            if ( lineType( i ) == Marked ) {
+                selectAndDisplayLine( static_cast<LineNumber>( i ) );
+                break;
+            }
+        }
+        keyEvent->accept();
+    }
+    else {
+        keyEvent->ignore();
+        AbstractLogView::keyPressEvent( keyEvent );
+    }
 }

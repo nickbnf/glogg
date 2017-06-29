@@ -42,6 +42,44 @@ class LogFilteredData;
 // Thrown when trying to attach an already attached LogData
 class CantReattachErr {};
 
+struct EncodingParameters
+{
+    EncodingParameters():lineFeedWidth(1),lineFeedIndex(0){}
+    explicit EncodingParameters(const QTextCodec* codec)
+    {
+        static const QChar lineFeed(QChar::LineFeed);
+        QTextCodec::ConverterState convertState(QTextCodec::IgnoreHeader);
+        QByteArray encodedLineFeed = codec->fromUnicode(&lineFeed, 1, &convertState);
+
+        lineFeedWidth = encodedLineFeed.length();
+        lineFeedIndex = encodedLineFeed[0] == '\n' ? 0 : (encodedLineFeed.length() - 1);
+    }
+
+    int lineFeedWidth;
+    int lineFeedIndex;
+
+    bool operator ==(const EncodingParameters& other) const
+    {
+        return  lineFeedWidth == other.lineFeedWidth &&
+                lineFeedIndex == other.lineFeedIndex;
+    }
+
+    bool operator !=(const EncodingParameters& other) const
+    {
+        return !operator ==(other);
+    }
+
+    int getBeforeCrOffset() const
+    {
+        return lineFeedIndex;
+    }
+
+    int getAfterCrOffset() const
+    {
+        return lineFeedWidth - lineFeedIndex - 1;
+    }
+};
+
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
 class LogData : public AbstractLogData {
@@ -146,15 +184,11 @@ class LogData : public AbstractLogData {
     // Indexing part of the current file (from fileSize)
     class PartialIndexOperation : public LogDataOperation {
       public:
-        PartialIndexOperation( qint64 fileSize )
-            : LogDataOperation( QString() ), filesize_( fileSize ) {}
+        PartialIndexOperation() : LogDataOperation( QString() ) {}
         ~PartialIndexOperation() {};
 
       protected:
         void doStart( LogDataWorkerThread& workerThread ) const;
-
-      private:
-        qint64 filesize_;
     };
 
     std::shared_ptr<FileWatcher> fileWatcher_;
@@ -185,6 +219,10 @@ class LogData : public AbstractLogData {
 
     // Codec to decode text
     QTextCodec* codec_;
+
+    // Offset to apply to the newline character
+    int before_cr_offset_ = 0;
+    int after_cr_offset_  = 0;
 
     // To protect the file:
     mutable QMutex fileMutex_;

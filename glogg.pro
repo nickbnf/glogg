@@ -202,6 +202,8 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 
 CONFIG += c++11
 
+QMAKE_CXXFLAGS += -Wall -Wextra
+
 release:QMAKE_CXXFLAGS += -O2 -Werror
 #release:QMAKE_CXXFLAGS += -O0
 

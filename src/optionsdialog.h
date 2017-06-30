@@ -63,8 +63,6 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;
 
     void updateDialogFromConfig();
-
-    QValidator* polling_interval_validator_;
 };
 
 #endif

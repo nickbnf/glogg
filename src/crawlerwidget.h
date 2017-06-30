@@ -264,10 +264,6 @@ class CrawlerWidget : public QSplitter,
     QCheckBox*      searchRefreshCheck;
     OverviewWidget* overviewWidget_;
 
-    QVBoxLayout*    bottomMainLayout;
-    QHBoxLayout*    searchLineLayout;
-    QHBoxLayout*    searchInfoLineLayout;
-
     // Default palette to be remembered
     QPalette        searchInfoLineDefaultPalette;
 

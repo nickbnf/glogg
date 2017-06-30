@@ -62,7 +62,7 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
             this, SLOT( updatePropertyFields() ) );
     connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
             this, SLOT( updateFilterProperties() ) );
-    connect( ignoreCaseCheckBox, SIGNAL( toggled(bool) ),
+    connect( ignoreCaseCheckBox, SIGNAL( clicked( bool ) ),
             this, SLOT( updateFilterProperties() ) );
     connect( foreColorBox, SIGNAL( activated( int ) ),
             this, SLOT( updateFilterProperties() ) );

@@ -51,7 +51,7 @@ class SearchingNotifier : public QObject
     // a progress percentage is calculated and displayed.
     // (line shall be negative if ging in reverse)
     inline void ping( qint64 line, qint64 nb_lines ) {
-        if ( startTime_.msecsTo( QTime::currentTime() ) > 1000 )
+        if ( startTime_.msecsTo( QTime::currentTime() ) > 200 )
             sendNotification( line, nb_lines );
     }
 
@@ -128,6 +128,12 @@ class QuickFind : public QObject
         Backward,
     };
 
+    enum class SearchState {
+        Idle,
+        OnGoing,
+        RestartNeeded,
+    };
+
     class LastMatchPosition {
       public:
         LastMatchPosition() : line_( -1 ), column_( -1 ) {}
@@ -185,6 +191,10 @@ class QuickFind : public QObject
 
     // Incremental search status
     IncrementalSearchStatus incrementalSearchStatus_;
+
+    // Flag to request stopping the search
+    // (e.g. on key press)
+    SearchState searchState_;
 
     // Private functions
     qint64 doSearchForward( const FilePosition &start_position );

@@ -897,7 +897,7 @@ void AbstractLogView::searchUsingFunction(
 
     int line = (quickFind_.*search_function)();
     if ( line >= 0 ) {
-        LOG(logDEBUG) << "search " << line;
+        LOG(logDEBUG) << "Found line " << line;
         displayLine( line );
         emit updateLineNumber( line );
     }

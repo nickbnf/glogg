@@ -19,6 +19,7 @@
 
 #include "log.h"
 
+#include <QCoreApplication>
 #include <QToolButton>
 #include <QLabel>
 #include <QCheckBox>
@@ -120,6 +121,9 @@ void QuickFindWidget::notify( const QFNotification& message )
     notificationText_->setText( message.message() );
     QWidget::show();
     notificationTimer_->start( NOTIFICATION_TIMEOUT );
+
+    // Poor man's asynchronous op.: check for events!
+    QCoreApplication::processEvents();
 }
 
 void QuickFindWidget::clearNotification()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2013 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2010, 2013, 2017 Nicolas Bonnefon and other contributors
  *
  * This file is part of glogg.
  *
@@ -40,7 +40,6 @@ void SearchingNotifier::reset()
 
 void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
 {
-    LOG( logDEBUG ) << "Emitting Searching....";
     qint64 progress;
     if ( current_line < 0 )
         progress = ( nb_lines + current_line ) * 100 / nb_lines;
@@ -49,7 +48,7 @@ void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
     emit notify( QFNotificationProgress( progress ) );
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
-    startTime_ = QTime::currentTime().addMSecs( -800 );
+    startTime_ = QTime::currentTime();
 }
 
 void QuickFind::LastMatchPosition::set( int line, int column )
@@ -237,6 +236,13 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
     int found_start_col;
     int found_end_col;
 
+    if ( searchState_ == SearchState::OnGoing ) {
+        // This happens if this function is re-entered via the notifier
+        // We want the top most call to restart the search
+        searchState_ = SearchState::RestartNeeded;
+        return -1;
+    }
+
     if ( ! quickFindPattern_->isActive() )
         return -1;
 
@@ -260,22 +266,35 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
     }
     else {
         searchingNotifier_.reset();
+        searchState_ = SearchState::OnGoing;
         // And then the rest of the file
         qint64 nb_lines = logData_->getNbLine();
-        line++;
+        int start_line = ++line;
         while ( line < nb_lines ) {
+            // Check if someone has changed the search within this loop
+            if ( searchState_ == SearchState::RestartNeeded ) {
+                line = start_line;
+                searchState_ = SearchState::OnGoing;
+                LOG( logDEBUG ) << "QuickFind restarted at line " << line;
+            }
+
             if ( quickFindPattern_->isLineMatching(
                         logData_->getExpandedLineString( line ) ) ) {
                 quickFindPattern_->getLastMatch(
                         &found_start_col, &found_end_col );
                 found = true;
+                LOG( logDEBUG ) << "QuickFind found!";
                 break;
             }
             line++;
 
             // See if we need to notify of the ongoing search
+            // Note this could re-enter this function if the pattern is
+            // modified whilst the search is on-going, this is okay.
             searchingNotifier_.ping( line, nb_lines );
         }
+
+        searchState_ = SearchState::Idle;
     }
 
     if ( found ) {

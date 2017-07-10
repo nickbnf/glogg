@@ -229,7 +229,7 @@ void OverviewWidget::mousePressEvent( QMouseEvent* mouseEvent )
 
 void OverviewWidget::mouseMoveEvent( QMouseEvent* mouseEvent )
 {
-    if ( mouseEvent->buttons() |= Qt::LeftButton )
+    if ( mouseEvent->buttons().testFlag( Qt::LeftButton ) )
         handleMousePress( mouseEvent->y() );
 }
 

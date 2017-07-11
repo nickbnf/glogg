@@ -60,7 +60,6 @@ configure_file(../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Configuration
 check_symbol_exists( symlink "unistd.h" HAVE_SYMLINK )
-check_symbol_exists( htons "arpa/inet.h" HAVE_HTONS )
 
 # find_library(WS2_LIBRARY NAMES ws2_32)
 

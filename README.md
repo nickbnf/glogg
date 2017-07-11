@@ -1,3 +1,5 @@
+[![Linux and Mac Build Status](https://travis-ci.org/nickbnf/glogg.svg?branch=master)](https://travis-ci.org/nickbnf/glogg)
+ [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/nickbnf/glogg?svg=true)](https://ci.appveyor.com/project/nickbnf/glogg)
 
 glogg - the fast, smart log explorer
 =====================================

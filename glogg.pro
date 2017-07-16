@@ -227,6 +227,8 @@ macx {
     QMAKE_LFLAGS += -stdlib=libc++
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+
+    QMAKE_INFO_PLIST = Info.plist
 }
 
 # Official builds can be generated with `qmake VERSION="1.2.3"'

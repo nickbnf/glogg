@@ -17,7 +17,6 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QApplication>
 #include <QFileInfo>
 
 #include <memory>
@@ -33,6 +32,7 @@ using namespace std;
 #include "unistd.h"
 #endif
 
+#include "gloggapp.h"
 #include "persistentinfo.h"
 #include "sessioninfo.h"
 #include "configuration.h"
@@ -58,7 +58,7 @@ static void print_version();
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    GloggApp app(argc, argv);
 
     vector<string> filenames;
 

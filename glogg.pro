@@ -54,6 +54,7 @@ SOURCES += \
     src/tabbedcrawlerwidget.cpp \
     src/viewtools.cpp \
     src/encodingspeculator.cpp \
+    src/gloggapp.cpp \
 
 INCLUDEPATH += src/
 
@@ -101,6 +102,7 @@ HEADERS += \
     src/externalcom.h \
     src/viewtools.h \
     src/encodingspeculator.h \
+    src/gloggapp.h \
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

@@ -156,6 +156,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     // Actions from external instances
     connect( externalCommunicator_.get(), SIGNAL( loadFile( const QString& ) ),
              this, SLOT( loadFileNonInteractive( const QString& ) ) );
+    connect( qApp, SIGNAL( loadFile( const QString& ) ),
+             this, SLOT( loadFileNonInteractive( const QString& ) ) );
 
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     // Version checker notification

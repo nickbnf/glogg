@@ -380,7 +380,7 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) + after_cr_offset_ - first_byte;
+        end = indexing_data_.getPosForLine( line ) - 1 + after_cr_offset_ - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();

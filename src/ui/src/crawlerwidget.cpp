@@ -209,6 +209,7 @@ void CrawlerWidget::reload()
 {
     searchState_.resetState();
     logFilteredData_->clearSearch();
+    logFilteredData_->clearMarks();
     filteredView->updateData();
     printSearchInfoMessage();
 
@@ -352,7 +353,7 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress, Line
         overview_.updateData( logData_->getNbLine() );
 
         // New data found icon
-        if ( initialPosition.get() > 0 ) {
+        if ( initialPosition > 0_lnum ) {
             changeDataStatus( DataStatus::NEW_FILTERED_DATA );
         }
 
@@ -362,7 +363,7 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress, Line
 
     // Try to restore the filtered window selection close to where it was
     // only for full searches to avoid disconnecting follow mode!
-    if ( ( progress == 100 ) && ( initialPosition.get() == 0 ) && ( !isFollowEnabled() ) ) {
+    if ( ( progress == 100 ) && ( initialPosition == 0_lnum ) && ( !isFollowEnabled() ) ) {
         const auto currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
         LOG(logDEBUG) << "updateFilteredView: restoring selection: "
                       << " absolute line number (0based) " << currentLineNumber_

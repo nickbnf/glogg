@@ -122,7 +122,6 @@ void LogFilteredData::clearSearch()
     currentRegExp_ = QRegularExpression();
     matching_lines_.clear();
     maxLength_        = 0;
-    maxLengthMarks_   = 0;
     nbLinesProcessed_ = 0;
     filteredItemsCacheDirty_ = true;
 }

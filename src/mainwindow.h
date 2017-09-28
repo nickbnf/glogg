@@ -33,6 +33,7 @@
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
 #include "versionchecker.h"
 #endif
+#include "utils.h"
 
 class QAction;
 class QActionGroup;
@@ -200,7 +201,7 @@ class MainWindow : public QMainWindow
     QAction *aboutAction;
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
-    QAction *encodingAction[CrawlerWidget::ENCODING_MAX];
+    QAction *encodingAction[static_cast<int>( Encoding::ENCODING_MAX )];
 
     QIcon mainIcon_;
 

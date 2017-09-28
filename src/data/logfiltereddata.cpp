@@ -398,9 +398,9 @@ int LogFilteredData::doGetLineLength( qint64 lineNum ) const
     return sourceLogData_->getExpandedLineString( line ).length();
 }
 
-void LogFilteredData::doSetDisplayEncoding( const char* encoding )
+void LogFilteredData::doSetDisplayEncoding( Encoding encoding )
 {
-    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
+    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << static_cast<int>( encoding );
 }
 
 void LogFilteredData::doSetMultibyteEncodingOffsets( int, int )

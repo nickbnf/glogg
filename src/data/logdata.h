@@ -158,11 +158,14 @@ class LogData : public AbstractLogData {
     qint64 doGetNbLine() const override;
     int doGetMaxLength() const override;
     int doGetLineLength( qint64 line ) const override;
-    void doSetDisplayEncoding( const char* encoding ) override;
+    void doSetDisplayEncoding( Encoding encoding ) override;
     void doSetMultibyteEncodingOffsets( int before_cr, int after_cr ) override;
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
+
+    qint64 endOfLinePosition( qint64 line ) const;
+    qint64 beginningOfNextLine( qint64 end_pos ) const;
 
     QString indexingFileName_;
     std::unique_ptr<QFile> attached_file_;

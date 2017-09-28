@@ -119,7 +119,7 @@ void CrawlerWidget::selectAll()
     activeView()->selectAll();
 }
 
-CrawlerWidget::Encoding CrawlerWidget::encodingSetting() const
+Encoding CrawlerWidget::encodingSetting() const
 {
     return encodingSetting_;
 }
@@ -953,88 +953,63 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 // Determine the right encoding and set the views.
 void CrawlerWidget::updateEncoding()
 {
-    static const char* latin1_encoding = "iso-8859-1";
-    static const char* utf8_encoding   = "utf-8";
-    static const char* utf16le_encoding   = "utf-16le";
-    static const char* utf16be_encoding   = "utf-16be";
-    static const char* cp1251_encoding   = "CP1251";
-    static const char* cp1252_encoding   = "CP1252";
-
-    const char* encoding = latin1_encoding;
+    Encoding encoding = Encoding::ENCODING_MAX;
 
     switch ( encodingSetting_ ) {
-        case ENCODING_AUTO:
+        case Encoding::ENCODING_AUTO:
             switch ( logData_->getDetectedEncoding() ) {
                 case EncodingSpeculator::Encoding::ASCII7:
-                    encoding = latin1_encoding;
+                    encoding = Encoding::ENCODING_ISO_8859_1;
                     encoding_text_ = tr( "US-ASCII" );
                     break;
                 case EncodingSpeculator::Encoding::ASCII8:
-                    encoding = latin1_encoding;
+                    encoding = Encoding::ENCODING_ISO_8859_1;
                     encoding_text_ = tr( "ISO-8859-1" );
                     break;
                 case EncodingSpeculator::Encoding::UTF8:
-                    encoding = utf8_encoding;
+                    encoding = Encoding::ENCODING_UTF8;
                     encoding_text_ = tr( "UTF-8" );
                     break;
                 case EncodingSpeculator::Encoding::UTF16LE:
-                    encoding = utf16le_encoding;
+                    encoding = Encoding::ENCODING_UTF16LE;
                     encoding_text_ = tr( "UTF-16LE" );
                     break;
                 case EncodingSpeculator::Encoding::UTF16BE:
-                    encoding = utf16be_encoding;
+                    encoding = Encoding::ENCODING_UTF16BE;
                     encoding_text_ = tr( "UTF-16BE" );
                     break;
             }
             break;
-        case ENCODING_UTF8:
-            encoding = utf8_encoding;
+        case Encoding::ENCODING_UTF8:
+            encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as UTF-8" );
             break;
-        case ENCODING_UTF16LE:
-            encoding = utf16le_encoding;
+        case Encoding::ENCODING_UTF16LE:
+            encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as UTF-16LE" );
             break;
-        case ENCODING_UTF16BE:
-            encoding = utf16be_encoding;
+        case Encoding::ENCODING_UTF16BE:
+            encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as UTF-16BE" );
             break;
-        case ENCODING_CP1251:
-            encoding = cp1251_encoding;
+        case Encoding::ENCODING_CP1251:
+            encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as CP1251" );
             break;
-        case ENCODING_CP1252:
-            encoding = cp1252_encoding;
+        case Encoding::ENCODING_CP1252:
+            encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as CP1252" );
             break;
-        case ENCODING_ISO_8859_1:
+        case Encoding::ENCODING_ISO_8859_1:
         default:
-            encoding = latin1_encoding;
+            encoding = Encoding::ENCODING_ISO_8859_1;
             encoding_text_ = tr( "Displayed as ISO-8859-1" );
             break;
     }
 
-    // Determine the newline offsets for the encoding
-    int before_cr;
-    int after_cr;
-    if ( encoding == utf16le_encoding ) {
-        before_cr = 0;
-        after_cr  = 1;
-    }
-    else if ( encoding == utf16be_encoding ) {
-        before_cr = 1;
-        after_cr  = 0;
-    }
-    else {
-        before_cr = 0;
-        after_cr  = 0;
-    }
-
     logData_->setDisplayEncoding( encoding );
-    logData_->setMultibyteEncodingOffsets( before_cr, after_cr );
     logMainView->forceRefresh();
     logFilteredData_->setDisplayEncoding( encoding );
-    logFilteredData_->setMultibyteEncodingOffsets( before_cr, after_cr );
     filteredView->forceRefresh();
 }
 

@@ -24,6 +24,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "utils.h"
+
 // Base class representing a set of data.
 // It can be either a full set or a filtered set.
 class AbstractLogData : public QObject {
@@ -52,11 +54,7 @@ class AbstractLogData : public QObject {
     int getLineLength( qint64 line ) const;
 
     // Set the view to use the passed encoding for display
-    void setDisplayEncoding( const char* encoding_name );
-    // Configure how the view shall interpret newline characters
-    // this should be non zero for encodings where \n is encoded
-    // in multiple bytes (e.g. UTF-16)
-    void setMultibyteEncodingOffsets( int before_cr, int after_cr );
+    void setDisplayEncoding( Encoding encoding );
 
     // Length of a tab stop
     static const int tabStop = 8;
@@ -77,7 +75,7 @@ class AbstractLogData : public QObject {
     // Internal function called to get the line length
     virtual int doGetLineLength( qint64 line ) const = 0;
     // Internal function called to set the encoding
-    virtual void doSetDisplayEncoding( const char* encoding ) = 0;
+    virtual void doSetDisplayEncoding( Encoding encoding ) = 0;
     // Internal function called to set the newline offsets
     virtual void doSetMultibyteEncodingOffsets( int before_cr, int after_cr ) = 0;
 

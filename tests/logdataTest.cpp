@@ -179,3 +179,102 @@ TEST_F( LogDataBehaviour, cannotBeReAttached ) {
 
     ASSERT_THROW( log_data.attachFile( TMPDIR "/verybiglog.txt" ), CantReattachErr );
 }
+
+TEST_F( LogDataBehaviour, readFunctions ) {
+    LogData log_data;
+    SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+
+    log_data.attachFile( TMPDIR "/smalllog.txt" );
+    endSpy.safeWait( 10000 );
+
+    QString ref = QString::fromUtf8( "LOGDATA is a part of glogg, we are going to test it thoroughly, this is line 000012" );
+
+    ASSERT_THAT( QString::compare( log_data.getLineString( 12 ), ref ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getExpandedLineString( 12 ), ref ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 1 ), ref ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getExpandedLines( 12, 2 ).at( 0 ), ref ), 0 );
+}
+
+class LogDataMultiByte : public testing::Test {
+  public:
+    LogDataMultiByte() {
+        generateDataFiles();
+    }
+
+    bool generateDataFiles() {
+        const QString text = QString::fromUtf8( u8"DOM JUAN\n\
+ou LE FESTIN DE PIERRE\n\
+COMÉDIE\n\
+1665\n\
+Molière\n\
+\n\
+\n\
+Représentée pour la première fois le 15 février 1665 sur le Théâtre de la salle du Palais-Royal par la Troupe de Monsieur, frère unique du Roi.\n\
+PERSONNAGES\n\
+DOM JUAN, fils de Dom Louis.\n\
+SGANARELLE, valet de Dom Juan.\n\
+ELVIRE, femme de Dom Juan.\n\
+GUSMAN, écuyer d'Elvire.\n\
+DOM CARLOS, frère d'Elvire.\n\
+DOM ALFONSE, frère d'Elvire\n\
+DOM LOUIS, père de Dom Juan.\n" );
+
+        QFile file_utf16le( TMPDIR "/utf16le.txt" );
+        QTextCodec *codec_utf16le = QTextCodec::codecForName( "UTF16LE" );
+        if ( file_utf16le.open( QIODevice::WriteOnly ) ) {
+            file_utf16le.write( codec_utf16le->fromUnicode( text ) );
+        }
+        else {
+            return false;
+        }
+        file_utf16le.close();
+
+        QFile file_utf16be( TMPDIR "/utf16be.txt" );
+        QTextCodec *codec_utf16be = QTextCodec::codecForName( "UTF16BE" );
+        if ( file_utf16be.open( QIODevice::WriteOnly ) ) {
+            file_utf16be.write( codec_utf16be->fromUnicode( text ) );
+        }
+        else {
+            return false;
+        }
+        file_utf16be.close();
+
+        return true;
+    }
+};
+
+TEST_F( LogDataMultiByte, readUtf16LE ) {
+    LogData log_data;
+    SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+
+    log_data.attachFile( TMPDIR "/utf16le.txt" );
+    endSpy.safeWait( 10000 );
+
+    log_data.setDisplayEncoding( Encoding::ENCODING_UTF16LE );
+
+    ASSERT_THAT( log_data.getDetectedEncoding(), EncodingSpeculator::Encoding::UTF16LE );
+    ASSERT_THAT( QString::compare( log_data.getLineString( 3 ), QStringLiteral( "1665" ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getExpandedLineString( 4 ), QStringLiteral( "Molière" ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 0 ), QStringLiteral( "ELVIRE, femme de Dom Juan." ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 1 ), QStringLiteral( "GUSMAN, écuyer d'Elvire." ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 2 ), QStringLiteral( "DOM CARLOS, frère d'Elvire." ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getExpandedLines( 0, 3 ).at( 2 ), QStringLiteral( "COMÉDIE" ) ), 0 );
+}
+
+TEST_F( LogDataMultiByte, readUtf16BE ) {
+    LogData log_data;
+    SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+
+    log_data.attachFile( TMPDIR "/utf16be.txt" );
+    endSpy.safeWait( 10000 );
+
+    log_data.setDisplayEncoding( Encoding::ENCODING_UTF16BE );
+
+    ASSERT_THAT( log_data.getDetectedEncoding(), EncodingSpeculator::Encoding::UTF16BE );
+    ASSERT_THAT( QString::compare( log_data.getLineString( 3 ), QStringLiteral( "1665" ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getExpandedLineString( 4 ), QStringLiteral( "Molière" ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 0 ), QStringLiteral( "ELVIRE, femme de Dom Juan." ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 1 ), QStringLiteral( "GUSMAN, écuyer d'Elvire." ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getLines( 11, 3 ).at( 2 ), QStringLiteral( "DOM CARLOS, frère d'Elvire." ) ), 0 );
+    ASSERT_THAT( QString::compare( log_data.getExpandedLines( 0, 3 ).at( 2 ), QStringLiteral( "COMÉDIE" ) ), 0 );
+}

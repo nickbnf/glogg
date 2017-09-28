@@ -69,17 +69,6 @@ class CrawlerWidget : public QSplitter,
     // is interacting with
     void selectAll();
 
-    enum Encoding {
-        ENCODING_AUTO = 0,
-        ENCODING_ISO_8859_1,
-        ENCODING_UTF8,
-        ENCODING_UTF16LE,
-        ENCODING_UTF16BE,
-        ENCODING_CP1251,
-        ENCODING_CP1252,
-        ENCODING_MAX,
-    };
-
     Encoding encodingSetting() const;
 
     // Returns whether follow is enabled in this crawler
@@ -304,7 +293,7 @@ class CrawlerWidget : public QSplitter,
     DataStatus      dataStatus_;
 
     // Current encoding setting;
-    Encoding        encodingSetting_ = ENCODING_AUTO;
+    Encoding        encodingSetting_ = Encoding::ENCODING_AUTO;
     QString         encoding_text_;
 };
 

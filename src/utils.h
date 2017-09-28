@@ -82,6 +82,17 @@ template <typename T> bool lookupLineNumber(
     return false;
 }
 
+enum class Encoding {
+    ENCODING_AUTO = 0,
+    ENCODING_ISO_8859_1,
+    ENCODING_UTF8,
+    ENCODING_UTF16LE,
+    ENCODING_UTF16BE,
+    ENCODING_CP1251,
+    ENCODING_CP1252,
+    ENCODING_MAX,
+};
+
 // Represents a position in a file (line, column)
 class FilePosition
 {

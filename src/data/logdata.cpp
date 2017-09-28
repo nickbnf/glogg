@@ -290,10 +290,54 @@ int LogData::doGetLineLength( qint64 line ) const
     return length;
 }
 
-void LogData::doSetDisplayEncoding( const char* encoding )
+void LogData::doSetDisplayEncoding( Encoding encoding )
 {
-    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
-    codec_ = QTextCodec::codecForName( encoding );
+    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << static_cast<int>( encoding );
+
+    static const char* latin1_encoding = "iso-8859-1";
+    static const char* utf8_encoding   = "utf-8";
+    static const char* utf16le_encoding   = "utf-16le";
+    static const char* utf16be_encoding   = "utf-16be";
+    static const char* cp1251_encoding   = "CP1251";
+    static const char* cp1252_encoding   = "CP1252";
+
+    const char* qt_encoding = latin1_encoding;
+
+    // Default to 0, for 8bit encodings
+    int before_cr = 0;
+    int after_cr  = 0;
+
+    switch ( encoding ) {
+        case Encoding::ENCODING_UTF8:
+            qt_encoding = utf8_encoding;
+            break;
+        case Encoding::ENCODING_UTF16LE:
+            qt_encoding = utf16le_encoding;
+            before_cr = 0;
+            after_cr  = 1;
+            break;
+        case Encoding::ENCODING_UTF16BE:
+            qt_encoding = utf16be_encoding;
+            before_cr = 1;
+            after_cr  = 0;
+            break;
+        case Encoding::ENCODING_CP1251:
+            qt_encoding = cp1251_encoding;
+            break;
+        case Encoding::ENCODING_CP1252:
+            qt_encoding = cp1252_encoding;
+            break;
+        case Encoding::ENCODING_ISO_8859_1:
+            qt_encoding = latin1_encoding;
+            break;
+        default:
+            LOG( logERROR ) << "Unknown encoding set!";
+            assert( false );
+            break;
+    }
+
+    doSetMultibyteEncodingOffsets( before_cr, after_cr );
+    codec_ = QTextCodec::codecForName( qt_encoding );
 }
 
 void LogData::doSetMultibyteEncodingOffsets( int before_cr, int after_cr )
@@ -311,7 +355,7 @@ QString LogData::doGetLineString( qint64 line ) const
     // end_byte is non-inclusive.(is not read)
     const qint64 first_byte = (line == 0) ?
         0 : ( indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
-    const qint64 end_byte  = indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_;
+    const qint64 end_byte  = endOfLinePosition( line );
 
     attached_file_->seek( first_byte );
 
@@ -331,7 +375,7 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
     // end_byte is non-inclusive.(is not read) We also exclude the final \r.
     const qint64 first_byte = (line == 0) ?
         0 : ( indexing_data_.getPosForLine( line-1 ) + after_cr_offset_ );
-    const qint64 end_byte  = indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_;
+    const qint64 end_byte  = endOfLinePosition( line );
 
     attached_file_->seek( first_byte );
 
@@ -370,7 +414,7 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
 
     const qint64 first_byte = (first_line == 0) ?
         0 : ( indexing_data_.getPosForLine( first_line-1 ) + after_cr_offset_ );
-    const qint64 end_byte  = indexing_data_.getPosForLine( last_line ) - 1 - before_cr_offset_;
+    const qint64 end_byte  = endOfLinePosition( last_line );
     // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " end_byte:" << end_byte;
     attached_file_->seek( first_byte );
     QByteArray blob = attached_file_->read( end_byte - first_byte );
@@ -380,12 +424,12 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) + after_cr_offset_ - first_byte;
+        end = endOfLinePosition( line ) - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
         list.append( codec_->toUnicode( this_line ) );
-        beginning = end + 1 + before_cr_offset_ + after_cr_offset_;
+        beginning = beginningOfNextLine( end );
     }
 
     return list;
@@ -410,7 +454,7 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     // end_byte is non-inclusive.(is not read)
     const qint64 first_byte = (first_line == 0) ?
         0 : ( indexing_data_.getPosForLine( first_line-1 ) + after_cr_offset_ );
-    const qint64 end_byte  = indexing_data_.getPosForLine( last_line ) - 1 - before_cr_offset_;
+    const qint64 end_byte  = endOfLinePosition( last_line );
     LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " end_byte:" << end_byte;
 
     attached_file_->seek( first_byte );
@@ -423,13 +467,13 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
         // end is non-inclusive
         // LOG(logDEBUG) << "EoL " << line << ": " << indexing_data_.getPosForLine( line );
-        end = indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_ - first_byte;
+        end = endOfLinePosition( line ) - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning );
         QString conv_line = codec_->toUnicode( this_line );
         // LOG(logDEBUG) << "Line is: " << conv_line.toStdString();
         list.append( untabify( conv_line ) );
-        beginning = end + 1 + before_cr_offset_ + after_cr_offset_;
+        beginning = beginningOfNextLine( end );
     }
 
     return list;
@@ -438,4 +482,23 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 EncodingSpeculator::Encoding LogData::getDetectedEncoding() const
 {
     return indexing_data_.getEncodingGuess();
+}
+
+// Given a line number, returns the position (offset in file) of
+// the byte immediately past its end.
+// e.g. in utf-16: T e s t \n2 n d l i n e \n
+//                 --------------------------
+//                           ^
+//                   endOfLinePosition( 0 )
+qint64 LogData::endOfLinePosition( qint64 line ) const
+{
+    return indexing_data_.getPosForLine( line ) - 1 - before_cr_offset_;
+}
+
+// Given the position (offset in file) of the end of a line, returns
+// the position of the beginning of the following, taking into account
+// encoding and newline signalling.
+qint64 LogData::beginningOfNextLine( qint64 end_pos ) const
+{
+    return end_pos + 1 + before_cr_offset_ + after_cr_offset_;
 }

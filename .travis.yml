@@ -8,32 +8,33 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - sourceline: ppa:beineri/opt-qt591-trusty
           packages:
-            - gcc-5
-            - g++-5
+            - gcc-6
+            - g++-6
+            - qt59base
+            - qt59tools
+            - qt59svg
+            - libboost-program-options-dev
     - os: osx
       compiler: clang
 
 
 
 before_install:
- - '[ "$TRAVIS_OS_NAME" != linux ] || sudo add-apt-repository -y ppa:beineri/opt-qt562'
- - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'
 
 install:
- - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt56base qt56tools qt56svg'
- - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libboost-program-options-dev'
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt5'
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt5'
 
 before_script:
-  - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
-  - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt56/bin/qt56-env.sh'
-  - qmake -v
+ - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
+ - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
+ - qmake -v
 
 script:
- - '[ "$TRAVIS_OS_NAME" != linux ] || qmake QMAKE_CXX=g++-5 glogg.pro'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || qmake QMAKE_CXX=g++-6 glogg.pro'
  - '[ "$TRAVIS_OS_NAME" != osx ] || qmake glogg.pro'
  - make

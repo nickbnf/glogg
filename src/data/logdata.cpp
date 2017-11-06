@@ -372,14 +372,16 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
 
     fileMutex_.unlock();
 
+    list.reserve(number);
+
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
         end = indexing_data_.getPosForLine( line ) - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
-        QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
-        // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( codec_->toUnicode( this_line ) );
+        // LOG(logDEBUG) << "Line is: " << std::string( blob.data() + beginning, end - beginning - 1 );
+        list.append( codec_->toUnicode( blob.data() + beginning, end - beginning - 1 ) );
+
         beginning = end;
     }
 
@@ -412,14 +414,15 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 
     fileMutex_.unlock();
 
+    list.reserve(number);
+
     qint64 beginning = 0;
     qint64 end = 0;
     for ( qint64 line = first_line; (line <= last_line); line++ ) {
         end = indexing_data_.getPosForLine( line ) - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
-        QByteArray this_line = blob.mid( beginning, end - beginning - 1 );
-        // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( untabify( codec_->toUnicode( this_line ) ) );
+        // LOG(logDEBUG) << "Line is: " << std::string( blob.data() + beginning, end - beginning - 1 );
+        list.append( untabify( codec_->toUnicode( blob.data() + beginning, end - beginning - 1 ) ) );
         beginning = end;
     }
 

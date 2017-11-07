@@ -282,10 +282,10 @@ void FiltersDialog::populateColors()
             i != colorNames.constEnd(); ++i ) {
         QPixmap solidPixmap( 20, 10 );
         solidPixmap.fill( QColor( *i ) );
-        QIcon* solidIcon = new QIcon( solidPixmap );
+        QIcon solidIcon { solidPixmap };
 
-        foreColorBox->addItem( *solidIcon, *i );
-        backColorBox->addItem( *solidIcon, *i );
+        foreColorBox->addItem( solidIcon, *i );
+        backColorBox->addItem( solidIcon, *i );
     }
 }
 

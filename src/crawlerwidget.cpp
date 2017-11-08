@@ -328,6 +328,14 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         // Also update the top window for the coloured bullets.
         update();
     }
+
+    if ( progress == 100 ) {
+        const int currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
+        LOG(logDEBUG) << "updateFilteredView: restoring selection: "
+                      << " absolute line number (0based) " << currentLineNumber_
+                      << " index " << currenLineIndex;
+        filteredView->selectAndDisplayLine(currenLineIndex);
+    }
 }
 
 void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
@@ -552,6 +560,9 @@ void CrawlerWidget::changeFilteredViewVisibility( int index )
         static_cast< FilteredView::Visibility>( item->data().toInt() );
 
     filteredView->setVisibility( visibility );
+
+    const int lineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
+    filteredView->selectAndDisplayLine( lineIndex );
 }
 
 void CrawlerWidget::addToSearch( const QString& string )

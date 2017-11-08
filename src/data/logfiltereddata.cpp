@@ -142,6 +142,11 @@ bool LogFilteredData::isLineInMatchingList( qint64 lineNumber )
             matching_lines_, lineNumber, &index);
 }
 
+int LogFilteredData::getLineIndexNumber( quint64 lineNumber ) const
+{
+    int lineIndex = findFilteredLine( lineNumber );
+    return lineIndex;
+}
 
 LineNumber LogFilteredData::getNbTotalLines() const
 {
@@ -312,6 +317,34 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
     }
 
     return line;
+}
+
+LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
+{
+    LineNumber lineIndex = std::numeric_limits<LineNumber>::max();
+
+    if ( visibility_ == MatchesOnly ) {
+        lineIndex = lookupLineNumber( matching_lines_.begin(),
+                                      matching_lines_.end(),
+                                      lineNum );
+    }
+    else if ( visibility_ == MarksOnly ) {
+        lineIndex = lookupLineNumber( marks_.begin(),
+                                      marks_.end(),
+                                      lineNum );
+    }
+    else {
+      // Regenerate the cache if needed
+        if ( filteredItemsCacheDirty_ ) {
+            regenerateFilteredItemsCache();
+        }
+
+        lineIndex = lookupLineNumber( filteredItemsCache_.begin(),
+                                      filteredItemsCache_.end(),
+                                      lineNum );
+    }
+
+    return lineIndex;
 }
 
 // Implementation of the virtual function.

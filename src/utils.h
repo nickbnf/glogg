@@ -110,6 +110,20 @@ class FilePosition
     int column_;
 };
 
+template<typename Iterator>
+LineNumber lookupLineNumber( Iterator begin, Iterator end, LineNumber lineNum )
+{
+    LineNumber lineIndex = 0;
+    Iterator lowerBound = std::lower_bound( begin, end, lineNum );
+    if ( lowerBound != end ) {
+        lineIndex = std::distance(begin, lowerBound);
+    }
+    else if (begin != end) {
+        lineIndex = begin->lineNumber();
+    }
+    return lineIndex;
+}
+
 #ifndef HAVE_MAKE_UNIQUE
 #include <memory>
 

@@ -69,6 +69,10 @@ class LogFilteredData : public AbstractLogData {
     // Returns whether the line number passed is in our list of matching ones.
     bool isLineInMatchingList( qint64 lineNumber );
 
+    // Returns the line 'index' in filterd log data that matches
+    // given original line number
+    int getLineIndexNumber( quint64 lineNumber ) const;
+
     // Returns the number of lines in the source log data
     LineNumber getNbTotalLines() const;
     // Returns the number of matches (independently of the visibility)
@@ -153,6 +157,8 @@ class LogFilteredData : public AbstractLogData {
 
     // Utility functions
     LineNumber findLogDataLine( LineNumber lineNum ) const;
+    LineNumber findFilteredLine( LineNumber lineNum ) const;
+
     void regenerateFilteredItemsCache() const;
 };
 
@@ -174,6 +180,12 @@ class LogFilteredData::FilteredItem {
     { return lineNumber_; }
     FilteredLineType type() const
     { return type_; }
+
+    bool operator <( const LogFilteredData::FilteredItem& other ) const
+    { return lineNumber_ < other.lineNumber_; }
+
+    bool operator <( const LineNumber& lineNumber ) const
+    { return lineNumber_ < lineNumber; }
 
   private:
     LineNumber lineNumber_;

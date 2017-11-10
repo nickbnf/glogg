@@ -5,10 +5,9 @@ matrix:
     - os: linux
       compiler: gcc
       addons:
-        addons:
-          artifacts: 
-            paths:
-              - ./release
+        artifacts: 
+          paths:
+            - ./release
         apt:
           sources:
             - ubuntu-toolchain-r-test

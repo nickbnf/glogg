@@ -32,7 +32,7 @@ after_build:
 - xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- 7z a glogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll README.md COPYING
+- 7z a glogg-%APPVEYOR_REPO_COMMIT%.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll README.md COPYING
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - makensis -DVERSION="%APPVEYOR_REPO_COMMIT%" glogg.nsi
 

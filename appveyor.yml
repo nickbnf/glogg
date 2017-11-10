@@ -7,15 +7,37 @@ environment:
   - QT5: C:\Qt\5.6\mingw49_32
     BOOST_ROOT: C:\Libraries\boost_1_59_0
     MINGW: C:\Qt\Tools\mingw492_32
+    NSIS: C:\Program Files (x86)\NSIS
     MAKE_CMD: mingw32-make
 
 matrix:
   fast_finish: true
   
 before_build:
-- set PATH=%MINGW%\bin;%QT5%\bin;%PATH%
+- set PATH=%MINGW%\bin;%QT5%\bin;%NSIS%;%PATH%
 
 build_script:
 - qmake -v
-- qmake -r BOOST_PATH=%BOOST_ROOT%
+- qmake -r BOOST_PATH=%BOOST_ROOT% VERSION="%APPVEYOR_REPO_COMMIT%"
 - call %MAKE_CMD%
+
+after_build:
+- xcopy %QT5%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %QT5%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %QT5%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %QT5%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %QT5%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- md %APPVEYOR_BUILD_FOLDER%\release\platforms
+- xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
+- xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- 7z a glogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll README.md COPYING
+- xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- makensis -DVERSION="%APPVEYOR_REPO_COMMIT%" glogg.nsi
+
+artifacts:
+  - path: glogg.zip
+    name: binary
+  - path: glogg-%APPVEYOR_REPO_COMMIT%-setup.exe
+    name: installer

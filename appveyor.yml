@@ -32,7 +32,7 @@ after_build:
 - xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- 7z a klogg.zip %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\*.dll 
+- 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll 
 
 artifacts:
   - path: klogg.zip

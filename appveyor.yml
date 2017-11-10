@@ -37,7 +37,7 @@ after_build:
 - makensis -DVERSION="%APPVEYOR_REPO_COMMIT%" glogg.nsi
 
 artifacts:
-  - path: glogg.zip
+  - path: glogg-%APPVEYOR_REPO_COMMIT%.zip
     name: binary
   - path: glogg-%APPVEYOR_REPO_COMMIT%-setup.exe
     name: installer

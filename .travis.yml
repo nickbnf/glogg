@@ -5,6 +5,7 @@ matrix:
     - os: linux
       compiler: gcc
       addons:
+        artifacts: true
         apt:
           sources:
             - ubuntu-toolchain-r-test

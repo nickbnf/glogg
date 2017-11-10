@@ -5,7 +5,6 @@ matrix:
     - os: linux
       compiler: gcc
       addons:
-        artifacts: true
         apt:
           sources:
             - ubuntu-toolchain-r-test
@@ -20,7 +19,10 @@ matrix:
     - os: osx
       compiler: clang
 
-
+addons:
+  artifacts: 
+    paths:
+      - ./release
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'

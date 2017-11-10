@@ -5,6 +5,10 @@ matrix:
     - os: linux
       compiler: gcc
       addons:
+        addons:
+          artifacts: 
+            paths:
+              - ./release
         apt:
           sources:
             - ubuntu-toolchain-r-test
@@ -18,11 +22,10 @@ matrix:
             - libboost-program-options-dev
     - os: osx
       compiler: clang
-
-addons:
-  artifacts: 
-    paths:
-      - ./release
+      addons:
+        artifacts: 
+          paths:
+            - ./release
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'

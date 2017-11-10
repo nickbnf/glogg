@@ -26,12 +26,13 @@ after_build:
 - xcopy %QT5%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %QT5%\plugins\platforms\* %APPVEYOR_BUILD_FOLDER%\release\platforms\ /I /y
-- xcopy %QT5%\plugins\platforms\* %APPVEYOR_BUILD_FOLDER%\release\platrorms\ /I /y
+- md %APPVEYOR_BUILD_FOLDER%\release\platforms
+- xcopy %QT5%\plugins\platforms\qminimal.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
+- xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 - xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- 7z a klogg.zip %APPVEYOR_BUILD_FOLDER%\release\
+- 7z a klogg.zip %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\*.dll 
 
 artifacts:
   - path: klogg.zip

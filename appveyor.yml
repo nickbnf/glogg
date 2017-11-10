@@ -21,6 +21,16 @@ build_script:
 - call %MAKE_CMD%
 
 after_build:
+- xcopy %QT5%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\Qt5Core.dll /s /y
+- xcopy %QT5%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\Qt5Gui.dll /s /y
+- xcopy %QT5%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\Qt5Network.dll /s /y
+- xcopy %QT5%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\Qt5Widgets.dll /s /y
+- xcopy %QT5%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\Qt5Concurrent.dll /s /y
+- xcopy %QT5%\plugins\platforms\* %APPVEYOR_BUILD_FOLDER%\release\ /s /y
+- xcopy %QT5%\plugins\platforms\* %APPVEYOR_BUILD_FOLDER%\release\ /s /y
+- xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\libstdc++-6.dll /s /y
+- xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\libgcc_s_dw2-1.dll /s /y
+- xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\libwinpthread-1.dll /s /y
 - 7z a klogg.zip %APPVEYOR_BUILD_FOLDER%\release\*.*
 
 artifacts:

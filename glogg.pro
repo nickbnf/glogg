@@ -129,26 +129,6 @@ FORMS += src/filtersdialog.ui
 
 RESOURCES = glogg.qrc
 
-isEmpty(BOOST_PATH) {
-    message(Building using system dynamic Boost libraries)
-    macx {
-      # Path for brew installed libs
-      INCLUDEPATH += /usr/local/include
-      LIBS += -L/usr/local/lib -lboost_program_options-mt
-    }
-    else {
-      LIBS += -lboost_program_options
-    }
-}
-else {
-    message(Building using static Boost libraries at $$BOOST_PATH)
-
-    SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp \
-        $$BOOST_PATH/libs/smart_ptr/src/*.cpp
-
-    INCLUDEPATH += $$BOOST_PATH
-}
-
 # Official builds can be generated with `qmake VERSION="1.2.3"'
 include(glogg_version.pri)
 

@@ -22,9 +22,6 @@
 
 #include <memory>
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
-
 #include <iostream>
 #include <iomanip>
 using namespace std;
@@ -51,8 +48,9 @@ using namespace std;
 #include "socketexternalcom.h"
 #endif
 
-
 #include "log.h"
+
+#include "cli11.hpp"
 
 static void print_version();
 
@@ -71,88 +69,34 @@ int main(int argc, char *argv[])
 #endif
 
     TLogLevel logLevel = logWARNING;
-
+    CLI::App options{ "Klogg -- fast log explorer" };
     try {
-        po::options_description desc("Usage: glogg [options] [files]");
-        desc.add_options()
-            ("help,h", "print out program usage (this message)")
-            ("version,v", "print glogg's version information")
-            ("multi,m", "allow multiple instance of glogg to run simultaneously (use together with -s)")
-            ("load-session,s", "load the previous session (default when no file is passed)")
-            ("new-session,n", "do not load the previous session (default when a file is passed)")
-#ifdef _WIN32
-            ("log,l", "save the log to a file (Windows only)")
-#endif
-            ("debug,d", "output more debug (include multiple times for more verbosity e.g. -dddd)")
-            ;
-        po::options_description desc_hidden("Hidden options");
-        // For -dd, -ddd...
-        for ( string s = "dd"; s.length() <= 10; s.append("d") )
-            desc_hidden.add_options()(s.c_str(), "debug");
+        options.add_flag( "-v,--version", []( auto ){ print_version(); exit( 0 ); }, "print version information" );
 
-        desc_hidden.add_options()
-            ("input-file", po::value<vector<string>>(), "input file")
-            ;
-
-        po::options_description all_options("all options");
-        all_options.add(desc).add(desc_hidden);
-
-        po::positional_options_description positional;
-        positional.add("input-file", -1);
-
-        int command_line_style = (((po::command_line_style::unix_style ^
-                po::command_line_style::allow_guessing) |
-                po::command_line_style::allow_long_disguise) ^
-                po::command_line_style::allow_sticky);
-
-        po::variables_map vm;
-        po::store(po::command_line_parser(argc, argv).
-                options(all_options).
-                positional(positional).
-                style(command_line_style).run(),
-                vm);
-        po::notify(vm);
-
-        if ( vm.count("help") ) {
-            desc.print(cout);
-            return 0;
-        }
-
-        if ( vm.count("version") ) {
-            print_version();
-            return 0;
-        }
-
-        if ( vm.count( "debug" ) )
-            logLevel = logINFO;
-
-        if ( vm.count( "multi" ) )
-            multi_instance = true;
-
-        if ( vm.count( "new-session" ) )
-            new_session = true;
-
-        if ( vm.count( "load-session" ) )
-            load_session = true;
+        options.add_flag( "-m,--multi", multi_instance, "allow multiple instance of klogg to run simultaneously (use together with -s)" );
+        options.add_flag( "-s,--load-session", load_session, "load the previous session (default when no file is passed)" );
+        options.add_flag( "-n,--new-session", new_session, "do not load the previous session (default when a file is passed)" );
 
 #ifdef _WIN32
-        if ( vm.count( "log" ) )
-            log_to_file = true;
+        options.add_flag( "-l,--log", log_to_file, "save the log to a file (Windows only)" );
 #endif
 
-        for ( string s = "dd"; s.length() <= 10; s.append("d") )
-            if ( vm.count( s ) )
-                logLevel = (TLogLevel) (logWARNING + s.length());
+        options.add_flag( "-d,--debug",
+                         [ &logLevel ]( auto count ) { logLevel = static_cast<TLogLevel>( logWARNING + count ); },
+                        "output more debug (include multiple times for more verbosity e.g. -dddd)"
+        );
 
-        if ( vm.count("input-file") ) {
-            for ( const auto& file: vm["input-file"].as<vector<string>>() ) {
-                filenames.push_back(QString::fromLocal8Bit(file.c_str(), file.size()));
-            }
+        vector<string> files;
+        options.add_option( "files", files, "files to open" );
+
+        options.parse( argc, argv );
+
+        for ( const auto& file: files ) {
+            filenames.push_back( QString::fromLocal8Bit( file.c_str(), file.size() ) );
         }
     }
-    catch(exception& e) {
-        cerr << "Option processing error: " << e.what() << endl;
-        return 1;
+    catch ( const CLI::ParseError &e ) {
+       return options.exit( e );
     }
     catch(...) {
         cerr << "Exception of unknown type!\n";

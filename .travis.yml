@@ -18,7 +18,6 @@ matrix:
             - qt59base
             - qt59tools
             - qt59svg
-            - libboost-program-options-dev
     - os: osx
       compiler: clang
       addons:

@@ -5,7 +5,6 @@ os: Visual Studio 2015
 environment:
   matrix:
   - QT5: C:\Qt\5.9\mingw53_32
-    BOOST_ROOT: C:\Libraries\boost_1_63_0
     MINGW: C:\Qt\Tools\mingw530_32
     MAKE_CMD: mingw32-make
 
@@ -17,7 +16,7 @@ before_build:
 
 build_script:
 - qmake -v
-- qmake -r BOOST_PATH=%BOOST_ROOT%
+- qmake -r
 - call %MAKE_CMD%
 
 after_build:

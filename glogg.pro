@@ -10,7 +10,7 @@ TEMPLATE = app
 
 QT += network
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += core widgets concurrent
+QT += core widgets concurrent
 
 win32:Debug:CONFIG += console
 
@@ -130,7 +130,9 @@ macx {
 }
 else {
     # For Windows icon
-    RC_FILE = glogg.rc
+    RC_ICONS = glogg48.ico
+    QMAKE_TARGET_COMPANY = Anton Filimonov
+    QMAKE_TARGET_DESCRIPTION = Klogg log viewer
 }
 
 RESOURCES = glogg.qrc

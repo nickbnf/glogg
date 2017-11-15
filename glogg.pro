@@ -134,8 +134,8 @@ macx {
 else {
     # For Windows icon
     RC_ICONS = glogg48.ico
-    QMAKE_TARGET_COMPANY = Nicolas Bonnefon
-    QMAKE_TARGET_DESCRIPTION = glogg - the fast, smart log explorer
+    QMAKE_TARGET_COMPANY = "Nicolas Bonnefon"
+    QMAKE_TARGET_DESCRIPTION = "glogg - the fast, smart log explorer"
 }
 
 RESOURCES = glogg.qrc

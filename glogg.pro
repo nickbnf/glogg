@@ -8,14 +8,36 @@
 TARGET = klogg
 TEMPLATE = app
 
-QT += network
+QT += network core widgets concurrent
 
-QT += core widgets concurrent
+# Build directories
+CONFIG(debug, debug|release) {
+    DESTDIR = debug
+} else {
+    DESTDIR = release
+}
 
-win32:Debug:CONFIG += console
+OBJECTS_DIR = $${OUT_PWD}/.obj/$${DESTDIR}-shared
+MOC_DIR = $${OUT_PWD}/.moc/$${DESTDIR}-shared
+UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 
-# Necessary when cross-compiling:
-win32:Release:QMAKE_LFLAGS += "-Wl,-subsystem,windows"
+CONFIG += c++14
+
+# Extra compiler arguments
+QMAKE_CXXFLAGS += -Wall -Wextra
+
+release:QMAKE_CXXFLAGS += -O2 -Werror
+#release:QMAKE_CXXFLAGS += -O0 -g #for release-debugging
+
+GPROF {
+    QMAKE_CXXFLAGS += -pg
+    QMAKE_LFLAGS   += -pg
+}
+
+# Performance measurement
+perf {
+    QMAKE_CXXFLAGS += -DGLOGG_PERF_MEASURE_FPS
+}
 
 # Input
 SOURCES += \
@@ -101,6 +123,12 @@ HEADERS += \
     src/viewtools.h \
     src/data/atomicflag.h
 
+
+FORMS += src/optionsdialog.ui
+FORMS += src/filtersdialog.ui
+
+RESOURCES = glogg.qrc
+
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
     macx {
@@ -121,100 +149,22 @@ else {
     INCLUDEPATH += $$BOOST_PATH
 }
 
-FORMS += src/optionsdialog.ui
-FORMS += src/filtersdialog.ui
+# Official builds can be generated with `qmake VERSION="1.2.3"'
+include(glogg_version.pri)
+
+win32 {
+    include(glogg_win32.pri)
+}
 
 macx {
-    # Icon for Mac
-    ICON = images/glogg.icns
-}
-else {
-    # For Windows icon
-    RC_ICONS = glogg48.ico
-    QMAKE_TARGET_COMPANY = Anton Filimonov
-    QMAKE_TARGET_DESCRIPTION = Klogg log viewer
+    include(glogg_mac.pri)
 }
 
-RESOURCES = glogg.qrc
-
-# Build HTML documentation (if 'markdown' is available)
-system(type markdown >/dev/null) {
-    MARKDOWN += doc/documentation.markdown
-}
-else {
-    message("markdown not found, HTML doc will not be generated")
-}
-
-doc_processor.name = markdown
-doc_processor.input = MARKDOWN
-doc_processor.output = doc/${QMAKE_FILE_BASE}.html
-doc_processor.commands = markdown ${QMAKE_FILE_NAME} | \
-    sed -f finish.sed >${QMAKE_FILE_OUT}
-
-doc_processor.CONFIG += target_predeps
-doc_processor.variable_out = doc.files
-
-QMAKE_EXTRA_COMPILERS += doc_processor
+include(glogg_doc.pri)
 
 # Install (for unix)
-icon16.path  = $$PREFIX/share/icons/hicolor/16x16/apps
-icon16.files = images/hicolor/16x16/glogg.png
+include(glogg_install.pri)
 
-icon32.path  = $$PREFIX/share/icons/hicolor/32x32/apps
-icon32.files = images/hicolor/32x32/glogg.png
-
-icon_svg.path  = $$PREFIX/share/icons/hicolor/scalable/apps
-icon_svg.files = images/hicolor/scalable/glogg.svg
-
-doc.path  = $$PREFIX/share/doc/glogg
-doc.files += README COPYING
-
-desktop.path = $$PREFIX/share/applications
-desktop.files = glogg.desktop
-
-target.path = $$PREFIX/bin
-INSTALLS = target icon16 icon32 icon_svg doc desktop
-
-# Build directories
-CONFIG(debug, debug|release) {
-    DESTDIR = debug
-} else {
-    DESTDIR = release
-}
-
-OBJECTS_DIR = $${OUT_PWD}/.obj/$${DESTDIR}-shared
-MOC_DIR = $${OUT_PWD}/.moc/$${DESTDIR}-shared
-UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
-
-# Which compiler are we using
-#system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) || macx {
-#    message ( "g++ version 4.7 or newer, supports C++11" )
-#    CONFIG += C++11
-#}
-#else {
-#    CONFIG += C++0x
-#}
-
-# Extra compiler arguments
-#QMAKE_CXXFLAGS += -Weffc++
-#QMAKE_CXXFLAGS += -Wextra
-
-#C++0x:QMAKE_CXXFLAGS += -std=c++0x
-#C++11:QMAKE_CXXFLAGS += -std=c++11
-
-CONFIG += c++11
-
-QMAKE_CXXFLAGS += -Wall -Wextra
-
-release:QMAKE_CXXFLAGS += -O2 -Werror
-#release:QMAKE_CXXFLAGS += -O0
-
-# Debug symbols even in release build
-#QMAKE_CXXFLAGS += -g
-GPROF {
-    QMAKE_CXXFLAGS += -pg
-    QMAKE_LFLAGS   += -pg
-}
 
 isEmpty(LOG_LEVEL) {
     CONFIG(debug, debug|release) {
@@ -226,28 +176,6 @@ isEmpty(LOG_LEVEL) {
 else {
     message("Using specified log level: $$LOG_LEVEL")
     DEFINES += FILELOG_MAX_LEVEL=\"$$LOG_LEVEL\"
-}
-
-macx {
-    QMAKE_CXXFLAGS += -stdlib=libc++
-    QMAKE_LFLAGS += -stdlib=libc++
-
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
-}
-
-# Official builds can be generated with `qmake VERSION="1.2.3"'
-isEmpty(VERSION):system(date >/dev/null) {
-    system([ -f .tarball-version ]) {
-        QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`cat .tarball-version`\\\"
-    }
-    else {
-        QMAKE_CXXFLAGS += -DGLOGG_DATE=\\\"`date +'\"%F\"'`\\\"
-        QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"`git --git-dir=$$PWD/.git describe`\\\"
-        QMAKE_CXXFLAGS += -DGLOGG_COMMIT=\\\"`git --git-dir=$$PWD/.git rev-parse --short HEAD`\\\"
-    }
-}
-else {
-    QMAKE_CXXFLAGS += -DGLOGG_VERSION=\\\"$$VERSION\\\"
 }
 
 # Optional features (e.g. CONFIG+=no-dbus)
@@ -269,7 +197,6 @@ else {
 # Version checking
 version_checker {
     message("Version checker will be included")
-    QT += network
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_VERSION_CHECKING
     SOURCES += src/versionchecker.cpp
     HEADERS += src/versionchecker.h
@@ -287,32 +214,10 @@ no-native-filewatch {
 }
 else {
     linux-g++ || linux-g++-64 {
-        CONFIG += inotify
-    }
-
-    win32 {
-        message("File watching using Windows")
-        SOURCES += src/platformfilewatcher.cpp src/winwatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
-        HEADERS += src/platformfilewatcher.h src/winwatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
-        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_POLLING
-    }
-    else {
-        inotify {
-            message("File watching using inotify")
-            QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_INOTIFY
-            SOURCES += src/platformfilewatcher.cpp src/inotifywatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
-            HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
-        }
-        else {
-            message("File watching using Qt")
-            QMAKE_CXXFLAGS += -DGLOGG_USES_QTFILEWATCHER
-            SOURCES += src/qtfilewatcher.cpp
-            HEADERS += src/qtfilewatcher.h
-        }
+        message("File watching using inotify")
+        QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_INOTIFY
+        SOURCES += src/platformfilewatcher.cpp src/inotifywatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+        HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
     }
 }
 
-# Performance measurement
-perf {
-    QMAKE_CXXFLAGS += -DGLOGG_PERF_MEASURE_FPS
-}

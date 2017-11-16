@@ -5,9 +5,7 @@ os: Visual Studio 2015
 environment:
   matrix:
   - QT5: C:\Qt\5.9.1\mingw53_32
-  - QT5: C:\Qt\5.8\mingw53_32
   - QT5: C:\Qt\5.7\mingw53_32
-  - QT5: C:\Qt\5.6\mingw49_32
 
 matrix:
   fast_finish: false
@@ -19,6 +17,8 @@ before_build:
 - if %QT5:msvc=%==%QT5% g++ --version
 - if %QT5:msvc=%==%QT5% set make=mingw32-make.exe
 - if %QT5:msvc=%==%QT5% %make% --version
+- if %QT5:msvc=%==%QT5% set MINGW=C:\Qt\Tools\mingw530_32
+
 # VS2015
 - if not %QT5:msvc=%==%QT5% call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
 - if not %QT5:msvc=%==%QT5% set make=nmake.exe

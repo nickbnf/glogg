@@ -18,8 +18,7 @@ before_build:
 - if %QT5:msvc=%==%QT5% set make=mingw32-make.exe
 - if %QT5:msvc=%==%QT5% %make% --version
 # VS2015
-- if %QT5:_64=%==%QT5% ( set ARCH=x86 ) else set ARCH=x64
-- if not %QT5:msvc2015=%==%QT5% call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %ARCH%
+- if not %QT5:msvc=%==%QT5% call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
 - if not %QT5:msvc=%==%QT5% set make=nmake.exe
 - if not %QT5:msvc=%==%QT5% %make% /? > nul
 

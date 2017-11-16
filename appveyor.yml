@@ -4,20 +4,28 @@ os: Visual Studio 2015
 
 environment:
   matrix:
-  - QT5: C:\Qt\5.9\mingw53_32
-    MINGW: C:\Qt\Tools\mingw530_32
-    MAKE_CMD: mingw32-make
+  - QT5: C:\Qt\5.9.1\mingw53_32
+  - QT5: C:\Qt\5.9.1\msvc2015_64
 
 matrix:
-  fast_finish: true
+  fast_finish: false
   
 before_build:
-- set PATH=%MINGW%\bin;%QT5%\bin;%PATH%
+- '%QT5%\bin\qtenv2.bat'
+- qmake -v
+# mingw
+- if %QT5:msvc=%==%QT5% g++ --version
+- if %QT5:msvc=%==%QT5% set make=mingw32-make.exe
+- if %QT5:msvc=%==%QT5% %make% --version
+# VS2015
+- if %QT5:_64=%==%QT5% ( set ARCH=x86 ) else set ARCH=x64
+- if not %QT5:msvc2015=%==%QT5% call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %ARCH%
+- if not %QT5:msvc=%==%QT5% set make=nmake.exe
+- if not %QT5:msvc=%==%QT5% %make% /? > nul
 
 build_script:
-- qmake -v
 - qmake -r
-- call %MAKE_CMD%
+- '%make%'
 
 after_build:
 - xcopy %QT5%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
@@ -28,9 +36,9 @@ after_build:
 - md %APPVEYOR_BUILD_FOLDER%\release\platforms
 - xcopy %QT5%\plugins\platforms\qminimal.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
-- xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- if not %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- if not %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- if not %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll 
 
 artifacts:

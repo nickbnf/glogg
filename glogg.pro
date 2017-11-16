@@ -23,11 +23,13 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 
 CONFIG += c++14
 
-# Extra compiler arguments
-QMAKE_CXXFLAGS += -Wall -Wextra
+!win32-msvc* {
+    # Extra compiler arguments
+    QMAKE_CXXFLAGS += -Wall -Wextra
 
-release:QMAKE_CXXFLAGS += -O2 -Werror
-#release:QMAKE_CXXFLAGS += -O0 -g #for release-debugging
+    release:QMAKE_CXXFLAGS += -O2 -Werror
+    #release:QMAKE_CXXFLAGS += -O0 -g #for release-debugging
+}
 
 GPROF {
     QMAKE_CXXFLAGS += -pg

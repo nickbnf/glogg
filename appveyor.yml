@@ -5,7 +5,9 @@ os: Visual Studio 2015
 environment:
   matrix:
   - QT5: C:\Qt\5.9.1\mingw53_32
-  - QT5: C:\Qt\5.6\msvc2015_64
+  - QT5: C:\Qt\5.8\mingw53_32
+  - QT5: C:\Qt\5.7\mingw53_32
+  - QT5: C:\Qt\5.6\mingw49_32
 
 matrix:
   fast_finish: false

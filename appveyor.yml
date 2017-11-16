@@ -24,7 +24,7 @@ before_build:
 - if not %QT5:msvc=%==%QT5% %make% /? > nul
 
 build_script:
-- qmake -r
+- qmake %APPVEYOR_BUILD_FOLDER%\glogg.pro
 - '%make%'
 
 after_build:

@@ -63,10 +63,13 @@ Section "klogg" klogg
 
     SetOutPath $INSTDIR
     File release\klogg.exe
-    File release\libstdc++-6.dll
-    File release\libgcc_s_seh-1.dll
+
     File COPYING
     File README.md
+
+    File /nonfatal release\libstdc++-6.dll
+    File /nonfatal release\libgcc_s_seh-1.dll
+    File /nonfatal release\libgcc_s_dw2-1.dll
 
     ; Create the 'sendto' link
     CreateShortCut "$SENDTO\klogg.lnk" "$INSTDIR\klogg,exe" "" "$INSTDIR\klogg.exe" 0
@@ -134,6 +137,7 @@ Section "Uninstall"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\libstdc++-6.dll"
     Delete "$INSTDIR\libgcc_s_seh-1.dll"
+    Delete "$INSTDIR\libgcc_s_dw2-1.dll"
     Delete "$INSTDIR\Qt5Widgets.dll"
     Delete "$INSTDIR\Qt5Core.dll"
     Delete "$INSTDIR\Qt5Gui.dll"

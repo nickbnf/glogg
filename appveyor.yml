@@ -13,6 +13,10 @@ matrix:
 before_build:
 - '%QT5%\bin\qtenv2.bat'
 - qmake -v
+
+- for /f %%i in ('git describe') do set GLOGG_VERSION=%%i
+- for /f %%i in ('git rev-parse --short HEAD') do set GLOGG_COMMIT=%%i
+
 # mingw
 - if %QT5:msvc=%==%QT5% g++ --version
 - if %QT5:msvc=%==%QT5% set make=mingw32-make.exe
@@ -26,7 +30,7 @@ before_build:
 
 build_script:
 - cd %APPVEYOR_BUILD_FOLDER%
-- qmake -r
+- qmake -r VERSION=%GLOGG_VERSION%
 - '%make%'
 
 after_build:
@@ -41,8 +45,11 @@ after_build:
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll 
+- 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING
+- "C:\Program Files (x86)\NSIS\makensis" %APPVEYOR_BUILD_FOLDER%\klogg.nsi
 
 artifacts:
   - path: klogg.zip
     name: klogg
+  - path: klogg-dev-build-setup.exe
+    name: installer

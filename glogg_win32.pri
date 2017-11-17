@@ -13,3 +13,7 @@ QMAKE_TARGET_DESCRIPTION = "Klogg log viewer"
     HEADERS += src/platformfilewatcher.h src/winwatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_POLLING
 }
+
+win32-msvc* {
+    LIBS += -luser32
+}

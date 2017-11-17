@@ -32,9 +32,8 @@
 #include "marks.h"
 #include "logfiltereddata.h"
 
-namespace {
-    const size_t MaxSearchCacheSize = 1000000; // 1M lines
-}
+#include "persistentinfo.h"
+#include "configuration.h"
 
 // Creates an empty set. It must be possible to display it without error.
 // FIXME
@@ -296,6 +295,9 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 {
+    static std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;
 
@@ -305,33 +307,35 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 
     if ( progress == 100 ) {
 
-        if ( matching_lines_.size() > MaxSearchCacheSize ) {
+        const auto maxCacheLines = config->searchResultsCacheLines();
+
+        if ( matching_lines_.size() > maxCacheLines ) {
             LOG(logDEBUG) << "LogFilteredData: too many matches to place in cache";
         }
         else {
             LOG(logDEBUG) << "LogFilteredData: caching results for pattern "
                           << currentRegExp_.pattern().toStdString();
 
-            searchResultsCache_[currentSearchKey_] = {matching_lines_, maxLength_};
+            searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
 
             size_t cacheSize = 0;
-            for (const auto& results: searchResultsCache_) {
+            for ( const auto& results: searchResultsCache_ ) {
                 cacheSize += results.matching_lines.size();
             }
 
             LOG(logDEBUG) << "LogFilteredData: cache size " << cacheSize;
 
-            auto cachedResult = std::begin(searchResultsCache_);
-            while(cachedResult != std::end(searchResultsCache_)
-                  && cacheSize > MaxSearchCacheSize) {
+            auto cachedResult = std::begin( searchResultsCache_ );
+            while( cachedResult != std::end( searchResultsCache_ )
+                  && cacheSize > maxCacheLines ) {
 
-                if (cachedResult.key() == currentSearchKey_) {
+                if ( cachedResult.key() == currentSearchKey_ ) {
                     ++cachedResult;
                     continue;
                 }
 
                 cacheSize -= cachedResult.value().matching_lines.size();
-                cachedResult = searchResultsCache_.erase(cachedResult);
+                cachedResult = searchResultsCache_.erase( cachedResult );
             }
         }
     }

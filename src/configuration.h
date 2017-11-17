@@ -68,6 +68,14 @@ class Configuration : public Persistable {
     { return loadLastSession_; }
     void setLoadLastSession( bool enabled )
     { loadLastSession_ = enabled; }
+    bool useParallelSearch() const
+    { return useParallelSearch_; }
+    void setUseParallelSearch( bool enabled )
+    { useParallelSearch_ = enabled; }
+    uint32_t searchResultsCacheLines() const
+    { return searchResultsCacheLines_; }
+    void setSearchResultsCacheLines( uint32_t lines )
+    { searchResultsCacheLines_ = lines; }
 
     // View settings
     bool isOverviewVisible() const
@@ -115,6 +123,10 @@ class Configuration : public Persistable {
     // Default settings for new views
     bool searchAutoRefresh_;
     bool searchIgnoreCase_;
+
+    // Performance settings
+    uint32_t searchResultsCacheLines_;
+    bool useParallelSearch_;
 };
 
 #endif

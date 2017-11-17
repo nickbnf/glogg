@@ -25,6 +25,9 @@
 #include "logfiltereddataworkerthread.h"
 #include "logdata.h"
 
+#include "persistentinfo.h"
+#include "configuration.h"
+
 // Number of lines in each chunk to read
 const int SearchOperation::nbLinesInChunk = 5000;
 
@@ -247,18 +250,21 @@ SearchOperation::SearchOperation( const LogData* sourceLogData,
 
 void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 {
+    static std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+
     const qint64 nbSourceLines = sourceLogData_->getNbLine();
     int maxLength = 0;
     int nbMatches = searchData.getNbMatches();
     SearchResultArray currentList;
 
-#ifndef _WIN32
     std::vector<QRegularExpression> regexp;
-    for (int core = 0; core < QThread::idealThreadCount(); ++core) {
-        regexp.emplace_back(regexp_.pattern(), regexp_.patternOptions());
-        regexp.back().optimize();
+    if ( config->useParallelSearch() ) {
+        for ( int core = 0; core < QThread::idealThreadCount(); ++core ) {
+            regexp.emplace_back( regexp_.pattern(), regexp_.patternOptions() );
+            regexp.back().optimize();
+        }
     }
-#endif
 
     // Ensure no re-alloc will be done
     currentList.reserve( nbLinesInChunk );
@@ -284,7 +290,6 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
         LOG(logDEBUG) << "Chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
 
-#ifndef _WIN32
         if (regexp.size() > 0) {
             std::vector<QFuture<PartialSearchResults>> partialResults;
             for (auto i=0u; i<regexp.size(); ++i) {
@@ -301,14 +306,11 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
             std::sort(currentList.begin(), currentList.end());
         }
         else {
-#endif
             auto matchResults = filterLines(regexp_, lines, chunkStart, 0, 1);
             currentList = std::move(matchResults.matchingLines);
             maxLength = qMax(maxLength, matchResults.maxLength);
             nbMatches += currentList.size();
-#ifndef _WIN32
         }
-#endif
 
         // After each block, copy the data to shared data
         // and update the client

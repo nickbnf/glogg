@@ -65,7 +65,7 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
 void OptionsDialog::setupTabs()
 {
 #ifndef GLOGG_SUPPORTS_POLLING
-    tabWidget->removeTab( 1 );
+    pollBox->setVisible(false);
 #endif
 }
 
@@ -176,6 +176,10 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Last session
     loadLastSessionCheckBox->setChecked( config->loadLastSession() );
+
+    // Perf
+    parallelSearchCheckBox->setChecked( config->useParallelSearch() );
+    searchCacheSpinBox->setValue( config->searchResultsCacheLines() );
 }
 
 //
@@ -224,6 +228,10 @@ void OptionsDialog::updateConfigFromDialog()
     config->setPollIntervalMs( poll_interval );
 
     config->setLoadLastSession( loadLastSessionCheckBox->isChecked() );
+
+    config->setUseParallelSearch( parallelSearchCheckBox->isChecked() );
+    config->setSearchResultsCacheLines( searchCacheSpinBox->value() );
+
     emit optionsChanged();
 }
 

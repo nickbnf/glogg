@@ -51,6 +51,9 @@ Configuration::Configuration()
 
     searchAutoRefresh_ = false;
     searchIgnoreCase_  = false;
+
+    useParallelSearch_ = true;
+    searchResultsCacheLines_ = 1000000;
 }
 
 // Accessor functions
@@ -95,6 +98,12 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "session.loadLast" ) )
         loadLastSession_ = settings.value( "session.loadLast" ).toBool();
 
+    // "Perf" settings
+    if ( settings.contains( "perf.useParallelSearch" ) )
+        useParallelSearch_ = settings.value( "perf.useParallelSearch" ).toBool();
+    if ( settings.contains( "perf.searchResultsCacheLines" ) )
+        searchResultsCacheLines_ = settings.value( "perf.searchResultsCacheLines" ).toUInt();
+
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
@@ -129,7 +138,9 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
-    settings.setValue( "session.loadLast", loadLastSession_);
+    settings.setValue( "session.loadLast", loadLastSession_ );
+    settings.setValue( "perf.useParallelSearch", useParallelSearch_ );
+    settings.setValue( "perf.searchResultsCacheLines", searchResultsCacheLines_ );
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );

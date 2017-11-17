@@ -33,7 +33,7 @@ build_script:
 - qmake -r VERSION=%GLOGG_VERSION%
 - '%make%'
 
-after_build:
+after_build:s
 - xcopy %QT5%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
@@ -46,7 +46,7 @@ after_build:
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING
-- "C:\Program Files (x86)\NSIS\makensis" %APPVEYOR_BUILD_FOLDER%\klogg.nsi
+- 'C:\Program Files (x86)\NSIS\makensis' %APPVEYOR_BUILD_FOLDER%\klogg.nsi
 
 artifacts:
   - path: klogg.zip

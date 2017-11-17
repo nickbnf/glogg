@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     TLogLevel logLevel = logWARNING;
     CLI::App options{ "Klogg -- fast log explorer" };
     try {
-        options.add_flag( "-v,--version", []( auto ){ print_version(); exit( 0 ); }, "print version information" );
+        options.add_flag_function( "-v,--version", []( size_t ){ print_version(); exit( 0 ); }, "print version information" );
 
         options.add_flag( "-m,--multi", multi_instance, "allow multiple instance of klogg to run simultaneously (use together with -s)" );
         options.add_flag( "-s,--load-session", load_session, "load the previous session (default when no file is passed)" );
@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
         options.add_flag( "-l,--log", log_to_file, "save the log to a file (Windows only)" );
 #endif
 
-        options.add_flag( "-d,--debug",
-                         [ &logLevel ]( auto count ) { logLevel = static_cast<TLogLevel>( logWARNING + count ); },
+        options.add_flag_function( "-d,--debug",
+                         [ &logLevel ]( size_t count ) { logLevel = static_cast<TLogLevel>( logWARNING + count ); },
                         "output more debug (include multiple times for more verbosity e.g. -dddd)"
         );
 

@@ -95,7 +95,7 @@ struct ObservedFile {
 
     // Last time a check has been done
     std::chrono::steady_clock::time_point last_check_time_ =
-        (std::chrono::steady_clock::time_point::min());
+        (std::chrono::steady_clock::time_point::min)();
 };
 
 // A list of the observed files and directories

@@ -14,8 +14,8 @@ before_build:
 - '%QT5%\bin\qtenv2.bat'
 - qmake -v
 
-- for /f %%i in ('git --git-dir=%APPVEYOR_BUILD_FOLDER%\.git describe') do set GLOGG_VERSION=%%i
-- for /f %%i in ('git --git-dir=%APPVEYOR_BUILD_FOLDER%\.git rev-parse --short HEAD') do set GLOGG_COMMIT=%%i
+#- for /f %%i in ('git --git-dir=%APPVEYOR_BUILD_FOLDER%\.git describe') do set GLOGG_VERSION=%%i
+#- for /f %%i in ('git --git-dir=%APPVEYOR_BUILD_FOLDER%\.git rev-parse --short HEAD') do set GLOGG_COMMIT=%%i
 
 - set PATH=C:\Program Files (x86)\NSIS;%PATH%
 

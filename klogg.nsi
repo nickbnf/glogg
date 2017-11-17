@@ -2,7 +2,7 @@
 
 # Is passed to the script using -DVERSION=$(git describe) on the command line
 !ifndef VERSION
-    !define VERSION 'anonymous-build'
+    !define VERSION 'dev-build'
 !endif
 
 # Headers

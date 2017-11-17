@@ -288,6 +288,7 @@ class AbstractLogView :
     void findNextSelected();
     void findPreviousSelected();
     void copy();
+    void saveToFile();
     void setSearchStart();
     void setSearchEnd();
 
@@ -361,6 +362,7 @@ class AbstractLogView :
     // Popup menu
     QMenu* popupMenu_;
     QAction* copyAction_;
+    QAction* saveToFileAction_;
     QAction* findNextAction_;
     QAction* findPreviousAction_;
     QAction* addToSearchAction_;

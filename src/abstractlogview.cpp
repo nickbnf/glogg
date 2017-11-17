@@ -39,6 +39,9 @@
 #include <QAction>
 #include <QtCore>
 #include <QGestureEvent>
+#include <QFileDialog>
+#include <QProgressDialog>
+#include <QtConcurrent>
 
 #include "log.h"
 
@@ -1030,6 +1033,72 @@ void AbstractLogView::copy()
     clipboard->setText( selection_.getSelectedText( logData ) );
 }
 
+void AbstractLogView::saveToFile()
+{
+    auto filename = QFileDialog::getSaveFileName( this, "Save content" );
+    if ( filename.isEmpty() ) {
+        return;
+    }
+
+    const auto totalLines = logData->getNbLine();
+    QSaveFile saveFile {filename};
+    saveFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text);
+    if ( !saveFile.isOpen() )  {
+        LOG(logERROR) << "Failed to open file to save";
+        return;
+    }
+
+    QTextStream outStream(&saveFile);
+
+    QProgressDialog progressDialog;
+    progressDialog.setLabelText(QString("Saving content to %1").arg(filename));
+
+    QFutureWatcher<void> futureWatcher;
+    QObject::connect(&futureWatcher, SIGNAL(finished()), &progressDialog, SLOT(reset()));
+    QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &progressDialog, SLOT(setRange(int, int)));
+    QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &progressDialog, SLOT(setValue(int)));
+    QObject::connect(&progressDialog, SIGNAL(canceled()), &futureWatcher, SLOT(cancel()));
+
+    std::vector<std::pair<qint64, int>> offsets;
+    qint64 lineOffset = 0;
+    const int chunkSize = 5000;
+
+    for ( lineOffset = 0; lineOffset + chunkSize < totalLines; lineOffset += chunkSize ) {
+       offsets.emplace_back( lineOffset, chunkSize );
+    }
+    offsets.emplace_back( lineOffset, totalLines % chunkSize );
+
+    auto writeLines = [this, &outStream, &progressDialog](const std::pair<qint64, int>& offset) {
+        QStringList lines = logData->getLines( offset.first, offset.second );
+        for ( const auto& l : lines)  {
+            outStream << l << endl;
+            if ( outStream.status() == QTextStream::WriteFailed ) {
+                LOG(logERROR) << "Saving file write failed";
+                QMetaObject::invokeMethod(&progressDialog, SLOT(cancel() ), Qt::QueuedConnection);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    QThreadPool::globalInstance()->setMaxThreadCount( 1 );
+    futureWatcher.setFuture( QtConcurrent::map( offsets, writeLines ) );
+
+    progressDialog.exec();
+    futureWatcher.waitForFinished();
+
+    QThreadPool::globalInstance()->setMaxThreadCount( QThread::idealThreadCount() );
+
+    if ( futureWatcher.isFinished() ) {
+        outStream.flush();
+        if ( outStream.status() == QTextStream::Ok ) {
+            saveFile.commit();
+        } else {
+            LOG(logERROR) << "Saving file write failed";
+        }
+    }
+}
+
 void AbstractLogView::updateSearchLimits()
 {
     textAreaCache_.invalid_ = true;
@@ -1401,6 +1470,9 @@ void AbstractLogView::createMenu()
     // No text as this action title depends on the type of selection
     connect( copyAction_, SIGNAL(triggered()), this, SLOT(copy()) );
 
+    saveToFileAction_ = new QAction( tr("Save to file"), this );
+    connect( saveToFileAction_, SIGNAL(triggered()), this, SLOT(saveToFile()) );
+
     // For '#' and '*', shortcuts doesn't seem to work but
     // at least it displays them in the menu, we manually handle those keys
     // as keys event anyway (in keyPressEvent).
@@ -1436,6 +1508,7 @@ void AbstractLogView::createMenu()
 
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );
+    popupMenu_->addAction( saveToFileAction_ );
     popupMenu_->addSeparator();
     popupMenu_->addAction( findNextAction_ );
     popupMenu_->addAction( findPreviousAction_ );

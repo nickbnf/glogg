@@ -17,6 +17,8 @@ before_build:
 - for /f %%i in ('git describe') do set GLOGG_VERSION=%%i
 - for /f %%i in ('git rev-parse --short HEAD') do set GLOGG_COMMIT=%%i
 
+- set PATH=C:\Program Files (x86)\NSIS;%PATH%
+
 # mingw
 - if %QT5:msvc=%==%QT5% g++ --version
 - if %QT5:msvc=%==%QT5% set make=mingw32-make.exe
@@ -46,7 +48,7 @@ after_build:
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING
-- 'C:\Program Files (x86)\NSIS\makensis' %APPVEYOR_BUILD_FOLDER%\klogg.nsi
+- makensis %APPVEYOR_BUILD_FOLDER%\klogg.nsi
 
 artifacts:
   - path: klogg.zip

@@ -345,7 +345,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
-    LineNumber line = std::numeric_limits<LineNumber>::max();
+    LineNumber line = (std::numeric_limits<LineNumber>::max)();
     if ( visibility_ == MatchesOnly ) {
         if ( lineNum < matching_lines_.size() ) {
             line = matching_lines_[lineNum].lineNumber();
@@ -376,7 +376,7 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 
 LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
 {
-    LineNumber lineIndex = std::numeric_limits<LineNumber>::max();
+    LineNumber lineIndex = (std::numeric_limits<LineNumber>::max)();
 
     if ( visibility_ == MatchesOnly ) {
         lineIndex = lookupLineNumber( matching_lines_.begin(),
@@ -505,9 +505,9 @@ void LogFilteredData::regenerateFilteredItemsCache() const
 
     while ( ( i != matching_lines_.cend() ) || ( j != marks_.end() ) ) {
         qint64 next_mark =
-            ( j != marks_.end() ) ? j->lineNumber() : std::numeric_limits<qint64>::max();
+            ( j != marks_.end() ) ? j->lineNumber() : (std::numeric_limits<qint64>::max)();
         qint64 next_match =
-            ( i != matching_lines_.cend() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
+            ( i != matching_lines_.cend() ) ? i->lineNumber() : (std::numeric_limits<qint64>::max)();
         // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
         if ( next_mark <= next_match ) {
             // LOG(logDEBUG) << "Add mark at " << next_mark;

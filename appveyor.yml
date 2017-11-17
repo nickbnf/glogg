@@ -6,6 +6,7 @@ environment:
   matrix:
   - QT5: C:\Qt\5.9.1\mingw53_32
   - QT5: C:\Qt\5.7\mingw53_32
+  - QT5: C:\Qt\5.9.1\msvc2015_x64
 
 matrix:
   fast_finish: false
@@ -38,9 +39,9 @@ after_build:
 - md %APPVEYOR_BUILD_FOLDER%\release\platforms
 - xcopy %QT5%\plugins\platforms\qminimal.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
-- if not %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- if not %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- if not %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - 7z a klogg.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll 
 
 artifacts:

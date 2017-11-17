@@ -1143,7 +1143,7 @@ void AbstractLogView::updateData()
     updateScrollBars();
 
     // Calculate the index of the last line shown
-    LineNumber last_line = std::min( static_cast<int64_t>( logData->getNbLine() ),
+    LineNumber last_line = qMin( static_cast<int64_t>( logData->getNbLine() ),
             static_cast<int64_t>( firstLine + getNbVisibleLines() ) );
 
     // Reset the QuickFind in case we have new stuff to search into
@@ -1544,10 +1544,10 @@ void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
 
 void AbstractLogView::updateScrollBars()
 {
-    verticalScrollBar()->setRange( 0, std::max( 0LL,
+    verticalScrollBar()->setRange( 0, qMax( 0LL,
             logData->getNbLine() - getNbVisibleLines() + 1 ) );
 
-    const int hScrollMaxValue = std::max( 0,
+    const int hScrollMaxValue = qMax( 0,
             logData->getMaxLength() - getNbVisibleCols() + 1 );
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 }
@@ -1591,7 +1591,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     if ( firstLine > lines_in_file )
         firstLine = lines_in_file ? lines_in_file - 1 : 0;
 
-    const int64_t nbLines = std::min(
+    const int64_t nbLines = qMin(
             static_cast<int64_t>( getNbVisibleLines() ), lines_in_file - firstLine );
 
     const int bottomOfTextPx = nbLines * fontHeight;

@@ -26,10 +26,6 @@
 #include <iomanip>
 using namespace std;
 
-#ifdef _WIN32
-#include "unistd.h"
-#endif
-
 #include "persistentinfo.h"
 #include "sessioninfo.h"
 #include "configuration.h"
@@ -106,7 +102,7 @@ int main(int argc, char *argv[])
     if ( log_to_file )
     {
         char file_name[255];
-        snprintf( file_name, sizeof file_name, "glogg_%d.log", getpid() );
+        snprintf( file_name, sizeof file_name, "glogg_%lld.log", app.applicationPid() );
         FILE* file = fopen(file_name, "w");
         Output2FILE::Stream() = file;
     }

@@ -34,7 +34,7 @@ void ElasticHook::move( int value )
     if ( !held_ && ( position_ * value > 0 ) ) // value and resistance have the same sign
         resistance = position_ / 8;
 
-    position_ = std::min( position_ + ( value - resistance ), MAX_POSITION );
+    position_ = qMin( position_ + ( value - resistance ), MAX_POSITION );
 
     if ( !held_ && ( std::chrono::duration_cast<std::chrono::milliseconds>
             ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) )

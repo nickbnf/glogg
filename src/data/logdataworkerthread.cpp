@@ -24,32 +24,7 @@
 
 #include "logdata.h"
 #include "logdataworkerthread.h"
-
-#include "uchardet.h"
-
-namespace {
-class UchardetDetector {
-public:
-    UchardetDetector() : ud_{ uchardet_new() } {}
-    ~UchardetDetector() { uchardet_delete( ud_ ); }
-
-    QTextCodec* detectEncoding(const QByteArray& block)
-    {
-        uchardet_handle_data(ud_, block.data(), block.size());
-        uchardet_data_end(ud_);
-
-        auto uchardetGuess = uchardet_get_charset( ud_ );
-        auto encodingGuess = QTextCodec::codecForUtfText( block, QTextCodec::codecForName( uchardetGuess ) );
-        LOG(logINFO) << "Uchardet encoding guess " << uchardetGuess << ", final guess " << encodingGuess->name().data();
-
-        return encodingGuess;
-    }
-
-  private:
-    uchardet_t ud_;
-};
-
-}
+#include "encodingdetector.h"
 
 // Size of the chunk to read (5 MiB)
 const int IndexOperation::sizeChunk = 1*1024*1024;
@@ -253,7 +228,6 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
     QTextCodec* fileTextCodec = nullptr;
     QTextCodec* encodingGuess = nullptr;
     EncodingParameters encodingParams;
-    UchardetDetector encodingDetector;
 
     QFile file( fileName_ );
 
@@ -275,7 +249,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
             if ( !fileTextCodec ) {
                 fileTextCodec = indexing_data->getForcedEncoding();
                 if ( !fileTextCodec ) {
-                    fileTextCodec = encodingDetector.detectEncoding(block);
+                    fileTextCodec = EncodingDetector::getInstance().detectEncoding(block);
                 }
 
                 encodingParams = EncodingParameters( fileTextCodec );
@@ -283,7 +257,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
             }
 
             if ( !encodingGuess ) {
-                encodingGuess = encodingDetector.detectEncoding(block);
+                encodingGuess = EncodingDetector::getInstance().detectEncoding(block);
             }
 
             // Count the number of lines in each chunk

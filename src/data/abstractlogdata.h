@@ -95,6 +95,7 @@ class AbstractLogData : public QObject {
     static inline QString untabify( const QString& line ) {
         QString untabified_line;
         int total_spaces = 0;
+        untabified_line.reserve(line.size());
 
         for ( int j = 0; j < line.length(); j++ ) {
             if ( line[j] == '\t' ) {

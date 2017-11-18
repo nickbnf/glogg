@@ -314,11 +314,12 @@ QString LogData::doGetLineString( qint64 line ) const
     fileMutex_.lock();
 
     attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
-
-    QString string = codec_->toUnicode( attached_file_->readLine() );
+    const QByteArray rawString = attached_file_->readLine();
 
     fileMutex_.unlock();
 
+
+    QString string = codec_->toUnicode( rawString );
     string.chop( 1 );
 
     return string;
@@ -331,8 +332,7 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
     fileMutex_.lock();
 
     attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
-
-    QByteArray rawString = attached_file_->readLine();
+    const QByteArray rawString = attached_file_->readLine();
 
     fileMutex_.unlock();
 
@@ -361,11 +361,12 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         return QStringList(); /* exception? */
     }
 
-    fileMutex_.lock();
-
     const qint64 first_byte = (first_line == 0) ?
         0 : indexing_data_.getPosForLine( first_line-1 );
     const qint64 last_byte  = indexing_data_.getPosForLine( last_line );
+
+    fileMutex_.lock();
+
     // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " last_byte:" << last_byte;
     attached_file_->seek( first_byte );
     QByteArray blob = attached_file_->read( last_byte - first_byte );

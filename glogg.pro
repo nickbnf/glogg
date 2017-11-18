@@ -203,3 +203,5 @@ else {
     }
 }
 
+include(uchardet.pri)
+

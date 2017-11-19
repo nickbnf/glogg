@@ -1,19 +1,21 @@
 [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
  [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 
-klogg is the fork of glogg - the fast, smart log explorer
+klogg is the fork of glogg - the fast, smart log explorer.
 
 The main reason for this fork is that we use glogg a lot
-and feel that usability can be improved here and there
+and feel that usability can be improved here and there.
 
 ## Features of klogg
-* Support for non-latin simbols in file paths
-* Keeps selected lines visible after changing search pattern
-* Support UTF16/32, CP1251 encodings
-* Support limiting search to a part of open file
-* Cache some search results in memory to avoid rereading original file
-* Uses several cores for searching through input file
+* Automatic log encoding detection using uchardet library
+* Limiting search to a part of open file
+* In-memory cache of search results per search pattern
+* Parallel pattern matching using all available cpu cores
 
+Dependency on boost "program-options" library has been removed.
+
+Latest win32 builds from master branch can be downloaded from Appveyor:
+https://ci.appveyor.com/project/variar/klogg/build/artifacts?branch=master
 
 ## About original glogg
 =======

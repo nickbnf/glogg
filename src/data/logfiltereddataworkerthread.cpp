@@ -28,9 +28,6 @@
 #include "persistentinfo.h"
 #include "configuration.h"
 
-// Number of lines in each chunk to read
-const int SearchOperation::nbLinesInChunk = 5000;
-
 namespace
 {
     struct PartialSearchResults
@@ -265,6 +262,8 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
             regexp.back().optimize();
         }
     }
+
+    const int nbLinesInChunk = config->searchReadBufferSizeLines();
 
     // Ensure no re-alloc will be done
     currentList.reserve( nbLinesInChunk );

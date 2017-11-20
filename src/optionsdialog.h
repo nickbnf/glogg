@@ -51,6 +51,8 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void onIncrementalChanged();
     // Called when the 'polling' checkbox is toggled.
     void onPollingChanged();
+    // Called when the 'search results cache' checkbox is toggled.
+    void onSearchResultsCacheChanged();
 
   private:
     void setupTabs();
@@ -58,6 +60,7 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void setupRegexp();
     void setupIncremental();
     void setupPolling();
+    void setupSearchResultsCache();
 
     int getRegexpIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>488</height>
+    <height>489</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -249,31 +249,86 @@
          <property name="title">
           <string>Performance</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <item>
+         <layout class="QFormLayout" name="formLayout_2">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::ExpandingFieldsGrow</enum>
+          </property>
+          <property name="labelAlignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+          <item row="0" column="0">
            <widget class="QCheckBox" name="parallelSearchCheckBox">
             <property name="text">
              <string>Use parallel search</string>
             </property>
            </widget>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>Search cache size (lines):</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="searchCacheSpinBox">
-              <property name="maximum">
-               <number>10000000</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="searchResultsCacheCheckBox">
+            <property name="text">
+             <string>Enable search results cache</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Search cache size (lines):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QSpinBox" name="searchCacheSpinBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximum">
+             <number>10000000</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Index file read buffer (Mib):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QSpinBox" name="indexReadBufferSpinBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Search read buffer (lines):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QSpinBox" name="searchReadBufferSpinBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="suffix">
+             <string/>
+            </property>
+            <property name="maximum">
+             <number>100000</number>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>

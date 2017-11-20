@@ -68,14 +68,28 @@ class Configuration : public Persistable {
     { return loadLastSession_; }
     void setLoadLastSession( bool enabled )
     { loadLastSession_ = enabled; }
+
+    // perf settings
     bool useParallelSearch() const
     { return useParallelSearch_; }
     void setUseParallelSearch( bool enabled )
     { useParallelSearch_ = enabled; }
+    bool useSearchResultsCache() const
+    { return useSearchResultsCache_; }
+    void setUseSearchResultsCache( bool enabled )
+    { useSearchResultsCache_ = enabled; }
     uint32_t searchResultsCacheLines() const
     { return searchResultsCacheLines_; }
     void setSearchResultsCacheLines( uint32_t lines )
     { searchResultsCacheLines_ = lines; }
+    uint32_t indexReadBufferSizeMb() const
+    { return indexReadBufferSizeMb_; }
+    void setIndexReadBufferSizeMb( uint32_t bufferSizeMb )
+    { indexReadBufferSizeMb_ = bufferSizeMb; }
+    uint32_t searchReadBufferSizeLines() const
+    { return searchReadBufferSizeLines_; }
+    void setSearchReadBufferSizeLines( uint32_t lines )
+    { searchReadBufferSizeLines_ = lines; }
 
     // View settings
     bool isOverviewVisible() const
@@ -125,8 +139,12 @@ class Configuration : public Persistable {
     bool searchIgnoreCase_;
 
     // Performance settings
+    bool useSearchResultsCache_;
     uint32_t searchResultsCacheLines_;
     bool useParallelSearch_;
+    uint32_t indexReadBufferSizeMb_;
+    uint32_t searchReadBufferSizeLines_;
+
 };
 
 #endif

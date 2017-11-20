@@ -50,11 +50,14 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
             this, SLOT( onIncrementalChanged() ) );
     connect(pollingCheckBox, SIGNAL( toggled( bool ) ),
             this, SLOT( onPollingChanged() ) );
+    connect(searchResultsCacheCheckBox, SIGNAL( toggled( bool ) ),
+            this, SLOT( onSearchResultsCacheChanged() ) );
 
     updateDialogFromConfig();
 
     setupIncremental();
     setupPolling();
+    setupSearchResultsCache();
 }
 
 //
@@ -109,6 +112,11 @@ void OptionsDialog::setupIncremental()
 void OptionsDialog::setupPolling()
 {
     pollIntervalLineEdit->setEnabled( pollingCheckBox->isChecked() );
+}
+
+void OptionsDialog::setupSearchResultsCache()
+{
+    searchCacheSpinBox->setEnabled( searchResultsCacheCheckBox->isChecked() );
 }
 
 // Convert a regexp type to its index in the list
@@ -179,7 +187,10 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Perf
     parallelSearchCheckBox->setChecked( config->useParallelSearch() );
+    searchResultsCacheCheckBox->setChecked( config->useSearchResultsCache() );
     searchCacheSpinBox->setValue( config->searchResultsCacheLines() );
+    indexReadBufferSpinBox->setValue( config->indexReadBufferSizeMb() );
+    searchReadBufferSpinBox->setValue( config->searchReadBufferSizeLines() );
 }
 
 //
@@ -230,7 +241,10 @@ void OptionsDialog::updateConfigFromDialog()
     config->setLoadLastSession( loadLastSessionCheckBox->isChecked() );
 
     config->setUseParallelSearch( parallelSearchCheckBox->isChecked() );
+    config->setUseSearchResultsCache( searchResultsCacheCheckBox->isChecked() );
     config->setSearchResultsCacheLines( searchCacheSpinBox->value() );
+    config->setIndexReadBufferSizeMb( indexReadBufferSpinBox->value() );
+    config->setSearchReadBufferSizeLines( searchReadBufferSpinBox->value() );
 
     emit optionsChanged();
 }
@@ -257,4 +271,9 @@ void OptionsDialog::onIncrementalChanged()
 void OptionsDialog::onPollingChanged()
 {
     setupPolling();
+}
+
+void OptionsDialog::onSearchResultsCacheChanged()
+{
+    setupSearchResultsCache();
 }

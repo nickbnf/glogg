@@ -26,8 +26,8 @@
 #include "logdataworkerthread.h"
 #include "encodingdetector.h"
 
-// Size of the chunk to read (5 MiB)
-const int IndexOperation::sizeChunk = 1*1024*1024;
+#include "persistentinfo.h"
+#include "configuration.h"
 
 qint64 IndexingData::getSize() const
 {
@@ -228,6 +228,11 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
     QTextCodec* fileTextCodec = nullptr;
     QTextCodec* encodingGuess = nullptr;
     EncodingParameters encodingParams;
+
+    static std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+
+    const int sizeChunk = config->indexReadBufferSizeMb() * 1024 * 1024;
 
     QFile file( fileName_ );
 

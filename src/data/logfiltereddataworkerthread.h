@@ -106,8 +106,6 @@ class SearchOperation : public QObject
     void searchProgressed( int percent, int nbMatches );
 
   protected:
-    static const int nbLinesInChunk;
-
     // Implement the common part of the search, passing
     // the shared results and the line to begin the search from.
     void doSearch( SearchData& result, qint64 initialLine );

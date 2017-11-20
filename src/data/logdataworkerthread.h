@@ -100,8 +100,6 @@ class IndexOperation : public QObject
     void indexingProgressed( int );
 
   protected:
-    static const int sizeChunk;
-
     // Returns the total size indexed
     // Modify the passed linePosition and maxLength
     void doIndex( IndexingData* linePosition, qint64 initialPosition );

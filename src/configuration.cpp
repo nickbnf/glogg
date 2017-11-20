@@ -53,7 +53,10 @@ Configuration::Configuration()
     searchIgnoreCase_  = false;
 
     useParallelSearch_ = true;
+    useSearchResultsCache_ = true;
     searchResultsCacheLines_ = 1000000;
+    indexReadBufferSizeMb_ = 5;
+    searchReadBufferSizeLines_ = 5000;
 }
 
 // Accessor functions
@@ -101,8 +104,14 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // "Perf" settings
     if ( settings.contains( "perf.useParallelSearch" ) )
         useParallelSearch_ = settings.value( "perf.useParallelSearch" ).toBool();
+    if ( settings.contains( "perf.useSearchResultsCache" ) )
+        useSearchResultsCache_ = settings.value( "perf.useSearchResultsCache" ).toBool();
     if ( settings.contains( "perf.searchResultsCacheLines" ) )
         searchResultsCacheLines_ = settings.value( "perf.searchResultsCacheLines" ).toUInt();
+    if ( settings.contains( "perf.indexReadBufferSizeMb" ) )
+        indexReadBufferSizeMb_ = settings.value( "perf.indexReadBufferSizeMb" ).toUInt();
+    if ( settings.contains( "perf.searchReadBufferSizeLines" ) )
+        searchReadBufferSizeLines_ = settings.value( "perf.searchReadBufferSizeLines" ).toUInt();
 
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
@@ -139,8 +148,12 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
     settings.setValue( "session.loadLast", loadLastSession_ );
+
     settings.setValue( "perf.useParallelSearch", useParallelSearch_ );
+    settings.setValue( "perf.useSearchResultsCache", useSearchResultsCache_ );
     settings.setValue( "perf.searchResultsCacheLines", searchResultsCacheLines_ );
+    settings.setValue( "perf.indexReadBufferSizeMb", indexReadBufferSizeMb_ );
+    settings.setValue( "perf.searchReadBufferSizeLines", searchReadBufferSizeLines_ );
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );

@@ -101,18 +101,27 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
 {
     LOG(logDEBUG) << "Entering runSearch";
 
+    static std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+
+
     clearSearch();
     currentRegExp_ = regExp;
     currentSearchKey_ = makeCacheKey( regExp, startLine, endLine );
 
-    const auto cachedResults = searchResultsCache_.find( currentSearchKey_ );
-    if ( cachedResults != std::end( searchResultsCache_ ) ) {
-        LOG(logDEBUG) << "Got result from cache";
-        matching_lines_ = cachedResults.value().matching_lines;
-        maxLength_ = cachedResults.value().maxLength;
-        emit searchProgressed( matching_lines_.size(), 100 );
+    bool shouldRunSearch = true;
+    if ( config->useSearchResultsCache() ) {
+        const auto cachedResults = searchResultsCache_.find( currentSearchKey_ );
+        if ( cachedResults != std::end( searchResultsCache_ ) ) {
+            LOG(logDEBUG) << "Got result from cache";
+            shouldRunSearch = false;
+            matching_lines_ = cachedResults.value().matching_lines;
+            maxLength_ = cachedResults.value().maxLength;
+            emit searchProgressed( matching_lines_.size(), 100 );
+        }
     }
-    else {
+
+    if ( shouldRunSearch ) {
         workerThread_.search( currentRegExp_, startLine, endLine );
     }
 }
@@ -311,6 +320,9 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
 
         if ( matching_lines_.size() > maxCacheLines ) {
             LOG(logDEBUG) << "LogFilteredData: too many matches to place in cache";
+        }
+        else if ( !config->useSearchResultsCache() ) {
+            LOG(logDEBUG) << "LogFilteredData: search results cache disabled by configs";
         }
         else {
             LOG(logDEBUG) << "LogFilteredData: caching results for pattern "

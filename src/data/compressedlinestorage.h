@@ -302,12 +302,12 @@ class CompressedLinePositionStorage
         Cache()
           : index{UINT32_MAX - 1U}
           , position{0}
-          , ptr{nullptr} 
+          , offset{0}
         {}
 
         uint32_t index;
         uint64_t position;
-        const char* ptr;
+        ptrdiff_t offset;
     };
     mutable ThreadPrivateStore<Cache,2> last_read_; // = { UINT32_MAX - 1U, 0, nullptr };
     // mutable Cache last_read;

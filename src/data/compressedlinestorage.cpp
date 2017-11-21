@@ -329,20 +329,22 @@ void CompressedLinePositionStorage::append( uint64_t pos )
 // template<int BLOCK_SIZE>
 uint64_t CompressedLinePositionStorage::at( uint32_t index ) const
 {
+    const char* block;
     const char* ptr;
     uint64_t position;
 
     Cache* last_read = last_read_.getPtr();
 
     if ( index < first_long_line_ ) {
+        block = pool32_[ index / BLOCK_SIZE ];
+
         if ( ( index == last_read->index + 1 ) && ( index % BLOCK_SIZE != 0 ) ) {
             position = last_read->position;
-            ptr      = last_read->ptr;
+            ptr      =  block + last_read->offset;
 
             position = block32_next_pos( &ptr, position );
         }
         else {
-            const char* block = pool32_[ index / BLOCK_SIZE ];
             position = block32_initial_pos( block, &ptr );
 
             for ( uint32_t i = 0; i < index % BLOCK_SIZE; i++ ) {
@@ -353,14 +355,15 @@ uint64_t CompressedLinePositionStorage::at( uint32_t index ) const
     }
     else {
         const uint32_t index_in_64 = index - first_long_line_;
+        block = pool64_[ index_in_64 / BLOCK_SIZE ];
+
         if ( ( index == last_read->index + 1 ) && ( index_in_64 % BLOCK_SIZE != 0 ) ) {
             position = last_read->position;
-            ptr      = last_read->ptr;
+            ptr      = block + last_read->offset;
 
             position = block64_next_pos( &ptr, position );
         }
         else {
-            const char* block = pool64_[ index_in_64 / BLOCK_SIZE ];
             position = block64_initial_pos( block, &ptr );
 
             for ( uint32_t i = 0; i < index_in_64 % BLOCK_SIZE; i++ ) {
@@ -373,7 +376,7 @@ uint64_t CompressedLinePositionStorage::at( uint32_t index ) const
     // Populate our cache ready for next consecutive read
     last_read->index    = index;
     last_read->position = position;
-    last_read->ptr      = ptr;
+    last_read->offset   = std::distance( block, ptr );
 
     return position;
 }

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <deque>
 
 #include "threadprivatestore.h"
 
@@ -80,15 +81,162 @@
 
 #define BLOCK_SIZE 256
 
+template<typename BlockType>
+class BlockPool
+{
+    using PoolType = std::vector<char>;
+
+public:
+    BlockPool()
+        : allocationSize_{}
+        , lastBlockSize_{}
+    {
+        blockIndex_.reserve(10000);
+        pool_.resize(1024*1024);
+    }
+
+    BlockPool(const BlockType&) = delete;
+    BlockPool& operator =(const BlockType&) = delete;
+
+    BlockPool(BlockPool&& other)
+    {
+        *this = std::move(other);
+    }
+
+    BlockPool& operator=(BlockPool&& other)
+    {
+        allocationSize_ = other.allocationSize_;
+        pool_ = std::move(other.pool_);
+        blockIndex_ = std::move(other.blockIndex_);
+        return *this;
+    }
+
+    size_t get_required_size(size_t block_size)
+    {
+        return sizeof(BlockType) + block_size * (sizeof(BlockType) + 2);
+    }
+
+    char* get_block(size_t block_size)
+    {
+        char* ptr = nullptr;
+        const auto requiredSize = get_required_size(block_size);
+
+        LOG(logWARNING) << "Get block " << sizeof(BlockType) << " pool " << pool_.size() << " alloc " << allocationSize_;
+
+        if (allocationSize_ + requiredSize >= pool_.size()) {
+            pool_.resize(pool_.size() * 2);
+        }
+
+        blockIndex_.push_back(allocationSize_);
+        allocationSize_ += requiredSize;
+        lastBlockSize_ = requiredSize;
+
+        ptr = pool_.data() + blockIndex_.back();
+
+        /*if ( pools_.empty() ) {
+            pools_.emplace_back(1024*1024*2, 0);
+        }
+
+        if (allocationSize_ + requiredSize >= pools_.back().size()) {
+            allocationSize_ = 0;
+            pools_.emplace_back(1024*1024*2, 0);
+        }
+
+        auto& pool = pools_.back();
+        ptr = pool.data() + allocationSize_;
+        allocationSize_ += requiredSize;
+
+        lastBlockSize_ = requiredSize;
+        blockIndex_.push_back(ptr);*/
+
+        return ptr;
+    }
+
+    char* get_block(size_t block_size, BlockType initial_position, char** block_ptr)
+    {
+        auto ptr = get_block( block_size );
+        if ( ptr ) {
+            *(reinterpret_cast<BlockType*>(ptr)) = initial_position;
+            if (block_ptr) {
+                *block_ptr = ptr + sizeof(BlockType);
+            }
+        }
+
+        return ptr;
+    }
+
+    char* resize_last_bloc(size_t new_size)
+    {
+        LOG(logWARNING) << "Resize block " << sizeof(BlockType) << " from " << lastBlockSize_ << " to " << new_size;
+
+        if (new_size < lastBlockSize_) {
+            allocationSize_ -= (lastBlockSize_ - new_size);
+        }
+        else {
+            const auto delta = new_size - lastBlockSize_;
+            if (allocationSize_ + delta < pool_.size()) {
+                pool_.resize(pool_.size() * 2);
+            }
+            allocationSize_ += delta;
+        }
+
+        return pool_.data() + blockIndex_.back();
+
+        /*if ( allocationSize_ + size_delta < pools_.back().size() ) {
+            allocationSize_ += size_delta;
+            return blockIndex_.back();
+        }
+
+        const auto last_size = lastBlockSize_;
+        const char* last_block = blockIndex_.back();
+        blockIndex_.pop_back();
+
+        auto new_block = get_block( new_size );
+        std::copy_n(last_block, last_size, new_block);
+        return new_block;*/
+    }
+
+    void free_last_block()
+    {
+        LOG(logWARNING) << "Free block " << sizeof(BlockType) << " " << lastBlockSize_;
+
+        if (allocationSize_ >= lastBlockSize_)
+        {
+            allocationSize_ -= lastBlockSize_;
+        }
+
+        blockIndex_.pop_back();
+    }
+
+    char* operator[](size_t index)
+    {
+        return pool_.data() + blockIndex_.at(index);
+    }
+
+    const char* operator[](size_t index) const
+    {
+        return pool_.data() + blockIndex_.at(index);
+    }
+
+  private:
+    std::vector<char> pool_;
+
+    size_t allocationSize_;
+    size_t lastBlockSize_;
+    std::vector<size_t> blockIndex_;
+};
+
 //template<int BLOCK_SIZE = 128>
 class CompressedLinePositionStorage
 {
   public:
     // Default constructor
     CompressedLinePositionStorage()
-    { nb_lines_ = 0; first_long_line_ = UINT32_MAX;
-      current_pos_ = 0; block_pointer_ = nullptr;
-      previous_block_pointer_ = nullptr; }
+    {
+        nb_lines_ = 0; first_long_line_ = UINT32_MAX;
+        current_pos_ = 0; block_pointer_ = nullptr;
+        previous_block_pointer_ = nullptr;
+    }
     // Copy constructor would be slow, delete!
     CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
 
@@ -122,8 +270,8 @@ class CompressedLinePositionStorage
     void free_blocks();
 
     // The two indexes
-    std::vector<char*> block32_index_;
-    std::vector<char*> block64_index_;
+    BlockPool<uint32_t> pool32_;
+    BlockPool<uint64_t> pool64_;
 
     // Total number of lines in storage
     uint32_t nb_lines_;
@@ -159,7 +307,7 @@ class CompressedLinePositionStorage
 
         uint32_t index;
         uint64_t position;
-        char* ptr;
+        const char* ptr;
     };
     mutable ThreadPrivateStore<Cache,2> last_read_; // = { UINT32_MAX - 1U, 0, nullptr };
     // mutable Cache last_read;

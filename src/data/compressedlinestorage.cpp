@@ -300,7 +300,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
             // We allocate extra space for the last element in case it
             // is replaced by an absolute value in the future (following a pop_back)
             size_t new_size = effective_block_size + sizeof( uint16_t ) + sizeof( uint32_t );
-            char* new_location = pool32_.resize_last_bloc(new_size);
+            char* new_location = pool32_.resize_last_block(new_size);
 
             block_pointer_ = nullptr;
             previous_block_pointer_ = new_location + effective_block_size;
@@ -318,7 +318,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
             const auto effective_block_size = std::distance(block, previous_block_pointer_);
 
             size_t new_size = effective_block_size + sizeof( uint16_t ) + sizeof( uint64_t );
-            char* new_location = pool64_.resize_last_bloc(new_size);
+            char* new_location = pool64_.resize_last_block(new_size);
 
             block_pointer_ = nullptr;
             previous_block_pointer_ = new_location + effective_block_size;

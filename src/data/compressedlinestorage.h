@@ -111,47 +111,6 @@ public:
         return *this;
     }
 
-    size_t get_required_size(size_t block_size)
-    {
-        return sizeof(BlockType) + block_size * (sizeof(BlockType) + 2);
-    }
-
-    char* get_block(size_t block_size)
-    {
-        char* ptr = nullptr;
-        const auto requiredSize = get_required_size(block_size);
-
-        LOG(logWARNING) << "Get block " << sizeof(BlockType) << " pool " << pool_.size() << " alloc " << allocationSize_;
-
-        if (allocationSize_ + requiredSize >= pool_.size()) {
-            pool_.resize(pool_.size() * 2);
-        }
-
-        blockIndex_.push_back(allocationSize_);
-        allocationSize_ += requiredSize;
-        lastBlockSize_ = requiredSize;
-
-        ptr = pool_.data() + blockIndex_.back();
-
-        /*if ( pools_.empty() ) {
-            pools_.emplace_back(1024*1024*2, 0);
-        }
-
-        if (allocationSize_ + requiredSize >= pools_.back().size()) {
-            allocationSize_ = 0;
-            pools_.emplace_back(1024*1024*2, 0);
-        }
-
-        auto& pool = pools_.back();
-        ptr = pool.data() + allocationSize_;
-        allocationSize_ += requiredSize;
-
-        lastBlockSize_ = requiredSize;
-        blockIndex_.push_back(ptr);*/
-
-        return ptr;
-    }
-
     char* get_block(size_t block_size, BlockType initial_position, char** block_ptr)
     {
         auto ptr = get_block( block_size );
@@ -165,15 +124,20 @@ public:
         return ptr;
     }
 
-    char* resize_last_bloc(size_t new_size)
+    char* resize_last_block(size_t new_size)
     {
-        LOG(logWARNING) << "Resize block " << sizeof(BlockType) << " from " << lastBlockSize_ << " to " << new_size;
+        const auto aligned_new_size = get_aligned_size(new_size);
 
-        if (new_size < lastBlockSize_) {
-            allocationSize_ -= (lastBlockSize_ - new_size);
+        LOG(logWARNING) << "Resize block " << sizeof(BlockType)
+                        << " from " << lastBlockSize_
+                        << " to " << new_size
+                        << " aligned " << aligned_new_size;
+
+        if (aligned_new_size < lastBlockSize_) {
+            allocationSize_ -= (lastBlockSize_ - aligned_new_size);
         }
         else {
-            const auto delta = new_size - lastBlockSize_;
+            const auto delta = aligned_new_size - lastBlockSize_;
             if (allocationSize_ + delta < pool_.size()) {
                 pool_.resize(pool_.size() * 2);
             }
@@ -181,19 +145,6 @@ public:
         }
 
         return pool_.data() + blockIndex_.back();
-
-        /*if ( allocationSize_ + size_delta < pools_.back().size() ) {
-            allocationSize_ += size_delta;
-            return blockIndex_.back();
-        }
-
-        const auto last_size = lastBlockSize_;
-        const char* last_block = blockIndex_.back();
-        blockIndex_.pop_back();
-
-        auto new_block = get_block( new_size );
-        std::copy_n(last_block, last_size, new_block);
-        return new_block;*/
     }
 
     void free_last_block()
@@ -216,6 +167,35 @@ public:
     const char* operator[](size_t index) const
     {
         return pool_.data() + blockIndex_.at(index);
+    }
+
+private:
+
+    size_t get_aligned_size(size_t required_size) const
+    {
+        return required_size + required_size % alignof(BlockType);
+    }
+
+    size_t get_required_size(size_t block_size) const
+    {
+        return get_aligned_size(sizeof(BlockType) + block_size * (sizeof(BlockType) + 2));
+    }
+
+    char* get_block(size_t block_size)
+    {
+        const auto requiredSize = get_required_size(block_size);
+
+        LOG(logWARNING) << "Get block " << sizeof(BlockType) << " pool " << pool_.size() << " alloc " << allocationSize_;
+
+        if (allocationSize_ + requiredSize >= pool_.size()) {
+            pool_.resize(pool_.size() * 2);
+        }
+
+        blockIndex_.push_back(allocationSize_);
+        allocationSize_ += requiredSize;
+        lastBlockSize_ = requiredSize;
+
+        return pool_.data() + blockIndex_.back();
     }
 
   private:

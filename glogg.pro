@@ -77,7 +77,8 @@ SOURCES += \
     src/signalmux.cpp \
     src/tabbedcrawlerwidget.cpp \
     src/viewtools.cpp \
-    src/data/encodingdetector.cpp
+    src/data/encodingdetector.cpp \
+    src/data/blockpool.cpp
 
 INCLUDEPATH += src/
 
@@ -125,7 +126,8 @@ HEADERS += \
     src/externalcom.h \
     src/viewtools.h \
     src/data/atomicflag.h \
-    src/data/encodingdetector.h
+    src/data/encodingdetector.h \
+    src/data/blockpool.h
 
 
 FORMS += src/optionsdialog.ui

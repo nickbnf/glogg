@@ -19,9 +19,9 @@
 
 #include <vector>
 #include <cstdint>
-#include <deque>
 
 #include "threadprivatestore.h"
+#include "blockpool.h"
 
 // This class is a compressed storage backend for LinePositionArray
 // It emulates the interface of a vector, but take advantage of the nature
@@ -81,131 +81,6 @@
 
 #define BLOCK_SIZE 256
 
-template<typename BlockType>
-class BlockPool
-{
-    using PoolType = std::vector<char>;
-
-public:
-    BlockPool()
-        : allocationSize_{}
-        , lastBlockSize_{}
-    {
-        blockIndex_.reserve(10000);
-        pool_.resize(1024*1024);
-    }
-
-    BlockPool(const BlockType&) = delete;
-    BlockPool& operator =(const BlockType&) = delete;
-
-    BlockPool(BlockPool&& other)
-    {
-        *this = std::move(other);
-    }
-
-    BlockPool& operator=(BlockPool&& other)
-    {
-        allocationSize_ = other.allocationSize_;
-        pool_ = std::move(other.pool_);
-        blockIndex_ = std::move(other.blockIndex_);
-        return *this;
-    }
-
-    char* get_block(size_t block_size, BlockType initial_position, char** block_ptr)
-    {
-        auto ptr = get_block( block_size );
-        if ( ptr ) {
-            *(reinterpret_cast<BlockType*>(ptr)) = initial_position;
-            if (block_ptr) {
-                *block_ptr = ptr + sizeof(BlockType);
-            }
-        }
-
-        return ptr;
-    }
-
-    char* resize_last_block(size_t new_size)
-    {
-        const auto aligned_new_size = get_aligned_size(new_size);
-
-        LOG(logWARNING) << "Resize block " << sizeof(BlockType)
-                        << " from " << lastBlockSize_
-                        << " to " << new_size
-                        << " aligned " << aligned_new_size;
-
-        if (aligned_new_size < lastBlockSize_) {
-            allocationSize_ -= (lastBlockSize_ - aligned_new_size);
-        }
-        else {
-            const auto delta = aligned_new_size - lastBlockSize_;
-            if (allocationSize_ + delta < pool_.size()) {
-                pool_.resize(pool_.size() * 2);
-            }
-            allocationSize_ += delta;
-        }
-
-        return pool_.data() + blockIndex_.back();
-    }
-
-    void free_last_block()
-    {
-        LOG(logWARNING) << "Free block " << sizeof(BlockType) << " " << lastBlockSize_;
-
-        if (allocationSize_ >= lastBlockSize_)
-        {
-            allocationSize_ -= lastBlockSize_;
-        }
-
-        blockIndex_.pop_back();
-    }
-
-    char* operator[](size_t index)
-    {
-        return pool_.data() + blockIndex_.at(index);
-    }
-
-    const char* operator[](size_t index) const
-    {
-        return pool_.data() + blockIndex_.at(index);
-    }
-
-private:
-
-    size_t get_aligned_size(size_t required_size) const
-    {
-        return required_size + required_size % alignof(BlockType);
-    }
-
-    size_t get_required_size(size_t block_size) const
-    {
-        return get_aligned_size(sizeof(BlockType) + block_size * (sizeof(BlockType) + 2));
-    }
-
-    char* get_block(size_t block_size)
-    {
-        const auto requiredSize = get_required_size(block_size);
-
-        LOG(logWARNING) << "Get block " << sizeof(BlockType) << " pool " << pool_.size() << " alloc " << allocationSize_;
-
-        if (allocationSize_ + requiredSize >= pool_.size()) {
-            pool_.resize(pool_.size() * 2);
-        }
-
-        blockIndex_.push_back(allocationSize_);
-        allocationSize_ += requiredSize;
-        lastBlockSize_ = requiredSize;
-
-        return pool_.data() + blockIndex_.back();
-    }
-
-  private:
-    std::vector<char> pool_;
-
-    size_t allocationSize_;
-    size_t lastBlockSize_;
-    std::vector<size_t> blockIndex_;
-};
-
 //template<int BLOCK_SIZE = 128>
 class CompressedLinePositionStorage
 {
@@ -225,8 +100,6 @@ class CompressedLinePositionStorage
     // Move assignement
     CompressedLinePositionStorage& operator=(
             CompressedLinePositionStorage&& orig );
-    // Destructor
-    ~CompressedLinePositionStorage();
 
     // Append the passed end-of-line to the storage
     void append( uint64_t pos );
@@ -247,7 +120,6 @@ class CompressedLinePositionStorage
   private:
     // Utility for move ctor/assign
     void move_from( CompressedLinePositionStorage&& orig );
-    void free_blocks();
 
     // The two indexes
     BlockPool<uint32_t> pool32_;
@@ -261,7 +133,7 @@ class CompressedLinePositionStorage
     // Address of the next position (not yet written) within the current
     // block. nullptr means there is no current block (previous block
     // finished or no data)
-    char* block_pointer_;
+    uint8_t* block_pointer_;
 
     // The index of the first line whose end is stored in a block64
     // Initialised at UINT32_MAX, meaning "unset"
@@ -274,7 +146,7 @@ class CompressedLinePositionStorage
     // "pop_back" the last element.
     // A null pointer here means pop_back need to free the block
     // that has just been created.
-    char* previous_block_pointer_;
+    uint8_t* previous_block_pointer_;
 
     // Cache the last position read
     // This is to speed up consecutive reads (whole page)

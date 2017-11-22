@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         options.parse( argc, argv );
 
         for ( const auto& file: files ) {
-            filenames.push_back( QString::fromLocal8Bit( file.c_str(), file.size() ) );
+            filenames.push_back( QFile::decodeName( file.c_str() ) );
         }
     }
     catch ( const CLI::ParseError &e ) {

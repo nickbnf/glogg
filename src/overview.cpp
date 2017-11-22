@@ -115,7 +115,8 @@ void Overview::recalculatesLines()
         markLines_.clear();
 
         if ( linesInFile_ > 0 ) {
-            for ( int i = 0; i < logFilteredData_->getNbLine(); i++ ) {
+            const auto nbLines = logFilteredData_->getNbLine();
+            for ( int i = 0; i < nbLines; i++ ) {
                 LogFilteredData::FilteredLineType line_type =
                     logFilteredData_->filteredLineTypeByIndex( i );
                 int line = (int) logFilteredData_->getMatchingLineNumber( i );

@@ -25,10 +25,10 @@
 
 #include "filtersdialog.h"
 
-static const QString DEFAULT_PATTERN = "New Filter";
+static const char* DEFAULT_PATTERN = "New Filter";
 static const bool    DEFAULT_IGNORE_CASE = false;
-static const QString DEFAULT_FORE_COLOUR = "black";
-static const QString DEFAULT_BACK_COLOUR = "white";
+static const char* DEFAULT_FORE_COLOUR = "black";
+static const char* DEFAULT_BACK_COLOUR = "white";
 
 // Construct the box, including a copy of the global FilterSet
 // to handle ok/cancel/apply
@@ -292,7 +292,7 @@ void FiltersDialog::populateColors()
 void FiltersDialog::populateFilterList()
 {
     filterListWidget->clear();
-    foreach ( Filter filter, filterSet->filterList ) {
+    for ( const Filter& filter : qAsConst(filterSet->filterList) ) {
         QListWidgetItem* new_item = new QListWidgetItem( filter.pattern() );
         // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
         new_item->setForeground( QBrush( QColor( filter.foreColorName() ) ) );

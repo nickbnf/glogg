@@ -78,7 +78,8 @@ void OptionsDialog::setupFontList()
     QFontDatabase database;
 
     // We only show the fixed fonts
-    foreach ( const QString &str, database.families() ) {
+    const auto families = database.families();
+    for ( const QString &str : families ) {
          if ( database.isFixedPitch( str ) )
              fontFamilyBox->addItem( str );
      }
@@ -201,10 +202,10 @@ void OptionsDialog::updateFontSize(const QString& fontFamily)
 {
     QFontDatabase database;
     QString oldFontSize = fontSizeBox->currentText();
-    QList<int> sizes = database.pointSizes( fontFamily, "" );
+    const QList<int> sizes = database.pointSizes( fontFamily, "" );
 
     fontSizeBox->clear();
-    foreach (int size, sizes) {
+    for (int size : sizes) {
         fontSizeBox->addItem( QString::number(size) );
     }
     // Now restore the size we had before

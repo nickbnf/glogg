@@ -36,12 +36,12 @@ void Marks::addMark( qint64 line, QChar mark )
 {
     // Look for the index immediately before
     int index;
-    if ( ! lookupLineNumber< QList<Mark> >( marks_, line, &index ) )
+    if ( ! lookupLineNumber( marks_, line, &index ) )
     {
         // If a mark is not already set for this line
         LOG(logDEBUG) << "Inserting mark at line " << line
             << " (index " << index << ")";
-        marks_.insert( index, Mark( line ) );
+        marks_.emplace( marks_.begin() + index,  line );
     }
     else
     {
@@ -63,7 +63,7 @@ qint64 Marks::getMark( QChar mark ) const
 bool Marks::isLineMarked( qint64 line ) const
 {
     int index;
-    return lookupLineNumber< QList<Mark> >( marks_, line, &index );
+    return lookupLineNumber( marks_, line, &index );
 }
 
 void Marks::deleteMark( QChar mark )
@@ -76,9 +76,9 @@ void Marks::deleteMark( qint64 line )
 {
     int index;
 
-    if ( lookupLineNumber< QList<Mark> >( marks_, line, &index ) )
+    if ( lookupLineNumber( marks_, line, &index ) )
     {
-        marks_.removeAt( index );
+        marks_.erase( marks_.begin() + index );
     }
 }
 

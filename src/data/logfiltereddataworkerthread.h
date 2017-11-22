@@ -120,6 +120,7 @@ class SearchOperation : public QObject
 
 class FullSearchOperation : public SearchOperation
 {
+  Q_OBJECT
   public:
     FullSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
                          qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest )
@@ -130,6 +131,7 @@ class FullSearchOperation : public SearchOperation
 
 class UpdateSearchOperation : public SearchOperation
 {
+  Q_OBJECT
   public:
     UpdateSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
             qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest, qint64 position )

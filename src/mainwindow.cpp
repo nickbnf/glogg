@@ -188,7 +188,7 @@ void MainWindow::reloadSession()
 {
     int current_file_index = -1;
 
-    for ( auto open_file: session_->restore(
+    for ( const auto& open_file: session_->restore(
                []() { return new CrawlerWidget(); },
                &current_file_index ) )
     {
@@ -798,7 +798,7 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
 
-    switch ( (keyEvent->text())[0].toLatin1() ) {
+    switch ( keyEvent->text().at(0).toLatin1() ) {
         case '/':
             displayQuickFindBar( QuickFindMux::Forward );
             break;
@@ -897,7 +897,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
         shownName = strippedName( file_name );
 
     setWindowTitle(
-            tr("%1 - %2").arg(shownName).arg(tr("klogg"))
+            tr("%1 - %2").arg(shownName, tr("klogg"))
 #ifdef GLOGG_COMMIT
             + " (dev build " GLOGG_VERSION ")"
 #endif
@@ -956,13 +956,13 @@ void MainWindow::updateInfoLine()
         const QString date =
             defaultLocale.toString( lastModified, QLocale::NarrowFormat );
         infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4 - %5)" )
-                .arg(current_file).arg(readableSize(fileSize))
-                .arg(fileNbLine).arg( date )
-                .arg(currentCrawlerWidget()->encodingText()) );
+                .arg(current_file, readableSize(fileSize))
+                .arg(fileNbLine)
+                .arg(date, currentCrawlerWidget()->encodingText()) );
     }
     else {
         infoLine->setText( tr( "%1 (%2 - %3 lines - %4)" )
-                .arg(current_file).arg(readableSize(fileSize))
+                .arg(current_file, readableSize(fileSize))
                 .arg(fileNbLine)
                 .arg(currentCrawlerWidget()->encodingText()) );
     }

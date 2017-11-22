@@ -165,7 +165,7 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
         visibilityBox->setCurrentIndex(
                 ( visibilityBox->currentIndex() + 1 ) % visibilityBox->count() );
     else {
-        const char character = (keyEvent->text())[0].toLatin1();
+        const char character = keyEvent->text().at( 0 ).toLatin1();
 
         if ( character == '+' )
             changeTopViewSize( 1 );
@@ -1002,7 +1002,7 @@ void CrawlerWidget::updateEncoding()
     switch ( encodingSetting_ ) {
         case ENCODING_AUTO:
             textCodec = logData_->getDetectedEncoding();
-            encoding_text_ = tr(textCodec->name().data());
+            encoding_text_ = tr(textCodec->name().constData());
             break;
         case ENCODING_UTF8:
             textCodec = QTextCodec::codecForName("utf-8");
@@ -1032,12 +1032,12 @@ void CrawlerWidget::updateEncoding()
 
     if (encodingSetting_ != ENCODING_AUTO) {
         QString displayedAs("Displayed as %1");
-        encoding_text_ = tr (displayedAs.arg(textCodec->name().data()).toLocal8Bit().data());
+        encoding_text_ = tr ( displayedAs.arg( textCodec->name().constData() ).toLatin1() );
     }
 
-    logData_->setDisplayEncoding( textCodec->name().data() );
+    logData_->setDisplayEncoding( textCodec->name().constData() );
     logMainView->forceRefresh();
-    logFilteredData_->setDisplayEncoding( textCodec->name().data() );
+    logFilteredData_->setDisplayEncoding( textCodec->name().constData() );
     filteredView->forceRefresh();
 }
 
@@ -1046,9 +1046,9 @@ void CrawlerWidget::changeTopViewSize( int32_t delta )
 {
     int min, max;
     getRange( 1, &min, &max );
-    LOG(logDEBUG) << "CrawlerWidget::changeTopViewSize " << sizes()[0] << " " << min << " " << max;
-    moveSplitter( closestLegalPosition( sizes()[0] + ( delta * 10 ), 1 ), 1 );
-    LOG(logDEBUG) << "CrawlerWidget::changeTopViewSize " << sizes()[0];
+    LOG(logDEBUG) << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 ) << " " << min << " " << max;
+    moveSplitter( closestLegalPosition( sizes().at( 0 ) + ( delta * 10 ), 1 ), 1 );
+    LOG(logDEBUG) << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 );
 }
 
 //

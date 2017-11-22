@@ -95,7 +95,7 @@ class Selection
     bool getPortionForLine( int line,
             int* start_column, int* end_column ) const;
     // Get a list of selected line(s), in order.
-    QList<int> getLines() const;
+    std::vector<int> getLines() const;
 
     // Returns wether the line passed is selected (entirely).
     bool isLineSelected( int line ) const;

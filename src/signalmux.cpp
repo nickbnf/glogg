@@ -106,13 +106,13 @@ void SignalMux::disconnect( const char *signal,
 void SignalMux::setCurrentDocument( QObject* current_document )
 {
     // First disconnect everything to/from the old document
-    for ( auto c: connectionList_ )
+    for ( const auto& c: connectionList_ )
         disconnect( c );
 
     currentDocument_ = current_document;
 
     // And now connect to/from the new document
-    for ( auto c: connectionList_ )
+    for ( const auto& c: connectionList_ )
         connect( c );
 
     // And ask the doc to emit all state signals

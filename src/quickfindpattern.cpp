@@ -74,8 +74,8 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern, bool ignoreC
     changeSearchPattern( pattern );
 }
 
-bool QuickFindPattern::matchLine( const QString& line,
-        QList<QuickFindMatch>& matches ) const
+bool QuickFindPattern::matchLine(const QString& line,
+        std::vector<QuickFindMatch> &matches ) const
 {
     matches.clear();
 
@@ -84,11 +84,11 @@ bool QuickFindPattern::matchLine( const QString& line,
 
         while( matchIterator.hasNext() ) {
             QRegularExpressionMatch match = matchIterator.next();
-            matches << QuickFindMatch ( match.capturedStart(), match.capturedLength() );
+            matches.emplace_back( match.capturedStart(), match.capturedLength() );
         }
     }
 
-    return ( matches.count() > 0 );
+    return ( matches.size() > 0 );
 }
 
 bool QuickFindPattern::isLineMatching( const QString& line, int column ) const

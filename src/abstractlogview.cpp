@@ -109,17 +109,17 @@ LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
     type_  = type;
 }
 
-QList<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
+std::vector<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
 {
-    QList<LineChunk> list;
+    std::vector<LineChunk> list;
 
     if ( ( sel_start < start_ ) && ( sel_end < start_ ) ) {
         // Selection BEFORE this chunk: no change
-        list << LineChunk( *this );
+        list.emplace_back( *this );
     }
     else if ( sel_start > end_ ) {
         // Selection AFTER this chunk: no change
-        list << LineChunk( *this );
+        list.emplace_back( *this );
     }
     else /* if ( ( sel_start >= start_ ) && ( sel_end <= end_ ) ) */
     {
@@ -127,11 +127,15 @@ QList<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
         sel_start = qMax( sel_start, start_ );
         sel_end   = qMin( sel_end, end_ );
 
-        if ( sel_start > start_ )
-            list << LineChunk( start_, sel_start - 1, type_ );
-        list << LineChunk( sel_start, sel_end, Selected );
-        if ( sel_end < end_ )
-            list << LineChunk( sel_end + 1, end_, type_ );
+        if ( sel_start > start_ ) {
+            list.emplace_back( start_, sel_start - 1, type_ );
+        }
+
+        list.emplace_back( sel_start, sel_end, Selected );
+
+        if ( sel_end < end_ ) {
+            list.emplace_back( sel_end + 1, end_, type_ );
+        }
     }
 
     return list;
@@ -144,7 +148,7 @@ inline void LineDrawer::addChunk( int first_col, int last_col,
         first_col = 0;
     int length = last_col - first_col + 1;
     if ( length > 0 ) {
-        list << Chunk ( first_col, length, fore, back );
+        list.emplace_back( first_col, length, fore, back );
     }
 }
 
@@ -172,7 +176,7 @@ inline void LineDrawer::draw( QPainter& painter,
     int xPos = initialXPos;
     int yPos = initialYPos;
 
-    foreach ( Chunk chunk, list ) {
+    for ( const Chunk& chunk : list ) {
         // Draw each chunk
         // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
@@ -570,13 +574,13 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
         selectAndDisplayLine( 0 );
     else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
-        searchNext(); // duplicate of 'n' action.
+        emit searchNext(); // duplicate of 'n' action.
     else if ( keyEvent->key() == Qt::Key_F3 && shiftModifier )
-        searchPrevious(); // duplicate of 'N' action.
+        emit searchPrevious(); // duplicate of 'N' action.
     else if ( keyEvent->key() == Qt::Key_Space && noModifier )
         emit exitView();
     else {
-        const char character = (keyEvent->text())[0].toLatin1();
+        const char character = keyEvent->text().at( 0 ).toLatin1();
 
         if ( keyEvent->modifiers() == Qt::NoModifier &&
                 ( character >= '0' ) && ( character <= '9' ) ) {
@@ -584,7 +588,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             digitsBuffer_.add( character );
         }
         else {
-            switch ( (keyEvent->text())[0].toLatin1() ) {
+            switch ( keyEvent->text().at( 0 ).toLatin1() ) {
                 case 'j':
                     moveSelectionDown();
                     break;
@@ -718,7 +722,8 @@ bool AbstractLogView::event( QEvent* e )
     if ( e->type() == QEvent::Gesture ) {
         auto gesture_event = dynamic_cast<QGestureEvent*>( e );
         if ( gesture_event ) {
-            foreach( QGesture* gesture, gesture_event->gestures() ) {
+            const auto gestures = gesture_event->gestures();
+            for( QGesture* gesture : gestures ) {
                 LOG(logDEBUG4) << "Gesture: " << gesture->gestureType();
                 gesture_event->ignore( gesture );
             }
@@ -1326,22 +1331,24 @@ void AbstractLogView::moveSelection( int delta )
 {
     LOG(logDEBUG) << "AbstractLogView::moveSelection delta=" << delta;
 
-    QList<int> selection = selection_.getLines();
+    auto selection = selection_.getLines();
     int new_line;
 
     // If nothing is selected, do as if line -1 was.
-    if ( selection.isEmpty() )
-        selection.append( -1 );
+    if ( selection.empty() )
+        selection.push_back( -1 );
 
     if ( delta < 0 )
-        new_line = selection.first() + delta;
+        new_line = selection.front() + delta;
     else
-        new_line = selection.last() + delta;
+        new_line = selection.back() + delta;
 
-    if ( new_line < 0 )
+    if ( new_line < 0 ) {
         new_line = 0;
-    else if ( new_line >= logData->getNbLine() )
+    }
+    else if ( new_line >= logData->getNbLine() ) {
         new_line = logData->getNbLine() - 1;
+    }
 
     // Select and display the new line
     selection_.selectLine( new_line );
@@ -1359,30 +1366,28 @@ void AbstractLogView::jumpToStartOfLine()
 // Make the end of the lines in the selection visible
 void AbstractLogView::jumpToEndOfLine()
 {
-    QList<int> selection = selection_.getLines();
+    const auto selection = selection_.getLines();
 
     // Search the longest line in the selection
-    int max_length = 0;
-    foreach ( int line, selection ) {
-        int length = logData->getLineLength( line );
-        if ( length > max_length )
-            max_length = length;
-    }
-
+    const int max_length = std::accumulate(
+                selection.cbegin(), selection.cend(),
+                0,
+                [this] ( auto currentMax, auto line ) {
+                    return qMax( currentMax, logData->getLineLength( line ) );
+    });
     horizontalScrollBar()->setValue( max_length - getNbVisibleCols() );
 }
 
 // Make the end of the lines on the screen visible
 void AbstractLogView::jumpToRightOfScreen()
 {
-    QList<int> selection = selection_.getLines();
-
     // Search the longest line on screen
     int max_length = 0;
-    for ( auto i = firstLine; i <= ( firstLine + getNbVisibleLines() ); i++ ) {
-        int length = logData->getLineLength( i );
-        if ( length > max_length )
-            max_length = length;
+
+    const auto nbVisibleLines = getNbVisibleLines();
+    for ( auto i = firstLine; i <= ( firstLine + nbVisibleLines ); i++ ) {
+        const auto length = logData->getLineLength( i );
+        max_length = qMax(length, max_length);
     }
 
     horizontalScrollBar()->setValue( max_length - getNbVisibleCols() );
@@ -1694,7 +1699,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
         bool isSelection =
             selection_.getPortionForLine( line_index, &sel_start, &sel_end );
         // Has the line got elements to be highlighted
-        QList<QuickFindMatch> qfMatchList;
+        std::vector<QuickFindMatch> qfMatchList;
         bool isMatch =
             quickFindPattern_->matchLine( line, qfMatchList );
 
@@ -1704,38 +1709,45 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
             LineDrawer lineDrawer( backColor );
 
             // First we create a list of chunks with the highlights
-            QList<LineChunk> chunkList;
+            std::vector<LineChunk> chunkList;
             int column = 0; // Current column in line space
-            foreach( const QuickFindMatch match, qfMatchList ) {
+            for( const auto& match : qfMatchList ) {
                 int start = match.startColumn() - firstCol;
                 int end = start + match.length();
+
                 // Ignore matches that are *completely* outside view area
                 if ( ( start < 0 && end < 0 ) || start >= nbCols )
                     continue;
+
                 if ( start > column )
-                    chunkList << LineChunk( column, start - 1, LineChunk::Normal );
+                    chunkList.emplace_back( column, start - 1, LineChunk::Normal );
+
                 column = qMin( start + match.length() - 1, nbCols );
-                chunkList << LineChunk( qMax( start, 0 ), column,
-                        LineChunk::Highlighted );
+                chunkList.emplace_back( qMax( start, 0 ), column, LineChunk::Highlighted );
+
                 column++;
             }
             if ( column <= cutLine.length() - 1 )
-                chunkList << LineChunk( column, cutLine.length() - 1, LineChunk::Normal );
+                chunkList.emplace_back( column, cutLine.length() - 1, LineChunk::Normal );
 
             // Then we add the selection if needed
-            QList<LineChunk> newChunkList;
+            std::vector<LineChunk> newChunkList;
             if ( isSelection ) {
                 sel_start -= firstCol; // coord in line space
                 sel_end   -= firstCol;
 
-                foreach ( const LineChunk chunk, chunkList ) {
-                    newChunkList << chunk.select( sel_start, sel_end );
+                for ( const auto& chunk : chunkList ) {
+                    auto selection = chunk.select( sel_start, sel_end );
+                    newChunkList.insert(newChunkList.end(),
+                                        std::make_move_iterator( selection.begin() ),
+                                        std::make_move_iterator( selection.end() ));
                 }
             }
-            else
+            else {
                 newChunkList = chunkList;
+            }
 
-            foreach ( const LineChunk chunk, newChunkList ) {
+            for ( const auto& chunk : newChunkList ) {
                 // Select the colours
                 QColor fore;
                 QColor back;
@@ -1751,8 +1763,8 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
                         // back = highlightBackColor;
                         break;
                     case LineChunk::Selected:
-                        fore = palette.color( QPalette::HighlightedText ),
-                             back = palette.color( QPalette::Highlight );
+                        fore = palette.color( QPalette::HighlightedText );
+                        back = palette.color( QPalette::Highlight );
                         break;
                 }
                 lineDrawer.addChunk ( chunk, fore, back );

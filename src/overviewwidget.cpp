@@ -178,7 +178,8 @@ void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
 
         // The 'match' lines
         painter.setPen( match_color );
-        foreach (Overview::WeightedLine line, *(overview_->getMatchLines()) ) {
+        const auto matchLines = *(overview_->getMatchLines());
+        for (const auto& line : matchLines ) {
             painter.setOpacity( ( 1.0 / Overview::WeightedLine::WEIGHT_STEPS )
                    * ( line.weight() + 1 ) );
             // (allow multiple matches to look 'darker' than a single one.)
@@ -188,7 +189,8 @@ void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
 
         // The 'mark' lines
         painter.setPen( mark_color );
-        foreach (Overview::WeightedLine line, *(overview_->getMarkLines()) ) {
+        const auto markLines = *(overview_->getMarkLines());
+        for (const auto& line : markLines ) {
             painter.setOpacity( ( 1.0 / Overview::WeightedLine::WEIGHT_STEPS )
                    * ( line.weight() + 1 ) );
             // (allow multiple matches to look 'darker' than a single one.)

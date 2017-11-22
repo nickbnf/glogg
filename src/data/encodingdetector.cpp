@@ -38,7 +38,7 @@ QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
         LOG(logINFO) << "Uchardet encoding guess " << uchardetGuess;
         uchardetCodec =  QTextCodec::codecForName( uchardetGuess );
         if ( uchardetCodec ) {
-            LOG(logINFO) << "Uchardet codec selected " << uchardetCodec->name().data();
+            LOG(logINFO) << "Uchardet codec selected " << uchardetCodec->name().constData();
         } else {
             LOG(logWARNING) << "Uchardet codec not found for guess " << uchardetGuess;
         }
@@ -47,7 +47,7 @@ QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
     auto encodingGuess = uchardetCodec ? QTextCodec::codecForUtfText( block, uchardetCodec )
                                        : QTextCodec::codecForUtfText( block );
 
-    LOG(logINFO) << "Final encoding guess " << encodingGuess->name().data();
+    LOG(logINFO) << "Final encoding guess " << encodingGuess->name().constData();
 
     return encodingGuess;
 }

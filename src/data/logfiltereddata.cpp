@@ -331,7 +331,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
             searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
 
             size_t cacheSize = 0;
-            for ( const auto& results: searchResultsCache_ ) {
+            for ( const auto& results: qAsConst( searchResultsCache_ ) ) {
                 cacheSize += results.matching_lines.size();
             }
 

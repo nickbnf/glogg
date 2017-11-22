@@ -68,7 +68,7 @@ class QuickFindPattern : public QObject
     // If so, it populate the passed list with the list of matches
     // within this particular line.
     bool matchLine( const QString& line,
-            QList<QuickFindMatch>& matches ) const;
+            std::vector<QuickFindMatch>& matches ) const;
 
     // Returns whether there is a match in the passed line, starting at
     // the passed column.

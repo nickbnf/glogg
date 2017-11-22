@@ -122,18 +122,21 @@ qint64 Selection::selectedLine() const
     return selectedLine_;
 }
 
-QList<int> Selection::getLines() const
+std::vector<int> Selection::getLines() const
 {
-    QList<int> selection;
+    std::vector<int> selection;
 
-    if ( selectedLine_ >= 0 )
-        selection.append( selectedLine_ );
-    else if ( selectedPartial_.line >= 0 )
-        selection.append( selectedPartial_.line );
-    else if ( selectedRange_.startLine >= 0 )
-        for ( int i = selectedRange_.startLine;
-                i <= selectedRange_.endLine; i++ )
-            selection.append( i );
+    if ( selectedLine_ >= 0 ) {
+        selection.push_back( selectedLine_ );
+    }
+    else if ( selectedPartial_.line >= 0 ) {
+        selection.push_back( selectedPartial_.line );
+    }
+    else if ( selectedRange_.startLine >= 0 ) {
+        selection.reserve( selectedRange_.endLine - selectedRange_.startLine + 1 );
+        for ( int i = selectedRange_.startLine; i <= selectedRange_.endLine; i++ )
+            selection.push_back( i );
+    }
 
     return selection;
 }

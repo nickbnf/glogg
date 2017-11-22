@@ -29,6 +29,7 @@
 // Class implementing the filtered (bottom) view widget.
 class FilteredView : public AbstractLogView
 {
+  Q_OBJECT
   public:
     FilteredView( LogFilteredData* newLogData,
             const QuickFindPattern* const quickFindPattern,

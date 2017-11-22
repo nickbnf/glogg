@@ -76,7 +76,8 @@ void QtFileWatcher::removeFile( const QString& fileName )
         }
         else {
             bool needWatchDirectory = false;
-            foreach ( const QString& monitoredFile, monitoredFiles_.keys() ) {
+            const auto keys = monitoredFiles_.keys();
+            for ( const QString& monitoredFile : keys ) {
                 if ( QFileInfo( monitoredFile ).path() == fileInfo.path() ) {
                     needWatchDirectory = true;
                     break;
@@ -93,10 +94,12 @@ void QtFileWatcher::removeFile( const QString& fileName )
     }
 
     // For debug purpose:
-    foreach (QString str, qtFileWatcher_.files()) {
+    const auto files = qtFileWatcher_.files();
+    for ( const QString& str : files ) {
         LOG(logERROR) << "File still watched: " << str.toStdString();
     }
-    foreach (QString str, qtFileWatcher_.directories()) {
+    const auto dirs = qtFileWatcher_.directories();
+    for ( const QString& str : dirs ) {
         LOG(logERROR) << "Directories still watched: " << str.toStdString();
     }
 }
@@ -124,7 +127,8 @@ void QtFileWatcher::directoryChangedOnDisk( const QString& filename )
 {
     LOG(logDEBUG) << "QtFileWatcher::directoryChangedOnDisk " << filename.toStdString();
 
-    foreach( const QString& monitoredFile, monitoredFiles_.keys() ) {
+    const auto keys = monitoredFiles_.keys();
+    for( const QString& monitoredFile : keys ) {
         const MonitoringState currentState = monitoredFiles_[monitoredFile];
         if ( currentState == FileRemoved ) {
             if ( QFileInfo( monitoredFile ).exists() ) {

@@ -27,6 +27,7 @@
 // Class implementing the main (top) view widget.
 class LogMainView : public AbstractLogView
 {
+  Q_OBJECT
   public:
     LogMainView( const LogData* newLogData,
             const QuickFindPattern* const quickFindPattern,

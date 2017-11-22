@@ -55,7 +55,7 @@ class LineChunk
 
     // Returns 'true' if the selection is part of this chunk
     // (at least partially), if so, it should be replaced by the list returned
-    QList<LineChunk> select( int selection_start, int selection_end ) const;
+    std::vector<LineChunk> select( int selection_start, int selection_end ) const;
 
   private:
     int start_;
@@ -70,7 +70,7 @@ class LineDrawer
 {
   public:
     LineDrawer( const QColor& back_color) :
-        list(), backColor_( back_color ) { };
+        list(), backColor_( back_color ) { }
 
     // Add a chunk of line using the given colours.
     // Both first_col and last_col are included
@@ -110,7 +110,7 @@ class LineDrawer
         QColor foreColor_;
         QColor backColor_;
     };
-    QList<Chunk> list;
+    std::vector<Chunk> list;
     QColor backColor_;
 };
 

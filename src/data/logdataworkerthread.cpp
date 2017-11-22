@@ -258,7 +258,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
                 }
 
                 encodingParams = EncodingParameters( fileTextCodec );
-                LOG(logWARNING) << "Encoding " << fileTextCodec->name().data() <<", Char width " << encodingParams.lineFeedWidth;
+                LOG(logWARNING) << "Encoding " << fileTextCodec->name().toStdString() <<", Char width " << encodingParams.lineFeedWidth;
             }
 
             if ( !encodingGuess ) {
@@ -333,7 +333,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
 
         emit indexingProgressed( 100 );
     }
-    LOG(logINFO) << "Detected encoding " << fileTextCodec->name().data();
+    LOG(logINFO) << "Detected encoding " << fileTextCodec->name().toStdString();
 }
 
 // Called in the worker thread's context

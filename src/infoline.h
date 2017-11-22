@@ -27,6 +27,7 @@
 // used for the file name and the search results.
 class InfoLine : public QLabel
 {
+  Q_OBJECT
   public:
     // Default constructor
     InfoLine();

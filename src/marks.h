@@ -70,14 +70,14 @@ class Marks {
     // Iterator
     // Provide a const_iterator for the client to iterate through the marks.
     class const_iterator
-            : public std::iterator<QList<Mark>::const_iterator::iterator_category,
-            QList<Mark>::const_iterator::value_type,
-            QList<Mark>::const_iterator::difference_type,
-            QList<Mark>::const_iterator::pointer,
-            QList<Mark>::const_iterator::reference>
+            : public std::iterator<std::vector<Mark>::const_iterator::iterator_category,
+            std::vector<Mark>::const_iterator::value_type,
+            std::vector<Mark>::const_iterator::difference_type,
+            std::vector<Mark>::const_iterator::pointer,
+            std::vector<Mark>::const_iterator::reference>
     {
       public:
-        const_iterator( QList<Mark>::const_iterator iter )
+        const_iterator( std::vector<Mark>::const_iterator iter )
         { internal_iter_ = iter; }
         const_iterator( const const_iterator& original )
         { internal_iter_ = original.internal_iter_; }
@@ -114,7 +114,7 @@ class Marks {
         }
 
       private:
-        QList<Mark>::const_iterator internal_iter_;
+        std::vector<Mark>::const_iterator internal_iter_;
     };
 
     const_iterator begin() const
@@ -124,7 +124,7 @@ class Marks {
 
   private:
     // List of marks.
-    QList<Mark> marks_;
+    std::vector<Mark> marks_;
 };
 
 #endif

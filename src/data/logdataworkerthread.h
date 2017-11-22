@@ -111,6 +111,7 @@ class IndexOperation : public QObject
 
 class FullIndexOperation : public IndexOperation
 {
+  Q_OBJECT
   public:
     FullIndexOperation( const QString& fileName,
             IndexingData* indexingData, AtomicFlag* interruptRequest,
@@ -125,6 +126,7 @@ class FullIndexOperation : public IndexOperation
 
 class PartialIndexOperation : public IndexOperation
 {
+  Q_OBJECT
   public:
     PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
             AtomicFlag* interruptRequest );

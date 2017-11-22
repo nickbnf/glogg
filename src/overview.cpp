@@ -65,12 +65,12 @@ void Overview::updateView( int height )
     }
 }
 
-const QVector<Overview::WeightedLine>* Overview::getMatchLines() const
+const std::vector<Overview::WeightedLine> *Overview::getMatchLines() const
 {
     return &matchLines_;
 }
 
-const QVector<Overview::WeightedLine>* Overview::getMarkLines() const
+const std::vector<Overview::WeightedLine> *Overview::getMarkLines() const
 {
     return &markLines_;
 }
@@ -122,23 +122,23 @@ void Overview::recalculatesLines()
                 int line = (int) logFilteredData_->getMatchingLineNumber( i );
                 int position = (int)( (qint64)line * height_ / linesInFile_ );
                 if ( line_type == LogFilteredData::Match ) {
-                    if ( ( ! matchLines_.isEmpty() ) && matchLines_.last().position() == position ) {
+                    if ( ( ! matchLines_.empty() ) && matchLines_.back().position() == position ) {
                         // If the line is already there, we increase its weight
-                        matchLines_.last().load();
+                        matchLines_.back().load();
                     }
                     else {
                         // If not we just add it
-                        matchLines_.append( WeightedLine( position ) );
+                        matchLines_.emplace_back(  position );
                     }
                 }
                 else {
-                    if ( ( ! markLines_.isEmpty() ) && markLines_.last().position() == position ) {
+                    if ( ( ! markLines_.empty() ) && markLines_.back().position() == position ) {
                         // If the line is already there, we increase its weight
-                        markLines_.last().load();
+                        markLines_.back().load();
                     }
                     else {
                         // If not we just add it
-                        markLines_.append( WeightedLine( position ) );
+                        markLines_.emplace_back( position );
                     }
                 }
             }

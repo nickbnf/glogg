@@ -76,10 +76,10 @@ class Overview
     void updateView( int height );
     // Returns a list of lines (between 0 and 'height') representing matches.
     // (pointer returned is valid until next call to update*()
-    const QVector<WeightedLine>* getMatchLines() const;
+    const std::vector<WeightedLine>* getMatchLines() const;
     // Returns a list of lines (between 0 and 'height') representing marks.
     // (pointer returned is valid until next call to update*()
-    const QVector<WeightedLine>* getMarkLines() const;
+    const std::vector<WeightedLine>* getMarkLines() const;
     // Return a pair of lines (between 0 and 'height') representing the current view.
     std::pair<int,int> getViewLines() const;
 
@@ -104,8 +104,8 @@ class Overview
     bool dirty_;
 
     // List of lines representing matches and marks (are shared with the client)
-    QVector<WeightedLine> matchLines_;
-    QVector<WeightedLine> markLines_;
+    std::vector<WeightedLine> matchLines_;
+    std::vector<WeightedLine> markLines_;
 
     void recalculatesLines();
 };

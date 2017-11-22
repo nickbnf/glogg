@@ -21,6 +21,7 @@
 #include <cstdint>
 
 #include "threadprivatestore.h"
+#include "blockpool.h"
 
 // This class is a compressed storage backend for LinePositionArray
 // It emulates the interface of a vector, but take advantage of the nature
@@ -86,9 +87,11 @@ class CompressedLinePositionStorage
   public:
     // Default constructor
     CompressedLinePositionStorage()
-    { nb_lines_ = 0; first_long_line_ = UINT32_MAX;
-      current_pos_ = 0; block_pointer_ = nullptr;
-      previous_block_pointer_ = nullptr; }
+    {
+        nb_lines_ = 0; first_long_line_ = UINT32_MAX;
+        current_pos_ = 0; block_pointer_ = nullptr;
+        previous_block_pointer_ = nullptr;
+    }
     // Copy constructor would be slow, delete!
     CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
 
@@ -97,8 +100,6 @@ class CompressedLinePositionStorage
     // Move assignement
     CompressedLinePositionStorage& operator=(
             CompressedLinePositionStorage&& orig );
-    // Destructor
-    ~CompressedLinePositionStorage();
 
     // Append the passed end-of-line to the storage
     void append( uint64_t pos );
@@ -119,11 +120,10 @@ class CompressedLinePositionStorage
   private:
     // Utility for move ctor/assign
     void move_from( CompressedLinePositionStorage&& orig );
-    void free_blocks();
 
     // The two indexes
-    std::vector<char*> block32_index_;
-    std::vector<char*> block64_index_;
+    BlockPool<uint32_t> pool32_;
+    BlockPool<uint64_t> pool64_;
 
     // Total number of lines in storage
     uint32_t nb_lines_;
@@ -133,7 +133,7 @@ class CompressedLinePositionStorage
     // Address of the next position (not yet written) within the current
     // block. nullptr means there is no current block (previous block
     // finished or no data)
-    char* block_pointer_;
+    uint8_t* block_pointer_;
 
     // The index of the first line whose end is stored in a block64
     // Initialised at UINT32_MAX, meaning "unset"
@@ -146,7 +146,7 @@ class CompressedLinePositionStorage
     // "pop_back" the last element.
     // A null pointer here means pop_back need to free the block
     // that has just been created.
-    char* previous_block_pointer_;
+    uint8_t* previous_block_pointer_;
 
     // Cache the last position read
     // This is to speed up consecutive reads (whole page)
@@ -154,12 +154,12 @@ class CompressedLinePositionStorage
         Cache()
           : index{UINT32_MAX - 1U}
           , position{0}
-          , ptr{nullptr} 
+          , offset{0}
         {}
 
         uint32_t index;
         uint64_t position;
-        char* ptr;
+        ptrdiff_t offset;
     };
     mutable ThreadPrivateStore<Cache,2> last_read_; // = { UINT32_MAX - 1U, 0, nullptr };
     // mutable Cache last_read;

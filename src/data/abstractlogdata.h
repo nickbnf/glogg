@@ -98,41 +98,18 @@ class AbstractLogData : public QObject {
         untabified_line.reserve(line.size());
 
         for ( int j = 0; j < line.length(); j++ ) {
-            if ( line[j] == '\t' ) {
+            if ( line[j] == QChar::Tabulation ) {
                 int spaces = tabStop - ( ( j + total_spaces ) % tabStop );
                 // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
-                QString blanks( spaces, QChar(' ') );
+                QString blanks( spaces, QChar::Space );
                 untabified_line.append( blanks );
                 total_spaces += spaces - 1;
             }
-            else if ( line[j] == '\0' ) {
-                untabified_line.append( QChar(' ') );
+            else if ( line[j] == QChar::Null ) {
+                untabified_line.append( QChar::Space );
             }
             else {
                 untabified_line.append( line[j] );
-            }
-        }
-
-        return untabified_line;
-    }
-
-    static inline QString untabify( const char* line ) {
-        QString untabified_line;
-        int total_spaces = 0;
-
-        for ( const char* i = line; *i != '\0'; i++ ) {
-            if ( *i == '\t' ) {
-                int spaces = tabStop - ( ( (i - line) + total_spaces ) % tabStop );
-                // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
-                QString blanks( spaces, QChar(' ') );
-                untabified_line.append( blanks );
-                total_spaces += spaces - 1;
-            }
-            else if ( *i == '\0' ) {
-                untabified_line.append( QChar(' ') );
-            }
-            else {
-                untabified_line.append( *i );
             }
         }
 

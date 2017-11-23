@@ -64,9 +64,9 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
             [this](auto){ this->updatePropertyFields(); } );
     connect( ignoreCaseCheckBox, &QCheckBox::toggled,
             [this](auto){ this->updatePropertyFields(); } );
-    connect( foreColorBox, qOverload<int>(&QComboBox::activated),
+    connect( foreColorBox, QOverload<int>::of(&QComboBox::activated),
             [this](auto){ this->updatePropertyFields(); } );
-    connect( backColorBox, qOverload<int>(&QComboBox::activated),
+    connect( backColorBox, QOverload<int>::of(&QComboBox::activated),
             [this](auto){ this->updatePropertyFields(); } );
 
     if ( !filterSet->filterList.empty() ) {

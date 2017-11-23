@@ -774,7 +774,7 @@ void CrawlerWidget::setup()
     connect( stopButton, &QToolButton::clicked,
              this, &CrawlerWidget::stopSearch );
 
-    connect( visibilityBox, qOverload<int>(&QComboBox::currentIndexChanged),
+    connect( visibilityBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
              this, &CrawlerWidget::changeFilteredViewVisibility );
 
     connect( logMainView, &LogMainView::newSelection,
@@ -792,9 +792,9 @@ void CrawlerWidget::setup()
     connect( filteredView, &FilteredView::markLine,
              this, &CrawlerWidget::markLineFromFiltered );
 
-    connect( logMainView, qOverload<const QString&>(&LogMainView::addToSearch),
+    connect( logMainView, QOverload<const QString&>::of(&LogMainView::addToSearch),
              this, &CrawlerWidget::addToSearch );
-    connect( filteredView, qOverload<const QString&>(&FilteredView::addToSearch),
+    connect( filteredView, QOverload<const QString&>::of(&FilteredView::addToSearch),
              this, &CrawlerWidget::addToSearch );
 
     connect( filteredView, &FilteredView::mouseHoveredOverLine,
@@ -852,9 +852,9 @@ void CrawlerWidget::setup()
 
     // Switch between views
     connect( logMainView, &LogMainView::exitView,
-             filteredView, qOverload<>(&FilteredView::setFocus) );
+             filteredView, QOverload<>::of(&FilteredView::setFocus) );
     connect( filteredView, &FilteredView::exitView,
-             logMainView, qOverload<>(&LogMainView::setFocus) );
+             logMainView, QOverload<>::of(&LogMainView::setFocus) );
 }
 
 // Create a new search using the text passed, replace the currently

@@ -44,7 +44,7 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
 
     connect(buttonBox, &QDialogButtonBox::clicked,
             this, &OptionsDialog::onButtonBoxClicked );
-    connect(fontFamilyBox, qOverload<const QString&>(&QComboBox::currentIndexChanged),
+    connect(fontFamilyBox, QOverload<const QString&>::of(&QComboBox::currentIndexChanged),
             this, &OptionsDialog::updateFontSize );
     connect(incrementalCheckBox, &QCheckBox::toggled,
             [this](auto){ this->onIncrementalChanged(); } );

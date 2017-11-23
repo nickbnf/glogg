@@ -126,7 +126,7 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     mainTabWidget_.setTabsClosable( true );
 
     connect( &mainTabWidget_, &TabbedCrawlerWidget::tabCloseRequested ,
-            this, qOverload<int>(&MainWindow::closeTab) );
+            this, QOverload<int>::of(&MainWindow::closeTab) );
     connect( &mainTabWidget_, &TabbedCrawlerWidget::currentChanged,
             this, &MainWindow::currentTabChanged );
 

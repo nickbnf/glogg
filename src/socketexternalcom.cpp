@@ -107,7 +107,9 @@ void SocketExternalCommunicator::startListening()
         *reinterpret_cast<qint32*>(memory_->data()) = version();
         QLocalServer::removeServer(GLOG_SERVICE_NAME);
 
-        connect(server_, SIGNAL(newConnection()), SLOT(onConnection()));
+        connect(server_, &QLocalServer::newConnection,
+                [this]{ onConnection(); });
+
         server_->listen(GLOG_SERVICE_NAME);
     }
 }

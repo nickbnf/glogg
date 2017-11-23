@@ -278,8 +278,8 @@ void CompressedLinePositionStorage::append_list(
 {
     // This is not very clever, but caching should make it
     // reasonably fast.
-    for ( uint32_t i = 0; i < positions.size(); i++ )
-        append( positions.at( i ) );
+    for ( auto position : positions )
+        append( position );
 }
 
 // template<int BLOCK_SIZE>

@@ -109,8 +109,8 @@ QuickFind::QuickFind( const AbstractLogData* const logData,
     lastMatch_(), firstMatch_(), searchingNotifier_(),
     incrementalSearchStatus_()
 {
-    connect( &searchingNotifier_, SIGNAL( notify( const QFNotification& ) ),
-            this, SIGNAL( notify( const QFNotification& ) ) );
+    connect( &searchingNotifier_, &SearchingNotifier::notify,
+            this, &QuickFind::notify );
 }
 
 void QuickFind::incrementalSearchStop()

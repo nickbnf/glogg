@@ -26,12 +26,12 @@
 
 QtFileWatcher::QtFileWatcher() : FileWatcher(), qtFileWatcher_( this )
 {
-    connect( &qtFileWatcher_, SIGNAL( fileChanged( const QString& ) ),
-            this, SLOT( fileChangedOnDisk( const QString& ) ),
+    connect( &qtFileWatcher_, &QFileSystemWatcher::fileChanged,
+            this, &QtFileWatcher::fileChangedOnDisk,
             Qt::QueuedConnection );
 
-    connect( &qtFileWatcher_, SIGNAL( directoryChanged( const QString& ) ),
-            this, SLOT( directoryChangedOnDisk( const QString& ) ),
+    connect( &qtFileWatcher_, &QFileSystemWatcher::directoryChanged,
+            this, &QtFileWatcher::directoryChangedOnDisk,
              Qt::QueuedConnection );
 }
 

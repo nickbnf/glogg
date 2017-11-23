@@ -25,10 +25,6 @@
 
 #include "abstractlogdata.h"
 
-AbstractLogData::AbstractLogData()
-{
-}
-
 // Simple wrapper in order to use a clean Template Method
 QString AbstractLogData::getLineString( qint64 line ) const
 {

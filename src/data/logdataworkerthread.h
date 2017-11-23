@@ -90,7 +90,7 @@ class IndexOperation : public QObject
     IndexOperation(const QString& fileName,
             IndexingData* indexingData, AtomicFlag* interruptRequest);
 
-    virtual ~IndexOperation() { }
+    virtual ~IndexOperation() = default;
 
     // Start the indexing operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
@@ -119,7 +119,7 @@ class FullIndexOperation : public IndexOperation
         : IndexOperation( fileName, indexingData, interruptRequest )
         , forcedEncoding_(forcedEncoding)
     { }
-    virtual bool start();
+    bool start() override;
   private:
     QTextCodec* forcedEncoding_;
 };
@@ -131,7 +131,7 @@ class PartialIndexOperation : public IndexOperation
     PartialIndexOperation( const QString& fileName, IndexingData* indexingData,
             AtomicFlag* interruptRequest );
 
-    virtual bool start();
+    bool start() override;
 };
 
 // Create and manage the thread doing loading/indexing for
@@ -174,7 +174,7 @@ class LogDataWorkerThread : public QThread
     void indexingFinished( LoadingStatus status );
 
   protected:
-    void run();
+    void run() override;
 
   private:
     void doIndexAll();

@@ -765,94 +765,96 @@ void CrawlerWidget::setup()
             Qt::Checked : Qt::Unchecked );
 
     // Connect the signals
-    connect(searchLineEdit->lineEdit(), SIGNAL( returnPressed() ),
-            searchButton, SIGNAL( clicked() ));
-    connect(searchLineEdit->lineEdit(), SIGNAL( textEdited( const QString& ) ),
-            this, SLOT( searchTextChangeHandler() ));
-    connect(searchButton, SIGNAL( clicked() ),
-            this, SLOT( startNewSearch() ) );
-    connect(stopButton, SIGNAL( clicked() ),
-            this, SLOT( stopSearch() ) );
+    connect( searchLineEdit->lineEdit(), &QLineEdit::returnPressed,
+             [this]() { searchButton->clicked(); } );
+    connect( searchLineEdit->lineEdit(), &QLineEdit::textEdited,
+             [this](auto){ searchTextChangeHandler(); } );
+    connect( searchButton, &QToolButton::clicked,
+             this, &CrawlerWidget::startNewSearch );
+    connect( stopButton, &QToolButton::clicked,
+             this, &CrawlerWidget::stopSearch );
 
-    connect(visibilityBox, SIGNAL( currentIndexChanged( int ) ),
-            this, SLOT( changeFilteredViewVisibility( int ) ) );
+    connect( visibilityBox, qOverload<int>(&QComboBox::currentIndexChanged),
+             this, &CrawlerWidget::changeFilteredViewVisibility );
 
-    connect(logMainView, SIGNAL( newSelection( int ) ),
-            logMainView, SLOT( update() ) );
-    connect(filteredView, SIGNAL( newSelection( int ) ),
-            this, SLOT( jumpToMatchingLine( int ) ) );
-    connect(filteredView, SIGNAL( newSelection( int ) ),
-            filteredView, SLOT( update() ) );
-    connect(logMainView, SIGNAL( updateLineNumber( int ) ),
-            this, SLOT( updateLineNumberHandler( int ) ) );
-    connect(logMainView, SIGNAL( markLine( qint64 ) ),
-            this, SLOT( markLineFromMain( qint64 ) ) );
-    connect(filteredView, SIGNAL( markLine( qint64 ) ),
-            this, SLOT( markLineFromFiltered( qint64 ) ) );
+    connect( logMainView, &LogMainView::newSelection,
+             [this](auto){ logMainView->update(); } );
+    connect( filteredView, &FilteredView::newSelection,
+             [this](auto){ filteredView->update(); } );
 
-    connect(logMainView, SIGNAL( addToSearch( const QString& ) ),
-            this, SLOT( addToSearch( const QString& ) ) );
-    connect(filteredView, SIGNAL( addToSearch( const QString& ) ),
-            this, SLOT( addToSearch( const QString& ) ) );
+    connect( filteredView, &FilteredView::newSelection,
+             this, &CrawlerWidget::jumpToMatchingLine );
 
-    connect(filteredView, SIGNAL( mouseHoveredOverLine( qint64 ) ),
-            this, SLOT( mouseHoveredOverMatch( qint64 ) ) );
-    connect(filteredView, SIGNAL( mouseLeftHoveringZone() ),
-            overviewWidget_, SLOT( removeHighlight() ) );
+    connect( logMainView, &LogMainView::updateLineNumber,
+             this, &CrawlerWidget::updateLineNumberHandler );
+    connect( logMainView, &LogMainView::markLine,
+             this, &CrawlerWidget::markLineFromMain );
+    connect( filteredView, &FilteredView::markLine,
+             this, &CrawlerWidget::markLineFromFiltered );
+
+    connect( logMainView, qOverload<const QString&>(&LogMainView::addToSearch),
+             this, &CrawlerWidget::addToSearch );
+    connect( filteredView, qOverload<const QString&>(&FilteredView::addToSearch),
+             this, &CrawlerWidget::addToSearch );
+
+    connect( filteredView, &FilteredView::mouseHoveredOverLine,
+             this, &CrawlerWidget::mouseHoveredOverMatch );
+    connect( filteredView, &FilteredView::mouseLeftHoveringZone,
+             overviewWidget_, &OverviewWidget::removeHighlight );
 
     // Follow option (up and down)
-    connect(this, SIGNAL( followSet( bool ) ),
-            logMainView, SLOT( followSet( bool ) ) );
-    connect(this, SIGNAL( followSet( bool ) ),
-            filteredView, SLOT( followSet( bool ) ) );
-    connect(logMainView, SIGNAL( followModeChanged( bool ) ),
-            this, SIGNAL( followModeChanged( bool ) ) );
-    connect(filteredView, SIGNAL( followModeChanged( bool ) ),
-            this, SIGNAL( followModeChanged( bool ) ) );
+    connect( this, &CrawlerWidget::followSet,
+             logMainView, &LogMainView::followSet );
+    connect( this, &CrawlerWidget::followSet,
+             filteredView, &FilteredView::followSet );
+    connect( logMainView, &LogMainView::followModeChanged,
+             this, &CrawlerWidget::followModeChanged );
+    connect( filteredView, &FilteredView::followModeChanged,
+             this, &CrawlerWidget::followModeChanged );
 
     // Detect activity in the views
-    connect(logMainView, SIGNAL( activity() ),
-            this, SLOT( activityDetected() ) );
-    connect(filteredView, SIGNAL( activity() ),
-            this, SLOT( activityDetected() ) );
+    connect( logMainView, &LogMainView::activity,
+             this, &CrawlerWidget::activityDetected );
+    connect( filteredView, &FilteredView::activity,
+             this, &CrawlerWidget::activityDetected );
 
-    connect(logMainView, SIGNAL(changeSearchLimits(qint64,qint64)),
-            this, SLOT(setSearchLimits(qint64,qint64)));
-    connect(filteredView, SIGNAL(changeSearchLimits(qint64,qint64)),
-            this, SLOT(setSearchLimits(qint64,qint64)));
+    connect( logMainView, &LogMainView::changeSearchLimits,
+             this, &CrawlerWidget::setSearchLimits );
+    connect( filteredView, &FilteredView::changeSearchLimits,
+             this, &CrawlerWidget::setSearchLimits );
 
-    connect(logMainView, SIGNAL( clearSearchLimits() ),
-            this, SLOT(clearSearchLimits()));
-    connect(filteredView, SIGNAL(clearSearchLimits()),
-            this, SLOT(clearSearchLimits()));
+    connect( logMainView, &LogMainView::clearSearchLimits,
+             this, &CrawlerWidget::clearSearchLimits );
+    connect(filteredView, &FilteredView::clearSearchLimits,
+            this, &CrawlerWidget::clearSearchLimits );
 
-    connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
-            this, SLOT( updateFilteredView( int, int ) ) );
+    connect( logFilteredData_, &LogFilteredData::searchProgressed,
+            this, &CrawlerWidget::updateFilteredView );
 
     // Sent load file update to MainWindow (for status update)
-    connect( logData_, SIGNAL( loadingProgressed( int ) ),
-            this, SIGNAL( loadingProgressed( int ) ) );
-    connect( logData_, SIGNAL( loadingFinished( LoadingStatus ) ),
-            this, SLOT( loadingFinishedHandler( LoadingStatus ) ) );
-    connect( logData_, SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ),
-            this, SLOT( fileChangedHandler( LogData::MonitoredFileStatus ) ) );
+    connect( logData_, &LogData::loadingProgressed,
+             this, &CrawlerWidget::loadingProgressed );
+    connect( logData_, &LogData::loadingFinished,
+             this, &CrawlerWidget::loadingFinishedHandler );
+    connect( logData_, &LogData::fileChanged,
+             this, &CrawlerWidget::fileChangedHandler );
 
     // Search auto-refresh
-    connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
-            this, SLOT( searchRefreshChangedHandler( int ) ) );
+    connect( searchRefreshCheck, &QCheckBox::stateChanged,
+             this, &CrawlerWidget::searchRefreshChangedHandler );
 
     // Advise the parent the checkboxes have been changed
     // (for maintaining default config)
-    connect( searchRefreshCheck, SIGNAL( stateChanged( int ) ),
-            this, SIGNAL( searchRefreshChanged( int ) ) );
-    connect( ignoreCaseCheck, SIGNAL( stateChanged( int ) ),
-            this, SIGNAL( ignoreCaseChanged( int ) ) );
+    connect( searchRefreshCheck, &QCheckBox::stateChanged,
+             this, &CrawlerWidget::searchRefreshChanged );
+    connect( ignoreCaseCheck, &QCheckBox::stateChanged,
+             this, &CrawlerWidget::ignoreCaseChanged );
 
     // Switch between views
-    connect( logMainView, SIGNAL( exitView() ),
-            filteredView, SLOT( setFocus() ) );
-    connect( filteredView, SIGNAL( exitView() ),
-            logMainView, SLOT( setFocus() ) );
+    connect( logMainView, &LogMainView::exitView,
+             filteredView, qOverload<>(&FilteredView::setFocus) );
+    connect( filteredView, &FilteredView::exitView,
+             logMainView, qOverload<>(&LogMainView::setFocus) );
 }
 
 // Create a new search using the text passed, replace the currently

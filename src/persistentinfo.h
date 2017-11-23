@@ -48,8 +48,12 @@ class PersistentInfo {
   private:
     // Can't be constructed or copied (singleton)
     PersistentInfo();
-    PersistentInfo( const PersistentInfo& );
     ~PersistentInfo();
+
+    PersistentInfo( const PersistentInfo& ) = delete;
+    PersistentInfo& operator=( const PersistentInfo& ) = delete;
+    PersistentInfo( PersistentInfo&& ) = delete;
+    PersistentInfo& operator=( PersistentInfo&& ) = delete;
 
     // Has migrateAndInit() been called?
     bool initialised_;

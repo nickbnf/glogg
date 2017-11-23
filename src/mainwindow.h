@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <QMainWindow>
+#include <array>
 
 #include "session.h"
 #include "crawlerwidget.h"
@@ -167,8 +168,8 @@ class MainWindow : public QMainWindow
     static const EncodingList encoding_list[];
 
     enum { MaxRecentFiles = 5 };
-    QAction *recentFileActions[MaxRecentFiles];
-    MenuActionToolTipBehavior *recentFileActionBehaviors[MaxRecentFiles];
+    std::array<QAction*, MaxRecentFiles> recentFileActions;
+    std::array<MenuActionToolTipBehavior*, MaxRecentFiles> recentFileActionBehaviors;
     QAction *separatorAction;
 
     QMenu *fileMenu;
@@ -200,7 +201,7 @@ class MainWindow : public QMainWindow
     QAction *aboutAction;
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
-    QAction *encodingAction[CrawlerWidget::ENCODING_MAX];
+    std::array<QAction*, CrawlerWidget::ENCODING_MAX> encodingAction;
 
     QIcon mainIcon_;
 

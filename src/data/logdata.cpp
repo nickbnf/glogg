@@ -73,19 +73,22 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
     codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
 #if defined(GLOGG_USES_QTFILEWATCHER)
-    fileWatcher_ = std::make_shared<QtFileWatcher>();
+    using FileWatcherT = QtFileWatcher;
 #elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-    fileWatcher_ = std::make_shared<PlatformFileWatcher>();
+    using FileWatcherT = PlatformFileWatcher;
+#else
+    using FileWatcherT = QtFileWatcher;
 #endif
 
+    fileWatcher_ = std::make_shared<FileWatcherT>();
     // Initialise the file watcher
-    connect( fileWatcher_.get(), SIGNAL( fileChanged( const QString& ) ),
-            this, SLOT( fileChangedOnDisk() ) );
+    connect( fileWatcher_.get(), &FileWatcher::fileChanged,
+            [this](auto){ fileChangedOnDisk(); } );
     // Forward the update signal
-    connect( &workerThread_, SIGNAL( indexingProgressed( int ) ),
-            this, SIGNAL( loadingProgressed( int ) ) );
-    connect( &workerThread_, SIGNAL( indexingFinished( LoadingStatus ) ),
-            this, SLOT( indexingFinished( LoadingStatus ) ) );
+    connect( &workerThread_, &LogDataWorkerThread::indexingProgressed,
+            this, &LogData::loadingProgressed );
+    connect( &workerThread_, &LogDataWorkerThread::indexingFinished,
+            this, &LogData::indexingFinished );
 
     // Starts the worker thread
     workerThread_.start();

@@ -78,8 +78,8 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     filteredItemsCacheDirty_ = true;
 
     // Forward the update signal
-    connect( &workerThread_, SIGNAL( searchProgressed( int, int ) ),
-            this, SLOT( handleSearchProgressed( int, int ) ) );
+    connect( &workerThread_, &LogFilteredDataWorkerThread::searchProgressed,
+            this, &LogFilteredData::handleSearchProgressed );
 
     // Starts the worker thread
     workerThread_.start();
@@ -237,9 +237,9 @@ qint64 LogFilteredData::getMarkAfter( qint64 line ) const
 {
     qint64 marked_line = -1;
 
-    for ( auto i = marks_.begin(); i != marks_.end(); ++i ) {
-        if ( i->lineNumber() > line ) {
-            marked_line = i->lineNumber();
+    for ( const auto& mark : marks_ ) {
+        if ( mark.lineNumber() > line ) {
+            marked_line = mark.lineNumber();
             break;
         }
     }
@@ -251,11 +251,11 @@ qint64 LogFilteredData::getMarkBefore( qint64 line ) const
 {
     qint64 marked_line = -1;
 
-    for ( auto i = marks_.begin(); i != marks_.end(); ++i ) {
-        if ( i->lineNumber() >= line ) {
+    for ( const auto& mark : marks_ ) {
+        if ( mark.lineNumber() >= line ) {
             break;
         }
-        marked_line = i->lineNumber();
+        marked_line = mark.lineNumber();
     }
 
     return marked_line;
@@ -278,11 +278,10 @@ void LogFilteredData::deleteMark( qint64 line )
     if ( sourceLogData_->getLineLength( line ) >= maxLengthMarks_ ) {
         LOG(logDEBUG) << "deleteMark recalculating longest mark";
         maxLengthMarks_ = 0;
-        for ( Marks::const_iterator i = marks_.begin();
-                i != marks_.end(); ++i ) {
-            LOG(logDEBUG) << "line " << i->lineNumber();
+        for ( const auto& mark : marks_ ) {
+            LOG(logDEBUG) << "line " << mark.lineNumber();
             maxLengthMarks_ = qMax( maxLengthMarks_,
-                    sourceLogData_->getLineLength( i->lineNumber() ) );
+                    sourceLogData_->getLineLength( mark.lineNumber() ) );
         }
     }
 }
@@ -435,6 +434,7 @@ QString LogFilteredData::doGetExpandedLineString( qint64 lineNum ) const
 QStringList LogFilteredData::doGetLines( qint64 first_line, int number ) const
 {
     QStringList list;
+    list.reserve( number );
 
     for ( int i = first_line; i < first_line + number; i++ ) {
         list.append( doGetLineString( i ) );
@@ -447,6 +447,7 @@ QStringList LogFilteredData::doGetLines( qint64 first_line, int number ) const
 QStringList LogFilteredData::doGetExpandedLines( qint64 first_line, int number ) const
 {
     QStringList list;
+    list.reserve( number );
 
     for ( int i = first_line; i < first_line + number; i++ ) {
         list.append( doGetExpandedLineString( i ) );

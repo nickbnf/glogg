@@ -81,7 +81,7 @@ class ThreadPrivateStore
             }
         }
 
-        assert( 1 );
+        assert( true );
         return 0;
     }
 };

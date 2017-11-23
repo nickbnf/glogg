@@ -79,8 +79,6 @@ class Marks {
       public:
         const_iterator( std::vector<Mark>::const_iterator iter )
         { internal_iter_ = iter; }
-        const_iterator( const const_iterator& original )
-        { internal_iter_ = original.internal_iter_; }
         const Mark& operator*()
         { return *internal_iter_; }
         const Mark* operator->()

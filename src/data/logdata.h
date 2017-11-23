@@ -141,9 +141,11 @@ class LogData : public AbstractLogData {
     // one is ongoing (operations are asynchronous)
     class LogDataOperation {
       public:
-        LogDataOperation( const QString& fileName ) : filename_( fileName ) {}
+        LogDataOperation() = default;
+        explicit LogDataOperation( const QString& fileName ) : filename_( fileName ) {}
+
         // Permit each child to have its destructor
-        virtual ~LogDataOperation() {};
+        virtual ~LogDataOperation() = default;
 
         void start( LogDataWorkerThread& workerThread ) const
         { doStart( workerThread ); }
@@ -159,23 +161,20 @@ class LogData : public AbstractLogData {
       public:
         AttachOperation( const QString& fileName )
             : LogDataOperation( fileName ) {}
-        ~AttachOperation() {};
 
       protected:
-        void doStart( LogDataWorkerThread& workerThread ) const;
+        void doStart( LogDataWorkerThread& workerThread ) const override;
     };
 
     // Reindexing the current file
     class FullIndexOperation : public LogDataOperation {
       public:
-        explicit FullIndexOperation(QTextCodec* forcedEncoding = nullptr)
-            : LogDataOperation( QString() )
-            , forcedEncoding_(forcedEncoding)
+        explicit FullIndexOperation( QTextCodec* forcedEncoding = nullptr )
+             : forcedEncoding_( forcedEncoding )
         {}
-        ~FullIndexOperation() {};
 
       protected:
-        void doStart( LogDataWorkerThread& workerThread ) const;
+        void doStart( LogDataWorkerThread& workerThread ) const override;
 
       private:
         QTextCodec* forcedEncoding_;
@@ -183,12 +182,8 @@ class LogData : public AbstractLogData {
 
     // Indexing part of the current file (from fileSize)
     class PartialIndexOperation : public LogDataOperation {
-      public:
-        PartialIndexOperation() : LogDataOperation( QString() ) {}
-        ~PartialIndexOperation() {};
-
       protected:
-        void doStart( LogDataWorkerThread& workerThread ) const;
+        void doStart( LogDataWorkerThread& workerThread ) const override;
     };
 
     std::shared_ptr<FileWatcher> fileWatcher_;

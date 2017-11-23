@@ -36,8 +36,8 @@ DBusExternalCommunicator::DBusExternalCommunicator()
 
     dbus_iface_object_ = std::make_shared<DBusInterfaceExternalCommunicator>();
 
-    connect( dbus_iface_object_.get(), SIGNAL( signalLoadFile( const QString& ) ),
-             this, SIGNAL( loadFile( const QString& ) ) );
+    connect( dbus_iface_object_.get(), &DBusInterfaceExternalCommunicator::signalLoadFile,
+             this, &DBusExternalCommunicator::loadFile );
 }
 
 // If listening fails (e.g. another glogg is already listening,

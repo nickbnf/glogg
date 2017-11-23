@@ -31,7 +31,7 @@
 class LogData;
 
 // Line number are unsigned 32 bits for now.
-typedef uint32_t LineNumber;
+using LineNumber = uint32_t;
 
 // Class encapsulating a single matching line
 // Contains the line number the line was found in and its content.
@@ -53,14 +53,14 @@ class MatchingLine {
 // This is an array of matching lines.
 // It shall be implemented for random lookup speed, so
 // a fixed "in-place" array (vector) is probably fine.
-typedef std::vector<MatchingLine> SearchResultArray;
+using SearchResultArray = std::vector<MatchingLine>;
 
 // This class is a mutex protected set of search result data.
 // It is thread safe.
 class SearchData
 {
   public:
-    SearchData() : dataMutex_(), matches_(), maxLength_(0) { }
+    SearchData() : maxLength_{0} { }
 
     // Atomically get all the search data
     // appending more results to passed array
@@ -96,7 +96,7 @@ class SearchOperation : public QObject
             qint64 startLine, qint64 endLine,
             AtomicFlag* interruptRequest );
 
-    virtual ~SearchOperation() { }
+    virtual ~SearchOperation() = default;
 
     // Start the search operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
@@ -126,7 +126,7 @@ class FullSearchOperation : public SearchOperation
                          qint64 startLine, qint64 endLine, AtomicFlag* interruptRequest )
         : SearchOperation( sourceLogData, regExp, startLine, endLine, interruptRequest ) {}
 
-    virtual void start( SearchData& result );
+    void start( SearchData& result ) override;
 };
 
 class UpdateSearchOperation : public SearchOperation
@@ -138,7 +138,7 @@ class UpdateSearchOperation : public SearchOperation
         : SearchOperation( sourceLogData, regExp, startLine, endLine, interruptRequest ),
         initialPosition_( position ) {}
 
-    virtual void start( SearchData& result );
+    void start( SearchData& result ) override;
 
   private:
     qint64 initialPosition_;
@@ -179,7 +179,7 @@ class LogFilteredDataWorkerThread : public QThread
     void searchFinished();
 
   protected:
-    void run();
+    void run() override;
 
   private:
     const LogData* sourceLogData_;

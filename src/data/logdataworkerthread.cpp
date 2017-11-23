@@ -129,7 +129,7 @@ void LogDataWorkerThread::indexAll(QTextCodec* forcedEncoding)
     LOG(logDEBUG) << "FullIndex requested";
 
     // If an operation is ongoing, we will block
-    while ( (operationRequested_ != NULL) )
+    while ( (operationRequested_ != nullptr) )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_.clear();
@@ -145,7 +145,7 @@ void LogDataWorkerThread::indexAdditionalLines()
     LOG(logDEBUG) << "AddLines requested";
 
     // If an operation is ongoing, we will block
-    while ( (operationRequested_ != NULL) )
+    while ( (operationRequested_ != nullptr) )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_.clear();
@@ -167,7 +167,7 @@ void LogDataWorkerThread::run()
     QMutexLocker locker( &mutex_ );
 
     forever {
-        while ( !terminate_ && (operationRequested_ == NULL) )
+        while ( !terminate_ && (operationRequested_ == nullptr) )
             operationRequestedCond_.wait( &mutex_ );
         LOG(logDEBUG) << "Worker thread signaled";
 
@@ -176,8 +176,8 @@ void LogDataWorkerThread::run()
             return;      // We must die
 
         if ( operationRequested_ ) {
-            connect( operationRequested_, SIGNAL( indexingProgressed( int ) ),
-                    this, SIGNAL( indexingProgressed( int ) ) );
+            connect( operationRequested_, &IndexOperation::indexingProgressed,
+                    this, &LogDataWorkerThread::indexingProgressed );
 
             // Run the operation
             try {
@@ -195,7 +195,7 @@ void LogDataWorkerThread::run()
             }
 
             delete operationRequested_;
-            operationRequested_ = NULL;
+            operationRequested_ = nullptr;
             nothingToDoCond_.wakeAll();
         }
     }
@@ -333,7 +333,6 @@ void IndexOperation::doIndex(IndexingData* indexing_data, qint64 initialPosition
 
         emit indexingProgressed( 100 );
     }
-    LOG(logINFO) << "Detected encoding " << fileTextCodec->name().toStdString();
 }
 
 // Called in the worker thread's context

@@ -291,16 +291,16 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     createMenu();
 
     // Signals
-    connect( quickFindPattern_, SIGNAL( patternUpdated() ),
-            this, SLOT ( handlePatternUpdated() ) );
-    connect( &quickFind_, SIGNAL( notify( const QFNotification& ) ),
-            this, SIGNAL( notifyQuickFind( const QFNotification& ) ) );
-    connect( &quickFind_, SIGNAL( clearNotification() ),
-            this, SIGNAL( clearQuickFindNotification() ) );
-    connect( &followElasticHook_, SIGNAL( lengthChanged() ),
-            this, SLOT( repaint() ) );
-    connect( &followElasticHook_, SIGNAL( hooked( bool ) ),
-            this, SIGNAL( followModeChanged( bool ) ) );
+    connect( quickFindPattern_, &QuickFindPattern::patternUpdated,
+            this, &AbstractLogView::handlePatternUpdated );
+    connect( &quickFind_, &QuickFind::notify,
+            this, &AbstractLogView::notifyQuickFind );
+    connect( &quickFind_,  &QuickFind::clearNotification,
+            this, &AbstractLogView::clearQuickFindNotification );
+    connect( &followElasticHook_, &ElasticHook::lengthChanged,
+             [this]() { repaint(); } );
+    connect( &followElasticHook_, &ElasticHook::hooked,
+            this, &AbstractLogView::followModeChanged );
 }
 
 AbstractLogView::~AbstractLogView()
@@ -894,8 +894,8 @@ void AbstractLogView::setOverview( Overview* overview,
     overviewWidget_ = overview_widget;
 
     if ( overviewWidget_ ) {
-        connect( overviewWidget_, SIGNAL( lineClicked ( int ) ),
-                this, SLOT( jumpToLine( int ) ) );
+        connect( overviewWidget_, &OverviewWidget::lineClicked,
+                this, &AbstractLogView::jumpToLine );
     }
     refreshOverview();
 }
@@ -1059,10 +1059,15 @@ void AbstractLogView::saveToFile()
     progressDialog.setLabelText(QString("Saving content to %1").arg(filename));
 
     QFutureWatcher<void> futureWatcher;
-    QObject::connect(&futureWatcher, SIGNAL(finished()), &progressDialog, SLOT(reset()));
-    QObject::connect(&futureWatcher, SIGNAL(progressRangeChanged(int,int)), &progressDialog, SLOT(setRange(int, int)));
-    QObject::connect(&futureWatcher, SIGNAL(progressValueChanged(int)), &progressDialog, SLOT(setValue(int)));
-    QObject::connect(&progressDialog, SIGNAL(canceled()), &futureWatcher, SLOT(cancel()));
+    QObject::connect( &futureWatcher, &QFutureWatcher<void>::finished,
+                      &progressDialog, &QProgressDialog::reset );
+    QObject::connect( &futureWatcher, &QFutureWatcher<void>::progressRangeChanged,
+                      &progressDialog, &QProgressDialog::setRange );
+    QObject::connect( &futureWatcher, &QFutureWatcher<void>::progressValueChanged,
+                      &progressDialog, &QProgressDialog::setValue );
+
+    QObject::connect( &progressDialog, &QProgressDialog::canceled,
+                      &futureWatcher, &QFutureWatcher<void>::cancel );
 
     std::vector<std::pair<qint64, int>> offsets;
     qint64 lineOffset = 0;
@@ -1473,10 +1478,12 @@ void AbstractLogView::createMenu()
 {
     copyAction_ = new QAction( tr("&Copy"), this );
     // No text as this action title depends on the type of selection
-    connect( copyAction_, SIGNAL(triggered()), this, SLOT(copy()) );
+    connect( copyAction_, &QAction::triggered,
+             [this](auto){ copy(); } );
 
     saveToFileAction_ = new QAction( tr("Save to file"), this );
-    connect( saveToFileAction_, SIGNAL(triggered()), this, SLOT(saveToFile()) );
+    connect( saveToFileAction_, &QAction::triggered,
+             [this](auto){ saveToFile(); } );
 
     // For '#' and '*', shortcuts doesn't seem to work but
     // at least it displays them in the menu, we manually handle those keys
@@ -1484,32 +1491,32 @@ void AbstractLogView::createMenu()
     findNextAction_ = new QAction(tr("Find &next"), this);
     findNextAction_->setShortcut( Qt::Key_Asterisk );
     findNextAction_->setStatusTip( tr("Find the next occurence") );
-    connect( findNextAction_, SIGNAL(triggered()),
-            this, SLOT( findNextSelected() ) );
+    connect( findNextAction_, &QAction::triggered,
+            [this](auto){ findNextSelected(); } );
 
     findPreviousAction_ = new QAction( tr("Find &previous"), this );
     findPreviousAction_->setShortcut( tr("#")  );
     findPreviousAction_->setStatusTip( tr("Find the previous occurence") );
-    connect( findPreviousAction_, SIGNAL(triggered()),
-            this, SLOT( findPreviousSelected() ) );
+    connect( findPreviousAction_, &QAction::triggered,
+             [this](auto){ findPreviousSelected(); } );
 
     addToSearchAction_ = new QAction( tr("&Add to search"), this );
     addToSearchAction_->setStatusTip(
             tr("Add the selection to the current search") );
-    connect( addToSearchAction_, SIGNAL( triggered() ),
-            this, SLOT( addToSearch() ) );
+    connect( addToSearchAction_, &QAction::triggered,
+            [this](auto){ addToSearch(); } );
 
     setSearchStartAction_ = new QAction( tr("Set search start"), this );
-    connect( setSearchStartAction_, SIGNAL( triggered() ),
-            this, SLOT( setSearchStart() ) );
+    connect( setSearchStartAction_, &QAction::triggered,
+            [this](auto){ setSearchStart(); } );
 
     setSearchEndAction_ = new QAction( tr("Set search end"), this );
-    connect( setSearchEndAction_, SIGNAL( triggered() ),
-            this, SLOT( setSearchEnd() ) );
+    connect( setSearchEndAction_, &QAction::triggered,
+            [this](auto){ setSearchEnd(); } );
 
     clearSearchLimitAction_ = new QAction( tr("Clear search limit"), this );
-    connect( clearSearchLimitAction_, SIGNAL( triggered() ),
-            this, SIGNAL( clearSearchLimits() ) );
+    connect( clearSearchLimitAction_, &QAction::triggered,
+            [this](auto){ clearSearchLimits(); } );
 
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );

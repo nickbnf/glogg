@@ -24,7 +24,7 @@
 
 #include "data/compressedlinestorage.h"
 
-typedef std::vector<uint64_t> SimpleLinePositionStorage;
+using  SimpleLinePositionStorage = std::vector<uint64_t>;
 
 class VectorLinePositionStorage
 {
@@ -138,9 +138,9 @@ class LinePosition
 };
 
 // Use the non-optimised storage
-typedef LinePosition<SimpleLinePositionStorage> FastLinePositionArray;
+using FastLinePositionArray = LinePosition<SimpleLinePositionStorage>;
 //typedef LinePosition<VectorLinePositionStorage> LinePositionArray;
 
-typedef LinePosition<CompressedLinePositionStorage> LinePositionArray;
+using LinePositionArray = LinePosition<CompressedLinePositionStorage>;
 
 #endif

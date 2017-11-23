@@ -124,14 +124,14 @@ class LogFilteredData : public AbstractLogData {
     class FilteredItem;
 
     // Implementation of virtual functions
-    QString doGetLineString( qint64 line ) const;
-    QString doGetExpandedLineString( qint64 line ) const;
-    QStringList doGetLines( qint64 first, int number ) const;
-    QStringList doGetExpandedLines( qint64 first, int number ) const;
-    qint64 doGetNbLine() const;
-    int doGetMaxLength() const;
-    int doGetLineLength( qint64 line ) const;
-    void doSetDisplayEncoding( const char* encoding );
+    QString doGetLineString( qint64 line ) const override;
+    QString doGetExpandedLineString( qint64 line ) const override;
+    QStringList doGetLines( qint64 first, int number ) const override;
+    QStringList doGetExpandedLines( qint64 first, int number ) const override;
+    qint64 doGetNbLine() const override;
+    int doGetMaxLength() const override;
+    int doGetLineLength( qint64 line ) const override;
+    void doSetDisplayEncoding( const char* encoding ) override;
 
     // List of the matching line numbers
     SearchResultArray matching_lines_;
@@ -161,7 +161,7 @@ class LogFilteredData : public AbstractLogData {
         int maxLength;
     };
 
-    typedef QPair<QRegularExpression, QPair<qint64, qint64>> SearchCacheKey;
+    using SearchCacheKey = QPair<QRegularExpression, QPair<qint64, qint64>>;
 
     SearchCacheKey makeCacheKey( const QRegularExpression& regExp, qint64 startLine, qint64 endLine ) {
       return qMakePair( regExp, qMakePair( startLine, endLine ) );

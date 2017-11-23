@@ -125,42 +125,42 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     //mainTabWidget_.setTabShape( QTabWidget::Triangular );
     mainTabWidget_.setTabsClosable( true );
 
-    connect( &mainTabWidget_, SIGNAL( tabCloseRequested( int ) ),
-            this, SLOT( closeTab( int ) ) );
-    connect( &mainTabWidget_, SIGNAL( currentChanged( int ) ),
-            this, SLOT( currentTabChanged( int ) ) );
+    connect( &mainTabWidget_, &TabbedCrawlerWidget::tabCloseRequested ,
+            this, qOverload<int>(&MainWindow::closeTab) );
+    connect( &mainTabWidget_, &TabbedCrawlerWidget::currentChanged,
+            this, &MainWindow::currentTabChanged );
 
     // Establish the QuickFindWidget and mux ( to send requests from the
     // QFWidget to the right window )
-    connect( &quickFindWidget_, SIGNAL( patternConfirmed( const QString&, bool ) ),
-             &quickFindMux_, SLOT( confirmPattern( const QString&, bool ) ) );
-    connect( &quickFindWidget_, SIGNAL( patternUpdated( const QString&, bool ) ),
-             &quickFindMux_, SLOT( setNewPattern( const QString&, bool ) ) );
-    connect( &quickFindWidget_, SIGNAL( cancelSearch() ),
-             &quickFindMux_, SLOT( cancelSearch() ) );
-    connect( &quickFindWidget_, SIGNAL( searchForward() ),
-             &quickFindMux_, SLOT( searchForward() ) );
-    connect( &quickFindWidget_, SIGNAL( searchBackward() ),
-             &quickFindMux_, SLOT( searchBackward() ) );
-    connect( &quickFindWidget_, SIGNAL( searchNext() ),
-             &quickFindMux_, SLOT( searchNext() ) );
+    connect( &quickFindWidget_, &QuickFindWidget::patternConfirmed,
+             &quickFindMux_, &QuickFindMux::confirmPattern );
+    connect( &quickFindWidget_,  &QuickFindWidget::patternUpdated,
+             &quickFindMux_, &QuickFindMux::setNewPattern );
+    connect( &quickFindWidget_,  &QuickFindWidget::cancelSearch,
+             &quickFindMux_, &QuickFindMux::cancelSearch );
+    connect( &quickFindWidget_,  &QuickFindWidget::searchForward,
+             &quickFindMux_, &QuickFindMux::searchForward );
+    connect( &quickFindWidget_,  &QuickFindWidget::searchBackward,
+             &quickFindMux_, &QuickFindMux::searchBackward );
+    connect( &quickFindWidget_,  &QuickFindWidget::searchNext,
+             &quickFindMux_, &QuickFindMux::searchNext );
 
     // QuickFind changes coming from the views
-    connect( &quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
-             this, SLOT( changeQFPattern( const QString& ) ) );
-    connect( &quickFindMux_, SIGNAL( notify( const QFNotification& ) ),
-             &quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
-    connect( &quickFindMux_, SIGNAL( clearNotification() ),
-             &quickFindWidget_, SLOT( clearNotification() ) );
+    connect( &quickFindMux_, &QuickFindMux::patternChanged,
+             this, &MainWindow::changeQFPattern );
+    connect( &quickFindMux_, &QuickFindMux::notify,
+             &quickFindWidget_, &QuickFindWidget::notify );
+    connect( &quickFindMux_, &QuickFindMux::clearNotification,
+             &quickFindWidget_, &QuickFindWidget::clearNotification );
 
     // Actions from external instances
-    connect( externalCommunicator_.get(), SIGNAL( loadFile( const QString& ) ),
-             this, SLOT( loadFileNonInteractive( const QString& ) ) );
+    connect( externalCommunicator_.get(), &ExternalCommunicator::loadFile,
+             this, &MainWindow::loadFileNonInteractive );
 
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     // Version checker notification
-    connect( &versionChecker_, SIGNAL( newVersionFound( const QString& ) ),
-            this, SLOT( newVersionNotification( const QString& ) ) );
+    connect( &versionChecker_, &VersionChecker::newVersionFound,
+            this, &MainWindow::newVersionNotification );
 #endif
 
     // Construct the QuickFind bar
@@ -249,72 +249,72 @@ void MainWindow::createActions()
     openAction->setShortcut(QKeySequence::Open);
     openAction->setIcon( QIcon( ":/images/open14.png" ) );
     openAction->setStatusTip(tr("Open a file"));
-    connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
+    connect(openAction, &QAction::triggered, [this](auto){ open(); });
 
     closeAction = new QAction(tr("&Close"), this);
     closeAction->setShortcut(tr("Ctrl+W"));
     closeAction->setStatusTip(tr("Close document"));
-    connect(closeAction, SIGNAL(triggered()), this, SLOT(closeTab()));
+    connect(closeAction, &QAction::triggered, [this](auto){ closeTab(); });
 
     closeAllAction = new QAction(tr("Close &All"), this);
     closeAllAction->setStatusTip(tr("Close all documents"));
-    connect(closeAllAction, SIGNAL(triggered()), this, SLOT(closeAll()));
+    connect(closeAllAction, &QAction::triggered, [this](auto){ closeAll(); });
 
     // Recent files
-    for (int i = 0; i < MaxRecentFiles; ++i) {
+    for (auto i = 0u; i < recentFileActions.size(); ++i) {
         recentFileActions[i] = new QAction(this);
         recentFileActions[i]->setVisible(false);
-        connect(recentFileActions[i], SIGNAL(triggered()),
-                this, SLOT(openRecentFile()));
+        connect(recentFileActions[i], &QAction::triggered,
+                [this](auto){ openRecentFile(); });
     }
 
     exitAction = new QAction(tr("E&xit"), this);
     exitAction->setShortcut(tr("Ctrl+Q"));
     exitAction->setStatusTip(tr("Exit the application"));
-    connect( exitAction, SIGNAL(triggered()), this, SLOT(close()) );
+    connect( exitAction, &QAction::triggered, [this](auto){ close(); });
 
     copyAction = new QAction(tr("&Copy"), this);
     copyAction->setShortcut(QKeySequence::Copy);
     copyAction->setStatusTip(tr("Copy the selection"));
-    connect( copyAction, SIGNAL(triggered()), this, SLOT(copy()) );
+    connect( copyAction, &QAction::triggered, [this](auto){ copy(); });
 
     selectAllAction = new QAction(tr("Select &All"), this);
     selectAllAction->setShortcut(tr("Ctrl+A"));
     selectAllAction->setStatusTip(tr("Select all the text"));
-    connect( selectAllAction, SIGNAL(triggered()),
-             this, SLOT( selectAll() ) );
+    connect( selectAllAction, &QAction::triggered,
+             [this](auto){ selectAll(); });
 
     findAction = new QAction(tr("&Find..."), this);
     findAction->setShortcut(QKeySequence::Find);
     findAction->setStatusTip(tr("Find the text"));
-    connect( findAction, SIGNAL(triggered()),
-            this, SLOT( find() ) );
+    connect( findAction, &QAction::triggered,
+             [this](auto){ find(); });
 
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
     overviewVisibleAction->setChecked( config->isOverviewVisible() );
-    connect( overviewVisibleAction, SIGNAL( toggled( bool ) ),
-            this, SLOT( toggleOverviewVisibility( bool )) );
+    connect( overviewVisibleAction, &QAction::toggled,
+            this, &MainWindow::toggleOverviewVisibility );
 
     lineNumbersVisibleInMainAction =
         new QAction( tr("Line &numbers in main view"), this );
     lineNumbersVisibleInMainAction->setCheckable( true );
     lineNumbersVisibleInMainAction->setChecked( config->mainLineNumbersVisible() );
-    connect( lineNumbersVisibleInMainAction, SIGNAL( toggled( bool ) ),
-            this, SLOT( toggleMainLineNumbersVisibility( bool )) );
+    connect( lineNumbersVisibleInMainAction,  &QAction::toggled,
+             this, &MainWindow::toggleMainLineNumbersVisibility );
 
     lineNumbersVisibleInFilteredAction =
         new QAction( tr("Line &numbers in filtered view"), this );
     lineNumbersVisibleInFilteredAction->setCheckable( true );
     lineNumbersVisibleInFilteredAction->setChecked( config->filteredLineNumbersVisible() );
-    connect( lineNumbersVisibleInFilteredAction, SIGNAL( toggled( bool ) ),
-            this, SLOT( toggleFilteredLineNumbersVisibility( bool )) );
+    connect( lineNumbersVisibleInFilteredAction, &QAction::toggled,
+             this, &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setShortcut(Qt::Key_F);
     followAction->setCheckable(true);
-    connect( followAction, SIGNAL(toggled( bool )),
-            this, SIGNAL(followSet( bool )) );
+    connect( followAction, &QAction::toggled,
+             this, &MainWindow::followSet );
 
     reloadAction = new QAction( tr("&Reload"), this );
     reloadAction->setShortcut(QKeySequence::Refresh);
@@ -328,19 +328,23 @@ void MainWindow::createActions()
 
     filtersAction = new QAction(tr("&Filters..."), this);
     filtersAction->setStatusTip(tr("Show the Filters box"));
-    connect( filtersAction, SIGNAL(triggered()), this, SLOT(filters()) );
+    connect( filtersAction, &QAction::triggered,
+             [this](auto){ filters(); });
 
     optionsAction = new QAction(tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Show the Options box"));
-    connect( optionsAction, SIGNAL(triggered()), this, SLOT(options()) );
+    connect( optionsAction, &QAction::triggered,
+             [this](auto){ options(); });
 
     aboutAction = new QAction(tr("&About"), this);
     aboutAction->setStatusTip(tr("Show the About box"));
-    connect( aboutAction, SIGNAL(triggered()), this, SLOT(about()) );
+    connect( aboutAction, &QAction::triggered,
+             [this](auto){ about(); });
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
     aboutQtAction->setStatusTip(tr("Show the Qt library's About box"));
-    connect( aboutQtAction, SIGNAL(triggered()), this, SLOT(aboutQt()) );
+    connect( aboutQtAction, &QAction::triggered,
+             [this](auto){ aboutQt(); });
 
     encodingGroup = new QActionGroup( this );
 
@@ -353,8 +357,8 @@ void MainWindow::createActions()
     encodingAction[0]->setStatusTip(tr("Automatically detect the file's encoding"));
     encodingAction[0]->setChecked( true );
 
-    connect( encodingGroup, SIGNAL( triggered( QAction* ) ),
-            this, SLOT( encodingChanged( QAction* ) ) );
+    connect( encodingGroup, &QActionGroup::triggered,
+            this, &MainWindow::encodingChanged );
 }
 
 void MainWindow::createMenus()
@@ -364,11 +368,14 @@ void MainWindow::createMenus()
     fileMenu->addAction( closeAction );
     fileMenu->addAction( closeAllAction );
     fileMenu->addSeparator();
-    for (int i = 0; i < MaxRecentFiles; ++i) {
+
+    assert(recentFileActions.size() == recentFileActionBehaviors.size());
+    for (auto i = 0u; i < recentFileActions.size(); ++i) {
         fileMenu->addAction( recentFileActions[i] );
         recentFileActionBehaviors[i] =
             new MenuActionToolTipBehavior(recentFileActions[i], fileMenu, this);
     }
+
     fileMenu->addSeparator();
     fileMenu->addAction( exitAction );
 

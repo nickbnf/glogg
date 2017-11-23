@@ -42,16 +42,16 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
            POLL_INTERVAL_MIN, POLL_INTERVAL_MAX, this );
     pollIntervalLineEdit->setValidator( polling_interval_validator_ );
 
-    connect(buttonBox, SIGNAL( clicked( QAbstractButton* ) ),
-            this, SLOT( onButtonBoxClicked( QAbstractButton* ) ) );
-    connect(fontFamilyBox, SIGNAL( currentIndexChanged(const QString& ) ),
-            this, SLOT( updateFontSize( const QString& ) ));
-    connect(incrementalCheckBox, SIGNAL( toggled( bool ) ),
-            this, SLOT( onIncrementalChanged() ) );
-    connect(pollingCheckBox, SIGNAL( toggled( bool ) ),
-            this, SLOT( onPollingChanged() ) );
-    connect(searchResultsCacheCheckBox, SIGNAL( toggled( bool ) ),
-            this, SLOT( onSearchResultsCacheChanged() ) );
+    connect(buttonBox, &QDialogButtonBox::clicked,
+            this, &OptionsDialog::onButtonBoxClicked );
+    connect(fontFamilyBox, qOverload<const QString&>(&QComboBox::currentIndexChanged),
+            this, &OptionsDialog::updateFontSize );
+    connect(incrementalCheckBox, &QCheckBox::toggled,
+            [this](auto){ onIncrementalChanged(); } );
+    connect(pollingCheckBox, &QCheckBox::toggled,
+            [this](auto){ onPollingChanged(); } );
+    connect(searchResultsCacheCheckBox,&QCheckBox::toggled,
+            [this](auto){ onSearchResultsCacheChanged(); } );
 
     updateDialogFromConfig();
 

@@ -215,8 +215,8 @@ void LogFilteredDataWorkerThread::run()
             return;      // We must die
 
         if ( operationRequested_ ) {
-            connect( operationRequested_, SIGNAL( searchProgressed( int, int ) ),
-                    this, SIGNAL( searchProgressed( int, int ) ) );
+            connect( operationRequested_, &SearchOperation::searchProgressed,
+                    this, &LogFilteredDataWorkerThread::searchProgressed );
 
             // Run the search operation
             operationRequested_->start( searchData_ );

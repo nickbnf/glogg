@@ -39,7 +39,7 @@ MenuActionToolTipBehavior::MenuActionToolTipBehavior(QAction *action,
       timerId(0),
       hoverPoint()
 {
-    connect(action, SIGNAL(hovered()), this, SLOT(onActionHovered()));
+    connect(action, &QAction::hovered, this, &MenuActionToolTipBehavior::onActionHovered);
 }
 
 int MenuActionToolTipBehavior::toolTipDelay()

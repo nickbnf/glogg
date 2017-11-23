@@ -47,11 +47,11 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
     connect(fontFamilyBox, qOverload<const QString&>(&QComboBox::currentIndexChanged),
             this, &OptionsDialog::updateFontSize );
     connect(incrementalCheckBox, &QCheckBox::toggled,
-            [this](auto){ onIncrementalChanged(); } );
+            [this](auto){ this->onIncrementalChanged(); } );
     connect(pollingCheckBox, &QCheckBox::toggled,
-            [this](auto){ onPollingChanged(); } );
+            [this](auto){ this->onPollingChanged(); } );
     connect(searchResultsCacheCheckBox,&QCheckBox::toggled,
-            [this](auto){ onSearchResultsCacheChanged(); } );
+            [this](auto){ this->onSearchResultsCacheChanged(); } );
 
     updateDialogFromConfig();
 

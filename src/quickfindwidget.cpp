@@ -76,9 +76,9 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     // Behaviour
     connect( closeButton_, &QToolButton::clicked, this, &QuickFindWidget::closeHandler );
     connect( editQuickFind_, &QLineEdit::textEdited,
-             [this](auto){ textChanged(); } );
+             [this](auto){ this->textChanged(); } );
     connect( ignoreCaseCheck_, &QCheckBox::stateChanged,
-             [this](auto){ textChanged(); } );
+             [this](auto){ this->textChanged(); } );
     /*
     connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
             SLOT( updateButtons() ) );

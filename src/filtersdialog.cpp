@@ -59,15 +59,15 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     selectedRow_ = -1;
 
     connect( filterListWidget, &QListWidget::itemSelectionChanged,
-            [this](){ updatePropertyFields(); } );
+            [this](){ this->updatePropertyFields(); } );
     connect( patternEdit, &QLineEdit::textEdited,
-            [this](auto){ updatePropertyFields(); } );
+            [this](auto){ this->updatePropertyFields(); } );
     connect( ignoreCaseCheckBox, &QCheckBox::toggled,
-            [this](auto){ updatePropertyFields(); } );
+            [this](auto){ this->updatePropertyFields(); } );
     connect( foreColorBox, qOverload<int>(&QComboBox::activated),
-            [this](auto){ updatePropertyFields(); } );
+            [this](auto){ this->updatePropertyFields(); } );
     connect( backColorBox, qOverload<int>(&QComboBox::activated),
-            [this](auto){ updatePropertyFields(); } );
+            [this](auto){ this->updatePropertyFields(); } );
 
     if ( !filterSet->filterList.empty() ) {
         filterListWidget->setCurrentItem( filterListWidget->item( 0 ) );

@@ -1479,11 +1479,11 @@ void AbstractLogView::createMenu()
     copyAction_ = new QAction( tr("&Copy"), this );
     // No text as this action title depends on the type of selection
     connect( copyAction_, &QAction::triggered,
-             [this](auto){ copy(); } );
+             [this](auto){ this->copy(); } );
 
     saveToFileAction_ = new QAction( tr("Save to file"), this );
     connect( saveToFileAction_, &QAction::triggered,
-             [this](auto){ saveToFile(); } );
+             [this](auto){ this->saveToFile(); } );
 
     // For '#' and '*', shortcuts doesn't seem to work but
     // at least it displays them in the menu, we manually handle those keys
@@ -1492,31 +1492,31 @@ void AbstractLogView::createMenu()
     findNextAction_->setShortcut( Qt::Key_Asterisk );
     findNextAction_->setStatusTip( tr("Find the next occurence") );
     connect( findNextAction_, &QAction::triggered,
-            [this](auto){ findNextSelected(); } );
+            [this](auto){ this->findNextSelected(); } );
 
     findPreviousAction_ = new QAction( tr("Find &previous"), this );
     findPreviousAction_->setShortcut( tr("#")  );
     findPreviousAction_->setStatusTip( tr("Find the previous occurence") );
     connect( findPreviousAction_, &QAction::triggered,
-             [this](auto){ findPreviousSelected(); } );
+             [this](auto){ this->findPreviousSelected(); } );
 
     addToSearchAction_ = new QAction( tr("&Add to search"), this );
     addToSearchAction_->setStatusTip(
             tr("Add the selection to the current search") );
     connect( addToSearchAction_, &QAction::triggered,
-            [this](auto){ addToSearch(); } );
+            [this](auto){ this->addToSearch(); } );
 
     setSearchStartAction_ = new QAction( tr("Set search start"), this );
     connect( setSearchStartAction_, &QAction::triggered,
-            [this](auto){ setSearchStart(); } );
+            [this](auto){ this->setSearchStart(); } );
 
     setSearchEndAction_ = new QAction( tr("Set search end"), this );
     connect( setSearchEndAction_, &QAction::triggered,
-            [this](auto){ setSearchEnd(); } );
+            [this](auto){ this->setSearchEnd(); } );
 
     clearSearchLimitAction_ = new QAction( tr("Clear search limit"), this );
     connect( clearSearchLimitAction_, &QAction::triggered,
-            [this](auto){ clearSearchLimits(); } );
+            [this](auto){ this->clearSearchLimits(); } );
 
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );

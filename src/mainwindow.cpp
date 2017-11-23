@@ -249,46 +249,46 @@ void MainWindow::createActions()
     openAction->setShortcut(QKeySequence::Open);
     openAction->setIcon( QIcon( ":/images/open14.png" ) );
     openAction->setStatusTip(tr("Open a file"));
-    connect(openAction, &QAction::triggered, [this](auto){ open(); });
+    connect(openAction, &QAction::triggered, [this](auto){ this->open(); });
 
     closeAction = new QAction(tr("&Close"), this);
     closeAction->setShortcut(tr("Ctrl+W"));
     closeAction->setStatusTip(tr("Close document"));
-    connect(closeAction, &QAction::triggered, [this](auto){ closeTab(); });
+    connect(closeAction, &QAction::triggered, [this](auto){ this->closeTab(); });
 
     closeAllAction = new QAction(tr("Close &All"), this);
     closeAllAction->setStatusTip(tr("Close all documents"));
-    connect(closeAllAction, &QAction::triggered, [this](auto){ closeAll(); });
+    connect(closeAllAction, &QAction::triggered, [this](auto){ this->closeAll(); });
 
     // Recent files
     for (auto i = 0u; i < recentFileActions.size(); ++i) {
         recentFileActions[i] = new QAction(this);
         recentFileActions[i]->setVisible(false);
         connect(recentFileActions[i], &QAction::triggered,
-                [this](auto){ openRecentFile(); });
+                [this](auto){ this->openRecentFile(); });
     }
 
     exitAction = new QAction(tr("E&xit"), this);
     exitAction->setShortcut(tr("Ctrl+Q"));
     exitAction->setStatusTip(tr("Exit the application"));
-    connect( exitAction, &QAction::triggered, [this](auto){ close(); });
+    connect( exitAction, &QAction::triggered, [this](auto){ this->close(); });
 
     copyAction = new QAction(tr("&Copy"), this);
     copyAction->setShortcut(QKeySequence::Copy);
     copyAction->setStatusTip(tr("Copy the selection"));
-    connect( copyAction, &QAction::triggered, [this](auto){ copy(); });
+    connect( copyAction, &QAction::triggered, [this](auto){ this->copy(); });
 
     selectAllAction = new QAction(tr("Select &All"), this);
     selectAllAction->setShortcut(tr("Ctrl+A"));
     selectAllAction->setStatusTip(tr("Select all the text"));
     connect( selectAllAction, &QAction::triggered,
-             [this](auto){ selectAll(); });
+             [this](auto){ this->selectAll(); });
 
     findAction = new QAction(tr("&Find..."), this);
     findAction->setShortcut(QKeySequence::Find);
     findAction->setStatusTip(tr("Find the text"));
     connect( findAction, &QAction::triggered,
-             [this](auto){ find(); });
+             [this](auto){ this->find(); });
 
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
@@ -329,22 +329,22 @@ void MainWindow::createActions()
     filtersAction = new QAction(tr("&Filters..."), this);
     filtersAction->setStatusTip(tr("Show the Filters box"));
     connect( filtersAction, &QAction::triggered,
-             [this](auto){ filters(); });
+             [this](auto){ this->filters(); });
 
     optionsAction = new QAction(tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Show the Options box"));
     connect( optionsAction, &QAction::triggered,
-             [this](auto){ options(); });
+             [this](auto){ this->options(); });
 
     aboutAction = new QAction(tr("&About"), this);
     aboutAction->setStatusTip(tr("Show the About box"));
     connect( aboutAction, &QAction::triggered,
-             [this](auto){ about(); });
+             [this](auto){ this->about(); });
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
     aboutQtAction->setStatusTip(tr("Show the Qt library's About box"));
     connect( aboutQtAction, &QAction::triggered,
-             [this](auto){ aboutQt(); });
+             [this](auto){ this->aboutQt(); });
 
     encodingGroup = new QActionGroup( this );
 

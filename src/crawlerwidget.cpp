@@ -768,7 +768,7 @@ void CrawlerWidget::setup()
     connect( searchLineEdit->lineEdit(), &QLineEdit::returnPressed,
              [this]() { searchButton->clicked(); } );
     connect( searchLineEdit->lineEdit(), &QLineEdit::textEdited,
-             [this](auto){ searchTextChangeHandler(); } );
+             [this](auto){ this->searchTextChangeHandler(); } );
     connect( searchButton, &QToolButton::clicked,
              this, &CrawlerWidget::startNewSearch );
     connect( stopButton, &QToolButton::clicked,

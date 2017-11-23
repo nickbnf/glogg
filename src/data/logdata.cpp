@@ -83,7 +83,7 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
     fileWatcher_ = std::make_shared<FileWatcherT>();
     // Initialise the file watcher
     connect( fileWatcher_.get(), &FileWatcher::fileChanged,
-            [this](auto){ fileChangedOnDisk(); } );
+            [this](auto){ this->fileChangedOnDisk(); } );
     // Forward the update signal
     connect( &workerThread_, &LogDataWorkerThread::indexingProgressed,
             this, &LogData::loadingProgressed );

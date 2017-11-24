@@ -22,7 +22,8 @@ size_t getBlockStorageSize( size_t elementsCount, std::size_t elementSize, size_
 template<typename PoolType>
 void increasePool(PoolType& pool)
 {
-    pool.resize( pool.size() * 2 );
+    const auto oldSize = pool.size();
+    pool.resize( oldSize + (oldSize >> 1 ) );
 }
 
 }

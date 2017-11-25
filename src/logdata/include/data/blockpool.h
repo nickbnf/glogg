@@ -30,6 +30,8 @@ protected:
 
     void freeLastBlock();
 
+    size_t lastBlockSize() const;
+
 private:
   std::vector<uint8_t> pool_;
 
@@ -37,7 +39,6 @@ private:
   size_t alignment_;
 
   size_t allocationSize_;
-  size_t lastBlockSize_;
 
   std::vector<size_t> blockIndex_;
 };

@@ -42,4 +42,4 @@ before_script:
 
 script:
  - cmake --build .
- - '[ "$TRAVIS_OS_NAME" != linux ] || ctest --verbose'
+ - ctest --verbose

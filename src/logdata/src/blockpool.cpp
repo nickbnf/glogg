@@ -87,7 +87,10 @@ uint8_t* BlockPoolBase::getBlock( size_t elementsCount )
 {
     const auto requiredSize = getBlockStorageSize( elementsCount, elementSize_, alignment_ );
 
-    LOG(logDEBUG2) << "Get block " << elementSize_ << " pool " << pool_.size() << " alloc " << allocationSize_;
+    LOG(logINFO) << "Get block " << elementSize_
+                   << " pool " << pool_.size()
+                   << " alloc " << allocationSize_
+                   << " blocks " << blockIndex_.size();
 
     if ( allocationSize_ + requiredSize >= pool_.size() ) {
         increasePool( pool_ );
@@ -104,21 +107,28 @@ uint8_t* BlockPoolBase::resizeLastBlock( size_t newSize )
 {
     const auto alignedNewSize = getAlignedSize( newSize, alignment_ );
 
-    LOG(logDEBUG2) << "Resize block "
+    LOG(logINFO) << "Resizing block "
                     << " from " << lastBlockSize_
                     << " to " << newSize
-                    << " aligned " << alignedNewSize;
+                    << " aligned " << alignedNewSize
+                    << " alloc " << allocationSize_;
 
     if ( alignedNewSize < lastBlockSize_ ) {
         allocationSize_ -= ( lastBlockSize_ - alignedNewSize );
     }
     else {
         const auto delta = alignedNewSize - lastBlockSize_;
-        if ( allocationSize_ + delta < pool_.size() ) {
+        LOG(logINFO) << "Increasing last block size by " << delta;
+
+        if ( allocationSize_ + delta >= pool_.size() ) {
             increasePool( pool_ );
         }
         allocationSize_ += delta;
     }
+
+    lastBlockSize_ = alignedNewSize;
+
+    LOG(logINFO) << "Resized block, alloc " << allocationSize_;
 
     return pool_.data() + blockIndex_.back();
 }
@@ -131,6 +141,8 @@ void BlockPoolBase::freeLastBlock()
     {
         allocationSize_ -= lastBlockSize_;
     }
+
+    LOG(logINFO) << "Free block, alloc " << allocationSize_;
 
     blockIndex_.pop_back();
 }

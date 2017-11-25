@@ -26,7 +26,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if (UNIX)
-    ucm_add_flags(CXX -Wall -Wextra)
+    ucm_add_flags(CXX -Wall -Wextra -O2 -g)
     #ucm_add_flags(CXX -Wshadow -Wnon-virtual-dtor
     #                  -Wno-unused-parameter
     #                  -Wno-unused-variable)

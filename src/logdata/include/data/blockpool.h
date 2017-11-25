@@ -20,6 +20,8 @@ public:
     uint8_t* operator[](size_t index);
     const uint8_t* operator[](size_t index) const;
 
+    uint32_t currentBlock() const;
+
 protected:
     BlockPoolBase( size_t elementSize, size_t alignment );
 
@@ -47,17 +49,17 @@ public:
     BlockPool() : BlockPoolBase( sizeof( ElementType ), alignof( ElementType ) )
     {}
 
-    uint8_t* get_block( size_t block_elements_count, ElementType initial_position, uint8_t** block_ptr )
+    uint32_t get_block( size_t block_elements_count, ElementType initial_position, ptrdiff_t* block_ptr )
     {
         auto ptr = getBlock( block_elements_count );
         if ( ptr ) {
             *( reinterpret_cast<ElementType*>( ptr ) ) = initial_position;
             if ( block_ptr ) {
-                *block_ptr = ptr + sizeof( ElementType );
+                *block_ptr = sizeof( ElementType );
             }
         }
 
-        return ptr;
+        return currentBlock();
     }
 
     uint8_t* resize_last_block( size_t new_size )

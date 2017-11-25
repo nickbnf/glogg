@@ -89,8 +89,11 @@ class CompressedLinePositionStorage
     CompressedLinePositionStorage()
     {
         nb_lines_ = 0; first_long_line_ = UINT32_MAX;
-        current_pos_ = 0; block_pointer_ = nullptr;
-        previous_block_pointer_ = nullptr;
+        current_pos_ = 0;
+        block_index_ = 0;
+        long_block_index_ = 0;
+        block_offset_ = 0;
+        previous_block_offset_ = 0;
     }
     // Copy constructor would be slow, delete!
     CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
@@ -130,10 +133,14 @@ class CompressedLinePositionStorage
 
     // Current position (position of the end of the last line added)
     uint64_t current_pos_;
-    // Address of the next position (not yet written) within the current
-    // block. nullptr means there is no current block (previous block
+
+    uint32_t block_index_;
+    uint32_t long_block_index_;
+    // Offset of the next position (not yet written) within the current
+    // block. null means there is no current block (previous block
     // finished or no data)
-    uint8_t* block_pointer_;
+    ptrdiff_t block_offset_;
+
 
     // The index of the first line whose end is stored in a block64
     // Initialised at UINT32_MAX, meaning "unset"
@@ -142,11 +149,11 @@ class CompressedLinePositionStorage
 
     // For pop_back:
 
-    // Previous pointer to block element, it is restored when we
+    // Previous offset to block element, it is restored when we
     // "pop_back" the last element.
-    // A null pointer here means pop_back need to free the block
+    // A null here means pop_back need to free the block
     // that has just been created.
-    uint8_t* previous_block_pointer_;
+    ptrdiff_t previous_block_offset_;
 
     // Cache the last position read
     // This is to speed up consecutive reads (whole page)

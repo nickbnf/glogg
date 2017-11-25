@@ -78,6 +78,11 @@ size_t BlockPoolBase::getPaddedElementSize() const
     return getElementSizeWithHeader( elementSize_ );
 }
 
+uint32_t BlockPoolBase::currentBlock() const
+{
+    return static_cast<uint32_t>( blockIndex_.size() - 1 );
+}
+
 uint8_t* BlockPoolBase::getBlock( size_t elementsCount )
 {
     const auto requiredSize = getBlockStorageSize( elementsCount, elementSize_, alignment_ );

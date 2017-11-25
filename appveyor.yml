@@ -1,53 +1,51 @@
 version: '1.1.3.{build}'
 
-os: Visual Studio 2015
+os: Visual Studio 2017
+
+platform:
+  - x64
+
+configuration:
+  - Release
 
 environment:
   matrix:
-  - QT5: C:\Qt\5.9\msvc2015_64
-  - QT5: C:\Qt\5.9\mingw53_32
+  - QT5: C:\Qt\5.9\msvc2017_64
+    CMAKE_GENERATOR_NAME: NMake Makefiles
+    CMAKE_BUILD_TYPE: Release
 
 matrix:
   fast_finish: false
   
 before_build:
 - '%QT5%\bin\qtenv2.bat'
-- qmake -v
-
-#- for /f %%i in ('git --git-dir=%APPVEYOR_BUILD_FOLDER%\.git describe') do set GLOGG_VERSION=%%i
-#- for /f %%i in ('git --git-dir=%APPVEYOR_BUILD_FOLDER%\.git rev-parse --short HEAD') do set GLOGG_COMMIT=%%i
-
+- call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=x64
 - set PATH=C:\Program Files (x86)\NSIS;%PATH%
-
-# mingw
-- if %QT5:msvc=%==%QT5% g++ --version
-- if %QT5:msvc=%==%QT5% set make=mingw32-make.exe
-- if %QT5:msvc=%==%QT5% %make% --version
-- if %QT5:msvc=%==%QT5% set MINGW=C:\Qt\Tools\mingw530_32
-
-# VS2015
-- if not %QT5:msvc=%==%QT5% call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
-- if not %QT5:msvc=%==%QT5% set make=nmake.exe
-- if not %QT5:msvc=%==%QT5% %make% /? > nul
+- md %APPVEYOR_BUILD_FOLDER%\build
+- cd %APPVEYOR_BUILD_FOLDER%\build
+- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration%  -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% -DBUILD_VERSION=%APPVEYOR_BUILD_VERSION% %APPVEYOR_BUILD_FOLDER%
 
 build_script:
-- cd %APPVEYOR_BUILD_FOLDER%
-- qmake -r VERSION=%APPVEYOR_BUILD_VERSION%
-- '%make%'
+  - cmake --build . --config %configuration%
+
+#test_script:
+#  - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
+#  - cmd: ctest --build-config %configuration%
 
 after_build:
+- md %APPVEYOR_BUILD_FOLDER%\release
+- xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %APPVEYOR_BUILD_FOLDER%\build\output\glogg_tests.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %QT5%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - md %APPVEYOR_BUILD_FOLDER%\release\platforms
-- xcopy %QT5%\plugins\platforms\qminimal.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
-- if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- if %QT5:msvc=%==%QT5% xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- 7z a klogg-%APPVEYOR_BUILD_VERSION%.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING
+
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING
+
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %APPVEYOR_BUILD_FOLDER%\klogg.nsi
 
 artifacts:

@@ -7,7 +7,7 @@ matrix:
       addons:
         artifacts: 
           paths:
-            - ./release
+            - ./build/output
         apt:
           sources:
             - ubuntu-toolchain-r-test
@@ -16,29 +16,30 @@ matrix:
             - gcc-6
             - g++-6
             - qt59base
-            - qt59tools
-            - qt59svg
+      env: GCC_VERSION=6
     - os: osx
       compiler: clang
+      osx_image: xcode8.3
       addons:
         artifacts: 
           paths:
-            - ./release
+            - ./build/output
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'
 
 install:
- - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt5'
- - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt5'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || brew ls | grep -wq cmake || brew install cmake'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || brew ls | grep -wq qt5 || brew install qt5'
 
 before_script:
- - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
- - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || export CXX=g++-$GCC_VERSION CC=gcc-$GCC_VERSION'
  - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
- - qmake -v
+ - mkdir build
+ - cd build
+ - '[ "$TRAVIS_OS_NAME" != osx ] || cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || cmake -DCMAKE_BUILD_TYPE=Release ..'
 
 script:
- - '[ "$TRAVIS_OS_NAME" != linux ] || qmake QMAKE_CXX=g++-6 glogg.pro'
- - '[ "$TRAVIS_OS_NAME" != osx ] || qmake glogg.pro'
- - make
+ - cmake --build .
+ - '[ "$TRAVIS_OS_NAME" != linux ] || ctest'

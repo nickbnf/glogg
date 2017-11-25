@@ -67,10 +67,6 @@ Section "klogg" klogg
     File COPYING
     File README.md
 
-    File /nonfatal release\libstdc++-6.dll
-    File /nonfatal release\libgcc_s_seh-1.dll
-    File /nonfatal release\libgcc_s_dw2-1.dll
-
     ; Create the 'sendto' link
     CreateShortCut "$SENDTO\klogg.lnk" "$INSTDIR\klogg,exe" "" "$INSTDIR\klogg.exe" 0
 
@@ -107,7 +103,6 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Concurrent.dll
     SetOutPath $INSTDIR\platforms
     File release\platforms\qwindows.dll
-    File release\platforms\qminimal.dll
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut

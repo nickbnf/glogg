@@ -1,0 +1,19 @@
+[Desktop Entry]
+Name=klogg
+GenericName=Log file viewer
+Exec=klogg %F
+Icon=klogg
+Type=Application
+Comment=A smart interactive log explorer.
+Terminal=false
+Categories=Qt;Utility;TextTools;Development;
+MimeType=text/plain;
+Actions=Session;NewInstance;
+
+[Desktop Action Session]
+Exec=klogg --load-session %F
+Name=Open With Previous Session
+
+[Desktop Action NewInstance]
+Exec=klogg --multi %F
+Name=Open In A New glogg Window

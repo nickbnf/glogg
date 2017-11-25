@@ -13,12 +13,16 @@
 
 #include "log.h"
 
+#ifndef GLOGG_USES_QTFILEWATCHER
+
+#include <QTemporaryFile>
+
 #include "watchtower.h"
 
-#ifdef _WIN32
+#if defined(GLOGG_SUPPORTS_WINWATCH)
 #  include "winwatchtowerdriver.h"
 using PlatformWatchTower = WatchTower<WinWatchTowerDriver>;
-#else
+#elif defined(GLOGG_SUPPORTS_INOTIFY)
 #  include "inotifywatchtowerdriver.h"
 using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;
 #endif
@@ -30,40 +34,26 @@ class WatchTowerBehaviour: public testing::Test {
   public:
     shared_ptr<PlatformWatchTower> watch_tower = make_shared<PlatformWatchTower>();
 
-    const char* createTempName()
+    std::string createTempName()
     {
-        const char* name;
-#if _WIN32
-        name = _tempnam( "c:\\temp", "glogg_test" );
-#else
-        name = tmpnam( nullptr );
-#endif
-        return name;
+        QTemporaryFile f;
+        return f.fileName().toStdString();
     }
 
     string createTempEmptyFile( string file_name = "" ) {
-        const char* name;
+        string tmp_name = file_name;
 
-        if ( ! file_name.empty() ) {
-            name = file_name.c_str();
+        if ( tmp_name.empty() ) {
+            tmp_name = createTempName();
         }
-        else {
-            // I know tmpnam is bad but I need control over the file
-            // and it is the only one which exits on Windows.
-            name = createTempName();
-        }
-        int fd = creat( name, S_IRUSR | S_IWUSR );
+        int fd = creat( tmp_name.c_str(), S_IRUSR | S_IWUSR );
         close( fd );
 
-        return string( name );
+        return tmp_name;
     }
 
     string getNonExistingFileName() {
-#if _WIN32
-        return string( _tempnam( "c:\\temp", "inexistant" ) );
-#else
-        return string( tmpnam( nullptr ) );
-#endif
+        return createTempName();
     }
 
     WatchTowerBehaviour() {
@@ -83,7 +73,7 @@ TEST_F( WatchTowerBehaviour, AcceptsANonExistingFileToWatch ) {
 
 /*****/
 
-class WatchTowerSingleFile: public WatchTowerBehaviour {
+class DISABLED_WatchTowerSingleFile: public WatchTowerBehaviour {
   public:
     static const int TIMEOUT;
 
@@ -109,14 +99,14 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
         return reg;
     }
 
-    WatchTowerSingleFile()
+    DISABLED_WatchTowerSingleFile()
         : heartbeat_( shared_ptr<void>( (void*) 0xDEADC0DE, [] (void*) {} ) )
     {
         file_name = createTempEmptyFile();
         registration = registerFile( file_name );
     }
 
-    ~WatchTowerSingleFile() {
+    ~DISABLED_WatchTowerSingleFile() {
         remove( file_name.c_str() );
     }
 
@@ -144,29 +134,29 @@ class WatchTowerSingleFile: public WatchTowerBehaviour {
 };
 
 #ifdef _WIN32
-const int WatchTowerSingleFile::TIMEOUT = 2000;
+const int DISABLED_WatchTowerSingleFile::TIMEOUT = 2000;
 #else
-const int WatchTowerSingleFile::TIMEOUT = 20;
+const int DISABLED_WatchTowerSingleFile::TIMEOUT = 20;
 #endif
 
-TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsAppended ) {
+TEST_F( DISABLED_WatchTowerSingleFile, SignalsWhenAWatchedFileIsAppended ) {
     appendDataToFile( file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSingleFile, SignalsWhenAWatchedFileIsRemoved) {
+TEST_F( DISABLED_WatchTowerSingleFile, SignalsWhenAWatchedFileIsRemoved) {
     remove( file_name.c_str() );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSingleFile, SignalsWhenADeletedFileReappears ) {
+TEST_F( DISABLED_WatchTowerSingleFile, SignalsWhenADeletedFileReappears ) {
     remove( file_name.c_str() );
     waitNotificationReceived();
     createTempEmptyFile( file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSingleFile, SignalsWhenAReappearedFileIsAppended ) {
+TEST_F( DISABLED_WatchTowerSingleFile, SignalsWhenAReappearedFileIsAppended ) {
     remove( file_name.c_str() );
     waitNotificationReceived();
     createTempEmptyFile( file_name );
@@ -176,7 +166,7 @@ TEST_F( WatchTowerSingleFile, SignalsWhenAReappearedFileIsAppended ) {
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
+TEST_F( DISABLED_WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
     auto second_file_name = createTempEmptyFile();
     std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     // Ensure file creation has been 'digested'
@@ -193,7 +183,7 @@ TEST_F( WatchTowerSingleFile, StopSignalingWhenWatchDeleted ) {
     remove( second_file_name.c_str() );
 }
 
-TEST_F( WatchTowerSingleFile, SignalsWhenSameFileIsFollowedMultipleTimes ) {
+TEST_F( DISABLED_WatchTowerSingleFile, SignalsWhenSameFileIsFollowedMultipleTimes ) {
     auto second_file_name = createTempEmptyFile();
 
     for ( int i = 0; i < 100; i++ )
@@ -210,14 +200,14 @@ TEST_F( WatchTowerSingleFile, SignalsWhenSameFileIsFollowedMultipleTimes ) {
     remove( second_file_name.c_str() );
 }
 
-TEST_F( WatchTowerSingleFile, TwoWatchesOnSameFileYieldsTwoNotifications ) {
+TEST_F( DISABLED_WatchTowerSingleFile, TwoWatchesOnSameFileYieldsTwoNotifications ) {
     auto second_registration = registerFile( file_name );
     appendDataToFile( file_name );
 
     ASSERT_TRUE( waitNotificationReceived( 2 ) );
 }
 
-TEST_F( WatchTowerSingleFile, RemovingOneWatchOfTwoStillYieldsOneNotification ) {
+TEST_F( DISABLED_WatchTowerSingleFile, RemovingOneWatchOfTwoStillYieldsOneNotification ) {
     {
         auto second_registration = registerFile( file_name );
     }
@@ -226,16 +216,16 @@ TEST_F( WatchTowerSingleFile, RemovingOneWatchOfTwoStillYieldsOneNotification ) 
     ASSERT_TRUE( waitNotificationReceived( 1 ) );
 }
 
-TEST_F( WatchTowerSingleFile, RenamingTheFileYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSingleFile, RenamingTheFileYieldsANotification ) {
     auto new_file_name = createTempName();
 
-    rename( file_name.c_str(), new_file_name );
+    rename( file_name.c_str(), new_file_name.c_str() );
     ASSERT_TRUE( waitNotificationReceived() );
 
-    rename( new_file_name, file_name.c_str() );
+    rename( new_file_name.c_str(), file_name.c_str() );
 }
 
-TEST_F( WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification ) {
     remove( file_name.c_str() );
     waitNotificationReceived();
 
@@ -248,8 +238,8 @@ TEST_F( WatchTowerSingleFile, RenamingAFileToTheWatchedNameYieldsANotification )
 
 /*****/
 
-#ifdef HAVE_SYMLINK
-class WatchTowerSymlink: public WatchTowerSingleFile {
+#ifdef GLOGG_SUPPORTS_SYMLINK
+class DISABLED_WatchTowerSymlink: public DISABLED_WatchTowerSingleFile {
   public:
     string symlink_name;
 
@@ -268,27 +258,27 @@ class WatchTowerSymlink: public WatchTowerSingleFile {
     }
 };
 
-TEST_F( WatchTowerSymlink, AppendingToTheSymlinkYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSymlink, AppendingToTheSymlinkYieldsANotification ) {
     appendDataToFile( symlink_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSymlink, AppendingToTheTargetYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSymlink, AppendingToTheTargetYieldsANotification ) {
     appendDataToFile( file_name );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSymlink, RemovingTheSymlinkYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSymlink, RemovingTheSymlinkYieldsANotification ) {
     remove( symlink_name.c_str() );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSymlink, RemovingTheTargetYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSymlink, RemovingTheTargetYieldsANotification ) {
     remove( file_name.c_str() );
     ASSERT_TRUE( waitNotificationReceived() );
 }
 
-TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
     auto new_target = createTempEmptyFile();
     remove( symlink_name.c_str() );
     waitNotificationReceived();
@@ -299,7 +289,7 @@ TEST_F( WatchTowerSymlink, ReappearingSymlinkYieldsANotification ) {
     remove( new_target.c_str() );
 }
 
-TEST_F( WatchTowerSymlink, DataAddedInAReappearingSymlinkYieldsANotification ) {
+TEST_F( DISABLED_WatchTowerSymlink, DataAddedInAReappearingSymlinkYieldsANotification ) {
     auto new_target = createTempEmptyFile();
     remove( symlink_name.c_str() );
     waitNotificationReceived();
@@ -311,7 +301,7 @@ TEST_F( WatchTowerSymlink, DataAddedInAReappearingSymlinkYieldsANotification ) {
 
     remove( new_target.c_str() );
 }
-#endif //HAVE_SYMLINK
+#endif //GLOGG_SUPPORTS_SYMLINK
 
 /*****/
 
@@ -325,7 +315,7 @@ TEST( WatchTowerLifetime, RegistrationCanBeDeletedWhenWeAreDead ) {
 
 /*****/
 
-class WatchTowerDirectories: public WatchTowerSingleFile {
+class DISABLED_WatchTowerDirectories: public DISABLED_WatchTowerSingleFile {
   public:
     string second_dir_name;
     string second_file_name;
@@ -334,13 +324,13 @@ class WatchTowerDirectories: public WatchTowerSingleFile {
     Registration registration_two;
     Registration registration_three;
 
-    WatchTowerDirectories() {
+    DISABLED_WatchTowerDirectories() {
         second_dir_name = createTempDir();
         second_file_name = createTempEmptyFileInDir( second_dir_name );
         third_file_name  = createTempEmptyFileInDir( second_dir_name );
     }
 
-    ~WatchTowerDirectories() {
+    ~DISABLED_WatchTowerDirectories() {
         remove( third_file_name.c_str() );
         remove( second_file_name.c_str() );
 
@@ -373,14 +363,14 @@ class WatchTowerDirectories: public WatchTowerSingleFile {
     }
 };
 
-TEST_F( WatchTowerDirectories, FollowThreeFilesInTwoDirs ) {
+TEST_F( DISABLED_WatchTowerDirectories, FollowThreeFilesInTwoDirs ) {
     registration_two   = registerFile( second_file_name );
     registration_three = registerFile( third_file_name );
 
     ASSERT_THAT( watch_tower->numberWatchedDirectories(), Eq( 2 ) );
 }
 
-TEST_F( WatchTowerDirectories, FollowTwoFilesInTwoDirs ) {
+TEST_F( DISABLED_WatchTowerDirectories, FollowTwoFilesInTwoDirs ) {
     registration_two   = registerFile( second_file_name );
     {
         auto temp_registration_three = registerFile( third_file_name );
@@ -389,7 +379,7 @@ TEST_F( WatchTowerDirectories, FollowTwoFilesInTwoDirs ) {
     ASSERT_THAT( watch_tower->numberWatchedDirectories(), Eq( 2 ) );
 }
 
-TEST_F( WatchTowerDirectories, FollowOneFileInOneDir ) {
+TEST_F( DISABLED_WatchTowerDirectories, FollowOneFileInOneDir ) {
     {
         auto temp_registration_two   = registerFile( second_file_name );
         auto temp_registration_three = registerFile( third_file_name );
@@ -402,7 +392,7 @@ TEST_F( WatchTowerDirectories, FollowOneFileInOneDir ) {
 
 /*****/
 
-class WatchTowerInexistantDirectory: public WatchTowerDirectories {
+class WatchTowerInexistantDirectory: public DISABLED_WatchTowerDirectories {
   public:
     WatchTowerInexistantDirectory() {
         test_dir = createTempDir();
@@ -496,9 +486,9 @@ TEST_F( WinNotificationInfoListTest, CanBeIteratedByFor ) {
 /*****/
 
 #ifdef _WIN32
-class WatchTowerPolling : public WatchTowerSingleFile {
+class WatchTowerPolling : public DISABLED_WatchTowerSingleFile {
   public:
-    WatchTowerPolling() : WatchTowerSingleFile() {
+    WatchTowerPolling() : DISABLED_WatchTowerSingleFile() {
         // FILELog::setReportingLevel( logDEBUG );
 
         fd_ = open( file_name.c_str(), O_WRONLY | O_APPEND );
@@ -550,3 +540,5 @@ TEST_F( WatchTowerPolling, PollIsDelayedIfImmediateNotification ) {
 }
 
 #endif
+
+#endif // GLOGG_USES_QTFILEWATCHER

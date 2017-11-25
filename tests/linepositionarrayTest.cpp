@@ -104,13 +104,13 @@ TEST_F( LinePositionArrayLong, LineNo128HasRightValue ) {
 TEST_F( LinePositionArrayLong, FakeLFisNotKeptWhenAddingAfterIt ) {
     for ( uint64_t i = 0; i < 1000; ++i ) {
         uint64_t pos = ( 257LL * 4 ) + i*35LL;
-        LOG(logINFO) << "Iteration " << i << ", pos " << pos;
+        LOG(logDEBUG2) << "Iteration " << i << ", pos " << pos;
         line_array.append( pos );
         line_array.setFakeFinalLF();
         ASSERT_THAT( line_array[256 + i], Eq( pos ) );
-        LOG(logINFO) << "appended fake lf";
+        LOG(logDEBUG2) << "appended fake lf";
         line_array.append( pos + 21LL );
-        LOG(logINFO) << "appended pos " << pos + 21LL;
+        LOG(logDEBUG2) << "appended pos " << pos + 21LL;
         ASSERT_THAT( line_array[256 + i], Eq( pos + 21LL ) );
     }
 }

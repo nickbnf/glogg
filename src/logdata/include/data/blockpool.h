@@ -67,9 +67,10 @@ public:
        return resizeLastBlock( new_size );
     }
 
-    void free_last_block()
+    uint32_t free_last_block()
     {
         freeLastBlock();
+        return currentBlock();
     }
 };
 

@@ -302,15 +302,13 @@ void CompressedLinePositionStorage::pop_back()
             // If we try to pop_back() twice, we're dead!
             assert( ( nb_lines_ - 1 ) % BLOCK_SIZE == 0 );
 
-            pool32_.free_last_block();
-            block_index_--;
+            block_index_ = pool32_.free_last_block();
         }
         else {
             // If we try to pop_back() twice, we're dead!
             assert( ( nb_lines_ - first_long_line_ - 1 ) % BLOCK_SIZE == 0 );
 
-            pool64_.free_last_block();
-            long_block_index_--;
+            long_block_index_ = pool64_.free_last_block();
         }
 
         block_offset_ = 0;

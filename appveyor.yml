@@ -28,9 +28,9 @@ before_build:
 build_script:
   - cmake --build . --config %configuration%
 
-#test_script:
-#  - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
-#  - cmd: ctest --build-config %configuration%
+test_script:
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
+  - cmd: ctest --build-config %configuration% --verbose
 
 after_build:
 - md %APPVEYOR_BUILD_FOLDER%\release

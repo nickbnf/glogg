@@ -83,7 +83,13 @@ add_subdirectory(src)
 option(BUILD_TESTS "Build tests" ON)
 if (${BUILD_TESTS})
     enable_testing()
-    add_subdirectory(tests)
+
+    add_test(
+        NAME klogg_smoke
+        COMMAND klogg -v
+    )
+
+    add_subdirectory(tests)   
 endif()
 
 install(DIRECTORY

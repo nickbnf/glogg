@@ -120,7 +120,7 @@ uint8_t* BlockPoolBase::resizeLastBlock( size_t newSize )
 
 void BlockPoolBase::freeLastBlock()
 {
-    LOG(logWARNING) << "Free block " << lastBlockSize_;
+    LOG(logDEBUG2) << "Free block " << lastBlockSize_;
 
     if (allocationSize_ >= lastBlockSize_)
     {

@@ -91,7 +91,7 @@ class LinePosition
     // (this is NOT checked!)
     inline void append( uint64_t pos )
     {
-        LOG(logDEBUG) << "Next line at " << pos;
+        LOG(logDEBUG2) << "Next line at " << pos;
         if ( fakeFinalLF_ )
             array.pop_back();
 

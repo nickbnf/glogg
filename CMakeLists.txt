@@ -86,7 +86,7 @@ if (${BUILD_TESTS})
 
     add_test(
         NAME klogg_smoke
-        COMMAND klogg -v
+        COMMAND klogg -platform offscreen -v
     )
 
     add_subdirectory(tests)   

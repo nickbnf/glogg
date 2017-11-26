@@ -78,6 +78,11 @@ add_custom_target(installation SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
 )
 
+add_custom_target(docs SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+    ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
+)
+
 add_subdirectory(3rdparty)
 add_subdirectory(src)
 

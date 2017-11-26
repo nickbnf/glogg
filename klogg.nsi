@@ -73,7 +73,7 @@ Section "klogg" klogg
     ; Register as an otion (but not main handler) for some files (.txt, .Log, .cap)
     WriteRegStr HKCR "Applications\klogg.exe" "" ""
     WriteRegStr HKCR "Applications\klogg.exe\shell" "" "open"
-    WriteRegStr HKCR "Applications\klogg.exe\shell\open" "FriendlyAppName" "klogg"
+    WriteRegStr HKCR "Applications\klogg.exe\shell\open" "Klogg log viewer" "klogg"
     WriteRegStr HKCR "Applications\klogg.exe\shell\open\command" "" '"$INSTDIR\klogg.exe" "%1"'
     WriteRegStr HKCR "*\OpenWithList\klogg.exe" "" ""
     WriteRegStr HKCR ".txt\OpenWithList\klogg.exe" "" ""

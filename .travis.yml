@@ -39,7 +39,7 @@ before_script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
  - mkdir build
  - cd build
- - '[ "$TRAVIS_OS_NAME" != osx ] || cmake -DBUILD_NUMBER=TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || cmake -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..'
  - '[ "$TRAVIS_OS_NAME" != linux ] || cmake -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release ..'
 
 script:

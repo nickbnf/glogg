@@ -20,7 +20,6 @@ include(ucm)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
-find_package(Qt5Test REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -94,6 +93,8 @@ if (${BUILD_TESTS})
     add_subdirectory(tests)   
 endif()
 
+# Installation and packaging
+
 install(DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
     DESTINATION share/icons/hicolor/16x16/apps
@@ -118,5 +119,42 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
     DESTINATION share/applications
 )
+
+include(InstallRequiredSystemLibraries)
+
+SET(CPACK_OUTPUT_FILE_PREFIX "packages")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Klogg log viewer")
+SET(CPACK_PACKAGE_VENDOR "Anton Filimonov")
+SET(CPACK_PACKAGE_CONTACT "anton.filimonov@gmail.com")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+SET(CPACK_PACKAGE_VERSION "1.1.3-r${BUILD_NUMBER}")
+SET(CPACK_STRIP_FILES "bin/klogg")
+
+if(UNIX)
+    if(APPLE)
+        set(CPACK_GENERATOR DragNDrop ${CPACK_GENERATOR})
+        set(CPACK_GENERATOR "DragNDrop")
+        set(CPACK_DMG_FORMAT "UDBZ")
+        set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
+        set(CPACK_SYSTEM_NAME "OSX")
+        set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/glogg.icns")
+    else()
+        # linux
+        IF(CPACK_GENERATOR STREQUAL "RPM")
+            set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+            set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase")
+            set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
+        ELSE()
+            set(CPACK_GENERATOR DEB)
+            set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+            set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
+            set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5dbus5, libqt5concurrent5, libqt5widgets5")
+        ENDIF()
+    endif()
+    INCLUDE(CPack)
+endif()
+
+
 
 

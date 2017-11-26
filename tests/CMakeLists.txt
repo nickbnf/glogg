@@ -1,3 +1,5 @@
+find_package(Qt5Test REQUIRED)
+
 # Add test cpp file
 add_executable(glogg_tests
     linepositionarrayTest.cpp

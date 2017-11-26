@@ -8,10 +8,11 @@ matrix:
         artifacts: 
           paths:
             - ./build/output
+            - ./build/packages
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - sourceline: ppa:beineri/opt-qt591-trusty
+            - sourceline: ppa:beineri/opt-qt592-trusty
           packages:
             - gcc-6
             - g++-6
@@ -24,6 +25,7 @@ matrix:
         artifacts: 
           paths:
             - ./build/output
+            - ./build/packages
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'
@@ -37,9 +39,10 @@ before_script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
  - mkdir build
  - cd build
- - '[ "$TRAVIS_OS_NAME" != osx ] || cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..'
- - '[ "$TRAVIS_OS_NAME" != linux ] || cmake -DCMAKE_BUILD_TYPE=Release ..'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || cmake -DBUILD_NUMBER=TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || cmake -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release ..'
 
 script:
  - cmake --build .
  - ctest --verbose
+ - cpack --verbose

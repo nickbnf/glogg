@@ -1,11 +1,12 @@
 if (${PREFER_DBUS_IPC})
+    find_package(DBus)
     find_package(Qt5DBus)
 endif()
 
 add_library(externalcom STATIC 
     "${CMAKE_CURRENT_SOURCE_DIR}/include/externalcom.h")
 
-if (${Qt5DBus_FOUND})
+if (${DBUS_FOUND} AND ${Qt5DBus_FOUND})
     message("Support for D-BUS will be included")
     target_sources(externalcom PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include/dbuscontrol.h"

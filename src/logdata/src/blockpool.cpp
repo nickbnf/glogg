@@ -140,7 +140,7 @@ size_t BlockPoolBase::lastBlockSize() const
 
 void BlockPoolBase::freeLastBlock()
 {
-    if (blockIndex_.empty()) {
+    if ( blockIndex_.empty() ) {
         return;
     }
 

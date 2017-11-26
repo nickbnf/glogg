@@ -21,31 +21,47 @@
 #define FILEWATCHER_H
 
 #include <QObject>
+#include <memory>
 
-// This abstract class defines a way to watch a group of (potentially
-// absent) files for update.
+class EfswFileWatcher;
+struct EfswFileWatcherDeleter
+{
+  void operator()(EfswFileWatcher *p) const;
+};
+
 class FileWatcher : public QObject {
   Q_OBJECT
-
   public:
-    // Create an empty object
-    FileWatcher() {}
-    // Destroy the object
-    virtual ~FileWatcher() {}
+    static FileWatcher& getFileWatcher();
 
     // Adds the file to the list of file to watch
     // (do nothing if a file is already monitored)
-    virtual void addFile( const QString& fileName ) = 0;
+    void addFile( const QString& fileName );
+
     // Removes the file to the list of file to watch
     // (do nothing if said file is not monitored)
-    virtual void removeFile( const QString& fileName ) = 0;
-
-    // Set the polling interval (0 means disabled)
-    virtual void setPollingInterval( uint32_t ) {}
+    void removeFile( const QString& fileName );
 
   signals:
     // Sent when the file on disk has changed in any way.
     void fileChanged( const QString& );
+
+  private slots:
+    void fileChangedOnDisk( const QString& );
+
+  private:
+    // Create an empty object
+    FileWatcher();
+    ~FileWatcher(); // for complete EfswFileWatcher
+
+    FileWatcher(const FileWatcher&) = delete;
+    FileWatcher(FileWatcher&&) = delete;
+
+    FileWatcher& operator =(const FileWatcher&) = delete;
+    FileWatcher& operator =(FileWatcher&&) = delete;
+
+    std::unique_ptr<EfswFileWatcher, EfswFileWatcherDeleter> efswWatcher_;
 };
+
 
 #endif

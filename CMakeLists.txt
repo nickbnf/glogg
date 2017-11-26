@@ -50,7 +50,9 @@ if (WIN32)
     add_definitions(-DNOMINMAX)
 endif()
 
-option(PREFER_PLATFORM_FILEWATCH "Use platform specific filewatch" ON)
+if (MSVC)
+    ucm_add_flags(CXX /O2)
+endif()
 
 option(PERF "Build for performance test" OFF)
 if(${PERF})

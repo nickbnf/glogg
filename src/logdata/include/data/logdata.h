@@ -113,9 +113,6 @@ class LogData : public AbstractLogData {
     // Throw away all the file data and reload/reindex.
     void reload(QTextCodec* forcedEncoding = nullptr);
 
-    // Update the polling interval (in ms, 0 means disabled)
-    void setPollingInterval( uint32_t interval_ms );
-
     // Get the auto-detected encoding for the indexed text.
     QTextCodec* getDetectedEncoding() const;
 
@@ -131,7 +128,7 @@ class LogData : public AbstractLogData {
 
   private slots:
     // Consider reloading the file when it changes on disk updated
-    void fileChangedOnDisk();
+    void fileChangedOnDisk(const QString &filename);
     // Called when the worker thread signals the current operation ended
     void indexingFinished( LoadingStatus status );
 
@@ -186,7 +183,6 @@ class LogData : public AbstractLogData {
         void doStart( LogDataWorkerThread& workerThread ) const override;
     };
 
-    std::shared_ptr<FileWatcher> fileWatcher_;
     MonitoredFileStatus fileChangedOnDisk_;
 
     // Implementation of virtual functions

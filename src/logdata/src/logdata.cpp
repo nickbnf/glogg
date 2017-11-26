@@ -30,13 +30,6 @@
 #include "logdata.h"
 #include "logfiltereddata.h"
 
-#if defined(GLOGG_USES_QTFILEWATCHER)
-#include "qtfilewatcher.h"
-#elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-#include "platformfilewatcher.h"
-#else
-#include "qtfilewatcher.h"
-#endif
 // Implementation of the 'start' functions for each operation
 
 void LogData::AttachOperation::doStart(
@@ -74,18 +67,10 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
 
     codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
-#if defined(GLOGG_USES_QTFILEWATCHER)
-    using FileWatcherT = QtFileWatcher;
-#elif defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
-    using FileWatcherT = PlatformFileWatcher;
-#else
-    using FileWatcherT = QtFileWatcher;
-#endif
-
-    fileWatcher_ = std::make_shared<FileWatcherT>();
     // Initialise the file watcher
-    connect( fileWatcher_.get(), &FileWatcher::fileChanged,
-            [this](auto){ this->fileChangedOnDisk(); } );
+    connect( &FileWatcher::getFileWatcher(), &FileWatcher::fileChanged,
+            this, &LogData::fileChangedOnDisk, Qt::QueuedConnection );
+
     // Forward the update signal
     connect( &workerThread_, &LogDataWorkerThread::indexingProgressed,
             this, &LogData::loadingProgressed );
@@ -100,7 +85,7 @@ LogData::~LogData()
 {
     // Remove the current file from the watch list
     if ( attached_file_ )
-        fileWatcher_->removeFile( attached_file_->fileName() );
+        FileWatcher::getFileWatcher().removeFile( attached_file_->fileName() );
 
     // FIXME
     // workerThread_.stop();
@@ -156,11 +141,6 @@ void LogData::reload(QTextCodec* forcedEncoding)
     enqueueOperation( std::make_shared<FullIndexOperation>(forcedEncoding) );
 }
 
-void LogData::setPollingInterval( uint32_t interval_ms )
-{
-    fileWatcher_->setPollingInterval( interval_ms );
-}
-
 //
 // Private functions
 //
@@ -200,9 +180,9 @@ void LogData::startOperation()
 // Slots
 //
 
-void LogData::fileChangedOnDisk()
+void LogData::fileChangedOnDisk( const QString& filename )
 {
-    LOG(logDEBUG) << "signalFileChanged";
+    LOG(logDEBUG) << "signalFileChanged " << filename.toStdString();
 
     const QString name = attached_file_->fileName();
     QFileInfo info( name );
@@ -244,7 +224,7 @@ void LogData::indexingFinished( LoadingStatus status )
     if ( status == LoadingStatus::Successful ) {
         // Start watching we watch the file for updates
         fileChangedOnDisk_ = Unchanged;
-        fileWatcher_->addFile( attached_file_->fileName() );
+        FileWatcher::getFileWatcher().addFile( attached_file_->fileName() );
 
         // Update the modified date/time if the file exists
         lastModifiedDate_ = QDateTime();

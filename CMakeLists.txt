@@ -19,7 +19,7 @@ elseif(APPLE)
     set(ICON_NAME glogg.icns)
 endif()
 
-if (${ICON_NAME})
+if (NOT ${ICON_NAME} STREQUAL "")
     set(ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ICON_NAME})
 endif()
 

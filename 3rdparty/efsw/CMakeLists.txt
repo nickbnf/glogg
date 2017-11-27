@@ -50,34 +50,34 @@ endif()
 
 if (APPLE)
 	target_sources(efsw PRIVATE 
-			src/efsw/FileWatcherFSEvents.cpp
-			src/efsw/WatcherFSEvents.cpp)
+			src/efsw/FileWatcherKqueue.cpp
+			src/efsw/WatcherKqueue.cpp)
+			
+	target_compile_definitions(efsw PUBLIC -DEFSW_FSEVENTS_NOT_SUPPORTED)
 elseif (WIN32)
 	target_sources(efsw PRIVATE 
 			src/efsw/FileWatcherWin32.cpp
 			src/efsw/WatcherWin32.cpp)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-
 	target_sources(efsw PRIVATE 
 			src/efsw/FileWatcherInotify.cpp
 			src/efsw/WatcherInotify.cpp)
 
 	if (NOT EXISTS "/usr/include/sys/inotify.h" AND NOT EXISTS "/usr/local/include/sys/inotify.h")
-		add_definitions(-DEFSW_INOTIFY_NOSYS)
+		target_compile_definitions(efsw PUBLIC -DEFSW_INOTIFY_NOSYS)
 	endif()	  
 endif()
 
 if (MSVC)
-	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+	target_compile_definitions(efsw PRIVATE -D_SCL_SECURE_NO_WARNINGS)
 else ()
-	add_definitions(-Wall -Wno-long-long)
+	target_compile_definitions(efsw PRIVATE -Wall -Wno-long-long)
 endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-	add_definitions(-DDEBUG)
+	target_compile_definitions(efsw PRIVATE -DDEBUG)
 elseif (${CMAKE_BUILD_TYPE} MATCHES "Release")
-	add_definitions(-DNDEBUG)
+	target_compile_definitions(efsw PRIVATE -DNDEBUG)
 endif()
 
 if (APPLE)

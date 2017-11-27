@@ -71,7 +71,7 @@ endif()
 if (MSVC)
 	target_compile_definitions(efsw PRIVATE -D_SCL_SECURE_NO_WARNINGS)
 else ()
-	target_compile_definitions(efsw PRIVATE -Wall -Wno-long-long)
+        target_compile_options(efsw PRIVATE -Wall -Wno-long-long)
 endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")

@@ -25,8 +25,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if (UNIX)
-    ucm_add_flags(CXX -Wall -Wextra -O2 -g)
-    #ucm_add_flags(CXX -Wshadow -Wnon-virtual-dtor
+    ucm_add_flags(-Wall -Wextra -O2 -g)
+    #ucm_add_flags(-Wshadow -Wnon-virtual-dtor
     #                  -Wno-unused-parameter
     #                  -Wno-unused-variable)
 
@@ -47,10 +47,13 @@ endif()
 
 if (WIN32)
     add_definitions(-DNOMINMAX)
-endif()
-
-if (MSVC)
-    ucm_add_flags(CXX /O2)
+    if(MSVC)
+        ucm_add_flags(/O2 CONFIG Release)
+        ucm_add_linker_flags(EXE "/SUBSYSTEM:WINDOWS" CONFIG Release)       
+    else()
+        ucm_add_flags(-O2 CONFIG Release)
+        ucm_add_linker_flags(EXE "-Wl,-subsystem,windows" CONFIG Release)
+    endif()
 endif()
 
 option(PERF "Build for performance test" OFF)

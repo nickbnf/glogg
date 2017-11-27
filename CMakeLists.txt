@@ -1,21 +1,40 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(klogg)
+project(klogg VERSION 1.1.3)
+
+set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+include(ucm)
+
+set(BUILD_VERSION "" CACHE STRING "build version")
+set(BUILD_NUMBER "" CACHE STRING "build number")
+
+set(COMPANY "Anton Filimonov")
+set(COPYRIGHT "Copyright (c) 2017 Nicolas Bonnefon, Anton Filimonov and other contributors.")
+set(IDENTIFIER "com.github.variar.klogg")
+
+if (WIN32)
+    set(ICON_NAME glogg48.ico)
+elseif(APPLE)
+    set(ICON_NAME glogg.icns)
+endif()
+
+if (${ICON_NAME})
+    set(ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ICON_NAME})
+endif()
+
+include(prepare_version)
 
 set(out_dir "${CMAKE_BINARY_DIR}/output")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${out_dir}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${out_dir}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${out_dir}")
 
-set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-include(ucm)
 
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
@@ -48,11 +67,9 @@ endif()
 if (WIN32)
     add_definitions(-DNOMINMAX)
     if(MSVC)
-        ucm_add_flags(/O2 CONFIG Release)
-        ucm_add_linker_flags(EXE "/SUBSYSTEM:WINDOWS" CONFIG Release)       
+        ucm_add_flags(/O2)
     else()
-        ucm_add_flags(-O2 CONFIG Release)
-        ucm_add_linker_flags(EXE "-Wl,-subsystem,windows" CONFIG Release)
+        ucm_add_flags(-O2)
     endif()
 endif()
 
@@ -60,16 +77,6 @@ option(PERF "Build for performance test" OFF)
 if(${PERF})
     add_definitions(-DGLOGG_PERF_MEASURE_FPS)
 endif()
-
-set(BUILD_VERSION "" CACHE STRING "build version")
-set(BUILD_NUMBER "" CACHE STRING "build number")
-
-include_directories(${CMAKE_BINARY_DIR}/generated)
-
-add_custom_target (generate_version ALL
-    COMMAND ${CMAKE_COMMAND} -DBUILD_VERSION=${BUILD_VERSION} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake
-    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake
-)
 
 add_custom_target(ci_config SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
@@ -79,6 +86,7 @@ add_custom_target(ci_config SOURCES
 add_custom_target(installation SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.nsi
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
 )
 
 add_custom_target(docs SOURCES
@@ -132,21 +140,32 @@ include(InstallRequiredSystemLibraries)
 
 SET(CPACK_OUTPUT_FILE_PREFIX "packages")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Klogg log viewer")
-SET(CPACK_PACKAGE_VENDOR "Anton Filimonov")
+SET(CPACK_PACKAGE_VENDOR ${COMPANY})
 SET(CPACK_PACKAGE_CONTACT "anton.filimonov@gmail.com")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
-SET(CPACK_PACKAGE_VERSION "1.1.3-r${BUILD_NUMBER}")
+SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-r${PROJECT_VERSION_TWEAK}")
 SET(CPACK_STRIP_FILES "bin/klogg")
 
 if(UNIX)
     if(APPLE)
-        set(CPACK_GENERATOR DragNDrop ${CPACK_GENERATOR})
-        set(CPACK_GENERATOR "DragNDrop")
-        set(CPACK_DMG_FORMAT "UDBZ")
-        set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
+        set(CPACK_GENERATOR "Bundle")
         set(CPACK_SYSTEM_NAME "OSX")
-        set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/glogg.icns")
+        set(CPACK_PACKAGE_ICON "")
+
+        # DragNDrop
+        set(CPACK_DMG_FORMAT "UFLO")
+        set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
+
+        # Bundle
+        set(CPACK_BUNDLE_NAME ${PROJECT_NAME})
+        set(CPACK_BUNDLE_PLIST_SOURCE "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in")
+        set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+        set(CPACK_BUNDLE_ICON "${ICON_FILE}")
+
+        configure_file("${CPACK_BUNDLE_PLIST_SOURCE}" "${CPACK_BUNDLE_PLIST}" @ONLY)
+        install(FILES ${CPACK_BUNDLE_PLIST} DESTINATION ../)
+
     else()
         # linux
         IF(CPACK_GENERATOR STREQUAL "RPM")

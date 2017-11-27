@@ -223,7 +223,7 @@ static void print_version()
 {
     cout << "glogg " GLOGG_VERSION "\n";
 #ifdef GLOGG_COMMIT
-    cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "\n";
+    cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "(" GLOGG_GIT_VERSION ")\n";
 #endif
     cout << "Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicolas Bonnefon and other contributors\n";
     cout << "This is free software.  You may redistribute copies of it under the terms of\n";

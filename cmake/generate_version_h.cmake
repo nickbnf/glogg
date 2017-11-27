@@ -30,14 +30,11 @@ STRING(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 
 FILE(WRITE  generated/version.h  "#ifndef VERSION_H\n")
 FILE(APPEND generated/version.h "#define VERSION_H\n\n")
-FILE(APPEND generated/version.h "#define GLOGG_DATE \"${BUILD_DATE}\"\n\n")
 
-if ("${BUILD_VERSION}" STREQUAL "")
-    FILE(APPEND generated/version.h "#define GLOGG_VERSION \"${GIT_DESCRIBE}\"\n\n")
-    FILE(APPEND generated/version.h "#define GLOGG_COMMIT \"${GIT_COMMIT_HASH}\"\n\n")
-else()
-    FILE(APPEND generated/version.h "#define GLOGG_VERSION \"${BUILD_VERSION}\"\n\n")
-endif()
+FILE(APPEND generated/version.h "#define GLOGG_DATE \"${BUILD_DATE}\"\n\n")
+FILE(APPEND generated/version.h "#define GLOGG_GIT_VERSION \"${GIT_DESCRIBE}\"\n\n")
+FILE(APPEND generated/version.h "#define GLOGG_COMMIT \"${GIT_COMMIT_HASH}\"\n\n")
+FILE(APPEND generated/version.h "#define GLOGG_VERSION \"${BUILD_VERSION}\"\n\n")
 
 FILE(APPEND generated/version.h "#endif // VERSION_H\n")
 

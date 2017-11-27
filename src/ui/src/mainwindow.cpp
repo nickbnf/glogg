@@ -908,7 +908,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
     setWindowTitle(
             tr("%1 - %2").arg(shownName, tr("klogg"))
 #ifdef GLOGG_COMMIT
-            + " (dev build " GLOGG_VERSION ")"
+            + " (build " GLOGG_VERSION ")"
 #endif
             );
 }

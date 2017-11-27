@@ -1,5 +1,5 @@
 
-add_executable(klogg  
+add_executable(klogg WIN32
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/glogg.qrc
 

@@ -9,9 +9,12 @@ include(ucm)
 set(BUILD_VERSION "" CACHE STRING "build version")
 set(BUILD_NUMBER "" CACHE STRING "build number")
 
+string(TIMESTAMP PRODUCT_CURRENT_YEAR "%Y")
+
 set(COMPANY "Anton Filimonov")
-set(COPYRIGHT "Copyright (c) 2017 Nicolas Bonnefon, Anton Filimonov and other contributors.")
+set(COPYRIGHT "Copyright (c) ${PRODUCT_CURRENT_YEAR} Nicolas Bonnefon, Anton Filimonov and other contributors.")
 set(IDENTIFIER "com.github.variar.klogg")
+set(PROJECT_DESCRIPTION "${PROJECT_NAME} log viewer")
 
 if (WIN32)
     set(ICON_NAME glogg48.ico)
@@ -111,35 +114,10 @@ endif()
 
 # Installation and packaging
 
-install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
-    DESTINATION share/icons/hicolor/16x16/apps
-)
-
-install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
-    DESTINATION share/icons/hicolor/32x32/apps
-)
-
-install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
-    DESTINATION share/icons/hicolor/scalable/apps
-)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
-    ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-    DESTINATION share/doc/klogg)
-
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
-    DESTINATION share/applications
-)
-
 include(InstallRequiredSystemLibraries)
 
 SET(CPACK_OUTPUT_FILE_PREFIX "packages")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Klogg log viewer")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
 SET(CPACK_PACKAGE_VENDOR ${COMPANY})
 SET(CPACK_PACKAGE_CONTACT "anton.filimonov@gmail.com")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
@@ -148,25 +126,39 @@ SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${P
 SET(CPACK_STRIP_FILES "bin/klogg")
 
 if(UNIX)
-    if(APPLE)
-        set(CPACK_GENERATOR "Bundle")
-        set(CPACK_SYSTEM_NAME "OSX")
-        set(CPACK_PACKAGE_ICON "")
-
-        # DragNDrop
-        set(CPACK_DMG_FORMAT "UFLO")
+    if(APPLE) 
+        set(CPACK_GENERATOR "DragNDrop")
+        set(CPACK_DMG_FORMAT "UDBZ")
         set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
-
-        # Bundle
-        set(CPACK_BUNDLE_NAME ${PROJECT_NAME})
-        set(CPACK_BUNDLE_PLIST_SOURCE "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in")
-        set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
-        set(CPACK_BUNDLE_ICON "${ICON_FILE}")
-
-        configure_file("${CPACK_BUNDLE_PLIST_SOURCE}" "${CPACK_BUNDLE_PLIST}" @ONLY)
-        install(FILES ${CPACK_BUNDLE_PLIST} DESTINATION ../)
-
+        set(CPACK_SYSTEM_NAME "OSX")
+        set(CPACK_PACKAGE_ICON "${ICON_FILE}")
     else()
+
+        install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
+            DESTINATION share/icons/hicolor/16x16/apps
+        )
+
+        install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
+            DESTINATION share/icons/hicolor/32x32/apps
+        )
+
+        install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
+            DESTINATION share/icons/hicolor/scalable/apps
+        )
+
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
+            ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+            DESTINATION share/doc/klogg)
+
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
+            DESTINATION share/applications
+        )
+
         # linux
         IF(CPACK_GENERATOR STREQUAL "RPM")
             set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")

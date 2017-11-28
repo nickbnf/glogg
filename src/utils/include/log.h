@@ -172,7 +172,7 @@ inline std::string NowTime()
             "HH':'mm':'ss", buffer, MAX_LEN) == 0)
         return "Error in NowTime()";
 
-    std::array<char, 100> result = {0};
+    std::array<char, 100> result{};
     static DWORD first = GetTickCount();
     std::snprintf(result.data(), result.size(), "%s.%03ld", buffer, (long)(GetTickCount() - first) % 1000);
     return std::string{ result.data() };
@@ -191,7 +191,7 @@ inline std::string NowTime()
     strftime(buffer, sizeof(buffer), "%T", localtime_r(&t, &r));
     struct timeval tv;
     gettimeofday(&tv, 0);
-    std::array<char, 100> result = {0};
+    std::array<char, 100> result{};
     std::snprintf(result.data(), result.size(), "%s.%03ld", buffer, (long)tv.tv_usec / 1000);
     return std::string{ result.data() };
 }

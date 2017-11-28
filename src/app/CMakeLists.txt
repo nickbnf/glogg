@@ -14,19 +14,21 @@ add_executable(klogg ${OS_BUNDLE}
 set_target_properties(klogg PROPERTIES AUTORCC ON)
 
 target_link_libraries(klogg PUBLIC ui cli11)
+include(win32_rc)
 
 if (WIN32)
-    include(win32_rc)
 
     generate_product_version(
         ProductVersionResourceFiles
-        NAME ${PROJECT_NAME}
+        NAME "${PROJECT_DESCRIPTION}"
+        ORIGINAL_FILENAME ${PROJECT_NAME}
         ICON "${ICON_FILE}"
         VERSION_MAJOR ${PRODUC_VERSION_MAJOR}
         VERSION_MINOR ${PRODUC_VERSION_MINOR}
         VERSION_PATCH ${PRODUC_VERSION_PATCH}
         VERSION_REVISION ${PRODUC_VERSION_TWEAK}
         COMPANY_NAME ${COMPANY}
+        COMPANY_COPYRIGHT ${COPYRIGHT}
     )
 
     target_sources(klogg PRIVATE ${ProductVersionResourceFiles})
@@ -34,6 +36,7 @@ if (WIN32)
 elseif (APPLE)
     set_source_files_properties(${ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
+    set(MACOSX_BUNDLE_BUNDLE_DISPLAY_NAME ${PROJECT_DESCRIPTION})
     set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
     set(MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION})
     set(MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION})

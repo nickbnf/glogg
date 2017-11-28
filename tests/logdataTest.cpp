@@ -11,8 +11,8 @@
 
 #include "gmock/gmock.h"
 
-static const qint64 SL_NB_LINES = 5000LL;
-static const qint64 VBL_NB_LINES = 500000LL;
+static const qint64 SL_NB_LINES = 500LL;
+static const qint64 VBL_NB_LINES = 5000LL;
 
 static const int SL_LINE_PER_PAGE = 70;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
@@ -77,7 +77,7 @@ TEST_F( LogDataChanging, changingFile ) {
     }
 
     // and wait for the signals
-    ASSERT_TRUE( finishedSpy.wait( 1000 ) );
+    ASSERT_TRUE( finishedSpy.wait( 10000 ) );
 
     // Check we have a bigger file
     ASSERT_THAT( changedSpy.count(), 1 );
@@ -98,7 +98,7 @@ TEST_F( LogDataChanging, changingFile ) {
         file.close();
 
         // and wait for the signals
-        ASSERT_TRUE( finishedSpy.wait( 1000 ) );
+        ASSERT_TRUE( finishedSpy.wait( 10000 ) );
 
         // Check we have a bigger file
         ASSERT_GE( changedSpy.count(), 2 );

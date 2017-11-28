@@ -1,0 +1,5 @@
+sudo: false
+os: osx
+
+script:
+- python2 macdeployqtfix.py --help

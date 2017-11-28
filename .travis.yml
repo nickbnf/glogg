@@ -4,21 +4,6 @@ language: cpp
 matrix:
   include:
     - os: linux
-      compiler: clang
-      addons:
-        artifacts:
-          paths:
-            - ./build/output
-            - ./build/packages
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - sourceline: ppa:beineri/opt-qt592-trusty
-          packages:
-            - qt59base
-      env:
-         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
-    - os: linux
       compiler: gcc
       addons:
         artifacts: 
@@ -63,9 +48,6 @@ script:
  - cmake --build .
  - ctest --verbose
  - '[ "$TRAVIS_OS_NAME" != linux ] || cpack --verbose'
- - '[ "$TRAVIS_OS_NAME" != osx   ] || /usr/local/opt/qt5/bin/macdeployqt ./output/klogg.app -always-overwrite -verbose=2'
- - '[ "$TRAVIS_OS_NAME" != osx   ] || curl -o /tmp/macdeployqtfix.py https://raw.githubusercontent.com/aurelien-rainone/macdeployqtfix/master/macdeployqtfix.py'
- - '[ "$TRAVIS_OS_NAME" != osx   ] || python /tmp/macdeployqtfix.py ./output/klogg.app/Contents/MacOS/klogg $(brew --prefix qt5)'
- - '[ "$TRAVIS_OS_NAME" != osx   ] || /usr/local/opt/qt5/bin/macdeployqt ./output/klogg.app -dmg -no-plugins'
- - '[ "$TRAVIS_OS_NAME" != osx   ] || cp -a klogg.dmg packages/klogg-1.1.3-r$TRAVIS_BUILD_NUMBER.dmg'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || ../make_osx_bundle.sh'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || cp -a ./output/klogg.dmg packages/klogg-1.1.3-r$TRAVIS_BUILD_NUMBER.dmg'
 

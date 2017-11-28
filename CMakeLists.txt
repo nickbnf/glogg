@@ -90,6 +90,7 @@ add_custom_target(installation SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.nsi
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/make_osx_bundle.sh
 )
 
 add_custom_target(docs SOURCES

@@ -16,6 +16,8 @@ matrix:
             - sourceline: ppa:beineri/opt-qt592-trusty
           packages:
             - qt59base
+      env:
+         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
     - os: linux
       compiler: gcc
       addons:

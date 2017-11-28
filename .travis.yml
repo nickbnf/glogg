@@ -1,7 +1,23 @@
 language: cpp
 
+
 matrix:
   include:
+    - os: linux
+      compiler: clang
+      addons:
+        artifacts:
+          paths:
+            - ./build/output
+            - ./build/packages
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - sourceline: ppa:beineri/opt-qt592-trusty
+          packages:
+            - qt59base
+      env:
+         - MATRIX_EVAL="CC=clang-3.5 && CXX=clang++-3.5"
     - os: linux
       compiler: gcc
       addons:
@@ -14,10 +30,10 @@ matrix:
             - ubuntu-toolchain-r-test
             - sourceline: ppa:beineri/opt-qt592-trusty
           packages:
-            - gcc-6
             - g++-6
             - qt59base
-      env: GCC_VERSION=6
+      env:
+         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     - os: osx
       compiler: clang
       osx_image: xcode8.3
@@ -29,6 +45,7 @@ matrix:
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || eval "${MATRIX_EVAL}"'
 
 install:
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew ls | grep -wq cmake || brew install cmake'
@@ -36,7 +53,6 @@ install:
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew link qt5 --force'
 
 before_script:
- - '[ "$TRAVIS_OS_NAME" != linux ] || export CXX=g++-$GCC_VERSION CC=gcc-$GCC_VERSION'
  - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
  - mkdir build
  - cd build

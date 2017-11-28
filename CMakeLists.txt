@@ -113,64 +113,54 @@ if (${BUILD_TESTS})
 endif()
 
 # Installation and packaging
+if(UNIX AND NOT APPLE)
+    include(InstallRequiredSystemLibraries)
 
-include(InstallRequiredSystemLibraries)
+    SET(CPACK_OUTPUT_FILE_PREFIX "packages")
+    SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
+    SET(CPACK_PACKAGE_VENDOR ${COMPANY})
+    SET(CPACK_PACKAGE_CONTACT "anton.filimonov@gmail.com")
+    SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+    SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
+    SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-r${PROJECT_VERSION_TWEAK}")
+    SET(CPACK_STRIP_FILES "bin/klogg")
 
-SET(CPACK_OUTPUT_FILE_PREFIX "packages")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
-SET(CPACK_PACKAGE_VENDOR ${COMPANY})
-SET(CPACK_PACKAGE_CONTACT "anton.filimonov@gmail.com")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
-SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-r${PROJECT_VERSION_TWEAK}")
-SET(CPACK_STRIP_FILES "bin/klogg")
+    install(DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
+        DESTINATION share/icons/hicolor/16x16/apps
+    )
 
-if(UNIX)
-    if(APPLE) 
-        set(CPACK_GENERATOR "DragNDrop")
-        set(CPACK_DMG_FORMAT "UDBZ")
-        set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
-        set(CPACK_SYSTEM_NAME "OSX")
-        set(CPACK_PACKAGE_ICON "${ICON_FILE}")
-    else()
+    install(DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
+        DESTINATION share/icons/hicolor/32x32/apps
+    )
 
-        install(DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
-            DESTINATION share/icons/hicolor/16x16/apps
-        )
+    install(DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
+        DESTINATION share/icons/hicolor/scalable/apps
+    )
 
-        install(DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
-            DESTINATION share/icons/hicolor/32x32/apps
-        )
+    install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
+        ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+        DESTINATION share/doc/klogg)
 
-        install(DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
-            DESTINATION share/icons/hicolor/scalable/apps
-        )
+    install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
+        DESTINATION share/applications
+    )
 
-        install(FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
-            ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-            DESTINATION share/doc/klogg)
-
-        install(FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
-            DESTINATION share/applications
-        )
-
-        # linux
-        IF(CPACK_GENERATOR STREQUAL "RPM")
-            set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
-            set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase")
-            set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
-        ELSE()
-            set(CPACK_GENERATOR DEB)
-            set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-            set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
-            set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5dbus5, libqt5concurrent5, libqt5widgets5")
-        ENDIF()
-    endif()
+    # linux
+    IF(CPACK_GENERATOR STREQUAL "RPM")
+        set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase")
+        set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
+    ELSE()
+        set(CPACK_GENERATOR DEB)
+        set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+        set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5dbus5, libqt5concurrent5, libqt5widgets5")
+    ENDIF()
     INCLUDE(CPack)
 endif()
 

@@ -33,6 +33,7 @@ before_install:
 install:
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew ls | grep -wq cmake || brew install cmake'
  - '[ "$TRAVIS_OS_NAME" != osx ] || brew ls | grep -wq qt5 || brew install qt5'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || brew link qt5 --force'
 
 before_script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || export CXX=g++-$GCC_VERSION CC=gcc-$GCC_VERSION'
@@ -45,4 +46,10 @@ before_script:
 script:
  - cmake --build .
  - ctest --verbose
- - cpack --verbose
+ - '[ "$TRAVIS_OS_NAME" != linux ] || cpack --verbose'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || /usr/local/opt/qt5/bin/macdeployqt ./output/klogg.app -always-overwrite -verbose=2'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || curl -o /tmp/macdeployqtfix.py https://raw.githubusercontent.com/aurelien-rainone/macdeployqtfix/master/macdeployqtfix.py'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || python /tmp/macdeployqtfix.py ./output/klogg.app/Contents/MacOS/klogg $(brew --prefix qt5)'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || /usr/local/opt/qt5/bin/macdeployqt ./output/klogg.app -dmg -no-plugins'
+ - '[ "$TRAVIS_OS_NAME" != osx   ] || cp -a klogg.dmg packages/klogg-1.1.3-r$TRAVIS_BUILD_NUMBER.dmg'
+

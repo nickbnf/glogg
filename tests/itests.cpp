@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 
 #include <QApplication>
+#include <QtConcurrent>
 
 #include "persistentinfo.h"
 #include "configuration.h"
@@ -14,10 +15,12 @@ int main(int argc, char *argv[]) {
     GetPersistentInfo().registerPersistable(
      std::make_shared<Configuration>(), QString( "settings" ) );
 
-    int iReturn = RUN_ALL_TESTS();
-    Q_UNUSED(iReturn);
-
-    // qDebug()<<"rcode:"<<iReturn;
+    QtConcurrent::run([&a]()
+    {
+        int result = RUN_ALL_TESTS();
+        a.processEvents();
+        a.exit(result);
+    });
 
     return a.exec();
 }

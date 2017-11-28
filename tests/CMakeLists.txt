@@ -30,3 +30,8 @@ add_test(
     NAME glogg_tests
     COMMAND glogg_tests
 )
+
+add_test(
+    NAME glogg_itests
+    COMMAND glogg_itests
+)

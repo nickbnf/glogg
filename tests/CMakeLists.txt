@@ -33,5 +33,5 @@ add_test(
 
 add_test(
     NAME glogg_itests
-    COMMAND glogg_itests
+    COMMAND glogg_itests -platform offscreen
 )

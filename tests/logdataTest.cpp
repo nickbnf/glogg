@@ -2,6 +2,7 @@
 
 #include <QTest>
 #include <QSignalSpy>
+#include <QTemporaryFile>
 
 #include "log.h"
 #include "test_utils.h"
@@ -10,9 +11,9 @@
 
 #include "gmock/gmock.h"
 
-#define TMPDIR "/tmp"
-
 static const qint64 SL_NB_LINES = 5000LL;
+static const qint64 VBL_NB_LINES = 500000LL;
+
 static const int SL_LINE_PER_PAGE = 70;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 static const int SL_LINE_LENGTH = 83; // Without the final '\n' !
@@ -20,13 +21,28 @@ static const int SL_LINE_LENGTH = 83; // Without the final '\n' !
 static const char* partial_line_begin = "123... beginning of line.";
 static const char* partial_line_end = " end of line 123.\n";
 
+namespace {
+
+void writeDataToFile( QFile& file, int numberOfLines = 200, bool flush = true ) {
+    char newLine[90];
+
+    for (int i = 0; i < numberOfLines; i++) {
+        snprintf(newLine, 89, sl_format, i);
+        file.write( newLine, qstrlen(newLine) );
+    }
+
+    if ( flush ) {
+        file.flush();
+    }
+}
+
+}
+
 
 class LogDataChanging : public testing::Test {
-  public:
 };
 
 TEST_F( LogDataChanging, changingFile ) {
-    char newLine[90];
     LogData log_data;
 
     SafeQSignalSpy finishedSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
@@ -35,43 +51,36 @@ TEST_F( LogDataChanging, changingFile ) {
             SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ) );
 
     // Generate a small file
-    QFile file( TMPDIR "/changingfile.txt" );
-    if ( file.open( QIODevice::WriteOnly ) ) {
-        for (int i = 0; i < 200; i++) {
-            snprintf(newLine, 89, sl_format, i);
-            file.write( newLine, qstrlen(newLine) );
-        }
+    QTemporaryFile file;
+    if ( file.open() ) {
+        writeDataToFile( file );
     }
-    file.close();
 
     // Start loading it
-    log_data.attachFile( TMPDIR "/changingfile.txt" );
+    log_data.attachFile( file.fileName() );
 
     // and wait for the signal
     ASSERT_TRUE( finishedSpy.safeWait() );
 
     // Check we have the small file
-    ASSERT_THAT( finishedSpy.count(), 1 );
+    ASSERT_GE( finishedSpy.count(), 1 );
     ASSERT_THAT( log_data.getNbLine(), 200LL );
     ASSERT_THAT( log_data.getMaxLength(), SL_LINE_LENGTH );
     ASSERT_THAT( log_data.getFileSize(), 200 * (SL_LINE_LENGTH+1LL) );
 
     // Add some data to it
-    if ( file.open( QIODevice::Append ) ) {
-        for (int i = 0; i < 200; i++) {
-            snprintf(newLine, 89, sl_format, i);
-            file.write( newLine, qstrlen(newLine) );
-        }
+    if ( file.open() ) {
+        writeDataToFile( file );
         // To test the edge case when the final line is not complete
         file.write( partial_line_begin, qstrlen( partial_line_begin ) );
+        file.flush();
     }
-    file.close();
 
     // and wait for the signals
     ASSERT_TRUE( finishedSpy.wait( 1000 ) );
 
     // Check we have a bigger file
-    ASSERT_GT( changedSpy.count(), 1 );
+    ASSERT_THAT( changedSpy.count(), 1 );
     ASSERT_THAT( finishedSpy.count(), 2 );
     ASSERT_THAT( log_data.getNbLine(), 401LL );
     ASSERT_THAT( log_data.getMaxLength(), SL_LINE_LENGTH );
@@ -82,12 +91,9 @@ TEST_F( LogDataChanging, changingFile ) {
         SafeQSignalSpy finishedSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
         // Add a couple more lines, including the end of the unfinished one.
-        if ( file.open( QIODevice::Append ) ) {
+        if ( file.open() ) {
             file.write( partial_line_end, qstrlen( partial_line_end ) );
-            for (int i = 0; i < 20; i++) {
-                snprintf(newLine, 89, sl_format, i);
-                file.write( newLine, qstrlen(newLine) );
-            }
+            writeDataToFile( file, 20 );
         }
         file.close();
 
@@ -107,8 +113,7 @@ TEST_F( LogDataChanging, changingFile ) {
         SafeQSignalSpy finishedSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
         // Truncate the file
-        QVERIFY( file.open( QIODevice::WriteOnly ) );
-        file.close();
+        QVERIFY( file.resize( 0 ) );
 
         // and wait for the signals
         ASSERT_TRUE( finishedSpy.safeWait() );
@@ -125,26 +130,18 @@ TEST_F( LogDataChanging, changingFile ) {
 class LogDataBehaviour : public testing::Test {
   public:
     LogDataBehaviour() {
-        generateDataFiles();
+        if ( smallFile_.open() ) {
+           writeDataToFile( smallFile_, SL_NB_LINES );
+        }
+
+        if ( bigFile_.open() ) {
+            writeDataToFile( bigFile_, VBL_NB_LINES );
+        }
     }
 
-    bool generateDataFiles() {
-        char newLine[90];
-
-        QFile file( TMPDIR "/smalllog.txt" );
-        if ( file.open( QIODevice::WriteOnly ) ) {
-            for (int i = 0; i < SL_NB_LINES; i++) {
-                snprintf(newLine, 89, sl_format, i);
-                file.write( newLine, qstrlen(newLine) );
-            }
-        }
-        else {
-            return false;
-        }
-        file.close();
-
-        return true;
-    }
+protected:
+    QTemporaryFile smallFile_;
+    QTemporaryFile bigFile_;
 };
 
 TEST_F( LogDataBehaviour, interruptLoadYieldsAnEmptyFile ) {
@@ -152,7 +149,7 @@ TEST_F( LogDataBehaviour, interruptLoadYieldsAnEmptyFile ) {
     SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
     // Start loading the VBL
-    log_data.attachFile( TMPDIR "/verybiglog.txt" );
+    log_data.attachFile( bigFile_.fileName() );
 
     // Immediately interrupt the loading
     log_data.interruptLoading();
@@ -174,8 +171,8 @@ TEST_F( LogDataBehaviour, cannotBeReAttached ) {
     LogData log_data;
     SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
-    log_data.attachFile( TMPDIR "/smalllog.txt" );
+    log_data.attachFile( smallFile_.fileName() );
     endSpy.safeWait( 10000 );
 
-    ASSERT_THROW( log_data.attachFile( TMPDIR "/verybiglog.txt" ), CantReattachErr );
+    ASSERT_THROW( log_data.attachFile( bigFile_.fileName() ), CantReattachErr );
 }

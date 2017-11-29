@@ -84,13 +84,14 @@ endif()
 add_custom_target(ci_config SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
     ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh
 )
 
 add_custom_target(installation SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.nsi
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/make_osx_bundle.sh
 )
 
 add_custom_target(docs SOURCES
@@ -114,7 +115,7 @@ if (${BUILD_TESTS})
 endif()
 
 # Installation and packaging
-if(UNIX AND NOT APPLE)
+if(UNIX)
     include(InstallRequiredSystemLibraries)
 
     SET(CPACK_OUTPUT_FILE_PREFIX "packages")
@@ -126,42 +127,50 @@ if(UNIX AND NOT APPLE)
     SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-r${PROJECT_VERSION_TWEAK}")
     SET(CPACK_STRIP_FILES "bin/klogg")
 
-    install(DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
-        DESTINATION share/icons/hicolor/16x16/apps
-    )
+    if (APPLE)
+        set(CPACK_GENERATOR "DragNDrop")
+        set(CPACK_DMG_FORMAT "UDBZ")
+        set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
+        set(CPACK_SYSTEM_NAME "OSX")
+        set(CPACK_PACKAGE_ICON "${ICON_FILE}")
+    else()
+        install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
+            DESTINATION share/icons/hicolor/16x16/apps
+        )
 
-    install(DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
-        DESTINATION share/icons/hicolor/32x32/apps
-    )
+        install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
+            DESTINATION share/icons/hicolor/32x32/apps
+        )
 
-    install(DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
-        DESTINATION share/icons/hicolor/scalable/apps
-    )
+        install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
+            DESTINATION share/icons/hicolor/scalable/apps
+        )
 
-    install(FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
-        ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-        DESTINATION share/doc/klogg)
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/COPYING
+            ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+            DESTINATION share/doc/klogg)
 
-    install(FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
-        DESTINATION share/applications
-    )
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
+            DESTINATION share/applications
+        )
 
-    # linux
-    IF(CPACK_GENERATOR STREQUAL "RPM")
-        set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
-        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase")
-        set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
-    ELSE()
-        set(CPACK_GENERATOR DEB)
-        set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-        set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5dbus5, libqt5concurrent5, libqt5widgets5")
-    ENDIF()
+        # linux
+        IF(CPACK_GENERATOR STREQUAL "RPM")
+            set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+            set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase")
+            set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
+        ELSE()
+            set(CPACK_GENERATOR DEB)
+            set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+            set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
+            set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5dbus5, libqt5concurrent5, libqt5widgets5")
+        ENDIF()
+    endif()
     INCLUDE(CPack)
 endif()
 

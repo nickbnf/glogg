@@ -4,9 +4,12 @@
 #include <QLocalSocket>
 #include <QSharedMemory>
 
-#ifdef Q_OS_UNIX
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+#else
     #include <signal.h>
-    #include <unistd.h>
+    #include <unistd.h>  
 #endif
 
 #include "log.h"
@@ -50,7 +53,7 @@ SocketExternalInstance::SocketExternalInstance()
         throw CantCreateExternalErr();
     }
 
-#ifdef Q_OS_UNIX
+#ifndef _WIN32
         // Handle any further termination signals to ensure the
         // QSharedMemory block is deleted even if the process crashes
         setCrashHandler(memory_);
@@ -98,7 +101,7 @@ SocketExternalCommunicator::~SocketExternalCommunicator()
 void SocketExternalCommunicator::startListening()
 {
     if ( memory_->create(sizeof(qint32))) {
-#ifdef Q_OS_UNIX
+#ifndef _WIN32
         // Handle any further termination signals to ensure the
         // QSharedMemory block is deleted even if the process crashes
         setCrashHandler(memory_);

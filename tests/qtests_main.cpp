@@ -6,9 +6,15 @@
 #include "persistentinfo.h"
 #include "configuration.h"
 
+#include <log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 int main(int argc, char *argv[]) {
     QApplication a( argc, argv );
     ::testing::InitGoogleTest(&argc, argv);
+
+    plog::ConsoleAppender<plog::GloggFormatter> appender;
+    plog::init(logINFO, &appender);
 
     // Register the configuration items
     GetPersistentInfo().migrateAndInit();

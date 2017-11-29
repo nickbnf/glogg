@@ -19,8 +19,7 @@ static const int VBL_VISIBLE_LINE_LENGTH = (76+8+4+7); // Without the final '\n'
 class PerfLogData : public testing::Test {
   public:
     PerfLogData() {
-        FILELog::setReportingLevel( logERROR );
-
+        plog::get()->setMaxSeverity( logERROR );
         generateDataFiles();
     }
 

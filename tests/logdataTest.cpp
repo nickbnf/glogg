@@ -63,7 +63,7 @@ TEST_F( LogDataChanging, changingFile ) {
     ASSERT_TRUE( finishedSpy.safeWait() );
 
     // Check we have the small file
-    ASSERT_GE( finishedSpy.count(), 1 );
+    ASSERT_THAT( finishedSpy.count(), 1 );
     ASSERT_THAT( log_data.getNbLine(), 200LL );
     ASSERT_THAT( log_data.getMaxLength(), SL_LINE_LENGTH );
     ASSERT_THAT( log_data.getFileSize(), 200 * (SL_LINE_LENGTH+1LL) );
@@ -80,7 +80,7 @@ TEST_F( LogDataChanging, changingFile ) {
     ASSERT_TRUE( finishedSpy.wait( 10000 ) );
 
     // Check we have a bigger file
-    ASSERT_THAT( changedSpy.count(), 1 );
+    ASSERT_GE( changedSpy.count(), 1 );
     ASSERT_THAT( finishedSpy.count(), 2 );
     ASSERT_THAT( log_data.getNbLine(), 401LL );
     ASSERT_THAT( log_data.getMaxLength(), SL_LINE_LENGTH );

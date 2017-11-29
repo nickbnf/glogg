@@ -3,7 +3,7 @@ find_package(Qt5Test REQUIRED)
 # Add test cpp file
 add_executable(glogg_tests
     linepositionarrayTest.cpp
-    #watchtowerTest.cpp
+    tests_main.cpp
 )
 
 set(TEST_LIBS ui gtest Qt5::Test)
@@ -13,7 +13,7 @@ target_link_libraries(glogg_tests ${TEST_LIBS})
 add_executable(glogg_itests
     logdataTest.cpp
     logfiltereddataTest.cpp
-    itests.cpp
+    qtests_main.cpp
 )
 
 target_link_libraries(glogg_itests ${TEST_LIBS})
@@ -21,7 +21,7 @@ target_link_libraries(glogg_itests ${TEST_LIBS})
 add_executable(glogg_ptests
     logdataPerfTest.cpp
     logfiltereddataPerfTest.cpp
-    itests.cpp
+    qtests_main.cpp
 )
 
 target_link_libraries(glogg_ptests ${TEST_LIBS})

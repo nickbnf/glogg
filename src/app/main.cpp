@@ -50,6 +50,9 @@ using namespace std;
 
 #include "version.h"
 
+#include <plog/Appenders/ColorConsoleAppender.h>
+#include <plog/Appenders/RollingFileAppender.h>
+
 static void print_version();
 
 int main(int argc, char *argv[])
@@ -62,11 +65,9 @@ int main(int argc, char *argv[])
     bool new_session = false;
     bool load_session = false;
     bool multi_instance = false;
-#ifdef _WIN32
     bool log_to_file = false;
-#endif
 
-    TLogLevel logLevel = logWARNING;
+    auto logLevel = logWARNING;
     CLI::App options{ "Klogg -- fast log explorer" };
     try {
         options.add_flag_function( "-v,--version", []( size_t ){ print_version(); exit( 0 ); }, "print version information" );
@@ -75,12 +76,11 @@ int main(int argc, char *argv[])
         options.add_flag( "-s,--load-session", load_session, "load the previous session (default when no file is passed)" );
         options.add_flag( "-n,--new-session", new_session, "do not load the previous session (default when a file is passed)" );
 
-#ifdef _WIN32
-        options.add_flag( "-l,--log", log_to_file, "save the log to a file (Windows only)" );
-#endif
+
+        options.add_flag( "-l,--log", log_to_file, "save the log to a file" );
 
         options.add_flag_function( "-d,--debug",
-                         [ &logLevel ]( size_t count ) { logLevel = static_cast<TLogLevel>( logWARNING + count ); },
+                         [ &logLevel ]( size_t count ) { logLevel = static_cast<decltype(logLevel)>( logWARNING + count ); },
                         "output more debug (include multiple times for more verbosity e.g. -dddd)"
         );
 
@@ -100,17 +100,18 @@ int main(int argc, char *argv[])
         cerr << "Exception of unknown type!\n";
     }
 
-#ifdef _WIN32
-    if ( log_to_file )
-    {
-        char file_name[255];
-        snprintf( file_name, sizeof file_name, "glogg_%lld.log", app.applicationPid() );
-        FILE* file = fopen(file_name, "w");
-        Output2FILE::Stream() = file;
-    }
-#endif
+    std::unique_ptr<plog::IAppender> logAppender;
 
-    FILELog::setReportingLevel( logLevel );
+    if ( log_to_file ) {
+        char file_name[255];
+        snprintf( file_name, sizeof file_name, "klogg_%lld.log", app.applicationPid() );
+        logAppender = std::make_unique<plog::RollingFileAppender<plog::GloggFormatter>>( file_name );
+    }
+    else {
+        logAppender = std::make_unique<plog::ColorConsoleAppender<plog::GloggFormatter>>();
+    }
+
+    plog::init(logLevel, logAppender.get());
 
     for ( auto& filename: filenames ) {
         if ( ! filename.isEmpty() ) {

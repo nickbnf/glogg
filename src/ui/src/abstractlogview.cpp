@@ -1047,13 +1047,11 @@ void AbstractLogView::saveToFile()
 
     const auto totalLines = logData->getNbLine();
     QSaveFile saveFile {filename};
-    saveFile.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text);
+    saveFile.open(QIODevice::WriteOnly|QIODevice::Truncate);
     if ( !saveFile.isOpen() )  {
         LOG(logERROR) << "Failed to open file to save";
         return;
     }
-
-    QTextStream outStream(&saveFile);
 
     QProgressDialog progressDialog;
     progressDialog.setLabelText(QString("Saving content to %1").arg(filename));
@@ -1078,11 +1076,18 @@ void AbstractLogView::saveToFile()
     }
     offsets.emplace_back( lineOffset, totalLines % chunkSize );
 
-    auto writeLines = [this, &outStream, &progressDialog](const std::pair<qint64, int>& offset) {
+    QTextCodec* codec = logData->getDisplayEncoding();
+    if ( !codec ) {
+        codec = QTextCodec::codecForName("utf-8");
+    }
+
+    auto writeLines = [this, &saveFile, &progressDialog, codec](const std::pair<qint64, int>& offset) {
         QStringList lines = logData->getLines( offset.first, offset.second );
-        for ( const auto& l : lines)  {
-            outStream << l << endl;
-            if ( outStream.status() == QTextStream::WriteFailed ) {
+        for ( auto& l : lines)  {
+            l.append(QChar::LineFeed);
+            const auto data = codec->fromUnicode( l );
+            const auto written = saveFile.write( data );
+            if ( written != data.size() ) {
                 LOG(logERROR) << "Saving file write failed";
                 QMetaObject::invokeMethod(&progressDialog, SLOT(cancel() ), Qt::QueuedConnection);
                 return false;
@@ -1100,12 +1105,9 @@ void AbstractLogView::saveToFile()
     QThreadPool::globalInstance()->setMaxThreadCount( QThread::idealThreadCount() );
 
     if ( futureWatcher.isFinished() ) {
-        outStream.flush();
-        if ( outStream.status() == QTextStream::Ok ) {
-            saveFile.commit();
-        } else {
-            LOG(logERROR) << "Saving file write failed";
-        }
+        saveFile.commit();
+    }  else {
+        LOG(logERROR) << "Saving file write failed";
     }
 }
 

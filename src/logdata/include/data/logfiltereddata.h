@@ -134,6 +134,8 @@ class LogFilteredData : public AbstractLogData {
     int doGetMaxLength() const override;
     int doGetLineLength( qint64 line ) const override;
     void doSetDisplayEncoding( const char* encoding ) override;
+    QTextCodec* doGetDisplayEncoding() const override;
+
 
     // List of the matching line numbers
     SearchResultArray matching_lines_;

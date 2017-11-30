@@ -194,6 +194,7 @@ class LogData : public AbstractLogData {
     int doGetMaxLength() const override;
     int doGetLineLength( qint64 line ) const override;
     void doSetDisplayEncoding( const char* encoding ) override;
+    QTextCodec* doGetDisplayEncoding() const override;
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();

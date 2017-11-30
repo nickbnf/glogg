@@ -58,6 +58,8 @@ class AbstractLogData : public QObject {
     // in multiple bytes (e.g. UTF-16)
     void setMultibyteEncodingOffsets( int before_cr, int after_cr );
 
+    QTextCodec* getDisplayEncoding() const;
+
     // Length of a tab stop
     static const int tabStop = 8;
 
@@ -91,6 +93,7 @@ class AbstractLogData : public QObject {
     virtual int doGetLineLength( qint64 line ) const = 0;
     // Internal function called to set the encoding
     virtual void doSetDisplayEncoding( const char* encoding ) = 0;
+    virtual QTextCodec* doGetDisplayEncoding() const = 0;
 
     static inline QString untabify( const QString& line ) {
         QString untabified_line;

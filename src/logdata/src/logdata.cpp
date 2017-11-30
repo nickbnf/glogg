@@ -292,6 +292,11 @@ void LogData::doSetDisplayEncoding( const char* encoding )
     }
 }
 
+QTextCodec* LogData::doGetDisplayEncoding() const
+{
+    return codec_;
+}
+
 QString LogData::doGetLineString( qint64 line ) const
 {
     if ( line >= indexing_data_.getNbLines() ) { return 0; /* exception? */ }

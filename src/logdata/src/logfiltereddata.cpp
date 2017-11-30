@@ -508,6 +508,11 @@ void LogFilteredData::doSetDisplayEncoding( const char* encoding )
     LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
 }
 
+QTextCodec* LogFilteredData::doGetDisplayEncoding() const
+{
+    return sourceLogData_->getDisplayEncoding();
+}
+
 // TODO: We might be a bit smarter and not regenerate the whole thing when
 // e.g. stuff is added at the end of the search.
 void LogFilteredData::regenerateFilteredItemsCache() const

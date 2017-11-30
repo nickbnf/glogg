@@ -25,6 +25,9 @@ void writeDataToFile( QFile& file, int numberOfLines = 200, WriteFileModificatio
 	auto helperProcess = std::make_unique<QProcess>();
 	helperProcess->start( writeHelper, arguments );
 	helperProcess->waitForFinished();
+	const auto output = helperProcess->readAllStandardOutput();
+
+	LOG(logINFO) << QString::fromLatin1(output);
 }
 
 }

@@ -99,7 +99,11 @@ TEST_F( LogDataChanging, changingFile ) {
     // Add some data to it
     if ( file.isOpen() ) {
 		// To test the edge case when the final line is not complete
+#ifdef _WIN32
 		writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
+#else
+		writeDataToFile(file, 200, WriteFileModification::EndWithPartialLineBegin);
+#endif
     }
 
     // and wait for the signals
@@ -120,7 +124,11 @@ TEST_F( LogDataChanging, changingFile ) {
 
         // Add a couple more lines, including the end of the unfinished one.
         if ( file.isOpen() ) {
+#ifdef _WIN32
 			writeDataToFileBackground( file, 20, WriteFileModification::StartWithPartialLineEnd );
+#else
+			writeDataToFile(file, 20, WriteFileModification::StartWithPartialLineEnd);
+#endif
         }
 
         // and wait for the signals

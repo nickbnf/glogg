@@ -26,6 +26,11 @@
 #include <iomanip>
 using namespace std;
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif // _WIN32
+
 #include "persistentinfo.h"
 #include "sessioninfo.h"
 #include "configuration.h"
@@ -80,7 +85,7 @@ int main(int argc, char *argv[])
         options.add_flag( "-l,--log", log_to_file, "save the log to a file" );
 
         options.add_flag_function( "-d,--debug",
-                         [ &logLevel ]( size_t count ) { logLevel = static_cast<decltype(logLevel)>( logWARNING + count ); },
+                         [ &logLevel ]( size_t count ) { logLevel = static_cast<std::decay<decltype(logLevel)>::type>( logWARNING + count ); },
                         "output more debug (include multiple times for more verbosity e.g. -dddd)"
         );
 

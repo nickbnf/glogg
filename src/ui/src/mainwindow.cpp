@@ -273,7 +273,10 @@ void MainWindow::createActions()
         recentFileActions[i] = new QAction(this);
         recentFileActions[i]->setVisible(false);
         connect(recentFileActions[i], &QAction::triggered,
-                [this](auto){ this->openRecentFile(); });
+                [this, action = recentFileActions[i]] (auto) {
+                    this->openRecentFile( action );
+                }
+        );
     }
 
     exitAction = new QAction(tr("E&xit"), this);
@@ -467,11 +470,10 @@ void MainWindow::open()
 }
 
 // Opens a log file from the recent files list
-void MainWindow::openRecentFile()
+void MainWindow::openRecentFile(QAction *recentFileAction)
 {
-    QAction* action = qobject_cast<QAction*>(sender());
-    if (action)
-        loadFile(action->data().toString());
+    if ( recentFileAction )
+        loadFile( recentFileAction->data().toString() );
 }
 
 // Close current tab

@@ -74,7 +74,7 @@ class MainWindow : public QMainWindow
 
   private slots:
     void open();
-    void openRecentFile();
+    void openRecentFile( QAction* recentFileAction );
     void closeTab();
     void closeAll();
     void selectAll();
@@ -170,6 +170,7 @@ class MainWindow : public QMainWindow
     enum { MaxRecentFiles = 5 };
     std::array<QAction*, MaxRecentFiles> recentFileActions;
     std::array<MenuActionToolTipBehavior*, MaxRecentFiles> recentFileActionBehaviors;
+
     QAction *separatorAction;
 
     QMenu *fileMenu;

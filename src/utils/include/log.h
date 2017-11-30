@@ -20,182 +20,41 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
-#include <sstream>
-#include <string>
-#include <cstdio>
-#include <array>
+#include <plog/Log.h>
 
-// Modify here!
-//#define FILELOG_MAX_LEVEL logDEBUG
+#define logINFO plog::info
+#define logWARNING plog::warning
+#define logDEBUG plog::debug
+#define logERROR plog::error
+#define logDEBUG1 plog::verbose
+#define logDEBUG2 plog::verbose
+#define logDEBUG3 plog::verbose
+#define logDEBUG4 plog::verbose
 
-inline std::string NowTime();
-
-enum TLogLevel {logERROR, logWARNING, logINFO, logDEBUG, logDEBUG1, logDEBUG2, logDEBUG3, logDEBUG4};
-
-template <typename T>
-class Log
+namespace plog
 {
-public:
-    Log();
-    virtual ~Log();
-    std::ostringstream& Get(TLogLevel level = logINFO,
-            const std::string& sourceFile = "", int lineNumber = 0);
-public:
-    static TLogLevel ReportingLevel() { return reportingLevel; }
-    static std::string ToString(TLogLevel level);
-    static TLogLevel FromString(const std::string& level);
-    static void setReportingLevel(TLogLevel level) { reportingLevel = level; }
+    class GloggFormatter
+    {
+    public:
+        static util::nstring header()
+        {
+            return util::nstring();
+        }
 
-    template <typename U> friend class Log;
+        static util::nstring format(const Record& record) // This method returns a string from a record.
+        {
+            tm t;
+            util::localtime_s(&t, &record.getTime().time);
 
-protected:
-    std::ostringstream os;
-private:
-    static TLogLevel reportingLevel;
+            util::nstringstream ss;
+            ss << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_hour << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_min << PLOG_NSTR(":") << std::setfill(PLOG_NSTR('0')) << std::setw(2) << t.tm_sec << PLOG_NSTR(".") << std::setfill(PLOG_NSTR('0')) << std::setw(3) << record.getTime().millitm << PLOG_NSTR(" ");
+            ss << std::setfill(PLOG_NSTR(' ')) << std::setw(5) << std::left << severityToString(record.getSeverity()) << PLOG_NSTR(" ");
+            ss << PLOG_NSTR("[") << record.getTid() << PLOG_NSTR("] ");
+            ss << PLOG_NSTR("[") << record.getFunc() << PLOG_NSTR("@") << record.getLine() << PLOG_NSTR("] ");
+            ss << record.getMessage() << PLOG_NSTR("\n");
 
-    Log(const Log&);
-    Log& operator =(const Log&);
-};
-
-template <typename T> TLogLevel Log<T>::reportingLevel = logDEBUG4;
-
-template <typename T>
-Log<T>::Log()
-{
+            return ss.str();
+        }
+    };
 }
-
-template <typename T>
-std::ostringstream& Log<T>::Get(TLogLevel level,
-        const std::string& sourceFile, int lineNumber)
-{
-    os << "- " << NowTime();
-    os << " " << ToString(level);
-    os << " " << sourceFile << ":" << lineNumber << ": ";
-    os << std::string(level > logDEBUG ? level - logDEBUG : 0, '\t');
-    return os;
-}
-
-template <typename T>
-Log<T>::~Log()
-{
-    os << std::endl;
-    T::Output(os.str());
-}
-
-template <typename T>
-std::string Log<T>::ToString(TLogLevel level)
-{
-    static const char* const buffer[] = {"ERROR", "WARNING", "INFO", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"};
-    return buffer[level];
-}
-
-template <typename T>
-TLogLevel Log<T>::FromString(const std::string& level)
-{
-    if (level == "DEBUG4")
-        return logDEBUG4;
-    if (level == "DEBUG3")
-        return logDEBUG3;
-    if (level == "DEBUG2")
-        return logDEBUG2;
-    if (level == "DEBUG1")
-        return logDEBUG1;
-    if (level == "DEBUG")
-        return logDEBUG;
-    if (level == "INFO")
-        return logINFO;
-    if (level == "WARNING")
-        return logWARNING;
-    if (level == "ERROR")
-        return logERROR;
-    Log<T>().Get(logWARNING) << "Unknown logging level '" << level << "'. Using INFO level as default.";
-    return logINFO;
-}
-
-class Output2FILE
-{
-public:
-    static FILE*& Stream();
-    static void Output(const std::string& msg);
-};
-
-inline FILE*& Output2FILE::Stream()
-{
-    static FILE* pStream = stderr;
-    return pStream;
-}
-
-inline void Output2FILE::Output(const std::string& msg)
-{
-    FILE* pStream = Stream();
-    if (!pStream)
-        return;
-    fprintf(pStream, "%s", msg.c_str());
-    fflush(pStream);
-}
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-#   if defined (BUILDING_FILELOG_DLL)
-#       define FILELOG_DECLSPEC   __declspec (dllexport)
-#   elif defined (USING_FILELOG_DLL)
-#       define FILELOG_DECLSPEC   __declspec (dllimport)
-#   else
-#       define FILELOG_DECLSPEC
-#   endif // BUILDING_DBSIMPLE_DLL
-#else
-#   define FILELOG_DECLSPEC
-#endif // _WIN32
-
-//class FILELOG_DECLSPEC FILELog : public Log<Output2FILE> {};
-typedef Log<Output2FILE> FILELog;
-
-#ifndef FILELOG_MAX_LEVEL
-#define FILELOG_MAX_LEVEL logDEBUG
-#endif
-
-#define FILE_LOG(level) \
-    if (level > FILELOG_MAX_LEVEL) ;\
-    else if (level > FILELog::ReportingLevel() || !Output2FILE::Stream()) ; \
-    else FILELog().Get(level, __FILE__, __LINE__)
-
-#define LOG(level) FILE_LOG(level)
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-
-#include <windows.h>
-
-inline std::string NowTime()
-{
-    const int MAX_LEN = 200;
-    char buffer[MAX_LEN];
-    if (GetTimeFormatA(LOCALE_USER_DEFAULT, 0, 0, 
-            "HH':'mm':'ss", buffer, MAX_LEN) == 0)
-        return "Error in NowTime()";
-
-    std::array<char, 100> result{};
-    static DWORD first = GetTickCount();
-    std::snprintf(result.data(), result.size(), "%s.%03ld", buffer, (long)(GetTickCount() - first) % 1000);
-    return std::string{ result.data() };
-}
-
-#else
-
-#include <sys/time.h>
-
-inline std::string NowTime()
-{
-    char buffer[11];
-    time_t t;
-    time(&t);
-    tm r;
-    strftime(buffer, sizeof(buffer), "%T", localtime_r(&t, &r));
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    std::array<char, 100> result{};
-    std::snprintf(result.data(), result.size(), "%s.%03ld", buffer, (long)tv.tv_usec / 1000);
-    return std::string{ result.data() };
-}
-
-#endif //WIN32
-
 #endif //__LOG_H__

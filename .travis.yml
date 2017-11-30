@@ -8,7 +8,6 @@ matrix:
       addons:
         artifacts: 
           paths:
-            - ./build/output
             - ./build/packages
         apt:
           sources:
@@ -28,7 +27,6 @@ matrix:
       addons:
         artifacts: 
           paths:
-            - ./build/output
             - ./build/packages
 
 env:

@@ -52,14 +52,16 @@ const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
 class CrawlerWidgetContext : public ViewContextInterface {
   public:
     // Construct from the stored string representation
-    CrawlerWidgetContext( const QString& string );
+    explicit CrawlerWidgetContext( const QString& string );
     // Construct from the value passsed
     CrawlerWidgetContext( QList<int> sizes,
            bool ignore_case,
-           bool auto_refresh )
+           bool auto_refresh,
+           bool follow_file )
         : sizes_( sizes ),
           ignore_case_( ignore_case ),
-          auto_refresh_( auto_refresh ) {}
+          auto_refresh_( auto_refresh ),
+          follow_file_ ( follow_file ) {}
 
     // Implementation of the ViewContextInterface function
     QString toString() const;
@@ -69,12 +71,14 @@ class CrawlerWidgetContext : public ViewContextInterface {
 
     bool ignoreCase() const { return ignore_case_; }
     bool autoRefresh() const { return auto_refresh_; }
+    bool followFile() const { return follow_file_; }
 
   private:
     QList<int> sizes_;
 
     bool ignore_case_;
     bool auto_refresh_;
+    bool follow_file_;
 };
 
 // Constructor only does trivial construction. The real work is done once
@@ -239,7 +243,7 @@ void CrawlerWidget::doSetViewContext(const QString &view_context )
 {
     LOG(logDEBUG) << "CrawlerWidget::doSetViewContext: " << view_context.toLocal8Bit().data();
 
-    CrawlerWidgetContext context = { view_context };
+    const auto context = CrawlerWidgetContext{ view_context };
 
     setSizes( context.sizes() );
     ignoreCaseCheck->setCheckState( context.ignoreCase() ? Qt::Checked : Qt::Unchecked );
@@ -248,6 +252,8 @@ void CrawlerWidget::doSetViewContext(const QString &view_context )
     searchRefreshCheck->setCheckState( auto_refresh_check_state );
     // Manually call the handler as it is not called when changing the state programmatically
     searchRefreshChangedHandler( auto_refresh_check_state );
+
+    logMainView->followSet( context.followFile() );
 }
 
 std::shared_ptr<const ViewContextInterface>
@@ -256,7 +262,8 @@ CrawlerWidget::doGetViewContext() const
     auto context = std::make_shared<const CrawlerWidgetContext>(
             sizes(),
             ( ignoreCaseCheck->checkState() == Qt::Checked ),
-            ( searchRefreshCheck->checkState() == Qt::Checked ) );
+            ( searchRefreshCheck->checkState() == Qt::Checked ),
+            ( logMainView->isFollowEnabled() ));
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
 }
@@ -1139,13 +1146,26 @@ CrawlerWidgetContext::CrawlerWidgetContext(const QString &string )
         ignore_case_ = false;
         auto_refresh_ = false;
     }
+
+    QRegularExpression follow_regex( "AR(\\d+):FF(\\d+)" );
+    match = follow_regex.match( string );
+    if ( match.hasMatch() ) {
+        follow_file_ = ( match.captured(2).toInt() == 1 );
+
+        LOG(logDEBUG) << "follow_file_: " << follow_file_;
+    }
+    else {
+        LOG(logWARNING) << "Unrecognised follow file " << string.toLocal8Bit().data();
+        follow_file_ = false;
+    }
 }
 
 QString CrawlerWidgetContext::toString() const
 {
-    return QString("S%1:%2IC%3:AR%4").arg(
+    return QString("S%1:%2IC%3:AR%4:FF%5").arg(
                 QString::number(sizes_[0]),
                 QString::number(sizes_[1]),
                 QString::number( static_cast<quint8>( ignore_case_ ) ),
-                QString::number( static_cast<quint8>( auto_refresh_) ) );
+                QString::number( static_cast<quint8>( auto_refresh_ ) ),
+                QString::number( static_cast<quint8>( follow_file_ ) ) );
 }

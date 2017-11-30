@@ -18,16 +18,12 @@ namespace {
 
 void writeDataToFile( QFile& file, int numberOfLines = 200, WriteFileModification flag = WriteFileModification::None ) {
 
-	QString writeHelper = "./file_write_helper";
+	QString writeHelper = QCoreApplication::applicationDirPath() + QDir::separator() + QLatin1Literal("file_write_helper");
 	QStringList arguments;
 	arguments << file.fileName() << QString::number( numberOfLines ) << QString::number( static_cast<uint8_t>( flag ) );
 
-	auto helperProcess = std::make_unique<QProcess>();
-	helperProcess->start( writeHelper, arguments );
-	helperProcess->waitForFinished();
-	const auto output = helperProcess->readAllStandardOutput();
-
-	LOG(logINFO) << QString::fromLatin1(output);
+	const auto result = QProcess::execute(writeHelper, arguments);
+	LOG(logINFO) << "Write helper result " << result;
 }
 
 }

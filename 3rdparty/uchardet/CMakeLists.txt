@@ -1,3 +1,4 @@
+#version 0.0.6
 add_library(uchardet STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/CharDistribution.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/JpCntx.cpp

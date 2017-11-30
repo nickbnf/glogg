@@ -1,6 +1,5 @@
+#version 36ee4ef7e4d0
 cmake_minimum_required(VERSION 3.2)
-
-project (efsw)
 
 option (VERBOSE "Build efsw with verbose mode.")
 option (BUILD_TEST_APP "Build the test app")

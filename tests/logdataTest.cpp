@@ -3,37 +3,28 @@
 #include <QTest>
 #include <QSignalSpy>
 #include <QTemporaryFile>
+#include <QProcess>
 
 #include "log.h"
 #include "test_utils.h"
+#include "file_write_helper.h"
 
 #include "data/logdata.h"
-
-#include "gmock/gmock.h"
 
 static const qint64 SL_NB_LINES = 500LL;
 static const qint64 VBL_NB_LINES = 5000LL;
 
-static const int SL_LINE_PER_PAGE = 70;
-static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
-static const int SL_LINE_LENGTH = 83; // Without the final '\n' !
-
-static const char* partial_line_begin = "123... beginning of line.";
-static const char* partial_line_end = " end of line 123.\n";
-
 namespace {
 
-void writeDataToFile( QFile& file, int numberOfLines = 200, bool flush = true ) {
-    char newLine[90];
+void writeDataToFile( QFile& file, int numberOfLines = 200, WriteFileModification flag = WriteFileModification::None ) {
 
-    for (int i = 0; i < numberOfLines; i++) {
-        snprintf(newLine, 89, sl_format, i);
-        file.write( newLine, qstrlen(newLine) );
-    }
+	QString writeHelper = "./file_write_helper";
+	QStringList arguments;
+	arguments << file.fileName() << QString::number( numberOfLines ) << QString::number( static_cast<uint8_t>( flag ) );
 
-    if ( flush ) {
-        file.flush();
-    }
+	auto helperProcess = std::make_unique<QProcess>();
+	helperProcess->start( writeHelper, arguments );
+	helperProcess->waitForFinished();
 }
 
 }
@@ -70,14 +61,12 @@ TEST_F( LogDataChanging, changingFile ) {
 
     // Add some data to it
     if ( file.open() ) {
-        writeDataToFile( file );
-        // To test the edge case when the final line is not complete
-        file.write( partial_line_begin, qstrlen( partial_line_begin ) );
-        file.flush();
+		// To test the edge case when the final line is not complete
+        writeDataToFile( file, 200, WriteFileModification::EndWithPartialLineBegin );
     }
 
     // and wait for the signals
-    ASSERT_TRUE( finishedSpy.wait( 10000 ) );
+    ASSERT_TRUE( finishedSpy.wait( 20000 ) );
 
     // Check we have a bigger file
     ASSERT_THAT( changedSpy.count(), 1 );
@@ -92,8 +81,7 @@ TEST_F( LogDataChanging, changingFile ) {
 
         // Add a couple more lines, including the end of the unfinished one.
         if ( file.open() ) {
-            file.write( partial_line_end, qstrlen( partial_line_end ) );
-            writeDataToFile( file, 20 );
+			writeDataToFile( file, 20, WriteFileModification::StartWithPartialLineEnd );
         }
         file.close();
 

@@ -10,6 +10,13 @@ set(TEST_LIBS ui gtest Qt5::Test)
 
 target_link_libraries(glogg_tests ${TEST_LIBS})
 
+add_executable(file_write_helper
+	file_write_helper.cpp
+	file_write_helper.h
+)
+
+target_link_libraries(file_write_helper ${TEST_LIBS})
+
 add_executable(glogg_itests
     logdataTest.cpp
     logfiltereddataTest.cpp
@@ -17,6 +24,8 @@ add_executable(glogg_itests
 )
 
 target_link_libraries(glogg_itests ${TEST_LIBS})
+
+add_dependencies(glogg_itests file_write_helper)
 
 add_executable(glogg_ptests
     logdataPerfTest.cpp

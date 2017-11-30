@@ -56,10 +56,12 @@ class CrawlerWidgetContext : public ViewContextInterface {
     // Construct from the value passsed
     CrawlerWidgetContext( QList<int> sizes,
            bool ignore_case,
-           bool auto_refresh )
+           bool auto_refresh,
+           bool follow_mode )
         : sizes_( sizes ),
           ignore_case_( ignore_case ),
-          auto_refresh_( auto_refresh ) {}
+          auto_refresh_( auto_refresh ),
+          follow_mode_( follow_mode ) {}
 
     // Implementation of the ViewContextInterface function
     std::string toString() const;
@@ -69,12 +71,14 @@ class CrawlerWidgetContext : public ViewContextInterface {
 
     bool ignoreCase() const { return ignore_case_; }
     bool autoRefresh() const { return auto_refresh_; }
+    bool followMode() const { return follow_mode_; }
 
   private:
     QList<int> sizes_;
 
     bool ignore_case_;
     bool auto_refresh_;
+    bool follow_mode_;
 };
 
 // Constructor only does trivial construction. The real work is done once
@@ -249,6 +253,8 @@ void CrawlerWidget::doSetViewContext(
     searchRefreshCheck->setCheckState( auto_refresh_check_state );
     // Manually call the handler as it is not called when changing the state programmatically
     searchRefreshChangedHandler( auto_refresh_check_state );
+
+    logMainView->followSet( context.followMode() );
 }
 
 std::shared_ptr<const ViewContextInterface>
@@ -257,7 +263,8 @@ CrawlerWidget::doGetViewContext() const
     auto context = std::make_shared<const CrawlerWidgetContext>(
             sizes(),
             ( ignoreCaseCheck->checkState() == Qt::Checked ),
-            ( searchRefreshCheck->checkState() == Qt::Checked ) );
+            ( searchRefreshCheck->checkState() == Qt::Checked ),
+            logMainView->isFollowEnabled() );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
 }
@@ -1124,15 +1131,25 @@ CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
         ignore_case_ = false;
         auto_refresh_ = false;
     }
+
+    QRegularExpression follow_mode_regex( ":FF(\\d+)" );
+    match = follow_mode_regex.match( string );
+    if ( match.hasMatch() ) {
+        follow_mode_ = ( match.captured(1).toInt() == 1 );
+        LOG(logDEBUG) << "follow_mode_: " << follow_mode_;
+    }
+    else {
+        follow_mode_ = false;
+    }
 }
 
 std::string CrawlerWidgetContext::toString() const
 {
     char string[160];
 
-    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d",
+    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d:FF%d",
             sizes_[0], sizes_[1],
-            ignore_case_, auto_refresh_ );
+            ignore_case_, auto_refresh_, follow_mode_ );
 
     return { string };
 }

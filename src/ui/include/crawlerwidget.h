@@ -301,6 +301,9 @@ class CrawlerWidget : public QSplitter,
     // Is it not the first time we are loading something?
     bool            firstLoadDone_;
 
+	// Saved marked lines to be restored on first load
+	QList<LineNumber> savedMarkedLines_;
+
     // Current number of matches
     int             nbMatches_;
 

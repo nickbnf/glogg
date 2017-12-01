@@ -113,6 +113,11 @@ class Marks {
             internal_iter_-=n ; return *this;
         }
 
+		bool operator<(const const_iterator& other) const
+		{
+			return internal_iter_ < other.internal_iter_;
+		}
+
       private:
         std::vector<Mark>::const_iterator internal_iter_;
     };

@@ -91,6 +91,8 @@ void IndexingData::addAll(qint64 size, int length,
 
 void IndexingData::clear()
 {
+	QMutexLocker locker(&dataMutex_);
+
     maxLength_   = 0;
     indexedSize_ = 0;
     linePosition_ = LinePositionArray();

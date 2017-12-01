@@ -16,4 +16,4 @@ Name=Open With Previous Session
 
 [Desktop Action NewInstance]
 Exec=klogg --multi %F
-Name=Open In A New glogg Window
+Name=Open In A New klogg Window

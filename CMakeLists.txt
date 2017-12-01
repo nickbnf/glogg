@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(klogg VERSION 1.1.3)
+project(klogg VERSION 17.12.0)
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 

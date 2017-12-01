@@ -169,12 +169,16 @@ class LogFilteredData : public AbstractLogData {
 
     using SearchCacheKey = QPair<QRegularExpression, QPair<qint64, qint64>>;
 
-    SearchCacheKey makeCacheKey( const QRegularExpression& regExp, qint64 startLine, qint64 endLine ) {
+    inline SearchCacheKey makeCacheKey( const QRegularExpression& regExp, qint64 startLine, qint64 endLine ) {
       return qMakePair( regExp, qMakePair( startLine, endLine ) );
     }
 
     QHash<SearchCacheKey, CachedSearchResult> searchResultsCache_;
     SearchCacheKey currentSearchKey_;
+
+    inline qint64 getExpectedSearchEnd( const SearchCacheKey& cacheKey ) const {
+        return cacheKey.second.second;
+    }
 
     // Utility functions
     LineNumber findLogDataLine( LineNumber lineNum ) const;

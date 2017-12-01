@@ -35,6 +35,10 @@
 #include "persistentinfo.h"
 #include "configuration.h"
 
+namespace {
+
+}
+
 // Creates an empty set. It must be possible to display it without error.
 // FIXME
 LogFilteredData::LogFilteredData() : AbstractLogData(),
@@ -327,7 +331,8 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
-    if ( progress == 100 ) {
+    if ( progress == 100 && config->useSearchResultsCache()
+         && nbLinesProcessed_ == getExpectedSearchEnd( currentSearchKey_ ) ) {
 
         const auto maxCacheLines = config->searchResultsCacheLines();
 

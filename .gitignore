@@ -35,3 +35,6 @@ build/
 # Qt-specific
 /.moc
 /.qmake.stash
+
+# VS-specific
+/.vs

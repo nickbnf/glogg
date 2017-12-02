@@ -268,6 +268,15 @@ void LogFilteredData::clearMarks()
     maxLengthMarks_ = 0;
 }
 
+QList<LineNumber> LogFilteredData::getMarks() const
+{
+    QList<LineNumber> markedLines;
+    for ( const auto& m : marks_ ) {
+        markedLines.append( m.lineNumber() );
+    }
+    return markedLines;
+}
+
 void LogFilteredData::setVisibility( Visibility visi )
 {
     visibility_ = visi;

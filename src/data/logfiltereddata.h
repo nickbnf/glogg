@@ -105,6 +105,8 @@ class LogFilteredData : public AbstractLogData {
     void deleteMark( qint64 line );
     // Completely clear the marks list.
     void clearMarks();
+    // Get all marked lines
+    QList<LineNumber> getMarks() const;
 
     // Changes what the AbstractLogData returns via its getXLines/getNbLines
     // API.

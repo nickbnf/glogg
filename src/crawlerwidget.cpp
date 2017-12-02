@@ -507,7 +507,7 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
 	}
     else {
         firstLoadDone_ = true;
-        for ( auto m : qAsConst( savedMarkedLines_ ) ) {
+        foreach ( LineNumber m, savedMarkedLines_ ) {
             logFilteredData_->addMark( m );
         }
     }
@@ -1198,8 +1198,8 @@ std::string CrawlerWidgetContext::toString() const
     QVariantMap properies;
 
     QVariantList sizes;
-    for ( const auto& item : qAsConst( sizes_ ) ) {
-        sizes.append( item );
+    foreach ( int size, sizes_ ) {
+        sizes.append( size );
     }
     properies["S"] = sizes;
 
@@ -1208,8 +1208,8 @@ std::string CrawlerWidgetContext::toString() const
     properies["FF"] = follow_file_;
 
     QVariantList marks;
-    for ( const auto& item : qAsConst( marks_ ) ) {
-        marks.append( item );
+    foreach ( LineNumber m, marks_ ) {
+        marks.append( m );
     }
     properies["M"] = marks;
 

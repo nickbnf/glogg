@@ -31,8 +31,8 @@ QuickFindMux::QuickFindMux( std::shared_ptr<QuickFindPattern> pattern ) :
     selector_ = nullptr;
 
     // Forward the pattern's signal to our listeners
-    connect( pattern_.get(), &QuickFindPattern::patternUpdated,
-             this, &QuickFindMux::notifyPatternChanged );
+    connect( pattern_.get(), SIGNAL( patternUpdated() ),
+             this, SLOT( notifyPatternChanged() ) );
 }
 
 //

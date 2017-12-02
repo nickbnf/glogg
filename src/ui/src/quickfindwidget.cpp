@@ -74,28 +74,28 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     setMinimumWidth( minimumSizeHint().width() );
 
     // Behaviour
-    connect( closeButton_, &QToolButton::clicked, this, &QuickFindWidget::closeHandler );
-    connect( editQuickFind_, &QLineEdit::textEdited,
-             [this](auto){ this->textChanged(); } );
-    connect( ignoreCaseCheck_, &QCheckBox::stateChanged,
-             [this](auto){ this->textChanged(); } );
+    connect( closeButton_, SIGNAL( clicked() ), SLOT( closeHandler() ) );
+    connect( editQuickFind_, SIGNAL( textEdited( QString ) ),
+             this, SLOT( textChanged() ) );
+    connect( ignoreCaseCheck_, SIGNAL( stateChanged( int ) ),
+             this, SLOT( textChanged() ) );
     /*
     connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
             SLOT( updateButtons() ) );
     */
 
-    connect( editQuickFind_, &QLineEdit::returnPressed,
-             this, &QuickFindWidget::returnHandler );
-    connect( previousButton_, &QToolButton::clicked,
-            this, &QuickFindWidget::doSearchBackward );
-    connect( nextButton_, &QToolButton::clicked,
-            this, &QuickFindWidget::doSearchForward );
+    connect( editQuickFind_, SIGNAL( returnPressed() ),
+             this, SLOT( returnHandler() ) );
+    connect( previousButton_, SIGNAL( clicked() ),
+            this, SLOT( doSearchBackward() ) );
+    connect( nextButton_, SIGNAL( clicked() ),
+            this, SLOT( doSearchForward() ) );
 
     // Notification timer:
     notificationTimer_ = new QTimer( this );
     notificationTimer_->setSingleShot( true );
-    connect( notificationTimer_, &QTimer::timeout,
-            this, &QuickFindWidget::notificationTimeout );
+    connect( notificationTimer_, SIGNAL( timeout() ),
+            this, SLOT( notificationTimeout() ) );
 }
 
 void QuickFindWidget::userActivate()

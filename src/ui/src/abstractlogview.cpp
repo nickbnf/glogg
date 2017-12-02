@@ -291,16 +291,16 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     createMenu();
 
     // Signals
-    connect( quickFindPattern_, &QuickFindPattern::patternUpdated,
-            this, &AbstractLogView::handlePatternUpdated );
-    connect( &quickFind_, &QuickFind::notify,
-            this, &AbstractLogView::notifyQuickFind );
-    connect( &quickFind_,  &QuickFind::clearNotification,
-            this, &AbstractLogView::clearQuickFindNotification );
-    connect( &followElasticHook_, &ElasticHook::lengthChanged,
-             [this]() { repaint(); } );
-    connect( &followElasticHook_, &ElasticHook::hooked,
-            this, &AbstractLogView::followModeChanged );
+    connect( quickFindPattern_, SIGNAL( patternUpdated() ),
+            this, SLOT ( handlePatternUpdated() ) );
+    connect( &quickFind_, SIGNAL( notify( const QFNotification& ) ),
+            this, SIGNAL( notifyQuickFind( const QFNotification& ) ) );
+    connect( &quickFind_, SIGNAL( clearNotification() ),
+            this, SIGNAL( clearQuickFindNotification() ) );
+    connect( &followElasticHook_, SIGNAL( lengthChanged() ),
+            this, SLOT( repaint() ) );
+    connect( &followElasticHook_, SIGNAL( hooked( bool ) ),
+            this, SIGNAL( followModeChanged( bool ) ) );
 }
 
 AbstractLogView::~AbstractLogView()

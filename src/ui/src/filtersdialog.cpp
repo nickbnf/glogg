@@ -58,16 +58,16 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     // No filter selected by default
     selectedRow_ = -1;
 
-    connect( filterListWidget, &QListWidget::itemSelectionChanged,
-            [this](){ this->updatePropertyFields(); } );
-    connect( patternEdit, &QLineEdit::textEdited,
-            [this](auto){ this->updatePropertyFields(); } );
-    connect( ignoreCaseCheckBox, &QCheckBox::toggled,
-            [this](auto){ this->updatePropertyFields(); } );
-    connect( foreColorBox, QOverload<int>::of(&QComboBox::activated),
-            [this](auto){ this->updatePropertyFields(); } );
-    connect( backColorBox, QOverload<int>::of(&QComboBox::activated),
-            [this](auto){ this->updatePropertyFields(); } );
+    connect( filterListWidget, SIGNAL( itemSelectionChanged() ),
+            this, SLOT( updatePropertyFields() ) );
+    connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
+            this, SLOT( updateFilterProperties() ) );
+    connect( ignoreCaseCheckBox, SIGNAL( toggled(bool) ),
+            this, SLOT( updateFilterProperties() ) );
+    connect( foreColorBox, SIGNAL( activated( int ) ),
+            this, SLOT( updateFilterProperties() ) );
+    connect( backColorBox, SIGNAL( activated( int ) ),
+            this, SLOT( updateFilterProperties() ) );
 
     if ( !filterSet->filterList.empty() ) {
         filterListWidget->setCurrentItem( filterListWidget->item( 0 ) );

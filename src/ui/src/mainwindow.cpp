@@ -140,26 +140,26 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
 
     // Establish the QuickFindWidget and mux ( to send requests from the
     // QFWidget to the right window )
-    connect( &quickFindWidget_, &QuickFindWidget::patternConfirmed,
-             &quickFindMux_, &QuickFindMux::confirmPattern );
-    connect( &quickFindWidget_,  &QuickFindWidget::patternUpdated,
-             &quickFindMux_, &QuickFindMux::setNewPattern );
-    connect( &quickFindWidget_,  &QuickFindWidget::cancelSearch,
-             &quickFindMux_, &QuickFindMux::cancelSearch );
-    connect( &quickFindWidget_,  &QuickFindWidget::searchForward,
-             &quickFindMux_, &QuickFindMux::searchForward );
-    connect( &quickFindWidget_,  &QuickFindWidget::searchBackward,
-             &quickFindMux_, &QuickFindMux::searchBackward );
-    connect( &quickFindWidget_,  &QuickFindWidget::searchNext,
-             &quickFindMux_, &QuickFindMux::searchNext );
+    connect( &quickFindWidget_, SIGNAL( patternConfirmed( const QString&, bool ) ),
+             &quickFindMux_, SLOT( confirmPattern( const QString&, bool ) ) );
+    connect( &quickFindWidget_, SIGNAL( patternUpdated( const QString&, bool ) ),
+             &quickFindMux_, SLOT( setNewPattern( const QString&, bool ) ) );
+    connect( &quickFindWidget_, SIGNAL( cancelSearch() ),
+             &quickFindMux_, SLOT( cancelSearch() ) );
+    connect( &quickFindWidget_, SIGNAL( searchForward() ),
+             &quickFindMux_, SLOT( searchForward() ) );
+    connect( &quickFindWidget_, SIGNAL( searchBackward() ),
+             &quickFindMux_, SLOT( searchBackward() ) );
+    connect( &quickFindWidget_, SIGNAL( searchNext() ),
+             &quickFindMux_, SLOT( searchNext() ) );
 
     // QuickFind changes coming from the views
-    connect( &quickFindMux_, &QuickFindMux::patternChanged,
-             this, &MainWindow::changeQFPattern );
-    connect( &quickFindMux_, &QuickFindMux::notify,
-             &quickFindWidget_, &QuickFindWidget::notify );
-    connect( &quickFindMux_, &QuickFindMux::clearNotification,
-             &quickFindWidget_, &QuickFindWidget::clearNotification );
+    connect( &quickFindMux_, SIGNAL( patternChanged( const QString& ) ),
+             this, SLOT( changeQFPattern( const QString& ) ) );
+    connect( &quickFindMux_, SIGNAL( notify( const QFNotification& ) ),
+             &quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
+    connect( &quickFindMux_, SIGNAL( clearNotification() ),
+             &quickFindWidget_, SLOT( clearNotification() ) );
 
     // Actions from external instances
     connect( externalCommunicator_.get(), &ExternalCommunicator::loadFile,

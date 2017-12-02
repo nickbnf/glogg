@@ -48,19 +48,18 @@ class MarksBehaviour : public testing::Test {
 };
 
 TEST_F( MarksBehaviour, marksIgnoresOutOfLimitLines ) {
-    filtered_data->addMark( -10 );
-    filtered_data->addMark( SL_NB_LINES + 25 );
+    filtered_data->addMark( LineNumber( SL_NB_LINES + 25 ) );
 
     // Check we still have no mark
-    for ( int i = 0; i < SL_NB_LINES; i++ )
+    for ( LineNumber i = 0_lnum; i < LineNumber( SL_NB_LINES ); ++i )
         ASSERT_FALSE( filtered_data->isLineMarked( i ) );
 }
 
 TEST_F( MarksBehaviour, marksAreStored ) {
-    filtered_data->addMark( 10 );
-    filtered_data->addMark( 25 );
+    filtered_data->addMark( 10_lnum );
+    filtered_data->addMark( 25_lnum );
 
     // Check the marks have been put
-    ASSERT_TRUE( filtered_data->isLineMarked( 10 ) );
-    ASSERT_TRUE( filtered_data->isLineMarked( 25 ) );
+    ASSERT_TRUE( filtered_data->isLineMarked( 10_lnum ) );
+    ASSERT_TRUE( filtered_data->isLineMarked( 25_lnum ) );
 }

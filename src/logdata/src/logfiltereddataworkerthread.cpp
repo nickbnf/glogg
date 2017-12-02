@@ -35,25 +35,28 @@ namespace
         PartialSearchResults() : maxLength{} {}
 
         SearchResultArray matchingLines;
-        int maxLength;
+        LineLength maxLength;
     };
 
-    PartialSearchResults filterLines(const QRegularExpression& regex, const QStringList& lines, qint64 chunkStart, size_t proc, size_t procs)
+    PartialSearchResults filterLines(const QRegularExpression& regex,
+                                     const QStringList& lines,
+                                     LineNumber chunkStart,
+                                     int proc, int procs)
     {
         PartialSearchResults results;
-        for (qint64 i = proc; i < lines.size(); i += procs) {
+        for (int i = proc; i < lines.size(); i += procs) {
             const auto& l = lines.at(i);
             if (regex.match(l).hasMatch()) {
                 results.maxLength = qMax(results.maxLength, AbstractLogData::getUntabifiedLength(l));
-                results.matchingLines.emplace_back(chunkStart + i);
+                results.matchingLines.emplace_back(chunkStart + LinesCount(i));
             }
         }
         return results;
     }
 }
 
-void SearchData::getAll( int* length, SearchResultArray* matches,
-        qint64* lines) const
+void SearchData::getAll( LineLength* length, SearchResultArray* matches,
+        LinesCount* lines) const
 {
     QMutexLocker locker( &dataMutex_ );
 
@@ -69,7 +72,7 @@ void SearchData::getAll( int* length, SearchResultArray* matches,
     //*matches = matches_;
 }
 
-void SearchData::setAll( int length,
+void SearchData::setAll( LineLength length,
         SearchResultArray&& matches )
 {
     QMutexLocker locker( &dataMutex_ );
@@ -78,8 +81,8 @@ void SearchData::setAll( int length,
     matches_    = matches;
 }
 
-void SearchData::addAll( int length,
-        const SearchResultArray& matches, LineNumber lines )
+void SearchData::addAll( LineLength length,
+        const SearchResultArray& matches, LinesCount lines )
 {
     QMutexLocker locker( &dataMutex_ );
 
@@ -92,11 +95,11 @@ void SearchData::addAll( int length,
             std::begin( matches ), std::end( matches ) );
 }
 
-LineNumber SearchData::getNbMatches() const
+LinesCount SearchData::getNbMatches() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    return matches_.size();
+    return LinesCount( static_cast<LinesCount::UnderlyingType> ( matches_.size() ) );
 }
 
 // This function starts searching from the end since we use it
@@ -108,7 +111,7 @@ void SearchData::deleteMatch( LineNumber line )
     SearchResultArray::iterator i = matches_.end();
     while ( i != matches_.begin() ) {
         i--;
-        const LineNumber this_line = i->lineNumber();
+        const auto this_line = i->lineNumber();
         if ( this_line == line ) {
             matches_.erase(i);
             break;
@@ -123,8 +126,8 @@ void SearchData::clear()
 {
     QMutexLocker locker( &dataMutex_ );
 
-    maxLength_        = 0;
-    nbLinesProcessed_ = 0;
+    maxLength_        = LineLength(0);
+    nbLinesProcessed_ = LinesCount(0);
     matches_.clear();
 }
 
@@ -147,7 +150,7 @@ LogFilteredDataWorkerThread::~LogFilteredDataWorkerThread()
 }
 
 void LogFilteredDataWorkerThread::search(const QRegularExpression& regExp,
-                                         qint64 startLine, qint64 endLine)
+                                         LineNumber startLine, LineNumber endLine)
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -163,7 +166,8 @@ void LogFilteredDataWorkerThread::search(const QRegularExpression& regExp,
     operationRequestedCond_.wakeAll();
 }
 
-void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp, qint64 startLine, qint64 endLine, qint64 position )
+void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp,
+                                               LineNumber startLine, LineNumber endLine, LineNumber position )
 {
     QMutexLocker locker( &mutex_ );  // to protect operationRequested_
 
@@ -195,7 +199,7 @@ void LogFilteredDataWorkerThread::interrupt()
 
 // This will do an atomic copy of the object
 void LogFilteredDataWorkerThread::getSearchResult(
-        int* maxLength, SearchResultArray* searchMatches, qint64* nbLinesProcessed )
+        LineLength* maxLength, SearchResultArray* searchMatches, LinesCount* nbLinesProcessed )
 {
     searchData_.getAll( maxLength, searchMatches, nbLinesProcessed );
 }
@@ -237,7 +241,7 @@ void LogFilteredDataWorkerThread::run()
 
 SearchOperation::SearchOperation( const LogData* sourceLogData,
         const QRegularExpression& regExp,
-        qint64 startLine, qint64 endLine,
+        LineNumber startLine, LineNumber endLine,
         AtomicFlag* interruptRequest )
     : regexp_( regExp ), sourceLogData_( sourceLogData ), startLine_(startLine), endLine_(endLine)
 
@@ -245,14 +249,14 @@ SearchOperation::SearchOperation( const LogData* sourceLogData,
     interruptRequested_ = interruptRequest;
 }
 
-void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
+void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
     static std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
 
-    const qint64 nbSourceLines = sourceLogData_->getNbLine();
-    int maxLength = 0;
-    int nbMatches = searchData.getNbMatches();
+    const auto nbSourceLines = sourceLogData_->getNbLine();
+    LineLength maxLength = 0_length;
+    LinesCount nbMatches = searchData.getNbMatches();
     SearchResultArray currentList;
 
     std::vector<QRegularExpression> regexp;
@@ -263,10 +267,10 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
         }
     }
 
-    const int nbLinesInChunk = config->searchReadBufferSizeLines();
+    const auto nbLinesInChunk = LinesCount(config->searchReadBufferSizeLines());
 
     // Ensure no re-alloc will be done
-    currentList.reserve( nbLinesInChunk );
+    currentList.reserve( nbLinesInChunk.get() );
 
     LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
@@ -274,25 +278,26 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
         initialLine = startLine_;
     }
 
-    const qint64 endLine = qMin(nbSourceLines, endLine_);
+    const auto endLine = qMin( LineNumber( nbSourceLines.get() ), endLine_ );
 
-    for ( qint64 chunkStart = initialLine; chunkStart < endLine; chunkStart += nbLinesInChunk ) {
+    for ( auto chunkStart = initialLine; chunkStart < endLine; chunkStart = chunkStart + nbLinesInChunk ) {
         if ( *interruptRequested_ )
             break;
 
-        const int percentage = ( chunkStart - initialLine ) * 100 / ( endLine - initialLine );
+        const int percentage = ( chunkStart - initialLine ).get() * 100 / ( endLine - initialLine ).get();
         emit searchProgressed( nbMatches, percentage );
 
-        const int linesInChunk = qMin( nbLinesInChunk, (int) ( endLine - chunkStart ) );
-        const QStringList lines = sourceLogData_->getLines( chunkStart, linesInChunk );
+        const auto linesInChunk = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
+        const auto lines = sourceLogData_->getLines( chunkStart, linesInChunk );
 
         LOG(logDEBUG) << "Chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
 
-        if (regexp.size() > 0) {
+        if ( regexp.size() > 0 ) {
             std::vector<QFuture<PartialSearchResults>> partialResults;
-            for (auto i=0u; i<regexp.size(); ++i) {
-                partialResults.push_back(QtConcurrent::run(filterLines, regexp[i], lines, chunkStart, i, regexp.size()));
+            for ( auto i=0; i < static_cast<int>( regexp.size() ); ++i ) {
+                partialResults.push_back(QtConcurrent::run( filterLines, regexp[i], lines,
+                                                           chunkStart, i, static_cast<int>( regexp.size() ) ) );
             }
 
             for (auto& f: partialResults) {
@@ -300,20 +305,20 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
                 auto result = f.result();
                 currentList.insert(currentList.end(), result.matchingLines.begin(), result.matchingLines.end());
                 maxLength = qMax(maxLength, f.result().maxLength);
-                nbMatches += f.result().matchingLines.size();
+                nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( f.result().matchingLines.size() ) );
             }
             std::sort(currentList.begin(), currentList.end());
         }
         else {
             auto matchResults = filterLines(regexp_, lines, chunkStart, 0, 1);
-            currentList = std::move(matchResults.matchingLines);
-            maxLength = qMax(maxLength, matchResults.maxLength);
-            nbMatches += currentList.size();
+            currentList = std::move( matchResults.matchingLines );
+            maxLength = qMax( maxLength, matchResults.maxLength );
+            nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( currentList.size() ) );
         }
 
         // After each block, copy the data to shared data
         // and update the client
-        searchData.addAll( maxLength, currentList, chunkStart + linesInChunk );
+        searchData.addAll( maxLength, currentList, LinesCount( chunkStart.get() ) + linesInChunk );
         currentList.clear();
     }
 
@@ -326,15 +331,15 @@ void FullSearchOperation::start( SearchData& searchData )
     // Clear the shared data
     searchData.clear();
 
-    doSearch( searchData, 0 );
+    doSearch( searchData, 0_lnum );
 }
 
 // Called in the worker thread's context
 void UpdateSearchOperation::start( SearchData& searchData )
 {
-    qint64 initial_line = initialPosition_;
+    auto initial_line = initialPosition_;
 
-    if ( initial_line >= 1 ) {
+    if ( initial_line.get() >= 1 ) {
         // We need to re-search the last line because it might have
         // been updated (if it was not LF-terminated)
         --initial_line;

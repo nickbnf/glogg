@@ -64,6 +64,10 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
+    qRegisterMetaType<LinesCount>( "LinesCount" );
+    qRegisterMetaType<LineNumber>( "LineNumber" );
+    qRegisterMetaType<LineLength>( "LineLength" );
+
     vector<QString> filenames;
 
     // Configuration

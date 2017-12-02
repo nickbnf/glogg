@@ -42,7 +42,7 @@ class LogMainView : public AbstractLogView
 
   protected:
     // Implements the virtual function
-    virtual LineType lineType( int lineNumber ) const;
+    virtual LineType lineType( LineNumber lineNumber ) const;
 
     virtual void keyPressEvent( QKeyEvent* keyEvent );
 

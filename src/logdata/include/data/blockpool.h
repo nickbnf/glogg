@@ -50,13 +50,13 @@ public:
     BlockPool() : BlockPoolBase( sizeof( ElementType ), alignof( ElementType ) )
     {}
 
-    uint32_t get_block( size_t block_elements_count, ElementType initial_position, ptrdiff_t* block_ptr )
+    uint32_t get_block( size_t block_elements_count, ElementType initial_position, uint64_t* next_offset )
     {
         auto ptr = getBlock( block_elements_count );
         if ( ptr ) {
             *( reinterpret_cast<ElementType*>( ptr ) ) = initial_position;
-            if ( block_ptr ) {
-                *block_ptr = sizeof( ElementType );
+            if ( next_offset ) {
+                *next_offset = sizeof( ElementType );
             }
         }
 

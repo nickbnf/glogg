@@ -29,32 +29,28 @@
 
 Selection::Selection()
 {
-    selectedLine_ = -1;
-
-    selectedPartial_.line        = -1;
     selectedPartial_.startColumn = 0;
     selectedPartial_.endColumn   = 0;
 
-    selectedRange_.startLine = -1;
-    selectedRange_.endLine   = 0;
+    selectedRange_.endLine   = 0_lnum;
 }
 
-void Selection::selectPortion( int line, int start_column, int end_column )
+void Selection::selectPortion( LineNumber line, int start_column, int end_column )
 {
     // First unselect any whole line or range
-    selectedLine_ = -1;
-    selectedRange_.startLine = -1;
+    selectedLine_ = {};
+    selectedRange_.startLine = {};
 
     selectedPartial_.line = line;
     selectedPartial_.startColumn = qMin ( start_column, end_column );
     selectedPartial_.endColumn   = qMax ( start_column, end_column );
 }
 
-void Selection::selectRange( int start_line, int end_line )
+void Selection::selectRange( LineNumber start_line, LineNumber end_line )
 {
     // First unselect any whole line and portion
-    selectedLine_ = -1;
-    selectedPartial_.line = -1;
+    selectedLine_ = {};
+    selectedPartial_.line = {};
 
     selectedRange_.startLine = qMin ( start_line, end_line );
     selectedRange_.endLine   = qMax ( start_line, end_line );
@@ -62,40 +58,40 @@ void Selection::selectRange( int start_line, int end_line )
     selectedRange_.firstLine = start_line;
 }
 
-void Selection::selectRangeFromPrevious( int line )
+void Selection::selectRangeFromPrevious( LineNumber line )
 {
-    int previous_line;
+    LineNumber previous_line;
 
-    if ( selectedLine_ >= 0 )
-        previous_line = selectedLine_;
-    else if ( selectedRange_.startLine >= 0 )
+    if ( selectedLine_.has_value() )
+        previous_line = *selectedLine_;
+    else if ( selectedRange_.startLine.has_value() )
         previous_line = selectedRange_.firstLine;
-    else if ( selectedPartial_.line >= 0 )
-        previous_line = selectedPartial_.line;
+    else if ( selectedPartial_.line.has_value() )
+        previous_line = *selectedPartial_.line;
     else
-        previous_line = 0;
+        previous_line = 0_lnum;
 
     selectRange( previous_line, line );
 }
 
-void Selection::crop( int last_line )
+void Selection::crop( LineNumber last_line )
 {
-    if ( selectedLine_ > last_line )
-        selectedLine_ = -1;
+    if ( selectedLine_.has_value() &&  *selectedLine_ > last_line )
+        selectedLine_ = {};
 
-    if ( selectedPartial_.line > last_line )
-        selectedPartial_.line = -1;
+    if ( selectedPartial_.line.has_value() && *selectedPartial_.line > last_line )
+        selectedPartial_.line = {};
 
     if ( selectedRange_.endLine > last_line )
         selectedRange_.endLine = last_line;
 
-    if ( selectedRange_.startLine > last_line )
+    if ( selectedRange_.startLine.has_value() && *selectedRange_.startLine > last_line )
         selectedRange_.startLine = last_line;
-};
+}
 
-bool Selection::getPortionForLine( int line, int* start_column, int* end_column ) const
+bool Selection::getPortionForLine( LineNumber line, int* start_column, int* end_column ) const
 {
-    if ( selectedPartial_.line == line ) {
+    if ( selectedPartial_.line.has_value() && *selectedPartial_.line == line ) {
         *start_column = selectedPartial_.startColumn;
         *end_column   = selectedPartial_.endColumn;
 
@@ -106,35 +102,35 @@ bool Selection::getPortionForLine( int line, int* start_column, int* end_column 
     }
 }
 
-bool Selection::isLineSelected( int line ) const
+bool Selection::isLineSelected( LineNumber line ) const
 {
-    if ( line == selectedLine_ )
+    if ( selectedLine_.has_value()  && line == *selectedLine_ )
         return true;
-    else if ( selectedRange_.startLine >= 0 )
-        return ( ( line >= selectedRange_.startLine )
+    else if ( selectedRange_.startLine.has_value() )
+        return ( ( line >= *selectedRange_.startLine )
                 && ( line <= selectedRange_.endLine ) );
     else
         return false;
 }
 
-qint64 Selection::selectedLine() const
+OptionalLineNumber Selection::selectedLine() const
 {
     return selectedLine_;
 }
 
-std::vector<int> Selection::getLines() const
+std::vector<LineNumber> Selection::getLines() const
 {
-    std::vector<int> selection;
+    std::vector<LineNumber> selection;
 
-    if ( selectedLine_ >= 0 ) {
-        selection.push_back( selectedLine_ );
+    if ( selectedLine_.has_value() ) {
+        selection.push_back( *selectedLine_ );
     }
-    else if ( selectedPartial_.line >= 0 ) {
-        selection.push_back( selectedPartial_.line );
+    else if ( selectedPartial_.line.has_value() ) {
+        selection.push_back( *selectedPartial_.line );
     }
-    else if ( selectedRange_.startLine >= 0 ) {
-        selection.reserve( selectedRange_.endLine - selectedRange_.startLine + 1 );
-        for ( int i = selectedRange_.startLine; i <= selectedRange_.endLine; i++ )
+    else if ( selectedRange_.startLine.has_value() ) {
+        selection.reserve( selectedRange_.endLine.get() - selectedRange_.startLine->get() + 1 );
+        for ( auto i = *selectedRange_.startLine; i <= selectedRange_.endLine; ++i )
             selection.push_back( i );
     }
 
@@ -147,18 +143,18 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
 {
     QString text;
 
-    if ( selectedLine_ >= 0 ) {
-        text = logData->getLineString( selectedLine_ );
+    if ( selectedLine_.has_value() ) {
+        text = logData->getLineString( *selectedLine_ );
     }
-    else if ( selectedPartial_.line >= 0 ) {
-        text = logData->getExpandedLineString( selectedPartial_.line ).
+    else if ( selectedPartial_.line.has_value() ) {
+        text = logData->getExpandedLineString( *selectedPartial_.line ).
             mid( selectedPartial_.startColumn, ( selectedPartial_.endColumn -
                         selectedPartial_.startColumn ) + 1 );
     }
-    else if ( selectedRange_.startLine >= 0 ) {
-        QStringList list = logData->getLines( selectedRange_.startLine,
-                selectedRange_.endLine - selectedRange_.startLine + 1 );
-        text = list.join( "\n" );
+    else if ( selectedRange_.startLine.has_value() ) {
+        QStringList list = logData->getLines( *selectedRange_.startLine,
+                LinesCount( selectedRange_.endLine.get() - selectedRange_.startLine->get() + 1 ) );
+        text = list.join( QChar::LineFeed );
     }
 
     return text;
@@ -166,17 +162,17 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
 
 FilePosition Selection::getNextPosition() const
 {
-    qint64 line = 0;
+    LineNumber line;
     int column = 0;
 
-    if ( selectedLine_ >= 0 ) {
-        line = selectedLine_ + 1;
+    if ( selectedLine_.has_value() ) {
+        line = *selectedLine_ + 1_lcount;
     }
-    else if ( selectedRange_.startLine >= 0 ) {
-        line = selectedRange_.endLine + 1;
+    else if ( selectedRange_.startLine.has_value() ) {
+        line = selectedRange_.endLine + 1_lcount;
     }
-    else if ( selectedPartial_.line >= 0 ) {
-        line   = selectedPartial_.line;
+    else if ( selectedPartial_.line.has_value() ) {
+        line   = *selectedPartial_.line;
         column = selectedPartial_.endColumn + 1;
     }
 
@@ -185,17 +181,17 @@ FilePosition Selection::getNextPosition() const
 
 FilePosition Selection::getPreviousPosition() const
 {
-    qint64 line = 0;
+    LineNumber line;
     int column = 0;
 
-    if ( selectedLine_ >= 0 ) {
-        line = selectedLine_;
+    if ( selectedLine_.has_value() ) {
+        line = *selectedLine_;
     }
-    else if ( selectedRange_.startLine >= 0 ) {
-        line = selectedRange_.startLine;
+    else if ( selectedRange_.startLine.has_value() ) {
+        line = *selectedRange_.startLine;
     }
-    else if ( selectedPartial_.line >= 0 ) {
-        line   = selectedPartial_.line;
+    else if ( selectedPartial_.line.has_value() ) {
+        line   = *selectedPartial_.line;
         column = qMax( selectedPartial_.startColumn - 1, 0 );
     }
 

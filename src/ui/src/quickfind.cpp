@@ -52,10 +52,10 @@ void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
     startTime_ = QTime::currentTime().addMSecs( -800 );
 }
 
-void QuickFind::LastMatchPosition::set( int line, int column )
+void QuickFind::LastMatchPosition::set( LineNumber line, int column )
 {
-    if ( ( line_ == -1 ) ||
-            ( ( line <= line_ ) && ( column < column_ ) ) )
+    if ( ( !line_.has_value() ) ||
+            ( ( line <= *line_ ) && ( column < column_ ) ) )
     {
         line_ = line;
         column_ = column;
@@ -67,13 +67,13 @@ void QuickFind::LastMatchPosition::set( const FilePosition &position )
     set( position.line(), position.column() );
 }
 
-bool QuickFind::LastMatchPosition::isLater( int line, int column ) const
+bool QuickFind::LastMatchPosition::isLater( OptionalLineNumber line, int column ) const
 {
-    if ( line_ == -1 )
+    if ( !line_.has_value() || !line.has_value()  )
         return false;
-    else if ( ( line == line_ ) && ( column >= column_ ) )
+    else if ( ( *line == *line_ ) && ( column >= column_ ) )
         return true;
-    else if ( line > line_ )
+    else if ( *line > *line_ )
         return true;
     else
         return false;
@@ -84,13 +84,13 @@ bool QuickFind::LastMatchPosition::isLater( const FilePosition &position ) const
     return isLater( position.line(), position.column() );
 }
 
-bool QuickFind::LastMatchPosition::isSooner( int line, int column ) const
+bool QuickFind::LastMatchPosition::isSooner( OptionalLineNumber line, int column ) const
 {
-    if ( line_ == -1 )
+    if ( !line_.has_value() || !line.has_value() )
         return false;
-    else if ( ( line == line_ ) && ( column <= column_ ) )
+    else if ( ( *line == *line_ ) && ( column <= column_ ) )
         return true;
-    else if ( line < line_ )
+    else if ( *line < *line_ )
         return true;
     else
         return false;
@@ -135,7 +135,7 @@ void QuickFind::incrementalSearchAbort()
     }
 }
 
-qint64 QuickFind::incrementallySearchForward()
+OptionalLineNumber QuickFind::incrementallySearchForward()
 {
     LOG( logDEBUG ) << "QuickFind::incrementallySearchForward";
 
@@ -156,9 +156,9 @@ qint64 QuickFind::incrementallySearchForward()
                 *selection_ );
     }
 
-    qint64 line_found = doSearchForward( start_position );
+    const auto line_found = doSearchForward( start_position );
 
-    if ( line_found >= 0 ) {
+    if ( line_found ) {
         // We have found a result...
         // ... the caller will jump to this line.
         return line_found;
@@ -171,7 +171,7 @@ qint64 QuickFind::incrementallySearchForward()
     }
 }
 
-qint64 QuickFind::incrementallySearchBackward()
+OptionalLineNumber QuickFind::incrementallySearchBackward()
 {
     LOG( logDEBUG ) << "QuickFind::incrementallySearchBackward";
 
@@ -192,9 +192,9 @@ qint64 QuickFind::incrementallySearchBackward()
                 *selection_ );
     }
 
-    qint64 line_found = doSearchBackward( start_position );
+    const auto line_found = doSearchBackward( start_position );
 
-    if ( line_found >= 0 ) {
+    if ( line_found ) {
         // We have found a result...
         // ... the caller will jump to this line.
         return line_found;
@@ -207,7 +207,7 @@ qint64 QuickFind::incrementallySearchBackward()
     }
 }
 
-qint64 QuickFind::searchForward()
+OptionalLineNumber QuickFind::searchForward()
 {
     incrementalSearchStatus_ = IncrementalSearchStatus();
 
@@ -218,7 +218,7 @@ qint64 QuickFind::searchForward()
 }
 
 
-qint64 QuickFind::searchBackward()
+OptionalLineNumber QuickFind::searchBackward()
 {
     incrementalSearchStatus_ = IncrementalSearchStatus();
 
@@ -231,14 +231,14 @@ qint64 QuickFind::searchBackward()
 // Internal implementation of forward search,
 // returns the line where the pattern is found or -1 if not found.
 // Parameters are the position the search shall start
-qint64 QuickFind::doSearchForward( const FilePosition &start_position )
+OptionalLineNumber QuickFind::doSearchForward( const FilePosition &start_position )
 {
     bool found = false;
     int found_start_col;
     int found_end_col;
 
     if ( ! quickFindPattern_->isActive() )
-        return -1;
+        return {};
 
     // Optimisation: if we are already after the last match,
     // we don't do any search at all.
@@ -246,10 +246,10 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
         // Send a notification
         emit notify( QFNotificationReachedEndOfFile() );
 
-        return -1;
+        return {};
     }
 
-    qint64 line = start_position.line();
+    auto line = start_position.line();
     LOG( logDEBUG ) << "Start searching at line " << line;
     // We look at the rest of the first line
     if ( quickFindPattern_->isLineMatching(
@@ -261,8 +261,8 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
     else {
         searchingNotifier_.reset();
         // And then the rest of the file
-        qint64 nb_lines = logData_->getNbLine();
-        line++;
+        const auto nb_lines = logData_->getNbLine();
+        ++line;
         while ( line < nb_lines ) {
             if ( quickFindPattern_->isLineMatching(
                         logData_->getExpandedLineString( line ) ) ) {
@@ -271,10 +271,10 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
                 found = true;
                 break;
             }
-            line++;
+            ++line;
 
             // See if we need to notify of the ongoing search
-            searchingNotifier_.ping( line, nb_lines );
+            searchingNotifier_.ping( line.get(), nb_lines.get() );
         }
     }
 
@@ -295,21 +295,21 @@ qint64 QuickFind::doSearchForward( const FilePosition &start_position )
         // Send a notification
         emit notify( QFNotificationReachedEndOfFile() );
 
-        return -1;
+        return {};
     }
 }
 
 // Internal implementation of backward search,
 // returns the line where the pattern is found or -1 if not found.
 // Parameters are the position the search shall start
-qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
+OptionalLineNumber QuickFind::doSearchBackward( const FilePosition &start_position )
 {
     bool found = false;
     int start_col;
     int end_col;
 
     if ( ! quickFindPattern_->isActive() )
-        return -1;
+        return {};
 
     // Optimisation: if we are already before the first match,
     // we don't do any search at all.
@@ -317,10 +317,10 @@ qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
         // Send a notification
         emit notify( QFNotificationReachedBegininningOfFile() );
 
-        return -1;
+        return {};
     }
 
-    qint64 line = start_position.line();
+    auto line = start_position.line();
     LOG( logDEBUG ) << "Start searching at line " << line;
     // We look at the beginning of the first line
     if (    ( start_position.column() > 0 )
@@ -334,19 +334,25 @@ qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
     else {
         searchingNotifier_.reset();
         // And then the rest of the file
-        qint64 nb_lines = logData_->getNbLine();
-        line--;
-        while ( line >= 0 ) {
-            if ( quickFindPattern_->isLineMatchingBackward(
-                        logData_->getExpandedLineString( line ) ) ) {
-                quickFindPattern_->getLastMatch( &start_col, &end_col );
-                found = true;
-                break;
-            }
-            line--;
+        const auto nb_lines = logData_->getNbLine();
+        if ( line.get() > 0) {
+            --line;
+            while ( true ) {
+                if ( quickFindPattern_->isLineMatchingBackward(
+                            logData_->getExpandedLineString( line ) ) ) {
+                    quickFindPattern_->getLastMatch( &start_col, &end_col );
+                    found = true;
+                    break;
+                }
+                if(line.get() == 0 ) {
+                    break;
+                }
 
-            // See if we need to notify of the ongoing search
-            searchingNotifier_.ping( -line, nb_lines );
+                --line;
+
+                // See if we need to notify of the ongoing search
+                searchingNotifier_.ping( -static_cast<qint64>( line.get() ), nb_lines.get() );
+            }
         }
     }
 
@@ -368,7 +374,7 @@ qint64 QuickFind::doSearchBackward( const FilePosition &start_position )
         LOG( logDEBUG ) << "QF: Send BOF notification.";
         emit notify( QFNotificationReachedBegininningOfFile() );
 
-        return -1;
+        return {};
     }
 }
 

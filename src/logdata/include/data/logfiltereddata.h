@@ -54,58 +54,59 @@ class LogFilteredData : public AbstractLogData {
     // Starts the async search, sending newDataAvailable() when new data found.
     // If a search is already in progress this function will block until
     // it is done, so the application should call interruptSearch() first.
-    void runSearch(const QRegularExpression &regExp, qint64 startLine, qint64 endLine);
+    void runSearch(const QRegularExpression &regExp, LineNumber startLine, LineNumber endLine);
     // Shortcut for runSearch on all file
     void runSearch(const QRegularExpression &regExp);
 
     // Add to the existing search, starting at the line when the search was
     // last stopped. Used when the file on disk has been added too.
-    void updateSearch(qint64 startLine, qint64 endLine);
+    void updateSearch(LineNumber startLine, LineNumber endLine);
     // Interrupt the running search if one is in progress.
     // Nothing is done if no search is in progress.
     void interruptSearch();
     // Clear the search and the list of results.
     void clearSearch();
+
     // Returns the line number in the original LogData where the element
     // 'index' was found.
-    qint64 getMatchingLineNumber( int index ) const;
-    // Returns whether the line number passed is in our list of matching ones.
-    bool isLineInMatchingList( qint64 lineNumber );
-
+    LineNumber getMatchingLineNumber( LineNumber index ) const;
     // Returns the line 'index' in filterd log data that matches
     // given original line number
-    int getLineIndexNumber( quint64 lineNumber ) const;
+    LineNumber getLineIndexNumber( LineNumber lineNumber ) const;
+
+    // Returns whether the line number passed is in our list of matching ones.
+    bool isLineInMatchingList( LineNumber lineNumber );
 
     // Returns the number of lines in the source log data
-    LineNumber getNbTotalLines() const;
+    LinesCount getNbTotalLines() const;
     // Returns the number of matches (independently of the visibility)
-    LineNumber getNbMatches() const;
+    LinesCount getNbMatches() const;
     // Returns the number of marks (independently of the visibility)
-    LineNumber getNbMarks() const;
+    LinesCount getNbMarks() const;
 
     // Returns the reason why the line at the passed index is in the filtered
     // data.  It can be because it is either a mark or a match.
     enum FilteredLineType { Match, Mark };
-    FilteredLineType filteredLineTypeByIndex( int index ) const;
+    FilteredLineType filteredLineTypeByIndex(LineNumber index ) const;
 
     // Marks interface (delegated to a Marks object)
 
     // Add a mark at the given line, optionally identified by the given char
     // If a mark for this char already exist, the previous one is replaced.
-    void addMark( qint64 line, QChar mark = QChar() );
+    void addMark( LineNumber line, QChar mark = QChar() );
     // Get the (unique) mark identified by the passed char.
-    qint64 getMark( QChar mark ) const;
+    LineNumber getMark( QChar mark ) const;
     // Returns wheither the passed line has a mark on it.
-    bool isLineMarked( qint64 line ) const;
-    // Get the first mark after the line passed (-1 if none)
-    qint64 getMarkAfter( qint64 line ) const;
-    // Get the first mark before the line passed (-1 if none)
-    qint64 getMarkBefore( qint64 line ) const;
+    bool isLineMarked( LineNumber line ) const;
+    // Get the first mark after the line passed
+    OptionalLineNumber getMarkAfter( LineNumber line ) const;
+    // Get the first mark before the line passed
+    OptionalLineNumber getMarkBefore( LineNumber line ) const;
     // Delete the mark identified by the passed char.
     void deleteMark( QChar mark );
     // Delete the mark present on the passed line or do nothing if there is
     // none.
-    void deleteMark( qint64 line );
+    void deleteMark( LineNumber line );
     // Completely clear the marks list.
     void clearMarks();
 	// Get all marked lines
@@ -119,25 +120,25 @@ class LogFilteredData : public AbstractLogData {
   signals:
     // Sent when the search has progressed, give the number of matches (so far)
     // and the percentage of completion
-    void searchProgressed( int nbMatches, int progress );
+    void searchProgressed( LinesCount nbMatches, int progress );
 
   private slots:
-    void handleSearchProgressed( int NbMatches, int progress );
+    void handleSearchProgressed( LinesCount nbMatches, int progress );
 
   private:
     class FilteredItem;
 
     // Implementation of virtual functions
-    QString doGetLineString( qint64 line ) const override;
-    QString doGetExpandedLineString( qint64 line ) const override;
-    QStringList doGetLines( qint64 first, int number ) const override;
-    QStringList doGetExpandedLines( qint64 first, int number ) const override;
-    qint64 doGetNbLine() const override;
-    int doGetMaxLength() const override;
-    int doGetLineLength( qint64 line ) const override;
+    QString doGetLineString( LineNumber line ) const override;
+    QString doGetExpandedLineString( LineNumber line ) const override;
+    QStringList doGetLines( LineNumber first, LinesCount number ) const override;
+    QStringList doGetExpandedLines( LineNumber first, LinesCount number ) const override;
+    LinesCount doGetNbLine() const override;
+    LineLength doGetMaxLength() const override;
+    LineLength doGetLineLength( LineNumber line ) const override;
+
     void doSetDisplayEncoding( const char* encoding ) override;
     QTextCodec* doGetDisplayEncoding() const override;
-
 
     // List of the matching line numbers
     SearchResultArray matching_lines_;
@@ -145,10 +146,10 @@ class LogFilteredData : public AbstractLogData {
     const LogData* sourceLogData_;
     QRegularExpression currentRegExp_;
     bool searchDone_;
-    int maxLength_;
-    int maxLengthMarks_;
+    LineLength maxLength_;
+    LineLength maxLengthMarks_;
     // Number of lines of the LogData that has been searched for:
-    qint64 nbLinesProcessed_;
+    LinesCount nbLinesProcessed_;
 
     Visibility visibility_;
 
@@ -164,20 +165,21 @@ class LogFilteredData : public AbstractLogData {
     struct CachedSearchResult
     {
         SearchResultArray matching_lines;
-        int maxLength;
+        LineLength maxLength;
     };
 
-    using SearchCacheKey = QPair<QRegularExpression, QPair<qint64, qint64>>;
+    using SearchCacheKey = QPair<QRegularExpression, QPair<uint32_t, uint32_t>>;
 
-    inline SearchCacheKey makeCacheKey( const QRegularExpression& regExp, qint64 startLine, qint64 endLine ) {
-      return qMakePair( regExp, qMakePair( startLine, endLine ) );
+    inline SearchCacheKey makeCacheKey( const QRegularExpression& regExp,
+                                        LineNumber startLine, LineNumber endLine ) {
+      return qMakePair( regExp, qMakePair( startLine.get(), endLine.get() ) );
     }
 
     QHash<SearchCacheKey, CachedSearchResult> searchResultsCache_;
     SearchCacheKey currentSearchKey_;
 
-    inline qint64 getExpectedSearchEnd( const SearchCacheKey& cacheKey ) const {
-        return cacheKey.second.second;
+    inline LineNumber getExpectedSearchEnd( const SearchCacheKey& cacheKey ) const {
+        return LineNumber(cacheKey.second.second);
     }
 
     // Utility functions
@@ -196,8 +198,7 @@ class LogFilteredData : public AbstractLogData {
 class LogFilteredData::FilteredItem {
   public:
     // A default ctor seems to be necessary for QVector
-    FilteredItem()
-    { lineNumber_ = 0; }
+    FilteredItem();
     FilteredItem( LineNumber lineNumber, FilteredLineType type )
     { lineNumber_ = lineNumber; type_ = type; }
 

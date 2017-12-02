@@ -33,6 +33,7 @@
 #include "overviewwidget.h"
 #include "quickfindmux.h"
 #include "viewtools.h"
+#include "data/linetypes.h"
 
 class QMenu;
 class QAction;
@@ -167,7 +168,7 @@ class AbstractLogView :
     // used when the font is changed.
     void updateDisplaySize();
     // Return the line number of the top line of the view
-    int getTopLine() const;
+    LineNumber getTopLine() const;
     // Return the text of the current selection.
     QString getSelection() const;
     // Instructs the widget to select the whole text.
@@ -192,12 +193,12 @@ class AbstractLogView :
     // Must be implemented to return wether the line number is
     // a match, a mark or just a normal line (used for coloured bullets)
     enum LineType { Normal, Marked, Match };
-    virtual LineType lineType( int lineNumber ) const = 0;
+    virtual LineType lineType( LineNumber lineNumber ) const = 0;
 
     // Line number to display for line at the given index
-    virtual qint64 displayLineNumber( int lineNumber ) const;
-    virtual qint64 lineIndex( int lineNumber ) const;
-    virtual qint64 maxDisplayLineNumber() const;
+    virtual LineNumber displayLineNumber( LineNumber lineNumber ) const;
+    virtual LineNumber lineIndex(LineNumber lineNumber ) const;
+    virtual LineNumber maxDisplayLineNumber() const;
 
     // Get the overview associated with this view, or NULL if there is none
     Overview* getOverview() const { return overview_; }
@@ -210,25 +211,25 @@ class AbstractLogView :
 
   signals:
     // Sent when a new line has been selected by the user.
-    void newSelection(int line);
+    void newSelection(LineNumber line);
     // Sent up to the MainWindow to enable/disable the follow mode
     void followModeChanged( bool enabled );
     // Sent when the view wants the QuickFind widget pattern to change.
     void changeQuickFind( const QString& newPattern,
             QuickFindMux::QFDirection newDirection );
     // Sent up when the current line number is updated
-    void updateLineNumber( int line );
+    void updateLineNumber( LineNumber line );
     // Sent up when quickFind wants to show a message to the user.
     void notifyQuickFind( const QFNotification& message );
     // Sent up when quickFind wants to clear the notification.
     void clearQuickFindNotification();
     // Sent when the view ask for a line to be marked
     // (click in the left margin).
-    void markLine( qint64 line );
+    void markLine( LineNumber line );
     // Sent up when the user wants to add the selection to the search
     void addToSearch( const QString& selection );
     // Sent up when the mouse is hovered over a line's margin
-    void mouseHoveredOverLine( qint64 line );
+    void mouseHoveredOverLine( LineNumber line );
     // Sent up when the mouse leaves a line's margin
     void mouseLeftHoveringZone();
     // Sent up for view initiated quickfind searches
@@ -240,13 +241,13 @@ class AbstractLogView :
     // (switch to the next one)
     void exitView();
 
-    void changeSearchLimits( qint64 startLine, qint64 endLine );
+    void changeSearchLimits( LineNumber startLine, LineNumber endLine );
     void clearSearchLimits();
 
   public slots:
     // Makes the widget select and display the passed line.
     // Scrolling as necessary
-    void selectAndDisplayLine( int line );
+    void selectAndDisplayLine(LineNumber line );
 
     // Use the current QFP to go and select the next match.
     virtual void searchForward();
@@ -271,7 +272,7 @@ class AbstractLogView :
     // Make the view jump to the specified line, regardless of weither it
     // is on the screen or not.
     // (does NOT emit followDisabled() )
-    void jumpToLine( int line );
+    void jumpToLine( LineNumber line );
 
     // Configure the setting of whether to show line number margin
     void setLineNumbersVisible( bool lineNumbersVisible );
@@ -280,7 +281,7 @@ class AbstractLogView :
     // To be used if the data might have changed.
     void forceRefresh();
 
-    void setSearchLimits( qint64 startLine, qint64 endLine );
+    void setSearchLimits(LineNumber startLine, LineNumber endLine );
 
   private slots:
     void handlePatternUpdated();
@@ -336,11 +337,11 @@ class AbstractLogView :
 
     // Hovering state
     // Last line that has been hoovered on, -1 if none
-    qint64 lastHoveredLine_;
+    OptionalLineNumber lastHoveredLine_;
 
     // Marks (left margin click)
     bool markingClickInitiated_;
-    qint64 markingClickLine_;
+    OptionalLineNumber markingClickLine_;
 
     Selection selection_;
 
@@ -387,24 +388,24 @@ class AbstractLogView :
     struct TextAreaCache {
         QPixmap pixmap_;
         bool invalid_;
-        int first_line_;
-        int last_line_;
+        LineNumber first_line_;
+        LineNumber last_line_;
         int first_column_;
     };
     struct PullToFollowCache {
         QPixmap pixmap_;
         int nb_columns_;
     };
-    TextAreaCache textAreaCache_ = { {}, true, 0, 0, 0 };
+    TextAreaCache textAreaCache_ = { {}, true, 0_lnum, 0_lnum, 0 };
     PullToFollowCache pullToFollowCache_ = { {}, 0 };
 
-    LineNumber getNbVisibleLines() const;
+    LinesCount getNbVisibleLines() const;
     int getNbVisibleCols() const;
     QPoint convertCoordToFilePos( const QPoint& pos ) const;
-    int convertCoordToLine( int yPos ) const;
+    OptionalLineNumber convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;
     void displayLine( LineNumber line );
-    void moveSelection( int y );
+    void moveSelection(int delta );
     void moveSelectionUp();
     void moveSelectionDown();
     void jumpToStartOfLine();
@@ -421,7 +422,7 @@ class AbstractLogView :
     void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
-    void searchUsingFunction( qint64 (QuickFind::*search_function)() );
+    void searchUsingFunction( OptionalLineNumber (QuickFind::*search_function)() );
 
     void updateScrollBars();
 

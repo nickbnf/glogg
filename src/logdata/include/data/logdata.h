@@ -30,8 +30,6 @@
 #include <QDateTime>
 #include <QTextCodec>
 
-#include "utils.h"
-
 #include "abstractlogdata.h"
 #include "logdataworkerthread.h"
 #include "filewatcher.h"
@@ -186,13 +184,13 @@ class LogData : public AbstractLogData {
     MonitoredFileStatus fileChangedOnDisk_;
 
     // Implementation of virtual functions
-    QString doGetLineString( qint64 line ) const override;
-    QString doGetExpandedLineString( qint64 line ) const override;
-    QStringList doGetLines( qint64 first, int number ) const override;
-    QStringList doGetExpandedLines( qint64 first, int number ) const override;
-    qint64 doGetNbLine() const override;
-    int doGetMaxLength() const override;
-    int doGetLineLength( qint64 line ) const override;
+    QString doGetLineString( LineNumber line ) const override;
+    QString doGetExpandedLineString( LineNumber line ) const override;
+    QStringList doGetLines( LineNumber first, LinesCount number ) const override;
+    QStringList doGetExpandedLines( LineNumber first, LinesCount number ) const override;
+    LinesCount doGetNbLine() const override;
+    LineLength doGetMaxLength() const override;
+    LineLength doGetLineLength(LineNumber line ) const override;
     void doSetDisplayEncoding( const char* encoding ) override;
     QTextCodec* doGetDisplayEncoding() const override;
 

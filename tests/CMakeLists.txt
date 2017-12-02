@@ -27,14 +27,6 @@ target_link_libraries(glogg_itests ${TEST_LIBS})
 
 add_dependencies(glogg_itests file_write_helper)
 
-add_executable(glogg_ptests
-    logdataPerfTest.cpp
-    logfiltereddataPerfTest.cpp
-    qtests_main.cpp
-)
-
-target_link_libraries(glogg_ptests ${TEST_LIBS})
-
 add_test(
     NAME glogg_tests
     COMMAND glogg_tests

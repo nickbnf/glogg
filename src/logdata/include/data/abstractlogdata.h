@@ -24,6 +24,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "linetypes.h"
+
 // Base class representing a set of data.
 // It can be either a full set or a filtered set.
 class AbstractLogData : public QObject {
@@ -35,21 +37,21 @@ class AbstractLogData : public QObject {
     virtual ~AbstractLogData() = default;
 
     // Returns the line passed as a QString
-    QString getLineString( qint64 line ) const;
+    QString getLineString( LineNumber line ) const;
     // Returns the line passed as a QString, with tabs expanded
-    QString getExpandedLineString( qint64 line ) const;
+    QString getExpandedLineString( LineNumber line ) const;
     // Returns a set of lines as a QStringList
-    QStringList getLines( qint64 first_line, int number ) const;
+    QStringList getLines( LineNumber first_line, LinesCount number ) const;
     // Returns a set of lines with tabs expanded
-    QStringList getExpandedLines( qint64 first_line, int number ) const;
+    QStringList getExpandedLines( LineNumber first_line, LinesCount number ) const;
     // Returns the total number of lines
-    qint64 getNbLine() const;
+    LinesCount getNbLine() const;
     // Returns the visible length of the longest line
     // Tabs are expanded
-    int getMaxLength() const;
+    LineLength getMaxLength() const;
     // Returns the visible length of the passed line
     // Tabs are expanded
-    int getLineLength( qint64 line ) const;
+    LineLength getLineLength( LineNumber line ) const;
 
     // Set the view to use the passed encoding for display
     void setDisplayEncoding( const char* encoding_name );
@@ -63,7 +65,7 @@ class AbstractLogData : public QObject {
     // Length of a tab stop
     static const int tabStop = 8;
 
-    static inline int getUntabifiedLength( const QString& line ) {
+    static inline LineLength getUntabifiedLength( const QString& line ) {
         int total_spaces = 0;
 
         for ( int j = 0; j < line.length(); j++ ) {
@@ -73,24 +75,24 @@ class AbstractLogData : public QObject {
             }
         }
 
-        return line.length() + total_spaces;
+        return LineLength( line.length() + total_spaces );
     }
 
   protected:
     // Internal function called to get a given line
-    virtual QString doGetLineString( qint64 line ) const = 0;
+    virtual QString doGetLineString( LineNumber line ) const = 0;
     // Internal function called to get a given line
-    virtual QString doGetExpandedLineString( qint64 line ) const = 0;
+    virtual QString doGetExpandedLineString( LineNumber line ) const = 0;
     // Internal function called to get a set of lines
-    virtual QStringList doGetLines( qint64 first_line, int number ) const = 0;
+    virtual QStringList doGetLines( LineNumber first_line, LinesCount number ) const = 0;
     // Internal function called to get a set of expanded lines
-    virtual QStringList doGetExpandedLines( qint64 first_line, int number ) const = 0;
+    virtual QStringList doGetExpandedLines( LineNumber first_line, LinesCount number ) const = 0;
     // Internal function called to get the number of lines
-    virtual qint64 doGetNbLine() const = 0;
+    virtual LinesCount doGetNbLine() const = 0;
     // Internal function called to get the maximum length
-    virtual int doGetMaxLength() const = 0;
+    virtual LineLength doGetMaxLength() const = 0;
     // Internal function called to get the line length
-    virtual int doGetLineLength( qint64 line ) const = 0;
+    virtual LineLength doGetLineLength( LineNumber line ) const = 0;
     // Internal function called to set the encoding
     virtual void doSetDisplayEncoding( const char* encoding ) = 0;
     virtual QTextCodec* doGetDisplayEncoding() const = 0;

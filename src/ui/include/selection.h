@@ -23,30 +23,30 @@
 #include <QList>
 #include <QString>
 
-#include "utils.h"
+#include "data/linetypes.h"
 
 class AbstractLogData;
 
 class Portion
 {
   public:
-    Portion() : line_{ -1 }, startColumn_{ -1 }, endColumn_{ -1 }
+    Portion() : line_{}, startColumn_{ -1 }, endColumn_{ -1 }
     {}
 
-    Portion( int line, int start_column, int end_column )
+    Portion( LineNumber line, int start_column, int end_column )
         : line_{ line }
         , startColumn_{ start_column }
         , endColumn_{ end_column }
     {}
 
-    int line() const { return line_; }
+    LineNumber line() const { return *line_; }
     int startColumn() const { return startColumn_; }
     int endColumn() const { return endColumn_; }
 
-    bool isValid() const { return ( line_ != -1 ); }
+    bool isValid() const { return !!line_; }
 
   private:
-    int line_;
+    OptionalLineNumber line_;
     int startColumn_;
     int endColumn_;
 };
@@ -59,49 +59,52 @@ class Selection
     Selection();
 
     // Clear the selection
-    void clear() { selectedPartial_.line = -1; selectedLine_ = -1; }
+    void clear() { selectedPartial_.line = {}; selectedLine_ = {}; }
 
     // Select one line
-    void selectLine( int line )
-      { selectedPartial_.line = -1; selectedRange_.startLine = -1;
-        selectedLine_ = line; }
+    void selectLine( LineNumber line )
+    {
+        selectedPartial_.line = {};
+        selectedRange_.startLine = {};
+        selectedLine_ = line;
+    }
     // Select a portion of line (both start and end included)
-    void selectPortion( int line, int start_column, int end_column );
+    void selectPortion( LineNumber line, int start_column, int end_column );
     void selectPortion( const Portion& selection )
       { selectPortion( selection.line(), selection.startColumn(),
               selection.endColumn() ); }
     // Select a range of lines (both start and end included)
-    void selectRange( int start_line, int end_line );
+    void selectRange(LineNumber start_line, LineNumber end_line );
 
     // Select a range from the previously selected line or beginning
     // of range (shift+click behaviour)
-    void selectRangeFromPrevious( int line );
+    void selectRangeFromPrevious(LineNumber line );
 
     // Crop selection so that in fit in the range ending with the line passed.
-    void crop( int last_line );
+    void crop(LineNumber last_line );
 
     // Returns whether the selection is empty
     bool isEmpty() const
-    { return ( selectedPartial_.line == -1 ) && ( selectedLine_ == -1 ); }
+    { return ( !selectedPartial_.line ) && ( !selectedLine_ ); }
 
     // Returns whether the selection is a single line
-    bool isSingleLine() const { return ( selectedLine_ != -1 ); }
+    bool isSingleLine() const { return !!selectedLine_; }
 
     // Returns whether the selection is a portion of line
-    bool isPortion() const { return ( selectedPartial_.line != -1 ); }
+    bool isPortion() const { return !!selectedPartial_.line; }
 
     // Returns whether a portion is selected or not on the passed line.
     // If so, returns the portion position.
-    bool getPortionForLine( int line,
+    bool getPortionForLine( LineNumber line,
             int* start_column, int* end_column ) const;
     // Get a list of selected line(s), in order.
-    std::vector<int> getLines() const;
+    std::vector<LineNumber> getLines() const;
 
     // Returns wether the line passed is selected (entirely).
-    bool isLineSelected( int line ) const;
+    bool isLineSelected( LineNumber line ) const;
 
     // Returns the line selected or -1 if not a single line selection
-    qint64 selectedLine() const;
+    OptionalLineNumber selectedLine() const;
 
     // Returns the text selected from the passed AbstractLogData
     QString getSelectedText( const AbstractLogData* logData ) const;
@@ -116,19 +119,19 @@ class Selection
 
   private:
     // Line number currently selected, or -1 if none selected
-    int selectedLine_;
+    OptionalLineNumber selectedLine_;
 
     struct SelectedPartial {
-        int line;
+        OptionalLineNumber line;
         int startColumn;
         int endColumn;
     };
     struct SelectedRange {
         // The limits of the range, sorted
-        int startLine;
-        int endLine;
+        OptionalLineNumber  startLine;
+        LineNumber endLine;
         // The line selected first, used for shift+click
-        int firstLine;
+        LineNumber firstLine;
     };
     struct SelectedPartial selectedPartial_;
     struct SelectedRange selectedRange_;

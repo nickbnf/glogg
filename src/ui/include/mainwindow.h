@@ -96,7 +96,7 @@ class MainWindow : public QMainWindow
 
     // Update the line number displayed in the status bar.
     // Must be passed as the internal (starts at 0) line number.
-    void lineNumberHandler( int line );
+    void lineNumberHandler(LineNumber line );
 
     // Instructs the widget to update the loading progress gauge
     void updateLoadingProgress( int progress );

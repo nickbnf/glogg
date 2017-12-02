@@ -24,46 +24,7 @@
 
 #include "compressedlinestorage.h"
 
-using  SimpleLinePositionStorage = std::vector<uint64_t>;
-
-class VectorLinePositionStorage
-{
-public:
-    void pop_back()
-    {
-        pos_.pop_back();
-    }
-
-    void push_back(uint64_t p)
-    {
-        pos_.push_back(p);
-    }
-
-    void append_list(const VectorLinePositionStorage& other)
-    {
-        pos_.reserve(pos_.size() + other.pos_.size());
-        std::copy(other.pos_.begin(), other.pos_.end(), std::back_inserter(pos_));
-    }
-
-    void append_list(const SimpleLinePositionStorage& other)
-    {
-        pos_.reserve(pos_.size() + other.size());
-        std::copy(other.begin(), other.end(), std::back_inserter(pos_));
-    }
-
-    size_t size() const
-    {
-        return pos_.size();
-    }
-
-    qint64 at(size_t n) const
-    {
-        return pos_.at(n);
-    }
-
-private:
-    std::vector<uint64_t> pos_;
-};
+using  SimpleLinePositionStorage = std::vector<LineOffset>;
 
 // This class is a list of end of lines position,
 // in addition to a list of uint64_t (positions within the files)
@@ -76,20 +37,29 @@ class LinePosition
     template <typename> friend class LinePosition;
 
     // Default constructor
-    LinePosition() : array()
-    { fakeFinalLF_ = false; }
+    LinePosition() : fakeFinalLF_{ false } {}
+
     // Copy constructor (slow: deleted)
-    LinePosition( const LinePosition& orig ) = delete;
+    LinePosition( const LinePosition& ) = delete;
+    LinePosition& operator =(const LinePosition&) = delete;
+
     // Move assignement
+    LinePosition(LinePosition&& orig)
+    {
+        *this = std::move(orig);
+    }
+
     LinePosition& operator=( LinePosition&& orig )
-    { array = std::move( orig.array );
+    {
+      array = std::move( orig.array );
       fakeFinalLF_ = orig.fakeFinalLF_;
-      return *this; }
+      return *this;
+    }
 
     // Add a new line position at the given position
     // Invariant: pos must be greater than the previous one
     // (this is NOT checked!)
-    inline void append( uint64_t pos )
+    inline void append( LineOffset pos )
     {
         LOG(logDEBUG2) << "Next line at " << pos;
         if ( fakeFinalLF_ )
@@ -99,20 +69,21 @@ class LinePosition
         fakeFinalLF_ = false;
     }
     // Size of the array
-    inline int size() const
+    inline LinesCount size() const
     { return array.size(); }
     // Extract an element
-    inline uint64_t at( int i ) const
+    inline LineOffset at( LineNumber::UnderlyingType i ) const
     {
         const auto pos = array.at( i );
         LOG(logDEBUG) << "Line pos at " << i << " is " << pos;
         return pos;
     }
-    inline uint64_t operator[]( int i ) const
+    inline LineOffset operator[]( LineNumber::UnderlyingType i ) const
     { return array.at( i ); }
+
     // Set the presence of a fake final LF
     // Must be used after 'append'-ing a fake LF at the end.
-    void setFakeFinalLF( bool finalLF=true )
+    void setFakeFinalLF( bool finalLF = true )
     { fakeFinalLF_ = finalLF; }
 
     // Add another list to this one, removing any fake LF on this list.

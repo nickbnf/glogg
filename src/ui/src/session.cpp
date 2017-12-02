@@ -162,7 +162,7 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
     assert( file );
 
     *fileSize = file->logData->getFileSize();
-    *fileNbLine = file->logData->getNbLine();
+    *fileNbLine = file->logData->getNbLine().get();
     *lastModified = file->logData->getLastModifiedDate();
 }
 

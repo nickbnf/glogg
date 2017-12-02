@@ -40,12 +40,12 @@ class FilteredView : public AbstractLogView
     void setVisibility( Visibility visi );
 
   protected:
-    virtual LineType lineType( int lineNumber ) const;
+    virtual LineType lineType(LineNumber lineNumber ) const;
 
     // Number of the filtered line relative to the unfiltered source
-    virtual qint64 displayLineNumber( int lineNumber ) const;
-    virtual qint64 lineIndex( int lineNumber ) const;
-    virtual qint64 maxDisplayLineNumber() const;
+    virtual LineNumber displayLineNumber(LineNumber lineNumber ) const;
+    virtual LineNumber lineIndex( LineNumber lineNumber ) const;
+    virtual LineNumber maxDisplayLineNumber() const;
 
     virtual void keyPressEvent( QKeyEvent* keyEvent );
 

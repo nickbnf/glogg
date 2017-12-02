@@ -24,7 +24,6 @@
 #include <QPoint>
 #include <QTime>
 
-#include "utils.h"
 #include "qfnotifications.h"
 #include "selection.h"
 
@@ -86,8 +85,8 @@ class QuickFind : public QObject
     // point.  These searches don't use the QFP and don't change the
     // starting point.
     // TODO Update comment
-    qint64 incrementallySearchForward();
-    qint64 incrementallySearchBackward();
+    OptionalLineNumber incrementallySearchForward();
+    OptionalLineNumber incrementallySearchBackward();
 
     // Stop the currently ongoing incremental search, leave the selection
     // where it is if a match has been found, restore the old one
@@ -109,8 +108,8 @@ class QuickFind : public QObject
 
     // Idem but ignore the direction and always search in the
     // specified direction
-    qint64 searchForward();
-    qint64 searchBackward();
+    OptionalLineNumber searchForward();
+    OptionalLineNumber searchBackward();
 
     // Make the object forget the 'no more match' flag.
     void resetLimits();
@@ -130,19 +129,19 @@ class QuickFind : public QObject
 
     class LastMatchPosition {
       public:
-        LastMatchPosition() : line_( -1 ), column_( -1 ) {}
-        void set( int line, int column );
+        LastMatchPosition() : column_( -1 ) {}
+        void set( LineNumber line, int column );
         void set( const FilePosition& position );
-        void reset() { line_ = -1; column_ = -1; }
+        void reset() { line_ = {}; column_ = -1; }
         // Does the passed position come after the recorded one
-        bool isLater( int line, int column ) const;
+        bool isLater(OptionalLineNumber line, int column ) const;
         bool isLater( const FilePosition& position ) const;
         // Does the passed position come before the recorded one
-        bool isSooner( int line, int column ) const;
+        bool isSooner(OptionalLineNumber line, int column ) const;
         bool isSooner( const FilePosition& position ) const;
 
       private:
-        int line_;
+        OptionalLineNumber line_;
         int column_;
     };
 
@@ -187,8 +186,8 @@ class QuickFind : public QObject
     IncrementalSearchStatus incrementalSearchStatus_;
 
     // Private functions
-    qint64 doSearchForward( const FilePosition &start_position );
-    qint64 doSearchBackward( const FilePosition &start_position );
+    OptionalLineNumber doSearchForward( const FilePosition &start_position );
+    OptionalLineNumber doSearchBackward( const FilePosition &start_position );
 };
 
 #endif

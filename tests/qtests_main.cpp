@@ -2,9 +2,11 @@
 
 #include <QApplication>
 #include <QtConcurrent>
+#include <QMetaType>
 
 #include "persistentinfo.h"
 #include "configuration.h"
+#include "data/linetypes.h"
 
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
@@ -20,6 +22,11 @@ int main(int argc, char *argv[]) {
     GetPersistentInfo().migrateAndInit();
     GetPersistentInfo().registerPersistable(
      std::make_shared<Configuration>(), QString( "settings" ) );
+
+
+    qRegisterMetaType<LinesCount>( "LinesCount" );
+    qRegisterMetaType<LineNumber>( "LineNumber" );
+    qRegisterMetaType<LineLength>( "LineLength" );
 
     QtConcurrent::run([&a]()
     {

@@ -22,6 +22,7 @@
 
 #include "threadprivatestore.h"
 #include "blockpool.h"
+#include "linetypes.h"
 
 // This class is a compressed storage backend for LinePositionArray
 // It emulates the interface of a vector, but take advantage of the nature
@@ -81,20 +82,19 @@
 
 #define BLOCK_SIZE 256
 
+
 //template<int BLOCK_SIZE = 128>
 class CompressedLinePositionStorage
 {
   public:
     // Default constructor
     CompressedLinePositionStorage()
+        : block_index_ {0}
+        , long_block_index_ {0}
+        , first_long_line_{std::numeric_limits<LineNumber::UnderlyingType>::max()}
     {
-        nb_lines_ = 0; first_long_line_ = UINT32_MAX;
-        current_pos_ = 0;
-        block_index_ = 0;
-        long_block_index_ = 0;
-        block_offset_ = 0;
-        previous_block_offset_ = 0;
     }
+
     // Copy constructor would be slow, delete!
     CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
 
@@ -105,21 +105,25 @@ class CompressedLinePositionStorage
             CompressedLinePositionStorage&& orig );
 
     // Append the passed end-of-line to the storage
-    void append( uint64_t pos );
-    void push_back( uint64_t pos )
-    { append( pos ); }
+    void append( LineOffset pos );
+    void push_back( LineOffset pos ) { append( pos ); }
+
     // Size of the array
-    uint32_t size() const
-    { return nb_lines_; }
+    LinesCount size() const { return nb_lines_; }
+
     // Element at index
-    uint64_t at( uint32_t i ) const;
+    LineOffset at( uint32_t i ) const { return at( LineNumber( i ) ); }
+    LineOffset at( LineNumber i ) const;
 
     // Add one list to the other
-    void append_list( const std::vector<uint64_t>& positions );
+    void append_list( const std::vector<LineOffset>& positions );
 
     // Pop the last element of the storage
     void pop_back();
 
+    using BlockOffset = fluent::NamedType<uint64_t, struct block_offset,
+                            fluent::Incrementable, fluent::Addable,
+                            fluent::Comparable>;
   private:
     // Utility for move ctor/assign
     void move_from( CompressedLinePositionStorage&& orig );
@@ -129,23 +133,23 @@ class CompressedLinePositionStorage
     BlockPool<uint64_t> pool64_;
 
     // Total number of lines in storage
-    uint32_t nb_lines_;
+    LinesCount nb_lines_;
 
     // Current position (position of the end of the last line added)
-    uint64_t current_pos_;
+    LineOffset current_pos_;
 
     uint32_t block_index_;
     uint32_t long_block_index_;
-    // Offset of the next position (not yet written) within the current
-    // block. null means there is no current block (previous block
-    // finished or no data)
-    ptrdiff_t block_offset_;
-
 
     // The index of the first line whose end is stored in a block64
     // Initialised at UINT32_MAX, meaning "unset"
     // this is the origin point for all calculations in block64
-    uint32_t first_long_line_;
+    LineNumber first_long_line_;
+
+    // Offset of the next position (not yet written) within the current
+    // block. null means there is no current block (previous block
+    // finished or no data)
+    BlockOffset block_offset_;
 
     // For pop_back:
 
@@ -153,20 +157,20 @@ class CompressedLinePositionStorage
     // "pop_back" the last element.
     // A null here means pop_back need to free the block
     // that has just been created.
-    ptrdiff_t previous_block_offset_;
+    BlockOffset previous_block_offset_;
 
     // Cache the last position read
     // This is to speed up consecutive reads (whole page)
     struct Cache {
         Cache()
-          : index{UINT32_MAX - 1U}
+          : index{std::numeric_limits<uint32_t>::max() - 1U}
           , position{0}
           , offset{0}
         {}
 
-        uint32_t index;
-        uint64_t position;
-        ptrdiff_t offset;
+        LineNumber index;
+        LineOffset position;
+        BlockOffset offset;
     };
     mutable ThreadPrivateStore<Cache,2> last_read_; // = { UINT32_MAX - 1U, 0, nullptr };
     // mutable Cache last_read;

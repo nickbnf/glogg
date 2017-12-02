@@ -22,6 +22,7 @@
 
 #include <QWidget>
 #include <QBasicTimer>
+#include <data/linetypes.h>
 
 class Overview;
 
@@ -38,7 +39,7 @@ class OverviewWidget : public QWidget
   public slots:
     // Sent when a match at the line passed must be highlighted in
     // the overview
-    void highlightLine( qint64 line );
+    void highlightLine(LineNumber line );
     void removeHighlight();
 
   protected:
@@ -49,7 +50,7 @@ class OverviewWidget : public QWidget
 
   signals:
     // Sent when the user click on a line in the Overview.
-    void lineClicked( int line );
+    void lineClicked( LineNumber line );
 
   private:
     // Constants

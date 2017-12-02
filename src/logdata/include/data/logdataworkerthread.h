@@ -30,7 +30,6 @@
 #include "loadingstatus.h"
 #include "linepositionarray.h"
 
-#include "utils.h"
 #include "atomicflag.h"
 
 // This class is a thread-safe set of indexing data.
@@ -47,14 +46,14 @@ class IndexingData
     qint64 getSize() const;
 
     // Get the length of the longest line
-    int getMaxLength() const;
+    LineLength getMaxLength() const;
 
     // Get the total number of lines
-    LineNumber getNbLines() const;
+    LinesCount getNbLines() const;
 
     // Get the position (in byte from the beginning of the file)
     // of the end of the passed line.
-    qint64 getPosForLine( LineNumber line ) const;
+    LineOffset getPosForLine( LineNumber line ) const;
 
     // Get the guessed encoding for the content.
     QTextCodec* getEncodingGuess() const;
@@ -65,7 +64,7 @@ class IndexingData
 
     // Atomically add to all the existing
     // indexing data.
-    void addAll( qint64 size, int length,
+    void addAll(qint64 size, LineLength length,
             const FastLinePositionArray& linePosition,
             QTextCodec* encoding );
 
@@ -76,7 +75,7 @@ class IndexingData
     mutable QMutex dataMutex_;
 
     LinePositionArray linePosition_;
-    int maxLength_;
+    LineLength maxLength_;
     qint64 indexedSize_;
 
     QTextCodec* encodingGuess_;
@@ -102,7 +101,7 @@ class IndexOperation : public QObject
   protected:
     // Returns the total size indexed
     // Modify the passed linePosition and maxLength
-    void doIndex( IndexingData* linePosition, qint64 initialPosition );
+    void doIndex(IndexingData* linePosition, LineOffset initialPosition );
 
     QString fileName_;
     AtomicFlag* interruptRequest_;
@@ -163,7 +162,7 @@ class LogDataWorkerThread : public QThread
 
     // Returns a copy of the current indexing data
     void getIndexingData( qint64* indexedSize,
-            int* maxLength, LinePositionArray* linePosition );
+            LineLength* maxLength, LinePositionArray* linePosition );
 
   signals:
     // Sent during the indexing process to signal progress

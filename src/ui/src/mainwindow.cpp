@@ -112,8 +112,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     // Actions from the CrawlerWidget
     signalMux_.connect( SIGNAL( followModeChanged( bool ) ),
             this, SLOT( changeFollowMode( bool ) ) );
-    signalMux_.connect( SIGNAL( updateLineNumber( int ) ),
-            this, SLOT( lineNumberHandler( int ) ) );
+    signalMux_.connect( SIGNAL( updateLineNumber( LineNumber ) ),
+            this, SLOT( lineNumberHandler( LineNumber ) ) );
 
     // Register for progress status bar
     signalMux_.connect( SIGNAL( loadingProgressed( int ) ),
@@ -606,10 +606,10 @@ void MainWindow::changeFollowMode( bool follow )
     followAction->setChecked( follow );
 }
 
-void MainWindow::lineNumberHandler( int line )
+void MainWindow::lineNumberHandler( LineNumber line )
 {
     // The line number received is the internal (starts at 0)
-    lineNbField->setText( tr( "Line %1" ).arg( line + 1 ) );
+    lineNbField->setText( tr( "Line %1" ).arg( line.get() + 1 ) );
 }
 
 void MainWindow::updateLoadingProgress( int progress )

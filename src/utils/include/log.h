@@ -21,6 +21,7 @@
 #define __LOG_H__
 
 #include <plog/Log.h>
+#include <nonstd/optional.hpp>
 
 #define logINFO plog::info
 #define logWARNING plog::warning

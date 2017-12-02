@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init(logINFO, &appender);
+    plog::init(logDEBUG, &appender);
 
     return RUN_ALL_TESTS();
 }

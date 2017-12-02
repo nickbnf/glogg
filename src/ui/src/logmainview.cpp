@@ -51,7 +51,7 @@ void LogMainView::useNewFiltering( LogFilteredData* filteredData )
         getOverview()->setFilteredData( filteredData_ );
 }
 
-AbstractLogView::LineType LogMainView::lineType( int lineNumber ) const
+AbstractLogView::LineType LogMainView::lineType(LineNumber lineNumber ) const
 {
     if ( filteredData_ != NULL ) {
         LineType line_type;
@@ -73,16 +73,16 @@ void LogMainView::keyPressEvent( QKeyEvent* keyEvent )
     bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
     if ( keyEvent->key() == Qt::Key_BracketLeft && noModifier ) {
-        qint64 line = filteredData_->getMarkBefore( getViewPosition() );
-        if ( line >= 0 ) {
-            selectAndDisplayLine( static_cast<LineNumber>( line ) );
+        const auto line = filteredData_->getMarkBefore( getViewPosition() );
+        if ( line.has_value() ) {
+            selectAndDisplayLine( *line );
         }
         keyEvent->accept();
     }
     else if ( keyEvent->key() == Qt::Key_BracketRight && noModifier ) {
-        qint64 line = filteredData_->getMarkAfter( getViewPosition() );
-        if ( line >= 0 ) {
-            selectAndDisplayLine( static_cast<LineNumber>( line ) );
+        const auto line = filteredData_->getMarkAfter( getViewPosition() );
+        if ( line.has_value() ) {
+            selectAndDisplayLine( *line );
         }
         keyEvent->accept();
     }

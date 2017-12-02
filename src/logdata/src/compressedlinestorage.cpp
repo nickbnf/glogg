@@ -21,83 +21,87 @@
 #include <cstdlib>
 #include <QtEndian>
 
-#include "utils.h"
-
 #include "compressedlinestorage.h"
+
+CompressedLinePositionStorage::BlockOffset operator "" _boffset(unsigned long long int value) {
+    return CompressedLinePositionStorage::BlockOffset(value);
+}
 
 namespace {
     // Functions to manipulate blocks
 
+    using BlockOffset = CompressedLinePositionStorage::BlockOffset;
+
     // Add a one byte relative delta (0-127) and inc pointer
     // First bit is always 0
-    void block_add_one_byte_relative( uint8_t* block, ptrdiff_t* ptr, uint8_t value )
+    void block_add_one_byte_relative( uint8_t* block, BlockOffset& offset, uint8_t value )
     {
-        *(block + *ptr) = value;
-        *ptr += sizeof( value );
+        *( block + offset.get() ) = value;
+        offset += BlockOffset( sizeof( value ) );
     }
 
     // Add a two bytes relative delta (0-16383) and inc pointer
     // First 2 bits are always 10
-    void block_add_two_bytes_relative( uint8_t* block, ptrdiff_t* ptr, uint16_t value )
+    void block_add_two_bytes_relative( uint8_t* block, BlockOffset& offset, uint16_t value )
     {
         // Stored in big endian format in order to recognise the initial pattern:
         // 10xx xxxx xxxx xxxx
         //  HO byte | LO byte
-        *(reinterpret_cast<uint16_t*>(block + *ptr)) = qToBigEndian( static_cast<uint16_t>( value | (1 << 15) ) );
-        *ptr += sizeof( value );
+        *( reinterpret_cast<uint16_t*>( block + offset.get() ) ) = qToBigEndian( static_cast<uint16_t>( value | (1 << 15) ) );
+        offset += BlockOffset( sizeof( value ) );
     }
 
     template<typename ElementType>
-    void block_add_absolute( uint8_t* block, ptrdiff_t* ptr, ElementType value )
+    void block_add_absolute( uint8_t* block, BlockOffset& offset, ElementType value )
     {
         // 2 bytes marker (actually only the first two bits are tested)
-        *(reinterpret_cast<uint16_t*>(block + *ptr)) = 0xFF;
-        *ptr += sizeof( uint16_t );
+        *(reinterpret_cast<uint16_t*>( block + offset.get() )) = 0xFF;
+        offset += BlockOffset( sizeof( uint16_t ) );
 
 
         // Absolute value (machine endian)
         // This might be unaligned, can cause problem on some CPUs
-        *(reinterpret_cast<ElementType*>(block + *ptr)) = value;
-        *ptr += sizeof( ElementType );
+        *( reinterpret_cast<ElementType*>( block + offset.get() ) ) = value;
+        offset += BlockOffset( sizeof( ElementType ) );
     }
 
     // Initialise the passed block for reading, returning
     // the initial position and a pointer to the second entry.
     template<typename ElementType>
-    uint64_t block_initial_pos( const uint8_t* block, ptrdiff_t* ptr )
+    LineOffset block_initial_pos( const uint8_t* block, BlockOffset& offset )
     {
-        *ptr = sizeof( ElementType );
-        return *(reinterpret_cast<const ElementType*>(block));
+        offset = BlockOffset( sizeof( ElementType ) );
+        return LineOffset( *( reinterpret_cast<const ElementType*>( block ) ) );
     }
 
     // Give the next position in the block based on the previous
     // position, then increase the pointer.
     template<typename ElementType>
-    uint64_t block_next_pos( const uint8_t* block, ptrdiff_t* ptr, uint64_t previous_pos )
+    LineOffset block_next_pos( const uint8_t* block, BlockOffset& offset, LineOffset previous_pos )
     {
-        uint64_t pos = previous_pos;
+        LineOffset pos = previous_pos;
 
-        uint8_t byte = *(block + *ptr);
-        ++(*ptr);
+        uint8_t byte = *(block + offset.get());
+        ++offset;
         if ( ! ( byte & 0x80 ) ) {
             // High order bit is 0
-            pos += byte;
+            pos += LineOffset( byte );
         }
         else if ( ( byte & 0xC0 ) == 0x80 ) {
             // We need to read the low order byte
-            uint8_t lo_byte = *(block + *ptr);
-            ++(*ptr);
+            uint8_t lo_byte = *(block + offset.get());
+            ++offset;
             // Remove the starting 10b
             byte &= ~0xC0;
             // And form the displacement (stored as big endian)
-            pos += ( (uint16_t) byte << 8 ) | (uint16_t) lo_byte;
+            pos += LineOffset( ( (uint16_t) byte << 8 ) | (uint16_t) lo_byte );
         }
         else {
             // Skip the next byte (not used)
-            ++(*ptr);
+            ++offset;
             // And read the new absolute pos (machine endian)
-            pos = *(reinterpret_cast<const ElementType*>(block + *ptr));
-            *ptr += sizeof( ElementType );
+            pos = LineOffset( *(reinterpret_cast<const ElementType*>( block + offset.get() ) ) );
+            offset += BlockOffset( sizeof( ElementType ) );
         }
 
         return pos;
@@ -115,7 +119,7 @@ void CompressedLinePositionStorage::move_from(
     block_offset_   = orig.block_offset_;
     previous_block_offset_ = orig.previous_block_offset_;
 
-    orig.nb_lines_   = 0;
+    orig.nb_lines_ = 0_lcount;
 }
 
 // Move constructor
@@ -139,50 +143,50 @@ CompressedLinePositionStorage& CompressedLinePositionStorage::operator=(
 }
 
 // template<int BLOCK_SIZE>
-void CompressedLinePositionStorage::append( uint64_t pos )
+void CompressedLinePositionStorage::append( LineOffset pos )
 {
     // Lines must be stored in order
-    assert( ( pos > current_pos_ ) || ( pos == 0 ) );
+    assert( ( pos > current_pos_ ) || ( pos == 0_offset ) );
 
     // Save the pointer in case we need to "pop_back"
     previous_block_offset_ = block_offset_;
 
     bool store_in_big = false;
-    if ( pos > UINT32_MAX ) {
+    if ( pos.get() > maxValue<LineNumber>().get() ) {
         store_in_big = true;
-        if ( first_long_line_ == UINT32_MAX ) {
+        if ( first_long_line_ == maxValue<LineNumber>() ) {
             // First "big" end of line, we will start a new (64) block
-            first_long_line_ = nb_lines_;
-            block_offset_ = 0;
+            first_long_line_ = LineNumber( nb_lines_.get() );
+            block_offset_ = 0_boffset;
         }
     }
 
-    if ( ! block_offset_ ) {
+    if ( !block_offset_.get() ) {
         // We need to start a new block
         if ( ! store_in_big ) {
-           block_index_ = pool32_.get_block( BLOCK_SIZE, pos, &block_offset_ );
+           block_index_ = pool32_.get_block( BLOCK_SIZE, static_cast<uint32_t>( pos.get() ), &block_offset_.get() );
         }
         else {
-           long_block_index_ = pool64_.get_block( BLOCK_SIZE, pos, &block_offset_ );
+           long_block_index_ = pool64_.get_block( BLOCK_SIZE, pos.get(), &block_offset_.get() );
         }
     }
     else {
         const auto block = ( !store_in_big ) ? pool32_[block_index_] : pool64_[long_block_index_];
-        uint64_t delta = pos - current_pos_;
-        if ( delta < 128 ) {
+        auto delta = pos - current_pos_;
+        if ( delta <  128_offset ) {
             // Code relative on one byte
-            block_add_one_byte_relative(block, &block_offset_, delta );
+            block_add_one_byte_relative(block, block_offset_, static_cast<uint8_t>( delta.get() ) );
         }
-        else if ( delta < 16384 ) {
+        else if ( delta < 16384_offset ) {
             // Code relative on two bytes
-            block_add_two_bytes_relative(block, &block_offset_, delta );
+            block_add_two_bytes_relative(block, block_offset_, static_cast<uint16_t>( delta.get() ) );
         }
         else {
             // Code absolute
             if ( ! store_in_big )
-                block_add_absolute<uint32_t>(block, &block_offset_, static_cast<uint32_t>( pos ) );
+                block_add_absolute<uint32_t>(block, block_offset_, static_cast<uint32_t>( pos.get() ) );
             else
-                block_add_absolute<uint64_t>(block, &block_offset_, pos );
+                block_add_absolute<uint64_t>(block, block_offset_, pos.get() );
         }
     }
 
@@ -191,19 +195,19 @@ void CompressedLinePositionStorage::append( uint64_t pos )
 
     const auto shrinkBlock = [this]( auto& blockPool )
     {
-        const auto effective_block_size = previous_block_offset_;
+        const auto effective_block_size = previous_block_offset_.get();
 
         // We allocate extra space for the last element in case it
         // is replaced by an absolute value in the future (following a pop_back)
         const auto new_size = effective_block_size + blockPool.getPaddedElementSize();
         blockPool.resize_last_block(new_size);
 
-        block_offset_ = 0;
-        previous_block_offset_ = effective_block_size;
+        block_offset_ =  0_boffset;
+        previous_block_offset_ = BlockOffset( effective_block_size );
     };
 
     if ( ! store_in_big ) {
-        if ( nb_lines_ % BLOCK_SIZE == 0 ) {
+        if ( nb_lines_.get() % BLOCK_SIZE == 0 ) {
             // We have finished the block
 
             // Let's reduce its size to what is actually used
@@ -211,7 +215,7 @@ void CompressedLinePositionStorage::append( uint64_t pos )
         }
     }
     else {
-        if ( ( nb_lines_ - first_long_line_ ) % BLOCK_SIZE == 0 ) {
+        if ( ( nb_lines_.get() - first_long_line_.get() ) % BLOCK_SIZE == 0 ) {
             // We have finished the block
 
             // Let's reduce its size to what is actually used
@@ -221,48 +225,48 @@ void CompressedLinePositionStorage::append( uint64_t pos )
 }
 
 // template<int BLOCK_SIZE>
-uint64_t CompressedLinePositionStorage::at( uint32_t index ) const
+LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
 {
     const uint8_t* block = nullptr;
-    ptrdiff_t offset = 0;
-    uint64_t position = 0;
+    BlockOffset offset;
+    LineOffset position;
 
     Cache* last_read = last_read_.getPtr();
 
     if ( index < first_long_line_ ) {
-        block = pool32_[ index / BLOCK_SIZE ];
+        block = pool32_[ index.get() / BLOCK_SIZE ];
 
-        if ( ( index == last_read->index + 1 ) && ( index % BLOCK_SIZE != 0 ) ) {
+        if ( ( index.get() == last_read->index.get() + 1 ) && ( index.get() % BLOCK_SIZE != 0 ) ) {
             position = last_read->position;
             offset   =  last_read->offset;
 
-            position = block_next_pos<uint32_t>(block, &offset, position );
+            position = block_next_pos<uint32_t>(block, offset, position );
         }
         else {
-            position = block_initial_pos<uint32_t>( block, &offset );
+            position = block_initial_pos<uint32_t>( block, offset );
 
-            for ( uint32_t i = 0; i < index % BLOCK_SIZE; i++ ) {
+            for ( uint32_t i = 0; i < index.get() % BLOCK_SIZE; i++ ) {
                 // Go through all the lines in the block till the one we want
-                position = block_next_pos<uint32_t>(block, &offset, position );
+                position = block_next_pos<uint32_t>(block, offset, position );
             }
         }
     }
     else {
-        const uint32_t index_in_64 = index - first_long_line_;
-        block = pool64_[ index_in_64 / BLOCK_SIZE ];
+        const auto index_in_64 = index - first_long_line_;
+        block = pool64_[ index_in_64.get() / BLOCK_SIZE ];
 
-        if ( ( index == last_read->index + 1 ) && ( index_in_64 % BLOCK_SIZE != 0 ) ) {
+        if ( ( index.get() == last_read->index.get() + 1 ) && ( index_in_64.get() % BLOCK_SIZE != 0 ) ) {
             position = last_read->position;
             offset   = last_read->offset;
 
-            position = block_next_pos<uint64_t>(block, &offset, position );
+            position = block_next_pos<uint64_t>(block, offset, position );
         }
         else {
-            position = block_initial_pos<uint64_t>( block, &offset );
+            position = block_initial_pos<uint64_t>( block, offset );
 
-            for ( uint32_t i = 0; i < index_in_64 % BLOCK_SIZE; i++ ) {
+            for ( uint32_t i = 0; i < index_in_64.get() % BLOCK_SIZE; i++ ) {
                 // Go through all the lines in the block till the one we want
-                position = block_next_pos<uint64_t>(block, &offset, position );
+                position = block_next_pos<uint64_t>(block, offset, position );
             }
         }
     }
@@ -276,44 +280,44 @@ uint64_t CompressedLinePositionStorage::at( uint32_t index ) const
 }
 
 void CompressedLinePositionStorage::append_list(
-        const std::vector<uint64_t>& positions )
+        const std::vector<LineOffset>& positions )
 {
     // This is not very clever, but caching should make it
     // reasonably fast.
     for ( auto position : positions )
-        append( position );
+        append( std::move(position) );
 }
 
 // template<int BLOCK_SIZE>
 void CompressedLinePositionStorage::pop_back()
 {
     // Removing the last entered data, there are two cases
-    if ( previous_block_offset_ ) {
+    if ( previous_block_offset_.get() ) {
         // The last append was a normal entry in an existing block,
         // so we can just revert the pointer
         block_offset_ = previous_block_offset_;
-        previous_block_offset_ = 0;
+        previous_block_offset_ = 0_boffset;
     }
     else {
         // A new block has been created for the last entry, we need
         // to de-alloc it.
 
-        if ( first_long_line_ == UINT32_MAX ) {
+        if ( first_long_line_ == maxValue<LineNumber>() ) {
             // If we try to pop_back() twice, we're dead!
-            assert( ( nb_lines_ - 1 ) % BLOCK_SIZE == 0 );
+            assert( ( nb_lines_.get() - 1 ) % BLOCK_SIZE == 0 );
 
             block_index_ = pool32_.free_last_block();
         }
         else {
             // If we try to pop_back() twice, we're dead!
-            assert( ( nb_lines_ - first_long_line_ - 1 ) % BLOCK_SIZE == 0 );
+            assert( ( nb_lines_.get() - first_long_line_.get() - 1 ) % BLOCK_SIZE == 0 );
 
             long_block_index_ = pool64_.free_last_block();
         }
 
-        block_offset_ = 0;
+        block_offset_ = 0_boffset;
     }
 
     --nb_lines_;
-    current_pos_ = at( nb_lines_ - 1 );
+    current_pos_ = at( nb_lines_.get() -  1 );
 }

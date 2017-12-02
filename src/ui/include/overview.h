@@ -22,6 +22,7 @@
 
 #include <QList>
 #include <QVector>
+#include "data/linetypes.h"
 
 class LogFilteredData;
 
@@ -61,13 +62,13 @@ class Overview
     // Signal the overview its attached LogFilteredData has been changed and
     // the overview must be updated with the provided total number
     // of line of the file.
-    void updateData( int totalNbLine );
+    void updateData(LinesCount totalNbLine );
     // Set the visibility flag of this overview.
     void setVisible( bool visible ) { visible_ = visible; dirty_ = visible; }
 
     // Update the current position in the file (to draw the view line)
-    void updateCurrentPosition( int firstLine, int lastLine )
-    { topLine_ = firstLine; nbLines_ = lastLine - firstLine; }
+    void updateCurrentPosition( LineNumber firstLine, LineNumber lastLine )
+    { topLine_ = firstLine; nbLines_ = LinesCount( lastLine.get() - firstLine.get() ); }
 
     // Returns weither this overview is visible.
     bool isVisible() { return visible_; }
@@ -84,7 +85,7 @@ class Overview
     std::pair<int,int> getViewLines() const;
 
     // Return the line number corresponding to the passed overview y coordinate.
-    int fileLineFromY( int y ) const;
+    LineNumber fileLineFromY( int y ) const;
     // Return the y coordinate corresponding to the passed line number.
     int yFromFileLine( int file_line ) const;
 
@@ -92,12 +93,12 @@ class Overview
     // List of matches associated with this Overview.
     const LogFilteredData* logFilteredData_;
     // Total number of lines in the file.
-    int linesInFile_;
+    LinesCount linesInFile_;
     // Whether the overview is visible.
     bool visible_;
     // First and last line currently viewed.
-    int topLine_;
-    int nbLines_;
+    LineNumber topLine_;
+    LinesCount nbLines_;
     // Current height of view window.
     int height_;
     // Does the cache (matchesLines, markLines) need to be recalculated.

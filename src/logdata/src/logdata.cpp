@@ -256,23 +256,21 @@ void LogData::indexingFinished( LoadingStatus status )
 //
 // Implementation of virtual functions
 //
-qint64 LogData::doGetNbLine() const
+LinesCount LogData::doGetNbLine() const
 {
     return indexing_data_.getNbLines();
 }
 
-int LogData::doGetMaxLength() const
+LineLength LogData::doGetMaxLength() const
 {
     return indexing_data_.getMaxLength();
 }
 
-int LogData::doGetLineLength( qint64 line ) const
+LineLength LogData::doGetLineLength( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) { return 0; /* exception? */ }
+    if ( line >= indexing_data_.getNbLines() ) { return 0_length; /* exception? */ }
 
-    int length = doGetExpandedLineString( line ).length();
-
-    return length;
+    return LineLength( doGetExpandedLineString( line ).length() );
 }
 
 void LogData::doSetDisplayEncoding( const char* encoding )
@@ -297,36 +295,35 @@ QTextCodec* LogData::doGetDisplayEncoding() const
     return codec_;
 }
 
-QString LogData::doGetLineString( qint64 line ) const
+QString LogData::doGetLineString( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) { return 0; /* exception? */ }
+    if ( line >= indexing_data_.getNbLines() ) { return ""; /* exception? */ }
 
     fileMutex_.lock();
 
-    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
-    const QByteArray rawString = attached_file_->readLine();
+    attached_file_->seek( ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount ).get() );
+    const auto rawString = attached_file_->readLine();
 
     fileMutex_.unlock();
 
-
-    QString string = codec_->toUnicode( rawString );
+    auto string = codec_->toUnicode( rawString );
     string.chop( 1 );
 
     return string;
 }
 
-QString LogData::doGetExpandedLineString( qint64 line ) const
+QString LogData::doGetExpandedLineString( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) { return 0; /* exception? */ }
+    if ( line >= indexing_data_.getNbLines() ) { return ""; /* exception? */ }
 
     fileMutex_.lock();
 
-    attached_file_->seek( (line == 0) ? 0 : indexing_data_.getPosForLine( line-1 ) );
-    const QByteArray rawString = attached_file_->readLine();
+    attached_file_->seek( ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount).get() );
+    const auto rawString = attached_file_->readLine();
 
     fileMutex_.unlock();
 
-    QString string = untabify( codec_->toUnicode( rawString ) );
+    auto string = untabify( codec_->toUnicode( rawString ) );
     string.chop( 1 );
 
     return string;
@@ -335,14 +332,13 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
 // Note this function is also called from the LogFilteredDataWorker thread, so
 // data must be protected because they are changed in the main thread (by
 // indexingFinished).
-QStringList LogData::doGetLines( qint64 first_line, int number ) const
+QStringList LogData::doGetLines( LineNumber first_line, LinesCount number ) const
 {
-    QStringList list;
-    const qint64 last_line = first_line + number - 1;
+    const auto last_line = first_line + number - 1_lcount;
 
     // LOG(logDEBUG) << "LogData::doGetLines first_line:" << first_line << " nb:" << number;
 
-    if ( number == 0 ) {
+    if ( number.get() == 0 ) {
         return QStringList();
     }
 
@@ -351,27 +347,29 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         return QStringList(); /* exception? */
     }
 
-    const qint64 first_byte = (first_line == 0) ?
-        0 : indexing_data_.getPosForLine( first_line-1 );
-    const qint64 last_byte  = indexing_data_.getPosForLine( last_line );
+    const auto first_byte = (first_line.get() == 0) ?
+        0 : indexing_data_.getPosForLine( first_line - 1_lcount ).get();
+    const auto last_byte  = indexing_data_.getPosForLine( last_line ).get();
 
     fileMutex_.lock();
 
     // LOG(logDEBUG) << "LogData::doGetLines first_byte:" << first_byte << " last_byte:" << last_byte;
     attached_file_->seek( first_byte );
-    QByteArray blob = attached_file_->read( last_byte - first_byte );
+    const auto blob = attached_file_->read( last_byte - first_byte );
 
     fileMutex_.unlock();
 
-    list.reserve(number);
+    QStringList list;
+    list.reserve( number.get() );
 
     qint64 beginning = 0;
     qint64 end = 0;
-    for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) - first_byte;
+    for ( LineNumber line = first_line; (line <= last_line); ++line ) {
+        end = indexing_data_.getPosForLine( line ).get() - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         // LOG(logDEBUG) << "Line is: " << std::string( blob.data() + beginning, end - beginning - 1 );
-        list.append( codec_->toUnicode( blob.data() + beginning, end - beginning - 1 ) );
+        list.append( codec_->toUnicode( blob.data() + beginning,
+                                        static_cast<LineLength::UnderlyingType>( end - beginning - 1 ) ) );
 
         beginning = end;
     }
@@ -379,12 +377,11 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
     return list;
 }
 
-QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
+QStringList LogData::doGetExpandedLines( LineNumber first_line, LinesCount number ) const
 {
-    QStringList list;
-    const qint64 last_line = first_line + number - 1;
+    const auto last_line = first_line + number - 1_lcount;
 
-    if ( number == 0 ) {
+    if ( number.get() == 0 ) {
         return QStringList();
     }
 
@@ -395,9 +392,9 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 
     fileMutex_.lock();
 
-    const qint64 first_byte = (first_line == 0) ?
-        0 : indexing_data_.getPosForLine( first_line-1 );
-    const qint64 last_byte  = indexing_data_.getPosForLine( last_line );
+    const auto first_byte = (first_line.get() == 0) ?
+        0 : indexing_data_.getPosForLine( first_line-1_lcount ).get();
+    const auto last_byte  = indexing_data_.getPosForLine( last_line ).get();
     // LOG(logDEBUG) << "LogData::doGetExpandedLines first_byte:" << first_byte << " last_byte:" << last_byte;
 
     attached_file_->seek( first_byte );
@@ -405,15 +402,18 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
 
     fileMutex_.unlock();
 
-    list.reserve(number);
+    QStringList list;
+    list.reserve( number.get() );
 
     qint64 beginning = 0;
     qint64 end = 0;
-    for ( qint64 line = first_line; (line <= last_line); line++ ) {
-        end = indexing_data_.getPosForLine( line ) - first_byte;
+    for ( auto line = first_line; (line <= last_line); ++line ) {
+        end = indexing_data_.getPosForLine( line ).get() - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         // LOG(logDEBUG) << "Line is: " << std::string( blob.data() + beginning, end - beginning - 1 );
-        list.append( untabify( codec_->toUnicode( blob.data() + beginning, end - beginning - 1 ) ) );
+
+        list.append( untabify( codec_->toUnicode( blob.data() + beginning,
+                                                  static_cast<LineLength::UnderlyingType>( end - beginning - 1 ) ) ) );
         beginning = end;
     }
 

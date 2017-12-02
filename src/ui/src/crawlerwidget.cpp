@@ -59,12 +59,16 @@ class CrawlerWidgetContext : public ViewContextInterface {
            bool ignore_case,
            bool auto_refresh,
            bool follow_file,
-		   QList<LineNumber> markedLines )
+           QList<LineNumber> markedLines )
         : sizes_( sizes ),
           ignore_case_( ignore_case ),
           auto_refresh_( auto_refresh ),
-          follow_file_ ( follow_file ),
-		  marks_ ( markedLines ) {}
+          follow_file_ ( follow_file )
+    {
+        std::transform(markedLines.begin(), markedLines.end(),
+                       std::back_inserter(marks_),
+                       [](const auto& m) { return m.get(); });
+    }
 
     // Implementation of the ViewContextInterface function
     QString toString() const;
@@ -76,7 +80,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
     bool autoRefresh() const { return auto_refresh_; }
     bool followFile() const { return follow_file_; }
 
-	QList<LineNumber> marks() const { return marks_; }
+    QList<LineNumber::UnderlyingType> marks() const { return marks_; }
 
   private:
 	void loadFromString( const QString& string );
@@ -89,7 +93,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
     bool auto_refresh_;
     bool follow_file_;
 
-	QList<LineNumber> marks_;
+    QList<LineNumber::UnderlyingType> marks_;
 };
 
 // Constructor only does trivial construction. The real work is done once
@@ -109,14 +113,11 @@ CrawlerWidget::CrawlerWidget( QWidget *parent )
     loadingInProgress_ = true;
     // and it's the first time
     firstLoadDone_     = false;
-    nbMatches_         = 0;
     dataStatus_        = DataStatus::OLD_DATA;
-
-    currentLineNumber_ = 0;
 }
 
 // The top line is first one on the main display
-int CrawlerWidget::getTopLine() const
+LineNumber CrawlerWidget::getTopLine() const
 {
     return logMainView->getTopLine();
 }
@@ -266,7 +267,10 @@ void CrawlerWidget::doSetViewContext(const QString &view_context )
 
     logMainView->followSet( context.followFile() );
 
-	savedMarkedLines_ = context.marks();
+    const auto savedMarks = context.marks();
+    std::transform(savedMarks.begin(), savedMarks.end(),
+                   std::back_inserter(savedMarkedLines_),
+                   [](const auto& l) { return LineNumber(l); } );
 }
 
 std::shared_ptr<const ViewContextInterface>
@@ -308,7 +312,7 @@ void CrawlerWidget::stopSearch()
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
-void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
+void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress )
 {
     LOG(logDEBUG) << "updateFilteredView received.";
 
@@ -325,9 +329,10 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         if ( progress > 0 ) {
             searchInfoLine->setText(
                     tr("Search in progress (%1 %)... %2 match%3 found so far.")
-                    .arg( progress )
-                    .arg( nbMatches )
-                    .arg( nbMatches > 1 ? "es" : "" ) );
+                    .arg( QString::number( progress ),
+                          QString::number( nbMatches.get() ),
+                          QLatin1String( nbMatches.get() > 1 ? "es" : "" ) ) );
+
             searchInfoLine->displayGauge( progress );
         }
     }
@@ -350,28 +355,28 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
     }
 
     if ( progress == 100 ) {
-        const int currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
+        const auto currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
         LOG(logDEBUG) << "updateFilteredView: restoring selection: "
                       << " absolute line number (0based) " << currentLineNumber_
                       << " index " << currenLineIndex;
-        filteredView->selectAndDisplayLine(currenLineIndex);
-        filteredView->setSearchLimits(searchStartLine_, searchEndLine_);
+        filteredView->selectAndDisplayLine( currenLineIndex );
+        filteredView->setSearchLimits( searchStartLine_, searchEndLine_ );
     }
 }
 
-void CrawlerWidget::jumpToMatchingLine(int filteredLineNb)
+void CrawlerWidget::jumpToMatchingLine(LineNumber filteredLineNb)
 {
-    int mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
-    logMainView->selectAndDisplayLine(mainViewLine);  // FIXME: should be done with a signal.
+    const auto mainViewLine = logFilteredData_->getMatchingLineNumber(filteredLineNb);
+    logMainView->selectAndDisplayLine( mainViewLine );  // FIXME: should be done with a signal.
 }
 
-void CrawlerWidget::updateLineNumberHandler( int line )
+void CrawlerWidget::updateLineNumberHandler( LineNumber line )
 {
     currentLineNumber_ = line;
     emit updateLineNumber( line );
 }
 
-void CrawlerWidget::markLineFromMain( qint64 line )
+void CrawlerWidget::markLineFromMain( LineNumber line )
 {
     if ( line < logData_->getNbLine() ) {
         if ( logFilteredData_->isLineMarked( line ) )
@@ -391,10 +396,10 @@ void CrawlerWidget::markLineFromMain( qint64 line )
     }
 }
 
-void CrawlerWidget::markLineFromFiltered( qint64 line )
+void CrawlerWidget::markLineFromFiltered( LineNumber line )
 {
     if ( line < logFilteredData_->getNbLine() ) {
-        qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
+        const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
         if ( logFilteredData_->filteredLineTypeByIndex( line )
                 == LogFilteredData::Mark )
             logFilteredData_->deleteMark( line_in_file );
@@ -506,7 +511,7 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
 	}
 	else {
 		firstLoadDone_ = true;
-		for ( auto m : qAsConst( savedMarkedLines_ ) ) {
+        for ( const auto& m : savedMarkedLines_ ) {
 			logFilteredData_->addMark( m );
 		}
 	}
@@ -524,7 +529,7 @@ void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
             filteredView->updateData();
             searchState_.truncateFile();
             printSearchInfoMessage();
-            nbMatches_ = 0;
+            nbMatches_ = 0_lcount;
         }
     }
 }
@@ -585,7 +590,7 @@ void CrawlerWidget::changeFilteredViewVisibility( int index )
         static_cast< FilteredView::Visibility>( item->data().toInt() );
 
     filteredView->setVisibility( visibility );
-    const int lineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
+    const auto lineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
     filteredView->selectAndDisplayLine( lineIndex );
 }
 
@@ -606,9 +611,9 @@ void CrawlerWidget::addToSearch( const QString& string )
     searchLineEdit->lineEdit()->setFocus();
 }
 
-void CrawlerWidget::mouseHoveredOverMatch( qint64 line )
+void CrawlerWidget::mouseHoveredOverMatch( LineNumber line )
 {
-    qint64 line_in_mainview = logFilteredData_->getMatchingLineNumber( line );
+    const auto line_in_mainview = logFilteredData_->getMatchingLineNumber( line );
 
     overviewWidget_->highlightLine( line_in_mainview );
 }
@@ -618,18 +623,18 @@ void CrawlerWidget::activityDetected()
     changeDataStatus( DataStatus::OLD_DATA );
 }
 
-void CrawlerWidget::setSearchLimits( qint64 startLine, qint64 endLine )
+void CrawlerWidget::setSearchLimits( LineNumber startLine, LineNumber endLine )
 {
     searchStartLine_ = startLine;
     searchEndLine_ = endLine;
 
-    logMainView->setSearchLimits(startLine, endLine);
-    filteredView->setSearchLimits(startLine, endLine);
+    logMainView->setSearchLimits( startLine, endLine );
+    filteredView->setSearchLimits( startLine, endLine );
 }
 
 void CrawlerWidget::clearSearchLimits()
 {
-    setSearchLimits(0, logData_->getNbLine());
+    setSearchLimits(0_lnum, LineNumber( logData_->getNbLine().get() ));
 }
 
 //
@@ -895,7 +900,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
     // us the overhead of having proper sync.
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 
-    nbMatches_ = 0;
+    nbMatches_ = 0_lcount;
 
     // Clear and recompute the content of the filtered window.
     logFilteredData_->clearSearch();
@@ -982,7 +987,7 @@ void CrawlerWidget::updateSearchCombo()
 }
 
 // Print the search info message.
-void CrawlerWidget::printSearchInfoMessage( int nbMatches )
+void CrawlerWidget::printSearchInfoMessage( LinesCount nbMatches )
 {
     QString text;
 
@@ -991,12 +996,12 @@ void CrawlerWidget::printSearchInfoMessage( int nbMatches )
             // Blank text is fine
             break;
         case SearchState::Static:
-            text = tr("%1 match%2 found.").arg( nbMatches )
-                .arg( nbMatches > 1 ? "es" : "" );
+            text = tr("%1 match%2 found.").arg( nbMatches.get() )
+                .arg( nbMatches.get() > 1 ? "es" : "" );
             break;
         case SearchState::Autorefreshing:
-            text = tr("%1 match%2 found. Search is auto-refreshing...").arg( nbMatches )
-                .arg( nbMatches > 1 ? "es" : "" );
+            text = tr("%1 match%2 found. Search is auto-refreshing...").arg( nbMatches.get() )
+                .arg( nbMatches.get() > 1 ? "es" : "" );
             break;
         case SearchState::FileTruncated:
         case SearchState::TruncatedAutorefreshing:
@@ -1217,7 +1222,7 @@ QString CrawlerWidgetContext::toString() const
 	const auto toVariantList = []( const auto& list ) -> QVariantList {
 		QVariantList variantList;
 		for ( const auto& item : list ) {
-			variantList.append( item );
+            variantList.append( item );
 		}
 		return variantList;
 	};

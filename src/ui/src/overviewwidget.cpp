@@ -237,16 +237,16 @@ void OverviewWidget::mouseMoveEvent( QMouseEvent* mouseEvent )
 
 void OverviewWidget::handleMousePress( int position )
 {
-    int line = overview_->fileLineFromY( position );
+    const auto line = overview_->fileLineFromY( position );
     LOG(logDEBUG) << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
     emit lineClicked( line );
 }
 
-void OverviewWidget::highlightLine( qint64 line )
+void OverviewWidget::highlightLine( LineNumber line )
 {
     highlightTimer_.stop();
 
-    highlightedLine_ = line;
+    highlightedLine_ = line.get();
     highlightedTTL_  = INITIAL_TTL_VALUE;
 
     update();

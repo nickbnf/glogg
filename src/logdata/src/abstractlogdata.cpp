@@ -26,43 +26,43 @@
 #include "abstractlogdata.h"
 
 // Simple wrapper in order to use a clean Template Method
-QString AbstractLogData::getLineString( qint64 line ) const
+QString AbstractLogData::getLineString( LineNumber line ) const
 {
     return doGetLineString(line);
 }
 
 // Simple wrapper in order to use a clean Template Method
-QString AbstractLogData::getExpandedLineString( qint64 line ) const
+QString AbstractLogData::getExpandedLineString( LineNumber line ) const
 {
     return doGetExpandedLineString(line);
 }
 
 // Simple wrapper in order to use a clean Template Method
-QStringList AbstractLogData::getLines( qint64 first_line, int number ) const
+QStringList AbstractLogData::getLines( LineNumber first_line, LinesCount number ) const
 {
     return doGetLines( first_line, number );
 }
 
 // Simple wrapper in order to use a clean Template Method
-QStringList AbstractLogData::getExpandedLines( qint64 first_line, int number ) const
+QStringList AbstractLogData::getExpandedLines( LineNumber first_line, LinesCount number ) const
 {
     return doGetExpandedLines( first_line, number );
 }
 
 // Simple wrapper in order to use a clean Template Method
-qint64 AbstractLogData::getNbLine() const
+LinesCount AbstractLogData::getNbLine() const
 {
     return doGetNbLine();
 }
 
 // Simple wrapper in order to use a clean Template Method
-int AbstractLogData::getMaxLength() const
+LineLength AbstractLogData::getMaxLength() const
 {
     return doGetMaxLength();
 }
 
 // Simple wrapper in order to use a clean Template Method
-int AbstractLogData::getLineLength( qint64 line ) const
+LineLength AbstractLogData::getLineLength( LineNumber line ) const
 {
     return doGetLineLength( line );
 }

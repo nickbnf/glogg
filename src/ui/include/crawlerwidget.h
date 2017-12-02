@@ -58,7 +58,7 @@ class CrawlerWidget : public QSplitter,
     CrawlerWidget( QWidget *parent=0 );
 
     // Get the line number of the first line displayed.
-    int getTopLine() const;
+    LineNumber getTopLine() const;
     // Get the selected text as a string (from the main window)
     QString getSelectedText() const;
 
@@ -135,7 +135,7 @@ class CrawlerWidget : public QSplitter,
     // Sent up to the MainWindow to enable/disable the follow mode
     void followModeChanged( bool follow );
     // Sent up when the current line number is updated
-    void updateLineNumber( int line );
+    void updateLineNumber( LineNumber line );
 
     // "auto-refresh" check has been changed
     void searchRefreshChanged( int state );
@@ -158,16 +158,16 @@ class CrawlerWidget : public QSplitter,
     // QuickFind is being closed.
     void exitingQuickFind();
     // Called when new data must be displayed in the filtered window.
-    void updateFilteredView( int nbMatches, int progress );
+    void updateFilteredView(LinesCount nbMatches, int progress );
     // Called when a new line has been selected in the filtered view,
     // to instruct the main view to jump to the matching line.
-    void jumpToMatchingLine( int filteredLineNb );
+    void jumpToMatchingLine(LineNumber filteredLineNb );
     // Called when the main view is on a new line number
-    void updateLineNumberHandler( int line );
+    void updateLineNumberHandler(LineNumber line );
     // Mark a line that has been clicked on the main (top) view.
-    void markLineFromMain( qint64 line );
+    void markLineFromMain(LineNumber line );
     // Mark a line that has been clicked on the filtered (bottom) view.
-    void markLineFromFiltered( qint64 line );
+    void markLineFromFiltered(LineNumber line );
 
     void loadingFinishedHandler( LoadingStatus status );
     // Manages the info lines to inform the user the file has changed.
@@ -189,12 +189,12 @@ class CrawlerWidget : public QSplitter,
     void addToSearch( const QString& string );
 
     // Called when a match is hovered on in the filtered view
-    void mouseHoveredOverMatch( qint64 line );
+    void mouseHoveredOverMatch(LineNumber line );
 
     // Called when there was activity in the views
     void activityDetected();
 
-    void setSearchLimits( qint64 startLine, qint64 endLine );
+    void setSearchLimits( LineNumber startLine, LineNumber endLine );
     void clearSearchLimits();
 
   private:
@@ -243,7 +243,7 @@ class CrawlerWidget : public QSplitter,
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
     AbstractLogView* activeView() const;
-    void printSearchInfoMessage( int nbMatches = 0 );
+    void printSearchInfoMessage(LinesCount nbMatches = 0_lcount );
     void changeDataStatus( DataStatus status );
     void updateEncoding();
     void changeTopViewSize( int32_t delta );
@@ -289,10 +289,10 @@ class CrawlerWidget : public QSplitter,
     QStandardItemModel* visibilityModel_;
 
     // Last main line number received
-    qint64 currentLineNumber_;
+    LineNumber currentLineNumber_;
 
-    qint64 searchStartLine_;
-    qint64 searchEndLine_;
+    LineNumber searchStartLine_;
+    LineNumber searchEndLine_;
 
     // Are we loading something?
     // Set to false when we receive a completion message from the LogData
@@ -302,10 +302,10 @@ class CrawlerWidget : public QSplitter,
     bool            firstLoadDone_;
 
 	// Saved marked lines to be restored on first load
-	QList<LineNumber> savedMarkedLines_;
+    std::vector<LineNumber> savedMarkedLines_;
 
     // Current number of matches
-    int             nbMatches_;
+    LinesCount        nbMatches_;
 
     // the current dataStatus (whether we have new, not seen, data)
     DataStatus      dataStatus_;

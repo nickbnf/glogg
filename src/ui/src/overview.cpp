@@ -30,9 +30,6 @@
 Overview::Overview() : matchLines_(), markLines_()
 {
     logFilteredData_ = NULL;
-    linesInFile_     = 0;
-    topLine_         = 0;
-    nbLines_         = 0;
     height_          = 0;
     dirty_           = true;
     visible_         = false;
@@ -47,7 +44,7 @@ void Overview::setFilteredData( const LogFilteredData* logFilteredData )
     logFilteredData_ = logFilteredData;
 }
 
-void Overview::updateData( int totalNbLine )
+void Overview::updateData( LinesCount totalNbLine )
 {
     LOG(logDEBUG) << "OverviewWidget::updateData " << totalNbLine;
 
@@ -80,27 +77,29 @@ std::pair<int,int> Overview::getViewLines() const
     int top = 0;
     int bottom = height_ - 1;
 
-    if ( linesInFile_ > 0 ) {
-        top = (int)((qint64)topLine_ * height_ / linesInFile_);
-        bottom = (int)((qint64)top + nbLines_ * height_ / linesInFile_);
+    if ( linesInFile_.get() > 0 ) {
+        top = (int)((qint64)topLine_.get() * height_ / linesInFile_.get());
+        bottom = (int)((qint64)top + nbLines_.get() * height_ / linesInFile_.get());
     }
 
     return std::pair<int,int>(top, bottom);
 }
 
-int Overview::fileLineFromY( int position ) const
+LineNumber Overview::fileLineFromY( int position ) const
 {
-    int line = (int)((qint64)position * linesInFile_ / height_);
+    const auto line = static_cast<LineNumber::UnderlyingType>(
+                (qint64)position * linesInFile_.get() / height_
+            );
 
-    return line;
+    return LineNumber(line);
 }
 
 int Overview::yFromFileLine( int file_line ) const
 {
     int position = 0;
 
-    if ( linesInFile_ > 0 )
-        position =  (int)((qint64)file_line * height_ / linesInFile_);
+    if ( linesInFile_.get() > 0 )
+        position =  (int)((qint64)file_line * height_ / linesInFile_.get());
 
     return position;
 }
@@ -114,13 +113,13 @@ void Overview::recalculatesLines()
         matchLines_.clear();
         markLines_.clear();
 
-        if ( linesInFile_ > 0 ) {
+        if ( linesInFile_.get() > 0 ) {
             const auto nbLines = logFilteredData_->getNbLine();
-            for ( int i = 0; i < nbLines; i++ ) {
+            for ( auto i = 0_lnum; i < nbLines; ++i ) {
                 LogFilteredData::FilteredLineType line_type =
                     logFilteredData_->filteredLineTypeByIndex( i );
-                int line = (int) logFilteredData_->getMatchingLineNumber( i );
-                int position = (int)( (qint64)line * height_ / linesInFile_ );
+                const auto line = logFilteredData_->getMatchingLineNumber( i );
+                const auto position = static_cast<int>( (qint64)(line.get()) * height_ / linesInFile_.get() );
                 if ( line_type == LogFilteredData::Match ) {
                     if ( ( ! matchLines_.empty() ) && matchLines_.back().position() == position ) {
                         // If the line is already there, we increase its weight

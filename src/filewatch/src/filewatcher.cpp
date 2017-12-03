@@ -23,7 +23,7 @@ namespace  {
 
 class EfswFileWatcher : public efsw::FileWatchListener {
   public:
-    EfswFileWatcher(FileWatcher* parent) : parent_ { parent }
+    explicit EfswFileWatcher(FileWatcher* parent) : parent_ { parent }
     {}
 
     void addFile( const QString& fullFileName )

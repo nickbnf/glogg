@@ -680,7 +680,6 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
     if ( followMode_ )
         jumpToBottom();
 
-    int y_delta = 0;
     if ( verticalScrollBar()->value() == verticalScrollBar()->maximum() ) {
         // First see if we need to block the elastic (on Mac)
         if ( wheelEvent->phase() == Qt::ScrollBegin )
@@ -688,6 +687,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
         else if ( wheelEvent->phase() == Qt::ScrollEnd )
             followElasticHook_.release();
 
+        int y_delta = 0;
         auto pixel_delta = wheelEvent->pixelDelta();
 
         if ( pixel_delta.isNull() ) {

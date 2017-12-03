@@ -223,14 +223,6 @@ PartialIndexOperation::PartialIndexOperation( const QString& fileName,
 
 void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosition )
 {
-    auto pos = initialPosition.get(); // Absolute position of the start of current line
-    auto end = 0ll;  // Absolute position of the end of current line
-    int additional_spaces = 0;  // Additional spaces due to tabs
-
-    QTextCodec* fileTextCodec = nullptr;
-    QTextCodec* encodingGuess = nullptr;
-    EncodingParameters encodingParams;
-
     static std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
 
@@ -238,7 +230,16 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
 
     QFile file( fileName_ );
 
-    if ( file.open( QIODevice::ReadOnly ) ) {
+    if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
+
+        auto pos = initialPosition.get(); // Absolute position of the start of current line
+        auto end = 0ll;  // Absolute position of the end of current line
+        int additional_spaces = 0;  // Additional spaces due to tabs
+
+        QTextCodec* fileTextCodec = nullptr;
+        QTextCodec* encodingGuess = nullptr;
+        EncodingParameters encodingParams;
+
         // Count the number of lines and max length
         // (read big chunks to speed up reading from disk)
         file.seek( pos );

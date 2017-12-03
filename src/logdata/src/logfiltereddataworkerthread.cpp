@@ -110,7 +110,7 @@ void SearchData::deleteMatch( LineNumber line )
 
     SearchResultArray::iterator i = matches_.end();
     while ( i != matches_.begin() ) {
-        i--;
+        --i;
         const auto this_line = i->lineNumber();
         if ( this_line == line ) {
             matches_.erase(i);

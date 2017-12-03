@@ -47,7 +47,11 @@
 class CharDistributionAnalysis
 {
 public:
-  CharDistributionAnalysis() {Reset(PR_FALSE);}
+  CharDistributionAnalysis()
+      : mCharToFreqOrder{nullptr}
+      , mTableSize{}
+      , mTypicalDistributionRatio{}
+  { Reset(PR_FALSE); }
 
   //feed a block of data and do distribution analysis
   void HandleData(const char* /*aBuf*/, PRUint32 /*aLen*/) {}

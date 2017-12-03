@@ -59,7 +59,12 @@ typedef struct
 
 class nsCodingStateMachine {
 public:
-  nsCodingStateMachine(const SMModel* sm) : mModel(sm) { mCurrentState = eStart; }
+  nsCodingStateMachine(const SMModel* sm)
+      : mCurrentCharLen{}
+      , mCurrentBytePos{}
+      , mModel(sm)
+  { mCurrentState = eStart; }
+
   nsSMState NextState(char c){
     //for each byte we get its class , if it is first byte, we also get byte length
     PRUint32 byteCls = GETCLASS(c);

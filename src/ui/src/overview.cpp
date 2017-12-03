@@ -35,10 +35,6 @@ Overview::Overview() : matchLines_(), markLines_()
     visible_         = false;
 }
 
-Overview::~Overview()
-{
-}
-
 void Overview::setFilteredData( const LogFilteredData* logFilteredData )
 {
     logFilteredData_ = logFilteredData;

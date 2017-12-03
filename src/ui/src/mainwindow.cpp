@@ -175,7 +175,7 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     quickFindWidget_.hide();
 
     QWidget* central_widget = new QWidget();
-    QVBoxLayout* main_layout = new QVBoxLayout();
+    auto* main_layout = new QVBoxLayout();
     main_layout->setContentsMargins( 0, 0, 0, 0 );
     main_layout->addWidget( &mainTabWidget_ );
     main_layout->addWidget( &quickFindWidget_ );
@@ -201,7 +201,7 @@ void MainWindow::reloadSession()
                &current_file_index ) )
     {
         QString file_name = { open_file.first };
-        CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+        auto* crawler_widget = dynamic_cast<CrawlerWidget*>(
                 open_file.second );
 
         assert( crawler_widget );
@@ -699,7 +699,7 @@ void MainWindow::currentTabChanged( int index )
 
     if ( index >= 0 )
     {
-        CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+        auto* crawler_widget = dynamic_cast<CrawlerWidget*>(
                 mainTabWidget_.widget( index ) );
         signalMux_.setCurrentDocument( crawler_widget );
         quickFindMux_.registerSelector( crawler_widget );
@@ -842,7 +842,7 @@ bool MainWindow::loadFile( const QString& fileName )
     LOG(logDEBUG) << "loadFile ( " << fileName.toStdString() << " )";
 
     // First check if the file is already open...
-    CrawlerWidget* existing_crawler = dynamic_cast<CrawlerWidget*>(
+    auto* existing_crawler = dynamic_cast<CrawlerWidget*>(
             session_->getViewIfOpen( fileName ) );
     if ( existing_crawler ) {
         // ... and switch to it.

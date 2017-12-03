@@ -32,10 +32,6 @@ class AbstractLogData : public QObject {
   Q_OBJECT
 
   public:
-    AbstractLogData() = default;
-    // Permit each child to have its destructor
-    ~AbstractLogData() override = default;
-
     // Returns the line passed as a QString
     QString getLineString( LineNumber line ) const;
     // Returns the line passed as a QString, with tabs expanded

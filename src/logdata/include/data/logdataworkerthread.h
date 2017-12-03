@@ -89,8 +89,6 @@ class IndexOperation : public QObject
     IndexOperation(const QString& fileName,
             IndexingData* indexingData, AtomicFlag* interruptRequest);
 
-    ~IndexOperation() override = default;
-
     // Start the indexing operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
     virtual bool start() = 0;

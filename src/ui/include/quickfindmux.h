@@ -31,7 +31,7 @@
 // Interface representing a widget searchable in both direction.
 class SearchableWidgetInterface {
   public:
-    virtual ~SearchableWidgetInterface() {}
+    virtual ~SearchableWidgetInterface() = default;
 
     virtual void searchForward() = 0;
     virtual void searchBackward() = 0;
@@ -46,7 +46,7 @@ class SearchableWidgetInterface {
 // who the search have to be forwarded to.
 class QuickFindMuxSelectorInterface {
   public:
-    virtual ~QuickFindMuxSelectorInterface() {}
+    virtual ~QuickFindMuxSelectorInterface() = default;
 
     // Return the searchable widget to use.
     SearchableWidgetInterface* getActiveSearchable() const

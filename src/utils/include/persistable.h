@@ -26,7 +26,7 @@ class QSettings;
 // storage by PersistentInfo.
 class Persistable {
   public:
-    virtual ~Persistable() {}
+    virtual ~Persistable() = default;
 
     // Must be implemented to save/retrieve from Qt Settings
     virtual void saveToStorage( QSettings& settings ) const = 0;

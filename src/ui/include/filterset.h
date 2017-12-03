@@ -32,7 +32,7 @@ class Filter
 {
   public:
     // Construct an uninitialized Filter (when reading from a config file)
-    Filter();
+    Filter() = default;
     Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColor, const QString& backColor );
 
@@ -83,7 +83,7 @@ class FilterSet : public Persistable
 
     // Should be private really, but I don't know how to have 
     // it recognised by QVariant then.
-    typedef QList<Filter> FilterList;
+    using FilterList = QList<Filter>;
 
     // Operators for serialization
     // (must be kept to migrate filters from <=0.8.2)

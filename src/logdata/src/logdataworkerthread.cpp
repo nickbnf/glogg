@@ -312,7 +312,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
                    encodingGuess );
 
             // Update the caller for progress indication
-            int progress = static_cast<int>( ( file.size() > 0 ) ? pos*100 / file.size() : 100 );
+            auto progress = static_cast<int>( ( file.size() > 0 ) ? pos*100 / file.size() : 100 );
             emit indexingProgressed( progress );
         }
 

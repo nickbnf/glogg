@@ -55,7 +55,6 @@ class Overview
     };
 
     Overview();
-    ~Overview();
 
     // Associate the passed filteredData to this Overview
     void setFilteredData( const LogFilteredData* logFilteredData );

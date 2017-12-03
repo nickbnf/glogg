@@ -129,7 +129,7 @@ QDateTime LogData::getLastModifiedDate() const
 // Return an initialised LogFilteredData. The search is not started.
 LogFilteredData* LogData::getNewFilteredData() const
 {
-    LogFilteredData* newFilteredData = new LogFilteredData( this );
+    auto* newFilteredData = new LogFilteredData( this );
 
     return newFilteredData;
 }

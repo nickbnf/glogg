@@ -94,8 +94,6 @@ class SearchOperation : public QObject
             LineNumber startLine, LineNumber endLine,
             AtomicFlag* interruptRequest );
 
-    ~SearchOperation() override = default;
-
     // Start the search operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
     virtual void start( SearchData& result ) = 0;

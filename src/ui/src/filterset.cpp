@@ -39,10 +39,6 @@ QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
     return options;
 }
 
-Filter::Filter()
-{
-}
-
 Filter::Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColorName, const QString& backColorName ) :
     regexp_( pattern,  getPatternOptions( ignoreCase ) ),

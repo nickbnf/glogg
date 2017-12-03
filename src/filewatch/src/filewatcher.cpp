@@ -174,12 +174,11 @@ FileWatcher::FileWatcher()
     efswWatcher_.reset( new EfswFileWatcher( this ));
 }
 
-FileWatcher::~FileWatcher()
-{}
+FileWatcher::~FileWatcher() {}
 
 FileWatcher& FileWatcher::getFileWatcher()
 {
-    static FileWatcher * const instance = new FileWatcher;
+    static auto * const instance = new FileWatcher;
     return *instance;
 }
 

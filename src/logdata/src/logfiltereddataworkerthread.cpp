@@ -108,7 +108,7 @@ void SearchData::deleteMatch( LineNumber line )
 {
     QMutexLocker locker( &dataMutex_ );
 
-    SearchResultArray::iterator i = matches_.end();
+    auto i = matches_.end();
     while ( i != matches_.begin() ) {
         --i;
         const auto this_line = i->lineNumber();

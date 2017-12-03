@@ -30,7 +30,6 @@
 class DBusExternalInstance : public ExternalInstance {
   public:
     DBusExternalInstance();
-    ~DBusExternalInstance() override {}
 
     void loadFile( const QString& file_name ) const override;
     uint32_t getVersion() const override;
@@ -42,10 +41,6 @@ class DBusExternalInstance : public ExternalInstance {
 class DBusInterfaceExternalCommunicator : public QObject
 {
   Q_OBJECT
-
-  public:
-    DBusInterfaceExternalCommunicator() : QObject() {}
-    ~DBusInterfaceExternalCommunicator() override {}
 
   public slots:
     void loadFile( const QString& file_name );
@@ -64,7 +59,7 @@ class DBusExternalCommunicator : public ExternalCommunicator
     // Constructor: initialise the D-Bus connection,
     // can throw if D-Bus is not available
     DBusExternalCommunicator();
-    ~DBusExternalCommunicator() override {}
+    ~DBusExternalCommunicator() override = default;
 
     void startListening() override;
 

@@ -160,7 +160,6 @@ class AbstractLogView :
     // The pointer to the QFP is used for colouring and QuickFind searches
     AbstractLogView( const AbstractLogData* newLogData,
             const QuickFindPattern* const quickFind, QWidget* parent=nullptr );
-    ~AbstractLogView() override;
 
     // Refresh the widget when the data set has changed.
     void updateData();

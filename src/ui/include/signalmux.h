@@ -54,7 +54,7 @@ class QObject;
 
 class MuxableDocumentInterface {
   public:
-    virtual ~MuxableDocumentInterface(){}
+    virtual ~MuxableDocumentInterface()= default;
 
     // Send all signals refering to a state of the document to update
     // the parent widget.

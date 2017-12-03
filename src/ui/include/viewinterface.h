@@ -32,7 +32,7 @@ class QuickFindPattern;
 // It can be marshalled to persistent storage.
 class ViewContextInterface {
   public:
-    virtual ~ViewContextInterface() {}
+    virtual ~ViewContextInterface() = default;
 
     virtual QString toString() const = 0;
 };
@@ -64,7 +64,7 @@ class ViewInterface {
     { return doGetViewContext(); }
 
     // To allow polymorphic destruction
-    virtual ~ViewInterface() {}
+    virtual ~ViewInterface() = default;
 
   protected:
     // Virtual functions (using NVI)

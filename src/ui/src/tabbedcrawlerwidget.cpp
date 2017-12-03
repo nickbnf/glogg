@@ -153,7 +153,7 @@ void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 {
     LOG(logDEBUG) << "TabbedCrawlerWidget::setTabDataStatus " << index;
 
-    QLabel* icon_label = dynamic_cast<QLabel*>(
+    auto* icon_label = dynamic_cast<QLabel*>(
             myTabBar_.tabButton( index, QTabBar::RightSide ) );
 
     if ( icon_label ) {

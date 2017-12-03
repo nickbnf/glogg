@@ -32,8 +32,7 @@ class CantCreateExternalErr {};
 class ExternalInstance
 {
   public:
-    ExternalInstance() {}
-    virtual ~ExternalInstance() {}
+    virtual ~ExternalInstance() = default;
 
     virtual void loadFile( const QString& file_name ) const = 0;
     virtual uint32_t getVersion() const = 0;

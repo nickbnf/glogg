@@ -40,7 +40,7 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     // ui_.setupUi( this );
     // setFocusProxy(ui_.findEdit);
     // setProperty("topBorder", true);
-    QHBoxLayout *layout = new QHBoxLayout( this );
+    auto *layout = new QHBoxLayout( this );
 
     layout->setMargin( 0 );
     layout->setSpacing( 6 );
@@ -193,7 +193,7 @@ void QuickFindWidget::textChanged()
 QToolButton* QuickFindWidget::setupToolButton(
         const QString &text, const QString &icon)
 {
-    QToolButton *toolButton = new QToolButton(this);
+    auto *toolButton = new QToolButton(this);
 
     toolButton->setText(text);
     toolButton->setAutoRaise(true);

@@ -34,7 +34,6 @@ class TabbedCrawlerWidget : public QTabWidget
   Q_OBJECT
     public:
       TabbedCrawlerWidget();
-      ~TabbedCrawlerWidget() override {}
 
       // "Overridden" addTab/removeTab that automatically
       // show/hide the tab bar

@@ -547,7 +547,7 @@ AbstractLogView* CrawlerWidget::activeView() const
         activeView = qfSavedFocus_;
 
     if ( activeView ) {
-        AbstractLogView* view = qobject_cast<AbstractLogView*>( activeView );
+        auto* view = qobject_cast<AbstractLogView*>( activeView );
         return view;
     }
     else {
@@ -688,7 +688,7 @@ void CrawlerWidget::setup()
     matchesItem->setData( FilteredView::MatchesOnly );
     visibilityModel_->appendRow( matchesItem );
 
-    QListView *visibilityView = new QListView( this );
+    auto *visibilityView = new QListView( this );
     visibilityView->setMovement( QListView::Static );
     visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
 
@@ -750,7 +750,7 @@ void CrawlerWidget::setup()
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
 
-    QHBoxLayout* searchLineLayout = new QHBoxLayout;
+    auto* searchLineLayout = new QHBoxLayout;
     searchLineLayout->addWidget(searchLabel);
     searchLineLayout->addWidget(searchLineEdit);
     searchLineLayout->addWidget(searchButton);
@@ -759,14 +759,14 @@ void CrawlerWidget::setup()
     stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
     searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
-    QHBoxLayout* searchInfoLineLayout = new QHBoxLayout;
+    auto* searchInfoLineLayout = new QHBoxLayout;
     searchInfoLineLayout->addWidget( visibilityBox );
     searchInfoLineLayout->addWidget( searchInfoLine );
     searchInfoLineLayout->addWidget( ignoreCaseCheck );
     searchInfoLineLayout->addWidget( searchRefreshCheck );
 
     // Construct the bottom window
-    QVBoxLayout* bottomMainLayout = new QVBoxLayout;
+    auto* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout(searchLineLayout);
     bottomMainLayout->addLayout(searchInfoLineLayout);
     bottomMainLayout->addWidget(filteredView);

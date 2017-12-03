@@ -28,7 +28,7 @@
 // and their translation in UI text.
 class QFNotification {
   public:
-    virtual ~QFNotification(){}
+    virtual ~QFNotification()= default;
     virtual QString message() const = 0;
 
     // Max width of the message (in pixels)

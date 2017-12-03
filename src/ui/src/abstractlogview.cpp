@@ -303,11 +303,6 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
             this, SIGNAL( followModeChanged( bool ) ) );
 }
 
-AbstractLogView::~AbstractLogView()
-{
-}
-
-
 //
 // Received events
 //

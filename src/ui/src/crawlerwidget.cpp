@@ -576,7 +576,7 @@ void CrawlerWidget::searchRefreshChangedHandler( int state )
     printSearchInfoMessage( logFilteredData_->getNbMatches() );
 }
 
-void CrawlerWidget::searchTextChangeHandler()
+void CrawlerWidget::searchTextChangeHandler( QString )
 {
     // We suspend auto-refresh
     searchState_.changeExpression();
@@ -793,9 +793,9 @@ void CrawlerWidget::setup()
 
     // Connect the signals
     connect( searchLineEdit->lineEdit(), &QLineEdit::returnPressed,
-             [this]() { searchButton->clicked(); } );
+             searchButton, &QToolButton::click );
     connect( searchLineEdit->lineEdit(), &QLineEdit::textEdited,
-             [this](auto){ this->searchTextChangeHandler(); } );
+             this, &CrawlerWidget::searchTextChangeHandler );
     connect( searchButton, &QToolButton::clicked,
              this, &CrawlerWidget::startNewSearch );
     connect( stopButton, &QToolButton::clicked,

@@ -180,7 +180,7 @@ class CrawlerWidget : public QSplitter,
     void searchRefreshChangedHandler( int state );
 
     // Called when the text on the search line is modified
-    void searchTextChangeHandler();
+    void searchTextChangeHandler( QString );
 
     // Called when the user change the visibility combobox
     void changeFilteredViewVisibility( int index );

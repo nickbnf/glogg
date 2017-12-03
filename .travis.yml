@@ -12,7 +12,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - sourceline: ppa:beineri/opt-qt592-trusty
+            - sourceline: ppa:beineri/opt-qt593-trusty
           packages:
             - g++-6
             - qt59base

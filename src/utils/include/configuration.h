@@ -116,8 +116,8 @@ class Configuration : public Persistable {
     { searchIgnoreCase_ = ignore_case; }
 
     // Reads/writes the current config in the QSettings object passed
-    virtual void saveToStorage( QSettings& settings ) const;
-    virtual void retrieveFromStorage( QSettings& settings );
+    void saveToStorage( QSettings& settings ) const override;
+    void retrieveFromStorage( QSettings& settings ) override;
 
   private:
     // Configuration settings

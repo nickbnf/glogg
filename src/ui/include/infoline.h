@@ -39,7 +39,7 @@ class InfoLine : public QLabel
     void hideGauge();
 
   protected:
-    void paintEvent(QPaintEvent* paintEvent);
+    void paintEvent(QPaintEvent* paintEvent) override;
 
   private:
     // The original palette of the QLabel

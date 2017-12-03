@@ -66,11 +66,11 @@ class MainWindow : public QMainWindow
     void startBackgroundTasks();
 
   protected:
-    void closeEvent( QCloseEvent* event );
+    void closeEvent( QCloseEvent* event ) override;
     // Drag and drop support
-    void dragEnterEvent( QDragEnterEvent* event );
-    void dropEvent( QDropEvent* event );
-    void keyPressEvent( QKeyEvent* keyEvent );
+    void dragEnterEvent( QDragEnterEvent* event ) override;
+    void dropEvent( QDropEvent* event ) override;
+    void keyPressEvent( QKeyEvent* keyEvent ) override;
 
   private slots:
     void open();

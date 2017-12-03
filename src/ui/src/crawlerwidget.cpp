@@ -71,7 +71,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
     }
 
     // Implementation of the ViewContextInterface function
-    QString toString() const;
+    QString toString() const override;
 
     // Access the Qt sizes array for the QSplitter
     QList<int> sizes() const { return sizes_; }
@@ -732,7 +732,7 @@ void CrawlerWidget::setup()
     searchLabel = new QLabel(tr("&Text: "));
     searchLineEdit = new QComboBox;
     searchLineEdit->setEditable( true );
-    searchLineEdit->setCompleter( 0 );
+    searchLineEdit->setCompleter( nullptr );
     searchLineEdit->addItems( savedSearches_->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     searchLineEdit->setSizeAdjustPolicy( QComboBox::AdjustToMinimumContentsLengthWithIcon );

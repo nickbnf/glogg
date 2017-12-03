@@ -32,7 +32,7 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     Q_OBJECT
 
   public:
-    OptionsDialog(QWidget* parent = 0);
+    OptionsDialog(QWidget* parent = nullptr);
 
   signals:
     // Is emitted when new settings must be used

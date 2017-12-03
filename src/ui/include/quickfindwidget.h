@@ -40,7 +40,7 @@ class QuickFindWidget : public QWidget
   Q_OBJECT
 
   public:
-    QuickFindWidget( QWidget* parent = 0 );
+    QuickFindWidget( QWidget* parent = nullptr );
 
     // Show the widget with the given direction
     // when requested by the user (the widget won't timeout)

@@ -55,7 +55,7 @@ class CrawlerWidget : public QSplitter,
   Q_OBJECT
 
   public:
-    CrawlerWidget( QWidget *parent=0 );
+    CrawlerWidget( QWidget *parent=nullptr );
 
     // Get the line number of the first line displayed.
     LineNumber getTopLine() const;
@@ -102,26 +102,26 @@ class CrawlerWidget : public QSplitter,
 
   protected:
     // Implementation of the ViewInterface functions
-    virtual void doSetData(
+    void doSetData(
             std::shared_ptr<LogData> log_data,
-            std::shared_ptr<LogFilteredData> filtered_data );
-    virtual void doSetQuickFindPattern(
-            std::shared_ptr<QuickFindPattern> qfp );
-    virtual void doSetSavedSearches(
-            std::shared_ptr<SavedSearches> saved_searches );
-    virtual void doSetViewContext( const QString& view_context );
-    virtual std::shared_ptr<const ViewContextInterface>
-        doGetViewContext( void ) const;
+            std::shared_ptr<LogFilteredData> filtered_data ) override;
+    void doSetQuickFindPattern(
+            std::shared_ptr<QuickFindPattern> qfp ) override;
+    void doSetSavedSearches(
+            std::shared_ptr<SavedSearches> saved_searches ) override;
+    void doSetViewContext( const QString& view_context ) override;
+    std::shared_ptr<const ViewContextInterface>
+        doGetViewContext( void ) const override;
 
     // Implementation of the mux selector interface
     // (for dispatching QuickFind to the right widget)
-    virtual SearchableWidgetInterface* doGetActiveSearchable() const;
-    virtual std::vector<QObject*> doGetAllSearchables() const;
+    SearchableWidgetInterface* doGetActiveSearchable() const override;
+    std::vector<QObject*> doGetAllSearchables() const override;
 
     // Implementation of the MuxableDocumentInterface
-    virtual void doSendAllStateSignals();
+    void doSendAllStateSignals() override;
 
-    virtual void keyPressEvent( QKeyEvent* keyEvent );
+    void keyPressEvent( QKeyEvent* keyEvent ) override;
 
   signals:
     // Sent to signal the client load has progressed,

@@ -52,7 +52,7 @@ class ElasticHook : public QObject {
     bool isHooked() const { return hooked_; }
 
   protected:
-    void timerEvent( QTimerEvent *event );
+    void timerEvent( QTimerEvent *event ) override;
 
   signals:
     // Sent when the length has changed

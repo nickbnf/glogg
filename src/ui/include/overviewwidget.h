@@ -31,7 +31,7 @@ class OverviewWidget : public QWidget
   Q_OBJECT
 
   public:
-    OverviewWidget( QWidget* parent = 0 );
+    OverviewWidget( QWidget* parent = nullptr );
 
     // Associate the widget with an Overview object.
     void setOverview( Overview* overview ) { overview_ = overview; }
@@ -43,10 +43,10 @@ class OverviewWidget : public QWidget
     void removeHighlight();
 
   protected:
-    void paintEvent( QPaintEvent* paintEvent );
-    void mousePressEvent( QMouseEvent* mouseEvent );
-    void mouseMoveEvent( QMouseEvent* mouseEvent );
-    void timerEvent( QTimerEvent* event );
+    void paintEvent( QPaintEvent* paintEvent ) override;
+    void mousePressEvent( QMouseEvent* mouseEvent ) override;
+    void mouseMoveEvent( QMouseEvent* mouseEvent ) override;
+    void timerEvent( QTimerEvent* event ) override;
 
   signals:
     // Sent when the user click on a line in the Overview.

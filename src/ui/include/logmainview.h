@@ -33,7 +33,7 @@ class LogMainView : public AbstractLogView
             const QuickFindPattern* const quickFindPattern,
             Overview* overview,
             OverviewWidget* overview_widget,
-            QWidget* parent = 0 );
+            QWidget* parent = nullptr );
 
     // Configure the view to use the passed filtered list
     // (used for couloured bullets)
@@ -42,9 +42,9 @@ class LogMainView : public AbstractLogView
 
   protected:
     // Implements the virtual function
-    virtual LineType lineType( LineNumber lineNumber ) const;
+    LineType lineType( LineNumber lineNumber ) const override;
 
-    virtual void keyPressEvent( QKeyEvent* keyEvent );
+    void keyPressEvent( QKeyEvent* keyEvent ) override;
 
   private:
     LogFilteredData* filteredData_;

@@ -30,10 +30,10 @@
 class DBusExternalInstance : public ExternalInstance {
   public:
     DBusExternalInstance();
-    ~DBusExternalInstance() {}
+    ~DBusExternalInstance() override {}
 
-    virtual void loadFile( const QString& file_name ) const;
-    virtual uint32_t getVersion() const;
+    void loadFile( const QString& file_name ) const override;
+    uint32_t getVersion() const override;
 
   private:
     std::shared_ptr<QDBusInterface> dbusInterface_;
@@ -45,7 +45,7 @@ class DBusInterfaceExternalCommunicator : public QObject
 
   public:
     DBusInterfaceExternalCommunicator() : QObject() {}
-    ~DBusInterfaceExternalCommunicator() {}
+    ~DBusInterfaceExternalCommunicator() override {}
 
   public slots:
     void loadFile( const QString& file_name );
@@ -64,14 +64,14 @@ class DBusExternalCommunicator : public ExternalCommunicator
     // Constructor: initialise the D-Bus connection,
     // can throw if D-Bus is not available
     DBusExternalCommunicator();
-    ~DBusExternalCommunicator() {}
+    ~DBusExternalCommunicator() override {}
 
-    virtual void startListening();
+    void startListening() override;
 
-    virtual ExternalInstance* otherInstance() const;
+    ExternalInstance* otherInstance() const override;
 
   public slots:
-    qint32 version() const;
+    qint32 version() const override;
 
   private:
     std::shared_ptr<DBusInterfaceExternalCommunicator> dbus_iface_object_;

@@ -89,7 +89,7 @@ class IndexOperation : public QObject
     IndexOperation(const QString& fileName,
             IndexingData* indexingData, AtomicFlag* interruptRequest);
 
-    virtual ~IndexOperation() = default;
+    ~IndexOperation() override = default;
 
     // Start the indexing operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
@@ -146,7 +146,7 @@ class LogDataWorkerThread : public QThread
     // Pass a pointer to the IndexingData (initially empty)
     // This object will change it when indexing (IndexingData must be thread safe!)
     LogDataWorkerThread( IndexingData* indexing_data );
-    ~LogDataWorkerThread();
+    ~LogDataWorkerThread() override;
 
     // Attaches to a file on disk. Attaching to a non existant file
     // will work, it will just appear as an empty file.

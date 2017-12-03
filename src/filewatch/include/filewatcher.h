@@ -52,7 +52,7 @@ class FileWatcher : public QObject {
   private:
     // Create an empty object
     FileWatcher();
-    ~FileWatcher(); // for complete EfswFileWatcher
+    ~FileWatcher() override; // for complete EfswFileWatcher
 
     FileWatcher(const FileWatcher&) = delete;
     FileWatcher(FileWatcher&&) = delete;

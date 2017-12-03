@@ -33,21 +33,21 @@ class FilteredView : public AbstractLogView
   public:
     FilteredView( LogFilteredData* newLogData,
             const QuickFindPattern* const quickFindPattern,
-            QWidget* parent = 0 );
+            QWidget* parent = nullptr );
 
     // What is visible in the view.
     enum Visibility { MatchesOnly, MarksOnly, MarksAndMatches };
     void setVisibility( Visibility visi );
 
   protected:
-    virtual LineType lineType(LineNumber lineNumber ) const;
+    LineType lineType(LineNumber lineNumber ) const override;
 
     // Number of the filtered line relative to the unfiltered source
-    virtual LineNumber displayLineNumber(LineNumber lineNumber ) const;
-    virtual LineNumber lineIndex( LineNumber lineNumber ) const;
-    virtual LineNumber maxDisplayLineNumber() const;
+    LineNumber displayLineNumber(LineNumber lineNumber ) const override;
+    LineNumber lineIndex( LineNumber lineNumber ) const override;
+    LineNumber maxDisplayLineNumber() const override;
 
-    virtual void keyPressEvent( QKeyEvent* keyEvent );
+    void keyPressEvent( QKeyEvent* keyEvent ) override;
 
   private:
     LogFilteredData* logFilteredData_;

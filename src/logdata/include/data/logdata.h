@@ -87,7 +87,7 @@ class LogData : public AbstractLogData {
     // Creates an empty LogData
     LogData();
     // Destroy an object
-    ~LogData();
+    ~LogData() override;
 
     enum MonitoredFileStatus { Unchanged, DataAdded, Truncated };
 

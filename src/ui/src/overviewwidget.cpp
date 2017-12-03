@@ -137,7 +137,7 @@ const char* const highlight_xpm[][14] = {
 OverviewWidget::OverviewWidget( QWidget* parent ) :
     QWidget( parent ), highlightTimer_()
 {
-    overview_ = NULL;
+    overview_ = nullptr;
 
     setBackgroundRole( QPalette::Window );
 

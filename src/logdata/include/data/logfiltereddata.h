@@ -49,7 +49,7 @@ class LogFilteredData : public AbstractLogData {
     // Constructor used by LogData
     LogFilteredData( const LogData* logData );
 
-    ~LogFilteredData();
+    ~LogFilteredData() override;
 
     // Starts the async search, sending newDataAvailable() when new data found.
     // If a search is already in progress this function will block until

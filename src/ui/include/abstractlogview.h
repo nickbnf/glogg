@@ -134,7 +134,7 @@ class DigitsBuffer : public QObject
     int content();
 
   protected:
-    void timerEvent( QTimerEvent* event );
+    void timerEvent( QTimerEvent* event ) override;
 
   private:
     // Duration of the timeout in milliseconds.
@@ -159,8 +159,8 @@ class AbstractLogView :
     // The caller retains ownership of the data set.
     // The pointer to the QFP is used for colouring and QuickFind searches
     AbstractLogView( const AbstractLogData* newLogData,
-            const QuickFindPattern* const quickFind, QWidget* parent=0 );
-    ~AbstractLogView();
+            const QuickFindPattern* const quickFind, QWidget* parent=nullptr );
+    ~AbstractLogView() override;
 
     // Refresh the widget when the data set has changed.
     void updateData();
@@ -177,18 +177,18 @@ class AbstractLogView :
     bool isFollowEnabled() const { return followMode_; }
 
   protected:
-    virtual void mousePressEvent( QMouseEvent* mouseEvent );
-    virtual void mouseMoveEvent( QMouseEvent* mouseEvent );
-    virtual void mouseReleaseEvent( QMouseEvent* );
-    virtual void mouseDoubleClickEvent( QMouseEvent* mouseEvent );
-    virtual void timerEvent( QTimerEvent* timerEvent );
-    virtual void changeEvent( QEvent* changeEvent );
-    virtual void paintEvent( QPaintEvent* paintEvent );
-    virtual void resizeEvent( QResizeEvent* resizeEvent );
-    virtual void scrollContentsBy( int dx, int dy );
-    virtual void keyPressEvent( QKeyEvent* keyEvent );
-    virtual void wheelEvent( QWheelEvent* wheelEvent );
-    virtual bool event( QEvent * e );
+    void mousePressEvent( QMouseEvent* mouseEvent ) override;
+    void mouseMoveEvent( QMouseEvent* mouseEvent ) override;
+    void mouseReleaseEvent( QMouseEvent* ) override;
+    void mouseDoubleClickEvent( QMouseEvent* mouseEvent ) override;
+    void timerEvent( QTimerEvent* timerEvent ) override;
+    void changeEvent( QEvent* changeEvent ) override;
+    void paintEvent( QPaintEvent* paintEvent ) override;
+    void resizeEvent( QResizeEvent* resizeEvent ) override;
+    void scrollContentsBy( int dx, int dy ) override;
+    void keyPressEvent( QKeyEvent* keyEvent ) override;
+    void wheelEvent( QWheelEvent* wheelEvent ) override;
+    bool event( QEvent * e ) override;
 
     // Must be implemented to return wether the line number is
     // a match, a mark or just a normal line (used for coloured bullets)
@@ -250,18 +250,18 @@ class AbstractLogView :
     void selectAndDisplayLine(LineNumber line );
 
     // Use the current QFP to go and select the next match.
-    virtual void searchForward();
+    void searchForward() override;
     // Use the current QFP to go and select the previous match.
-    virtual void searchBackward();
+    void searchBackward() override;
 
     // Use the current QFP to go and select the next match (incremental)
-    virtual void incrementallySearchForward();
+    void incrementallySearchForward() override;
     // Use the current QFP to go and select the previous match (incremental)
-    virtual void incrementallySearchBackward();
+    void incrementallySearchBackward() override;
     // Stop the current incremental search (typically when user press return)
-    virtual void incrementalSearchStop();
+    void incrementalSearchStop() override;
     // Abort the current incremental search (typically when user press esc)
-    virtual void incrementalSearchAbort();
+    void incrementalSearchAbort() override;
 
     // Signals the follow mode has been enabled.
     void followSet( bool checked );

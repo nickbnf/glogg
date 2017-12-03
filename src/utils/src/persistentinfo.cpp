@@ -33,7 +33,7 @@
 
 PersistentInfo::PersistentInfo()
 {
-    settings_    = NULL;
+    settings_    = nullptr;
     initialised_ = false;
 }
 
@@ -77,7 +77,7 @@ std::shared_ptr<Persistable> PersistentInfo::getPersistable( const QString& name
 {
     assert( initialised_ );
 
-    std::shared_ptr<Persistable> object = objectList_.value( name, NULL );
+    std::shared_ptr<Persistable> object = objectList_.value( name, nullptr );
 
     return object;
 }

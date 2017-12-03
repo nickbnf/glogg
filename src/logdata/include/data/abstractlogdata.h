@@ -34,7 +34,7 @@ class AbstractLogData : public QObject {
   public:
     AbstractLogData() = default;
     // Permit each child to have its destructor
-    virtual ~AbstractLogData() = default;
+    ~AbstractLogData() override = default;
 
     // Returns the line passed as a QString
     QString getLineString( LineNumber line ) const;

@@ -46,8 +46,8 @@ class SavedSearches : public Persistable
     friend QDataStream& operator>>( QDataStream& in, SavedSearches& object );
 
     // Reads/writes the current config in the QSettings object passed
-    void saveToStorage( QSettings& settings ) const;
-    void retrieveFromStorage( QSettings& settings );
+    void saveToStorage( QSettings& settings ) const override;
+    void retrieveFromStorage( QSettings& settings ) override;
 
   private:
     static const int SAVEDSEARCHES_VERSION;

@@ -270,8 +270,8 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     lastLineAligned = false;
     firstCol = 0;
 
-    overview_ = NULL;
-    overviewWidget_ = NULL;
+    overview_ = nullptr;
+    overviewWidget_ = nullptr;
 
     // Display
     leftMarginPx_ = 0;
@@ -281,7 +281,7 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     charHeight_ = 10;
 
     // Create the viewport QWidget
-    setViewport( 0 );
+    setViewport( nullptr );
 
     // Hovering
     setMouseTracking( true );
@@ -709,7 +709,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
 
 void AbstractLogView::resizeEvent( QResizeEvent* )
 {
-    if ( logData == NULL )
+    if ( logData == nullptr )
         return;
 
     LOG(logDEBUG) << "resizeEvent received";
@@ -762,7 +762,7 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
     const auto last_line  = firstLine + getNbVisibleLines();
 
     // Update the overview if we have one
-    if ( overview_ != NULL )
+    if ( overview_ != nullptr )
         overview_->updateCurrentPosition( firstLine, last_line );
 
     // Are we hovering over a new line?
@@ -776,7 +776,7 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 {
     const QRect invalidRect = paintEvent->rect();
-    if ( (invalidRect.isEmpty()) || (logData == NULL) )
+    if ( (invalidRect.isEmpty()) || (logData == nullptr) )
         return;
 
     LOG(logDEBUG4) << "paintEvent received, firstLine=" << firstLine
@@ -981,7 +981,7 @@ void AbstractLogView::refreshOverview()
     assert( overviewWidget_ );
 
     // Create space for the Overview if needed
-    if ( ( getOverview() != NULL ) && getOverview()->isVisible() ) {
+    if ( ( getOverview() != nullptr ) && getOverview()->isVisible() ) {
         setViewportMargins( 0, 0, OVERVIEW_WIDTH, 0 );
         overviewWidget_->show();
     }
@@ -1174,7 +1174,7 @@ void AbstractLogView::updateData()
         jumpToBottom();
 
     // Update the overview if we have one
-    if ( overview_ != NULL )
+    if ( overview_ != nullptr )
         overview_->updateCurrentPosition( firstLine, last_line );
 
     textAreaCache_.invalid_ = true;

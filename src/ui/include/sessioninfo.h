@@ -64,8 +64,8 @@ class SessionInfo : public Persistable {
     { openFiles_ = loaded_files; }
 
     // Reads/writes the current config in the QSettings object passed
-    virtual void saveToStorage( QSettings& settings ) const;
-    virtual void retrieveFromStorage( QSettings& settings );
+    void saveToStorage( QSettings& settings ) const override;
+    void retrieveFromStorage( QSettings& settings ) override;
 
   private:
     static const int OPENFILES_VERSION;

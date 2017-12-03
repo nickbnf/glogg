@@ -45,14 +45,14 @@ class QFNotification {
 
 class QFNotificationReachedEndOfFile : public QFNotification
 {
-    QString message() const {
+    QString message() const override {
         return REACHED_EOF;
     }
 };
 
 class QFNotificationReachedBegininningOfFile : public QFNotification
 {
-    QString message() const {
+    QString message() const override {
         return REACHED_BOF;
     }
 };
@@ -63,7 +63,7 @@ class QFNotificationProgress : public QFNotification {
     QFNotificationProgress( int progress_percent )
     { progressPercent_ = progress_percent; }
 
-    QString message() const {
+    QString message() const override {
         return QString( QObject::tr("Searching (position %1 %)")
                 .arg( progressPercent_ ) );
     }

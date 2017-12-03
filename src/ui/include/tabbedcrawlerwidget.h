@@ -34,7 +34,7 @@ class TabbedCrawlerWidget : public QTabWidget
   Q_OBJECT
     public:
       TabbedCrawlerWidget();
-      virtual ~TabbedCrawlerWidget() {}
+      ~TabbedCrawlerWidget() override {}
 
       // "Overridden" addTab/removeTab that automatically
       // show/hide the tab bar
@@ -46,8 +46,8 @@ class TabbedCrawlerWidget : public QTabWidget
       void setTabDataStatus( int index, DataStatus status );
 
     protected:
-      void keyPressEvent( QKeyEvent* event );
-      void mouseReleaseEvent( QMouseEvent *event);
+      void keyPressEvent( QKeyEvent* event ) override;
+      void mouseReleaseEvent( QMouseEvent *event) override;
 
     private:
       const QIcon olddata_icon_;

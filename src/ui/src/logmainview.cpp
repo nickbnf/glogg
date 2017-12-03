@@ -36,7 +36,7 @@ LogMainView::LogMainView( const LogData* newLogData,
         QWidget* parent)
     : AbstractLogView( newLogData, quickFindPattern, parent )
 {
-    filteredData_ = NULL;
+    filteredData_ = nullptr;
 
     // The main data has a real (non NULL) Overview
     setOverview( overview, overview_widget );
@@ -47,13 +47,13 @@ void LogMainView::useNewFiltering( LogFilteredData* filteredData )
 {
     filteredData_ = filteredData;
 
-    if ( getOverview() != NULL )
+    if ( getOverview() != nullptr )
         getOverview()->setFilteredData( filteredData_ );
 }
 
 AbstractLogView::LineType LogMainView::lineType(LineNumber lineNumber ) const
 {
-    if ( filteredData_ != NULL ) {
+    if ( filteredData_ != nullptr ) {
         LineType line_type;
         if ( filteredData_->isLineMarked( lineNumber ) )
             line_type = Marked;

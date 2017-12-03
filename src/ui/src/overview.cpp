@@ -29,7 +29,7 @@
 
 Overview::Overview() : matchLines_(), markLines_()
 {
-    logFilteredData_ = NULL;
+    logFilteredData_ = nullptr;
     height_          = 0;
     dirty_           = true;
     visible_         = false;
@@ -109,7 +109,7 @@ void Overview::recalculatesLines()
 {
     LOG(logDEBUG) << "OverviewWidget::recalculatesLines";
 
-    if ( logFilteredData_ != NULL ) {
+    if ( logFilteredData_ != nullptr ) {
         matchLines_.clear();
         markLines_.clear();
 

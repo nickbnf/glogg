@@ -157,7 +157,7 @@ void LogFilteredDataWorkerThread::search(const QRegularExpression& regExp,
     LOG(logDEBUG) << "Search requested";
 
     // If an operation is ongoing, we will block
-    while ( (operationRequested_ != NULL) )
+    while ( (operationRequested_ != nullptr) )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_.clear();
@@ -174,7 +174,7 @@ void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp,
     LOG(logDEBUG) << "Search requested";
 
     // If an operation is ongoing, we will block
-    while ( (operationRequested_ != NULL) )
+    while ( (operationRequested_ != nullptr) )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_.clear();
@@ -192,7 +192,7 @@ void LogFilteredDataWorkerThread::interrupt()
     // We wait for the interruption to be done
     {
         QMutexLocker locker( &mutex_ );
-        while ( (operationRequested_ != NULL) )
+        while ( (operationRequested_ != nullptr) )
             nothingToDoCond_.wait( &mutex_ );
     }
 }
@@ -210,7 +210,7 @@ void LogFilteredDataWorkerThread::run()
     QMutexLocker locker( &mutex_ );
 
     forever {
-        while ( !terminate_ && (operationRequested_ == NULL) )
+        while ( !terminate_ && (operationRequested_ == nullptr) )
             operationRequestedCond_.wait( &mutex_ );
         LOG(logDEBUG) << "Worker thread signaled";
 
@@ -229,7 +229,7 @@ void LogFilteredDataWorkerThread::run()
 
             emit searchFinished();
             delete operationRequested_;
-            operationRequested_ = NULL;
+            operationRequested_ = nullptr;
             nothingToDoCond_.wakeAll();
         }
     }

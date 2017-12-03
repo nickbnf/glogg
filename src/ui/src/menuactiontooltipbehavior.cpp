@@ -31,7 +31,7 @@
 // explicity (probably, the window owning the action and the menu).
 MenuActionToolTipBehavior::MenuActionToolTipBehavior(QAction *action,
                                                      QMenu *parentMenu,
-                                                     QObject *parent = 0)
+                                                     QObject *parent = nullptr)
     : QObject(parent),
       action(action),
       parentMenu(parentMenu),

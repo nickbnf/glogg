@@ -210,7 +210,7 @@ void QuickFindMux::registerSearchable( QObject* searchable )
 void QuickFindMux::unregisterAllSearchables()
 {
     for ( auto searchable: registeredSearchables_ )
-        disconnect( searchable, 0, this, 0 );
+        disconnect( searchable, nullptr, this, nullptr );
 
     registeredSearchables_.clear();
 }

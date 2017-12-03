@@ -32,7 +32,7 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
   Q_OBJECT
 
   public:
-    FiltersDialog( QWidget* parent = 0 );
+    FiltersDialog( QWidget* parent = nullptr );
 
   signals:
     // Is emitted when new settings must be used

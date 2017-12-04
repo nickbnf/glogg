@@ -40,6 +40,10 @@
 #include "nscore.h"
 #include "nsUniversalDetector.h"
 
+#ifdef _MSC_VER
+#define strdup(s) _strdup(s)
+#endif
+
 class HandleUniversalDetector : public nsUniversalDetector
 {
 protected:

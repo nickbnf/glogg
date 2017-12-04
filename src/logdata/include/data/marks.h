@@ -96,20 +96,20 @@ class Marks {
         const_iterator::difference_type operator-( const const_iterator& other ) const
         { return ( internal_iter_ - other.internal_iter_ ); }
 
-        const_iterator operator+(int n) const
+        const_iterator operator+(const_iterator::difference_type n) const
         {
             return const_iterator(internal_iter_ + n);
         }
-        const_iterator& operator+=(int n)
+        const_iterator& operator+=(const_iterator::difference_type n)
         {
             internal_iter_+=n ; return *this;
         }
 
-        const_iterator operator-(int n) const
+        const_iterator operator-(const_iterator::difference_type n) const
         {
             return const_iterator(internal_iter_ - n);
         }
-        const_iterator& operator-=(int n)
+        const_iterator& operator-=(const_iterator::difference_type n)
         {
             internal_iter_-=n ; return *this;
         }

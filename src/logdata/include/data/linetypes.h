@@ -6,16 +6,6 @@
 
 #include <QMetaType>
 
-template <typename T>
-struct ConvertibleTo : fluent::crtp<T, ConvertibleTo>
-{
-    template<typename Destination>
-    Destination as() const
-    {
-        return Destination ( this->underlying().get() );
-    }
-};
-
 using LineOffset = fluent::NamedType<int64_t, struct line_offset,
                             fluent::Addable, fluent::Incrementable,
                             fluent::Subtractable,
@@ -34,17 +24,17 @@ using LinesCount = fluent::NamedType<uint32_t, struct lines_count,
 using LineLength = fluent::NamedType<int, struct lines_count,
                             fluent::Comparable, fluent::Printable>;
 
-inline LineOffset operator"" _offset( unsigned long long int value )
+inline constexpr LineOffset operator"" _offset( unsigned long long int value )
 { return LineOffset( static_cast<LineOffset::UnderlyingType>( value ) ); }
-inline LineNumber operator"" _lnum (unsigned long long int value )
+inline constexpr LineNumber operator"" _lnum (unsigned long long int value )
 { return LineNumber( static_cast<LineNumber::UnderlyingType>( value ) ); }
-inline LinesCount operator"" _lcount( unsigned long long int value )
+inline constexpr LinesCount operator"" _lcount( unsigned long long int value )
 { return LinesCount( static_cast<LinesCount::UnderlyingType>( value ) ); }
-inline LineLength operator"" _length( unsigned long long int value )
+inline constexpr LineLength operator"" _length( unsigned long long int value )
 { return LineLength( static_cast<LineLength::UnderlyingType>( value ) ); }
 
 template<typename StrongType>
-StrongType maxValue()
+constexpr StrongType maxValue()
 {
     return StrongType( std::numeric_limits<typename StrongType::UnderlyingType>::max() );
 }
@@ -94,25 +84,22 @@ class FilePosition
 
 inline LineNumber operator+(const LineNumber& number, const LinesCount& count)
 {
-    uint64_t line = number.get() + count.get();
-    return line > maxValue<LineNumber>().get()
-            ? maxValue<LineNumber>()
-            : LineNumber( static_cast<LineNumber::UnderlyingType>(line) );
+    return ( number.get() <= maxValue<LineNumber>().get() - count.get() )
+            ? LineNumber( number.get() + count.get() )
+            : maxValue<LineNumber>();
 }
 
 inline LineNumber operator-(const LineNumber& number, const LinesCount& count)
 {
-    int64_t line = number.get() - count.get();
-    return line >= 0
-            ? LineNumber( static_cast<LineNumber::UnderlyingType>( line ) )
+    return number.get() >= count.get()
+            ? LineNumber( number.get() - count.get() )
             : LineNumber( 0u );
 }
 
 inline LinesCount operator-(const LineNumber& n1, const LineNumber& n2)
 {
-    int64_t count = n1.get() - n2.get();
-    return count >= 0
-            ? LinesCount( static_cast<LinesCount::UnderlyingType>( count ) )
+    return n1.get() >= n2.get()
+            ? LinesCount( n1.get() - n2.get() )
             : LinesCount( 0u );
 }
 

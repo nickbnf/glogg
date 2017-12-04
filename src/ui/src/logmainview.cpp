@@ -70,7 +70,7 @@ AbstractLogView::LineType LogMainView::lineType(LineNumber lineNumber ) const
 
 void LogMainView::keyPressEvent( QKeyEvent* keyEvent )
 {
-    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+    const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
     if ( keyEvent->key() == Qt::Key_BracketLeft && noModifier ) {
         const auto line = filteredData_->getMarkBefore( getViewPosition() );

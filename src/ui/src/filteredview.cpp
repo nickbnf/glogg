@@ -85,33 +85,51 @@ LineNumber FilteredView::maxDisplayLineNumber() const
 
 void FilteredView::keyPressEvent( QKeyEvent* keyEvent )
 {
-    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+    const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
-    if ( keyEvent->key() == Qt::Key_BracketLeft && noModifier ) {
-        for ( LineNumber i = getViewPosition() - 1_lcount;; --i ) {
-            if ( lineType( i ) == Marked ) {
-                selectAndDisplayLine( i );
-                break;
+    if ( noModifier ) {
+        switch ( keyEvent->key() ) {
+        case Qt::Key_BracketLeft:
+        {
+            auto i = getViewPosition() - 1_lcount;
+            bool foundMark = false;
+            for (; i != 0_lnum; --i ) {
+                if ( lineType( i ) == Marked ) {
+                    foundMark = true;
+                    break;
+                }
             }
 
-            if (i.get() == 0 ) {
-                break;
+            if ( !foundMark ) {
+                foundMark = lineType( i ) == Marked;
             }
-        }
-        keyEvent->accept();
-    }
-    else if ( keyEvent->key() == Qt::Key_BracketRight && noModifier ) {
-        const auto nbLines = logFilteredData_->getNbLine();
-        for ( auto i = getViewPosition() + 1_lcount; i < nbLines; ++i ) {
-            if ( lineType( i ) == Marked ) {
+
+            if ( foundMark ) {
                 selectAndDisplayLine( i );
-                break;
+                keyEvent->accept();
             }
+
+            break;
         }
-        keyEvent->accept();
+        case Qt::Key_BracketRight:
+        {
+            const auto nbLines = logFilteredData_->getNbLine();
+            for ( auto i = getViewPosition() + 1_lcount; i < nbLines; ++i ) {
+                if ( lineType( i ) == Marked ) {
+                    selectAndDisplayLine( i );
+                    break;
+                }
+            }
+            keyEvent->accept();
+            break;
+        }
+        default:
+            keyEvent->ignore();
+            break;
+        }
     }
-    else {
-        keyEvent->ignore();
+
+    if ( !keyEvent->isAccepted() ) {
         AbstractLogView::keyPressEvent( keyEvent );
     }
 }

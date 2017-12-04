@@ -26,14 +26,15 @@ public:
     using UnderlyingType = T;
 
     // constructor
-    NamedTypeImpl() : value_{} {}
-    explicit NamedTypeImpl(T const& value) : value_(value) {}
+    constexpr NamedTypeImpl() : value_{} {}
+    constexpr explicit NamedTypeImpl(T const& value) noexcept : value_(value) {}
+
     template<typename T_ = T, typename = IsNotReference<T_>>
-    explicit NamedTypeImpl(T&& value) : value_(std::move(value)) {}
+    constexpr explicit NamedTypeImpl(T&& value) noexcept : value_(std::move(value)) {}
 
     // get
-    T& get() { return value_; }
-    T const& get() const {return value_; }
+    constexpr T& get() { return value_; }
+    constexpr T const& get() const {return value_; }
 
     // conversions
     template <typename Converter2>

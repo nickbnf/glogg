@@ -235,6 +235,11 @@ int DigitsBuffer::content()
     return result;
 }
 
+bool DigitsBuffer::isEmpty() const
+{
+    return digits_.isEmpty();
+}
+
 void DigitsBuffer::timerEvent( QTimerEvent* event )
 {
     if ( event->timerId() == timer_.timerId() ) {
@@ -541,10 +546,18 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
 
-    bool controlModifier = (keyEvent->modifiers() & Qt::ControlModifier) == Qt::ControlModifier;
-    bool shiftModifier = (keyEvent->modifiers() & Qt::ShiftModifier) == Qt::ShiftModifier;
-    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+    const auto controlModifier = keyEvent->modifiers().testFlag( Qt::ControlModifier );
+    const auto shiftModifier = keyEvent->modifiers().testFlag( Qt::ShiftModifier );
+    const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
+    const auto jumpToBottomLine = [this]() {
+        disableFollow();
+        const auto line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
+        selection_.selectLine( line );
+        emit updateLineNumber( line );
+        emit newSelection( line );
+        jumpToBottom();
+    };
 
     if ( keyEvent->key() == Qt::Key_Up && noModifier)
 	      moveSelectionUp();
@@ -561,10 +574,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( (keyEvent->key() == Qt::Key_PageDown && controlModifier)
            || (keyEvent->key() == Qt::Key_End && controlModifier) )
     {
-        disableFollow(); // duplicate of 'G' action.
-        selection_.selectLine( LineNumber(logData->getNbLine().get() ) - 1_lcount );
-        emit updateLineNumber( LineNumber(logData->getNbLine().get() ) - 1_lcount );
-        jumpToBottom();
+       jumpToBottomLine(); // Same as G
     }
     else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
@@ -576,76 +586,72 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( keyEvent->key() == Qt::Key_Space && noModifier )
         emit exitView();
     else {
-        const char character = keyEvent->text().at( 0 ).toLatin1();
+        const auto character = keyEvent->text().at( 0 ).toLatin1();
 
         if ( keyEvent->modifiers() == Qt::NoModifier &&
-                ( character >= '0' ) && ( character <= '9' ) ) {
+                ( ( ( character > '0' ) && ( character <= '9' ) ) ||
+                ( !digitsBuffer_.isEmpty() && character == '0' ) ) ) {
             // Adds the digit to the timed buffer
             digitsBuffer_.add( character );
         }
         else {
-            switch ( keyEvent->text().at( 0 ).toLatin1() ) {
-                case 'j':
-                    moveSelectionDown();
+            switch ( keyEvent->key() ) {
+            case Qt::Key_J:
+                moveSelectionDown();
+                break;
+            case Qt::Key_K:
+                moveSelectionUp();
+                break;
+            case Qt::Key_H:
+                horizontalScrollBar()->triggerAction(
+                        QScrollBar::SliderSingleStepSub);
+                break;
+            case Qt::Key_L:
+                horizontalScrollBar()->triggerAction(
+                        QScrollBar::SliderSingleStepAdd);
+                break;
+            case Qt::Key_0:
+            case Qt::Key_AsciiCircum:
+                jumpToStartOfLine();
+                break;
+            case Qt::Key_Dollar:
+                jumpToEndOfLine();
+                break;
+            case Qt::Key_Asterisk:
+                // Use the selected 'word' and search forward
+                findNextSelected();
+                break;
+            case Qt::Key_Slash:
+                // Use the selected 'word' and search backward
+                findPreviousSelected();
+                break;
+            case Qt::Key_M:
+                {
+                    auto line = selection_.selectedLine();
+                    if ( line.has_value() )
+                        emit markLine( *line );
                     break;
-                case 'k':
-                    moveSelectionUp();
-                    break;
-                case 'h':
-                    horizontalScrollBar()->triggerAction(
-                            QScrollBar::SliderSingleStepSub);
-                    break;
-                case 'l':
-                    horizontalScrollBar()->triggerAction(
-                            QScrollBar::SliderSingleStepAdd);
-                    break;
-                case '0':
-                    jumpToStartOfLine();
-                    break;
-                case '$':
-                    jumpToEndOfLine();
-                    break;
-                case 'g':
-                    {
-                        LineNumber::UnderlyingType newLine = qMax( 0, digitsBuffer_.content() - 1 );
-                        if ( newLine >= logData->getNbLine().get() )
-                            newLine = logData->getNbLine().get() - 1;
-                        selectAndDisplayLine( LineNumber( newLine ) );
-                        break;
-                    }
-                case 'G':
-                    {
-                        disableFollow();
-                        const auto line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
-                        selection_.selectLine( line );
-                        emit updateLineNumber( line );
-                        emit newSelection( line );
-                        jumpToBottom();
-                        break;
-                    }
-                case 'n':
-                    emit searchNext();
-                    break;
-                case 'N':
+                }
+            case Qt::Key_G:
+                if ( shiftModifier ) {
+                    jumpToBottomLine();
+                }
+                else {
+                    LineNumber::UnderlyingType newLine = qMax( 0, digitsBuffer_.content() - 1 );
+                    if ( newLine >= logData->getNbLine().get() )
+                        newLine = logData->getNbLine().get() - 1;
+                    selectAndDisplayLine( LineNumber( newLine ) );
+                }
+                break;
+            case Qt::Key_N:
+                if ( shiftModifier ) {
                     emit searchPrevious();
-                    break;
-                case '*':
-                    // Use the selected 'word' and search forward
-                    findNextSelected();
-                    break;
-                case '/':
-                    // Use the selected 'word' and search backward
-                    findPreviousSelected();
-                    break;
-                case 'm':
-                    {
-                        auto line = selection_.selectedLine();
-                        if ( line.has_value() )
-                            emit markLine( *line );
-                        break;
-                    }
-                default:
-                    keyEvent->ignore();
+                }
+                else {
+                   emit searchNext();
+                }
+            default:
+                keyEvent->ignore();
             }
         }
     }
@@ -1344,9 +1350,9 @@ void AbstractLogView::moveSelection( int delta )
 
     if ( !selection.empty() ) {
         if ( delta < 0 )
-            new_line = selection.front() - LinesCount(delta);
+            new_line = selection.front() - LinesCount( qAbs( delta ) );
         else
-            new_line = selection.back() + LinesCount(delta);
+            new_line = selection.back() + LinesCount( delta );
     }
 
     if ( new_line >= logData->getNbLine() ) {

@@ -133,6 +133,8 @@ class DigitsBuffer : public QObject
     // Get the content of the buffer (0 if empty) and reset it.
     int content();
 
+    bool isEmpty() const;
+
   protected:
     void timerEvent( QTimerEvent* event ) override;
 

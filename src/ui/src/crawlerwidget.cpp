@@ -175,20 +175,23 @@ void CrawlerWidget::doSendAllStateSignals()
 
 void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 {
-    bool noModifier = keyEvent->modifiers() == Qt::NoModifier;
+    const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
     if ( keyEvent->key() == Qt::Key_V && noModifier )
         visibilityBox->setCurrentIndex(
                 ( visibilityBox->currentIndex() + 1 ) % visibilityBox->count() );
     else {
-        const char character = keyEvent->text().at( 0 ).toLatin1();
-
-        if ( character == '+' )
+        switch (keyEvent->key()) {
+        case Qt::Key_Plus:
             changeTopViewSize( 1 );
-        else if ( character == '-' )
+            break;
+        case Qt::Key_Minus:
             changeTopViewSize( -1 );
-        else
+            break;
+        default:
             QSplitter::keyPressEvent( keyEvent );
+            break;
+        }
     }
 }
 

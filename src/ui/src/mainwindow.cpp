@@ -815,11 +815,11 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
 
-    switch ( keyEvent->text().at(0).toLatin1() ) {
-        case '/':
+    switch ( keyEvent->key()) {
+        case Qt::Key_Slash:
             displayQuickFindBar( QuickFindMux::Forward );
             break;
-        case '?':
+        case Qt::Key_Question:
             displayQuickFindBar( QuickFindMux::Backward );
             break;
         default:

@@ -62,7 +62,7 @@ class QuickFindPattern : public QObject
     bool isActive() const { return active_; }
 
     // Return the text of the regex
-    QString getPattern() const { return regexp_.pattern(); }
+    QString getPattern() const { return pattern_; }
 
     // Returns whether the passed line match the quick find search.
     // If so, it populate the passed list with the list of matches
@@ -89,6 +89,7 @@ class QuickFindPattern : public QObject
   private:
     bool active_;
     QRegularExpression regexp_;
+    QString pattern_;
 
     mutable int lastMatchStart_;
     mutable int lastMatchEnd_;

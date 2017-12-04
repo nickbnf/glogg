@@ -36,6 +36,8 @@ QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
 
 void QuickFindPattern::changeSearchPattern( const QString& pattern )
 {
+    pattern_ = pattern;
+
     // Determine the type of regexp depending on the config
     QString searchPattern;
     switch ( Persistent<Configuration>( "settings" )->quickfindRegexpType() ) {

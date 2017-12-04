@@ -20,8 +20,9 @@
 #ifndef THREADPRIVATESTORE_H
 #define THREADPRIVATESTORE_H
 
-#include <QAtomicInt>
+#include <QAtomicInteger>
 #include <QThread>
+#include <array>
 #include <cassert>
 
 #include "log.h"
@@ -33,39 +34,27 @@ class ThreadPrivateStore
 {
   public:
     // Construct an empty ThreadPrivateStore
-    ThreadPrivateStore() : nb_threads_( 0 ) {
-        // Last one is a guard
-        for ( int i=0; i<(MAX_THREADS+1); ++i )
-            thread_ids_[i] = 0;
-    }
-
-    // Conversion to a T
-    operator T() const
-    { return get(); }
-
-    // Getter (thread-safe, wait-free)
-    T get() const
-    { return data_[threadIndex()]; }
+    ThreadPrivateStore()
+        : nb_threads_{}
+        , thread_ids_ {}
+    {}
 
     T* getPtr()
     { return &data_[threadIndex()]; }
-
-    // Setter (thread-safe, wait-free)
-    void set( const T& value )
-    { data_[threadIndex()] = value; }
 
   private:
     // Nb of threads that have registered
     int nb_threads_;
 
-    // The actual data array (one element per thread from 0 to nb_threads_)
-    T data_[MAX_THREADS];
+    // Data array (one element per thread from 0 to nb_threads_)
+    std::array<T, MAX_THREADS> data_;
 
-    mutable QAtomicInt thread_ids_[MAX_THREADS+1];
+    // Last one is a guard
+    mutable std::array<QAtomicInteger<size_t>, MAX_THREADS+1> thread_ids_;
 
     int threadIndex() const {
 
-        const int thread_id = std::hash<Qt::HANDLE>()( QThread::currentThreadId() );
+        const auto thread_id = std::hash<Qt::HANDLE>()( QThread::currentThreadId() );
 
         int i;
         for ( i=0; thread_ids_[i]; ++i ) {

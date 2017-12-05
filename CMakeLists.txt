@@ -57,9 +57,12 @@ if(NOT MSVC)
     ucm_add_flags(-Werror -Wall -Wextra -Wnarrowing -Wshadow -Wnon-virtual-dtor -Wpedantic)
     remove_release_flag("-O3")
 else()
-    ucm_add_flags(/O2)
+    ucm_add_flags(/O2 /LTCG /INCREMENTAL:NO /OPT:REF)
     ucm_add_flags(/W4)
     remove_release_flag("/W3")
+
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF")
+    set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF")
 endif()
 
 ucm_print_flags()

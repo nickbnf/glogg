@@ -16,6 +16,7 @@ matrix:
           packages:
             - g++-6
             - qt59base
+            - ninja-build
       env:
          - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
@@ -32,7 +33,7 @@ matrix:
 env:
     global:
         - KLOGG_VERSION_EVAL='KLOGG_VERSION=17.12.0.$TRAVIS_BUILD_NUMBER'
-        - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release"'
+        - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-G Ninja -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release"'
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != linux ] || eval "${MATRIX_EVAL}"'

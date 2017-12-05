@@ -71,7 +71,7 @@ else()
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
     ENDIF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
 
-    ucm_add_flags(/Wd4127)
+    ucm_add_flags(/wd4127)
 
 endif()
 

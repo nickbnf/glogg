@@ -45,6 +45,7 @@ after_build:
 
 - 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING
 
+- xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %APPVEYOR_BUILD_FOLDER%\klogg.nsi
 
 artifacts:

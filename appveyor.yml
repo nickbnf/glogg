@@ -11,12 +11,19 @@ configuration:
 environment:
   matrix:
   - QT5: C:\Qt\5.9\msvc2017_64
-    CMAKE_GENERATOR_NAME: NMake Makefiles
+    CMAKE_GENERATOR_NAME: Ninja
     CMAKE_BUILD_TYPE: Release
 
 matrix:
   fast_finish: false
   
+install:
+  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+  - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  - 7z x ninja.zip -o%APPVEYOR_BUILD_FOLDER%\ninja > nul
+  - set PATH=%APPVEYOR_BUILD_FOLDER%\ninja;%PATH%
+  - ninja --version
+
 before_build:
 - '%QT5%\bin\qtenv2.bat'
 - call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=x64

@@ -33,10 +33,10 @@ class QTimerEvent;
 // files in the file menu. Not thread-safe.
 class MenuActionToolTipBehavior : public QObject
 {
-    Q_OBJECT;
+    Q_OBJECT
 
  public:
-    MenuActionToolTipBehavior(QAction *action, QMenu *parentMenu,
+    MenuActionToolTipBehavior(QAction *menuAction, QMenu *menuParent,
                               QObject *parent);
 
     // Time in ms that mouse needs to stay unmoved for tooltip to be shown

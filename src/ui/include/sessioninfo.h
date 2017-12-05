@@ -44,10 +44,10 @@ class SessionInfo : public Persistable {
 
     struct OpenFile
     {
-        OpenFile( const QString& fileName, uint64_t topLine, const QString& viewContext )
-            : fileName{ fileName }
-            , topLine{ topLine }
-            , viewContext{ viewContext }
+        OpenFile( const QString& file, uint64_t top, const QString& context )
+            : fileName{ file }
+            , topLine{ top }
+            , viewContext{ context }
         {}
 
         QString fileName;

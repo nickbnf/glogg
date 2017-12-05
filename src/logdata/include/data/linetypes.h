@@ -110,9 +110,9 @@ inline bool operator>=( const LineNumber& number, const LinesCount& count ) { re
 inline bool operator==( const LineNumber& number, const LinesCount& count ) { return !(number < count) && !(count.get() < number.get()); }
 inline bool operator!=( const LineNumber& number, const LinesCount& count ) { return !(number == count); }
 
-Q_DECLARE_METATYPE(LineLength);
-Q_DECLARE_METATYPE(LineNumber);
-Q_DECLARE_METATYPE(LinesCount);
+Q_DECLARE_METATYPE(LineLength)
+Q_DECLARE_METATYPE(LineNumber)
+Q_DECLARE_METATYPE(LinesCount)
 
 // Use a bisection method to find the given line number
 // in a sorted list.

@@ -9,6 +9,7 @@
 #include <windows.h>
 #endif // _WIN32
 
+static const char* sl_format = "LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 
 int main( int argc, const char** argv )
 {

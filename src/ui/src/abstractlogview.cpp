@@ -55,7 +55,7 @@
 
 namespace {
 int mapPullToFollowLength( int length );
-};
+}
 
 namespace {
 
@@ -1093,9 +1093,9 @@ void AbstractLogView::saveToFile()
         QStringList lines = logData->getLines( offset.first, offset.second );
         for ( auto& l : lines)  {
             l.append(QChar::LineFeed);
-            const auto data = codec->fromUnicode( l );
-            const auto written = saveFile.write( data );
-            if ( written != data.size() ) {
+            const auto encodedLine = codec->fromUnicode( l );
+            const auto written = saveFile.write( encodedLine );
+            if ( written != encodedLine.size() ) {
                 LOG(logERROR) << "Saving file write failed";
                 QMetaObject::invokeMethod(&progressDialog, SLOT(cancel() ), Qt::QueuedConnection);
                 return false;
@@ -1896,4 +1896,4 @@ int mapPullToFollowLength( int length )
     return length / 14;
 }
 
-};
+}

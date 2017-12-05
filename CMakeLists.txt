@@ -46,12 +46,16 @@ find_package(Qt5Concurrent REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-if (UNIX)
-    ucm_add_flags(-Wall -Wextra -Wnarrowing -O2 -g)
-    #ucm_add_flags(-Wshadow -Wnon-virtual-dtor
-    #                  -Wno-unused-parameter
-    #                  -Wno-unused-variable)
+# warnings and optimization
+if(NOT MSVC)
+    ucm_add_flags(-O2 -g)
+    ucm_add_flags(-Werror -Wall -Wextra -Wnarrowing -Wshadow -Wnon-virtual-dtor -Wpedantic)
+else()
+    ucm_add_flags(/O2)
+    ucm_add_flags(/W4 /W44640)
+endif()
 
+if (UNIX)
     option(GPROF "Build for gprof" OFF)
     if (${GPROF})
         ucm_add_flags(-pg -g)
@@ -59,7 +63,6 @@ if (UNIX)
     endif()
 
     option(PREFER_DBUS_IPC "Prefer dbus IPC if available" ON)
-
 endif()
 
 if (APPLE)
@@ -69,11 +72,6 @@ endif()
 
 if (WIN32)
     add_definitions(-DNOMINMAX)
-    if(MSVC)
-        ucm_add_flags(/O2)
-    else()
-        ucm_add_flags(-O2)
-    endif()
 endif()
 
 option(PERF "Build for performance test" OFF)

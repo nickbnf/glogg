@@ -29,12 +29,12 @@
 // since neither action nor parent is guaranteed to die before the other,
 // for memory-management purposes the parent will have to be specified
 // explicity (probably, the window owning the action and the menu).
-MenuActionToolTipBehavior::MenuActionToolTipBehavior(QAction *action,
-                                                     QMenu *parentMenu,
+MenuActionToolTipBehavior::MenuActionToolTipBehavior(QAction *menuAction,
+                                                     QMenu *menuParent,
                                                      QObject *parent = nullptr)
     : QObject(parent),
-      action(action),
-      parentMenu(parentMenu),
+      action(menuAction),
+      parentMenu(menuParent),
       toolTipDelayMs(1000),
       timerId(0),
       hoverPoint()

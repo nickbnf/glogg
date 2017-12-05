@@ -53,6 +53,8 @@ public:
       , mTypicalDistributionRatio{}
   { Reset(PR_FALSE); }
 
+  virtual ~CharDistributionAnalysis() = default;
+
   //feed a block of data and do distribution analysis
   void HandleData(const char* /*aBuf*/, PRUint32 /*aLen*/) {}
   

@@ -33,8 +33,8 @@ struct TestTimer {
 class SafeQSignalSpy : public QSignalSpy {
   public:
     template <typename... Args>
-    SafeQSignalSpy( Args&&... args )
-        : QSignalSpy( std::forward<Args>(args)... ) {}
+    SafeQSignalSpy( Args&&... agruments )
+        : QSignalSpy( std::forward<Args>(agruments)... ) {}
 
     bool safeWait( int timeout = 10000 ) {
         // If it has already been received

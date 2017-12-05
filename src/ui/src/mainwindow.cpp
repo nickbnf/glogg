@@ -816,10 +816,10 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
     LOG(logDEBUG4) << "keyPressEvent received";
 
     switch ( keyEvent->key()) {
-        case Qt::Key_Slash:
+        case Qt::Key_Apostrophe:
             displayQuickFindBar( QuickFindMux::Forward );
             break;
-        case Qt::Key_Question:
+        case Qt::Key_QuoteDbl:
             displayQuickFindBar( QuickFindMux::Backward );
             break;
         default:

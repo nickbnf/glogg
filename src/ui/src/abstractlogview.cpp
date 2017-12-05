@@ -333,13 +333,13 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     {
         const auto line = convertCoordToLine( mouseEvent->y() );
 
-        if (line.has_value() && mouseEvent->modifiers() & Qt::ShiftModifier )
+        if ( line.has_value() && mouseEvent->modifiers() & Qt::ShiftModifier )
         {
             selection_.selectRangeFromPrevious( *line );
             emit updateLineNumber( *line );
             update();
         }
-        else if (line)
+        else if ( line.has_value() )
         {
             if ( mouseEvent->x() < bulletZoneWidthPx_ ) {
                 // Mark a line if it is clicked in the left margin
@@ -349,7 +349,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             }
             else {
                 // Select the line, and start a selection
-                if ( line < logData->getNbLine() ) {
+                if ( *line < logData->getNbLine() ) {
                     selection_.selectLine( *line );
                     emit updateLineNumber( *line );
                     emit newSelection( *line );
@@ -618,10 +618,12 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 jumpToEndOfLine();
                 break;
             case Qt::Key_Asterisk:
+            case Qt::Key_Period:
                 // Use the selected 'word' and search forward
                 findNextSelected();
                 break;
             case Qt::Key_Slash:
+            case Qt::Key_Comma:
                 // Use the selected 'word' and search backward
                 findPreviousSelected();
                 break;
@@ -1129,14 +1131,15 @@ void AbstractLogView::updateSearchLimits()
 void AbstractLogView::setSearchStart()
 {
     const auto selectedLine = selection_.selectedLine();
-    searchStart_ = selectedLine.has_value() ? *selectedLine : 0_lnum;
+    searchStart_ = selectedLine.has_value() ? *selectedLine : 1_lnum;
     updateSearchLimits();
 }
 
 void AbstractLogView::setSearchEnd()
 {
     const auto selectedLine = selection_.selectedLine();
-    searchEnd_ = selectedLine.has_value() ? *selectedLine  + 1_lcount : LineNumber( logData->getNbLine().get() );
+    searchEnd_ = selectedLine.has_value() ? *selectedLine  + 1_lcount
+                                          : LineNumber( logData->getNbLine().get() );
     updateSearchLimits();
 }
 

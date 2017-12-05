@@ -7,13 +7,13 @@ endif()
 
 add_executable(klogg ${OS_BUNDLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/glogg.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/klogg.qrc
     ${ICON_FILE}
 )
 
 add_executable(klogg_portable ${OS_BUNDLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/glogg.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/klogg.qrc
     ${ICON_FILE}
 )
 

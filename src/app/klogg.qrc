@@ -1,9 +1,9 @@
 <RCC>
 <qresource>
-    <file>images/hicolor/16x16/glogg.png</file>
-    <file>images/hicolor/24x24/glogg.png</file>
-    <file>images/hicolor/32x32/glogg.png</file>
-    <file>images/hicolor/48x48/glogg.png</file>
+    <file>images/hicolor/16x16/klogg.png</file>
+    <file>images/hicolor/24x24/klogg.png</file>
+    <file>images/hicolor/32x32/klogg.png</file>
+    <file>images/hicolor/48x48/klogg.png</file>
     <file>images/open14.png</file>
     <file>images/open14@2x.png</file>
     <file>images/reload14.png</file>

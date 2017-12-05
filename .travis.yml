@@ -31,6 +31,7 @@ matrix:
 
 env:
     global:
+        - KLOGG_VERSION_EVAL='KLOGG_VERSION=17.12.0.$TRAVIS_BUILD_NUMBER'
         - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release"'
 
 before_install:
@@ -45,11 +46,15 @@ before_script:
  - mkdir build
  - cd build
  - eval "${COMMON_CMAKE_OPTS_EVAL}"
+ - eval "${KLOGG_VERSION_EVAL}"
  - '[ "$TRAVIS_OS_NAME" != osx ] || cmake ${COMMON_CMAKE_OPTS} -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..'
- - '[ "$TRAVIS_OS_NAME" != linux ] || cmake ${COMMON_CMAKE_OPTS} ..'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || cmake ${COMMON_CMAKE_OPTS} -DCMAKE_INSTALL_PREFIX=/usr ..'
 
 script:
  - cmake --build .
  - ctest --verbose
  - '[ "$TRAVIS_OS_NAME" != osx   ] || ${SCRIPTS_PATH}/prepare_bundle.sh'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || ${SCRIPTS_PATH}/make_appimage.sh'
  - cpack --verbose
+ - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg--x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'
+

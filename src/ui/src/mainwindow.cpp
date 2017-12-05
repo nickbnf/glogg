@@ -87,10 +87,10 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     setGeometry( geometry.x() + 20, geometry.y() + 40,
             geometry.width() - 140, geometry.height() - 140 );
 
-    mainIcon_.addFile( ":/images/hicolor/16x16/glogg.png" );
-    mainIcon_.addFile( ":/images/hicolor/24x24/glogg.png" );
-    mainIcon_.addFile( ":/images/hicolor/32x32/glogg.png" );
-    mainIcon_.addFile( ":/images/hicolor/48x48/glogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/16x16/klogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/24x24/klogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/32x32/klogg.png" );
+    mainIcon_.addFile( ":/images/hicolor/48x48/klogg.png" );
 
     setWindowIcon( mainIcon_ );
 

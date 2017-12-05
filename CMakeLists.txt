@@ -84,6 +84,7 @@ endif()
 add_custom_target(ci_config SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
     ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linux/make_appimage.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh
 )
@@ -134,18 +135,18 @@ if(UNIX)
         set(CPACK_SYSTEM_NAME "OSX")
         set(CPACK_PACKAGE_ICON "${ICON_FILE}")
     else()
-        install(DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16/klogg.png
             DESTINATION share/icons/hicolor/16x16/apps
         )
 
-        install(DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/32x32/klogg.png
             DESTINATION share/icons/hicolor/32x32/apps
         )
 
-        install(DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable
+        install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable/klogg.svg
             DESTINATION share/icons/hicolor/scalable/apps
         )
 

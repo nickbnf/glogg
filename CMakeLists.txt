@@ -46,14 +46,21 @@ find_package(Qt5Concurrent REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+macro(remove_cxx_flag flag)
+    string(REPLACE "${flag}" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+endmacro()
+
 # warnings and optimization
 if(NOT MSVC)
     ucm_add_flags(-O2 -g)
     ucm_add_flags(-Werror -Wall -Wextra -Wnarrowing -Wshadow -Wnon-virtual-dtor -Wpedantic)
+    remove_cxx_flag("-O3")
 else()
     ucm_add_flags(/O2)
     ucm_add_flags(/W4 /W44640)
 endif()
+
+ucm_print_flags()
 
 if (UNIX)
     option(GPROF "Build for gprof" OFF)

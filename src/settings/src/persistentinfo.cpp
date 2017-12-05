@@ -43,14 +43,14 @@ PersistentInfo::~PersistentInfo()
         delete settings_;
 }
 
-void PersistentInfo::migrateAndInit( SettingsStorage storage )
+void PersistentInfo::migrateAndInit()
 {
     assert( initialised_ == false );
 
     QString configurationFile = QDir::cleanPath( qApp->applicationDirPath() +
                                        QDir::separator() + "klogg.conf" );
 
-    if ( storage == Portable || QFileInfo::exists( configurationFile ) ) {
+    if ( QFileInfo::exists(configurationFile) ) {
         settings_ = new QSettings(configurationFile, QSettings::IniFormat);
     }
     else {

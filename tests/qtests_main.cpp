@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     plog::init(logINFO, &appender);
 
     // Register the configuration items
-    GetPersistentInfo().migrateAndInit();
+    GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
     GetPersistentInfo().registerPersistable(
      std::make_shared<Configuration>(), QString( "settings" ) );
 

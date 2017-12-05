@@ -174,7 +174,12 @@ int main(int argc, char *argv[])
     qRegisterMetaType<LoadingStatus>("LoadingStatus");
 
     // Register the configuration items
-    GetPersistentInfo().migrateAndInit();
+#ifdef KLOGG_PORTABLE
+    GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
+#else
+    GetPersistentInfo().migrateAndInit( PersistentInfo::Common );
+#endif
+
     GetPersistentInfo().registerPersistable(
             std::make_shared<SessionInfo>(), QString( "session" ) );
     GetPersistentInfo().registerPersistable(

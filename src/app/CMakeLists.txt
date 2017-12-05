@@ -11,9 +11,20 @@ add_executable(klogg ${OS_BUNDLE}
     ${ICON_FILE}
 )
 
+add_executable(klogg_portable ${OS_BUNDLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/glogg.qrc
+    ${ICON_FILE}
+)
+
 set_target_properties(klogg PROPERTIES AUTORCC ON)
+set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
 
 target_link_libraries(klogg PUBLIC ui cli11)
+target_link_libraries(klogg_portable PUBLIC ui cli11)
+
+target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
+
 include(win32_rc)
 
 if (WIN32)
@@ -31,7 +42,8 @@ if (WIN32)
         COMPANY_COPYRIGHT ${COPYRIGHT}
     )
 
-    target_sources(klogg PRIVATE ${ProductVersionResourceFiles})
+    target_sources(klogg PRIVATE ${ProductVersionResourceFiles})  
+    target_sources(klogg_portable PRIVATE ${ProductVersionResourceFiles})
 
 elseif (APPLE)
     set_source_files_properties(${ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)

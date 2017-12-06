@@ -1,4 +1,4 @@
-# NSIS script creating the Windows installer for glogg
+# NSIS script creating the Windows installer for klogg
 
 # Is passed to the script using -DVERSION=$(git describe) on the command line
 !ifndef VERSION
@@ -24,8 +24,8 @@ SetCompressor /SOLID lzma
 !endif
 InstallDirRegKey HKLM Software\klogg ""
 
-; glogg icon
-; !define MUI_ICON glogg.ico
+; klogg icon
+; !define MUI_ICON klogg.ico
 
 RequestExecutionLevel admin
 
@@ -36,8 +36,8 @@ Caption "klogg ${VERSION} Setup"
 !define MUI_WELCOMEPAGE_TITLE "Welcome to the klogg ${VERSION} Setup Wizard"
 !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of klogg\
 , a fast, advanced log explorer.$\r$\n$\r$\n\
-glogg and the Qt libraries are released under the GPL, see \
-the COPYING file.$\r$\n$\r$\n$_CLICK"
+klogg and the Qt libraries are released under the GPL, see \
+the COPYING and NOTICE files.$\r$\n$\r$\n$_CLICK"
 ; MUI_FINISHPAGE_LINK_LOCATION "http://nsis.sf.net/"
 
 !insertmacro MUI_PAGE_WELCOME
@@ -65,6 +65,7 @@ Section "klogg" klogg
     File release\klogg.exe
 
     File COPYING
+    File NOTICE
     File README.md
 
     ; Create the 'sendto' link

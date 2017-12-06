@@ -1,0 +1,212 @@
+[klogg]
+Copyright (c) 2017 Anton Filimonov
+
+klogg is free software; you can redistribute it and/or modify it under
+the terms of the GNU General PubLic License as published by the Free
+Software Foundation; either version 3 of the License, or (at your option)
+any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+for more details.
+
+===
+This product is based on software developed by Nicolas Bonnefon:
+glogg (https://github.com/nickbnf/glogg) licensed under under the terms
+of the GNU General PubLic License as published by the Free Software
+Foundation; either version 3 of the License, or (at your option)
+any later version.
+
+>glogg is free software; you can redistribute it and/or modify it under
+>the terms of the GNU General PubLic License as published by the Free
+>Software Foundation; either version 3 of the License, or (at your option)
+>any later version.
+
+>This program is distributed in the hope that it will be useful, but
+>WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+>or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+>for more details.
+
+===
+This product is based on software developed by The Qt Company:
+Qt (www.qt.io) licensed under under the terms of the GNU Lesser General Public
+License v.3
+
+===
+This product includes software developed by Henry Schreiner:
+CLI11 (https://github.com/CLIUtils/CLI11) licensed under under the terms
+of BSD licence
+
+>CLI11 1.0 Copyright (c) 2017 University of Cincinnati, developed by Henry
+>Schreiner under NSF AWARD 1414736.
+>All rights reserved.
+
+>Redistribution and use in source and binary forms of CLI11, with or
+>without modification, are permitted provided that the following
+>conditions are met:
+>1. Redistributions of source code must retain the above copyright notice,
+>this list of conditions and the following disclaimer.
+>2. Redistributions in binary form must reproduce the above copyright
+>notice, this list of conditions and the following disclaimer in the
+>documentation and/or other materials provided with the distribution.
+>3. Neither the name of the copyright holder nor the names of its
+>contributors may be used to endorse or promote products derived from this
+>software without specific prior written permission.
+
+>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+>“AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+>TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+>PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+>OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+>EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+>PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+>PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+>LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+>NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+>SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===
+This product includes software developed by Martín Lucas Golini:
+efsw (https://bitbucket.org/SpartanJ/efsw) licensed under under the terms
+of MIT licence
+
+>Copyright (c) 2012 Martín Lucas Golini
+>Permission is hereby granted, free of charge, to any person obtaining a copy
+>of this software and associated documentation files (the "Software"), to deal
+>in the Software without restriction, including without limitation the rights
+>to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+>copies of the Software, and to permit persons to whom the Software is
+>furnished to do so, subject to the following conditions:
+>The above copyright notice and this permission notice shall be included in
+>all copies or substantial portions of the Software.
+>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+>IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+>FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+>AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+>LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+>OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+>THE SOFTWARE.
+>This software is a fork of the "simplefilewatcher" by James Wynn
+>(james@jameswynn.com) http://code.google.com/p/simplefilewatcher/
+>also MIT licensed.
+
+===
+This product includes software developed by Google Inc.:
+Google Test and Google Mock licensed under under the terms
+of BSD licence
+
+>Copyright 2008, Google Inc.
+>All rights reserved.
+>Redistribution and use in source and binary forms, with or without
+>modification, are permitted provided that the following conditions are
+>met:
+>    * Redistributions of source code must retain the above copyright
+>notice, this list of conditions and the following disclaimer.
+>    * Redistributions in binary form must reproduce the above
+>copyright notice, this list of conditions and the following disclaimer
+>in the documentation and/or other materials provided with the
+>distribution.
+>    * Neither the name of Google Inc. nor the names of its
+>contributors may be used to endorse or promote products derived from
+>this software without specific prior written permission.
+>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+>"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+>LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+>A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+>OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+>SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+>LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+>DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+>THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+>(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+>OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===
+This product includes software developed by Aurelien Rainone:
+macdeployqtfix (https://github.com/aurelien-rainone/macdeployqtfix)
+licensed under under the terms of MIT licence
+
+>The MIT License (MIT)
+>Copyright (c) 2015 Aurelien Rainone
+>Permission is hereby granted, free of charge, to any person obtaining a copy
+>of this software and associated documentation files (the "Software"), to deal
+>in the Software without restriction, including without limitation the rights
+>to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+>copies of the Software, and to permit persons to whom the Software is
+>furnished to do so, subject to the following conditions:
+>The above copyright notice and this permission notice shall be included in all
+>copies or substantial portions of the Software.
+>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+>IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+>FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+>AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+>LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+>OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+>SOFTWARE.
+
+===
+This product includes software developed by Jonathan Boccara:
+NamedType (https://github.com/joboccara/NamedType) licensed under under the
+terms of MIT licence
+
+>MIT License
+>Copyright (c) 2017 Jonathan Boccara
+>Permission is hereby granted, free of charge, to any person obtaining a copy
+>of this software and associated documentation files (the "Software"), to deal
+>in the Software without restriction, including without limitation the rights
+>to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+>copies of the Software, and to permit persons to whom the Software is
+>furnished to do so, subject to the following conditions:
+>The above copyright notice and this permission notice shall be included in all
+>copies or substantial portions of the Software.
+>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+>IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+>FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+>AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+>LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+>OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+>SOFTWARE.
+
+===
+This product includes software developed by Martin Moene:
+optional-lite (https://github.com/martinmoene/optional-lite) licensed under
+under the terms of MIT licence
+
+>MIT License
+>Copyright (c) 2016 Martin Moene
+>Permission is hereby granted, free of charge, to any person obtaining a copy
+>of this software and associated documentation files (the "Software"), to deal
+>in the Software without restriction, including without limitation the rights
+>to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+>copies of the Software, and to permit persons to whom the Software is
+>furnished to do so, subject to the following conditions:
+>The above copyright notice and this permission notice shall be included in all
+>copies or substantial portions of the Software.
+>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+>IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+>FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+>AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+>LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+>OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+>SOFTWARE.
+
+===
+This product includes software developed by Sergey Podobry:
+plog (https://github.com/SergiusTheBest/plog) licensed under the terms of
+Mozilla Public License Version 2.0
+
+>Copyright (c) 2016 Sergey Podobry (sergey.podobry at gmail.com).
+>Mozilla Public License Version 2.0
+>This Source Code Form is subject to the terms of the Mozilla Public
+>License, v. 2.0. If a copy of the MPL was not distributed with this
+>file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+===
+This product includes software developed by Netscape Communications Corporation,
+BYVoid <byvoid.kcp@gmail.com> and Jehan <jehan@girinstud.io> licensed under the
+terms of:
+Mozilla Public License Version 1.1
+GNU General Public License,version 2.0 or later.
+GNU Lesser General Public License, version 2.1 or later.
+

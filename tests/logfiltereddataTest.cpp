@@ -11,9 +11,7 @@
 #include "gmock/gmock.h"
 
 static const qint64 SL_NB_LINES = 500LL;
-static const int SL_LINE_PER_PAGE = 70;
 static const char* sl_format="LOGDATA is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
-static const int SL_LINE_LENGTH = 83; // Without the final '\n' !
 
 class FilteredLogDataFixture : public testing::Test {
   public:

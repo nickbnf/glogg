@@ -128,13 +128,10 @@ void QuickFindMux::confirmPattern(
 
     pattern_->changeSearchPattern( new_pattern, ignore_case );
 
-    // if non-incremental, we perform the search now
-    if ( ! config->isQuickfindIncremental() ) {
-        searchNext();
-    }
-    else {
+    if ( config->isQuickfindIncremental() ) {
         if ( auto searchable = getSearchableWidget() )
             searchable->incrementalSearchStop();
+
     }
 }
 

@@ -4,6 +4,7 @@ matrix:
   include:
     - os: linux
       sudo: required
+      dist: trusty
       compiler: gcc
       addons:
         artifacts: 
@@ -58,4 +59,3 @@ script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || ${SCRIPTS_PATH}/make_appimage.sh'
  - cpack --verbose
  - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg-x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'
-

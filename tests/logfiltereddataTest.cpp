@@ -150,7 +150,49 @@ TEST_F( FilteredLogDataFixture, visibilityChangesCount ) {
     ASSERT_EQ( filtered_count.get(), 1 );
 }
 
+TEST_F( FilteredLogDataFixture, getMatchingLineNumber ) {
+    SafeQSignalSpy searchProgressSpy {
+                filtered_data.get(),
+                &LogFilteredData::searchProgressed
+    };
 
+    runSearch( "this is line [0-9]{5}9", searchProgressSpy );
+
+    filtered_data->addMark( 1_lnum );
+
+    auto original_line = filtered_data->getMatchingLineNumber( 0_lnum );
+
+    ASSERT_EQ( original_line, 1_lnum );
+
+    auto max_filtered_line = LineNumber( filtered_data->getNbLine().get() - 1 );
+    original_line = filtered_data->getMatchingLineNumber( max_filtered_line );
+    ASSERT_EQ( original_line, 499_lnum );
+
+    original_line = filtered_data->getMatchingLineNumber( max_filtered_line + 1_lcount );
+    ASSERT_EQ( original_line, maxValue<LineNumber>() );
+}
+
+TEST_F( FilteredLogDataFixture, getLineIndexNumber ) {
+    SafeQSignalSpy searchProgressSpy {
+                filtered_data.get(),
+                &LogFilteredData::searchProgressed
+    };
+
+    runSearch( "this is line [0-9]{5}9", searchProgressSpy );
+
+    filtered_data->addMark( 1_lnum );
+
+    auto filtered_line = filtered_data->getLineIndexNumber( 1_lnum );
+
+    ASSERT_EQ( filtered_line, 0_lnum );
+
+    auto max_filtered_line = LineNumber( filtered_data->getNbLine().get() - 1 );
+    filtered_line = filtered_data->getLineIndexNumber( 499_lnum );
+    ASSERT_EQ( filtered_line, max_filtered_line );
+
+    filtered_line = filtered_data->getMatchingLineNumber( 500_lnum );
+    ASSERT_EQ( filtered_line, maxValue<LineNumber>() );
+}
 
 
 

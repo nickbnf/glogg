@@ -372,7 +372,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
-    LineNumber line = (std::numeric_limits<LineNumber>::max)();
+    auto line = maxValue<LineNumber>();
     if ( visibility_ == MatchesOnly ) {
         if ( lineNum.get() < matching_lines_.size() ) {
             line = matching_lines_[lineNum.get()].lineNumber();
@@ -403,7 +403,7 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 
 LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
 {
-    LineNumber lineIndex = (std::numeric_limits<LineNumber>::max)();
+    auto lineIndex = maxValue<LineNumber>();
 
     if ( visibility_ == MatchesOnly ) {
         lineIndex = lookupLineNumber( matching_lines_.begin(),

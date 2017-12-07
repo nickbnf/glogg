@@ -28,6 +28,7 @@ before_build:
 - '%QT5%\bin\qtenv2.bat'
 - call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=x64
 - set PATH=C:\Program Files (x86)\NSIS;%PATH%
+- set
 - md %APPVEYOR_BUILD_FOLDER%\build
 - cd %APPVEYOR_BUILD_FOLDER%\build
 - cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %APPVEYOR_BUILD_FOLDER%

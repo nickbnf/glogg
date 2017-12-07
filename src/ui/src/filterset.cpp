@@ -191,9 +191,8 @@ void FilterSet::saveToStorage( QSettings& settings ) const
     LOG(logDEBUG) << "FilterSet::saveToStorage";
 
     settings.beginGroup( "FilterSet" );
-    // Remove everything in case the array is shorter than the previous one
-    settings.remove("");
     settings.setValue( "version", FILTERSET_VERSION );
+    settings.remove( "filterss" );
     settings.beginWriteArray( "filters" );
     for (int i = 0; i < filterList.size(); ++i) {
         settings.setArrayIndex(i);

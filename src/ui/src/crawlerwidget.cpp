@@ -779,12 +779,6 @@ void CrawlerWidget::setup()
     addWidget( logMainView );
     addWidget( bottomWindow );
 
-    // Default splitter position (usually overridden by the config file)
-    QList<int> splitterSizes;
-    splitterSizes += 400;
-    splitterSizes += 100;
-    setSizes( splitterSizes );
-
     // Default search checkboxes
     auto config = Persistent<Configuration>( "settings" );
     searchRefreshCheck->setCheckState( config->isSearchAutoRefreshDefault() ?
@@ -793,6 +787,9 @@ void CrawlerWidget::setup()
     searchRefreshChangedHandler( searchRefreshCheck->checkState() );
     ignoreCaseCheck->setCheckState( config->isSearchIgnoreCaseDefault() ?
             Qt::Checked : Qt::Unchecked );
+
+    // Default splitter position (usually overridden by the config file)
+    setSizes( config->splitterSizes() );
 
     // Connect the signals
     connect( searchLineEdit->lineEdit(), &QLineEdit::returnPressed,
@@ -853,10 +850,14 @@ void CrawlerWidget::setup()
     connect( filteredView, &FilteredView::changeSearchLimits,
              this, &CrawlerWidget::setSearchLimits );
 
-    connect( logMainView, &LogMainView::clearSearchLimits,
-             this, &CrawlerWidget::clearSearchLimits );
-    connect(filteredView, &FilteredView::clearSearchLimits,
-            this, &CrawlerWidget::clearSearchLimits );
+    auto saveSplitterSizes = [this, config]() {
+        config->setSplitterSizes( this->sizes() );
+    };
+
+    connect( logMainView, &LogMainView::saveDefaultSplitterSizes,
+             saveSplitterSizes );
+    connect( filteredView, &FilteredView::saveDefaultSplitterSizes,
+             saveSplitterSizes );
 
     connect( logFilteredData_, &LogFilteredData::searchProgressed,
             this, &CrawlerWidget::updateFilteredView );
@@ -1166,7 +1167,7 @@ void CrawlerWidgetContext::loadFromString( const QString &string )
 		LOG(logWARNING) << "Unrecognised view size: " << string.toLocal8Bit().data();
 
 		// Default values;
-		sizes_ = { 100, 400 };
+        sizes_ = { 400, 100 };
 	}
 
 	QRegularExpression case_refresh_regex( "IC(\\d+):AR(\\d+)" );

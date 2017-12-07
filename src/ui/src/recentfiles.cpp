@@ -67,6 +67,7 @@ void RecentFiles::saveToStorage( QSettings& settings ) const
 
     settings.beginGroup( "RecentFiles" );
     settings.setValue( "version", RECENTFILES_VERSION );
+    settings.remove( "filesHistory" );
     settings.beginWriteArray( "filesHistory" );
     for (int i = 0; i < recentFiles_.size(); ++i) {
         settings.setArrayIndex( i );

@@ -87,8 +87,8 @@ void SavedSearches::saveToStorage( QSettings& settings ) const
 
     settings.beginGroup( "SavedSearches" );
     // Remove everything in case the array is shorter than the previous one
-    settings.remove("");
     settings.setValue( "version", SAVEDSEARCHES_VERSION );
+    settings.remove( "searchHistory" );
     settings.beginWriteArray( "searchHistory" );
     for (int i = 0; i < savedSearches_.size(); ++i) {
         settings.setArrayIndex( i );

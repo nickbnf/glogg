@@ -63,6 +63,7 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
     settings.setValue( "geometry", geometry_ );
     settings.beginGroup( "OpenFiles" );
     settings.setValue( "version", OPENFILES_VERSION );
+    settings.remove( "openFiles" );
     settings.beginWriteArray( "openFiles" );
     for ( unsigned i = 0; i < openFiles_.size(); ++i ) {
         settings.setArrayIndex( i );

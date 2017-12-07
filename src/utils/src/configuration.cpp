@@ -51,6 +51,7 @@ Configuration::Configuration()
 
     searchAutoRefresh_ = false;
     searchIgnoreCase_  = false;
+    splitterSizes_ << 400 << 100;
 
     useParallelSearch_ = true;
     useSearchResultsCache_ = true;
@@ -132,6 +133,14 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         searchAutoRefresh_ = settings.value( "defaultView.searchAutoRefresh" ).toBool();
     if ( settings.contains( "defaultView.searchIgnoreCase" ) )
         searchIgnoreCase_ = settings.value( "defaultView.searchIgnoreCase" ).toBool();
+    if ( settings.contains( "defaultView.splitterSizes" ) ) {
+        splitterSizes_.clear();
+
+        const auto sizes = settings.value( "defaultView.splitterSizes" ).toList();
+        std::transform( sizes.begin(), sizes.end(),
+                        std::back_inserter( splitterSizes_ ),
+                        [] ( auto v ) { return v.toInt(); } );
+    }
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
@@ -158,6 +167,14 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );
+
     settings.setValue( "defaultView.searchAutoRefresh", searchAutoRefresh_ );
     settings.setValue( "defaultView.searchIgnoreCase", searchIgnoreCase_ );
+
+    QList<QVariant> splitterSizes;
+    std::transform( splitterSizes_.begin() , splitterSizes_.end(),
+                    std::back_inserter( splitterSizes ),
+                    []( auto s) { return QVariant::fromValue( s ); } );
+
+    settings.setValue( "defaultView.splitterSizes", splitterSizes );
 }

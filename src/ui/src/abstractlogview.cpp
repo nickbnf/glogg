@@ -1503,7 +1503,7 @@ void AbstractLogView::createMenu()
             [this](auto){ this->findNextSelected(); } );
 
     findPreviousAction_ = new QAction( tr("Find &previous"), this );
-    findPreviousAction_->setShortcut( tr("#")  );
+    findPreviousAction_->setShortcut( tr("/")  );
     findPreviousAction_->setStatusTip( tr("Find the previous occurence") );
     connect( findPreviousAction_, &QAction::triggered,
              [this](auto){ this->findPreviousSelected(); } );
@@ -1526,6 +1526,10 @@ void AbstractLogView::createMenu()
     connect( clearSearchLimitAction_, &QAction::triggered,
             [this](auto){ this->clearSearchLimits(); } );
 
+    saveDefaultSplitterSizesAction_ = new QAction( tr("Save splitter position"), this );
+    connect( saveDefaultSplitterSizesAction_, &QAction::triggered,
+            [this](auto){ this->saveDefaultSplitterSizes(); } );
+
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( copyAction_ );
     popupMenu_->addAction( saveToFileAction_ );
@@ -1537,7 +1541,8 @@ void AbstractLogView::createMenu()
     popupMenu_->addAction( setSearchStartAction_ );
     popupMenu_->addAction( setSearchEndAction_ );
     popupMenu_->addAction( clearSearchLimitAction_ );
-
+    popupMenu_->addSeparator();
+    popupMenu_->addAction( saveDefaultSplitterSizesAction_ );
 }
 
 void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )

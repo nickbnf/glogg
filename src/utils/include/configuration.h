@@ -114,6 +114,10 @@ class Configuration : public Persistable {
     { return searchIgnoreCase_; }
     void setSearchIgnoreCaseDefault( bool ignore_case )
     { searchIgnoreCase_ = ignore_case; }
+    QList<int> splitterSizes() const
+    { return splitterSizes_; }
+    void setSplitterSizes( QList<int> sizes )
+    { splitterSizes_ = std::move( sizes ); }
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const override;
@@ -137,6 +141,7 @@ class Configuration : public Persistable {
     // Default settings for new views
     bool searchAutoRefresh_;
     bool searchIgnoreCase_;
+    QList<int> splitterSizes_;
 
     // Performance settings
     bool useSearchResultsCache_;

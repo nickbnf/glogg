@@ -245,6 +245,8 @@ class AbstractLogView :
     void changeSearchLimits( LineNumber startLine, LineNumber endLine );
     void clearSearchLimits();
 
+    void saveDefaultSplitterSizes();
+
   public slots:
     // Makes the widget select and display the passed line.
     // Scrolling as necessary
@@ -371,6 +373,7 @@ class AbstractLogView :
     QAction* setSearchStartAction_;
     QAction* setSearchEndAction_;
     QAction* clearSearchLimitAction_;
+    QAction* saveDefaultSplitterSizesAction_;
 
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;

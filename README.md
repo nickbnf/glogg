@@ -6,7 +6,7 @@ CI builds 17.12.0.231 (x64):
 [windows installer](https://ci.appveyor.com/api/buildjobs/jms1g7se3hd3855l/artifacts/klogg-17.12.0.231-setup.exe) |
 [linux deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.1/build/packages/klogg-17.12.0-r231-Linux.deb) |
 [linux appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.1/build/packages/klogg-17.12.0.231-x86_64.AppImage) |
-[osx dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/224/224.2/build/packages/klogg-17.12.0-r224-OSX.dmg)
+[osx dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/227/227.2/build/packages/klogg-17.12.0-r227-OSX.dmg)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 
@@ -99,6 +99,8 @@ xcopy %QT5%\bin\Qt5Widgets.dll release\ /y
 xcopy %QT5%\bin\Qt5Concurrent.dll release\ /y
 md release\platforms
 xcopy %QT5%\plugins\platforms\qwindows.dll release\platforms\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 
 makensis -DVERSION=X.X.X klogg.nsi
 ```

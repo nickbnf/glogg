@@ -86,46 +86,44 @@ LineNumber FilteredView::maxDisplayLineNumber() const
 void FilteredView::keyPressEvent( QKeyEvent* keyEvent )
 {
     const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
+    keyEvent->ignore();
 
     if ( noModifier ) {
         switch ( keyEvent->key() ) {
-        case Qt::Key_BracketLeft:
-        {
-            auto i = getViewPosition() - 1_lcount;
-            bool foundMark = false;
-            for (; i != 0_lnum; --i ) {
-                if ( lineType( i ) == Marked ) {
-                    foundMark = true;
-                    break;
+            case Qt::Key_BracketLeft:
+            {
+                auto i = getViewPosition() - 1_lcount;
+                bool foundMark = false;
+                for (; i != 0_lnum; --i ) {
+                    if ( lineType( i ) == Marked ) {
+                        foundMark = true;
+                        break;
+                    }
                 }
-            }
 
-            if ( !foundMark ) {
-                foundMark = lineType( i ) == Marked;
-            }
+                if ( !foundMark ) {
+                    foundMark = lineType( i ) == Marked;
+                }
 
-            if ( foundMark ) {
-                selectAndDisplayLine( i );
-                keyEvent->accept();
-            }
-
-            break;
-        }
-        case Qt::Key_BracketRight:
-        {
-            const auto nbLines = logFilteredData_->getNbLine();
-            for ( auto i = getViewPosition() + 1_lcount; i < nbLines; ++i ) {
-                if ( lineType( i ) == Marked ) {
+                if ( foundMark ) {
                     selectAndDisplayLine( i );
-                    break;
+                    keyEvent->accept();
                 }
+
+                break;
             }
-            keyEvent->accept();
-            break;
-        }
-        default:
-            keyEvent->ignore();
-            break;
+            case Qt::Key_BracketRight:
+            {
+                const auto nbLines = logFilteredData_->getNbLine();
+                for ( auto i = getViewPosition() + 1_lcount; i < nbLines; ++i ) {
+                    if ( lineType( i ) == Marked ) {
+                        selectAndDisplayLine( i );
+                        break;
+                    }
+                }
+                keyEvent->accept();
+                break;
+            }
         }
     }
 

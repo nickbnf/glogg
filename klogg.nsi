@@ -106,6 +106,12 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\platforms\qwindows.dll
 SectionEnd
 
+Section "MSVC Runtime libraries" vcruntime
+    SetOutPath $INSTDIR
+    File release\msvcp140.dll
+    File release\vcruntime140.dll
+SectionEnd
+
 Section "Create Start menu shortcut" shortcut
     SetShellVarContext all
     CreateShortCut "$SMPROGRAMS\klogg.lnk" "$INSTDIR\klogg.exe" "" "$INSTDIR\klogg.exe" 0
@@ -120,6 +126,8 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${klogg} "The core files required to use klogg."
     !insertmacro MUI_DESCRIPTION_TEXT ${qtlibs} "Needed by klogg, you have to install these unless \
 you already have the Qt5 development kit installed."
+    !insertmacro MUI_DESCRIPTION_TEXT ${vcruntime} "Needed by klogg, you have to install these unless \
+you already have the Microsoft Visual C++ 2017 Redistributable installed."
     !insertmacro MUI_DESCRIPTION_TEXT ${shortcut} "Create a shortcut in the Start menu for klogg."
     !insertmacro MUI_DESCRIPTION_TEXT ${associate} "Make klogg the default viewer for .log files."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
@@ -131,6 +139,7 @@ Section "Uninstall"
     Delete "$INSTDIR\klogg.exe"
     Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\COPYING"
+    Delete "$INSTDIR\NOTICE"
     Delete "$INSTDIR\libstdc++-6.dll"
     Delete "$INSTDIR\libgcc_s_seh-1.dll"
     Delete "$INSTDIR\libgcc_s_dw2-1.dll"
@@ -141,6 +150,8 @@ Section "Uninstall"
     Delete "$INSTDIR\Qt5Concurrent.dll"
     Delete "$INSTDIR\platforms\qwindows.dll"
     Delete "$INSTDIR\platforms\qminimal.dll"
+    Delete "$INSTDIR\msvcp140.dll"
+    Delete "$INSTDIR\vcruntime140.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

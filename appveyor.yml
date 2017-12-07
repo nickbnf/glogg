@@ -49,8 +49,8 @@ after_build:
 - xcopy %QT5%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - md %APPVEYOR_BUILD_FOLDER%\release\platforms
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
-- xcopy "%ProgramFiles(x86)%\\Microsoft Visual Studio\\2017\\Community\\VC\\redist\\x64\\Microsoft.VC140.CRT\\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy "%ProgramFiles(x86)%\\Microsoft Visual Studio\\2017\\Community\\VC\\redist\\x64\\Microsoft.VC140.CRT\\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy "%VCToolsRedistDir%\\x64\\Microsoft.VC141.CRT\\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy "%VCToolsRedistDir%\\x64\\Microsoft.VC141.CRT\\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 
 - 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\NOTICE
 

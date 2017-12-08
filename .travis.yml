@@ -21,11 +21,14 @@ matrix:
       env:
          - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
+         - CPACK_GENERATOR="RPM;DMG"
+
     - os: osx
       compiler: clang
       osx_image: xcode8.3
       env:
         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/osx"
+        - CPACK_GENERATOR="DragNDrop"
       addons:
         artifacts: 
           paths:
@@ -57,5 +60,5 @@ script:
  - ctest --verbose
  - '[ "$TRAVIS_OS_NAME" != osx   ] || ${SCRIPTS_PATH}/prepare_bundle.sh'
  - '[ "$TRAVIS_OS_NAME" != linux ] || ${SCRIPTS_PATH}/make_appimage.sh'
- - cpack --verbose
+ - cpack --verbose -G "${CPACK_GENERATOR}"
  - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg-x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'

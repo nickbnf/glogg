@@ -1,3 +1,5 @@
+#include <catch.hpp>
+
 #include <iostream>
 
 #include <QTest>
@@ -63,12 +65,10 @@ namespace {
 }
 
 
-class LogDataChanging : public testing::Test {
-protected:
-	QTemporaryDir tempDir;
-};
+TEST_CASE("Logdata reading changing file", "[logdata]") {
 
-TEST_F( LogDataChanging, changingFile ) {
+    QTemporaryDir tempDir;
+
     LogData log_data;
 
     auto finishedSpy = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
@@ -77,7 +77,7 @@ TEST_F( LogDataChanging, changingFile ) {
             SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ) );
 
     // Generate a small file
-	QFile file { tempDir.path() + QDir::separator() + QLatin1Literal("testlog.txt") };
+    QFile file { tempDir.path() + QDir::separator() + QLatin1Literal("testlog.txt") };
     if ( file.open( QIODevice::ReadWrite | QIODevice::Truncate ) ) {
         writeDataToFile( file );
     }
@@ -86,37 +86,37 @@ TEST_F( LogDataChanging, changingFile ) {
     log_data.attachFile( file.fileName() );
 
     // and wait for the signal
-    ASSERT_TRUE( finishedSpy->safeWait() );
+    REQUIRE( finishedSpy->safeWait() );
 
     // Check we have the small file
-    ASSERT_THAT( finishedSpy->count(), 1 );
-    ASSERT_THAT( log_data.getNbLine().get(), 200LL );
-    ASSERT_THAT( log_data.getMaxLength().get(), SL_LINE_LENGTH );
-    ASSERT_THAT( log_data.getFileSize(), 200 * (SL_LINE_LENGTH+1LL) );
+    REQUIRE( finishedSpy->count() == 1 );
+    REQUIRE( log_data.getNbLine() == 200_lcount );
+    REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
+    REQUIRE( log_data.getFileSize() == 200 * (SL_LINE_LENGTH+1LL) );
 
 #ifndef _WIN32
     auto finishedSpyCount = finishedSpy->count();
     // Add some data to it
     if ( file.isOpen() ) {
-		// To test the edge case when the final line is not complete
+        // To test the edge case when the final line is not complete
 #ifdef _WIN32
-		writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
+        writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
 #else
-		writeDataToFile(file, 200, WriteFileModification::EndWithPartialLineBegin);
+        writeDataToFile(file, 200, WriteFileModification::EndWithPartialLineBegin);
 #endif
     }
 
     // and wait for the signals
     finishedSpy->wait( 10000 );
 
-    ASSERT_GE( finishedSpy->count(), finishedSpyCount );
+    REQUIRE( finishedSpy->count() > finishedSpyCount );
 
     // Check we have a bigger file
-    ASSERT_GE( changedSpy.count(), 1 );
-    ASSERT_THAT( finishedSpy->count(), 2 );
-    ASSERT_THAT( log_data.getNbLine().get(), 401LL );
-    ASSERT_THAT( log_data.getMaxLength().get(), SL_LINE_LENGTH );
-    ASSERT_THAT( log_data.getFileSize(), (qint64) (400 * (SL_LINE_LENGTH+1LL)
+    REQUIRE( changedSpy.count() > 1 );
+    REQUIRE( finishedSpy->count() >= 2 );
+    REQUIRE( log_data.getNbLine() == 401_lcount );
+    REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
+    REQUIRE( log_data.getFileSize() == (qint64) (400 * (SL_LINE_LENGTH+1LL)
             + strlen( partial_line_begin ) ) );
 
     {
@@ -125,21 +125,21 @@ TEST_F( LogDataChanging, changingFile ) {
         // Add a couple more lines, including the end of the unfinished one.
         if ( file.isOpen() ) {
 #ifdef _WIN32
-			writeDataToFileBackground( file, 20, WriteFileModification::StartWithPartialLineEnd );
+            writeDataToFileBackground( file, 20, WriteFileModification::StartWithPartialLineEnd );
 #else
-			writeDataToFile(file, 20, WriteFileModification::StartWithPartialLineEnd);
+            writeDataToFile(file, 20, WriteFileModification::StartWithPartialLineEnd);
 #endif
         }
 
         // and wait for the signals
-        ASSERT_TRUE( finishedSpy->wait( 10000 ) );
+        REQUIRE( finishedSpy->wait( 10000 ) );
 
         // Check we have a bigger file
-        ASSERT_GE( changedSpy.count(), 2 );
-        ASSERT_THAT( finishedSpy->count(), 1 );
-        ASSERT_THAT( log_data.getNbLine().get(), 421LL );
-        ASSERT_THAT( log_data.getMaxLength().get(), SL_LINE_LENGTH );
-        ASSERT_THAT( log_data.getFileSize(), (qint64) ( 420 * (SL_LINE_LENGTH+1LL)
+        REQUIRE( changedSpy.count() > 2 );
+        REQUIRE( finishedSpy->count() == 1 );
+        REQUIRE( log_data.getNbLine() == 421_lcount );
+        REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
+        REQUIRE( log_data.getFileSize() == (qint64) ( 420 * (SL_LINE_LENGTH+1LL)
                 + strlen( partial_line_begin ) + strlen( partial_line_end ) ) );
     }
 
@@ -150,64 +150,68 @@ TEST_F( LogDataChanging, changingFile ) {
         QVERIFY( file.resize( 0 ) );
 
         // and wait for the signals
-        ASSERT_TRUE( finishedSpy->safeWait() );
+        REQUIRE( finishedSpy->safeWait() );
 
         // Check we have an empty file
-        ASSERT_GE( changedSpy.count(), 3 );
-        ASSERT_THAT( finishedSpy->count(), 1 );
-        ASSERT_THAT( log_data.getNbLine().get(), 0LL );
-        ASSERT_THAT( log_data.getMaxLength().get(), 0 );
-        ASSERT_THAT( log_data.getFileSize(), 0LL );
+        REQUIRE( changedSpy.count() > 3 );
+        REQUIRE( finishedSpy->count() == 1 );
+        REQUIRE( log_data.getNbLine() == 0_lcount );
+        REQUIRE( log_data.getMaxLength().get() == 0 );
+        REQUIRE( log_data.getFileSize() == 0LL );
     }
 #endif
 }
 
-class LogDataBehaviour : public testing::Test {
-  public:
-    LogDataBehaviour() {
-        if ( smallFile_.open() ) {
-           writeDataToFile( smallFile_, SL_NB_LINES );
+SCENARIO( "Attaching log data to files", "[logdata]" ) {
+
+    GIVEN( "Small and big files" ) {
+        QTemporaryFile smallFile;
+        QTemporaryFile bigFile;
+
+        if ( smallFile.open() ) {
+           writeDataToFile( smallFile, SL_NB_LINES );
         }
 
-        if ( bigFile_.open() ) {
-            writeDataToFile( bigFile_, VBL_NB_LINES );
+        if ( bigFile.open() ) {
+            writeDataToFile( bigFile, VBL_NB_LINES );
+        }
+
+        WHEN( "Interrupt loading" ) {
+            LogData log_data;
+            SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+
+            // Start loading the VBL
+            log_data.attachFile( bigFile.fileName() );
+
+            // Immediately interrupt the loading
+            log_data.interruptLoading();
+
+            REQUIRE( endSpy.safeWait( 10000 ) );
+
+            THEN( "No file is attached" ) {
+                // Check we have an empty file
+                REQUIRE( endSpy.count() == 1 );
+                QList<QVariant> arguments = endSpy.takeFirst();
+                REQUIRE( arguments.at(0).toInt() ==
+                        static_cast<int>( LoadingStatus::Interrupted ) );
+
+                REQUIRE( log_data.getNbLine() == 0_lcount );
+                REQUIRE( log_data.getMaxLength().get() == 0 );
+                REQUIRE( log_data.getFileSize() == 0LL );
+            }
+        }
+
+        WHEN( "Try to reattach" ) {
+            LogData log_data;
+            SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+
+            log_data.attachFile( smallFile.fileName() );
+            endSpy.safeWait( 10000 );
+
+            THEN( "Throws" ) {
+                CHECK_THROWS_AS( log_data.attachFile( bigFile.fileName() ), CantReattachErr);
+            }
         }
     }
-
-protected:
-    QTemporaryFile smallFile_;
-    QTemporaryFile bigFile_;
-};
-
-TEST_F( LogDataBehaviour, interruptLoadYieldsAnEmptyFile ) {
-    LogData log_data;
-    SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
-
-    // Start loading the VBL
-    log_data.attachFile( bigFile_.fileName() );
-
-    // Immediately interrupt the loading
-    log_data.interruptLoading();
-
-    ASSERT_TRUE( endSpy.safeWait( 10000 ) );
-
-    // Check we have an empty file
-    ASSERT_THAT( endSpy.count(), 1 );
-    QList<QVariant> arguments = endSpy.takeFirst();
-    ASSERT_THAT( arguments.at(0).toInt(),
-            static_cast<int>( LoadingStatus::Interrupted ) );
-
-    ASSERT_THAT( log_data.getNbLine().get(), 0LL );
-    ASSERT_THAT( log_data.getMaxLength().get(), 0 );
-    ASSERT_THAT( log_data.getFileSize(), 0LL );
 }
 
-TEST_F( LogDataBehaviour, cannotBeReAttached ) {
-    LogData log_data;
-    SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
-
-    log_data.attachFile( smallFile_.fileName() );
-    endSpy.safeWait( 10000 );
-
-    ASSERT_THROW( log_data.attachFile( bigFile_.fileName() ), CantReattachErr );
-}

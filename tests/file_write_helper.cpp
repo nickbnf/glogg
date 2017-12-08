@@ -16,8 +16,8 @@ int main( int argc, const char** argv )
 	plog::ConsoleAppender<plog::GloggFormatter> appender;
 	plog::init(logINFO, &appender);
 
-    if ( argc < 5) {
-        LOG(logERROR) << "Expected 4 arguments";
+    if ( argc < 4) {
+        LOG(logERROR) << "Expected 3 arguments";
     }
 
 	LOG(logINFO) << "Will write to " << argv[1] << " lines " << argv[2] << ", flag " << argv[3];

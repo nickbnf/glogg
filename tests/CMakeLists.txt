@@ -6,7 +6,7 @@ add_executable(glogg_tests
     tests_main.cpp
 )
 
-set(TEST_LIBS ui gtest Qt5::Test)
+set(TEST_LIBS ui catch Qt5::Test)
 
 target_link_libraries(glogg_tests ${TEST_LIBS})
 

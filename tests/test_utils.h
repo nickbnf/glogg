@@ -1,10 +1,9 @@
 #ifndef TEST_UTILS_H
 #define TEST_UTILS_H
 
-#include "gmock/gmock.h"
-
 #include <string>
 #include <chrono>
+/*
 struct TestTimer {
     TestTimer()
         : TestTimer(
@@ -29,7 +28,7 @@ struct TestTimer {
     std::chrono::microseconds Elapsed;
     std::string text_;
 };
-
+*/
 class SafeQSignalSpy : public QSignalSpy {
   public:
     template <typename... Args>

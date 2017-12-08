@@ -1,13 +1,13 @@
-#include "gmock/gmock.h"
+#define CATCH_CONFIG_RUNNER
+#include <catch.hpp>
 
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
 int main(int argc, char *argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init(logDEBUG, &appender);
+    plog::init( logWARNING, &appender );
 
-    return RUN_ALL_TESTS();
+    return Catch::Session().run( argc, argv );
 }

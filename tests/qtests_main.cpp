@@ -1,22 +1,22 @@
-#include "gmock/gmock.h"
+#define CATCH_CONFIG_RUNNER
+#include <catch.hpp>
 
 #include <QApplication>
 #include <QtConcurrent>
 #include <QMetaType>
 
-#include "persistentinfo.h"
-#include "configuration.h"
-#include "data/linetypes.h"
+#include <persistentinfo.h>
+#include <configuration.h>
+#include <data/linetypes.h>
 
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
 int main(int argc, char *argv[]) {
     QApplication a( argc, argv );
-    ::testing::InitGoogleTest(&argc, argv);
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init(logINFO, &appender);
+    plog::init( logWARNING, &appender );
 
     // Register the configuration items
     GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
@@ -28,9 +28,9 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
 
-    QtConcurrent::run([&a]()
+    QtConcurrent::run( [&a, &argc, &argv]()
     {
-        int result = RUN_ALL_TESTS();
+        int result = Catch::Session().run( argc, argv );
         a.processEvents();
         a.exit(result);
     });

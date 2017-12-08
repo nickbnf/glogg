@@ -1,5 +1,4 @@
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include <catch.hpp>
 
 #include "config.h"
 
@@ -7,183 +6,209 @@
 
 #include "data/linepositionarray.h"
 
-using namespace std;
-using namespace testing;
+#include <random>
+#include <vector>
+#include <algorithm>
 
-class LinePositionArraySmall: public testing::Test {
-  public:
-    LinePositionArray line_array;
+SCENARIO( "LinePositionArray with small number of lines", "[linepositionarray]") {
 
-    LinePositionArraySmall() {
-        line_array.append( 4_offset );
-        line_array.append( 8_offset );
-        line_array.append( 10_offset );
-        // A longer (>128) line
-        line_array.append( 345_offset );
-        // An even longer (>16384) line
-        line_array.append( 20000_offset );
-        // And a short one again
-        line_array.append( 20020_offset );
+    std::vector<LineOffset> offsets = {
+        4_offset,
+        8_offset,
+        10_offset,
+        345_offset, // A longer (>128) line
+        20000_offset, // An even longer (>16384) line
+        20020_offset
+    };
+
+    GIVEN( "LinePositionArray with small number of lines") {
+
+        LinePositionArray line_array;
+
+        for ( const auto& offset: offsets ) {
+            line_array.append( offset );
+        }
+
+        REQUIRE( line_array.size() == 6_lcount );
+
+        WHEN( "Access items in linear order" ) {
+            THEN( "Corrent offsets returned") {
+                for ( auto i = 0u; i<offsets.size(); ++i ) {
+                    REQUIRE( line_array[i] == offsets[i] );
+                }
+            }
+        }
+
+        WHEN( "Access items in random order" ) {
+
+            std::random_device rd;
+            std::mt19937 g(rd());
+
+            auto index = std::vector<int>( offsets.size() );
+            std::generate(index.begin(), index.end(), [n = 0] () mutable { return n++; });
+
+            THEN( "Corrent offsets returned") {
+                for ( auto i : index ) {
+                    REQUIRE( line_array[i] == offsets[i] );
+                }
+            }
+        }
+
+        WHEN( "Adding fake lf" ) {
+            line_array.setFakeFinalLF();
+
+            THEN( "Last offset is returned" ) {
+                REQUIRE( line_array[5] == offsets[5] );
+            }
+        }
+
+        WHEN( "Adding line after fake lf") {
+            line_array.setFakeFinalLF();
+            line_array.append( 20030_offset );
+
+            THEN( "New last offset is returned" ) {
+                REQUIRE( line_array[6] == 20030_offset );
+            }
+        }
+
+        WHEN( "Appending other array ") {
+
+            GIVEN( "FastLinePositionArray" ) {
+                FastLinePositionArray other_array;
+                other_array.append( 150000_offset );
+                other_array.append( 150023_offset );
+
+                WHEN( "Appending other array without fake lf" ) {
+                    line_array.append_list( other_array );
+
+                    THEN( "All lines are kept" ) {
+                        for ( auto i = 0u; i<offsets.size(); ++i ) {
+                            REQUIRE( line_array[i] == offsets[i] );
+                        }
+                        REQUIRE( line_array[6] == other_array[0] );
+                        REQUIRE( line_array[7] == other_array[1] );
+                    }
+                }
+
+                WHEN( "Appending after fake lf" ) {
+                    line_array.setFakeFinalLF();
+                    line_array.append_list( other_array );
+
+                    THEN( "Last line is popped back" ) {
+                        REQUIRE( line_array.size() == 7_lcount );
+                        for ( auto i = 0u; i<offsets.size()-1; ++i ) {
+                            REQUIRE( line_array[i] == offsets[i] );
+                        }
+                        REQUIRE( line_array[5] == other_array[0] );
+                        REQUIRE( line_array[6] == other_array[1] );
+                    }
+                }
+            }
+        }
     }
-};
-
-TEST_F( LinePositionArraySmall, HasACorrectSize ) {
-    ASSERT_THAT( line_array.size(), Eq( 6_lcount ) );
 }
 
-TEST_F( LinePositionArraySmall, RememberAddedLines ) {
-    ASSERT_THAT( line_array[0], Eq( 4_offset ) );
-    ASSERT_THAT( line_array[1], Eq( 8_offset ) );
-    ASSERT_THAT( line_array[2], Eq( 10_offset ) );
-    ASSERT_THAT( line_array[3], Eq( 345_offset ) );
-    ASSERT_THAT( line_array[4], Eq( 20000_offset ) );
-    ASSERT_THAT( line_array[5], Eq( 20020_offset ) );
+SCENARIO( "LinePositionArray with full block of lines", "[linepositionarray]") {
 
-    // This one again to eliminate caching effects
-    ASSERT_THAT( line_array[3], Eq( 345_offset ) );
-}
+    GIVEN( "LinePositionArray with block of lines") {
 
-TEST_F( LinePositionArraySmall, FakeLFisNotKeptWhenAddingAfterIt ) {
-    line_array.setFakeFinalLF();
-    ASSERT_THAT( line_array[5], Eq( 20020_offset ) );
-    line_array.append( 20030_offset );
-    ASSERT_THAT( line_array[5], Eq( 20030_offset ) );
-}
+        LinePositionArray line_array;
 
-class LinePositionArrayConcatOperation: public LinePositionArraySmall {
-  public:
-    FastLinePositionArray other_array;
-
-    LinePositionArrayConcatOperation() {
-        other_array.append( 150000_offset );
-        other_array.append( 150023_offset );
-    }
-};
-
-TEST_F( LinePositionArrayConcatOperation, SimpleConcat ) {
-    line_array.append_list( other_array );
-
-    ASSERT_THAT( line_array.size(), Eq( 8_lcount ) );
-
-    ASSERT_THAT( line_array[0], Eq( 4_offset ) );
-    ASSERT_THAT( line_array[1], Eq( 8_offset ) );
-
-    ASSERT_THAT( line_array[5], Eq( 20020_offset ) );
-    ASSERT_THAT( line_array[6], Eq( 150000_offset ) );
-    ASSERT_THAT( line_array[7], Eq( 150023_offset ) );
-}
-
-TEST_F( LinePositionArrayConcatOperation, DoesNotKeepFakeLf ) {
-    line_array.setFakeFinalLF();
-    ASSERT_THAT( line_array[5], Eq( 20020_offset ) );
-
-    line_array.append_list( other_array );
-    ASSERT_THAT( line_array[5], Eq( 150000_offset ) );
-    ASSERT_THAT( line_array.size(), Eq( 7_lcount ) );
-}
-
-class LinePositionArrayLong: public testing::Test {
-  public:
-    LinePositionArray line_array;
-
-    LinePositionArrayLong() {
-        // Add 255 lines (of various sizes
-        int lines = 255;
-        for ( int i = 0; i < lines; i++ )
+        // Add 255 lines (of various sizes)
+        const int lines = 255;
+        for ( int i = 0; i < lines; ++i )
             line_array.append( LineOffset( i * 4 ) );
         // Line no 256
         line_array.append( LineOffset( 255 * 4 ) );
-    }
-};
 
-TEST_F( LinePositionArrayLong, LineNo128HasRightValue ) {
-    // Add line no 257
-    line_array.append( LineOffset( 255 * 4 + 10 ) );
-    ASSERT_THAT( line_array[256], Eq( LineOffset( 255 * 4 + 10 ) ) );
-}
+        WHEN( "Adding line after block") {
+            // Add line no 257
+            line_array.append( LineOffset( 255 * 4 + 10 ) );
 
-TEST_F( LinePositionArrayLong, FakeLFisNotKeptWhenAddingAfterIt ) {
-    for ( uint64_t i = 0; i < 1000; ++i ) {
-        uint64_t pos = ( 257LL * 4 ) + i*35LL;
-        LOG(logDEBUG2) << "Iteration " << i << ", pos " << pos;
-        line_array.append( LineOffset( pos ) );
-        line_array.setFakeFinalLF();
-        ASSERT_THAT( line_array[256 + i].get(), Eq( pos ) );
-        LOG(logDEBUG2) << "appended fake lf";
-        line_array.append( LineOffset( pos + 21LL ) );
-        LOG(logDEBUG2) << "appended pos " << pos + 21LL;
-        ASSERT_THAT( line_array[256 + i].get(), Eq( pos + 21LL ) );
-    }
-}
+            THEN( "Correct offset is returned" ) {
+                REQUIRE( line_array[256] == LineOffset( 255 * 4 + 10 ) );
+            }
+        }
 
-
-class LinePositionArrayBig: public testing::Test {
-  public:
-    LinePositionArray line_array;
-
-    LinePositionArrayBig() {
-        line_array.append( 4_offset );
-        line_array.append( 8_offset );
-        // A very big line
-        line_array.append( LineOffset(UINT32_MAX - 10) );
-        line_array.append( LineOffset( (uint64_t) UINT32_MAX + 10LL ) );
-        line_array.append( LineOffset( (uint64_t) UINT32_MAX + 30LL ) );
-        line_array.append( LineOffset( (uint64_t) 2*UINT32_MAX ) );
-        line_array.append( LineOffset( (uint64_t) 2*UINT32_MAX + 10LL ) );
-        line_array.append( LineOffset( (uint64_t) 2*UINT32_MAX + 1000LL ) );
-        line_array.append( LineOffset( (uint64_t) 3*UINT32_MAX ) );
-    }
-};
-
-TEST_F( LinePositionArrayBig, IsTheRightSize ) {
-    ASSERT_THAT( line_array.size(), 9_lcount );
-}
-
-TEST_F( LinePositionArrayBig, HasRightData ) {
-    ASSERT_THAT( line_array[0].get(), Eq( 4 ) );
-    ASSERT_THAT( line_array[1].get(), Eq( 8 ) );
-    ASSERT_THAT( line_array[2].get(), Eq( UINT32_MAX - 10 ) );
-    ASSERT_THAT( line_array[3].get(), Eq( (uint64_t) UINT32_MAX + 10LL ) );
-    ASSERT_THAT( line_array[4].get(), Eq( (uint64_t) UINT32_MAX + 30LL ) );
-    ASSERT_THAT( line_array[5].get(), Eq( (uint64_t) 2LL*UINT32_MAX ) );
-    ASSERT_THAT( line_array[6].get(), Eq( (uint64_t) 2LL*UINT32_MAX + 10LL ) );
-    ASSERT_THAT( line_array[7].get(), Eq( (uint64_t) 2LL*UINT32_MAX + 1000LL ) );
-    ASSERT_THAT( line_array[8].get(), Eq( (uint64_t) 3LL*UINT32_MAX ) );
-}
-
-TEST_F( LinePositionArrayBig, FakeLFisNotKeptWhenAddingAfterIt ) {
-    for ( uint64_t i = 0; i < 1000; ++i ) {
-        uint64_t pos = 3LL*UINT32_MAX + 524LL + i*35LL;
-        line_array.append( LineOffset( pos ) );
-        line_array.setFakeFinalLF();
-        ASSERT_THAT( line_array[9 + i].get(), Eq( pos ) );
-        line_array.append( LineOffset( pos + 21LL ) );
-        ASSERT_THAT( line_array[9 + i].get(), Eq( pos + 21LL ) );
+        WHEN( "Adding lines after fake lf") {
+            THEN( "Correct offset is returned" )
+            for ( uint64_t i = 0; i < 1000; ++i ) {
+                uint64_t pos = ( 257LL * 4 ) + i*35LL;
+                line_array.append( LineOffset( pos ) );
+                line_array.setFakeFinalLF();
+                REQUIRE( line_array[256 + i] == LineOffset( pos ) );
+                line_array.append( LineOffset( pos + 21LL ) );
+                REQUIRE( line_array[256 + i] == LineOffset( pos + 21LL ) );
+            }
+        }
     }
 }
 
+SCENARIO( "LinePositionArray with UINT32_MAX offsets", "[linepositionarray]") {
 
-class LinePositionArrayBigConcat: public testing::Test {
-  public:
-    LinePositionArray line_array;
-    FastLinePositionArray other_array;
+    std::vector<LineOffset> offsets = {
+        4_offset,
+        8_offset,
+        LineOffset(UINT32_MAX - 10),
+        LineOffset( (uint64_t) UINT32_MAX + 10LL ),
+        LineOffset( (uint64_t) UINT32_MAX + 30LL ),
+        LineOffset( (uint64_t) 2*UINT32_MAX ),
+        LineOffset( (uint64_t) 2*UINT32_MAX + 10LL ),
+        LineOffset( (uint64_t) 2*UINT32_MAX + 1000LL ),
+        LineOffset( (uint64_t) 3*UINT32_MAX )
+    };
 
-    LinePositionArrayBigConcat() {
+    GIVEN( "LinePositionArray with long offsets") {
+        LinePositionArray line_array;
+
+        for ( const auto& offset: offsets ) {
+            line_array.append( offset );
+        }
+
+        REQUIRE( line_array.size() == 9_lcount );
+
+        WHEN( "Access items in linear order" ) {
+            THEN( "Corrent offsets returned") {
+                for ( auto i = 0u; i<offsets.size(); ++i ) {
+                    REQUIRE( line_array[i] == offsets[i] );
+                }
+            }
+        }
+
+        WHEN( "Adding lines after fake lf") {
+            THEN( "Correct offset is returned" )
+            for ( uint64_t i = 0; i < 1000; ++i ) {
+                uint64_t pos = 3LL*UINT32_MAX + 524LL + i*35LL;
+                line_array.append( LineOffset( pos ) );
+                line_array.setFakeFinalLF();
+                REQUIRE( line_array[9 + i] == LineOffset( pos ) );
+                line_array.append( LineOffset( pos + 21LL ) );
+                REQUIRE( line_array[9 + i] == LineOffset( pos + 21LL ) );
+            }
+        }
+    }
+
+    GIVEN( "LinePositionArray with small lines" ) {
+
+        LinePositionArray line_array;
         line_array.append( 4_offset );
         line_array.append( 8_offset );
 
-        other_array.append( LineOffset( (uint64_t) UINT32_MAX + 10LL )  );
-        other_array.append( LineOffset( (uint64_t) UINT32_MAX + 30LL )  );
+        WHEN( "Appending large lines" ) {
+            FastLinePositionArray other_array;
+            other_array.append( LineOffset( (uint64_t) UINT32_MAX + 10LL ) );
+            other_array.append( LineOffset( (uint64_t) UINT32_MAX + 30LL ) );
+
+            line_array.append_list( other_array );
+
+            THEN( "Correct offsets are returned" ) {
+                REQUIRE( line_array.size() == 4_lcount );
+
+                REQUIRE( line_array[0] == 4_offset );
+                REQUIRE( line_array[1] == 8_offset );
+                REQUIRE( line_array[2] == LineOffset( (uint64_t)  UINT32_MAX + 10 ) );
+                REQUIRE( line_array[3] == LineOffset( (uint64_t)  UINT32_MAX + 30 ) );
+            }
+        }
     }
-};
-
-TEST_F( LinePositionArrayBigConcat, SimpleBigConcat ) {
-    line_array.append_list( other_array );
-
-    ASSERT_THAT( line_array.size(), Eq( 4_lcount ) );
-
-    ASSERT_THAT( line_array[0].get(), Eq( 4 ) );
-    ASSERT_THAT( line_array[1].get(), Eq( 8 ) );
-    ASSERT_THAT( line_array[2].get(), Eq((uint64_t)  UINT32_MAX + 10 ) );
-    ASSERT_THAT( line_array[3].get(), Eq((uint64_t)  UINT32_MAX + 30 ) );
 }

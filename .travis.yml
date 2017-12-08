@@ -19,6 +19,7 @@ matrix:
             - qt59base
             - ninja-build
             - rpm
+            - pandoc
       env:
          - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"

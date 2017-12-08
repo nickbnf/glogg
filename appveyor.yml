@@ -23,11 +23,14 @@ install:
   - 7z x ninja.zip -o%APPVEYOR_BUILD_FOLDER%\ninja > nul
   - set PATH=%APPVEYOR_BUILD_FOLDER%\ninja;%PATH%
   - ninja --version
+  - cinst pandoc
+  - set PATH=%ProgramFiles(x86)%\Pandoc;%PATH%
+  - pandoc -v
 
 before_build:
 - '%QT5%\bin\qtenv2.bat'
 - call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=x64
-- set PATH=C:\Program Files (x86)\NSIS;%PATH%
+- set PATH=%ProgramFiles(x86)%\NSIS;%PATH%
 - set
 - md %APPVEYOR_BUILD_FOLDER%\build
 - cd %APPVEYOR_BUILD_FOLDER%\build
@@ -52,8 +55,12 @@ after_build:
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 - xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y
+- pandoc -s %APPVEYOR_BUILD_FOLDER%\doc\documentation.markdown -o %APPVEYOR_BUILD_FOLDER%\release\readme.html
 
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\NOTICE
+
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r release\*.exe release\*.dll release\COPYING release\NOTICE release\readme.html
 
 - xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %APPVEYOR_BUILD_FOLDER%\klogg.nsi

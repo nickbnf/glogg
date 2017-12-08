@@ -1,12 +1,12 @@
 [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 
-CI builds 17.12.0.224 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/fnr65j7524d4dsqv/artifacts/klogg-17.12.0.224-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/fnr65j7524d4dsqv/artifacts/klogg-17.12.0.224-setup.exe) |
-[linux deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/224/224.1/build/packages/klogg-17.12.0-r224-Linux.deb) |
-[linux appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/224/224.1/build/packages/klogg-17.12.0.224-x86_64.AppImage) |
-[osx dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/224/224.2/build/packages/klogg-17.12.0-r224-OSX.dmg)
+CI builds 17.12.0.231 (x64):
+[windows portable](https://ci.appveyor.com/api/buildjobs/jms1g7se3hd3855l/artifacts/klogg-17.12.0.231-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/jms1g7se3hd3855l/artifacts/klogg-17.12.0.231-setup.exe) |
+[linux deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.1/build/packages/klogg-17.12.0-r231-Linux.deb) |
+[linux appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.1/build/packages/klogg-17.12.0.231-x86_64.AppImage) |
+[osx dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.2/build/packages/klogg-17.12.0-r231-OSX.dmg)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 
@@ -99,6 +99,8 @@ xcopy %QT5%\bin\Qt5Widgets.dll release\ /y
 xcopy %QT5%\bin\Qt5Concurrent.dll release\ /y
 md release\platforms
 xcopy %QT5%\plugins\platforms\qwindows.dll release\platforms\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 
 makensis -DVERSION=X.X.X klogg.nsi
 ```

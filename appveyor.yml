@@ -59,8 +59,11 @@ after_build:
 - xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y
 - pandoc -s %APPVEYOR_BUILD_FOLDER%\doc\documentation.markdown -o %APPVEYOR_BUILD_FOLDER%\release\readme.html
 
-
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r release\*.exe release\*.dll release\COPYING release\NOTICE release\readme.html
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.dll
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip %APPVEYOR_BUILD_FOLDER%\release\COPYING
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip %APPVEYOR_BUILD_FOLDER%\release\NOTICE
+- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip %APPVEYOR_BUILD_FOLDER%\release\readme.html
 
 - xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %APPVEYOR_BUILD_FOLDER%\klogg.nsi

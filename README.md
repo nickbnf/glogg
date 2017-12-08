@@ -1,12 +1,13 @@
 [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 
-CI builds 17.12.0.231 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/jms1g7se3hd3855l/artifacts/klogg-17.12.0.231-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/jms1g7se3hd3855l/artifacts/klogg-17.12.0.231-setup.exe) |
-[linux deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.1/build/packages/klogg-17.12.0-r231-Linux.deb) |
-[linux appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.1/build/packages/klogg-17.12.0.231-x86_64.AppImage) |
-[osx dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.2/build/packages/klogg-17.12.0-r231-OSX.dmg)
+CI builds 17.12.0.235 (x64):
+[windows portable](https://ci.appveyor.com/api/buildjobs/n9gh5neqy64sbg86/artifacts/klogg-17.12.0.235-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/n9gh5neqy64sbg86/artifacts/klogg-17.12.0.235-setup.exe) |
+[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0-r235-Linux.deb) |
+[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0-r235-Linux.rpm) |
+[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0.235-x86_64.AppImage) |
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.2/build/packages/klogg-17.12.0-r231-OSX.dmg)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 

@@ -850,6 +850,11 @@ void CrawlerWidget::setup()
     connect( filteredView, &FilteredView::changeSearchLimits,
              this, &CrawlerWidget::setSearchLimits );
 
+    connect( logMainView, &LogMainView::clearSearchLimits,
+             this, &CrawlerWidget::clearSearchLimits );
+    connect( filteredView, &FilteredView::clearSearchLimits,
+             this, &CrawlerWidget::clearSearchLimits );
+
     auto saveSplitterSizes = [this, config]() {
         config->setSplitterSizes( this->sizes() );
     };

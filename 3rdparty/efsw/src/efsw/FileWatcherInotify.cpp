@@ -29,7 +29,7 @@ namespace efsw
 FileWatcherInotify::FileWatcherInotify( FileWatcher * parent ) :
 	FileWatcherImpl( parent ),
 	mFD(-1),
-	mThread(NULL)
+	mThread(nullptr)
 {
 	mFD = inotify_init();
 
@@ -68,7 +68,7 @@ FileWatcherInotify::~FileWatcherInotify()
 
 WatchID FileWatcherInotify::addWatch( const std::string& directory, FileWatchListener* watcher, bool recursive )
 {
-	return addWatch( directory, watcher, recursive, NULL );
+	return addWatch( directory, watcher, recursive, nullptr );
 }
 
 WatchID FileWatcherInotify::addWatch( const std::string& directory, FileWatchListener* watcher, bool recursive, WatcherInotify * parent )
@@ -91,7 +91,7 @@ WatchID FileWatcherInotify::addWatch( const std::string& directory, FileWatchLis
 	{
 		return Errors::Log::createLastError( Errors::FileRepeated, directory );
 	}
-	else if ( NULL != parent && FileSystem::isRemoteFS( dir ) )
+	else if ( nullptr != parent && FileSystem::isRemoteFS( dir ) )
 	{
 		return Errors::Log::createLastError( Errors::FileRemote, dir );
 	}
@@ -103,7 +103,7 @@ WatchID FileWatcherInotify::addWatch( const std::string& directory, FileWatchLis
 	if ( "" != link )
 	{
 		/// Avoid adding symlinks directories if it's now enabled
-		if ( NULL != parent && !mFileWatcher->followSymlinks() )
+		if ( nullptr != parent && !mFileWatcher->followSymlinks() )
 		{
 			return Errors::Log::createLastError( Errors::FileOutOfScope, dir );
 		}
@@ -152,7 +152,7 @@ WatchID FileWatcherInotify::addWatch( const std::string& directory, FileWatchLis
 		mWatches.insert(std::make_pair(wd, pWatch));
 	}
 
-	if ( NULL == pWatch->Parent )
+	if ( nullptr == pWatch->Parent )
 	{
 		mRealWatches[ pWatch->ID ] = pWatch;
 	}
@@ -205,7 +205,7 @@ void FileWatcherInotify::removeWatchLocked(WatchID watchid)
 
 	mWatches.erase( iter );
 
-	if ( NULL == watch->Parent )
+	if ( nullptr == watch->Parent )
 	{
 		WatchMap::iterator eraseit = mRealWatches.find( watch->ID );
 
@@ -262,7 +262,7 @@ void FileWatcherInotify::removeWatch(const std::string& directory)
 
 			mWatches.erase( iter );
 
-			if ( NULL == watch->Parent )
+			if ( nullptr == watch->Parent )
 			{
 				WatchMap::iterator eraseit = mRealWatches.find( watch->ID );
 
@@ -306,7 +306,7 @@ void FileWatcherInotify::removeWatch( WatchID watchid )
 
 void FileWatcherInotify::watch()
 {
-	if ( NULL == mThread )
+	if ( nullptr == mThread )
 	{
 		mThread = new Thread( &FileWatcherInotify::run, this );
 		mThread->launch();
@@ -329,7 +329,7 @@ Watcher * FileWatcherInotify::watcherContainsDirectory( std::string dir )
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void FileWatcherInotify::run()
@@ -347,7 +347,7 @@ void FileWatcherInotify::run()
 		timeout.tv_sec=0;
 		timeout.tv_usec=100000;
 
-		if( select (FD_SETSIZE, &rfds, NULL, NULL, &timeout) > 0 )
+		if( select (FD_SETSIZE, &rfds, nullptr, nullptr, &timeout) > 0 )
 		{
 			ssize_t len, i = 0;
 

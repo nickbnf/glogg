@@ -5,7 +5,7 @@ namespace efsw {
 Watcher::Watcher() :
 	ID(0),
 	Directory(""),
-	Listener(NULL),
+	Listener(nullptr),
 	Recursive(false)
 {
 }

@@ -138,7 +138,7 @@ protected:
   //  first  byte range: 0xc4 -- 0xfe
   //  second byte range: 0xa1 -- 0xfe
   //no validation needed here. State machine has done that
-  PRInt32 GetOrder(const char* str) 
+  PRInt32 GetOrder(const char* str) override 
   { if ((unsigned char)*str >= (unsigned char)0xc4)  
       return 94*((unsigned char)str[0]-(unsigned char)0xc4) + (unsigned char)str[1] - (unsigned char)0xa1;
     else
@@ -156,7 +156,7 @@ protected:
   //  first  byte range: 0xb0 -- 0xfe
   //  second byte range: 0xa1 -- 0xfe
   //no validation needed here. State machine has done that
-  PRInt32 GetOrder(const char* str) 
+  PRInt32 GetOrder(const char* str) override 
   { if ((unsigned char)*str >= (unsigned char)0xb0)  
       return 94*((unsigned char)str[0]-(unsigned char)0xb0) + (unsigned char)str[1] - (unsigned char)0xa1;
     else
@@ -173,7 +173,7 @@ protected:
   //  first  byte range: 0xb0 -- 0xfe
   //  second byte range: 0xa1 -- 0xfe
   //no validation needed here. State machine has done that
-  PRInt32 GetOrder(const char* str) 
+  PRInt32 GetOrder(const char* str) override 
   { if ((unsigned char)*str >= (unsigned char)0xb0 && (unsigned char)str[1] >= (unsigned char)0xa1)  
       return 94*((unsigned char)str[0]-(unsigned char)0xb0) + (unsigned char)str[1] - (unsigned char)0xa1;
     else
@@ -191,7 +191,7 @@ protected:
   //  first  byte range: 0xa4 -- 0xfe
   //  second byte range: 0x40 -- 0x7e , 0xa1 -- 0xfe
   //no validation needed here. State machine has done that
-  PRInt32 GetOrder(const char* str) 
+  PRInt32 GetOrder(const char* str) override 
   { if ((unsigned char)*str >= (unsigned char)0xa4)  
       if ((unsigned char)str[1] >= (unsigned char)0xa1)
         return 157*((unsigned char)str[0]-(unsigned char)0xa4) + (unsigned char)str[1] - (unsigned char)0xa1 +63;
@@ -211,7 +211,7 @@ protected:
   //  first  byte range: 0x81 -- 0x9f , 0xe0 -- 0xfe
   //  second byte range: 0x40 -- 0x7e,  0x81 -- oxfe
   //no validation needed here. State machine has done that
-  PRInt32 GetOrder(const char* str) 
+  PRInt32 GetOrder(const char* str) override 
   { 
     PRInt32 order;
     if ((unsigned char)*str >= (unsigned char)0x81 && (unsigned char)*str <= (unsigned char)0x9f)  
@@ -236,7 +236,7 @@ protected:
   //  first  byte range: 0xa0 -- 0xfe
   //  second byte range: 0xa1 -- 0xfe
   //no validation needed here. State machine has done that
-  PRInt32 GetOrder(const char* str) 
+  PRInt32 GetOrder(const char* str) override 
   { if ((unsigned char)*str >= (unsigned char)0xa0)  
       return 94*((unsigned char)str[0]-(unsigned char)0xa1) + (unsigned char)str[1] - (unsigned char)0xa1;
     else

@@ -12,7 +12,7 @@ namespace efsw { namespace Platform {
 ThreadImpl::ThreadImpl( Thread * owner ) :
 	mIsActive(false)
 {
-	mIsActive = pthread_create( &mThread, NULL, &ThreadImpl::entryPoint, owner ) == 0;
+	mIsActive = pthread_create( &mThread, nullptr, &ThreadImpl::entryPoint, owner ) == 0;
 
 	if ( !mIsActive )
 	{
@@ -27,7 +27,7 @@ void ThreadImpl::wait()
 	{
 		assert( pthread_equal( pthread_self(), mThread ) == 0 );
 
-		pthread_join( mThread, NULL );
+		pthread_join( mThread, nullptr );
 
 		mIsActive = false; // Reset the thread state
 	}
@@ -54,13 +54,13 @@ void * ThreadImpl::entryPoint( void * userData )
 
 	// Tell the thread to handle cancel requests immediatly
 	#ifdef PTHREAD_CANCEL_ASYNCHRONOUS
-		pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
+		pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, nullptr );
 	#endif
 
 	// Forward to the owner
 	owner->run();
 
-	return NULL;
+	return nullptr;
 }
 
 }}

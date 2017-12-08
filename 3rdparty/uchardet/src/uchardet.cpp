@@ -52,24 +52,24 @@ protected:
 public:
     HandleUniversalDetector()
     : nsUniversalDetector(NS_FILTER_ALL)
-    , m_charset(0)
+    , m_charset(nullptr)
     {
     }
 
-    virtual ~HandleUniversalDetector()
+    ~HandleUniversalDetector() override
     {
         if (m_charset)
             free(m_charset);
     }
 
-    virtual void Report(const char* charset)
+    void Report(const char* charset) override
     {
         if (m_charset)
             free(m_charset);
         m_charset = strdup(charset);
     }
 
-    virtual void Reset()
+    void Reset() override
     {
         nsUniversalDetector::Reset();
         if (m_charset)

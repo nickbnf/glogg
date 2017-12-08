@@ -214,9 +214,9 @@ std::string FileInfo::linksTo()
 #if EFSW_PLATFORM != EFSW_PLATFORM_WIN32
 	if ( isLink() )
 	{
-		char * ch = realpath( Filepath.c_str(), NULL);
+		char * ch = realpath( Filepath.c_str(), nullptr);
 
-		if ( NULL != ch )
+		if ( nullptr != ch )
 		{
 			std::string tstr( ch );
 

@@ -20,7 +20,7 @@ public:
 	}
 
 	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename,
-		efsw::Action action, std::string oldFilename = "")
+		efsw::Action action, std::string oldFilename = "") override
 	{
 		mFn(mWatcher, watchid, dir.c_str(), filename.c_str(), (enum efsw_action)action,
 			oldFilename.c_str(), mParam );
@@ -42,7 +42,7 @@ Watcher_CAPI* find_callback(efsw_watcher watcher, efsw_pfn_fileaction_callback f
 			return *i;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 Watcher_CAPI* remove_callback(efsw_watcher watcher)
@@ -58,7 +58,7 @@ Watcher_CAPI* remove_callback(efsw_watcher watcher)
 			i++;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 
@@ -86,7 +86,7 @@ efsw_watchid efsw_addwatch(efsw_watcher watcher, const char* directory,
 {
 	Watcher_CAPI* callback = find_callback(watcher, callback_fn);
 
-	if (callback == NULL)   {
+	if (callback == nullptr)   {
 		callback = new Watcher_CAPI(watcher, callback_fn, param);
 		g_callbacks.push_back(callback);
 	}

@@ -58,10 +58,10 @@ FileInfoMap FileSystem::filesInfoFromPath( const std::string& path )
 	DIR *dp;
 	struct dirent *dirp;
 
-	if( ( dp = opendir( path.c_str() ) ) == NULL)
+	if( ( dp = opendir( path.c_str() ) ) == nullptr)
 		return files;
 
-	while ( ( dirp = readdir(dp) ) != NULL)
+	while ( ( dirp = readdir(dp) ) != nullptr)
 	{
 		if ( strcmp( dirp->d_name, ".." ) != 0 && strcmp( dirp->d_name, "." ) != 0 )
 		{

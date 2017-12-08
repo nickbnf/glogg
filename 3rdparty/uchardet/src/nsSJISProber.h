@@ -49,19 +49,19 @@
 #include "CharDistribution.h"
 
 
-class nsSJISProber: public nsCharSetProber {
+class nsSJISProber final: public nsCharSetProber {
 public:
   nsSJISProber(PRBool aIsPreferredLanguage)
     :mIsPreferredLanguage(aIsPreferredLanguage)
   {mCodingSM = new nsCodingStateMachine(&SJISSMModel);
     Reset();}
-  virtual ~nsSJISProber(void){delete mCodingSM;}
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
-  const char* GetCharSetName() {return "SHIFT_JIS";}
-  nsProbingState GetState(void) {return mState;}
-  void      Reset(void);
-  float     GetConfidence(void);
-  void      SetOpion() {}
+  ~nsSJISProber(void) override{delete mCodingSM;}
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
+  const char* GetCharSetName() override {return "SHIFT_JIS";}
+  nsProbingState GetState(void) override {return mState;}
+  void      Reset(void) override;
+  float     GetConfidence(void) override;
+  void      SetOpion() override {}
 
 protected:
   nsCodingStateMachine* mCodingSM;

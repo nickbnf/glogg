@@ -78,19 +78,19 @@ typedef struct
 } SequenceModel;
 
 
-class nsSingleByteCharSetProber : public nsCharSetProber{
+class nsSingleByteCharSetProber final : public nsCharSetProber{
 public:
   nsSingleByteCharSetProber(const SequenceModel *model) 
-    :mModel(model), mReversed(PR_FALSE), mNameProber(0) { Reset(); }
+    :mModel(model), mReversed(PR_FALSE), mNameProber(nullptr) { Reset(); }
   nsSingleByteCharSetProber(const SequenceModel *model, PRBool reversed, nsCharSetProber* nameProber)
     :mModel(model), mReversed(reversed), mNameProber(nameProber) { Reset(); }
 
-  virtual const char* GetCharSetName();
-  virtual nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
-  virtual nsProbingState GetState(void) {return mState;}
-  virtual void      Reset(void);
-  virtual float     GetConfidence(void);
-  virtual void      SetOpion() {}
+  const char* GetCharSetName() override;
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
+  nsProbingState GetState(void) override {return mState;}
+  void      Reset(void) override;
+  float     GetConfidence(void) override;
+  void      SetOpion() override {}
   
   // This feature is not implemented yet. any current language model
   // contain this parameter as PR_FALSE. No one is looking at this

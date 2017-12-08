@@ -75,7 +75,7 @@ nsSBCSGroupProber::nsSBCSGroupProber()
     for (PRUint32 i = 10; i <= 12; ++i)
     {
       delete mProbers[i];
-      mProbers[i] = 0;
+      mProbers[i] = nullptr;
     }
   }
 
@@ -160,7 +160,7 @@ nsProbingState nsSBCSGroupProber::HandleData(const char* aBuf, PRUint32 aLen)
 {
   nsProbingState st;
   PRUint32 i;
-  char *newBuf1 = 0;
+  char *newBuf1 = nullptr;
   PRUint32 newLen1 = 0;
 
   //apply filter to original buffer, and we got new buffer back

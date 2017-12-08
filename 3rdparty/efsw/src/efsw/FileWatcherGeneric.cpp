@@ -8,7 +8,7 @@ namespace efsw
 
 FileWatcherGeneric::FileWatcherGeneric( FileWatcher * parent ) :
 	FileWatcherImpl( parent ),
-	mThread( NULL ),
+	mThread( nullptr ),
 	mLastWatchID( 0 )
 {
 	mInitOK = true;
@@ -124,7 +124,7 @@ void FileWatcherGeneric::removeWatch(WatchID watchid)
 
 void FileWatcherGeneric::watch()
 {
-	if ( NULL == mThread )
+	if ( nullptr == mThread )
 	{
 		mThread = new Thread( &FileWatcherGeneric::run, this );
 		mThread->launch();

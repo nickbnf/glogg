@@ -42,19 +42,19 @@
 #include "nsCodingStateMachine.h"
 #include "CharDistribution.h"
 
-class nsEUCTWProber: public nsCharSetProber {
+class nsEUCTWProber final: public nsCharSetProber {
 public:
   nsEUCTWProber(PRBool aIsPreferredLanguage)
     :mIsPreferredLanguage(aIsPreferredLanguage)
   {mCodingSM = new nsCodingStateMachine(&EUCTWSMModel);
     Reset();}
-  virtual ~nsEUCTWProber(void){delete mCodingSM;}
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
-  const char* GetCharSetName() {return "EUC-TW";}
-  nsProbingState GetState(void) {return mState;}
-  void      Reset(void);
-  float     GetConfidence(void);
-  void      SetOpion() {}
+  ~nsEUCTWProber(void) override{delete mCodingSM;}
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
+  const char* GetCharSetName() override {return "EUC-TW";}
+  nsProbingState GetState(void) override {return mState;}
+  void      Reset(void) override;
+  float     GetConfidence(void) override;
+  void      SetOpion() override {}
 
 protected:
   void      GetDistribution(PRUint32 aCharLen, const char* aStr);

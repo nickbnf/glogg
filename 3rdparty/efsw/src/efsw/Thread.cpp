@@ -4,8 +4,8 @@
 namespace efsw {
 
 Thread::Thread() :
-	mThreadImpl(NULL),
-	mEntryPoint(NULL)
+	mThreadImpl(nullptr),
+	mEntryPoint(nullptr)
 {
 }
 

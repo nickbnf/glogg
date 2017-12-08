@@ -7,7 +7,7 @@ CI builds 17.12.0.235 (x64):
 [deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0-r235-Linux.deb) |
 [rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0-r235-Linux.rpm) |
 [appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0.235-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/231/231.2/build/packages/klogg-17.12.0-r231-OSX.dmg)
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.2/build/packages/klogg-17.12.0-r235-OSX.dmg)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 

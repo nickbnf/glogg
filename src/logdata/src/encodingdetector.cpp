@@ -47,19 +47,19 @@ QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
     QTextCodec* uchardetCodec = nullptr;
     if ( rc == 0 ) {
         auto uchardetGuess = ud.get_charset();
-        LOG(logINFO) << "Uchardet encoding guess " << uchardetGuess;
+        LOG(logDEBUG) << "Uchardet encoding guess " << uchardetGuess;
         uchardetCodec =  QTextCodec::codecForName( uchardetGuess );
         if ( uchardetCodec ) {
-            LOG(logINFO) << "Uchardet codec selected " << uchardetCodec->name().constData();
+            LOG(logDEBUG) << "Uchardet codec selected " << uchardetCodec->name().constData();
         } else {
-            LOG(logWARNING) << "Uchardet codec not found for guess " << uchardetGuess;
+            LOG(logDEBUG) << "Uchardet codec not found for guess " << uchardetGuess;
         }
     }
 
     auto encodingGuess = uchardetCodec ? QTextCodec::codecForUtfText( block, uchardetCodec )
                                        : QTextCodec::codecForUtfText( block );
 
-    LOG(logINFO) << "Final encoding guess " << encodingGuess->name().constData();
+    LOG(logDEBUG) << "Final encoding guess " << encodingGuess->name().constData();
 
     return encodingGuess;
 }

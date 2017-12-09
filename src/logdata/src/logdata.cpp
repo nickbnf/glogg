@@ -182,13 +182,15 @@ void LogData::startOperation()
 
 void LogData::fileChangedOnDisk( const QString& filename )
 {
-    LOG(logDEBUG) << "signalFileChanged " << filename.toStdString();
+    LOG(logINFO) << "signalFileChanged " << filename.toStdString();
 
     const QString name = attached_file_->fileName();
     QFileInfo info( name );
 
     // Need to open the file in case it was absent
-    attached_file_->open( QIODevice::ReadOnly );
+    if ( !attached_file_->isOpen() ) {
+        attached_file_->open( QIODevice::ReadOnly );
+    }
 
     std::shared_ptr<LogDataOperation> newOperation;
 

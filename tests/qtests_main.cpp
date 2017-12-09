@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     QApplication a( argc, argv );
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init( logWARNING, &appender );
+    plog::init( logINFO, &appender );
 
     // Register the configuration items
     GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );

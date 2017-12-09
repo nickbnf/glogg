@@ -261,7 +261,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
                 }
 
                 encodingParams = EncodingParameters( fileTextCodec );
-                LOG(logWARNING) << "Encoding " << fileTextCodec->name().toStdString() <<", Char width " << encodingParams.lineFeedWidth;
+                LOG(logDEBUG) << "Encoding " << fileTextCodec->name().toStdString() <<", Char width " << encodingParams.lineFeedWidth;
             }
 
             if ( !encodingGuess ) {

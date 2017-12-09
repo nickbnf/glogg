@@ -112,8 +112,8 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
     REQUIRE( finishedSpy->count() > finishedSpyCount );
 
     // Check we have a bigger file
-    REQUIRE( changedSpy.count() > 1 );
-    REQUIRE( finishedSpy->count() >= 2 );
+    REQUIRE( changedSpy.count() >= 1 );
+    REQUIRE( finishedSpy->count() == 2 );
     REQUIRE( log_data.getNbLine() == 401_lcount );
     REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
     REQUIRE( log_data.getFileSize() == (qint64) (400 * (SL_LINE_LENGTH+1LL)
@@ -135,7 +135,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
         REQUIRE( finishedSpy->wait( 10000 ) );
 
         // Check we have a bigger file
-        REQUIRE( changedSpy.count() > 2 );
+        REQUIRE( changedSpy.count() >= 2 );
         REQUIRE( finishedSpy->count() == 1 );
         REQUIRE( log_data.getNbLine() == 421_lcount );
         REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
@@ -153,7 +153,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
         REQUIRE( finishedSpy->safeWait() );
 
         // Check we have an empty file
-        REQUIRE( changedSpy.count() > 3 );
+        REQUIRE( changedSpy.count() >= 3 );
         REQUIRE( finishedSpy->count() == 1 );
         REQUIRE( log_data.getNbLine() == 0_lcount );
         REQUIRE( log_data.getMaxLength().get() == 0 );

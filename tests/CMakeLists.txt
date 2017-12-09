@@ -36,3 +36,10 @@ add_test(
     NAME glogg_itests
     COMMAND glogg_itests -platform offscreen
 )
+
+if (ENABLE_COVERAGE)
+    SETUP_TARGET_FOR_COVERAGE(
+        NAME glogg_itests_cov
+        EXECUTABLE glogg_itests
+        DEPENDENCIES glogg_itests)
+endif()

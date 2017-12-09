@@ -79,15 +79,27 @@ else()
 
 endif()
 
-ucm_print_flags()
+if (CMAKE_COMPILER_IS_GNUCC)
+  option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" FALSE)
+
+  if (ENABLE_COVERAGE)
+      include(CodeCoverage)
+      APPEND_COVERAGE_COMPILER_FLAGS()
+      set(COVERAGE_EXCLUDES '${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/*'
+                            '${CMAKE_CURRENT_SOURCE_DIR}/tests/*'
+                            '/usr/*'
+                            '${CMAKE_BINARY_DIR}/*')
+
+  endif()
+
+  option(GPROF "Build for gprof" OFF)
+  if (${GPROF})
+      ucm_add_flags(-pg -g)
+      ucm_add_linker_flags(-pg)
+  endif()
+endif()
 
 if (UNIX)
-    option(GPROF "Build for gprof" OFF)
-    if (${GPROF})
-        ucm_add_flags(-pg -g)
-        ucm_add_linker_flags(-pg)
-    endif()
-
     option(PREFER_DBUS_IPC "Prefer dbus IPC if available" ON)
 endif()
 
@@ -104,6 +116,8 @@ option(PERF "Build for performance test" OFF)
 if(${PERF})
     add_definitions(-DGLOGG_PERF_MEASURE_FPS)
 endif()
+
+ucm_print_flags()
 
 add_custom_target(ci_config SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml

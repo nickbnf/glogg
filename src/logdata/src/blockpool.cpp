@@ -85,17 +85,19 @@ uint8_t* BlockPoolBase::getBlock( size_t elementsCount )
 {
     const auto requiredSize = getBlockStorageSize( elementsCount, elementSize_, alignment_ );
 
+    const auto alignOffset = allocationSize_ % alignment_;
+
     LOG(logDEBUG2) << "Get block " << elementSize_
                    << " pool " << pool_.size()
                    << " alloc " << allocationSize_
                    << " blocks " << blockIndex_.size();
 
-    if ( allocationSize_ + requiredSize >= pool_.size() ) {
+    if ( allocationSize_ + requiredSize + alignOffset >= pool_.size() ) {
         increasePool( pool_ );
     }
 
-    blockIndex_.push_back( allocationSize_ );
-    allocationSize_ += requiredSize;
+    blockIndex_.push_back( allocationSize_ + alignOffset );
+    allocationSize_ += ( requiredSize + alignOffset );
 
     return pool_.data() + blockIndex_.back();
 }

@@ -142,7 +142,7 @@ h/l           scroll left/right
 G             jump to the last line of the file (selecting it)
 ' or "        start a quickfind search in the current screen (forward and backward)
 n or N        repeat the previous quickfind search forward/backward
-* or .        search for the nexto ccurence of the currently selected text
+\* or .        search for the next occurence of the currently selected text
 / or ,        search for the previous occurence of the currently selected text
 f             activate 'follow' mode, which keep the display as the tail of the file (like "tail -f")
 m             put a mark on current selected line

@@ -422,6 +422,8 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu( tr("&Help") );
     helpMenu->addAction( aboutAction );
+    helpMenu->addAction( aboutQtAction );
+
 }
 
 void MainWindow::createToolBars()
@@ -556,13 +558,14 @@ void MainWindow::about()
                 "<p><a href=\"https://github.com/variar/klogg\">https://github.com/variar/klogg</a></p>"
                 "<p>This is fork of glogg</p>"
                 "<p><a href=\"http://glogg.bonnefon.org/\">http://glogg.bonnefon.org/</a></p>"
-                "<p>Copyright &copy; 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Nicolas Bonnefon and other contributors"
+                "<p>Copyright &copy; 2017 Nicolas Bonnefon, Anton Filimonov and other contributors"
                 "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
 }
 
 // Opens the 'About Qt' dialog box.
 void MainWindow::aboutQt()
 {
+    QMessageBox::aboutQt(this, tr("About Qt"));
 }
 
 void MainWindow::encodingChanged( QAction* action )

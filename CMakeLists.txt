@@ -59,7 +59,7 @@ endmacro()
 
 # warnings and optimization
 if(NOT MSVC)
-    ucm_add_flags(-O0 -g -fsanitize=undefined)
+    ucm_add_flags(-O2 -g)
     ucm_add_flags(-Werror -Wall -Wextra -Wnarrowing -Wshadow -Wnon-virtual-dtor -Wpedantic)
     remove_release_flag("-O3")
 else()

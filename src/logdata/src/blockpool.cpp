@@ -11,12 +11,14 @@ size_t getElementSizeWithHeader( std::size_t elementSize )
 
 size_t getAlignedSize( size_t required_size, size_t alignement )
 {
-    return required_size + required_size % alignement;
+    return required_size + alignement - required_size % alignement;
 }
 
 size_t getBlockStorageSize( size_t elementsCount, std::size_t elementSize, size_t alignement )
 {
-    return getAlignedSize( elementSize + elementsCount * getElementSizeWithHeader( elementSize ), alignement );
+    // doubling the size is overestimate to compensate for possible alignment
+    // but block will be shrinked to real size after completion
+    return getAlignedSize( elementSize + 2 * elementsCount * getElementSizeWithHeader( elementSize ), alignement );
 }
 
 template<typename PoolType>
@@ -85,19 +87,19 @@ uint8_t* BlockPoolBase::getBlock( size_t elementsCount )
 {
     const auto requiredSize = getBlockStorageSize( elementsCount, elementSize_, alignment_ );
 
-    const auto alignOffset = allocationSize_ % alignment_;
+    const auto alignedAllocationSize = getAlignedSize(allocationSize_, alignment_);
 
     LOG(logDEBUG2) << "Get block " << elementSize_
                    << " pool " << pool_.size()
                    << " alloc " << allocationSize_
                    << " blocks " << blockIndex_.size();
 
-    if ( allocationSize_ + requiredSize + alignOffset >= pool_.size() ) {
+    if ( alignedAllocationSize + requiredSize >= pool_.size() ) {
         increasePool( pool_ );
     }
 
-    blockIndex_.push_back( allocationSize_ + alignOffset );
-    allocationSize_ += ( requiredSize + alignOffset );
+    blockIndex_.push_back( alignedAllocationSize );
+    allocationSize_ = alignedAllocationSize + requiredSize;
 
     return pool_.data() + blockIndex_.back();
 }

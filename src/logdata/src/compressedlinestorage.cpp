@@ -40,13 +40,25 @@ namespace {
         offset += BlockOffset( sizeof( value ) );
     }
 
+    uint8_t block_get_alignment_offset( uint8_t alignment, const uint64_t& offset )
+    {
+        return alignment - offset % alignment;
+    }
+
     // Add a two bytes relative delta (0-16383) and inc pointer
     // First 2 bits are always 10
     void block_add_two_bytes_relative( uint8_t* block, BlockOffset& offset, uint16_t value )
     {
+        const uint8_t alignmentOffset = block_get_alignment_offset( alignof( uint16_t ), offset.get() );
+        if ( alignmentOffset != 0 ) {
+             *( block + offset.get() ) = 0xC0 | alignmentOffset;
+            offset += BlockOffset( alignmentOffset );
+        }
+
         // Stored in big endian format in order to recognise the initial pattern:
         // 10xx xxxx xxxx xxxx
         //  HO byte | LO byte
+
         *( reinterpret_cast<uint16_t*>( block + offset.get() ) ) = qToBigEndian( static_cast<uint16_t>( value | (1 << 15) ) );
         offset += BlockOffset( sizeof( value ) );
     }
@@ -54,10 +66,18 @@ namespace {
     template<typename ElementType>
     void block_add_absolute( uint8_t* block, BlockOffset& offset, ElementType value )
     {
-        // 2 bytes marker (actually only the first two bits are tested)
-        *(reinterpret_cast<uint16_t*>( block + offset.get() )) = 0xFF;
-        offset += BlockOffset( sizeof( uint16_t ) );
+        uint8_t alignmentOffset = block_get_alignment_offset( alignof( uint16_t ), offset.get() );
+        if ( alignmentOffset != 0 ) {
+             *( block + offset.get() ) = 0xC0 | alignmentOffset;
+            offset += BlockOffset( alignmentOffset );
+        }
 
+        alignmentOffset = block_get_alignment_offset( alignof( ElementType ), offset.get() + sizeof( uint16_t ) );
+
+        // 2 bytes marker (actually only the first two bits are tested)
+        *(block + offset.get()) = 0xFF;
+        *(block + offset.get() + 1) = alignmentOffset;
+        offset += BlockOffset( sizeof( uint16_t ) + alignmentOffset );
 
         // Absolute value (machine endian)
         // This might be unaligned, can cause problem on some CPUs
@@ -82,12 +102,23 @@ namespace {
         LineOffset pos = previous_pos;
 
         uint8_t byte = *(block + offset.get());
-        ++offset;
+
         if ( ! ( byte & 0x80 ) ) {
             // High order bit is 0
             pos += LineOffset( byte );
+            ++offset;
+            return pos;
         }
-        else if ( ( byte & 0xC0 ) == 0x80 ) {
+
+        if ( byte != 0xFF && (byte & 0xC0 ) == 0xC0 ) {
+            // need to skip aligned bytes;
+            uint8_t alignmentOffset = byte & (~0xC0);
+            offset += BlockOffset( alignmentOffset ) ;
+            byte = *(block + offset.get());
+        }
+        ++offset;
+
+        if ( ( byte & 0xC0 ) == 0x80 ) {
             // We need to read the low order byte
             uint8_t lo_byte = *(block + offset.get());
             ++offset;
@@ -97,8 +128,10 @@ namespace {
             pos += LineOffset( ( (uint16_t) byte << 8 ) | (uint16_t) lo_byte );
         }
         else {
-            // Skip the next byte (not used)
-            ++offset;
+            // skip aligned bytes
+            uint8_t alignmentOffset = *(block + offset.get());
+            offset += BlockOffset ( alignmentOffset + 1 );
+
             // And read the new absolute pos (machine endian)
             pos = LineOffset( *(reinterpret_cast<const ElementType*>( block + offset.get() ) ) );
             offset += BlockOffset( sizeof( ElementType ) );

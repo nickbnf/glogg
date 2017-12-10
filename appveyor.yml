@@ -34,7 +34,7 @@ before_build:
 - set
 - md %APPVEYOR_BUILD_FOLDER%\build
 - cd %APPVEYOR_BUILD_FOLDER%\build
-- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %APPVEYOR_BUILD_FOLDER%
+- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% -DBUILD_DOC=True %APPVEYOR_BUILD_FOLDER%
 
 build_script:
   - cmake --build . --config %configuration%
@@ -43,30 +43,14 @@ test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
   - cmd: ctest --build-config %configuration% --verbose
 
-after_build:
-- md %APPVEYOR_BUILD_FOLDER%\release
-- xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_portable.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %QT5%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %QT5%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %QT5%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %QT5%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %QT5%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- md %APPVEYOR_BUILD_FOLDER%\release\platforms
-- xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
-- xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y
-- pandoc -s %APPVEYOR_BUILD_FOLDER%\doc\documentation.rst -f rst -t html -o %APPVEYOR_BUILD_FOLDER%\release\readme.html
+after_test:
+- cd %APPVEYOR_BUILD_FOLDER%
+- scripts\win\prepare_release.cmd
 
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.dll
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip %APPVEYOR_BUILD_FOLDER%\release\COPYING
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip %APPVEYOR_BUILD_FOLDER%\release\NOTICE
-- 7z a %APPVEYOR_BUILD_FOLDER%\klogg-%APPVEYOR_BUILD_VERSION%-portable.zip %APPVEYOR_BUILD_FOLDER%\release\readme.html
+- 7z a klogg-%APPVEYOR_BUILD_VERSION%-portable.zip -r @scripts\win\7z_dll_listfile.txt
+- 7z a klogg-%APPVEYOR_BUILD_VERSION%-portable.zip @scripts\win\7z_klogg_listfile.txt
 
-- xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
-- makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %APPVEYOR_BUILD_FOLDER%\klogg.nsi
+- makensis -DVERSION=%APPVEYOR_BUILD_VERSION% klogg.nsi
 
 artifacts:
   - path: klogg-%APPVEYOR_BUILD_VERSION%-portable.zip

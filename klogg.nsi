@@ -66,7 +66,8 @@ Section "klogg" klogg
 
     File COPYING
     File NOTICE
-    File README.md
+    File doc\documentation.rst
+    File release\readme.html
 
     ; Create the 'sendto' link
     CreateShortCut "$SENDTO\klogg.lnk" "$INSTDIR\klogg,exe" "" "$INSTDIR\klogg.exe" 0
@@ -140,6 +141,8 @@ Section "Uninstall"
     Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\NOTICE"
+    Delete "$INSTDIR\readme.html"
+    Delete "$INSTDIR\documentation.rst"
     Delete "$INSTDIR\libstdc++-6.dll"
     Delete "$INSTDIR\libgcc_s_seh-1.dll"
     Delete "$INSTDIR\libgcc_s_dw2-1.dll"

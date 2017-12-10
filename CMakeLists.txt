@@ -28,7 +28,9 @@ endif()
 
 set(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE)
 set(COPYING_FILE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
-set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.rst)
+set(README_HTML ${CMAKE_BINARY_DIR}/readme.html)
+
 
 include(prepare_version)
 
@@ -57,7 +59,7 @@ endmacro()
 
 # warnings and optimization
 if(NOT MSVC)
-    ucm_add_flags(-O2 -g)
+    ucm_add_flags(-O0 -g -fsanitize=undefined)
     ucm_add_flags(-Werror -Wall -Wextra -Wnarrowing -Wshadow -Wnon-virtual-dtor -Wpedantic)
     remove_release_flag("-O3")
 else()
@@ -122,6 +124,9 @@ ucm_print_flags()
 add_custom_target(ci_config SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
     ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/prepare_release.cmd
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_klogg_listfile.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_dll_listfile.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linux/make_appimage.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh
@@ -135,6 +140,8 @@ add_custom_target(installation SOURCES
 
 add_custom_target(docs SOURCES
     ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.rst
+
 )
 
 add_subdirectory(3rdparty)
@@ -150,6 +157,18 @@ if (${BUILD_TESTS})
     )
 
     add_subdirectory(tests)   
+endif()
+
+option(BUILD_DOC "Build documentation" ON)
+if (${BUILD_DOC})
+    include(pandocology)
+    add_document(
+        TARGET html_readme
+        OUTPUT_FILE readme.html
+        SOURCES doc/documentation.rst
+        PANDOC_DIRECTIVES -f rst
+        NO_EXPORT_PRODUCT
+    )
 endif()
 
 # Installation and packaging
@@ -188,8 +207,18 @@ if(UNIX)
         )
 
         install(FILES
-            ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE}
+            ${COPYING_FILE} ${NOTICE_FILE}
             DESTINATION share/doc/klogg)
+
+        if(${BUILD_DOC})
+            install(FILES
+                ${README_HTML}
+                DESTINATION share/doc/klogg)
+        else()
+            install(FILES
+                ${README_FILE}
+                DESTINATION share/doc/klogg)
+        endif()
 
         install(FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop

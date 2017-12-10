@@ -48,6 +48,13 @@ if (WIN32)
 elseif (APPLE)
     set_source_files_properties(${ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_source_files_properties(${NOTICE_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "")
+    set_source_files_properties(${COPYING_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "")
+
+    if(${BUILD_DOC})
+        set_source_files_properties(${README_HTML} PROPERTIES MACOSX_PACKAGE_LOCATION "")
+    else()
+        set_source_files_properties(${README_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION "")
+    endif()
 
     set(MACOSX_BUNDLE_BUNDLE_DISPLAY_NAME ${PROJECT_DESCRIPTION})
     set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})

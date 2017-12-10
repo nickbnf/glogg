@@ -1,0 +1,5 @@
+.\release\klogg_portable.exe
+.\release\readme.html
+.\COPYING
+.\NOTICE
+.\doc\documentation.rst

@@ -1,13 +1,13 @@
 [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 
-CI builds 17.12.0.235 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/n9gh5neqy64sbg86/artifacts/klogg-17.12.0.235-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/n9gh5neqy64sbg86/artifacts/klogg-17.12.0.235-setup.exe) |
-[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0-r235-Linux.deb) |
-[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0-r235-Linux.rpm) |
-[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.1/build/packages/klogg-17.12.0.235-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/235/235.2/build/packages/klogg-17.12.0-r235-OSX.dmg)
+CI builds 17.12.0.245 (x64):
+[windows portable](https://ci.appveyor.com/api/buildjobs/2lfgxips0pa8dgfq/artifacts/klogg-17.12.0.245-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/2lfgxips0pa8dgfq/artifacts/klogg-17.12.0.245-setup.exe) |
+[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.1/build/packages/klogg-17.12.0-r245-Linux.deb) |
+[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.1/build/packages/klogg-17.12.0-r245-Linux.rpm) |
+[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.1/build/packages/klogg-17.12.0.245-x86_64.AppImage) |
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.2/build/packages/klogg-17.12.0-r245-OSX.dmg)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 
@@ -49,9 +49,10 @@ Unlike upstream klogg is using cmake to generate build files.
 
 * cmake 3.2 or later
 * C++ compiler with C++14 support (gcc 5, clang 3.4, msvc 2015)
-* Qt libraries (version 5.6.0 or later). QtCore, QtGui, QtWidgets and QtConcurrent are required on all platforms. QtNetwork is required on Windows and Mac OS. On Linux either QtNetwork or QtDBus can be used (selected during build configuration). QtTest is needed to build and run tests.
+* Qt libraries (version 5.7 or later). QtCore, QtGui, QtWidgets and QtConcurrent are required on all platforms. QtNetwork is required on Windows and Mac OS. On Linux either QtNetwork or QtDBus can be used (selected during build configuration). QtTest is needed to build and run tests.
+* pandoc to build documentation
 
-cli11, Entropia File System Watcher, uchardet, Google Test and Google Mock sources are provided in 3rdparty directory. 
+All other build dependencies are provided in 3rdparty directory. 
 
 ### Building on Linux and Mac
 ```
@@ -73,6 +74,8 @@ cpack -G RPM
 
 Packages will be placed into `build/packages`.
 
+See `.travis.yml` for more information on build process.
+
 ### Building on Windows
 Assuming `QT5` environment variable contains full path to Qt installation root folder and
 Visual Studio 2017 Community Edition is used for C++ compiler (vsdevcmd batch file location depends on Visual Studio version):
@@ -88,11 +91,12 @@ cmake --build . --config Release
 
 Change cmake generator to "Visual Studio 14 2015" (or "Visual Studio 15 2017" with recent cmake) to get solution files and build from IDE.
 
-Installer can be built with NSIS. 
+Installer can be built with NSIS (requires documentation to be built). 
 ```
 cd <path_to_project_root>
 md release
-xcopy build\output\klogg.exe release
+xcopy build\output\klogg.exe release\ /y
+xcopy build\output\readme.html release\ /y
 xcopy %QT5%\bin\Qt5Core.dll release\ /y
 xcopy %QT5%\bin\Qt5Gui.dll release\ /y
 xcopy %QT5%\bin\Qt5Network.dll release\ /y
@@ -100,11 +104,13 @@ xcopy %QT5%\bin\Qt5Widgets.dll release\ /y
 xcopy %QT5%\bin\Qt5Concurrent.dll release\ /y
 md release\platforms
 xcopy %QT5%\plugins\platforms\qwindows.dll release\platforms\ /y
-xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
-xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" release\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" release\ /y
 
 makensis -DVERSION=X.X.X klogg.nsi
 ```
+
+See `appveyor.yml` for more information on build process.
 
 ### Tests
 Test are built by default. To turn them off pass `-DBUILD_TESTS:BOOL=OFF` to cmake.
@@ -112,7 +118,8 @@ Tests use google test and google mock (they are bundled with the project source)
 
 
 ## Contact
+You can reach out to me on github.
 
 Please visit glogg's website: http://glogg.bonnefon.org/
 
-The development mailing list is hosted at http://groups.google.co.uk/group/glogg-devel
+The glogg development mailing list is hosted at http://groups.google.co.uk/group/glogg-devel

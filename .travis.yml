@@ -25,8 +25,8 @@ before_install:
  - '[ "$TRAVIS_OS_NAME" != osx   ] || brew update'
 
 install:
- - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt5'
- - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt5'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
+ - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
  - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'

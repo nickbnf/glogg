@@ -190,6 +190,7 @@ void CrawlerWidget::reload()
 {
     searchState_.resetState();
     logFilteredData_->clearSearch();
+    logFilteredData_->clearMarks();
     filteredView->updateData();
     printSearchInfoMessage();
 

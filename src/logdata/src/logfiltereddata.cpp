@@ -126,7 +126,10 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
             shouldRunSearch = false;
             matching_lines_ = cachedResults.value().matching_lines;
             maxLength_ = cachedResults.value().maxLength;
-            emit searchProgressed( LinesCount( static_cast<LinesCount::UnderlyingType>( matching_lines_.size() ) ), 100 );
+            emit searchProgressed(
+                        LinesCount( static_cast<LinesCount::UnderlyingType>( matching_lines_.size() ) ),
+                        100,
+                        startLine );
         }
     }
 
@@ -316,7 +319,7 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 // Slots
 //
-void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress )
+void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine )
 {
     static std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
@@ -367,7 +370,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
         }
     }
 
-    emit searchProgressed( nbMatches, progress );
+    emit searchProgressed( nbMatches, progress, initialLine );
 }
 
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const

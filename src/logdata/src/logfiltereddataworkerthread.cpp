@@ -285,7 +285,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             break;
 
         const int percentage = ( chunkStart - initialLine ).get() * 100 / ( endLine - initialLine ).get();
-        emit searchProgressed( nbMatches, percentage );
+        emit searchProgressed( nbMatches, percentage, initialLine );
 
         const auto linesInChunk = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
         const auto lines = sourceLogData_->getLines( chunkStart, linesInChunk );
@@ -322,7 +322,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         currentList.clear();
     }
 
-    emit searchProgressed( nbMatches, 100 );
+    emit searchProgressed( nbMatches, 100, initialLine );
 }
 
 // Called in the worker thread's context

@@ -315,7 +315,7 @@ void CrawlerWidget::stopSearch()
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
-void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress )
+void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress, LineNumber initialPosition )
 {
     LOG(logDEBUG) << "updateFilteredView received.";
 
@@ -347,17 +347,22 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress )
         // Recompute the content of the filtered window.
         filteredView->updateData();
 
+
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
 
         // New data found icon
-        changeDataStatus( DataStatus::NEW_FILTERED_DATA );
+        if ( initialPosition.get() > 0 ) {
+            changeDataStatus( DataStatus::NEW_FILTERED_DATA );
+        }
 
         // Also update the top window for the coloured bullets.
         update();
     }
 
-    if ( progress == 100 ) {
+    // Try to restore the filtered window selection close to where it was
+    // only for full searches to avoid disconnecting follow mode!
+    if ( ( progress == 100 ) && ( initialPosition.get() == 0 ) && ( !isFollowEnabled() ) ) {
         const auto currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
         LOG(logDEBUG) << "updateFilteredView: restoring selection: "
                       << " absolute line number (0based) " << currentLineNumber_

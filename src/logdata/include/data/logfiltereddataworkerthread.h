@@ -99,7 +99,7 @@ class SearchOperation : public QObject
     virtual void start( SearchData& result ) = 0;
 
   signals:
-    void searchProgressed( LinesCount nbMatches, int percent );
+    void searchProgressed( LinesCount nbMatches, int percent, LineNumber initialLine );
 
   protected:
     // Implement the common part of the search, passing
@@ -168,7 +168,7 @@ class LogFilteredDataWorkerThread : public QThread
   signals:
     // Sent during the indexing process to signal progress
     // percent being the percentage of completion.
-    void searchProgressed( LinesCount nbMatches, int percent );
+    void searchProgressed( LinesCount nbMatches, int percent, LineNumber initialLine );
     // Sent when indexing is finished, signals the client
     // to copy the new data back.
     void searchFinished();

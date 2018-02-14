@@ -296,7 +296,7 @@ void CrawlerWidget::stopSearch()
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
-void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
+void CrawlerWidget::updateFilteredView( int nbMatches, int progress, qint64 initial_position )
 {
     LOG(logDEBUG) << "updateFilteredView received.";
 
@@ -330,8 +330,9 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
 
-        // New data found icon
-        changeDataStatus( DataStatus::NEW_FILTERED_DATA );
+        // New data found icon (only for "update" search)
+        if ( initial_position > 0 )
+            changeDataStatus( DataStatus::NEW_FILTERED_DATA );
 
         // Also update the top window for the coloured bullets.
         update();
@@ -806,8 +807,8 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( activity() ),
             this, SLOT( activityDetected() ) );
 
-    connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
-            this, SLOT( updateFilteredView( int, int ) ) );
+    connect( logFilteredData_, SIGNAL( searchProgressed( int, int, qint64 ) ),
+            this, SLOT( updateFilteredView( int, int, qint64 ) ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),

@@ -75,8 +75,8 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     filteredItemsCacheDirty_ = true;
 
     // Forward the update signal
-    connect( &workerThread_, SIGNAL( searchProgressed( int, int ) ),
-            this, SLOT( handleSearchProgressed( int, int ) ) );
+    connect( &workerThread_, SIGNAL( searchProgressed( int, int, qint64 ) ),
+            this, SLOT( handleSearchProgressed( int, int, qint64 ) ) );
 
     // Starts the worker thread
     workerThread_.start();
@@ -275,7 +275,7 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 // Slots
 //
-void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
+void LogFilteredData::handleSearchProgressed( int nbMatches, int progress, qint64 initial_position )
 {
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;
@@ -284,7 +284,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress )
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
-    emit searchProgressed( nbMatches, progress );
+    emit searchProgressed( nbMatches, progress, initial_position );
 }
 
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const

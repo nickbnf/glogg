@@ -188,8 +188,8 @@ void LogFilteredDataWorkerThread::run()
             return;      // We must die
 
         if ( operationRequested_ ) {
-            connect( operationRequested_, SIGNAL( searchProgressed( int, int ) ),
-                    this, SIGNAL( searchProgressed( int, int ) ) );
+            connect( operationRequested_, SIGNAL( searchProgressed( int, int, qint64 ) ),
+                    this, SIGNAL( searchProgressed( int, int, qint64 ) ) );
 
             // Run the search operation
             operationRequested_->start( searchData_ );
@@ -232,7 +232,7 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
             break;
 
         const int percentage = ( i - initialLine ) * 100 / ( nbSourceLines - initialLine );
-        emit searchProgressed( nbMatches, percentage );
+        emit searchProgressed( nbMatches, percentage, initialLine );
 
         const QStringList lines = sourceLogData_->getLines( i,
                 qMin( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
@@ -257,7 +257,7 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
         currentList.clear();
     }
 
-    emit searchProgressed( nbMatches, 100 );
+    emit searchProgressed( nbMatches, 100, initialLine );
 }
 
 // Called in the worker thread's context

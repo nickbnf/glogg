@@ -24,11 +24,13 @@
 #include "filterset.h"
 
 #include "filtersdialog.h"
+#include "colorcombodelegate.h"
 
 static const QString DEFAULT_PATTERN = "New Filter";
 static const bool    DEFAULT_IGNORE_CASE = false;
 static const QString DEFAULT_FORE_COLOUR = "black";
 static const QString DEFAULT_BACK_COLOUR = "white";
+static const QString DEFAULT_DESCRIPTION = "Description";
 
 // Construct the box, including a copy of the global FilterSet
 // to handle ok/cancel/apply
@@ -41,37 +43,25 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     GetPersistentInfo().retrieve( "filterSet" );
     filterSet = PersistentCopy<FilterSet>( "filterSet" );
 
-    populateColors();
-    populateFilterList();
-
     // Start with all buttons disabled except 'add'
     removeFilterButton->setEnabled(false);
     upFilterButton->setEnabled(false);
     downFilterButton->setEnabled(false);
 
-    // Default to black on white
-    int index = foreColorBox->findText( DEFAULT_FORE_COLOUR );
-    foreColorBox->setCurrentIndex( index );
-    index = backColorBox->findText( DEFAULT_BACK_COLOUR );
-    backColorBox->setCurrentIndex( index );
+    filterTableView->setModel( filterSet.get() );
+    filterTableView->horizontalHeader()->setStretchLastSection(true);
+    filterTableView->verticalHeader()->setHidden(true);
+    filterTableView->setColumnWidth(FilterSet::FILTER_COLUMN_DESCRIPTION, 180);
+    filterTableView->setColumnWidth(FilterSet::FILTER_COLUMN_PATTERN, 180);
+    filterTableView->setItemDelegateForColumn(FilterSet::FILTER_COLUMN_FOREGROUND, new ColorComboDelegate());
+    filterTableView->setItemDelegateForColumn(FilterSet::FILTER_COLUMN_BACKGROUND, new ColorComboDelegate());
+    filterTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    // No filter selected by default
-    selectedRow_ = -1;
-
-    connect( filterListWidget, SIGNAL( itemSelectionChanged() ),
-            this, SLOT( updatePropertyFields() ) );
-    connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
-            this, SLOT( updateFilterProperties() ) );
-    connect( ignoreCaseCheckBox, SIGNAL( clicked( bool ) ),
-            this, SLOT( updateFilterProperties() ) );
-    connect( foreColorBox, SIGNAL( activated( int ) ),
-            this, SLOT( updateFilterProperties() ) );
-    connect( backColorBox, SIGNAL( activated( int ) ),
-            this, SLOT( updateFilterProperties() ) );
-
-    if ( !filterSet->filterList.empty() ) {
-        filterListWidget->setCurrentItem( filterListWidget->item( 0 ) );
-    }
+    // Button status
+    connect( filterSet.get(), SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+             this, SLOT(updateButtonStatus()) );
+    connect( filterTableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+             this, SLOT(updateButtonStatus()) );
 }
 
 //
@@ -83,54 +73,69 @@ void FiltersDialog::on_addFilterButton_clicked()
     LOG(logDEBUG) << "on_addFilterButton_clicked()";
 
     Filter newFilter = Filter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
-            DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR );
-    filterSet->filterList << newFilter;
+            DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR, DEFAULT_DESCRIPTION );
 
     // Add and select the newly created filter
-    filterListWidget->addItem( DEFAULT_PATTERN );
-    filterListWidget->setCurrentRow( filterListWidget->count() - 1 );
+    filterSet->addFilter( newFilter );
+    filterTableView->selectRow( filterSet->rowCount(QModelIndex())-1 );
 }
 
 void FiltersDialog::on_removeFilterButton_clicked()
 {
-    int index = filterListWidget->currentRow();
+    QModelIndex modelIndex = filterTableView->currentIndex();
+    if ( !modelIndex.isValid() )
+    {
+        return;
+    }
+
+    int index = modelIndex.row();
     LOG(logDEBUG) << "on_removeFilterButton_clicked() index " << index;
 
-    if ( index >= 0 ) {
-        filterSet->filterList.removeAt( index );
-        filterListWidget->setCurrentRow( -1 );
-        delete filterListWidget->takeItem( index );
-
-        // Select the new item at the same index
-        filterListWidget->setCurrentRow( index );
+    filterSet->removeFilter(index);
+    if ( index >= 0 )
+    {
+        int nextIndex = index;
+        int numRows = filterSet->rowCount(QModelIndex());
+        if ( nextIndex >= numRows-1 )
+        {
+            nextIndex--;
+        }
+        filterTableView->selectRow( nextIndex );
     }
 }
 
 void FiltersDialog::on_upFilterButton_clicked()
 {
-    int index = filterListWidget->currentRow();
+    QModelIndex modelIndex = filterTableView->currentIndex();
+    if ( !modelIndex.isValid() )
+    {
+        return;
+    }
+
+    int index = modelIndex.row();
     LOG(logDEBUG) << "on_upFilterButton_clicked() index " << index;
 
-    if ( index > 0 ) {
-        filterSet->filterList.move( index, index - 1 );
-
-        QListWidgetItem* item = filterListWidget->takeItem( index );
-        filterListWidget->insertItem( index - 1, item );
-        filterListWidget->setCurrentRow( index - 1 );
-    }
+    filterSet->moveFilterUp(index);
+    filterTableView->selectRow( index > 0 ? index-1 : index );
 }
 
 void FiltersDialog::on_downFilterButton_clicked()
 {
-    int index = filterListWidget->currentRow();
+    QModelIndex modelIndex = filterTableView->currentIndex();
+    if ( !modelIndex.isValid() )
+    {
+        return;
+    }
+
+    int index = modelIndex.row();
     LOG(logDEBUG) << "on_downFilterButton_clicked() index " << index;
 
-    if ( ( index >= 0 ) && ( index < ( filterListWidget->count() - 1 ) ) ) {
-        filterSet->filterList.move( index, index + 1 );
+    filterSet->moveFilterDown(index);
 
-        QListWidgetItem* item = filterListWidget->takeItem( index );
-        filterListWidget->insertItem( index + 1, item );
-        filterListWidget->setCurrentRow( index + 1 );
+    int numRows = filterSet->rowCount(QModelIndex());
+    if ( index >= 0 && index < numRows-1 )
+    {
+        filterTableView->selectRow( index+1 );
     }
 }
 
@@ -153,150 +158,21 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
         reject();
 }
 
-void FiltersDialog::updatePropertyFields()
+void FiltersDialog::updateButtonStatus()
 {
-    if ( filterListWidget->selectedItems().count() >= 1 )
-        selectedRow_ = filterListWidget->row(
-                filterListWidget->selectedItems().at(0) );
-    else
-        selectedRow_ = -1;
-
-    LOG(logDEBUG) << "updatePropertyFields(), row = " << selectedRow_;
-
-    if ( selectedRow_ >= 0 ) {
-        const Filter& currentFilter = filterSet->filterList.at( selectedRow_ );
-
-        patternEdit->setText( currentFilter.pattern() );
-        patternEdit->setEnabled( true );
-
-        ignoreCaseCheckBox->setChecked( currentFilter.ignoreCase() );
-        ignoreCaseCheckBox->setEnabled( true );
-
-        int index = foreColorBox->findText( currentFilter.foreColorName() );
-        if ( index != -1 ) {
-            LOG(logDEBUG) << "fore index = " << index;
-            foreColorBox->setCurrentIndex( index );
-            foreColorBox->setEnabled( true );
-        }
-        index = backColorBox->findText( currentFilter.backColorName() );
-        if ( index != -1 ) {
-            LOG(logDEBUG) << "back index = " << index;
-            backColorBox->setCurrentIndex( index );
-            backColorBox->setEnabled( true );
-        }
-
-        // Enable the buttons if needed
-        removeFilterButton->setEnabled( true );
-        upFilterButton->setEnabled( ( selectedRow_ > 0 ) ? true : false );
-        downFilterButton->setEnabled(
-                ( selectedRow_ < ( filterListWidget->count() - 1 ) ) ? true : false );
+    QModelIndex modelIndex = filterTableView->currentIndex();
+    int index = -1;
+    if ( modelIndex.isValid() )
+    {
+        index = modelIndex.row();
     }
-    else {
-        // Nothing is selected, greys the buttons
-        patternEdit->setEnabled( false );
-        foreColorBox->setEnabled( false );
-        backColorBox->setEnabled( false );
-        ignoreCaseCheckBox->setEnabled( false );
-    }
-}
+    int numRows = filterSet->rowCount(QModelIndex());
+    bool enabled = ( ( numRows > 0 ) &&
+                     ( index >= 0 ) &&
+                     ( index < numRows ) &&
+                     ( !filterTableView->selectionModel()->selection().empty() ) );
 
-void FiltersDialog::updateFilterProperties()
-{
-    LOG(logDEBUG) << "updateFilterProperties()";
-
-    // If a row is selected
-    if ( selectedRow_ >= 0 ) {
-        Filter& currentFilter = filterSet->filterList[selectedRow_];
-
-        // Update the internal data
-        currentFilter.setPattern( patternEdit->text() );
-        currentFilter.setIgnoreCase( ignoreCaseCheckBox->isChecked() );
-        currentFilter.setForeColor( foreColorBox->currentText() );
-        currentFilter.setBackColor( backColorBox->currentText() );
-
-        // Update the entry in the filterList widget
-        filterListWidget->currentItem()->setText( patternEdit->text() );
-        filterListWidget->currentItem()->setForeground(
-                QBrush( QColor( currentFilter.foreColorName() ) ) );
-        filterListWidget->currentItem()->setBackground(
-                QBrush( QColor( currentFilter.backColorName() ) ) );
-    }
-}
-
-//
-// Private functions
-//
-
-// Fills the color selection combo boxes
-void FiltersDialog::populateColors()
-{
-    const QStringList colorNames = QStringList()
-        // Basic 16 HTML colors (minus greys):
-        << "black"
-        << "white"
-        << "maroon"
-        << "red"
-        << "purple"
-        << "fuchsia"
-        << "green"
-        << "lime"
-        << "olive"
-        << "yellow"
-        << "navy"
-        << "blue"
-        << "teal"
-        << "aqua"
-        // Greys
-        << "gainsboro"
-        << "lightgrey"
-        << "silver"
-        << "darkgrey"
-        << "grey"
-        << "dimgrey"
-        // Reds
-        << "tomato"
-        << "orangered"
-        << "orange"
-        << "crimson"
-        << "darkred"
-        // Greens
-        << "greenyellow"
-        << "lightgreen"
-        << "darkgreen"
-        << "lightseagreen"
-        // Blues
-        << "lightcyan"
-        << "darkturquoise"
-        << "steelblue"
-        << "lightblue"
-        << "royalblue"
-        << "darkblue"
-        << "midnightblue"
-        // Browns
-        << "bisque"
-        << "tan"
-        << "sandybrown"
-        << "chocolate";
-
-    for ( QStringList::const_iterator i = colorNames.constBegin();
-            i != colorNames.constEnd(); ++i ) {
-        QPixmap solidPixmap( 20, 10 );
-        solidPixmap.fill( QColor( *i ) );
-        QIcon solidIcon { solidPixmap };
-
-        foreColorBox->addItem( solidIcon, *i );
-        backColorBox->addItem( solidIcon, *i );
-    }
-}
-
-void FiltersDialog::populateFilterList()
-{
-    filterListWidget->clear();
-    foreach ( Filter filter, filterSet->filterList ) {
-        QListWidgetItem* new_item = new QListWidgetItem( filter.pattern() );
-        // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
-        new_item->setForeground( QBrush( QColor( filter.foreColorName() ) ) );
-        new_item->setBackground( QBrush( QColor( filter.backColorName() ) ) );
-        filterListWidget->addItem( new_item );
-    }
+    removeFilterButton->setEnabled( enabled );
+    upFilterButton->setEnabled( enabled && index > 0 );
+    downFilterButton->setEnabled( enabled && index < numRows-1 );
 }

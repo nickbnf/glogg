@@ -44,22 +44,13 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     void on_buttonBox_clicked( QAbstractButton* button );
     void on_upFilterButton_clicked();
     void on_downFilterButton_clicked();
-    // Update the property (pattern, color...) fields from the
-    // selected Filter.
-    void updatePropertyFields();
-    // Update the selected Filter from the values in the property fields.
-    void updateFilterProperties();
+    // Update the status of the buttons depending on the selected filter.
+    void updateButtonStatus();
 
   private:
     // Temporary filterset modified by the dialog
     // it is copied from the one in Config()
     std::shared_ptr<FilterSet> filterSet;
-
-    // Index of the row currently selected or -1 if none.
-    int selectedRow_;
-
-    void populateColors();
-    void populateFilterList();
 };
 
 #endif

@@ -55,6 +55,7 @@ SOURCES += \
     src/viewtools.cpp \
     src/encodingspeculator.cpp \
     src/gloggapp.cpp \
+    src/colorcombodelegate.cpp
 
 INCLUDEPATH += src/
 
@@ -103,6 +104,7 @@ HEADERS += \
     src/viewtools.h \
     src/encodingspeculator.h \
     src/gloggapp.h \
+    src/colorcombodelegate.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

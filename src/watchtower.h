@@ -142,7 +142,7 @@ Registration WatchTower<Driver>::addFile(
         const std::string& file_name,
         std::function<void()> notification )
 {
-    // LOG(logDEBUG) << "WatchTower::addFile " << file_name;
+    LOG(logDEBUG) << "WatchTower::addFile " << file_name;
 
     std::weak_ptr<void> weakHeartBeat(heartBeat_);
 
@@ -190,6 +190,7 @@ Registration WatchTower<Driver>::addFile(
     }
     else
     {
+        LOG(logDEBUG) << "WatchTower::addFile add extra callback for already monitored " << file_name;
         existing_observed_file->addCallback( ptr );
     }
 
@@ -244,6 +245,7 @@ void WatchTower<Driver>::removeNotification(
 
     if ( file )
     {
+        LOG(logDEBUG) << "WatchTower::removeNotification - remove the file";
         watch_tower->driver_.removeFile( file->file_id_ );
         watch_tower->driver_.removeSymlink( file->symlink_id_ );
     }

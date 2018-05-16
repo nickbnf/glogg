@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "winfilewatcher.h"
+#include "platformfilewatcher.h"
 
 using namespace std;
 
@@ -11,9 +11,7 @@ class FileWatcherBehaviour: public testing::Test {
     shared_ptr<FileWatcher> file_watcher;
 
     void SetUp() override {
-#ifdef _WIN32
-        // file_watcher = make_shared<WinFileWatcher>();
-#endif
+        file_watcher = make_shared<PlatformFileWatcher>();
     }
 };
 

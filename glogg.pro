@@ -283,6 +283,10 @@ linux-g++ || linux-g++-64 {
     CONFIG += inotify
 }
 
+macx {
+    CONFIG += kqueue
+}
+
 win32 {
     message("File watching using Windows")
     SOURCES += src/platformfilewatcher.cpp src/winwatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
@@ -297,9 +301,17 @@ else {
         HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
     }
     else {
-        message("File watching using Qt")
-        SOURCES += src/qtfilewatcher.cpp
-        HEADERS += src/qtfilewatcher.h
+        macx {
+            message("File watching using kqueue")
+            QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_KQUEUE
+            SOURCES += src/platformfilewatcher.cpp src/kqueuewatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+            HEADERS += src/platformfilewatcher.h src/kqueuewatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
+        }
+        else {
+            message("File watching using Qt")
+            SOURCES += src/qtfilewatcher.cpp
+            HEADERS += src/qtfilewatcher.h
+        }
     }
 }
 

@@ -117,7 +117,7 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of FilterSet, ignoring it...";
+            LOG(logERROR) << "Unknown version of HighlighterSet, ignoring it...";
         }
         settings.endGroup();
     }

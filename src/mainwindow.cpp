@@ -44,7 +44,7 @@
 #include "sessioninfo.h"
 #include "recentfiles.h"
 #include "crawlerwidget.h"
-#include "filtersdialog.h"
+#include "highlightersdialog.h"
 #include "optionsdialog.h"
 #include "persistentinfo.h"
 #include "menuactiontooltipbehavior.h"
@@ -326,9 +326,9 @@ void MainWindow::createActions()
     stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL(triggered()), SLOT(stopLoading()) );
 
-    filtersAction = new QAction(tr("&Filters..."), this);
-    filtersAction->setStatusTip(tr("Show the Filters box"));
-    connect( filtersAction, SIGNAL(triggered()), this, SLOT(filters()) );
+    highlightersAction = new QAction(tr("&Highlighters..."), this);
+    highlightersAction->setStatusTip(tr("Show the Highlighters box"));
+    connect( highlightersAction, SIGNAL(triggered()), this, SLOT(highlighters()) );
 
     optionsAction = new QAction(tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Show the Options box"));
@@ -389,7 +389,7 @@ void MainWindow::createMenus()
     viewMenu->addAction( reloadAction );
 
     toolsMenu = menuBar()->addMenu( tr("&Tools") );
-    toolsMenu->addAction( filtersAction );
+    toolsMenu->addAction( highlightersAction );
     toolsMenu->addSeparator();
     toolsMenu->addAction( optionsAction );
 
@@ -509,10 +509,10 @@ void MainWindow::find()
     displayQuickFindBar( QuickFindMux::Forward );
 }
 
-// Opens the 'Filters' dialog box
-void MainWindow::filters()
+// Opens the 'Highlighters' dialog box
+void MainWindow::highlighters()
 {
-    FiltersDialog dialog(this);
+    HighlightersDialog dialog(this);
     signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
     dialog.exec();
     signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
@@ -1004,7 +1004,7 @@ void MainWindow::readSettings()
     updateRecentFileActions();
 
     // GetPersistentInfo().retrieve( QString( "settings" ) );
-    GetPersistentInfo().retrieve( QString( "filterSet" ) );
+    GetPersistentInfo().retrieve( QString( "highlighterSet" ) );
 }
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )

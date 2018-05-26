@@ -116,6 +116,8 @@ class ObservedFileList {
                 typename Driver::SymlinkId symlink_id );
         ObservedFile<Driver>* searchByDirWdAndName(
                 typename Driver::DirId id, const char* name );
+        std::vector<ObservedFile<Driver>*> searchByDirWd(
+                typename Driver::DirId id );
 
         // Add a new file, the list returns a pointer to the added file,
         // but has ownership of the file.
@@ -264,6 +266,33 @@ ObservedFile<Driver>* ObservedFileList<Driver>::searchByDirWdAndName(
     else {
         return nullptr;
     }
+}
+
+template <typename Driver>
+std::vector<ObservedFile<Driver>*> ObservedFileList<Driver>::searchByDirWd(
+        typename Driver::DirId id )
+{
+    std::vector<ObservedFile<Driver>*> result;
+
+    auto dir = find_if( observed_dirs_.begin(), observed_dirs_.end(),
+            [id] (std::pair<std::string,std::weak_ptr<ObservedDir<Driver>>> d) -> bool {
+            if ( auto dir = d.second.lock() ) {
+                return ( id == dir->dir_id_ );
+            }
+            else {
+                return false; } } );
+
+    if ( dir != observed_dirs_.end() ) {
+        for ( auto i = observed_files_.begin(); i != observed_files_.end(); ++i ) {
+            if ( auto d = dir->second.lock() ) {
+                if ( d.get() == i->dir_.get() ) {
+                    result.push_back( &(*i) );
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 template <typename Driver>

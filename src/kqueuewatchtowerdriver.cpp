@@ -214,7 +214,15 @@ KQueueWatchTowerDriver::waitAndProcessEvents(
         }
         else
         {
+            /* We signal all watched files in this directory, yes it is wasteful,
+             * but kqueue doesn't give us enough information so we reach for
+             * the sledgehammer rather than trying to see what has changed in this dir!
+             */
             LOG(logDEBUG) << "File not found, is it a directory?";
+            auto files_in_dir = list->searchByDirWd( event.ident );
+            LOG(logDEBUG) << files_in_dir.size() << " files in dir.";
+            files_to_notify.reserve( files_in_dir.size() );
+            files_to_notify.insert( files_to_notify.end(), files_in_dir.begin(), files_in_dir.end() );
         }
     }
     else

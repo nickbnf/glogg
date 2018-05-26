@@ -155,6 +155,7 @@ if (WIN32)
 elseif (LINUX)
     # set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)
 elseif (APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGLOGG_SUPPORTS_KQUEUE")
     set(FileWatcherEngine_SOURCES
          ../src/kqueuewatchtowerdriver.cpp
     )

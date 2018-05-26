@@ -215,19 +215,21 @@ void LogData::fileChangedOnDisk()
         LOG(logINFO) << "File truncated";
         newOperation = std::make_shared<FullIndexOperation>();
     }
+    else if ( info.size() == file_size ) {
+        LOG(logINFO) << "No change in file";
+    }
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
         LOG(logINFO) << "New data on disk";
         newOperation = std::make_shared<PartialIndexOperation>();
     }
 
-    if ( newOperation )
+    if ( newOperation ) {
         enqueueOperation( newOperation );
+        lastModifiedDate_ = info.lastModified();
 
-    lastModifiedDate_ = info.lastModified();
-
-    emit fileChanged( fileChangedOnDisk_ );
-    // TODO: fileChangedOnDisk_, fileSize_
+        emit fileChanged( fileChangedOnDisk_ );
+    }
 }
 
 void LogData::indexingFinished( LoadingStatus status )

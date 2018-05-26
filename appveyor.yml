@@ -4,14 +4,14 @@ os: Visual Studio 2015
 
 environment:
   matrix:
-  - QT5: C:\Qt\5.6\mingw49_32
-    BOOST_ROOT: C:\Libraries\boost_1_59_0
-    MINGW: C:\Qt\Tools\mingw492_32
+  - QT5: C:\Qt\5.10.1\mingw53_32
+    BOOST_ROOT: C:\Libraries\boost_1_67_0
+    MINGW: C:\Qt\Tools\mingw530_32
     MAKE_CMD: mingw32-make
 
 matrix:
   fast_finish: true
-  
+
 before_build:
 - set PATH=%MINGW%\bin;%QT5%\bin;%PATH%
 

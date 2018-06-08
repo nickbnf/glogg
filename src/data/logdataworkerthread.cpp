@@ -84,7 +84,7 @@ void IndexingData::clear()
     encoding_    = EncodingSpeculator::Encoding::ASCII7;
 }
 
-LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
+LogDataWorkerThread::LogDataWorkerThread( IndexingData& indexing_data )
     : QThread(), mutex_(), operationRequestedCond_(),
     nothingToDoCond_(), fileName_(), indexing_data_( indexing_data )
 {
@@ -122,7 +122,7 @@ void LogDataWorkerThread::indexAll()
 
     interruptRequested_ = false;
     operationRequested_ = new FullIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, &encodingSpeculator_ );
+            indexing_data_, interruptRequested_, encodingSpeculator_ );
     operationRequestedCond_.wakeAll();
 }
 
@@ -138,7 +138,7 @@ void LogDataWorkerThread::indexAdditionalLines()
 
     interruptRequested_ = false;
     operationRequested_ = new PartialIndexOperation( fileName_,
-            indexing_data_, &interruptRequested_, &encodingSpeculator_ );
+            indexing_data_, interruptRequested_, encodingSpeculator_ );
     operationRequestedCond_.wakeAll();
 }
 
@@ -195,13 +195,13 @@ void LogDataWorkerThread::run()
 //
 
 IndexOperation::IndexOperation( const QString& fileName,
-        IndexingData* indexingData, bool* interruptRequest,
-        EncodingSpeculator* encodingSpeculator )
+        IndexingData& indexingData, bool& interruptRequest,
+        EncodingSpeculator& encodingSpeculator )
     : fileName_( fileName )
+    , interruptRequest_( interruptRequest )
+    , indexing_data_( indexingData )
+    , encoding_speculator_( encodingSpeculator )
 {
-    interruptRequest_ = interruptRequest;
-    indexing_data_ = indexingData;
-    encoding_speculator_ = encodingSpeculator;
 }
 
 void IndexOperation::doIndex( qint64 initialPosition )
@@ -219,7 +219,7 @@ void IndexOperation::doIndex( qint64 initialPosition )
             FastLinePositionArray line_positions;
             int max_length = 0;
 
-            if ( *interruptRequest_ )   // a bool is always read/written atomically isn't it?
+            if ( interruptRequest_ )   // a bool is always read/written atomically isn't it?
                 break;
 
             // Read a chunk of 5MB
@@ -234,7 +234,7 @@ void IndexOperation::doIndex( qint64 initialPosition )
                 do {
                     if ( pos_within_block < block.length() ) {
                         const char c = block.at(pos_within_block);
-                        encoding_speculator_->inject_byte( c );
+                        encoding_speculator_.inject_byte( c );
                         if ( c == '\n' )
                             break;
                         else if ( c == '\t' )
@@ -262,8 +262,8 @@ void IndexOperation::doIndex( qint64 initialPosition )
             }
 
             // Update the shared data
-            indexing_data_->addAll( block.length(), max_length, line_positions,
-                   encoding_speculator_->guess() );
+            indexing_data_.addAll( block.length(), max_length, line_positions,
+                   encoding_speculator_.guess() );
 
             // Update the caller for progress indication
             int progress = ( file.size() > 0 ) ? pos*100 / file.size() : 100;
@@ -272,7 +272,7 @@ void IndexOperation::doIndex( qint64 initialPosition )
 
         // Check if there is a non LF terminated line at the end of the file
         qint64 file_size = file.size();
-        if ( !*interruptRequest_ && file_size > pos ) {
+        if ( !interruptRequest_ && file_size > pos ) {
             LOG( logWARNING ) <<
                 "Non LF terminated file, adding a fake end of line";
 
@@ -280,7 +280,7 @@ void IndexOperation::doIndex( qint64 initialPosition )
             line_position.append( file_size + 1 );
             line_position.setFakeFinalLF();
 
-            indexing_data_->addAll( 0, 0, line_position, encoding_speculator_->guess() );
+            indexing_data_.addAll( 0, 0, line_position, encoding_speculator_.guess() );
         }
     }
     else {
@@ -303,14 +303,14 @@ bool FullIndexOperation::start()
     emit indexingProgressed( 0 );
 
     // First empty the index
-    indexing_data_->clear();
+    indexing_data_.clear();
 
     doIndex( 0 );
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
-        "interrupt = " << *interruptRequest_;
+        "interrupt = " << interruptRequest_;
 
-    return ( *interruptRequest_ ? false : true );
+    return !interruptRequest_;
 }
 
 bool PartialIndexOperation::start()
@@ -318,7 +318,7 @@ bool PartialIndexOperation::start()
     LOG(logDEBUG) << "PartialIndexOperation::start(), file "
         << fileName_.toStdString();
 
-    qint64 initial_position = indexing_data_->getSize();
+    qint64 initial_position = indexing_data_.getSize();
 
     LOG(logDEBUG) << "PartialIndexOperation: Starting the count at "
         << initial_position << " ...";
@@ -329,5 +329,5 @@ bool PartialIndexOperation::start()
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 
-    return ( *interruptRequest_ ? false : true );
+    return !interruptRequest_;
 }

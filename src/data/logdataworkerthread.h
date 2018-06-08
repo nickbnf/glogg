@@ -78,8 +78,8 @@ class IndexOperation : public QObject
   Q_OBJECT
   public:
     IndexOperation( const QString& fileName,
-            IndexingData* indexingData, bool* interruptRequest,
-            EncodingSpeculator* encodingSpeculator );
+            IndexingData& indexingData, bool& interruptRequest,
+            EncodingSpeculator& encodingSpeculator );
 
     virtual ~IndexOperation() { }
 
@@ -96,18 +96,18 @@ class IndexOperation : public QObject
     void doIndex( qint64 initialPosition );
 
     QString fileName_;
-    bool* interruptRequest_;
-    IndexingData* indexing_data_;
+    bool& interruptRequest_;
+    IndexingData& indexing_data_;
 
-    EncodingSpeculator* encoding_speculator_;
+    EncodingSpeculator& encoding_speculator_;
 };
 
 class FullIndexOperation : public IndexOperation
 {
   public:
     FullIndexOperation( const QString& fileName,
-            IndexingData* indexingData, bool* interruptRequest,
-            EncodingSpeculator* speculator )
+            IndexingData& indexingData, bool& interruptRequest,
+            EncodingSpeculator& speculator )
         : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
     virtual bool start();
 };
@@ -116,8 +116,8 @@ class PartialIndexOperation : public IndexOperation
 {
   public:
     PartialIndexOperation( const QString& fileName,
-            IndexingData* indexingData, bool* interruptRequest,
-            EncodingSpeculator* speculator )
+            IndexingData& indexingData, bool& interruptRequest,
+            EncodingSpeculator& speculator )
         : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
     virtual bool start();
 };
@@ -134,7 +134,7 @@ class LogDataWorkerThread : public QThread
   public:
     // Pass a pointer to the IndexingData (initially empty)
     // This object will change it when indexing (IndexingData must be thread safe!)
-    LogDataWorkerThread( IndexingData* indexing_data );
+    LogDataWorkerThread( IndexingData& indexing_data );
     ~LogDataWorkerThread();
 
     // Attaches to a file on disk. Attaching to a non existant file
@@ -175,7 +175,7 @@ class LogDataWorkerThread : public QThread
     IndexOperation* operationRequested_;
 
     // Pointer to the owner's indexing data (we modify it)
-    IndexingData* indexing_data_;
+    IndexingData& indexing_data_;
 
     // To guess the encoding
     EncodingSpeculator encodingSpeculator_;

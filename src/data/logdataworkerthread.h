@@ -93,10 +93,7 @@ class IndexOperation : public QObject
   protected:
     static const int sizeChunk;
 
-    // Returns the total size indexed
-    // Modify the passed linePosition and maxLength
-    void doIndex( IndexingData* linePosition, EncodingSpeculator* encodingSpeculator,
-            qint64 initialPosition );
+    void doIndex( qint64 initialPosition );
 
     QString fileName_;
     bool* interruptRequest_;
@@ -151,10 +148,6 @@ class LogDataWorkerThread : public QThread
     void indexAdditionalLines();
     // Interrupts the indexing if one is in progress
     void interrupt();
-
-    // Returns a copy of the current indexing data
-    void getIndexingData( qint64* indexedSize,
-            int* maxLength, LinePositionArray* linePosition );
 
   signals:
     // Sent during the indexing process to signal progress

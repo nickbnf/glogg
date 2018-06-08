@@ -104,10 +104,7 @@ class WatchTower {
 
 #include "log.h"
 
-namespace {
-    bool isSymLink( const std::string& file_name );
-    std::string directory_path( const std::string& path );
-};
+inline bool isSymLink( const std::string& file_name );
 
 template <typename Driver>
 WatchTower<Driver>::WatchTower()
@@ -318,18 +315,16 @@ void WatchTower<Driver>::run()
     }
 }
 
-namespace {
-    bool isSymLink( const std::string& file_name )
-    {
+bool isSymLink( const std::string& file_name )
+{
 #ifdef HAVE_SYMLINK
-        struct stat buf;
+    struct stat buf;
 
-        lstat( file_name.c_str(), &buf );
-        return ( S_ISLNK(buf.st_mode) );
+    lstat( file_name.c_str(), &buf );
+    return ( S_ISLNK(buf.st_mode) );
 #else
-        return false;
+    return false;
 #endif
-    }
-};
+}
 
 #endif

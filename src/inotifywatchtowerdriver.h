@@ -25,7 +25,7 @@
 #include <vector>
 
 template <typename Driver>
-class ObservedFile;
+struct ObservedFile;
 template <typename Driver>
 class ObservedFileList;
 

@@ -240,7 +240,7 @@ else {
 }
 
 # Optional features (e.g. CONFIG+=no-dbus)
-system(pkg-config --exists QtDBus):!no-dbus {
+system(pkg-config --exists Qt5DBus):!no-dbus {
     message("Support for D-BUS will be included")
     QT += dbus
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_DBUS

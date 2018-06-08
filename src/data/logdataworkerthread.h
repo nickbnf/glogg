@@ -20,6 +20,7 @@
 #ifndef LOGDATAWORKERTHREAD_H
 #define LOGDATAWORKERTHREAD_H
 
+#include <atomic>
 #include <QObject>
 #include <QThread>
 #include <QMutex>
@@ -78,7 +79,7 @@ class IndexOperation : public QObject
   Q_OBJECT
   public:
     IndexOperation( const QString& fileName,
-            IndexingData& indexingData, bool& interruptRequest,
+            IndexingData& indexingData, std::atomic_bool& interruptRequest,
             EncodingSpeculator& encodingSpeculator );
 
     virtual ~IndexOperation() { }
@@ -96,7 +97,7 @@ class IndexOperation : public QObject
     void doIndex( qint64 initialPosition );
 
     QString fileName_;
-    bool& interruptRequest_;
+    std::atomic_bool& interruptRequest_;
     IndexingData& indexing_data_;
 
     EncodingSpeculator& encoding_speculator_;
@@ -106,7 +107,7 @@ class FullIndexOperation : public IndexOperation
 {
   public:
     FullIndexOperation( const QString& fileName,
-            IndexingData& indexingData, bool& interruptRequest,
+            IndexingData& indexingData, std::atomic_bool& interruptRequest,
             EncodingSpeculator& speculator )
         : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
     virtual bool start();
@@ -116,7 +117,7 @@ class PartialIndexOperation : public IndexOperation
 {
   public:
     PartialIndexOperation( const QString& fileName,
-            IndexingData& indexingData, bool& interruptRequest,
+            IndexingData& indexingData, std::atomic_bool& interruptRequest,
             EncodingSpeculator& speculator )
         : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
     virtual bool start();
@@ -171,7 +172,7 @@ class LogDataWorkerThread : public QThread
 
     // Set when the thread must die
     bool terminate_;
-    bool interruptRequested_;
+    std::atomic_bool interruptRequested_;
     IndexOperation* operationRequested_;
 
     // Pointer to the owner's indexing data (we modify it)

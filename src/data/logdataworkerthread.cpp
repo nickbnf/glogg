@@ -86,10 +86,7 @@ void IndexingData::clear()
 }
 
 LogDataWorkerThread::LogDataWorkerThread( IndexingData& indexing_data )
-    : QThread(), mutex_(), operationRequestedCond_(),
-    nothingToDoCond_(), fileName_(),
-    terminate_( false ), interruptRequested_( false ),
-    operationRequested_( NULL ), indexing_data_( indexing_data )
+    : indexing_data_( indexing_data )
 {
 }
 

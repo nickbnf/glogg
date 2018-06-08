@@ -36,9 +36,6 @@
 class IndexingData
 {
   public:
-    IndexingData() : dataMutex_(), linePosition_(), maxLength_(0),
-        indexedSize_(0), encoding_(EncodingSpeculator::Encoding::ASCII7) { }
-
     // Get the total indexed size
     qint64 getSize() const;
 
@@ -68,10 +65,10 @@ class IndexingData
     mutable QMutex dataMutex_;
 
     LinePositionArray linePosition_;
-    int maxLength_;
-    qint64 indexedSize_;
+    int maxLength_{0};
+    qint64 indexedSize_{0};
 
-    EncodingSpeculator::Encoding encoding_;
+    EncodingSpeculator::Encoding encoding_{EncodingSpeculator::Encoding::ASCII7};
 };
 
 class IndexOperation : public QObject
@@ -106,20 +103,14 @@ class IndexOperation : public QObject
 class FullIndexOperation : public IndexOperation
 {
   public:
-    FullIndexOperation( const QString& fileName,
-            IndexingData& indexingData, std::atomic_bool& interruptRequest,
-            EncodingSpeculator& speculator )
-        : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
+    using IndexOperation::IndexOperation;
     virtual bool start();
 };
 
 class PartialIndexOperation : public IndexOperation
 {
   public:
-    PartialIndexOperation( const QString& fileName,
-            IndexingData& indexingData, std::atomic_bool& interruptRequest,
-            EncodingSpeculator& speculator )
-        : IndexOperation( fileName, indexingData, interruptRequest, speculator ) { }
+    using IndexOperation::IndexOperation;
     virtual bool start();
 };
 
@@ -171,9 +162,9 @@ class LogDataWorkerThread : public QThread
     QString fileName_;
 
     // Set when the thread must die
-    bool terminate_;
-    std::atomic_bool interruptRequested_;
-    IndexOperation* operationRequested_;
+    bool terminate_{false};
+    std::atomic_bool interruptRequested_{false};
+    IndexOperation* operationRequested_{nullptr};
 
     // Pointer to the owner's indexing data (we modify it)
     IndexingData& indexing_data_;

@@ -187,12 +187,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
     const QString name = attached_file_->fileName();
     QFileInfo info( name );
 
-    // Need to open the file in case it was absent
-    if ( !attached_file_->isOpen() ) {
-        attached_file_->open( QIODevice::ReadOnly );
-    }
-
-    std::shared_ptr<LogDataOperation> newOperation;
+    std::function<std::shared_ptr<LogDataOperation>()> newOperation;
 
     qint64 file_size = indexing_data_.getSize();
     LOG(logDEBUG) << "current fileSize=" << file_size;
@@ -200,21 +195,25 @@ void LogData::fileChangedOnDisk( const QString& filename )
     if ( info.size() < file_size ) {
         fileChangedOnDisk_ = Truncated;
         LOG(logINFO) << "File truncated";
-        newOperation = std::make_shared<FullIndexOperation>();
+        newOperation = std::make_shared<FullIndexOperation>;
     }
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
         LOG(logINFO) << "New data on disk";
-        newOperation = std::make_shared<PartialIndexOperation>();
+        newOperation = std::make_shared<PartialIndexOperation>;
     }
 
-    if ( newOperation )
-        enqueueOperation( newOperation );
+    if ( newOperation ) {
+        // Need to open the file in case it was absent
+        attached_file_->close();
 
-    lastModifiedDate_ = info.lastModified();
+        if ( attached_file_->open( QIODevice::ReadOnly ) ) {
+            enqueueOperation( newOperation() );
+            lastModifiedDate_ = info.lastModified();
 
-    emit fileChanged( fileChangedOnDisk_ );
-    // TODO: fileChangedOnDisk_, fileSize_
+            emit fileChanged( fileChangedOnDisk_ );
+        }
+    }
 }
 
 void LogData::indexingFinished( LoadingStatus status )

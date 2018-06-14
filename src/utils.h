@@ -118,9 +118,6 @@ LineNumber lookupLineNumber( Iterator begin, Iterator end, LineNumber lineNum )
     if ( lowerBound != end ) {
         lineIndex = std::distance(begin, lowerBound);
     }
-    else if (begin != end) {
-        lineIndex = begin->lineNumber();
-    }
     return lineIndex;
 }
 

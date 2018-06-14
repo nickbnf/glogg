@@ -249,7 +249,7 @@ system(pkg-config --exists Qt5DBus):!no-dbus {
 }
 else {
     message("Support for D-BUS will NOT be included")
-    win32 || macx {
+    win32 | macx {
         message("Support for cross-platform IPC will be included")
         QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_SOCKETIPC
         SOURCES += src/socketexternalcom.cpp
@@ -270,7 +270,7 @@ else {
 }
 
 # File watching
-linux-g++ || linux-g++-64 {
+linux-g++ | linux-g++-64 {
     CONFIG += inotify
 }
 

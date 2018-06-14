@@ -572,8 +572,10 @@ void CrawlerWidget::changeFilteredViewVisibility( int index )
 
     filteredView->setVisibility( visibility );
 
-    const int lineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
-    filteredView->selectAndDisplayLine( lineIndex );
+    if ( logFilteredData_->getNbLine() > 0 ) {
+        const int lineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
+        filteredView->selectAndDisplayLine( lineIndex );
+    }
 }
 
 void CrawlerWidget::addToSearch( const QString& string )

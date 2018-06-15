@@ -457,19 +457,21 @@ void LogFilteredData::regenerateFilteredItemsCache() const
             ( j != marks_.end() ) ? j->lineNumber() : std::numeric_limits<qint64>::max();
         qint64 next_match =
             ( i != matching_lines_.cend() ) ? i->lineNumber() : std::numeric_limits<qint64>::max();
-        // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
+        FilteredLineType type = static_cast<FilteredLineType>( 0 );
+        LineNumber line;
         if ( next_mark <= next_match ) {
             // LOG(logDEBUG) << "Add mark at " << next_mark;
-            filteredItemsCache_.push_back( FilteredItem( next_mark, Mark ) );
+            type |= Mark;
+            line = next_mark;
             ++j;
-            if ( ( next_mark == next_match ) )
-                ++i;  // Case when it's both match and mark.
         }
-        else {
+        if ( next_mark >= next_match ) {
             // LOG(logDEBUG) << "Add match at " << next_match;
-            filteredItemsCache_.push_back( FilteredItem( next_match, Match ) );
+            type |= Match;
+            line = next_match;
             ++i;
         }
+        filteredItemsCache_.push_back( FilteredItem( line, type ) );
     }
 
     filteredItemsCacheDirty_ = false;

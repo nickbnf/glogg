@@ -120,7 +120,7 @@ void Overview::recalculatesLines()
                     logFilteredData_->filteredLineTypeByIndex( i );
                 int line = (int) logFilteredData_->getMatchingLineNumber( i );
                 int position = (int)( (qint64)line * height_ / linesInFile_ );
-                if ( line_type == LogFilteredData::Match ) {
+                if ( line_type & LogFilteredData::Match ) {
                     if ( ( ! matchLines_.isEmpty() ) && matchLines_.last().position() == position ) {
                         // If the line is already there, we increase its weight
                         matchLines_.last().load();

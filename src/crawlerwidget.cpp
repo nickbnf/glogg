@@ -386,7 +386,7 @@ void CrawlerWidget::markLineFromFiltered( qint64 line )
     if ( line < logFilteredData_->getNbLine() ) {
         qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
         if ( logFilteredData_->filteredLineTypeByIndex( line )
-                == LogFilteredData::Mark )
+                & LogFilteredData::Mark )
             logFilteredData_->deleteMark( line_in_file );
         else
             logFilteredData_->addMark( line_in_file );

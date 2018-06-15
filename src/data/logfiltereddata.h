@@ -80,9 +80,13 @@ class LogFilteredData : public AbstractLogData {
     // Returns the number of marks (independently of the visibility)
     LineNumber getNbMarks() const;
 
+    // Flags indicating why the line is filtered.
+    enum FilteredLineType {
+        Match = 0x1,
+        Mark  = 0x2,
+    };
     // Returns the reason why the line at the passed index is in the filtered
-    // data.  It can be because it is either a mark or a match.
-    enum FilteredLineType { Match, Mark };
+    // data.
     FilteredLineType filteredLineTypeByIndex( int index ) const;
 
     // Marks interface (delegated to a Marks object)
@@ -164,6 +168,23 @@ class LogFilteredData : public AbstractLogData {
     void regenerateFilteredItemsCache() const;
 };
 
+inline LogFilteredData::FilteredLineType& operator|=(LogFilteredData::FilteredLineType& a, LogFilteredData::FilteredLineType b)
+{
+    a = LogFilteredData::FilteredLineType( a | b );
+    return a;
+}
+
+inline LogFilteredData::FilteredLineType& operator&=(LogFilteredData::FilteredLineType& a, LogFilteredData::FilteredLineType b)
+{
+    a = LogFilteredData::FilteredLineType( a & b );
+    return a;
+}
+
+inline LogFilteredData::FilteredLineType operator~(LogFilteredData::FilteredLineType a)
+{
+    return LogFilteredData::FilteredLineType( ~static_cast<int>( a ) );
+}
+
 // A class representing a Mark or Match.
 // Conceptually it should be a base class for Mark and MatchingLine,
 // but we implement it this way for performance reason as we create plenty of
@@ -182,6 +203,13 @@ class LogFilteredData::FilteredItem {
     { return lineNumber_; }
     FilteredLineType type() const
     { return type_; }
+
+    void add( FilteredLineType type )
+    { type_ |= type; }
+
+    // Returns whether any type-flag is left.
+    bool remove( FilteredLineType type )
+    { return type_ &= ~type; }
 
     bool operator <( const LogFilteredData::FilteredItem& other ) const
     { return lineNumber_ < other.lineNumber_; }

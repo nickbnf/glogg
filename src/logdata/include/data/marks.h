@@ -70,7 +70,9 @@ class Marks {
     // Add a mark at the given line, optionally identified by the given char
     // If a mark for this char already exist, the previous one is replaced.
     // It will happily add marks anywhere, even at stupid indexes.
-    void addMark( LineNumber line, QChar mark = QChar() );
+    // Returns the index at which the mark was inserted,
+    // such that getLineMarkedByIndex( addMark( line ) ) == line.
+    uint32_t addMark( LineNumber line, QChar mark = QChar() );
     // Get the (unique) mark identified by the passed char.
     LineNumber getMark( QChar mark ) const;
     // Returns wheither the passed line has a mark on it.
@@ -79,7 +81,8 @@ class Marks {
     void deleteMark( QChar mark );
     // Delete the mark present on the passed line or do nothing if there is
     // none.
-    void deleteMark( LineNumber line );
+    // Returns the index at which the mark was deleted.
+    uint32_t deleteMark( LineNumber line );
     // Get the line marked identified by the index (in this list) passed.
     LineNumber getLineMarkedByIndex( int index ) const
     { return marks_[index].lineNumber(); }

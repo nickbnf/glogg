@@ -32,7 +32,7 @@ Marks::Marks() : marks_()
 {
 }
 
-void Marks::addMark( qint64 line, QChar mark )
+int Marks::addMark( qint64 line, QChar mark )
 {
     // Look for the index immediately before
     int index;
@@ -50,6 +50,8 @@ void Marks::addMark( qint64 line, QChar mark )
 
     // 'mark' is not used yet
     mark = mark;
+
+    return index;
 }
 
 qint64 Marks::getMark( QChar mark ) const

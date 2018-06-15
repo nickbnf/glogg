@@ -165,7 +165,15 @@ class LogFilteredData : public AbstractLogData {
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
     void regenerateFilteredItemsCache() const;
+    // start_index can be passed in as an optimization when finding the item.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was inserted.
+    void insertIntoFilteredItemsCache( size_t start_index, FilteredItem item );
     void insertIntoFilteredItemsCache( FilteredItem item );
+    // Insert entries from matching_lines_ into filteredItemsCache_ starting by start_index.
+    void insertMatchesIntoFilteredItemsCache( size_t start_index );
+    // remove_index can be passed in as an optimization when finding the item.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was removed.
+    void removeFromFilteredItemsCache( size_t remove_index, FilteredItem item );
     void removeFromFilteredItemsCache( FilteredItem item );
     void removeAllFromFilteredItemsCache( FilteredLineType type );
 

@@ -156,7 +156,6 @@ class LogFilteredData : public AbstractLogData {
     // when visibility_ == MarksAndMatches
     // (QVector store actual objects instead of pointers)
     mutable std::vector<FilteredItem> filteredItemsCache_;
-    mutable bool filteredItemsCacheDirty_;
 
     LogFilteredDataWorkerThread workerThread_;
     Marks marks_;
@@ -166,6 +165,12 @@ class LogFilteredData : public AbstractLogData {
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
     void regenerateFilteredItemsCache() const;
+    void insertIntoFilteredItemsCache( FilteredItem item );
+    void removeFromFilteredItemsCache( FilteredItem item );
+    void removeAllFromFilteredItemsCache( FilteredLineType type );
+
+    // update maxLengthMarks_ when a Mark was removed.
+    void updateMaxLengthMarks( qint64 removed_line );
 };
 
 inline LogFilteredData::FilteredLineType& operator|=(LogFilteredData::FilteredLineType& a, LogFilteredData::FilteredLineType b)

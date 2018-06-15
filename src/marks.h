@@ -54,11 +54,15 @@ class Marks {
     qint64 getMark( QChar mark ) const;
     // Returns wheither the passed line has a mark on it.
     bool isLineMarked( qint64 line ) const;
-    // Delete the mark identified by the passed char.
-    void deleteMark( QChar mark );
+    // Find a mark.
+    // Returns the index of the mark or -1 if it was not found.
+    int findMark( QChar mark );
+    // Delete the mark at an index.
+    void deleteMarkAt( int index );
     // Delete the mark present on the passed line or do nothing if there is
     // none.
-    void deleteMark( qint64 line );
+    // Returns the index where the mark used to be.
+    int deleteMark( qint64 line );
     // Get the line marked identified by the index (in this list) passed.
     qint64 getLineMarkedByIndex( int index ) const
     { return marks_[index].lineNumber(); }

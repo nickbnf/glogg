@@ -28,15 +28,32 @@
 const int SearchOperation::nbLinesInChunk = 5000;
 
 void SearchData::getAll( int* length, SearchResultArray* matches,
-        qint64* lines) const
+        qint64* lines ) const
+{
+    matches->clear();
+    getAllMissing( length, matches, lines );
+}
+
+void SearchData::getAllMissing( int* length, SearchResultArray* matches,
+        qint64* lines ) const
 {
     QMutexLocker locker( &dataMutex_ );
+
 
     *length  = maxLength_;
     *lines   = nbLinesProcessed_;
 
+    if ( matches_.size() < matches->size() ) {
+        LOG(logWARNING) << "Cannot append search-data to smaller match-array";
+        return;
+    }
+
+    matches->reserve( matches_.size() - matches->size() );
+
     // This is a copy (potentially slow)
-    *matches = matches_;
+    size_t offset = matches->size();
+    std::insert_iterator<SearchResultArray> inserter{ *matches, next( begin( *matches ), offset ) };
+    copy( next( begin( matches_ ), offset ), end( matches_ ), inserter );
 }
 
 void SearchData::setAll( int length,
@@ -167,10 +184,10 @@ void LogFilteredDataWorkerThread::interrupt()
 }
 
 // This will do an atomic copy of the object
-void LogFilteredDataWorkerThread::getSearchResult(
+void LogFilteredDataWorkerThread::updateSearchResult(
         int* maxLength, SearchResultArray* searchMatches, qint64* nbLinesProcessed )
 {
-    searchData_.getAll( maxLength, searchMatches, nbLinesProcessed );
+    searchData_.getAllMissing( maxLength, searchMatches, nbLinesProcessed );
 }
 
 // This is the thread's main loop

@@ -63,6 +63,10 @@ class SearchData
     // Atomically get all the search data
     void getAll( int* length, SearchResultArray* matches,
             qint64* nbLinesProcessed ) const;
+    // Atomically get all the search data
+    // Appends the missing entries. Does not check that the existing entries match.
+    void getAllMissing( int* length, SearchResultArray* matches,
+            qint64* lines ) const;
     // Atomically set all the search data
     // (overwriting the existing)
     // (the matches are always moved)
@@ -155,8 +159,8 @@ class LogFilteredDataWorkerThread : public QThread
     // Interrupts the search if one is in progress
     void interrupt();
 
-    // Returns a copy of the current indexing data
-    void getSearchResult( int* maxLength, SearchResultArray* searchMatches,
+    // Updates the array by copying the current indexing data
+    void updateSearchResult( int* maxLength, SearchResultArray* searchMatches,
            qint64* nbLinesProcessed );
 
   signals:

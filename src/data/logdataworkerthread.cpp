@@ -92,6 +92,7 @@ LogDataWorkerThread::LogDataWorkerThread( IndexingData& indexing_data )
 
 LogDataWorkerThread::~LogDataWorkerThread()
 {
+    interruptRequested_.store( true, std::memory_order_relaxed );
     {
         QMutexLocker locker( &mutex_ );
         terminate_ = true;

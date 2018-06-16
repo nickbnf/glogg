@@ -109,6 +109,7 @@ LogDataWorkerThread::LogDataWorkerThread( IndexingData* indexing_data )
 
 LogDataWorkerThread::~LogDataWorkerThread()
 {
+    interruptRequested_.set();
     {
         QMutexLocker locker( &mutex_ );
         terminate_.set();
@@ -221,7 +222,7 @@ PartialIndexOperation::PartialIndexOperation( const QString& fileName,
 {
 }
 
-void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosition )
+void IndexOperation::doIndex(LineOffset initialPosition )
 {
     static std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
@@ -255,7 +256,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
             const auto block = file.read( sizeChunk );
 
             if ( !fileTextCodec ) {
-                fileTextCodec = indexing_data->getForcedEncoding();
+                fileTextCodec = indexing_data_->getForcedEncoding();
                 if ( !fileTextCodec ) {
                     fileTextCodec = EncodingDetector::getInstance().detectEncoding(block);
                 }
@@ -306,7 +307,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
             }
 
             // Update the shared data
-            indexing_data->addAll( block.length(),
+            indexing_data_->addAll( block.length(),
                                    LineLength( max_length ),
                                    line_positions,
                    encodingGuess );
@@ -326,7 +327,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
             line_position.append( LineOffset( file_size + 1 ) );
             line_position.setFakeFinalLF();
 
-            indexing_data->addAll( 0, 0_length, line_position, encodingGuess );
+            indexing_data_->addAll( 0, 0_length, line_position, encodingGuess );
         }
     }
     else {
@@ -334,7 +335,7 @@ void IndexOperation::doIndex(IndexingData* indexing_data, LineOffset initialPosi
         // If the file cannot be open, we do as if it was empty
         LOG(logWARNING) << "Cannot open file " << fileName_.toStdString();
 
-        indexing_data->clear();
+        indexing_data_->clear();
 
         emit indexingProgressed( 100 );
     }
@@ -354,7 +355,7 @@ bool FullIndexOperation::start()
     indexing_data_->clear();
     indexing_data_->forceEncoding(forcedEncoding_);
 
-    doIndex( indexing_data_, 0_offset );
+    doIndex( 0_offset );
 
     LOG(logDEBUG) << "FullIndexOperation: ... finished counting."
         "interrupt = " << static_cast<bool>(*interruptRequest_);
@@ -374,7 +375,7 @@ bool PartialIndexOperation::start()
 
     emit indexingProgressed( 0 );
 
-    doIndex( indexing_data_, initial_position );
+    doIndex( initial_position );
 
     LOG(logDEBUG) << "PartialIndexOperation: ... finished counting.";
 

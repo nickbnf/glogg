@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
+[ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
 
 CI builds 17.12.0.245 (x64):
 [windows portable](https://ci.appveyor.com/api/buildjobs/2lfgxips0pa8dgfq/artifacts/klogg-17.12.0.245-portable.zip) |

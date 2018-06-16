@@ -144,6 +144,18 @@ add_custom_target(docs SOURCES
 
 )
 
+option(BUILD_DOC "Build documentation" ON)
+if (${BUILD_DOC})
+    include(pandocology)
+    add_document(
+        TARGET html_readme
+        OUTPUT_FILE readme.html
+        SOURCES doc/documentation.rst
+        PANDOC_DIRECTIVES -f rst
+        NO_EXPORT_PRODUCT
+    )
+endif()
+
 add_subdirectory(3rdparty)
 add_subdirectory(src)
 
@@ -157,18 +169,6 @@ if (${BUILD_TESTS})
     )
 
     add_subdirectory(tests)   
-endif()
-
-option(BUILD_DOC "Build documentation" ON)
-if (${BUILD_DOC})
-    include(pandocology)
-    add_document(
-        TARGET html_readme
-        OUTPUT_FILE readme.html
-        SOURCES doc/documentation.rst
-        PANDOC_DIRECTIVES -f rst
-        NO_EXPORT_PRODUCT
-    )
 endif()
 
 # Installation and packaging

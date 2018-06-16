@@ -536,25 +536,35 @@ void LogFilteredData::regenerateFilteredItemsCache() const
     Marks::const_iterator j = marks_.begin();
 
     while ( ( i != matching_lines_.cend() ) || ( j != marks_.end() ) ) {
+
         const auto next_mark =
             ( j != marks_.end() ) ? j->lineNumber() : maxValue<LineNumber>();
+
         const auto next_match =
             ( i != matching_lines_.cend() ) ? i->lineNumber() : maxValue<LineNumber>();
-        // We choose a Mark over a Match if a line is both, just an arbitrary choice really.
+
+        LineNumber line;
+        FilteredLineType lineType = Match;
+
         if ( next_mark <= next_match ) {
             // LOG(logDEBUG) << "Add mark at " << next_mark;
-            filteredItemsCache_.emplace_back( next_mark, Mark );
-            if ( j != marks_.end() )
-                ++j;
-            if ( ( next_mark == next_match ) && ( i != matching_lines_.cend() ) )
-                ++i;  // Case when it's both match and mark.
+            line = next_mark;
+            lineType = Mark;
+            ++j;
         }
-        else {
+
+        if ( next_mark >= next_match ) {
             // LOG(logDEBUG) << "Add match at " << next_match;
-            filteredItemsCache_.emplace_back( next_match, Match );
-            if ( i != matching_lines_.cend() )
-                ++i;
+            line = next_match;
+
+            // We choose a Mark over a Match if a line is both,
+            // just an arbitrary choice really.
+            lineType = lineType == Mark ? Mark : Match;
+
+            ++i;
         }
+
+        filteredItemsCache_.emplace_back( line, lineType );
     }
 
     filteredItemsCacheDirty_ = false;

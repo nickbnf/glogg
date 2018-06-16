@@ -804,14 +804,14 @@ void MainWindow::dragEnterEvent( QDragEnterEvent* event )
 void MainWindow::dropEvent( QDropEvent* event )
 {
     QList<QUrl> urls = event->mimeData()->urls();
-    if ( urls.isEmpty() )
-        return;
 
-    QString fileName = urls.first().toLocalFile();
-    if ( fileName.isEmpty() )
-        return;
+    for ( const auto& url : qAsConst( urls ) ) {
+        auto fileName = url.toLocalFile();
+        if ( fileName.isEmpty() )
+            continue;
 
-    loadFile( fileName );
+        loadFile(fileName);
+    }
 }
 
 void MainWindow::keyPressEvent( QKeyEvent* keyEvent )

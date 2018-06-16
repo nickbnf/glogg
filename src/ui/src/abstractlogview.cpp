@@ -652,6 +652,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 else {
                    emit searchNext();
                 }
+                break;
             default:
                 keyEvent->ignore();
             }

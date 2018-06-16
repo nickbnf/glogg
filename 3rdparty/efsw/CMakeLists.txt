@@ -74,7 +74,7 @@ else ()
             -Wall
             -Wno-long-long -Wno-variadic-macros
             -Wno-pedantic -Wno-unused-parameter -Wno-shadow
-            -Wimplicit-fallthrough=0)
+            -Wno-implicit-fallthrough)
 endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")

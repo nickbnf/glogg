@@ -73,21 +73,26 @@ class Marks {
     // Iterator
     // Provide a const_iterator for the client to iterate through the marks.
     class const_iterator
-            : public std::iterator<std::vector<Mark>::const_iterator::iterator_category,
-            std::vector<Mark>::const_iterator::value_type,
-            std::vector<Mark>::const_iterator::difference_type,
-            std::vector<Mark>::const_iterator::pointer,
-            std::vector<Mark>::const_iterator::reference>
     {
       public:
+        using iterator_category = std::vector<Mark>::const_iterator::iterator_category;
+        using value_type = std::vector<Mark>::const_iterator::value_type;
+        using difference_type = std::vector<Mark>::const_iterator::difference_type;
+        using pointer = std::vector<Mark>::const_iterator::pointer;
+        using reference = std::vector<Mark>::const_iterator::reference;
+
         const_iterator( std::vector<Mark>::const_iterator iter )
         { internal_iter_ = iter; }
-        const Mark& operator*()
+
+        const Mark& operator*() const
         { return *internal_iter_; }
-        const Mark* operator->()
+
+        const Mark* operator->() const
         { return &(*internal_iter_); }
+
         bool operator!=( const const_iterator& other ) const
         { return ( internal_iter_ != other.internal_iter_ ); }
+
         const_iterator& operator++()
         { ++internal_iter_ ; return *this; }
         const_iterator& operator--()

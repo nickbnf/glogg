@@ -13,21 +13,21 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - sourceline: ppa:beineri/opt-qt593-trusty
+            - sourceline: ppa:beineri/opt-qt595-trusty
           packages:
-            - g++-6
+            - g++-7
             - qt59base
             - ninja-build
             - rpm
             - pandoc
       env:
-         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
          - CPACK_GENERATOR="RPM;DEB"
 
     - os: osx
       compiler: clang
-      osx_image: xcode8.3
+      osx_image: xcode9.2
       env:
         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/osx"
         - CPACK_GENERATOR="DragNDrop"
@@ -38,7 +38,7 @@ matrix:
 
 env:
     global:
-        - KLOGG_VERSION_EVAL='KLOGG_VERSION=17.12.0.$TRAVIS_BUILD_NUMBER'
+        - KLOGG_VERSION_EVAL='KLOGG_VERSION=18.06.0.$TRAVIS_BUILD_NUMBER'
         - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-G Ninja -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=True"'
 
 before_install:

@@ -192,20 +192,11 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 # Debug symbols even in release build
 QMAKE_CXXFLAGS = -g
 
-# Which compiler are we using
-system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) || macx {
-    message ( "g++ version 4.7 or newer, supports C++11" )
-    CONFIG += C++11
-}
-else {
-    CONFIG += C++0x
-}
+CONFIG += c++11
 
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
 QMAKE_CXXFLAGS += -Wextra
-C++0x:QMAKE_CXXFLAGS += -std=c++0x
-C++11:QMAKE_CXXFLAGS += -std=c++11
 
 GPROF {
     QMAKE_CXXFLAGS += -pg
@@ -249,7 +240,7 @@ else {
 }
 
 # Optional features (e.g. CONFIG+=no-dbus)
-system(pkg-config --exists QtDBus):!no-dbus {
+system(pkg-config --exists Qt5DBus):!no-dbus {
     message("Support for D-BUS will be included")
     QT += dbus
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_DBUS
@@ -258,7 +249,7 @@ system(pkg-config --exists QtDBus):!no-dbus {
 }
 else {
     message("Support for D-BUS will NOT be included")
-    win32 || macx {
+    win32 | macx {
         message("Support for cross-platform IPC will be included")
         QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_SOCKETIPC
         SOURCES += src/socketexternalcom.cpp
@@ -279,7 +270,7 @@ else {
 }
 
 # File watching
-linux-g++ || linux-g++-64 {
+linux-g++ | linux-g++-64 {
     CONFIG += inotify
 }
 

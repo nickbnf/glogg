@@ -118,8 +118,16 @@ isEmpty(BOOST_PATH) {
 else {
     message(Building using static Boost libraries at $$BOOST_PATH)
 
-    SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp \
-        $$BOOST_PATH/libs/smart_ptr/src/*.cpp
+    SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp
+
+    exists( $$BOOST_PATH/libs/smart_ptr/src/sp_collector.cpp ) {
+        message( "'old' version of Boost" )
+        SOURCES += $$BOOST_PATH/libs/smart_ptr/src/*.cpp
+    }
+    else {
+        message( "'new' version of Boost" )
+        SOURCES += $$BOOST_PATH/libs/smart_ptr/extras/src/*.cpp
+    }
 
     INCLUDEPATH += $$BOOST_PATH
 }

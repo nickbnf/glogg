@@ -104,8 +104,10 @@ template<typename Driver>
 class ObservedFileList {
     public:
         ObservedFileList() :
-            heartBeat_ { std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}) }
+            // Use an empty deleter since we don't really own this.
+            heartBeat_ { this, [] (void*) {} }
             { }
+        ObservedFileList( const ObservedFileList& ) = delete;
         ~ObservedFileList() = default;
 
         // The functions return a pointer to the existing file (if exists)
@@ -193,8 +195,10 @@ class ObservedFileList {
         // Map the inotify directory wds to the observed files
         std::map<int, ObservedFile<Driver>*> by_dir_wd_;
 
-        // Heartbeat
-        std::shared_ptr<void> heartBeat_;
+        // A shared_ptr to self.
+        // weak_ptr's from this can check if the list is still alive.
+        // This probably shouldn't be copied.
+        std::shared_ptr<ObservedFileList> heartBeat_;
 
         // Clean all reference to any expired directory
         void cleanRefsToExpiredDirs();
@@ -350,14 +354,14 @@ std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::addWatchedDirecto
         const std::string& dir_name,
         std::function<void( ObservedDir<Driver>* )> remove_notification )
 {
-    std::weak_ptr<void> weakHeartBeat(heartBeat_);
+    std::weak_ptr<ObservedFileList> weakHeartBeat(heartBeat_);
 
     std::shared_ptr<ObservedDir<Driver>> dir = {
             new ObservedDir<Driver>( dir_name ),
-            [this, remove_notification, weakHeartBeat] (ObservedDir<Driver>* d) {
-                if ( auto heart_beat = weakHeartBeat.lock() ) {
+            [remove_notification, weakHeartBeat] (ObservedDir<Driver>* d) {
+                if ( auto list = weakHeartBeat.lock() ) {
                     remove_notification( d );
-                    this->cleanRefsToExpiredDirs();
+                    list->cleanRefsToExpiredDirs();
                 }
                 delete d; } };
 

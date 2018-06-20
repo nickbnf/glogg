@@ -265,7 +265,7 @@ void IndexOperation::doIndex(LineOffset initialPosition )
             const auto block_beginning = blockData.first;
             const auto& block = blockData.second;
 
-            LOG_INFO << "Indexing block " << block_beginning;
+            LOG(logDEBUG) << "Indexing block " << block_beginning;
 
             if (block.isEmpty()) {
                 QMutexLocker lock(&indexingMutex);
@@ -363,7 +363,7 @@ void IndexOperation::doIndex(LineOffset initialPosition )
                 blockDone.wait(&indexingMutex);
             }
 
-            LOG_INFO << "Sending block " << block_beginning;
+            LOG(logDEBUG) << "Sending block " << block_beginning;
             blockSender(std::make_pair(block_beginning, std::move(block)));
         }
         blockSender(std::make_pair(file_size, QByteArray{}));
@@ -377,8 +377,8 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 
-        LOG_INFO << "Indexing done, took " << duration << " ms";
-        LOG_INFO << "Indexing perf " << (1000.f * file_size / duration) / (1024*1024) << " MiB/s";
+        LOG( logINFO ) << "Indexing done, took " << duration << " ms";
+        LOG( logINFO ) << "Indexing perf " << (1000.f * file_size / duration) / (1024*1024) << " MiB/s";
 
 
         // Check if there is a non LF terminated line at the end of the file

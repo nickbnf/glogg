@@ -29,6 +29,8 @@
 #include "persistentinfo.h"
 #include "configuration.h"
 
+#include <chrono>
+
 qint64 IndexingData::getSize() const
 {
     QMutexLocker locker( &dataMutex_ );
@@ -241,6 +243,9 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         QTextCodec* encodingGuess = nullptr;
         EncodingParameters encodingParams;
 
+        using namespace std::chrono;
+        high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
         // Count the number of lines and max length
         // (read big chunks to speed up reading from disk)
         file.seek( pos );
@@ -319,6 +324,13 @@ void IndexOperation::doIndex(LineOffset initialPosition )
 
         // Check if there is a non LF terminated line at the end of the file
         const auto file_size = file.size();
+
+        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+
+        LOG_INFO << "Indexing done, took " << duration << " ms";
+        LOG_INFO << "Indexing perf " << (1000.f * file_size / duration) / (1024*1024) << " MiB/s";
+
         if ( !*interruptRequest_ && file_size > pos ) {
             LOG( logWARNING ) <<
                 "Non LF terminated file, adding a fake end of line";

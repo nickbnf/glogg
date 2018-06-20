@@ -33,6 +33,16 @@ private:
 
 }
 
+EncodingParameters::EncodingParameters(const QTextCodec* codec)
+{
+    static const QChar lineFeed(QChar::LineFeed);
+    QTextCodec::ConverterState convertState(QTextCodec::IgnoreHeader);
+    QByteArray encodedLineFeed = codec->fromUnicode(&lineFeed, 1, &convertState);
+
+    lineFeedWidth = encodedLineFeed.length();
+    lineFeedIndex = encodedLineFeed[0] == '\n' ? 0 : (encodedLineFeed.length() - 1);
+}
+
 QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
 {
     QMutexLocker lock(&mutex_);

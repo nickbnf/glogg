@@ -27,7 +27,6 @@
 
 #include "logdata.h"
 #include "logdataworkerthread.h"
-#include "encodingdetector.h"
 
 #include "persistentinfo.h"
 #include "configuration.h"
@@ -225,173 +224,188 @@ PartialIndexOperation::PartialIndexOperation( const QString& fileName,
 {
 }
 
+FastLinePositionArray IndexOperation::parseDataBlock( int block_beginning,
+                                                     const QByteArray &block,
+                                                     IndexingState &state ) const
+{
+    state.max_length = 0;
+    FastLinePositionArray line_positions;
+
+    int pos_within_block = 0;
+    while ( pos_within_block != -1 ) {
+        pos_within_block = qMax( static_cast<int>( state.pos - block_beginning ), 0 );
+
+        // Looking for the next \n, expanding tabs in the process
+        do {
+            if ( pos_within_block < block.length() ) {
+                const char c =  block.at( pos_within_block + state.encodingParams.lineFeedIndex );
+
+                if ( c == '\n')
+                    break;
+                else if ( c == '\t')
+                    state.additional_spaces += AbstractLogData::tabStop -
+                        ( static_cast<int>( ( block_beginning - state.pos ) + pos_within_block
+                            + state.additional_spaces ) % AbstractLogData::tabStop ) - 1;
+
+                pos_within_block += state.encodingParams.lineFeedWidth;
+            }
+            else {
+                pos_within_block = -1;
+            }
+        } while ( pos_within_block != -1 );
+
+        // When a end of line has been found...
+        if ( pos_within_block != -1 ) {
+            state.end = pos_within_block + block_beginning;
+            const auto length = static_cast<LineLength::UnderlyingType>( state.end - state.pos + state.additional_spaces );
+            if ( length > state.max_length )
+                state.max_length = length;
+
+            state.pos = state.end + state.encodingParams.lineFeedWidth;
+            state.additional_spaces = 0;
+            line_positions.append( LineOffset( state.pos ) );
+        }
+    }
+
+    return line_positions;
+
+}
+
+void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& state ) const
+{
+    if ( !state.fileTextCodec ) {
+        state.fileTextCodec = indexing_data_->getForcedEncoding();
+        if ( !state.fileTextCodec ) {
+            state.fileTextCodec = EncodingDetector::getInstance().detectEncoding( block );
+        }
+
+        state.encodingParams = EncodingParameters( state.fileTextCodec );
+        LOG(logINFO) << "Encoding " << state.fileTextCodec->name().toStdString()
+                      << ", Char width " << state.encodingParams.lineFeedWidth;
+    }
+
+    if ( !state.encodingGuess ) {
+        state.encodingGuess = EncodingDetector::getInstance().detectEncoding( block );
+        LOG(logINFO) << "Encoding guess " << state.encodingGuess->name().toStdString();
+    }
+}
+
+auto IndexOperation::setupIndexingProcess( IndexingState &state )
+{
+    using BlockData = std::pair<int,QByteArray>;
+    stlab::sender<BlockData> blockSender;
+    stlab::receiver<BlockData> indexer;
+
+    std::tie( blockSender, indexer ) = stlab::channel<BlockData>( stlab::default_executor );
+
+    auto process = indexer | [&, this]( const BlockData& blockData )
+    {
+        const auto block_beginning = blockData.first;
+        const auto& block = blockData.second;
+
+        LOG(logDEBUG) << "Indexing block " << block_beginning;
+
+        if ( block.isEmpty() ) {
+            QMutexLocker lock( &state.indexingMutex );
+            state.indexingDone.wakeAll();
+            return;
+        }
+
+        guessEncoding( block, state );
+
+        auto line_positions = parseDataBlock( block_beginning, block, state );
+        indexing_data_->addAll( block.length(),
+                               LineLength( state.max_length ),
+                               line_positions, state.encodingGuess );
+
+        // Update the caller for progress indication
+        const auto progress = static_cast<int>( ( state.file_size > 0 ) ? state.pos*100 / state.file_size : 100 );
+        emit indexingProgressed( progress );
+
+        state.indexedSize.store( block_beginning + block.size(), std::memory_order_release );
+        {
+            QMutexLocker lock( &state.indexingMutex );
+            state.blockDone.wakeAll();
+        }
+    };
+
+    indexer.set_ready();
+
+    return std::make_tuple(std::move(blockSender), std::move(indexer), std::move(process));
+}
+
 void IndexOperation::doIndex(LineOffset initialPosition )
 {
     static std::shared_ptr<Configuration> config =
         Persistent<Configuration>( "settings" );
 
-    const uint32_t sizeChunk = config->indexReadBufferSizeMb() * 1024 * 1024;
+    const uint32_t sizeChunk = 1024 * 1024;
+    const auto prefetchBufferSize = config->indexReadBufferSizeMb() * sizeChunk;
 
     QFile file( fileName_ );
 
     if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
 
-        auto pos = initialPosition.get(); // Absolute position of the start of current line
-        auto end = 0ll;  // Absolute position of the end of current line
-        int additional_spaces = 0;  // Additional spaces due to tabs
+        IndexingState state;
+        state.pos = initialPosition.get();
+        state.end = 0ll;
+        state.additional_spaces = 0;
+        state.max_length = 0;
+        state.encodingGuess = nullptr;
+        state.fileTextCodec = nullptr;
+        state.indexedSize.store(0, std::memory_order_release);
+        state.file_size = file.size();
 
-        QTextCodec* fileTextCodec = nullptr;
-        QTextCodec* encodingGuess = nullptr;
-        EncodingParameters encodingParams;
-
-        const auto file_size = file.size();
-
-        stlab::sender<std::pair<int,QByteArray>> blockSender;
-        stlab::receiver<std::pair<int,QByteArray>> indexer;
-
-        std::tie(blockSender, indexer) = stlab::channel<std::pair<int, QByteArray>>(stlab::default_executor);
-
-        QMutex indexingMutex;
-        QWaitCondition indexingDone;
-        QWaitCondition blockDone;
-
-        std::atomic_int indexedSize {0};
-
-        auto hold = indexer | [&](const std::pair<int, QByteArray>& blockData)
-        {
-            FastLinePositionArray line_positions;
-            LineLength::UnderlyingType max_length = 0;
-
-            const auto block_beginning = blockData.first;
-            const auto& block = blockData.second;
-
-            LOG(logDEBUG) << "Indexing block " << block_beginning;
-
-            if (block.isEmpty()) {
-                QMutexLocker lock(&indexingMutex);
-                indexingDone.wakeAll();
-                return;
-            }
-
-            if ( !fileTextCodec ) {
-                fileTextCodec = indexing_data_->getForcedEncoding();
-                if ( !fileTextCodec ) {
-                    fileTextCodec = EncodingDetector::getInstance().detectEncoding(block);
-                }
-
-                encodingParams = EncodingParameters( fileTextCodec );
-                LOG(logDEBUG) << "Encoding " << fileTextCodec->name().toStdString() <<", Char width " << encodingParams.lineFeedWidth;
-            }
-
-            if ( !encodingGuess ) {
-                encodingGuess = EncodingDetector::getInstance().detectEncoding(block);
-            }
-
-            // Count the number of lines in each chunk
-            int pos_within_block = 0;
-            while ( pos_within_block != -1 ) {
-                pos_within_block = qMax( static_cast<int>( pos - block_beginning ), 0 );
-
-                // Looking for the next \n, expanding tabs in the process
-                do {
-                    if ( pos_within_block < block.length() ) {
-                        const char c =  block.at( pos_within_block + encodingParams.lineFeedIndex );
-
-                        if ( c == '\n')
-                            break;
-                        else if ( c == '\t')
-                            additional_spaces += AbstractLogData::tabStop -
-                                ( static_cast<int>( ( block_beginning - pos ) + pos_within_block
-                                    + additional_spaces ) % AbstractLogData::tabStop ) - 1;
-
-                        pos_within_block += encodingParams.lineFeedWidth;
-                    }
-                    else {
-                        pos_within_block = -1;
-                    }
-                } while ( pos_within_block != -1 );
-
-                // When a end of line has been found...
-                if ( pos_within_block != -1 ) {
-                    end = pos_within_block + block_beginning;
-                    const auto length = static_cast<LineLength::UnderlyingType>( end-pos + additional_spaces );
-                    if ( length > max_length )
-                        max_length = length;
-
-                    pos = end + encodingParams.lineFeedWidth;
-                    additional_spaces = 0;
-                    line_positions.append( LineOffset( pos ) );
-                }
-            }
-
-            // Update the shared data
-            indexing_data_->addAll( block.length(),
-                                   LineLength( max_length ),
-                                   line_positions,
-                   encodingGuess );
-
-            // Update the caller for progress indication
-            auto progress = static_cast<int>( ( file_size > 0 ) ? pos*100 / file_size : 100 );
-            emit indexingProgressed( progress );
-            indexedSize.store(block_beginning + block.size(), std::memory_order_release);
-            {
-                QMutexLocker lock(&indexingMutex);
-                blockDone.wakeAll();
-            }
-        };
-
-        indexer.set_ready();
+        auto process = setupIndexingProcess(state);
+        auto blockSender = std::get<0>(process);
 
         using namespace std::chrono;
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-        // Count the number of lines and max length
-        // (read big chunks to speed up reading from disk)
-        file.seek( pos );
+        file.seek( state.pos );
         while ( !file.atEnd() ) {
 
             if ( *interruptRequest_ )
                 break;
 
-            // Read a chunk of 5MB
             const auto block_beginning = file.pos();
             const auto block = file.read( sizeChunk );
 
-            while (block_beginning - indexedSize.load(std::memory_order_acquire) > 1 * sizeChunk)
+            while (block_beginning - state.indexedSize.load(std::memory_order_acquire) > prefetchBufferSize)
             {
-                QMutexLocker lock(&indexingMutex);
-                blockDone.wait(&indexingMutex);
+                QMutexLocker lock(&state.indexingMutex);
+                state.blockDone.wait(&state.indexingMutex);
             }
 
             LOG(logDEBUG) << "Sending block " << block_beginning;
-            blockSender(std::make_pair(block_beginning, std::move(block)));
+            blockSender(std::make_pair(block_beginning, block));
         }
-        blockSender(std::make_pair(file_size, QByteArray{}));
+
+        blockSender(std::make_pair(state.file_size, QByteArray{}));
         blockSender.close();
 
         {
-            QMutexLocker lock(&indexingMutex);
-            indexingDone.wait(&indexingMutex);
+            QMutexLocker lock(&state.indexingMutex);
+            state.indexingDone.wait(&state.indexingMutex);
+        }
+
+        // Check if there is a non LF terminated line at the end of the file
+        if ( !*interruptRequest_ && state.file_size > state.pos ) {
+            LOG( logWARNING ) <<
+                "Non LF terminated file, adding a fake end of line";
+
+            FastLinePositionArray line_position;
+            line_position.append( LineOffset( state.file_size + 1 ) );
+            line_position.setFakeFinalLF();
+
+            indexing_data_->addAll( 0, 0_length, line_position, state.encodingGuess );
         }
 
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 
         LOG( logINFO ) << "Indexing done, took " << duration << " ms";
-        LOG( logINFO ) << "Indexing perf " << (1000.f * file_size / duration) / (1024*1024) << " MiB/s";
-
-
-        // Check if there is a non LF terminated line at the end of the file
-        if ( !*interruptRequest_ && file_size > pos ) {
-            LOG( logWARNING ) <<
-                "Non LF terminated file, adding a fake end of line";
-
-            FastLinePositionArray line_position;
-            line_position.append( LineOffset( file_size + 1 ) );
-            line_position.setFakeFinalLF();
-
-            indexing_data_->addAll( 0, 0_length, line_position, encodingGuess );
-        }
+        LOG( logINFO ) << "Indexing perf " << (1000.f * state.file_size / duration) / (1024*1024) << " MiB/s";
     }
     else {
         // TODO: Check that the file is seekable?

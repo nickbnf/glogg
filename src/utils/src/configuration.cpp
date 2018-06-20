@@ -56,7 +56,7 @@ Configuration::Configuration()
     useParallelSearch_ = true;
     useSearchResultsCache_ = true;
     searchResultsCacheLines_ = 1000000;
-    indexReadBufferSizeMb_ = 5;
+    indexReadBufferSizeMb_ = 16;
     searchReadBufferSizeLines_ = 5000;
 }
 

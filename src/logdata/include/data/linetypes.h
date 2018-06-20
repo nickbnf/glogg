@@ -1,7 +1,7 @@
 #pragma once
 #include <named_type/named_type.hpp>
 #include <limits>
-#include <nonstd/optional.hpp>
+#include <absl/types/optional.h>
 #include <plog/Record.h>
 
 #include <QMetaType>
@@ -39,7 +39,7 @@ constexpr StrongType maxValue()
     return StrongType( std::numeric_limits<typename StrongType::UnderlyingType>::max() );
 }
 
-using OptionalLineNumber = nonstd::optional<LineNumber>;
+using OptionalLineNumber = absl::optional<LineNumber>;
 
 template <typename T, typename Parameter, template<typename> class... Skills>
 plog::util::nstringstream& operator<<( plog::util::nstringstream& os, fluent::NamedType<T, Parameter, Skills...> const& object )

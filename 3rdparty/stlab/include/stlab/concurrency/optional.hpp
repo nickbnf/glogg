@@ -14,6 +14,7 @@
 #define STLAB_STD_OPTIONAL 1
 #define STLAB_STD_EXPERIMENTAL_OPTIONAL 2
 #define STLAB_BOOST_OPTIONAL 3
+#define STLAB_ABSEIL_OPTIONAL 4
 
 // The library can be used with boost::optinal, std::experimental::optional or std::optional.
 // Without any additional define, it uses the versions from the standard, if it is available.
@@ -33,6 +34,9 @@
 #elif __has_include(<experimental/optional>) // Check for an experimental version
 #include <experimental/optional>
 #define STLAB_OPTIONAL STLAB_STD_EXPERIMENTAL_OPTIONAL
+#elif __has_include(<absl/types/optional.h>) // Check for abseil version
+#include <absl/types/optional.h>
+#define STLAB_OPTIONAL STLAB_ABSEIL_OPTIONAL
 #endif
 #endif
 #endif
@@ -57,6 +61,13 @@ template <typename T>
 using optional = std::experimental::optional<T>;
 
 constexpr std::experimental::nullopt_t nullopt{std::experimental::nullopt};
+
+#elif STLAB_OPTIONAL == STLAB_ABSEIL_OPTIONAL
+
+template <typename T>
+using optional = absl::optional<T>;
+
+constexpr absl::nullopt_t nullopt{absl::nullopt};
 
 #elif STLAB_OPTIONAL == STLAB_BOOST_OPTIONAL
 

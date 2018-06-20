@@ -83,6 +83,24 @@ class IndexingData
     QTextCodec* encodingForced_;
 };
 
+struct IndexingState
+{
+    EncodingParameters encodingParams;
+    LineOffset::UnderlyingType pos;
+    LineLength::UnderlyingType max_length;
+    LineLength::UnderlyingType additional_spaces;
+    LineOffset::UnderlyingType end;
+    LineOffset::UnderlyingType file_size;
+    LineOffset::UnderlyingType indexedSize;
+
+    QTextCodec* encodingGuess;
+    QTextCodec* fileTextCodec;
+
+    QMutex indexingMutex;
+    QWaitCondition indexingDone;
+    QWaitCondition blockDone;
+};
+
 class IndexOperation : public QObject
 {
   Q_OBJECT
@@ -99,28 +117,15 @@ class IndexOperation : public QObject
 
   protected:
 
-    struct IndexingState
-    {
-        EncodingParameters encodingParams;
-        LineOffset::UnderlyingType pos;
-        LineLength::UnderlyingType max_length;
-        LineLength::UnderlyingType additional_spaces;
-        LineOffset::UnderlyingType end;
-        LineOffset::UnderlyingType file_size;
-
-        QTextCodec* encodingGuess;
-        QTextCodec* fileTextCodec;
-
-        QMutex indexingMutex;
-        QWaitCondition indexingDone;
-        QWaitCondition blockDone;
-        std::atomic_int indexedSize;
-    };
-
     // Returns the total size indexed
     // Modify the passed linePosition and maxLength
     void doIndex( LineOffset initialPosition );
 
+    QString fileName_;
+    AtomicFlag* interruptRequest_;
+    IndexingData* indexing_data_;
+
+private:
     FastLinePositionArray parseDataBlock(
             int blockBegining, const QByteArray& block,
             IndexingState& state ) const;
@@ -129,10 +134,6 @@ class IndexOperation : public QObject
                        IndexingState &state ) const;
 
     auto setupIndexingProcess(IndexingState& state);
-
-    QString fileName_;
-    AtomicFlag* interruptRequest_;
-    IndexingData* indexing_data_;
 };
 
 class FullIndexOperation : public IndexOperation

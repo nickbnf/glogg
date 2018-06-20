@@ -5,6 +5,36 @@
 
 class QTextCodec;
 
+struct EncodingParameters
+{
+    EncodingParameters():lineFeedWidth(1),lineFeedIndex(0){}
+    explicit EncodingParameters(const QTextCodec* codec);
+
+    int lineFeedWidth;
+    int lineFeedIndex;
+
+    bool operator ==(const EncodingParameters& other) const
+    {
+        return  lineFeedWidth == other.lineFeedWidth &&
+                lineFeedIndex == other.lineFeedIndex;
+    }
+
+    bool operator !=(const EncodingParameters& other) const
+    {
+        return !operator ==(other);
+    }
+
+    int getBeforeCrOffset() const
+    {
+        return lineFeedIndex;
+    }
+
+    int getAfterCrOffset() const
+    {
+        return lineFeedWidth - lineFeedIndex - 1;
+    }
+};
+
 class EncodingDetector {
 public:
 

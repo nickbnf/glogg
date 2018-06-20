@@ -29,6 +29,7 @@
 
 #include "loadingstatus.h"
 #include "linepositionarray.h"
+#include "encodingdetector.h"
 
 #include "atomicflag.h"
 
@@ -97,9 +98,37 @@ class IndexOperation : public QObject
     void indexingProgressed( int );
 
   protected:
+
+    struct IndexingState
+    {
+        EncodingParameters encodingParams;
+        LineOffset::UnderlyingType pos;
+        LineLength::UnderlyingType max_length;
+        LineLength::UnderlyingType additional_spaces;
+        LineOffset::UnderlyingType end;
+        LineOffset::UnderlyingType file_size;
+
+        QTextCodec* encodingGuess;
+        QTextCodec* fileTextCodec;
+
+        QMutex indexingMutex;
+        QWaitCondition indexingDone;
+        QWaitCondition blockDone;
+        std::atomic_int indexedSize;
+    };
+
     // Returns the total size indexed
     // Modify the passed linePosition and maxLength
-    void doIndex(LineOffset initialPosition );
+    void doIndex( LineOffset initialPosition );
+
+    FastLinePositionArray parseDataBlock(
+            int blockBegining, const QByteArray& block,
+            IndexingState& state ) const;
+
+    void guessEncoding( const QByteArray& block,
+                       IndexingState &state ) const;
+
+    auto setupIndexingProcess(IndexingState& state);
 
     QString fileName_;
     AtomicFlag* interruptRequest_;

@@ -13,6 +13,8 @@
 
 #define STLAB_STD_VARIANT 1
 #define STLAB_BOOST_VARIANT 2
+#define STLAB_ABSEIL_VARIANT 3
+
 
 // The library can be used with boost::variant or std::variant.
 // Without any additional define, it uses the versions from the standard, if it is available.
@@ -29,6 +31,9 @@
 #if __has_include(<variant>) && STLAB_CPP_VERSION == 17
 #include <variant>
 #define STLAB_VARIANT STLAB_STD_VARIANT
+#elif __has_include(<absl/types/variant.h>)
+#include <absl/types/variant.h>
+#define STLAB_VARIANT STLAB_ABSEIL_VARIANT
 #endif
 #endif
 #endif
@@ -66,6 +71,36 @@ constexpr const T&& get(const std::variant<Types...>&& v) {
 
 template <typename... Types>
 constexpr auto index(const std::variant<Types...>& v) {
+    return v.index();
+}
+
+#elif STLAB_VARIANT == STLAB_ABSEIL_VARIANT
+
+template <typename... T>
+using variant = absl::variant<T...>;
+
+template <class T, class... Types>
+constexpr T& get(absl::variant<Types...>& v) {
+    return absl::get<T>(v);
+}
+
+template <class T, class... Types>
+constexpr T&& get(absl::variant<Types...>&& v) {
+    return absl::get<T>(std::move(v));
+}
+
+template <class T, class... Types>
+constexpr const T& get(const absl::variant<Types...>& v) {
+    return absl::get<T>(v);
+}
+
+template <class T, class... Types>
+constexpr const T&& get(const absl::variant<Types...>&& v) {
+    return absl::get<T>(std::move(v));
+}
+
+template <typename... Types>
+constexpr auto index(const absl::variant<Types...>& v) {
     return v.index();
 }
 

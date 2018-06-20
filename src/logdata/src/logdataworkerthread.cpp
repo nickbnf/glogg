@@ -20,6 +20,9 @@
 #include <QFile>
 #include <QTextStream>
 
+#include <stlab/concurrency/channel.hpp>
+#include <stlab/concurrency/default_executor.hpp>
+
 #include "log.h"
 
 #include "logdata.h"
@@ -241,19 +244,34 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         QTextCodec* encodingGuess = nullptr;
         EncodingParameters encodingParams;
 
-        // Count the number of lines and max length
-        // (read big chunks to speed up reading from disk)
-        file.seek( pos );
-        while ( !file.atEnd() ) {
+        const auto file_size = file.size();
+
+        stlab::sender<std::pair<int,QByteArray>> blockSender;
+        stlab::receiver<std::pair<int,QByteArray>> indexer;
+
+        std::tie(blockSender, indexer) = stlab::channel<std::pair<int, QByteArray>>(stlab::default_executor);
+
+        QMutex indexingMutex;
+        QWaitCondition indexingDone;
+        QWaitCondition blockDone;
+
+        std::atomic_int indexedSize {0};
+
+        auto hold = indexer | [&](const std::pair<int, QByteArray>& blockData)
+        {
             FastLinePositionArray line_positions;
             LineLength::UnderlyingType max_length = 0;
 
-            if ( *interruptRequest_ )
-                break;
+            const auto block_beginning = blockData.first;
+            const auto& block = blockData.second;
 
-            // Read a chunk of 5MB
-            const auto block_beginning = file.pos();
-            const auto block = file.read( sizeChunk );
+            LOG_INFO << "Indexing block " << block_beginning;
+
+            if (block.isEmpty()) {
+                QMutexLocker lock(&indexingMutex);
+                indexingDone.wakeAll();
+                return;
+            }
 
             if ( !fileTextCodec ) {
                 fileTextCodec = indexing_data_->getForcedEncoding();
@@ -313,12 +331,57 @@ void IndexOperation::doIndex(LineOffset initialPosition )
                    encodingGuess );
 
             // Update the caller for progress indication
-            auto progress = static_cast<int>( ( file.size() > 0 ) ? pos*100 / file.size() : 100 );
+            auto progress = static_cast<int>( ( file_size > 0 ) ? pos*100 / file_size : 100 );
             emit indexingProgressed( progress );
+            indexedSize.store(block_beginning + block.size(), std::memory_order_release);
+            {
+                QMutexLocker lock(&indexingMutex);
+                blockDone.wakeAll();
+            }
+        };
+
+        indexer.set_ready();
+
+        using namespace std::chrono;
+        high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
+        // Count the number of lines and max length
+        // (read big chunks to speed up reading from disk)
+        file.seek( pos );
+        while ( !file.atEnd() ) {
+
+            if ( *interruptRequest_ )
+                break;
+
+            // Read a chunk of 5MB
+            const auto block_beginning = file.pos();
+            const auto block = file.read( sizeChunk );
+
+            while (block_beginning - indexedSize.load(std::memory_order_acquire) > 1 * sizeChunk)
+            {
+                QMutexLocker lock(&indexingMutex);
+                blockDone.wait(&indexingMutex);
+            }
+
+            LOG_INFO << "Sending block " << block_beginning;
+            blockSender(std::make_pair(block_beginning, std::move(block)));
+        }
+        blockSender(std::make_pair(file_size, QByteArray{}));
+        blockSender.close();
+
+        {
+            QMutexLocker lock(&indexingMutex);
+            indexingDone.wait(&indexingMutex);
         }
 
+        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+
+        LOG_INFO << "Indexing done, took " << duration << " ms";
+        LOG_INFO << "Indexing perf " << (1000.f * file_size / duration) / (1024*1024) << " MiB/s";
+
+
         // Check if there is a non LF terminated line at the end of the file
-        const auto file_size = file.size();
         if ( !*interruptRequest_ && file_size > pos ) {
             LOG( logWARNING ) <<
                 "Non LF terminated file, adding a fake end of line";

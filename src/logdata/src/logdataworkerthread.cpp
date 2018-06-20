@@ -292,7 +292,7 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
     }
 }
 
-auto IndexOperation::setupIndexingProcess( IndexingState &state )
+auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 {
     using BlockData = std::pair<int,QByteArray>;
     stlab::sender<BlockData> blockSender;
@@ -300,7 +300,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState &state )
 
     std::tie( blockSender, indexer ) = stlab::channel<BlockData>( stlab::default_executor );
 
-    auto process = indexer | [&, this]( const BlockData& blockData )
+    auto process = indexer | [this, &indexingState]( const BlockData& blockData )
     {
         const auto block_beginning = blockData.first;
         const auto& block = blockData.second;
@@ -308,27 +308,29 @@ auto IndexOperation::setupIndexingProcess( IndexingState &state )
         LOG(logDEBUG) << "Indexing block " << block_beginning;
 
         if ( block.isEmpty() ) {
-            QMutexLocker lock( &state.indexingMutex );
-            state.indexedSize = state.file_size;
-            state.indexingDone.wakeAll();
+            QMutexLocker lock( &indexingState.indexingMutex );
+            indexingState.indexedSize = indexingState.file_size;
+            indexingState.indexingDone.wakeAll();
             return;
         }
 
-        guessEncoding( block, state );
+        guessEncoding( block, indexingState );
 
-        auto line_positions = parseDataBlock( block_beginning, block, state );
+        auto line_positions = parseDataBlock( block_beginning, block, indexingState );
         indexing_data_->addAll( block.length(),
-                               LineLength( state.max_length ),
-                               line_positions, state.encodingGuess );
+                               LineLength( indexingState.max_length ),
+                               line_positions, indexingState.encodingGuess );
 
         // Update the caller for progress indication
-        const auto progress = static_cast<int>( ( state.file_size > 0 ) ? state.pos*100 / state.file_size : 100 );
+        const auto progress = static_cast<int>( ( indexingState.file_size > 0 )
+                                                ? indexingState.pos*100 / indexingState.file_size
+                                                : 100 );
         emit indexingProgressed( progress );
 
         {
-            QMutexLocker lock( &state.indexingMutex );
-            state.indexedSize = block_beginning + block.size();
-            state.blockDone.wakeAll();
+            QMutexLocker lock( &indexingState.indexingMutex );
+            indexingState.indexedSize = block_beginning + block.size();
+            indexingState.blockDone.wakeAll();
         }
     };
 

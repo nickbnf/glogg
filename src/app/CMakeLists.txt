@@ -50,11 +50,7 @@ elseif (APPLE)
     set_source_files_properties(${NOTICE_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
     set_source_files_properties(${COPYING_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
 
-    if(${BUILD_DOC})
-        set_source_files_properties(${README_HTML} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
-    else()
-        set_source_files_properties(${README_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
-    endif()
+    set_source_files_properties(${README_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
 
     set(MACOSX_BUNDLE_BUNDLE_DISPLAY_NAME ${PROJECT_DESCRIPTION})
     set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})

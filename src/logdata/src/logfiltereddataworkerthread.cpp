@@ -301,12 +301,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         // copy and optimize regex for each thread
         auto regexp = QRegularExpression{regexp_.pattern(), regexp_.patternOptions()};
         regexp.optimize();
-        return [regexp, index]( const BlockData& blockData )
+        return [regexp, index, this]( const BlockData& blockData )
         {
               const auto& chunkStart = std::get<0>(blockData);
               const auto& lines = std::get<1>(blockData);
 
-              LOG( logINFO ) << "Searcher " << index << " " << chunkStart;
+              LOG( logDEBUG ) << "Searcher " << index << " " << chunkStart;
 
               if ( lines.isEmpty() ) {
                   return std::make_tuple( chunkStart, lines, PartialSearchResults{} );
@@ -344,7 +344,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
          // and update the client
          searchData.addAll( maxLength, matchResults.matchingLines, processedLines );
 
-         LOG( logINFO ) << "done Searching chunk starting at " << matchResults.chunkStart <<
+         LOG( logDEBUG ) << "done Searching chunk starting at " << matchResults.chunkStart <<
               ", " << matchResults.processedLines << " lines read.";
 
          blocksDone.release( lines.size() );

@@ -5,10 +5,10 @@
 CI builds 18.06.0.259 (x64):
 [windows portable](https://ci.appveyor.com/api/buildjobs/uvh5b4r8cslc8hlh/artifacts/klogg-18.06.0.259-portable.zip) |
 [windows installer](https://ci.appveyor.com/api/buildjobs/uvh5b4r8cslc8hlh/artifacts/klogg-18.06.0.259-setup.exe) |
-[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.1/build/packages/klogg-17.12.0-r245-Linux.deb) |
-[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.1/build/packages/klogg-17.12.0-r245-Linux.rpm) |
-[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.1/build/packages/klogg-17.12.0.245-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/245/245.2/build/packages/klogg-17.12.0-r245-OSX.dmg)
+[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/259/259.1/build/packages/klogg-18.06.0-r259-Linux.deb) |
+[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/259/259.1/build/packages/klogg-18.06.0-r259-Linux.rpm) |
+[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/259/259.1/build/packages/klogg-18.06.0.259-x86_64.AppImage) |
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/259/259.2/build/packages/klogg-18.06.0-r259-OSX.dmg)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 

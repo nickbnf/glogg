@@ -205,9 +205,16 @@ void LogData::fileChangedOnDisk( const QString& filename )
 
     if ( newOperation ) {
         // Need to open the file in case it was absent
-        attached_file_->close();
 
-        if ( attached_file_->open( QIODevice::ReadOnly ) ) {
+        auto reopened = std::make_unique<QFile>( name );
+
+        if ( reopened->open( QIODevice::ReadOnly ) ) {
+
+            {
+                QMutexLocker lock(&fileMutex_);
+                attached_file_ = std::move(reopened);
+            }
+
             enqueueOperation( newOperation() );
             lastModifiedDate_ = info.lastModified();
 

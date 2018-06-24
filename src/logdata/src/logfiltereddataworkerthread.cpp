@@ -28,6 +28,15 @@
 #include "persistentinfo.h"
 #include "configuration.h"
 
+#include <stlab/concurrency/channel.hpp>
+#include <stlab/concurrency/default_executor.hpp>
+#include <stlab/concurrency/future.hpp>
+#include <stlab/concurrency/utility.hpp>
+
+
+#include <chrono>
+
+
 namespace
 {
     struct PartialSearchResults
@@ -36,19 +45,24 @@ namespace
 
         SearchResultArray matchingLines;
         LineLength maxLength;
+
+        LineNumber chunkStart;
+        LinesCount processedLines;
     };
 
-    PartialSearchResults filterLines(const QRegularExpression& regex,
+    PartialSearchResults filterLines( const QRegularExpression& regex,
                                      const QStringList& lines,
-                                     LineNumber chunkStart,
-                                     int proc, int procs)
+                                     LineNumber chunkStart )
     {
+        LOG( logDEBUG ) << "Filter lines at " << chunkStart;
         PartialSearchResults results;
-        for (int i = proc; i < lines.size(); i += procs) {
-            const auto& l = lines.at(i);
-            if (regex.match(l).hasMatch()) {
-                results.maxLength = qMax(results.maxLength, AbstractLogData::getUntabifiedLength(l));
-                results.matchingLines.emplace_back(chunkStart + LinesCount(i));
+        results.chunkStart = chunkStart;
+        results.processedLines = LinesCount( lines.size() );
+        for ( int i = 0; i < lines.size(); ++i ) {
+            const auto& l = lines.at( i );
+            if ( regex.match(l).hasMatch() ) {
+                results.maxLength = qMax( results.maxLength, AbstractLogData::getUntabifiedLength( l ) );
+                results.matchingLines.emplace_back( chunkStart + LinesCount( i ) );
             }
         }
         return results;
@@ -257,28 +271,99 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     const auto nbSourceLines = sourceLogData_->getNbLine();
     LineLength maxLength = 0_length;
     LinesCount nbMatches = searchData.getNbMatches();
-    SearchResultArray currentList;
-
-    std::vector<QRegularExpression> regexp;
-    if ( config->useParallelSearch() ) {
-        for ( int core = 0; core < QThread::idealThreadCount(); ++core ) {
-            regexp.emplace_back( regexp_.pattern(), regexp_.patternOptions() );
-            regexp.back().optimize();
-        }
-    }
 
     const auto nbLinesInChunk = LinesCount(config->searchReadBufferSizeLines());
 
-    // Ensure no re-alloc will be done
-    currentList.reserve( nbLinesInChunk.get() );
-
-    LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
+    LOG( logDEBUG ) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
     if (initialLine < startLine_) {
         initialLine = startLine_;
     }
 
     const auto endLine = qMin( LineNumber( nbSourceLines.get() ), endLine_ );
+
+    using namespace std::chrono;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
+    QSemaphore searchCompleted;
+    QSemaphore blocksDone;
+
+    using BlockData = std::tuple<LineNumber, QStringList, PartialSearchResults>;
+    std::array<stlab::sender<BlockData>, 3> senders;
+    std::array<stlab::receiver<BlockData>, 3> searchers;
+
+    for ( size_t i = 0; i < senders.size(); ++ i ) {
+        std::tie( senders[i], searchers[i] ) = stlab::channel<BlockData>( stlab::default_executor );
+    }
+
+    const auto makeSearcher = [this](size_t index)
+    {
+        // copy and optimize regex for each thread
+        auto regexp = QRegularExpression{regexp_.pattern(), regexp_.patternOptions()};
+        regexp.optimize();
+        return [regexp, index]( const BlockData& blockData )
+        {
+              const auto& chunkStart = std::get<0>(blockData);
+              const auto& lines = std::get<1>(blockData);
+
+              LOG( logINFO ) << "Searcher " << index << " " << chunkStart;
+
+              if ( lines.isEmpty() ) {
+                  return std::make_tuple( chunkStart, lines, PartialSearchResults{} );
+              }
+
+              auto results = filterLines( regexp, lines, chunkStart );
+              return std::make_tuple( chunkStart, lines, results );
+        };
+    };
+
+    std::array<stlab::receiver<BlockData>, 3> postProcessors;
+
+    for ( size_t i = 0; i < senders.size(); ++ i ) {
+        postProcessors[i] = searchers[i] | makeSearcher(i);
+        postProcessors[i].set_ready();
+    }
+
+    auto processMatches = [&](const BlockData& blockData)
+    {
+         const auto& lines = std::get<1>( blockData );
+
+         if ( lines.isEmpty() ) {
+             searchCompleted.release();
+             return;
+         }
+
+         const auto& matchResults = std::get<2>( blockData );
+
+         maxLength = qMax( maxLength, matchResults.maxLength );
+         nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( matchResults.matchingLines.size() ) );
+
+         const auto processedLines = LinesCount{initialLine.get() + matchResults.processedLines.get()};
+
+         // After each block, copy the data to shared data
+         // and update the client
+         searchData.addAll( maxLength, matchResults.matchingLines, processedLines );
+
+         LOG( logINFO ) << "done Searching chunk starting at " << matchResults.chunkStart <<
+              ", " << matchResults.processedLines << " lines read.";
+
+         blocksDone.release( lines.size() );
+    };
+
+    const auto processorsSize = config->useParallelSearch() ? postProcessors.size() : 1;
+
+    auto zipped = processorsSize > 1
+            ? stlab::zip(stlab::default_executor, processMatches, postProcessors[0], postProcessors[1], postProcessors[2])
+            : stlab::zip(stlab::default_executor, processMatches, postProcessors[0]);
+
+    zipped.set_ready();
+
+    for ( auto& s : searchers ) {
+        s.set_ready();
+    }
+
+    size_t currentProcess = 0;
+    blocksDone.release( nbLinesInChunk.get() * ( senders.size() + 1 ) );
 
     for ( auto chunkStart = initialLine; chunkStart < endLine; chunkStart = chunkStart + nbLinesInChunk ) {
         if ( *interruptRequested_ )
@@ -287,40 +372,40 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         const int percentage = ( chunkStart - initialLine ).get() * 100 / ( endLine - initialLine ).get();
         emit searchProgressed( nbMatches, percentage, initialLine );
 
+        LOG( logDEBUG ) << "Reading chunk starting at " << chunkStart;
+
         const auto linesInChunk = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
         const auto lines = sourceLogData_->getLines( chunkStart, linesInChunk );
 
-        LOG(logDEBUG) << "Chunk starting at " << chunkStart <<
+        LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
 
-        if ( regexp.size() > 0 ) {
-            std::vector<QFuture<PartialSearchResults>> partialResults;
-            for ( auto i=0; i < static_cast<int>( regexp.size() ); ++i ) {
-                partialResults.push_back(QtConcurrent::run( filterLines, regexp[i], lines,
-                                                           chunkStart, i, static_cast<int>( regexp.size() ) ) );
-            }
+        blocksDone.acquire( lines.size() );
 
-            for (auto& f: partialResults) {
-                f.waitForFinished();
-                auto result = f.result();
-                currentList.insert(currentList.end(), result.matchingLines.begin(), result.matchingLines.end());
-                maxLength = qMax(maxLength, f.result().maxLength);
-                nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( f.result().matchingLines.size() ) );
-            }
-            std::sort(currentList.begin(), currentList.end());
-        }
-        else {
-            auto matchResults = filterLines(regexp_, lines, chunkStart, 0, 1);
-            currentList = std::move( matchResults.matchingLines );
-            maxLength = qMax( maxLength, matchResults.maxLength );
-            nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( currentList.size() ) );
+        senders[currentProcess]( std::make_tuple( chunkStart, lines, PartialSearchResults{} ) );
+
+        currentProcess++;
+        if ( currentProcess >= processorsSize ) {
+            currentProcess = 0;
         }
 
-        // After each block, copy the data to shared data
-        // and update the client
-        searchData.addAll( maxLength, currentList, LinesCount( chunkStart.get() ) + linesInChunk );
-        currentList.clear();
+        LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart <<
+             ", " << lines.size() << " lines read.";
     }
+
+    senders[currentProcess]( std::make_tuple(endLine, QStringList{}, PartialSearchResults{} ) );
+    for ( auto& s : senders ) {
+        s.close();
+    }
+
+    searchCompleted.acquire();
+
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+
+    LOG( logINFO ) << "Searching done, took " << duration / 1000.f << " ms";
+    LOG( logINFO ) << "Searching perf "
+                   << static_cast<uint32_t>(std::floor(1000 * 1000.f * (endLine - initialLine).get() / duration)) << " lines/s";
 
     emit searchProgressed( nbMatches, 100, initialLine );
 }

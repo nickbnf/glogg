@@ -26,6 +26,7 @@
 #include <QWaitCondition>
 #include <QVector>
 #include <QTextCodec>
+#include <QSemaphore>
 
 #include "loadingstatus.h"
 #include "linepositionarray.h"
@@ -91,14 +92,12 @@ struct IndexingState
     LineLength::UnderlyingType additional_spaces;
     LineOffset::UnderlyingType end;
     LineOffset::UnderlyingType file_size;
-    LineOffset::UnderlyingType indexedSize;
 
     QTextCodec* encodingGuess;
     QTextCodec* fileTextCodec;
 
-    QMutex indexingMutex;
-    QWaitCondition indexingDone;
-    QWaitCondition blockDone;
+    QSemaphore indexingSem;
+    QSemaphore blockSem;
 };
 
 class IndexOperation : public QObject

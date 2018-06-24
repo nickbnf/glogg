@@ -308,9 +308,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
         LOG(logDEBUG) << "Indexing block " << block_beginning;
 
         if ( block.isEmpty() ) {
-            QMutexLocker lock( &indexingState.indexingMutex );
-            indexingState.indexedSize = indexingState.file_size;
-            indexingState.indexingDone.wakeAll();
+            indexingState.indexingSem.release();
             return;
         }
 
@@ -327,11 +325,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
                                                 : 100 );
         emit indexingProgressed( progress );
 
-        {
-            QMutexLocker lock( &indexingState.indexingMutex );
-            indexingState.indexedSize = block_beginning + block.size();
-            indexingState.blockDone.wakeAll();
-        }
+        indexingState.blockSem.release(block.size());
     };
 
     indexer.set_ready();
@@ -358,11 +352,12 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         state.max_length = 0;
         state.encodingGuess = nullptr;
         state.fileTextCodec = nullptr;
-        state.indexedSize = 0;
         state.file_size = file.size();
 
         auto process = setupIndexingProcess(state);
         auto blockSender = std::get<0>(process);
+
+        state.blockSem.release(prefetchBufferSize);
 
         using namespace std::chrono;
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -376,15 +371,7 @@ void IndexOperation::doIndex(LineOffset initialPosition )
             const auto block_beginning = file.pos();
             const auto block = file.read( sizeChunk );
 
-            bool shouldWait = false;
-            do
-            {
-                QMutexLocker lock( &state.indexingMutex );
-                shouldWait = block_beginning - state.indexedSize > prefetchBufferSize;
-                if ( shouldWait ) {
-                    state.blockDone.wait( &state.indexingMutex );
-                }
-            } while( shouldWait );
+            state.blockSem.acquire(block.size());
 
             LOG(logDEBUG) << "Sending block " << block_beginning;
             blockSender(std::make_pair(block_beginning, block));
@@ -394,10 +381,7 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         blockSender.close();
 
         {
-            QMutexLocker lock( &state.indexingMutex );
-            if (state.indexedSize < state.file_size ) {
-                state.indexingDone.wait( &state.indexingMutex );
-            }
+           state.indexingSem.acquire();
         }
 
         // Check if there is a non LF terminated line at the end of the file

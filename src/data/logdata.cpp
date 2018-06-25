@@ -109,6 +109,8 @@ void LogData::attachFile( const QString& fileName )
 {
     LOG(logDEBUG) << "LogData::attachFile " << fileName.toStdString();
 
+    fileMutex_.lock();
+
     if ( attached_file_ ) {
         // We cannot reattach
         throw CantReattachErr();
@@ -116,6 +118,8 @@ void LogData::attachFile( const QString& fileName )
 
     attached_file_.reset( new QFile( fileName ) );
     attached_file_->open( QIODevice::ReadOnly );
+
+    fileMutex_.unlock();
 
     std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
     enqueueOperation( std::move( operation ) );
@@ -199,13 +203,12 @@ void LogData::fileChangedOnDisk()
 {
     LOG(logDEBUG) << "signalFileChanged";
 
+    fileMutex_.lock();
+
     const QString name = attached_file_->fileName();
     QFileInfo info( name );
 
-    // Need to open the file in case it was absent
-    attached_file_->open( QIODevice::ReadOnly );
-
-    std::shared_ptr<LogDataOperation> newOperation;
+    std::function<std::shared_ptr<LogDataOperation>()> newOperation;
 
     qint64 file_size = indexing_data_.getSize();
     LOG(logDEBUG) << "current fileSize=" << file_size;
@@ -213,7 +216,7 @@ void LogData::fileChangedOnDisk()
     if ( info.size() < file_size ) {
         fileChangedOnDisk_ = Truncated;
         LOG(logINFO) << "File truncated";
-        newOperation = std::make_shared<FullIndexOperation>();
+        newOperation = std::make_shared<FullIndexOperation>;
     }
     else if ( info.size() == file_size ) {
         LOG(logINFO) << "No change in file";
@@ -221,15 +224,23 @@ void LogData::fileChangedOnDisk()
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
         LOG(logINFO) << "New data on disk";
-        newOperation = std::make_shared<PartialIndexOperation>();
+        newOperation = std::make_shared<PartialIndexOperation>;
     }
 
     if ( newOperation ) {
-        enqueueOperation( newOperation );
-        lastModifiedDate_ = info.lastModified();
+        // Need to reopen the file in case it was absent
+        auto reopened = std::make_unique<QFile>( name );
 
-        emit fileChanged( fileChangedOnDisk_ );
+        if ( reopened->open( QIODevice::ReadOnly ) ) {
+            attached_file_ = std::move( reopened );
+            enqueueOperation( newOperation() );
+            lastModifiedDate_ = info.lastModified();
+
+            emit fileChanged( fileChangedOnDisk_ );
+        }
     }
+
+    fileMutex_.unlock();
 }
 
 void LogData::indexingFinished( LoadingStatus status )

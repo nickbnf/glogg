@@ -28,6 +28,10 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
 
+    static std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    config->setSearchReadBufferSizeLines(10);
+
     QtConcurrent::run( [&a, &argc, &argv]()
     {
         int result = Catch::Session().run( argc, argv );

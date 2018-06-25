@@ -338,7 +338,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
          maxLength = qMax( maxLength, matchResults.maxLength );
          nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( matchResults.matchingLines.size() ) );
 
-         const auto processedLines = LinesCount{initialLine.get() + matchResults.processedLines.get()};
+         const auto processedLines = LinesCount{matchResults.chunkStart.get() + matchResults.processedLines.get()};
 
          // After each block, copy the data to shared data
          // and update the client

@@ -365,12 +365,22 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     size_t currentProcess = 0;
     blocksDone.release( nbLinesInChunk.get() * ( senders.size() + 1 ) );
 
+    int reportedPercentage = 0;
+    auto reportedMatches = nbMatches;
+
     for ( auto chunkStart = initialLine; chunkStart < endLine; chunkStart = chunkStart + nbLinesInChunk ) {
         if ( *interruptRequested_ )
             break;
 
         const int percentage = ( chunkStart - initialLine ).get() * 100 / ( endLine - initialLine ).get();
-        emit searchProgressed( nbMatches, percentage, initialLine );
+
+        if ( percentage != reportedPercentage || nbMatches != reportedMatches ) {
+
+            emit searchProgressed( nbMatches, percentage, initialLine );
+
+            reportedPercentage = percentage;
+            reportedMatches = nbMatches;
+        }
 
         LOG( logDEBUG ) << "Reading chunk starting at " << chunkStart;
 

@@ -75,12 +75,4 @@ std::shared_ptr<T> Persistent( const char* name )
         GetPersistentInfo().getPersistable( QString( name ) );
     return std::dynamic_pointer_cast<T>(p);
 }
-
-template<typename T>
-std::shared_ptr<T> PersistentCopy( const char* name )
-{
-    std::shared_ptr<Persistable> p =
-        GetPersistentInfo().getPersistable( QString( name ) );
-    return std::make_shared<T>( *( std::dynamic_pointer_cast<T>(p) ) );
-}
 #endif

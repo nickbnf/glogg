@@ -187,9 +187,9 @@ void FiltersDialog::updatePropertyFields()
 
         // Enable the buttons if needed
         removeFilterButton->setEnabled( true );
-        upFilterButton->setEnabled( ( selectedRow_ > 0 ) ? true : false );
+        upFilterButton->setEnabled( selectedRow_ > 0 );
         downFilterButton->setEnabled(
-                ( selectedRow_ < ( filterListWidget->count() - 1 ) ) ? true : false );
+                selectedRow_ < ( filterListWidget->count() - 1 ) );
     }
     else {
         // Nothing is selected, greys the buttons
@@ -197,6 +197,9 @@ void FiltersDialog::updatePropertyFields()
         foreColorBox->setEnabled( false );
         backColorBox->setEnabled( false );
         ignoreCaseCheckBox->setEnabled( false );
+        removeFilterButton->setEnabled( false );
+        upFilterButton->setEnabled( false );
+        downFilterButton->setEnabled( false );
     }
 }
 

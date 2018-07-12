@@ -17,49 +17,49 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTERSDIALOG_H
-#define FILTERSDIALOG_H
+#ifndef HIGHLIGHTERSDIALOG_H
+#define HIGHLIGHTERSDIALOG_H
 
 #include <memory>
 
 #include <QDialog>
 
-#include "filterset.h"
-#include "ui_filtersdialog.h"
+#include "highlighterset.h"
+#include "ui_highlightersdialog.h"
 
-class FiltersDialog : public QDialog, public Ui::FiltersDialog
+class HighlightersDialog : public QDialog, public Ui::HighlightersDialog
 {
   Q_OBJECT
 
   public:
-    FiltersDialog( QWidget* parent = 0 );
+    HighlightersDialog( QWidget* parent = 0 );
 
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
 
   private slots:
-    void on_addFilterButton_clicked();
-    void on_removeFilterButton_clicked();
+    void on_addHighlighterButton_clicked();
+    void on_removeHighlighterButton_clicked();
     void on_buttonBox_clicked( QAbstractButton* button );
-    void on_upFilterButton_clicked();
-    void on_downFilterButton_clicked();
+    void on_upHighlighterButton_clicked();
+    void on_downHighlighterButton_clicked();
     // Update the property (pattern, color...) fields from the
-    // selected Filter.
+    // selected Highlighter.
     void updatePropertyFields();
-    // Update the selected Filter from the values in the property fields.
-    void updateFilterProperties();
+    // Update the selected Highlighter from the values in the property fields.
+    void updateHighlighterProperties();
 
   private:
-    // Temporary filterset modified by the dialog
+    // Temporary highlighterset modified by the dialog
     // it is copied from the one in Config()
-    std::shared_ptr<FilterSet> filterSet;
+    std::shared_ptr<HighlighterSet> highlighterSet;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;
 
     void populateColors();
-    void populateFilterList();
+    void populateHighlighterList();
 };
 
 #endif

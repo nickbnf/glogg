@@ -44,14 +44,14 @@ In addition to the filtered window, the match overview on the right hand side
 of the screen offers a view of the position of matches in the log file. Matches
 are showed as small red lines.
 
-## Using filters
+## Using highlighters
 
-_Filters_ can colorize some lines of the log being displayed, for example to
+_Highlighters_ can colorize some lines of the log being displayed, for example to
 draw attention to lines indicating an error, or to associate a color with each
-sort of event. Any number of filter can be defined in the 'Filters'
+sort of event. Any number of highlighter can be defined in the 'highlighters'
 configuration dialog, each using a regexp against which lines will be matched.
-For each line, all filters are tried in order and the fore and back colors of
-the first successful filter are applied.
+For each line, all highlighters are tried in order and the fore and back colors of
+the first successful highlighter are applied.
 
 ## Marking lines in the log file
 

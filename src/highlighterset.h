@@ -17,8 +17,8 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTERSET_H
-#define FILTERSET_H
+#ifndef HIGHLIGHTERSET_H
+#define HIGHLIGHTERSET_H
 
 #include <QRegularExpression>
 #include <QColor>
@@ -26,14 +26,14 @@
 
 #include "persistable.h"
 
-// Represents a filter, i.e. a regexp and the colors matching text
+// Represents a highlighter, i.e. a regexp and the colors matching text
 // should be rendered in.
-class Filter
+class Highlighter
 {
   public:
-    // Construct an uninitialized Filter (when reading from a config file)
-    Filter();
-    Filter(const QString& pattern, bool ignoreCase,
+    // Construct an uninitialized Highlighter (when reading from a config file)
+    Highlighter();
+    Highlighter(const QString& pattern, bool ignoreCase,
             const QString& foreColor, const QString& backColor );
 
     bool hasMatch( const QString& string ) const;
@@ -49,9 +49,9 @@ class Filter
     void setBackColor( const QString& backColorName );
 
     // Operators for serialization
-    // (must be kept to migrate filters from <=0.8.2)
-    friend QDataStream& operator<<( QDataStream& out, const Filter& object );
-    friend QDataStream& operator>>( QDataStream& in, Filter& object );
+    // (must be kept to migrate highlighters from <=0.8.2)
+    friend QDataStream& operator<<( QDataStream& out, const Highlighter& object );
+    friend QDataStream& operator>>( QDataStream& in, Highlighter& object );
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
@@ -64,14 +64,14 @@ class Filter
     bool enabled_;
 };
 
-// Represents an ordered set of filters to be applied to each line displayed.
-class FilterSet : public Persistable
+// Represents an ordered set of highlighters to be applied to each line displayed.
+class HighlighterSet : public Persistable
 {
   public:
-    // Construct an empty filter set
-    FilterSet();
+    // Construct an empty highlighter set
+    HighlighterSet();
 
-    // Returns weither the passed line match a filter of the set,
+    // Returns weither the passed line match a highlighter of the set,
     // if so, it returns the fore/back colors the line should use.
     // Ownership of the colors is transfered to the caller.
     bool matchLine( const QString& line,
@@ -83,27 +83,27 @@ class FilterSet : public Persistable
 
     // Should be private really, but I don't know how to have 
     // it recognised by QVariant then.
-    typedef QList<Filter> FilterList;
+    typedef QList<Highlighter> HighlighterList;
 
     // Operators for serialization
-    // (must be kept to migrate filters from <=0.8.2)
+    // (must be kept to migrate highlighters from <=0.8.2)
     friend QDataStream& operator<<(
-            QDataStream& out, const FilterSet& object );
+            QDataStream& out, const HighlighterSet& object );
     friend QDataStream& operator>>(
-            QDataStream& in, FilterSet& object );
+            QDataStream& in, HighlighterSet& object );
 
   private:
-    static const int FILTERSET_VERSION;
+    static const int HIGHLIGHTERSET_VERSION;
 
-    FilterList filterList;
+    HighlighterList highlighterList;
 
-    // To simplify this class interface, FilterDialog can access our
+    // To simplify this class interface, HighlighterDialog can access our
     // internal structure directly.
-    friend class FiltersDialog;
+    friend class HighlightersDialog;
 };
 
-Q_DECLARE_METATYPE(Filter)
-Q_DECLARE_METATYPE(FilterSet)
-Q_DECLARE_METATYPE(FilterSet::FilterList)
+Q_DECLARE_METATYPE(Highlighter)
+Q_DECLARE_METATYPE(HighlighterSet)
+Q_DECLARE_METATYPE(HighlighterSet::HighlighterList)
 
 #endif

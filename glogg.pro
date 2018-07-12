@@ -35,8 +35,6 @@ SOURCES += \
     src/optionsdialog.cpp \
     src/persistentinfo.cpp \
     src/configuration.cpp \
-    src/filtersdialog.cpp \
-    src/filterset.cpp \
     src/savedsearches.cpp \
     src/infoline.cpp \
     src/menuactiontooltipbehavior.cpp \
@@ -55,6 +53,8 @@ SOURCES += \
     src/viewtools.cpp \
     src/encodingspeculator.cpp \
     src/gloggapp.cpp \
+    src/highlightersdialog.cpp \
+    src/highlighterset.cpp
 
 INCLUDEPATH += src/
 
@@ -78,8 +78,6 @@ HEADERS += \
     src/optionsdialog.h \
     src/persistentinfo.h \
     src/configuration.h \
-    src/filtersdialog.h \
-    src/filterset.h \
     src/savedsearches.h \
     src/infoline.h \
     src/filewatcher.h \
@@ -103,6 +101,8 @@ HEADERS += \
     src/viewtools.h \
     src/encodingspeculator.h \
     src/gloggapp.h \
+    src/highlighterset.h \
+    src/highlightersdialog.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -132,8 +132,9 @@ else {
     INCLUDEPATH += $$BOOST_PATH
 }
 
-FORMS += src/optionsdialog.ui
-FORMS += src/filtersdialog.ui
+FORMS += src/optionsdialog.ui \
+    src/highlightersdialog.ui
+FORMS +=
 
 macx {
     # Icon for Mac

@@ -36,7 +36,7 @@ using namespace std;
 #include "persistentinfo.h"
 #include "sessioninfo.h"
 #include "configuration.h"
-#include "filterset.h"
+#include "highlighterset.h"
 #include "recentfiles.h"
 #include "session.h"
 #include "mainwindow.h"
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
     GetPersistentInfo().registerPersistable(
             std::make_shared<Configuration>(), QString( "settings" ) );
     GetPersistentInfo().registerPersistable(
-            std::make_shared<FilterSet>(), QString( "filterSet" ) );
+            std::make_shared<HighlighterSet>(), QString( "highlighterSet" ) );
     GetPersistentInfo().registerPersistable(
             std::make_shared<SavedSearches>(), QString( "savedSearches" ) );
     GetPersistentInfo().registerPersistable(

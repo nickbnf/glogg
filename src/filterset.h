@@ -34,7 +34,7 @@ class Filter
     // Construct an uninitialized Filter (when reading from a config file)
     Filter();
     Filter(const QString& pattern, bool ignoreCase,
-            const QString& foreColor, const QString& backColor );
+            const QColor& foreColor, const QColor& backColor );
 
     bool hasMatch( const QString& string ) const;
 
@@ -43,10 +43,10 @@ class Filter
     void setPattern( const QString& pattern );
     bool ignoreCase() const;
     void setIgnoreCase( bool ignoreCase );
-    const QString& foreColorName() const;
-    void setForeColor( const QString& foreColorName );
-    const QString& backColorName() const;
-    void setBackColor( const QString& backColorName );
+    const QColor& foreColor() const;
+    void setForeColor( const QColor& foreColor );
+    const QColor& backColor() const;
+    void setBackColor( const QColor& backColor );
 
     // Operators for serialization
     // (must be kept to migrate filters from <=0.8.2)
@@ -59,8 +59,8 @@ class Filter
 
   private:
     QRegularExpression regexp_;
-    QString foreColorName_;
-    QString backColorName_;
+    QColor foreColor_;
+    QColor backColor_;
     bool enabled_;
 };
 

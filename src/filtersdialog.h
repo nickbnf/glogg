@@ -44,22 +44,29 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     void on_buttonBox_clicked( QAbstractButton* button );
     void on_upFilterButton_clicked();
     void on_downFilterButton_clicked();
+    void on_ignoreCaseCheckBox_clicked();
+    void on_patternEdit_editingFinished();
+    void on_foreColorButton_clicked();
+    void on_backColorButton_clicked();
     // Update the property (pattern, color...) fields from the
     // selected Filter.
     void updatePropertyFields();
-    // Update the selected Filter from the values in the property fields.
-    void updateFilterProperties();
+
 
   private:
+    static bool showColorPicker(const QColor& in , QColor& out);
+    void updateIcon(QPushButton* button , QColor color);
     // Temporary filterset modified by the dialog
     // it is copied from the one in Config()
     std::shared_ptr<FilterSet> filterSet;
+    QColor foreColor , backColor;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;
 
     void populateColors();
     void populateFilterList();
+
 };
 
 #endif

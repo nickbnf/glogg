@@ -38,8 +38,9 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
 
     // Reload the filter list from disk (in case it has been changed
     // by another glogg instance) and copy it to here.
-    GetPersistentInfo().retrieve( "filterSet" );
-    filterSet = *Persistent<FilterSet>( "filterSet" );
+    auto persistentFilterSet = Persistent<FilterSet>( "filterSet" );
+    GetPersistentInfo().retrieve( *persistentFilterSet );
+    filterSet = *persistentFilterSet;
 
     populateColors();
     populateFilterList();
@@ -142,8 +143,9 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
     if (   ( role == QDialogButtonBox::AcceptRole )
         || ( role == QDialogButtonBox::ApplyRole ) ) {
         // Copy the filter set and persist it to disk
-        *( Persistent<FilterSet>( "filterSet" ) ) = filterSet;
-        GetPersistentInfo().save( "filterSet" );
+        auto persistentFilterSet = Persistent<FilterSet>( "filterSet" );
+        *persistentFilterSet = filterSet;
+        GetPersistentInfo().save( *persistentFilterSet );
         emit optionsChanged();
     }
 

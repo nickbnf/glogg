@@ -42,8 +42,10 @@ class PersistentInfo {
     std::shared_ptr<Persistable> getPersistable( const QString& name );
     // Save a persistable to its permanent storage
     void save( const QString& name );
+    void save( const Persistable& persistable );
     // Retrieve a persistable from permanent storage
     void retrieve( const QString& name );
+    void retrieve( Persistable& persistable );
 
   private:
     // Can't be constructed or copied (singleton)

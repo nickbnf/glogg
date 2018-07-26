@@ -19,6 +19,8 @@
 
 #include "log.h"
 
+#include <utility>
+
 #include "configuration.h"
 #include "persistentinfo.h"
 #include "filterset.h"
@@ -144,7 +146,7 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
         || ( role == QDialogButtonBox::ApplyRole ) ) {
         // Copy the filter set and persist it to disk
         auto persistentFilterSet = Persistent<FilterSet>( "filterSet" );
-        *persistentFilterSet = filterSet;
+        *persistentFilterSet = std::move( filterSet );
         GetPersistentInfo().save( *persistentFilterSet );
         emit optionsChanged();
     }

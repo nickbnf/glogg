@@ -86,8 +86,9 @@ void PersistentInfo::save( const QString& name )
 {
     assert( initialised_ );
 
-    if ( objectList_.contains( name ) )
-        objectList_.value( name )->saveToStorage( *settings_ );
+    auto object = objectList_.value( name );
+    if ( object )
+        object->saveToStorage( *settings_ );
     else
         LOG(logERROR) << "Unregistered persistable " << name.toStdString();
 
@@ -102,8 +103,9 @@ void PersistentInfo::retrieve( const QString& name )
     // Sync to ensure it has been propagated from other processes
     settings_->sync();
 
-    if ( objectList_.contains( name ) )
-        objectList_.value( name )->retrieveFromStorage( *settings_ );
+    auto object = objectList_.value( name );
+    if ( object )
+        object->retrieveFromStorage( *settings_ );
     else
         LOG(logERROR) << "Unregistered persistable " << name.toStdString();
 }

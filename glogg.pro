@@ -178,7 +178,7 @@ icon_svg.path  = $$PREFIX/share/icons/hicolor/scalable/apps
 icon_svg.files = images/hicolor/scalable/glogg.svg
 
 doc.path  = $$PREFIX/share/doc/glogg
-doc.files += README COPYING
+doc.files += README.md COPYING
 
 desktop.path = $$PREFIX/share/applications
 desktop.files = glogg.desktop

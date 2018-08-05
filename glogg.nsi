@@ -128,6 +128,7 @@ Section "Uninstall"
 
     Delete "$INSTDIR\glogg.exe"
     Delete "$INSTDIR\README"
+    Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\mingwm10.dll"
     Delete "$INSTDIR\libgcc_s_dw2-1.dll"

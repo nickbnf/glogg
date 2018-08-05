@@ -101,8 +101,15 @@ void FiltersDialog::on_removeFilterButton_clicked()
         filterListWidget->setCurrentRow( -1 );
         delete filterListWidget->takeItem( index );
 
-        // Select the new item at the same index
-        filterListWidget->setCurrentRow( index );
+        int count = filterListWidget->count();
+        if ( index < count ) {
+            // Select the new item at the same index
+            filterListWidget->setCurrentRow( index );
+        }
+        else {
+            // or the previous index if it is at the end
+            filterListWidget->setCurrentRow( count - 1 );
+        }
     }
 }
 

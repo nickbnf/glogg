@@ -302,6 +302,10 @@ void LogData::doSetDisplayEncoding( Encoding encoding )
     static const char* utf16be_encoding   = "utf-16be";
     static const char* cp1251_encoding   = "CP1251";
     static const char* cp1252_encoding   = "CP1252";
+    static const char* big5_encoding  = "Big5";
+    static const char* gb18030_encoding  = "GB18030";
+    static const char* shiftJIS_encoding  = "Shift-JIS";
+    static const char* koi8r_encoding  = "KOI8-R";
 
     const char* qt_encoding = latin1_encoding;
 
@@ -328,6 +332,18 @@ void LogData::doSetDisplayEncoding( Encoding encoding )
             break;
         case Encoding::ENCODING_CP1252:
             qt_encoding = cp1252_encoding;
+            break;
+        case Encoding::ENCODING_BIG5:
+            qt_encoding = big5_encoding;
+            break;
+        case Encoding::ENCODING_GB18030:
+            qt_encoding = gb18030_encoding;
+            break;
+        case Encoding::ENCODING_SHIFT_JIS:
+            qt_encoding = shiftJIS_encoding;
+            break;
+        case Encoding::ENCODING_KOI8R:
+            qt_encoding = koi8r_encoding;
             break;
         case Encoding::ENCODING_ISO_8859_1:
             qt_encoding = latin1_encoding;

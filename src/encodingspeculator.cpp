@@ -67,7 +67,7 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
                     // std::cout << "Lead 4: cp= " << std::hex << code_point_ << std::endl;
                 }
                 else {
-                    state_ = State::Unknown8Bit;
+                    state_ = State::OtherOrUnknown8Bit;
                 }
                 break;
             case State::UTF8LeadingByteSeen:
@@ -79,11 +79,11 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
                         if ( code_point_ >= min_value_ )
                             state_ = State::ValidUTF8;
                         else
-                            state_ = State::Unknown8Bit;
+                            state_ = State::OtherOrUnknown8Bit;
                     }
                 }
                 else {
-                    state_ = State::Unknown8Bit;
+                    state_ = State::OtherOrUnknown8Bit;
                 }
                 break;
             case State::UTF16BELeadingBOMByteSeen:
@@ -91,7 +91,7 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
                     state_ = State::ValidUTF16BE;
                 }
                 else {
-                    state_ = State::Unknown8Bit;
+                    state_ = State::OtherOrUnknown8Bit;
                 }
                 break;
             case State::UTF16LELeadingBOMByteSeen:
@@ -99,15 +99,15 @@ void EncodingSpeculator::inject_byte( uint8_t byte )
                     state_ = State::ValidUTF16LE;
                 }
                 else {
-                    state_ = State::Unknown8Bit;
+                    state_ = State::OtherOrUnknown8Bit;
                 }
                 break;
             case State::ValidUTF16LE:
             case State::ValidUTF16BE:
                 // We don't verify UTF16 and assume it's all fine for now.
                 break;
-            case State::Unknown8Bit:
-                state_ = State::Unknown8Bit;
+            case State::OtherOrUnknown8Bit:
+                state_ = State::OtherOrUnknown8Bit;
          }
     }
 }
@@ -121,7 +121,7 @@ EncodingSpeculator::Encoding EncodingSpeculator::guess() const
         case State::ASCIIOnly:
             guess = Encoding::ASCII7;
             break;
-        case State::Unknown8Bit:
+        case State::OtherOrUnknown8Bit:
         case State::UTF8LeadingByteSeen:
             guess = Encoding::ASCII8;
             break;

@@ -1022,6 +1022,22 @@ void CrawlerWidget::updateEncoding()
             encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as CP1252" );
             break;
+        case Encoding::ENCODING_BIG5:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as Big5" );
+            break;
+        case Encoding::ENCODING_GB18030:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as GB18030/GB2312" );
+            break;
+        case Encoding::ENCODING_SHIFT_JIS:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as Shift_JIS" );
+            break;
+        case Encoding::ENCODING_KOI8R:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as KOI8-R" );
+            break;
         case Encoding::ENCODING_ISO_8859_1:
         default:
             encoding = Encoding::ENCODING_ISO_8859_1;

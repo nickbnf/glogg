@@ -148,6 +148,9 @@ void LogData::reload()
 {
     workerThread_.interrupt();
 
+    // Re-open the file, useful in case the file has been moved
+    reOpenFile();
+
     enqueueOperation( std::make_shared<FullIndexOperation>() );
 }
 
@@ -216,10 +219,7 @@ void LogData::fileChangedOnDisk()
     if ( ( info.size() != attached_file_->size() )
             || ( attached_file_->openMode() == QIODevice::NotOpen ) ) {
         LOG(logINFO) << "Inconsistent size, the file might have changed, re-opening";
-        auto reopened = std::make_unique<QFile>( name );
-        reopened->open( QIODevice::ReadOnly );
-        QMutexLocker locker( &fileMutex_ );
-        attached_file_ = std::move( reopened );      // This will close the old one and open the new
+        reOpenFile();
 
         // We don't force a (slow) full reindex as this routinely happens if
         // the file is appended quickly.
@@ -524,4 +524,15 @@ qint64 LogData::endOfLinePosition( qint64 line ) const
 qint64 LogData::beginningOfNextLine( qint64 end_pos ) const
 {
     return end_pos + 1 + before_cr_offset_ + after_cr_offset_;
+}
+
+// Close and reopen the file.
+// Used if we suspect the file has been moved (we follow the old
+// inode but really want the one now associated with the name)
+void LogData::reOpenFile()
+{
+    auto reopened = std::make_unique<QFile>( attached_file_->fileName() );
+    reopened->open( QIODevice::ReadOnly );
+    QMutexLocker locker( &fileMutex_ );
+    attached_file_ = std::move( reopened );      // This will close the old one and open the new
 }

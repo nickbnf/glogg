@@ -237,6 +237,10 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "UTF-16BE" },
     { "CP1251" },
     { "CP1252" },
+    { "&Big5" },
+    { "&GB18030 / GB2312" },
+    { "&Shift_JIS" },
+    { "&KOI8-R" }
 };
 
 // Menu actions

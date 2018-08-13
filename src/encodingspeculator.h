@@ -32,7 +32,11 @@ class EncodingSpeculator {
         ASCII8,
         UTF8,
         UTF16LE,
-        UTF16BE
+        UTF16BE,
+        BIG5,
+        GB18030,
+        SHIFT_JIS,
+        KOI8R
     };
 
     EncodingSpeculator() : state_( State::Start ) {}
@@ -47,7 +51,7 @@ class EncodingSpeculator {
     enum class State {
         Start,
         ASCIIOnly,
-        Unknown8Bit,
+        OtherOrUnknown8Bit,
         UTF8LeadingByteSeen,
         ValidUTF8,
         UTF16BELeadingBOMByteSeen,

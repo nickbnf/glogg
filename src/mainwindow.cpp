@@ -858,9 +858,9 @@ bool MainWindow::loadFile( const QString& fileName )
 
         // Update the recent files list
         // (reload the list first in case another glogg changed it)
-        GetPersistentInfo().retrieve( "recentFiles" );
+        GetPersistentInfo().retrieve( *recentFiles_ );
         recentFiles_->addRecent( fileName );
-        GetPersistentInfo().save( "recentFiles" );
+        GetPersistentInfo().save( *recentFiles_ );
         updateRecentFileActions();
     }
     catch ( FileUnreadableErr ) {
@@ -1001,7 +1001,7 @@ void MainWindow::readSettings()
     */
 
     // History of recent files
-    GetPersistentInfo().retrieve( QString( "recentFiles" ) );
+    GetPersistentInfo().retrieve( *recentFiles_ );
     updateRecentFileActions();
 
     // GetPersistentInfo().retrieve( QString( "settings" ) );

@@ -78,9 +78,9 @@ void VersionChecker::startCheck()
 {
     LOG(logDEBUG) << "VersionChecker::startCheck()";
 
-    GetPersistentInfo().retrieve( "versionChecker" );
-
     auto config = Persistent<VersionCheckerConfig>( "versionChecker" );
+
+    GetPersistentInfo().retrieve( *config );
 
     if ( config->versionCheckingEnabled() )
     {
@@ -130,7 +130,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 
     config->setNextDeadline( std::time( nullptr ) + CHECK_INTERVAL_S );
 
-    GetPersistentInfo().save( "versionChecker" );
+    GetPersistentInfo().save( *config );
 }
 
 namespace {

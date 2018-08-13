@@ -42,8 +42,10 @@ class PersistentInfo {
     std::shared_ptr<Persistable> getPersistable( const QString& name );
     // Save a persistable to its permanent storage
     void save( const QString& name );
+    void save( const Persistable& persistable );
     // Retrieve a persistable from permanent storage
     void retrieve( const QString& name );
+    void retrieve( Persistable& persistable );
 
   private:
     // Can't be constructed or copied (singleton)
@@ -74,13 +76,5 @@ std::shared_ptr<T> Persistent( const char* name )
     std::shared_ptr<Persistable> p =
         GetPersistentInfo().getPersistable( QString( name ) );
     return std::dynamic_pointer_cast<T>(p);
-}
-
-template<typename T>
-std::shared_ptr<T> PersistentCopy( const char* name )
-{
-    std::shared_ptr<Persistable> p =
-        GetPersistentInfo().getPersistable( QString( name ) );
-    return std::make_shared<T>( *( std::dynamic_pointer_cast<T>(p) ) );
 }
 #endif

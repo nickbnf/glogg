@@ -86,10 +86,18 @@ void PersistentInfo::save( const QString& name )
 {
     assert( initialised_ );
 
-    if ( objectList_.contains( name ) )
-        objectList_.value( name )->saveToStorage( *settings_ );
+    auto object = objectList_.value( name );
+    if ( object )
+        save( *object );
     else
         LOG(logERROR) << "Unregistered persistable " << name.toStdString();
+}
+
+void PersistentInfo::save( const Persistable& persistable )
+{
+    assert( initialised_ );
+
+    persistable.saveToStorage( *settings_ );
 
     // Sync to ensure it is propagated to other processes
     settings_->sync();
@@ -99,13 +107,21 @@ void PersistentInfo::retrieve( const QString& name )
 {
     assert( initialised_ );
 
+    auto object = objectList_.value( name );
+    if ( object )
+        retrieve( *object );
+    else
+        LOG(logERROR) << "Unregistered persistable " << name.toStdString();
+}
+
+void PersistentInfo::retrieve( Persistable& persistable )
+{
+    assert( initialised_ );
+
     // Sync to ensure it has been propagated from other processes
     settings_->sync();
 
-    if ( objectList_.contains( name ) )
-        objectList_.value( name )->retrieveFromStorage( *settings_ );
-    else
-        LOG(logERROR) << "Unregistered persistable " << name.toStdString();
+    persistable.retrieveFromStorage( *settings_ );
 }
 
 // Friend function to construct/get the singleton

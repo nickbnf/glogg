@@ -249,7 +249,9 @@ int main(int argc, char *argv[])
     app.setAttribute( Qt::AA_DontShowIconsInMenus );
 
     // FIXME: should be replaced by a two staged init of MainWindow
-    GetPersistentInfo().retrieve( QString( "settings" ) );
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    GetPersistentInfo().retrieve( *config );
 
     std::unique_ptr<Session> session( new Session() );
     MainWindow mw( std::move( session ), externalCommunicator );
@@ -258,8 +260,6 @@ int main(int argc, char *argv[])
     mw.reloadGeometry();
 
     // Load the existing session if needed
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
     if ( load_session || ( filenames.empty() && !new_session && config->loadLastSession() ) )
         mw.reloadSession();
 

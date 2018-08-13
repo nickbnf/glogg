@@ -278,9 +278,9 @@ void CrawlerWidget::startNewSearch()
 {
     // Record the search line in the recent list
     // (reload the list first in case another glogg changed it)
-    GetPersistentInfo().retrieve( "savedSearches" );
+    GetPersistentInfo().retrieve( *savedSearches_ );
     savedSearches_->addRecent( searchLineEdit->currentText() );
-    GetPersistentInfo().save( "savedSearches" );
+    GetPersistentInfo().save( *savedSearches_ );
 
     // Update the SearchLine (history)
     updateSearchCombo();

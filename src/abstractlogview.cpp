@@ -1167,21 +1167,25 @@ int AbstractLogView::convertCoordToLine(int yPos) const
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
     int line = convertCoordToLine( pos.y() );
-    if ( line >= logData->getNbLine() )
-        line = logData->getNbLine() - 1;
+    int nbLine = logData->getNbLine();
+    if ( line >= nbLine )
+        line = nbLine - 1;
     if ( line < 0 )
         line = 0;
 
-    // Determine column in screen space and convert it to file space
-    int column = firstCol + ( pos.x() - leftMarginPx_ ) / charWidth_;
+    int column = 0;
 
-    QString this_line = logData->getExpandedLineString( line );
-    const int length = this_line.length();
+    if ( nbLine ) {
+        // Determine column in screen space and convert it to file space
+        column = firstCol + ( pos.x() - leftMarginPx_ ) / charWidth_;
+        QString this_line = logData->getExpandedLineString( line );
+        const int length = this_line.length();
 
-    if ( column >= length )
-        column = length - 1;
-    if ( column < 0 )
-        column = 0;
+        if ( column >= length )
+            column = length - 1;
+        if ( column < 0 )
+            column = 0;
+    }
 
     LOG(logDEBUG4) << "AbstractLogView::convertCoordToFilePos col="
         << column << " line=" << line;

@@ -226,7 +226,7 @@ PartialIndexOperation::PartialIndexOperation( const QString& fileName,
 {
 }
 
-FastLinePositionArray IndexOperation::parseDataBlock( int block_beginning,
+FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType block_beginning,
                                                      const QByteArray &block,
                                                      IndexingState &state ) const
 {
@@ -294,7 +294,7 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
 
 auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 {
-    using BlockData = std::pair<int,QByteArray>;
+    using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
     stlab::sender<BlockData> blockSender;
     stlab::receiver<BlockData> indexer;
 

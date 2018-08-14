@@ -53,7 +53,7 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
   private:
     // Temporary filterset modified by the dialog
     // it is copied from the one in Config()
-    std::shared_ptr<FilterSet> filterSet;
+    FilterSet filterSet;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;

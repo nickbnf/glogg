@@ -25,6 +25,7 @@
 #include "log.h"
 
 #include <cassert>
+#include <chrono>
 
 #include <Qt>
 #include <QApplication>
@@ -341,13 +342,22 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress, Line
         }
     }
 
+    static auto lastUpdateTime = std::chrono::high_resolution_clock::now();
+
+    const auto currentUpdateTime = std::chrono::high_resolution_clock::now();
+    const auto timeSinceLastUpdate = currentUpdateTime - lastUpdateTime;
+    if ( progress > 0 && progress < 100 &&  timeSinceLastUpdate < std::chrono::milliseconds(250) ) {
+        LOG(logDEBUG) << "updateFilteredView skipped";
+        return;
+    }
+    lastUpdateTime = currentUpdateTime;
+
     // If more (or less, e.g. come back to 0) matches have been found
     if ( nbMatches != nbMatches_ ) {
         nbMatches_ = nbMatches;
 
         // Recompute the content of the filtered window.
         filteredView->updateData();
-
 
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );

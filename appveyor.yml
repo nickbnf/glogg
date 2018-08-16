@@ -1,16 +1,22 @@
-version: '18.06.0.{build}'
+version: '18.08.0.{build}'
 
 os: Visual Studio 2017
 
 platform:
   - x64
+  - x86
+
+matrix:
+  allow_failures:
+  - platform: x86
 
 configuration:
   - Release
 
 environment:
   matrix:
-  - QT5: C:\Qt\5.9\msvc2017_64
+  - QTDIR64: C:\Qt\5.11\msvc2017_64
+    QTDIR32: C:\Qt\5.11\msvc2015
     CMAKE_GENERATOR_NAME: Ninja
     CMAKE_BUILD_TYPE: Release
 
@@ -28,8 +34,9 @@ install:
   - pandoc -v
 
 before_build:
-- '%QT5%\bin\qtenv2.bat'
-- call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=x64
+- if %platform%==x64 (set QTDIR=%QTDIR64%) else (set QTDIR=%QTDIR32%)
+- '%QTDIR%\bin\qtenv2.bat'
+- call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=%platform%
 - set PATH=%ProgramFiles(x86)%\NSIS;%PATH%
 - set
 - md %APPVEYOR_BUILD_FOLDER%\build

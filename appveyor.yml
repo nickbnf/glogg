@@ -6,22 +6,18 @@ platform:
   - x64
   - x86
 
-matrix:
-  allow_failures:
-  - platform: x86
-
 configuration:
   - Release
 
 environment:
-  matrix:
-  - QTDIR64: C:\Qt\5.11\msvc2017_64
-    QTDIR32: C:\Qt\5.11\msvc2015
-    CMAKE_GENERATOR_NAME: Ninja
-    CMAKE_BUILD_TYPE: Release
+  QTDIR64: C:\Qt\5.11\msvc2017_64
+  QTDIR32: C:\Qt\5.11\msvc2015
+  CMAKE_GENERATOR_NAME: Ninja
+  CMAKE_BUILD_TYPE: Release
 
 matrix:
-  fast_finish: false
+    allow_failures:
+    - platform: x86
   
 install:
   - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"

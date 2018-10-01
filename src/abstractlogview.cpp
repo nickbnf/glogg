@@ -1518,6 +1518,31 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
     // used for mouse calculation etc...
     leftMarginPx_ = contentStartPosX + SEPARATOR_WIDTH;
 
+
+    FilterSet *filterSetNew = new FilterSet();
+    filterSetNew->filterList.append(filterSet->filterList);
+
+    QString lightColors[] = {
+        "#FFDDDD",
+        "#DDFFDD",
+        "#DDDDFF",
+        "#FFFFDD",
+        "#FFDDFF",
+        "#DDFFFF"
+    };
+    foreColor = palette.color( QPalette::Text );
+    backColor = palette.color( QPalette::Base );
+
+    QString regexp = this->logData->getCurrentRegExp().pattern();
+    QStringList patterns = regexp.split("|");
+    int idx = 0;
+    foreach (QString pattern, patterns)  {
+        if (pattern != "" && idx < sizeof(lightColors)/sizeof(*(lightColors))) {
+            filterSetNew->filterList.append(Filter(pattern, true, "black", lightColors[idx]));
+        }
+        idx++;
+    }
+
     // Then draw each line
     for (int i = 0; i < nbLines; i++) {
         const LineNumber line_index = i + firstLine;
@@ -1536,7 +1561,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
             backColor = palette.color( QPalette::Highlight );
             painter.setPen(palette.color(QPalette::Text));
         }
-        else if ( filterSet->matchLine( logData->getLineString( line_index ),
+        else if ( filterSetNew->matchLine( logData->getLineString( line_index ),
                     &foreColor, &backColor ) ) {
             // Apply a filter to the line
         }

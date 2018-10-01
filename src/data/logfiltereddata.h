@@ -111,6 +111,8 @@ class LogFilteredData : public AbstractLogData {
     enum Visibility { MatchesOnly, MarksOnly, MarksAndMatches };
     void setVisibility( Visibility visibility );
 
+    QRegularExpression getCurrentRegExp() const { return currentRegExp_;}
+
   signals:
     // Sent when the search has progressed, give the number of matches (so far)
     // and the percentage of completion

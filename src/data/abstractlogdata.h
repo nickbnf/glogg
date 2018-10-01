@@ -23,6 +23,7 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QRegularExpression>
 
 #include "utils.h"
 
@@ -58,6 +59,8 @@ class AbstractLogData : public QObject {
 
     // Length of a tab stop
     static const int tabStop = 8;
+
+    virtual QRegularExpression getCurrentRegExp() const = 0;
 
   protected:
     // Internal function called to get a given line

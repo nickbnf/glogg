@@ -92,10 +92,12 @@ class FilterSet : public Persistable
     friend QDataStream& operator>>(
             QDataStream& in, FilterSet& object );
 
+    FilterList filterList;
+
   private:
     static const int FILTERSET_VERSION;
 
-    FilterList filterList;
+
 
     // To simplify this class interface, FilterDialog can access our
     // internal structure directly.

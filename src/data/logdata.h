@@ -81,6 +81,8 @@ class LogData : public AbstractLogData {
     // Get the auto-detected encoding for the indexed text.
     EncodingSpeculator::Encoding getDetectedEncoding() const;
 
+    QRegularExpression getCurrentRegExp() const { return QRegularExpression();}
+
   signals:
     // Sent during the 'attach' process to signal progress
     // percent being the percentage of completion.

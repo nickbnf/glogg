@@ -204,9 +204,7 @@ class ObservedFileList {
         void cleanRefsToExpiredDirs();
 };
 
-namespace {
-    std::string directory_path( const std::string& path );
-};
+inline std::string directory_path( const std::string& path );
 
 // ObservedFileList class
 template <typename Driver>
@@ -408,21 +406,19 @@ void ObservedFileList<Driver>::cleanRefsToExpiredDirs()
     }
 }
 
-namespace {
-    std::string directory_path( const std::string& path )
-    {
-        size_t slash_pos = path.rfind( '/' );
+std::string directory_path( const std::string& path )
+{
+    size_t slash_pos = path.rfind( '/' );
 
 #ifdef _WIN32
-        if ( slash_pos == std::string::npos ) {
-            slash_pos = path.rfind( '\\' );
-        }
+    if ( slash_pos == std::string::npos ) {
+        slash_pos = path.rfind( '\\' );
+    }
 
-        // We need to include the final slash on Windows
-        ++slash_pos;
+    // We need to include the final slash on Windows
+    ++slash_pos;
 #endif
 
-        return std::string( path, 0, slash_pos );
-    }
-};
+    return std::string( path, 0, slash_pos );
+}
 #endif

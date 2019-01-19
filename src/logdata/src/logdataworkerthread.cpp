@@ -234,27 +234,55 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
     FastLinePositionArray line_positions;
 
     int pos_within_block = 0;
+
+    const auto adjustToCharWidth = [ &state ] ( int pos )
+    {
+        if ( state.encodingParams.lineFeedIndex > 0 ) {
+            pos -= state.encodingParams.lineFeedWidth;
+        }
+        return pos;
+    };
+
+    const auto expandTabs = [ & ] ( const char* search_start, int line_size )
+    {
+        auto tab_search_start = search_start;
+        auto next_tab = reinterpret_cast<const char*>( std::memchr( tab_search_start, '\t', line_size ) );
+        while( next_tab != nullptr ) {
+            pos_within_block = adjustToCharWidth( next_tab - block.data() );
+
+            LOG(logDEBUG1) << "Tab at " << pos_within_block;
+
+            state.additional_spaces += AbstractLogData::tabStop -
+                ( static_cast<int>( ( block_beginning - state.pos ) + pos_within_block
+                    + state.additional_spaces ) % AbstractLogData::tabStop ) - 1;
+
+            const auto tab_substring_size = next_tab - tab_search_start;
+            line_size -= tab_substring_size;
+            tab_search_start = next_tab + 1;
+            next_tab = reinterpret_cast<const char*>( std::memchr( tab_search_start, '\t', line_size ) );
+        }
+    };
+
     while ( pos_within_block != -1 ) {
         pos_within_block = qMax( static_cast<int>( state.pos - block_beginning ), 0 );
 
         // Looking for the next \n, expanding tabs in the process
-        do {
-            if ( pos_within_block < block.length() ) {
-                const char c =  block.at( pos_within_block + state.encodingParams.lineFeedIndex );
 
-                if ( c == '\n')
-                    break;
-                else if ( c == '\t')
-                    state.additional_spaces += AbstractLogData::tabStop -
-                        ( static_cast<int>( ( block_beginning - state.pos ) + pos_within_block
-                            + state.additional_spaces ) % AbstractLogData::tabStop ) - 1;
+        const auto search_start = block.data() + pos_within_block;
+        const auto search_line_size = block.size() - pos_within_block;
 
-                pos_within_block += state.encodingParams.lineFeedWidth;
-            }
-            else {
-                pos_within_block = -1;
-            }
-        } while ( pos_within_block != -1 );
+        const auto next_line_feed = reinterpret_cast<const char*>( std::memchr( search_start, '\n', search_line_size ) );
+
+        if ( next_line_feed != nullptr ) {
+            expandTabs( search_start, next_line_feed - search_start );
+            pos_within_block = adjustToCharWidth( next_line_feed - block.data() );
+
+            LOG(logDEBUG1) << "LF at " << pos_within_block;
+        }
+        else {
+            expandTabs( search_start, search_line_size );
+            pos_within_block = -1;
+        }
 
         // When a end of line has been found...
         if ( pos_within_block != -1 ) {
@@ -270,7 +298,6 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
     }
 
     return line_positions;
-
 }
 
 void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& state ) const
@@ -360,7 +387,10 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         state.blockSem.release(prefetchBufferSize);
 
         using namespace std::chrono;
-        high_resolution_clock::time_point t1 = high_resolution_clock::now();
+        using clock = high_resolution_clock;
+        clock::time_point t1 = clock::now();
+
+        size_t ioDuration{};
 
         file.seek( state.pos );
         while ( !file.atEnd() ) {
@@ -369,7 +399,12 @@ void IndexOperation::doIndex(LineOffset initialPosition )
                 break;
 
             const auto block_beginning = file.pos();
+
+            clock::time_point ioT1 = clock::now();
             const auto block = file.read( sizeChunk );
+            clock::time_point ioT2 = clock::now();
+
+            ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 ).count();
 
             state.blockSem.acquire(block.size());
 
@@ -399,8 +434,9 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 
-        LOG( logINFO ) << "Indexing done, took " << duration << " ms";
+        LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
         LOG( logINFO ) << "Indexing perf " << (1000.f * state.file_size / duration) / (1024*1024) << " MiB/s";
+
     }
     else {
         // TODO: Check that the file is seekable?

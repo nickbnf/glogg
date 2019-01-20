@@ -62,6 +62,6 @@ script:
  - cmake --build .
  - ctest --verbose
  - '[ "$TRAVIS_OS_NAME" != osx   ] || ${SCRIPTS_PATH}/prepare_bundle.sh'
- - '[ "$TRAVIS_OS_NAME" != linux ] || ${SCRIPTS_PATH}/make_appimage.sh'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || VERSION=$KLOGG_VERSION ${SCRIPTS_PATH}/make_appimage.sh'
  - cpack --verbose -G "${CPACK_GENERATOR}"
- - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg-x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg-$KLOGG_VERSION-x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'

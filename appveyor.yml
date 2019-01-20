@@ -1,4 +1,4 @@
-version: '18.08.0.{build}'
+version: '19.01.0.{build}'
 
 os: Visual Studio 2017
 

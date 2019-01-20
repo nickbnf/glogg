@@ -16,6 +16,7 @@ matrix:
             - sourceline: ppa:beineri/opt-qt-5.11.3-xenial
           packages:
             - g++-7
+            - libmesa-dev
             - qt511base
             - ninja-build
             - rpm

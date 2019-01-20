@@ -2,17 +2,17 @@
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 [ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
 
-CI builds 18.08.0.269 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/i3q9ema96rav9l4i/artifacts/klogg-18.08.0.269-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/i3q9ema96rav9l4i/artifacts/klogg-18.08.0.269-setup.exe) |
-[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.1/build/packages/klogg-18.8.0-r269-Linux.deb) |
-[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.1/build/packages/klogg-18.8.0-r269-Linux.rpm) |
-[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.1/build/packages/klogg-18.08.0.269-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.2/build/packages/klogg-18.8.0-r269-OSX.dmg)
+CI builds 19.01.0.273 (x64):
+[windows portable](https://ci.appveyor.com/api/buildjobs/huf2obthk5e5853u/artifacts/klogg-19.01.0.273-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/huf2obthk5e5853u/artifacts/klogg-19.01.0.273-setup.exe) |
+[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.1/build/packages/klogg-19.1.0-r273-Linux.deb) |
+[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.1/build/packages/klogg-19.1.0-r273-Linux.rpm) |
+[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.1/build/packages/klogg-19.01.0.273-x86_64.AppImage) |
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.2/build/packages/klogg-19.1.0-r273-OSX.dmg)
 
-CI builds 18.08.0.269 (x86):
-[windows portable](https://ci.appveyor.com/api/buildjobs/4stctrtevhh2gf0v/artifacts/klogg-18.08.0.269-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/4stctrtevhh2gf0v/artifacts/klogg-18.08.0.269-setup.exe) |
+CI builds 19.01.0.273 (x86):
+[windows portable](https://ci.appveyor.com/api/buildjobs/slyfsi3n9g06dl76/artifacts/klogg-19.01.0.273-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/slyfsi3n9g06dl76/artifacts/klogg-19.01.0.273-setup.exe) |
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 

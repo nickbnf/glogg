@@ -1057,37 +1057,49 @@ void CrawlerWidget::updateEncoding()
 {
     QTextCodec* textCodec = QTextCodec::codecForName("iso-8859-1");
     switch ( encodingSetting_ ) {
-        case ENCODING_AUTO:
+        case Encoding::AUTO:
             textCodec = logData_->getDetectedEncoding();
             encoding_text_ = tr(textCodec->name().constData());
             break;
-        case ENCODING_UTF8:
+        case Encoding::UTF8:
             textCodec = QTextCodec::codecForName("utf-8");
             break;
-        case ENCODING_CP1251:
+        case Encoding::CP1251:
             textCodec = QTextCodec::codecForName("windows-1251");
             break;
-        case ENCODING_UTF16LE:
+        case Encoding::UTF16LE:
             textCodec = QTextCodec::codecForName("utf-16le");
             break;
-        case ENCODING_UTF16BE:
+        case Encoding::UTF16BE:
             textCodec = QTextCodec::codecForName("utf-16be");
             break;
-        case ENCODING_UTF32LE:
+        case Encoding::UTF32LE:
             textCodec = QTextCodec::codecForName("utf-32le");
             break;
-        case ENCODING_UTF32BE:
+        case Encoding::UTF32BE:
             textCodec = QTextCodec::codecForName("utf-32be");
             break;
-        case ENCODING_LOCAL:
+        case Encoding::BIG5:
+            textCodec = QTextCodec::codecForName("big5");
+            break;
+        case Encoding::GB18030:
+            textCodec = QTextCodec::codecForName("gb18030");
+            break;
+        case Encoding::SHIFT_JIS:
+            textCodec = QTextCodec::codecForName("shift-jis");
+            break;
+        case Encoding::KOI8R:
+            textCodec = QTextCodec::codecForName("koi8-r");
+            break;
+        case Encoding::LOCAL:
             textCodec = QTextCodec::codecForLocale();
             break;
-        case ENCODING_ISO_8859_1:
+        case Encoding::ISO_8859_1:
         default:
             break;
     }
 
-    if (encodingSetting_ != ENCODING_AUTO) {
+    if (encodingSetting_ != Encoding::AUTO) {
         QString displayedAs("Displayed as %1");
         encoding_text_ = tr ( displayedAs.arg( textCodec->name().constData() ).toLatin1() );
     }

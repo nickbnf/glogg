@@ -69,17 +69,21 @@ class CrawlerWidget : public QSplitter,
     // is interacting with
     void selectAll();
 
-    enum Encoding {
-        ENCODING_AUTO = 0,
-        ENCODING_ISO_8859_1,
-        ENCODING_UTF8,
-        ENCODING_CP1251,
-        ENCODING_UTF16LE,
-        ENCODING_UTF16BE,
-        ENCODING_UTF32LE,
-        ENCODING_UTF32BE,
-        ENCODING_LOCAL,
-        ENCODING_MAX,
+    enum class Encoding {
+        AUTO = 0,
+        LOCAL,
+        ISO_8859_1,
+        UTF8,
+        CP1251,
+        UTF16LE,
+        UTF16BE,
+        UTF32LE,
+        UTF32BE,
+        BIG5,
+        GB18030,
+        SHIFT_JIS,
+        KOI8R,
+        MAX,
     };
 
     Encoding encodingSetting() const;
@@ -311,7 +315,7 @@ class CrawlerWidget : public QSplitter,
     DataStatus      dataStatus_;
 
     // Current encoding setting;
-    Encoding        encodingSetting_ = ENCODING_AUTO;
+    Encoding        encodingSetting_ = Encoding::AUTO;
     QString         encoding_text_;
 };
 

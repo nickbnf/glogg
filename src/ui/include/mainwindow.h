@@ -202,7 +202,7 @@ class MainWindow : public QMainWindow
     QAction *aboutAction;
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
-    std::array<QAction*, CrawlerWidget::ENCODING_MAX> encodingAction;
+    std::array<QAction*, static_cast<int>(CrawlerWidget::Encoding::MAX)> encodingAction;
 
     QIcon mainIcon_;
 

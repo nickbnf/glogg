@@ -237,6 +237,7 @@ void MainWindow::startBackgroundTasks()
 
 const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "&Auto" },
+    { "Local" },
     { "ASCII / &ISO-8859-1" },
     { "&UTF-8" },
     { "CP1251" },
@@ -244,7 +245,11 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "UTF-16BE" },
     { "UTF-32LE" },
     { "UTF-32BE" },
-    { "Local" },
+    { "Big5" },
+    { "GB18030" },
+    { "Shift-JIS" },
+    { "KOI8-R" },
+
 };
 
 // Menu actions
@@ -359,7 +364,7 @@ void MainWindow::createActions()
 
     encodingGroup = new QActionGroup( this );
 
-    for ( int i = 0; i < CrawlerWidget::ENCODING_MAX; ++i ) {
+    for ( int i = 0; i < static_cast<int>(CrawlerWidget::Encoding::MAX); ++i ) {
         encodingAction[i] = new QAction( tr( encoding_list[i].name ), this );
         encodingAction[i]->setCheckable( true );
         encodingGroup->addAction( encodingAction[i] );
@@ -414,7 +419,7 @@ void MainWindow::createMenus()
     encodingMenu = menuBar()->addMenu( tr("En&coding") );
     encodingMenu->addAction( encodingAction[0] );
     encodingMenu->addSeparator();
-    for ( int i = 1; i < CrawlerWidget::ENCODING_MAX; ++i ) {
+    for ( int i = 1; i < static_cast<int>(CrawlerWidget::Encoding::MAX); ++i ) {
         encodingMenu->addAction( encodingAction[i] );
     }
 
@@ -571,7 +576,7 @@ void MainWindow::aboutQt()
 void MainWindow::encodingChanged( QAction* action )
 {
     int i = 0;
-    for ( i = 0; i < CrawlerWidget::ENCODING_MAX; ++i )
+    for ( i = 0; i < static_cast<int>(CrawlerWidget::Encoding::MAX); ++i )
         if ( action == encodingAction[i] )
             break;
 

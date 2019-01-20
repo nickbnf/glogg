@@ -2,13 +2,17 @@
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 [ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
 
-CI builds 18.06.0.266 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/ocfuev6m2reliv4j/artifacts/klogg-18.06.0.266-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/ocfuev6m2reliv4j/artifacts/klogg-18.06.0.266-setup.exe) |
-[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/266/266.1/build/packages/klogg-18.6.0-r266-Linux.deb) |
-[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/266/266.1/build/packages/klogg-18.6.0-r266-Linux.rpm) |
-[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/266/266.1/build/packages/klogg-18.06.0.266-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/266/266.2/build/packages/klogg-18.6.0-r266-OSX.dmg)
+CI builds 18.08.0.269 (x64):
+[windows portable](https://ci.appveyor.com/api/buildjobs/i3q9ema96rav9l4i/artifacts/klogg-18.08.0.269-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/i3q9ema96rav9l4i/artifacts/klogg-18.08.0.269-setup.exe) |
+[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.1/build/packages/klogg-18.8.0-r269-Linux.deb) |
+[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.1/build/packages/klogg-18.8.0-r269-Linux.rpm) |
+[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.1/build/packages/klogg-18.08.0.269-x86_64.AppImage) |
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/269/269.2/build/packages/klogg-18.8.0-r269-OSX.dmg)
+
+CI builds 18.08.0.269 (x86):
+[windows portable](https://ci.appveyor.com/api/buildjobs/4stctrtevhh2gf0v/artifacts/klogg-18.08.0.269-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/4stctrtevhh2gf0v/artifacts/klogg-18.08.0.269-setup.exe) |
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 

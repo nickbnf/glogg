@@ -4,7 +4,17 @@
 #include <functional>
 #include <ratio>
 #include <type_traits>
+
+#include <utility>
+
 #include "underlying_functionalities.hpp"
+
+// Enable empty base class optimization with multiple inheritance on Visual Studio.
+#if defined(_MSC_VER) && _MSC_VER >= 1910
+#  define FLUENT_EBCO __declspec(empty_bases)
+#else
+#  define FLUENT_EBCO
+#endif
 
 namespace fluent
 {
@@ -20,7 +30,7 @@ template<typename T>
 using IsNotReference = typename std::enable_if<!std::is_reference<T>::value, void>::type;
 
 template <typename T, typename Parameter, typename Converter, template<typename> class... Skills>
-class NamedTypeImpl : public Skills<NamedTypeImpl<T, Parameter, Converter, Skills...>>...
+class FLUENT_EBCO NamedTypeImpl : public Skills<NamedTypeImpl<T, Parameter, Converter, Skills...>>...
 {
 public:
     using UnderlyingType = T;
@@ -34,7 +44,7 @@ public:
 
     // get
     constexpr T& get() { return value_; }
-    constexpr T const& get() const {return value_; }
+    constexpr std::remove_reference_t<T> const& get() const {return value_; }
 
     // conversions
     template <typename Converter2>
@@ -70,7 +80,7 @@ template <typename StrongType, typename Converter>
 using ConvertibleTo = typename StrongType::conversions::template GetConvertible<Converter>;
 
 template<template<typename T> class StrongType, typename T>
-StrongType<T> make_named(T const& value)
+constexpr StrongType<T> make_named(T const& value)
 {
     return StrongType<T>(value);
 }

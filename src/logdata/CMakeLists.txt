@@ -10,7 +10,6 @@ add_library(logdata STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddata.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddataworkerthread.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/marks.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/threadprivatestore.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/linetypes.h
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/abstractlogdata.cpp

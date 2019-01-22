@@ -20,7 +20,6 @@
 #include <vector>
 #include <cstdint>
 
-#include "threadprivatestore.h"
 #include "blockpool.h"
 #include "linetypes.h"
 
@@ -172,8 +171,6 @@ class CompressedLinePositionStorage
         LineOffset position;
         BlockOffset offset;
     };
-    mutable ThreadPrivateStore<Cache,2> last_read_; // = { UINT32_MAX - 1U, 0, nullptr };
-    // mutable Cache last_read;
 };
 
 #endif

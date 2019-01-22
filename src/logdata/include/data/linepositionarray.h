@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "compressedlinestorage.h"
+#include "log.h"
 
 using  SimpleLinePositionStorage = std::vector<LineOffset>;
 

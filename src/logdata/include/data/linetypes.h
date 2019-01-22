@@ -1,10 +1,12 @@
 #pragma once
 #include <named_type/named_type.hpp>
 #include <limits>
-#include <absl/types/optional.h>
-#include <plog/Record.h>
 
 #include <QMetaType>
+#include <QString>
+
+#include <absl/types/optional.h>
+#include <plog/Record.h>
 
 using LineOffset = fluent::NamedType<int64_t, struct line_offset,
                             fluent::Addable, fluent::Incrementable,

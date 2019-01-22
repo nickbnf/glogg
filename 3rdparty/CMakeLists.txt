@@ -6,4 +6,6 @@ add_subdirectory(efsw)
 add_subdirectory(named_type)
 add_subdirectory(catch)
 add_subdirectory(stlab)
+add_subdirectory(singleapp)
+
 

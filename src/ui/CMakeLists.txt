@@ -61,7 +61,7 @@ set_target_properties(ui PROPERTIES AUTOUIC ON)
 set_property(TARGET ui APPEND PROPERTY AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 
 target_include_directories(ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(ui PUBLIC Qt5::Widgets logdata externalcom absl::any)
+target_link_libraries(ui PUBLIC Qt5::Widgets logdata absl::any)
 
 add_dependencies(ui generate_version)
 

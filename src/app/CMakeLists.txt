@@ -5,23 +5,21 @@ elseif (WIN32)
     set(OS_BUNDLE WIN32)
 endif()
 
-add_executable(klogg ${OS_BUNDLE}
+set(MAIN_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/messagereceiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.qrc
     ${ICON_FILE}
 )
 
-add_executable(klogg_portable ${OS_BUNDLE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/klogg.qrc
-    ${ICON_FILE}
-)
+add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
+add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})
 
 set_target_properties(klogg PROPERTIES AUTORCC ON)
 set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
 
-target_link_libraries(klogg PUBLIC ui cli11)
-target_link_libraries(klogg_portable PUBLIC ui cli11)
+target_link_libraries(klogg PUBLIC ui cli11 singleapp)
+target_link_libraries(klogg_portable PUBLIC ui cli11 singleapp)
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 

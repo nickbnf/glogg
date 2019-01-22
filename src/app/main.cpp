@@ -41,20 +41,15 @@ using namespace std;
 #include "savedsearches.h"
 #include "data/loadingstatus.h"
 
-#include "externalcom.h"
-
-#ifdef GLOGG_SUPPORTS_DBUS
-#include "dbusexternalcom.h"
-#elif GLOGG_SUPPORTS_SOCKETIPC
-#include "socketexternalcom.h"
-#endif
-
 #include "log.h"
 
-#include "cli11/cli11.hpp"
-
 #include "version.h"
+#include "messagereceiver.h"
 
+#include <QtWidgets/QApplication>
+
+#include <cli11/cli11.hpp>
+#include <singleapp/singleapplication.h>
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Appenders/RollingFileAppender.h>
 
@@ -62,8 +57,10 @@ static void print_version();
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    SingleApplication app(argc, argv, true, SingleApplication::SecondaryNotification);
 
+    // Register types for Qt
+    qRegisterMetaType<LoadingStatus>("LoadingStatus");
     qRegisterMetaType<LinesCount>( "LinesCount" );
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
@@ -131,47 +128,32 @@ int main(int argc, char *argv[])
         }
     }
 
-    // External communicator
-    shared_ptr<ExternalCommunicator> externalCommunicator = nullptr;
-    shared_ptr<ExternalInstance> externalInstance = nullptr;
+    LOG(logINFO) << "Klogg instance " << app.instanceId();
 
-    try {
-#ifdef GLOGG_SUPPORTS_DBUS
-        externalCommunicator = make_shared<DBusExternalCommunicator>();
-#elif GLOGG_SUPPORTS_SOCKETIPC
-        externalCommunicator = make_shared<SocketExternalCommunicator>();
+    MessageReceiver messageReceiver;
+
+    if ( app.isSecondary() ) {
+        LOG(logINFO) << "Found another klogg, pid " << app.primaryPid();
+
+        if ( !multi_instance ) {
+#ifdef _WIN32
+            ::AllowSetForegroundWindow( app.primaryPid() );
 #endif
-        if (externalCommunicator) {
-          auto ptr = externalCommunicator->otherInstance();
-          externalInstance = shared_ptr<ExternalInstance>( ptr );
+            for ( const auto& filename : filenames ) {
+
+                app.sendMessage( filename.toUtf8() );
+            }
+
+            return 0;
         }
-    }
-    catch(CantCreateExternalErr) {
-        LOG(logWARNING) << "Cannot initialise external communication.";
-    }
-
-    LOG(logDEBUG) << "externalInstance = " << externalInstance;
-    if ( ( ! multi_instance ) && externalInstance ) {
-        uint32_t version = externalInstance->getVersion();
-        LOG(logINFO) << "Found another glogg (version = "
-            << std::setbase(16) << version << ")";
-
-        for ( const auto& filename: filenames ) {
-            externalInstance->loadFile( filename );
-        }
-
-        return 0;
     }
     else {
-        // FIXME: there is a race condition here. One glogg could start
-        // between the declaration of externalInstance and here,
-        // is it a problem?
-        if ( externalCommunicator )
-            externalCommunicator->startListening();
+        QObject::connect(
+                    &app,
+                    &SingleApplication::receivedMessage,
+                    &messageReceiver,
+                    &MessageReceiver::receiveMessage);
     }
-
-    // Register types for Qt
-    qRegisterMetaType<LoadingStatus>("LoadingStatus");
 
     // Register the configuration items
 #ifdef KLOGG_PORTABLE
@@ -211,7 +193,15 @@ int main(int argc, char *argv[])
     GetPersistentInfo().retrieve( QString( "settings" ) );
 
     std::unique_ptr<Session> session( new Session() );
-    MainWindow mw( std::move( session ), externalCommunicator );
+    MainWindow mw( std::move( session ) );
+
+    if (app.isPrimary()) {
+        QObject::connect(
+                    &messageReceiver,
+                    &MessageReceiver::loadFile,
+                    &mw,
+                    &MainWindow::loadFileNonInteractive);
+    }
 
     // Geometry
     mw.reloadGeometry();

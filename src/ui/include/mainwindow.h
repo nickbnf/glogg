@@ -40,7 +40,6 @@ class QActionGroup;
 class Session;
 class RecentFiles;
 class MenuActionToolTipBehavior;
-class ExternalCommunicator;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
@@ -51,8 +50,7 @@ class MainWindow : public QMainWindow
   public:
     // Constructor
     // The ownership of the session is transferred to us
-    MainWindow( std::unique_ptr<Session> session,
-            std::shared_ptr<ExternalCommunicator> external_communicator );
+    MainWindow( std::unique_ptr<Session> session);
 
     // Re-install the geometry stored in config file
     // (should be done before 'Widget::show()')
@@ -64,6 +62,11 @@ class MainWindow : public QMainWindow
     // Starts the lower priority activities the MW controls such as
     // version checking etc...
     void startBackgroundTasks();
+
+  public slots:
+    // Load a file in a new tab (non-interactive)
+    // (for use from e.g. IPC)
+    void loadFileNonInteractive( const QString& file_name );
 
   protected:
     void closeEvent( QCloseEvent* event ) override;
@@ -119,10 +122,6 @@ class MainWindow : public QMainWindow
     // and confirm it.
     void changeQFPattern( const QString& newPattern );
 
-    // Load a file in a new tab (non-interactive)
-    // (for use from e.g. IPC)
-    void loadFileNonInteractive( const QString& file_name );
-
     // Notify the user a new version is available
     void newVersionNotification( const QString& new_version );
 
@@ -156,7 +155,6 @@ class MainWindow : public QMainWindow
     void updateInfoLine();
 
     std::unique_ptr<Session> session_;
-    std::shared_ptr<ExternalCommunicator> externalCommunicator_;
     std::shared_ptr<RecentFiles> recentFiles_;
     QString loadingFileName;
 

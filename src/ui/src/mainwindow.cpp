@@ -55,17 +55,14 @@
 #include "persistentinfo.h"
 #include "menuactiontooltipbehavior.h"
 #include "tabbedcrawlerwidget.h"
-#include "externalcom.h"
 
 #include "version.h"
 
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow( std::unique_ptr<Session> session,
-        std::shared_ptr<ExternalCommunicator> external_communicator ) :
+MainWindow::MainWindow(std::unique_ptr<Session> session) :
     session_( std::move( session )  ),
-    externalCommunicator_( external_communicator ),
     recentFiles_( Persistent<RecentFiles>( "recentFiles" ) ),
     mainIcon_(),
     signalMux_(),
@@ -160,10 +157,6 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
              &quickFindWidget_, SLOT( notify( const QFNotification& ) ) );
     connect( &quickFindMux_, SIGNAL( clearNotification() ),
              &quickFindWidget_, SLOT( clearNotification() ) );
-
-    // Actions from external instances
-    connect( externalCommunicator_.get(), &ExternalCommunicator::loadFile,
-             this, &MainWindow::loadFileNonInteractive );
 
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     // Version checker notification

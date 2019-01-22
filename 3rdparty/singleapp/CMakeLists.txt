@@ -1,0 +1,12 @@
+find_package(Qt5Network REQUIRED)
+
+add_library(singleapp STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/singleapp/singleapplication.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/singleapplication.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/singleapplication_p.cpp)
+
+target_include_directories(singleapp SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(singleapp SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/singleapp)
+
+target_link_libraries(singleapp PUBLIC Qt5::Widgets Qt5::Network)
+target_compile_definitions(singleapp PUBLIC QAPPLICATION_CLASS=QApplication)

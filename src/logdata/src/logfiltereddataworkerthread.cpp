@@ -51,14 +51,14 @@ namespace
     };
 
     PartialSearchResults filterLines( const QRegularExpression& regex,
-                                     const QStringList& lines,
+                                     const std::vector<QString>& lines,
                                      LineNumber chunkStart )
     {
         LOG( logDEBUG ) << "Filter lines at " << chunkStart;
         PartialSearchResults results;
         results.chunkStart = chunkStart;
         results.processedLines = LinesCount( lines.size() );
-        for ( int i = 0; i < lines.size(); ++i ) {
+        for ( size_t i = 0; i < lines.size(); ++i ) {
             const auto& l = lines.at( i );
             if ( regex.match(l).hasMatch() ) {
                 results.maxLength = qMax( results.maxLength, AbstractLogData::getUntabifiedLength( l ) );
@@ -288,7 +288,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     QSemaphore searchCompleted;
     QSemaphore blocksDone;
 
-    using BlockData = std::tuple<LineNumber, QStringList, PartialSearchResults>;
+    using BlockData = std::tuple<LineNumber, std::vector<QString>, PartialSearchResults>;
     std::array<stlab::sender<BlockData>, 3> senders;
     std::array<stlab::receiver<BlockData>, 3> searchers;
 
@@ -301,19 +301,19 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         // copy and optimize regex for each thread
         auto regexp = QRegularExpression{regexp_.pattern(), regexp_.patternOptions()};
         regexp.optimize();
-        return [regexp, index, this]( const BlockData& blockData )
+        return [regexp, index, this]( BlockData&& blockData )
         {
               const auto& chunkStart = std::get<0>(blockData);
-              const auto& lines = std::get<1>(blockData);
+              auto& lines = std::get<1>(blockData);
 
               LOG( logDEBUG ) << "Searcher " << index << " " << chunkStart;
 
-              if ( lines.isEmpty() ) {
+              if ( lines.empty() ) {
                   return std::make_tuple( chunkStart, lines, PartialSearchResults{} );
               }
 
               auto results = filterLines( regexp, lines, chunkStart );
-              return std::make_tuple( chunkStart, lines, results );
+              return std::make_tuple( chunkStart, std::move(lines), results );
         };
     };
 
@@ -324,11 +324,11 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         postProcessors[i].set_ready();
     }
 
-    auto processMatches = [&](const BlockData& blockData)
+    auto processMatches = [&](BlockData&& blockData)
     {
          const auto& lines = std::get<1>( blockData );
 
-         if ( lines.isEmpty() ) {
+         if ( lines.empty() ) {
              searchCompleted.release();
              return;
          }
@@ -385,14 +385,14 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         LOG( logDEBUG ) << "Reading chunk starting at " << chunkStart;
 
         const auto linesInChunk = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
-        const auto lines = sourceLogData_->getLines( chunkStart, linesInChunk );
+        auto lines = sourceLogData_->getLines( chunkStart, linesInChunk );
 
         LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
 
         blocksDone.acquire( lines.size() );
 
-        senders[currentProcess]( std::make_tuple( chunkStart, lines, PartialSearchResults{} ) );
+        senders[currentProcess]( std::make_tuple( chunkStart, std::move(lines), PartialSearchResults{} ) );
 
         currentProcess++;
         if ( currentProcess >= processorsSize ) {
@@ -403,7 +403,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
              ", " << lines.size() << " lines read.";
     }
 
-    senders[currentProcess]( std::make_tuple(endLine, QStringList{}, PartialSearchResults{} ) );
+    senders[currentProcess]( std::make_tuple(endLine, std::vector<QString>{}, PartialSearchResults{} ) );
     for ( auto& s : senders ) {
         s.close();
     }

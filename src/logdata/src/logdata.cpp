@@ -356,19 +356,19 @@ QString LogData::doGetExpandedLineString( LineNumber line ) const
 // Note this function is also called from the LogFilteredDataWorker thread, so
 // data must be protected because they are changed in the main thread (by
 // indexingFinished).
-QStringList LogData::doGetLines( LineNumber first_line, LinesCount number ) const
+std::vector<QString> LogData::doGetLines( LineNumber first_line, LinesCount number ) const
 {
     const auto last_line = first_line + number - 1_lcount;
 
     // LOG(logDEBUG) << "LogData::doGetLines first_line:" << first_line << " nb:" << number;
 
     if ( number.get() == 0 ) {
-        return QStringList();
+        return std::vector<QString>();
     }
 
     if ( last_line >= indexing_data_.getNbLines() ) {
         LOG(logWARNING) << "LogData::doGetLines Lines out of bound asked for";
-        return QStringList(); /* exception? */
+        return std::vector<QString>(); /* exception? */
     }
 
     const auto first_byte = (first_line.get() == 0) ?
@@ -383,7 +383,7 @@ QStringList LogData::doGetLines( LineNumber first_line, LinesCount number ) cons
 
     fileMutex_.unlock();
 
-    QStringList list;
+    std::vector<QString> list;
     list.reserve( number.get() );
 
     qint64 beginning = 0;
@@ -392,7 +392,7 @@ QStringList LogData::doGetLines( LineNumber first_line, LinesCount number ) cons
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         // LOG(logDEBUG) << "Line is: " << std::string( blob.data() + beginning, end - beginning - 1 );
-        list.append( codec_->toUnicode( blob.data() + beginning,
+        list.emplace_back( codec_->toUnicode( blob.data() + beginning,
                                         static_cast<LineLength::UnderlyingType>( end - beginning - 1 ) ) );
 
         beginning = end;
@@ -401,17 +401,17 @@ QStringList LogData::doGetLines( LineNumber first_line, LinesCount number ) cons
     return list;
 }
 
-QStringList LogData::doGetExpandedLines( LineNumber first_line, LinesCount number ) const
+std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCount number ) const
 {
     const auto last_line = first_line + number - 1_lcount;
 
     if ( number.get() == 0 ) {
-        return QStringList();
+        return std::vector<QString>();
     }
 
     if ( last_line >= indexing_data_.getNbLines() ) {
         LOG(logWARNING) << "LogData::doGetExpandedLines Lines out of bound asked for";
-        return QStringList(); /* exception? */
+        return std::vector<QString>(); /* exception? */
     }
 
     fileMutex_.lock();
@@ -426,7 +426,7 @@ QStringList LogData::doGetExpandedLines( LineNumber first_line, LinesCount numbe
 
     fileMutex_.unlock();
 
-    QStringList list;
+    std::vector<QString> list;
     list.reserve( number.get() );
 
     qint64 beginning = 0;
@@ -436,7 +436,7 @@ QStringList LogData::doGetExpandedLines( LineNumber first_line, LinesCount numbe
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         // LOG(logDEBUG) << "Line is: " << std::string( blob.data() + beginning, end - beginning - 1 );
 
-        list.append( untabify( codec_->toUnicode( blob.data() + beginning,
+        list.emplace_back( untabify( codec_->toUnicode( blob.data() + beginning,
                                                   static_cast<LineLength::UnderlyingType>( end - beginning - 1 ) ) ) );
         beginning = end;
     }

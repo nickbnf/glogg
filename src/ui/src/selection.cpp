@@ -152,9 +152,18 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
                         selectedPartial_.startColumn ) + 1 );
     }
     else if ( selectedRange_.startLine.has_value() ) {
-        QStringList list = logData->getLines( *selectedRange_.startLine,
+        const auto list = logData->getLines( *selectedRange_.startLine,
                 LinesCount( selectedRange_.endLine.get() - selectedRange_.startLine->get() + 1 ) );
-        text = list.join( QChar::LineFeed );
+
+        text.reserve( std::accumulate( list.begin(), list.end(), list.size(),
+            []( const auto value, const auto& line ) { return value + line.size(); } ) );
+
+        for ( const auto& line : list ) {
+            if ( !text.isEmpty() ) {
+                text.append( QChar::LineFeed );
+            }
+            text.append( line );
+        }
     }
 
     return text;

@@ -1091,7 +1091,7 @@ void AbstractLogView::saveToFile()
     }
 
     auto writeLines = [this, &saveFile, &progressDialog, codec](const auto& offset) {
-        QStringList lines = logData->getLines( offset.first, offset.second );
+        auto lines = logData->getLines( offset.first, offset.second );
         for ( auto& l : lines)  {
             l.append(QChar::LineFeed);
             const auto encodedLine = codec->fromUnicode( l );
@@ -1627,7 +1627,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     LOG(logDEBUG) << "Height: " << paintDeviceHeight;
 
     // Lines to write
-    const QStringList lines = logData->getExpandedLines( firstLine, nbLines );
+    const auto lines = logData->getExpandedLines( firstLine, nbLines );
 
     // First draw the bullet left margin
     painter.setPen(palette.color(QPalette::Text));

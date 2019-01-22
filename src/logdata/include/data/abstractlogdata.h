@@ -37,9 +37,9 @@ class AbstractLogData : public QObject {
     // Returns the line passed as a QString, with tabs expanded
     QString getExpandedLineString( LineNumber line ) const;
     // Returns a set of lines as a QStringList
-    QStringList getLines( LineNumber first_line, LinesCount number ) const;
+    std::vector<QString> getLines( LineNumber first_line, LinesCount number ) const;
     // Returns a set of lines with tabs expanded
-    QStringList getExpandedLines( LineNumber first_line, LinesCount number ) const;
+    std::vector<QString> getExpandedLines( LineNumber first_line, LinesCount number ) const;
     // Returns the total number of lines
     LinesCount getNbLine() const;
     // Returns the visible length of the longest line
@@ -80,9 +80,9 @@ class AbstractLogData : public QObject {
     // Internal function called to get a given line
     virtual QString doGetExpandedLineString( LineNumber line ) const = 0;
     // Internal function called to get a set of lines
-    virtual QStringList doGetLines( LineNumber first_line, LinesCount number ) const = 0;
+    virtual std::vector<QString> doGetLines( LineNumber first_line, LinesCount number ) const = 0;
     // Internal function called to get a set of expanded lines
-    virtual QStringList doGetExpandedLines( LineNumber first_line, LinesCount number ) const = 0;
+    virtual std::vector<QString> doGetExpandedLines( LineNumber first_line, LinesCount number ) const = 0;
     // Internal function called to get the number of lines
     virtual LinesCount doGetNbLine() const = 0;
     // Internal function called to get the maximum length
@@ -93,7 +93,7 @@ class AbstractLogData : public QObject {
     virtual void doSetDisplayEncoding( const char* encoding ) = 0;
     virtual QTextCodec* doGetDisplayEncoding() const = 0;
 
-    static inline QString untabify( const QString& line ) {
+    static QString untabify( const QString& line ) {
         QString untabified_line;
         int total_spaces = 0;
         untabified_line.reserve(line.size());

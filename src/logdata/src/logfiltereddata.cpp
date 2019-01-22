@@ -445,26 +445,26 @@ QString LogFilteredData::doGetExpandedLineString( LineNumber lineNum ) const
 }
 
 // Implementation of the virtual function.
-QStringList LogFilteredData::doGetLines( LineNumber first_line, LinesCount number ) const
+std::vector<QString> LogFilteredData::doGetLines( LineNumber first_line, LinesCount number ) const
 {
-    QStringList list;
+    std::vector<QString> list;
     list.reserve( number.get() );
 
     for ( auto i = first_line; i < first_line + number; ++i ) {
-        list.append( doGetLineString( i ) );
+        list.emplace_back( doGetLineString( i ) );
     }
 
     return list;
 }
 
 // Implementation of the virtual function.
-QStringList LogFilteredData::doGetExpandedLines( LineNumber first_line, LinesCount number ) const
+std::vector<QString> LogFilteredData::doGetExpandedLines( LineNumber first_line, LinesCount number ) const
 {
-    QStringList list;
+    std::vector<QString> list;
     list.reserve( number.get() );
 
     for ( auto i = first_line; i < first_line + number; ++i ) {
-        list.append( doGetExpandedLineString( i ) );
+        list.emplace_back( doGetExpandedLineString( i ) );
     }
 
     return list;

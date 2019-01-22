@@ -145,7 +145,7 @@ class CrawlerWidget : public QSplitter,
     // QuickFind is being closed.
     void exitingQuickFind();
     // Called when new data must be displayed in the filtered window.
-    void updateFilteredView( int nbMatches, int progress );
+    void updateFilteredView( int nbMatches, int progress, qint64 initial_position );
     // Called when a new line has been selected in the filtered view,
     // to instruct the main view to jump to the matching line.
     void jumpToMatchingLine( int filteredLineNb );

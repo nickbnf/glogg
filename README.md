@@ -20,6 +20,10 @@ combination of grep and less.
 * Is fast and reads the file directly from disk, without loading it into memory
 * Is open source, released under the GPL
 
+## Download
+
+Installers, binaries and source tarballs are available at https://glogg.bonnefon.org/download.html.
+
 ## Requirements
 
 * GCC version 4.8.0 or later

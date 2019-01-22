@@ -118,8 +118,16 @@ isEmpty(BOOST_PATH) {
 else {
     message(Building using static Boost libraries at $$BOOST_PATH)
 
-    SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp \
-        $$BOOST_PATH/libs/smart_ptr/src/*.cpp
+    SOURCES += $$BOOST_PATH/libs/program_options/src/*.cpp
+
+    exists( $$BOOST_PATH/libs/smart_ptr/src/sp_collector.cpp ) {
+        message( "'old' version of Boost" )
+        SOURCES += $$BOOST_PATH/libs/smart_ptr/src/*.cpp
+    }
+    else {
+        message( "'new' version of Boost" )
+        SOURCES += $$BOOST_PATH/libs/smart_ptr/extras/src/*.cpp
+    }
 
     INCLUDEPATH += $$BOOST_PATH
 }
@@ -133,7 +141,9 @@ macx {
 }
 else {
     # For Windows icon
-    RC_FILE = glogg.rc
+    RC_ICONS = glogg48.ico
+    QMAKE_TARGET_COMPANY = "Nicolas Bonnefon"
+    QMAKE_TARGET_DESCRIPTION = "glogg - the fast, smart log explorer"
 }
 
 RESOURCES = glogg.qrc
@@ -168,7 +178,7 @@ icon_svg.path  = $$PREFIX/share/icons/hicolor/scalable/apps
 icon_svg.files = images/hicolor/scalable/glogg.svg
 
 doc.path  = $$PREFIX/share/doc/glogg
-doc.files += README COPYING
+doc.files += README.md COPYING
 
 desktop.path = $$PREFIX/share/applications
 desktop.files = glogg.desktop
@@ -190,20 +200,11 @@ UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 # Debug symbols even in release build
 QMAKE_CXXFLAGS = -g
 
-# Which compiler are we using
-system( $${QMAKE_CXX} --version | grep -e " 4\\.[7-9]" ) || macx {
-    message ( "g++ version 4.7 or newer, supports C++11" )
-    CONFIG += C++11
-}
-else {
-    CONFIG += C++0x
-}
+CONFIG += c++11
 
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
 QMAKE_CXXFLAGS += -Wextra
-C++0x:QMAKE_CXXFLAGS += -std=c++0x
-C++11:QMAKE_CXXFLAGS += -std=c++11
 
 GPROF {
     QMAKE_CXXFLAGS += -pg
@@ -226,7 +227,7 @@ macx {
     QMAKE_CXXFLAGS += -stdlib=libc++
     QMAKE_LFLAGS += -stdlib=libc++
 
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
 
     QMAKE_INFO_PLIST = Info.plist
 }
@@ -247,7 +248,7 @@ else {
 }
 
 # Optional features (e.g. CONFIG+=no-dbus)
-system(pkg-config --exists QtDBus):!no-dbus {
+system(pkg-config --exists Qt5DBus):!no-dbus {
     message("Support for D-BUS will be included")
     QT += dbus
     QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_DBUS
@@ -256,7 +257,7 @@ system(pkg-config --exists QtDBus):!no-dbus {
 }
 else {
     message("Support for D-BUS will NOT be included")
-    win32 || macx {
+    win32 | macx {
         message("Support for cross-platform IPC will be included")
         QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_SOCKETIPC
         SOURCES += src/socketexternalcom.cpp
@@ -277,8 +278,12 @@ else {
 }
 
 # File watching
-linux-g++ || linux-g++-64 {
+linux-g++ | linux-g++-64 {
     CONFIG += inotify
+}
+
+macx {
+    CONFIG += kqueue
 }
 
 win32 {
@@ -295,9 +300,17 @@ else {
         HEADERS += src/platformfilewatcher.h src/inotifywatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
     }
     else {
-        message("File watching using Qt")
-        SOURCES += src/qtfilewatcher.cpp
-        HEADERS += src/qtfilewatcher.h
+        macx {
+            message("File watching using kqueue")
+            QMAKE_CXXFLAGS += -DGLOGG_SUPPORTS_KQUEUE
+            SOURCES += src/platformfilewatcher.cpp src/kqueuewatchtowerdriver.cpp src/watchtower.cpp src/watchtowerlist.cpp
+            HEADERS += src/platformfilewatcher.h src/kqueuewatchtowerdriver.h src/watchtower.h src/watchtowerlist.h
+        }
+        else {
+            message("File watching using Qt")
+            SOURCES += src/qtfilewatcher.cpp
+            HEADERS += src/qtfilewatcher.h
+        }
     }
 }
 

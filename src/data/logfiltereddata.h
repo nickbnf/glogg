@@ -114,10 +114,12 @@ class LogFilteredData : public AbstractLogData {
   signals:
     // Sent when the search has progressed, give the number of matches (so far)
     // and the percentage of completion
-    void searchProgressed( int nbMatches, int progress );
+    // Also include the initial position to allow the client to distinguish
+    // between full and partial searches
+    void searchProgressed( int nbMatches, int progress, qint64 initial_position );
 
   private slots:
-    void handleSearchProgressed( int NbMatches, int progress );
+    void handleSearchProgressed( int NbMatches, int progress, qint64 initial_position );
 
   private:
     class FilteredItem;

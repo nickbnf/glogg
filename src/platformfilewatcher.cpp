@@ -42,6 +42,7 @@ void PlatformFileWatcher::addFile( const QString& fileName )
 
     watched_file_name_ = fileName;
 
+    removeFile( fileName );
     notification_ = std::make_shared<Registration>(
             watch_tower_->addFile( fileName.toStdString(), [this, fileName] {
                 emit fileChanged( fileName ); } ) );

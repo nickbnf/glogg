@@ -8,8 +8,9 @@ project(glogg_tests)
 # Qt
 
 find_program(QT_QMAKE_EXECUTABLE NAMES qmake PATHS $ENV{QT_DIR}/bin)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5Test REQUIRED)
+find_package(Qt5Core 5.8 REQUIRED)
+find_package(Qt5Widgets 5.8 REQUIRED)
+find_package(Qt5Test 5.8 REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -110,24 +111,25 @@ set(glogg_SOURCES
     ../src/marks.cpp
     ../src/quickfindmux.cpp
     ../src/signalmux.cpp
-    ../src/qtfilewatcher.cpp
     ../src/tabbedcrawlerwidget.cpp
-    ../src/filewatcher.cpp
     ../src/watchtowerlist.cpp
     ../src/watchtower.cpp
     ../src/viewtools.cpp
     ../src/encodingspeculator.cpp
-    # ../src/platformfilewatcher.cpp
+    ../src/platformfilewatcher.cpp
+    ../src/filewatcher.cpp
 )
 
 set(glogg_HEADERS
     ../src/mainwindow.h
     ../src/marks.h
-    ../src/filewatcher.h)
+    ../src/platformfilewatcher.h
+    ../src/filewatcher.h
+)
 
 # Unit tests
 set(glogg_UTESTS
-    # watchtowerTest.cpp
+    watchtowerTest.cpp
     linepositionarrayTest.cpp
     encodingspeculatorTest.cpp
 )
@@ -152,6 +154,11 @@ if (WIN32)
     )
 elseif (LINUX)
     # set(FileWatcherEngine_SOURCES ../src/inotifywatchtowerdriver.cpp)
+elseif (APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGLOGG_SUPPORTS_KQUEUE")
+    set(FileWatcherEngine_SOURCES
+         ../src/kqueuewatchtowerdriver.cpp
+    )
 endif (WIN32)
 
 # Compiler flags

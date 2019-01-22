@@ -101,8 +101,15 @@ void FiltersDialog::on_removeFilterButton_clicked()
         filterListWidget->setCurrentRow( -1 );
         delete filterListWidget->takeItem( index );
 
-        // Select the new item at the same index
-        filterListWidget->setCurrentRow( index );
+        int count = filterListWidget->count();
+        if ( index < count ) {
+            // Select the new item at the same index
+            filterListWidget->setCurrentRow( index );
+        }
+        else {
+            // or the previous index if it is at the end
+            filterListWidget->setCurrentRow( count - 1 );
+        }
     }
 }
 
@@ -187,16 +194,28 @@ void FiltersDialog::updatePropertyFields()
 
         // Enable the buttons if needed
         removeFilterButton->setEnabled( true );
-        upFilterButton->setEnabled( ( selectedRow_ > 0 ) ? true : false );
+        upFilterButton->setEnabled( selectedRow_ > 0 );
         downFilterButton->setEnabled(
-                ( selectedRow_ < ( filterListWidget->count() - 1 ) ) ? true : false );
+                selectedRow_ < ( filterListWidget->count() - 1 ) );
     }
     else {
-        // Nothing is selected, greys the buttons
+        // Nothing is selected, reset and disable the controls
+        patternEdit->clear();
         patternEdit->setEnabled( false );
+
+        int index = foreColorBox->findText( DEFAULT_FORE_COLOUR );
+        foreColorBox->setCurrentIndex( index );
         foreColorBox->setEnabled( false );
+        index = backColorBox->findText( DEFAULT_BACK_COLOUR );
+
+        backColorBox->setCurrentIndex( index );
         backColorBox->setEnabled( false );
+
+        ignoreCaseCheckBox->setChecked( DEFAULT_IGNORE_CASE );
         ignoreCaseCheckBox->setEnabled( false );
+        removeFilterButton->setEnabled( false );
+        upFilterButton->setEnabled( false );
+        downFilterButton->setEnabled( false );
     }
 }
 

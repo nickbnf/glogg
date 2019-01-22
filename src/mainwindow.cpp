@@ -237,6 +237,10 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
     { "UTF-16BE" },
     { "CP1251" },
     { "CP1252" },
+    { "&Big5" },
+    { "&GB18030 / GB2312" },
+    { "&Shift_JIS" },
+    { "&KOI8-R" }
 };
 
 // Menu actions
@@ -781,15 +785,12 @@ void MainWindow::dragEnterEvent( QDragEnterEvent* event )
 // Tries and loads the file if the URL dropped is local
 void MainWindow::dropEvent( QDropEvent* event )
 {
-    QList<QUrl> urls = event->mimeData()->urls();
-    if ( urls.isEmpty() )
-        return;
-
-    QString fileName = urls.first().toLocalFile();
-    if ( fileName.isEmpty() )
-        return;
-
-    loadFile( fileName );
+    foreach( const QUrl& url, event->mimeData()->urls() ) {
+        QString fileName = url.toLocalFile();
+        if ( !fileName.isEmpty() ) {
+            loadFile( fileName );
+        }
+    }
 }
 
 void MainWindow::keyPressEvent( QKeyEvent* keyEvent )

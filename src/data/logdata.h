@@ -163,6 +163,7 @@ class LogData : public AbstractLogData {
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
+    void reOpenFile();
 
     qint64 endOfLinePosition( qint64 line ) const;
     qint64 beginningOfNextLine( qint64 end_pos ) const;

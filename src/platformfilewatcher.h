@@ -24,8 +24,11 @@
 
 #include <memory>
 
+
 #ifdef _WIN32
 #  include "winwatchtowerdriver.h"
+#elif defined(__APPLE__)
+#  include "kqueuewatchtowerdriver.h"
 #else
 #  include "inotifywatchtowerdriver.h"
 #endif
@@ -61,6 +64,8 @@ using PlatformWatchTower = WatchTower<WinWatchTowerDriver>;
 #  else
 typedef WatchTower<WinWatchTowerDriver> PlatformWatchTower;
 #  endif
+#elif defined(__APPLE__)
+using PlatformWatchTower = WatchTower<KQueueWatchTowerDriver>;
 #else
 #  ifdef HAS_TEMPLATE_ALIASES
 using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;

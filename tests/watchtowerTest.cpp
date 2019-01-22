@@ -18,6 +18,9 @@
 #ifdef _WIN32
 #  include "winwatchtowerdriver.h"
 using PlatformWatchTower = WatchTower<WinWatchTowerDriver>;
+#elif defined(__APPLE__)
+#  include "kqueuewatchtowerdriver.h"
+using PlatformWatchTower = WatchTower<KQueueWatchTowerDriver>;
 #else
 #  include "inotifywatchtowerdriver.h"
 using PlatformWatchTower = WatchTower<INotifyWatchTowerDriver>;

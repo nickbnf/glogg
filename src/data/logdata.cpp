@@ -29,7 +29,7 @@
 
 #include "logdata.h"
 #include "logfiltereddata.h"
-#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(GLOGG_SUPPORTS_KQUEUE) || defined(WIN32)
 #include "platformfilewatcher.h"
 #else
 #include "qtfilewatcher.h"
@@ -72,7 +72,7 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
 
     codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
-#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(WIN32)
+#if defined(GLOGG_SUPPORTS_INOTIFY) || defined(GLOGG_SUPPORTS_KQUEUE) || defined(WIN32)
     fileWatcher_ = std::make_shared<PlatformFileWatcher>();
 #else
     fileWatcher_ = std::make_shared<QtFileWatcher>();
@@ -148,6 +148,9 @@ void LogData::reload()
 {
     workerThread_.interrupt();
 
+    // Re-open the file, useful in case the file has been moved
+    reOpenFile();
+
     enqueueOperation( std::make_shared<FullIndexOperation>() );
 }
 
@@ -197,23 +200,44 @@ void LogData::startOperation()
 
 void LogData::fileChangedOnDisk()
 {
-    LOG(logDEBUG) << "signalFileChanged";
-
     const QString name = attached_file_->fileName();
-    QFileInfo info( name );
 
-    // Need to open the file in case it was absent
-    attached_file_->open( QIODevice::ReadOnly );
+    LOG(logDEBUG) << "signalFileChanged: " << name.toStdString();
+
+    QFileInfo info( name );
+    qint64 file_size = indexing_data_.getSize();
+    LOG(logDEBUG) << "current indexed fileSize=" << file_size;
+    LOG(logDEBUG) << "info file_->size()=" << info.size();
+    LOG(logDEBUG) << "attached_file_->size()=" << attached_file_->size();
+    // In absence of any clearer information, we use the following size comparison
+    // to determine whether we are following the same file or not (i.e. the file
+    // has been moved and the inode we are following is now under a new name, if for
+    // instance log has been rotated). We want to follow the name so we have to reopen
+    // the file to ensure we are reading the right one.
+    // This is a crude heuristic but necessary for notification services that do not
+    // give details (e.g. kqueues)
+    if ( ( info.size() != attached_file_->size() )
+            || ( attached_file_->openMode() == QIODevice::NotOpen ) ) {
+        LOG(logINFO) << "Inconsistent size, the file might have changed, re-opening";
+        reOpenFile();
+
+        // We don't force a (slow) full reindex as this routinely happens if
+        // the file is appended quickly.
+        // This means we can occasionally have false negatives (should be dealt with at
+        // a lower level): e.g. if a new file is created with the same name as the old one
+        // and with a size greater than the old one (should be rare in practice).
+    }
 
     std::shared_ptr<LogDataOperation> newOperation;
 
-    qint64 file_size = indexing_data_.getSize();
-    LOG(logDEBUG) << "current fileSize=" << file_size;
-    LOG(logDEBUG) << "info file_->size()=" << info.size();
-    if ( info.size() < file_size ) {
+    qint64 real_file_size = attached_file_->size();
+    if ( real_file_size < file_size ) {
         fileChangedOnDisk_ = Truncated;
         LOG(logINFO) << "File truncated";
         newOperation = std::make_shared<FullIndexOperation>();
+    }
+    else if ( real_file_size == file_size ) {
+        LOG(logINFO) << "No change in file";
     }
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
@@ -221,13 +245,12 @@ void LogData::fileChangedOnDisk()
         newOperation = std::make_shared<PartialIndexOperation>();
     }
 
-    if ( newOperation )
+    if ( newOperation ) {
         enqueueOperation( newOperation );
+        lastModifiedDate_ = info.lastModified();
 
-    lastModifiedDate_ = info.lastModified();
-
-    emit fileChanged( fileChangedOnDisk_ );
-    // TODO: fileChangedOnDisk_, fileSize_
+        emit fileChanged( fileChangedOnDisk_ );
+    }
 }
 
 void LogData::indexingFinished( LoadingStatus status )
@@ -300,6 +323,10 @@ void LogData::doSetDisplayEncoding( Encoding encoding )
     static const char* utf16be_encoding   = "utf-16be";
     static const char* cp1251_encoding   = "CP1251";
     static const char* cp1252_encoding   = "CP1252";
+    static const char* big5_encoding  = "Big5";
+    static const char* gb18030_encoding  = "GB18030";
+    static const char* shiftJIS_encoding  = "Shift-JIS";
+    static const char* koi8r_encoding  = "KOI8-R";
 
     const char* qt_encoding = latin1_encoding;
 
@@ -326,6 +353,18 @@ void LogData::doSetDisplayEncoding( Encoding encoding )
             break;
         case Encoding::ENCODING_CP1252:
             qt_encoding = cp1252_encoding;
+            break;
+        case Encoding::ENCODING_BIG5:
+            qt_encoding = big5_encoding;
+            break;
+        case Encoding::ENCODING_GB18030:
+            qt_encoding = gb18030_encoding;
+            break;
+        case Encoding::ENCODING_SHIFT_JIS:
+            qt_encoding = shiftJIS_encoding;
+            break;
+        case Encoding::ENCODING_KOI8R:
+            qt_encoding = koi8r_encoding;
             break;
         case Encoding::ENCODING_ISO_8859_1:
             qt_encoding = latin1_encoding;
@@ -501,4 +540,15 @@ qint64 LogData::endOfLinePosition( qint64 line ) const
 qint64 LogData::beginningOfNextLine( qint64 end_pos ) const
 {
     return end_pos + 1 + before_cr_offset_ + after_cr_offset_;
+}
+
+// Close and reopen the file.
+// Used if we suspect the file has been moved (we follow the old
+// inode but really want the one now associated with the name)
+void LogData::reOpenFile()
+{
+    auto reopened = std::make_unique<QFile>( attached_file_->fileName() );
+    reopened->open( QIODevice::ReadOnly );
+    QMutexLocker locker( &fileMutex_ );
+    attached_file_ = std::move( reopened );      // This will close the old one and open the new
 }

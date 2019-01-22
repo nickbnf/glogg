@@ -104,8 +104,10 @@ template<typename Driver>
 class ObservedFileList {
     public:
         ObservedFileList() :
-            heartBeat_ { std::shared_ptr<void>((void*) 0xDEADC0DE, [] (void*) {}) }
+            // Use an empty deleter since we don't really own this.
+            heartBeat_ { this, [] (void*) {} }
             { }
+        ObservedFileList( const ObservedFileList& ) = delete;
         ~ObservedFileList() = default;
 
         // The functions return a pointer to the existing file (if exists)
@@ -116,6 +118,8 @@ class ObservedFileList {
                 typename Driver::SymlinkId symlink_id );
         ObservedFile<Driver>* searchByDirWdAndName(
                 typename Driver::DirId id, const char* name );
+        std::vector<ObservedFile<Driver>*> searchByDirWd(
+                typename Driver::DirId id );
 
         // Add a new file, the list returns a pointer to the added file,
         // but has ownership of the file.
@@ -191,8 +195,10 @@ class ObservedFileList {
         // Map the inotify directory wds to the observed files
         std::map<int, ObservedFile<Driver>*> by_dir_wd_;
 
-        // Heartbeat
-        std::shared_ptr<void> heartBeat_;
+        // A shared_ptr to self.
+        // weak_ptr's from this can check if the list is still alive.
+        // This probably shouldn't be copied.
+        std::shared_ptr<ObservedFileList> heartBeat_;
 
         // Clean all reference to any expired directory
         void cleanRefsToExpiredDirs();
@@ -267,6 +273,33 @@ ObservedFile<Driver>* ObservedFileList<Driver>::searchByDirWdAndName(
 }
 
 template <typename Driver>
+std::vector<ObservedFile<Driver>*> ObservedFileList<Driver>::searchByDirWd(
+        typename Driver::DirId id )
+{
+    std::vector<ObservedFile<Driver>*> result;
+
+    auto dir = find_if( observed_dirs_.begin(), observed_dirs_.end(),
+            [id] (std::pair<std::string,std::weak_ptr<ObservedDir<Driver>>> d) -> bool {
+            if ( auto dir = d.second.lock() ) {
+                return ( id == dir->dir_id_ );
+            }
+            else {
+                return false; } } );
+
+    if ( dir != observed_dirs_.end() ) {
+        for ( auto i = observed_files_.begin(); i != observed_files_.end(); ++i ) {
+            if ( auto d = dir->second.lock() ) {
+                if ( d.get() == i->dir_.get() ) {
+                    result.push_back( &(*i) );
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+template <typename Driver>
 ObservedFile<Driver>* ObservedFileList<Driver>::addNewObservedFile(
         ObservedFile<Driver> new_observed )
 {
@@ -321,14 +354,14 @@ std::shared_ptr<ObservedDir<Driver>> ObservedFileList<Driver>::addWatchedDirecto
         const std::string& dir_name,
         std::function<void( ObservedDir<Driver>* )> remove_notification )
 {
-    std::weak_ptr<void> weakHeartBeat(heartBeat_);
+    std::weak_ptr<ObservedFileList> weakHeartBeat(heartBeat_);
 
     std::shared_ptr<ObservedDir<Driver>> dir = {
             new ObservedDir<Driver>( dir_name ),
-            [this, remove_notification, weakHeartBeat] (ObservedDir<Driver>* d) {
-                if ( auto heart_beat = weakHeartBeat.lock() ) {
+            [remove_notification, weakHeartBeat] (ObservedDir<Driver>* d) {
+                if ( auto list = weakHeartBeat.lock() ) {
                     remove_notification( d );
-                    this->cleanRefsToExpiredDirs();
+                    list->cleanRefsToExpiredDirs();
                 }
                 delete d; } };
 

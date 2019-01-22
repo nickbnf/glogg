@@ -136,6 +136,7 @@ INotifyWatchTowerDriver::waitAndProcessEvents(
                 __attribute__ ((aligned(__alignof__(struct inotify_event))));
 
             ssize_t nb = read( inotify_fd_, buffer, sizeof( buffer ) );
+            LOG(logDEBUG) << "Read " << nb << " bytes";
             if ( nb > 0 )
             {
                 ssize_t offset = 0;
@@ -170,7 +171,7 @@ size_t INotifyWatchTowerDriver::processINotifyEvent(
         std::vector<INotifyObservedFile*>* files_to_notify,
         std::vector<INotifyObservedFile*>* files_needing_readding )
 {
-    LOG(logDEBUG) << "Event received: " << std::hex << event->mask;
+    LOG(logDEBUG) << "Event received: 0x" << std::hex << event->mask;
 
     INotifyObservedFile* file = nullptr;
 

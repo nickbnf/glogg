@@ -155,7 +155,7 @@ namespace {
         }
 
         QRegularExpressionMatch newMatch = version_regex.match( new_version );
-        if ( version_regex.indexIn( new_version ) != -1 )
+        if ( newMatch.hasMatch() )
         {
             new_main_version = newMatch.captured(3).toInt()
                 + newMatch.captured(2).toInt() * 100

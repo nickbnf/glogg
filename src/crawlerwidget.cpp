@@ -56,10 +56,12 @@ class CrawlerWidgetContext : public ViewContextInterface {
     // Construct from the value passsed
     CrawlerWidgetContext( QList<int> sizes,
            bool ignore_case,
-           bool auto_refresh )
+           bool auto_refresh,
+           bool follow_file )
         : sizes_( sizes ),
           ignore_case_( ignore_case ),
-          auto_refresh_( auto_refresh ) {}
+          auto_refresh_( auto_refresh ),
+          follow_file_( follow_file ) {}
 
     // Implementation of the ViewContextInterface function
     std::string toString() const;
@@ -69,12 +71,14 @@ class CrawlerWidgetContext : public ViewContextInterface {
 
     bool ignoreCase() const { return ignore_case_; }
     bool autoRefresh() const { return auto_refresh_; }
+    bool followFile() const { return follow_file_; }
 
   private:
     QList<int> sizes_;
 
     bool ignore_case_;
     bool auto_refresh_;
+    bool follow_file_;
 };
 
 // Constructor only does trivial construction. The real work is done once
@@ -190,6 +194,7 @@ void CrawlerWidget::reload()
 {
     searchState_.resetState();
     logFilteredData_->clearSearch();
+    logFilteredData_->clearMarks();
     filteredView->updateData();
     printSearchInfoMessage();
 
@@ -249,6 +254,8 @@ void CrawlerWidget::doSetViewContext(
     searchRefreshCheck->setCheckState( auto_refresh_check_state );
     // Manually call the handler as it is not called when changing the state programmatically
     searchRefreshChangedHandler( auto_refresh_check_state );
+
+    emit followSet( context.followFile() );
 }
 
 std::shared_ptr<const ViewContextInterface>
@@ -257,7 +264,8 @@ CrawlerWidget::doGetViewContext() const
     auto context = std::make_shared<const CrawlerWidgetContext>(
             sizes(),
             ( ignoreCaseCheck->checkState() == Qt::Checked ),
-            ( searchRefreshCheck->checkState() == Qt::Checked ) );
+            ( searchRefreshCheck->checkState() == Qt::Checked ),
+            logMainView->isFollowEnabled() );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
 }
@@ -288,7 +296,7 @@ void CrawlerWidget::stopSearch()
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
-void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
+void CrawlerWidget::updateFilteredView( int nbMatches, int progress, qint64 initial_position )
 {
     LOG(logDEBUG) << "updateFilteredView received.";
 
@@ -322,14 +330,17 @@ void CrawlerWidget::updateFilteredView( int nbMatches, int progress )
         // Update the match overview
         overview_.updateData( logData_->getNbLine() );
 
-        // New data found icon
-        changeDataStatus( DataStatus::NEW_FILTERED_DATA );
+        // New data found icon (only for "update" search)
+        if ( initial_position > 0 )
+            changeDataStatus( DataStatus::NEW_FILTERED_DATA );
 
         // Also update the top window for the coloured bullets.
         update();
     }
 
-    if ( progress == 100 ) {
+    // Try to restore the filtered window selection close to where it was
+    // only for full searches to avoid disconnecting follow mode!
+    if ( ( progress == 100 ) && ( initial_position == 0 ) && ( !isFollowEnabled() ) ) {
         const int currenLineIndex = logFilteredData_->getLineIndexNumber(currentLineNumber_);
         LOG(logDEBUG) << "updateFilteredView: restoring selection: "
                       << " absolute line number (0based) " << currentLineNumber_
@@ -798,8 +809,8 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( activity() ),
             this, SLOT( activityDetected() ) );
 
-    connect( logFilteredData_, SIGNAL( searchProgressed( int, int ) ),
-            this, SLOT( updateFilteredView( int, int ) ) );
+    connect( logFilteredData_, SIGNAL( searchProgressed( int, int, qint64 ) ),
+            this, SLOT( updateFilteredView( int, int, qint64 ) ) );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, SIGNAL( loadingProgressed( int ) ),
@@ -1011,6 +1022,22 @@ void CrawlerWidget::updateEncoding()
             encoding = encodingSetting_;
             encoding_text_ = tr( "Displayed as CP1252" );
             break;
+        case Encoding::ENCODING_BIG5:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as Big5" );
+            break;
+        case Encoding::ENCODING_GB18030:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as GB18030/GB2312" );
+            break;
+        case Encoding::ENCODING_SHIFT_JIS:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as Shift_JIS" );
+            break;
+        case Encoding::ENCODING_KOI8R:
+            encoding = encodingSetting_;
+            encoding_text_ = tr( "Displayed as KOI8-R" );
+            break;
         case Encoding::ENCODING_ISO_8859_1:
         default:
             encoding = Encoding::ENCODING_ISO_8859_1;
@@ -1124,15 +1151,27 @@ CrawlerWidgetContext::CrawlerWidgetContext( const char* string )
         ignore_case_ = false;
         auto_refresh_ = false;
     }
+
+    QRegularExpression follow_regex( "FF(\\d+)" );
+    match = follow_regex.match( string );
+    if ( match.hasMatch() ) {
+        follow_file_ = ( match.captured(1).toInt() == 1 );
+
+        LOG(logDEBUG) << "follow_file_: " << follow_file_;
+    }
+    else {
+        LOG(logWARNING) << "Unrecognised follow: " << string;
+        follow_file_ = false;
+    }
 }
 
 std::string CrawlerWidgetContext::toString() const
 {
     char string[160];
 
-    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d",
+    snprintf( string, sizeof string, "S%d:%d:IC%d:AR%d:FF%d",
             sizes_[0], sizes_[1],
-            ignore_case_, auto_refresh_ );
+            ignore_case_, auto_refresh_, follow_file_ );
 
     return { string };
 }

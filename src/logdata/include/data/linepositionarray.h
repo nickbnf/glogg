@@ -25,7 +25,54 @@
 #include "compressedlinestorage.h"
 #include "log.h"
 
-using  SimpleLinePositionStorage = std::vector<LineOffset>;
+class SimpleLinePositionStorage
+{
+  public:
+    // Append the passed end-of-line to the storage
+    void append( LineOffset pos )
+    {
+        storage_.push_back( pos );
+    }
+
+    void push_back( LineOffset pos )
+    {
+        append( pos );
+    }
+
+    // Size of the array
+    LinesCount size() const
+    {
+        return LinesCount ( storage_.size() );
+    }
+
+    // Element at index
+    LineOffset at( uint32_t i ) const
+    {
+        return storage_.at( i );
+    }
+
+    LineOffset at( LineNumber i ) const
+    {
+        return at( i.get() );
+    }
+
+    // Add one list to the other
+    void append_list( const SimpleLinePositionStorage& positions )
+    {
+        storage_.insert(storage_.end(), positions.storage_.begin(), positions.storage_.end());
+    }
+
+    // Pop the last element of the storage
+    void pop_back()
+    {
+        storage_.pop_back();
+    }
+
+    operator const std::vector<LineOffset>&() const { return storage_; }
+
+private:
+    std::vector<LineOffset> storage_;
+};
 
 // This class is a list of end of lines position,
 // in addition to a list of uint64_t (positions within the files)
@@ -111,8 +158,6 @@ class LinePosition
 
 // Use the non-optimised storage
 using FastLinePositionArray = LinePosition<SimpleLinePositionStorage>;
-//typedef LinePosition<VectorLinePositionStorage> LinePositionArray;
-
 using LinePositionArray = LinePosition<CompressedLinePositionStorage>;
 
 #endif

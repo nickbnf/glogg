@@ -64,11 +64,16 @@ class AbstractLogData : public QObject {
     static inline LineLength getUntabifiedLength( const QString& line ) {
         int total_spaces = 0;
 
-        for ( int j = 0; j < line.length(); j++ ) {
-            if ( line[j] == '\t' ) {
-                int spaces = tabStop - ( ( j + total_spaces ) % tabStop );
-                total_spaces += spaces - 1;
-            }
+        const auto dataLength = line.length() * 2;
+        auto tab = reinterpret_cast<const char*>( std::memchr( line.utf16(), '\t', dataLength  ) );
+        while ( tab != nullptr ) {
+
+            const auto tabPosition = tab -  reinterpret_cast<const char*>(line.utf16());
+            const auto spaces = tabStop - ( ( tabPosition + total_spaces ) % tabStop );
+            total_spaces += spaces - 1;
+
+            tab++;
+            tab = reinterpret_cast<const char*>( std::memchr( tab, '\t', dataLength - tabPosition ) );
         }
 
         return LineLength( line.length() + total_spaces );

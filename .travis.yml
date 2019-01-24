@@ -50,7 +50,7 @@ install:
  - '[ "$TRAVIS_OS_NAME" != osx ] || ${SCRIPTS_PATH}/install_deps.sh'
 
 before_script:
- - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt511/bin/qt511-env.sh'
+ - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
  - mkdir build
  - cd build
  - eval "${COMMON_CMAKE_OPTS_EVAL}"

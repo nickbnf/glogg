@@ -43,7 +43,7 @@ Filter::Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColorName, const QString& backColorName ) :
     regexp_( pattern,  getPatternOptions( ignoreCase ) ),
     foreColorName_( foreColorName ),
-    backColorName_( backColorName ), enabled_( true )
+    backColorName_( backColorName )
 {
     LOG(logDEBUG) << "New Filter, fore: " << foreColorName_.toStdString()
         << " back: " << backColorName_.toStdString();

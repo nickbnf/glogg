@@ -61,7 +61,6 @@ class Filter
     QRegularExpression regexp_;
     QString foreColorName_;
     QString backColorName_;
-    bool enabled_;
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.

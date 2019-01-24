@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 
-project(klogg VERSION 19.01.0)
+project(klogg VERSION 19.01.0 HOMEPAGE_URL "https://github.com/variar/klogg")
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -229,11 +229,13 @@ if(UNIX)
 
         # linux
         IF(CPACK_GENERATOR STREQUAL "RPM")
+            set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
             set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
             set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase >= 5.9.5")
             set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
         ELSE()
             set(CPACK_GENERATOR DEB)
+            set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
             set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
             set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
             set(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS}

@@ -13,7 +13,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - sourceline: ppa:beineri/opt-qt-5.9.5-xenial
+            - sourceline: ppa:beineri/opt-qt595-xenial
           packages:
             - g++-7
             - mesa-common-dev

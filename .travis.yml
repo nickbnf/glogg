@@ -21,6 +21,12 @@ matrix:
             - ninja-build
             - rpm
             - pandoc
+        homebrew:
+          packages:
+            - cmake
+            - ninja
+            - pandoc
+            - qt
       env:
          - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
@@ -28,7 +34,7 @@ matrix:
 
     - os: osx
       compiler: clang
-      osx_image: xcode9.2
+      osx_image: xcode10.1
       env:
         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/osx"
         - CPACK_GENERATOR="DragNDrop"

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.12)
 
 project(klogg
         VERSION 19.01.0
@@ -113,7 +113,7 @@ endif()
 
 if (APPLE)
     ucm_add_flags(CXX -stdlib=libc++)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.8)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.11)
 endif()
 
 if (WIN32)
@@ -178,6 +178,7 @@ if (${BUILD_TESTS})
 endif()
 
 # Installation and packaging
+
 if(UNIX)
     include(InstallRequiredSystemLibraries)
 

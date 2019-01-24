@@ -53,10 +53,8 @@ before_install:
  - '[ "$TRAVIS_OS_NAME" != linux ] || eval "${MATRIX_EVAL}"'
  - eval "${SCRIPTS_PATH_EVAL}"
 
-install:
- - '[ "$TRAVIS_OS_NAME" != osx ] || ${SCRIPTS_PATH}/install_deps.sh'
-
 before_script:
+ - '[ "$TRAVIS_OS_NAME" != osx ] || ${SCRIPTS_PATH}/install_deps.sh'
  - '[ "$TRAVIS_OS_NAME" != linux ] || source /opt/qt59/bin/qt59-env.sh'
  - mkdir build
  - cd build

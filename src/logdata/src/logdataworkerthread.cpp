@@ -363,8 +363,6 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
         queue->enqueue(std::move(block));
     };
 
-    using ProcessData = std::tuple<decltype(blockSender), decltype(blockQueue), decltype(consumerFuture)>;
-
     return std::make_tuple(std::move(blockSender), std::move(blockQueue), std::move(consumerFuture));
 }
 

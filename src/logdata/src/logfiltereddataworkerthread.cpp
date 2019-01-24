@@ -331,7 +331,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     LOG(logINFO) << "Using " << threadsCount << " matching threads";
 
-    for ( size_t i = 0; i < threadsCount; ++i ) {
+    for ( int i = 0; i < threadsCount; ++i ) {
         matchers.emplace_back( makeMatcher(i) );
     }
 

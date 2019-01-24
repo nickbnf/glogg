@@ -318,9 +318,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                     results = filterLines( regexp, lines, chunkStart );
                 }
 
+                LOG( logDEBUG ) << "Searcher " << index << " sending matches " << results.matchingLines.size();
+
                 processMatchQueue.enqueue(std::move(blockData));
 
                 if ( lastBlock ) {
+                    LOG( logDEBUG ) << "Searcher " << index << " last block";
                     return;
                 }
             }
@@ -344,6 +347,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             for (size_t i = 0; i < processedBlocks; ++i) {
                 auto& blockData = matchedBlocks[i];
                 const auto& lines = std::get<1>( blockData );
+
+                LOG( logDEBUG ) << "Combining match results from " << std::get<0>( blockData );
 
                 if ( lines.empty() ) {
                     matchersDone.release();

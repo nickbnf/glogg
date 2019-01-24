@@ -23,6 +23,8 @@
 
 #include "compressedlinestorage.h"
 
+#define BLOCK_SIZE 256
+
 CompressedLinePositionStorage::BlockOffset operator "" _boffset(unsigned long long int value) {
     return CompressedLinePositionStorage::BlockOffset(value);
 }

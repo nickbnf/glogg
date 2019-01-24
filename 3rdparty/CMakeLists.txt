@@ -7,5 +7,6 @@ add_subdirectory(named_type)
 add_subdirectory(catch)
 add_subdirectory(stlab)
 add_subdirectory(singleapp)
+add_subdirectory(concurrentqueue)
 
 

@@ -79,9 +79,6 @@
 #ifndef COMPRESSEDLINESTORAGE_H
 #define COMPRESSEDLINESTORAGE_H
 
-#define BLOCK_SIZE 256
-
-
 //template<int BLOCK_SIZE = 128>
 class CompressedLinePositionStorage
 {

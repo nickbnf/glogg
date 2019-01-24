@@ -36,13 +36,34 @@ namespace
 {
     struct PartialSearchResults
     {
-        PartialSearchResults() : maxLength{} {}
+        PartialSearchResults() = default;
+
+        PartialSearchResults( const PartialSearchResults& ) = delete;
+        PartialSearchResults( PartialSearchResults&& ) = default;
+
+        PartialSearchResults& operator =( const PartialSearchResults& ) = delete;
+        PartialSearchResults& operator =( PartialSearchResults&& ) = default;
 
         SearchResultArray matchingLines;
         LineLength maxLength;
 
         LineNumber chunkStart;
         LinesCount processedLines;
+    };
+
+    struct SearchBlockData
+    {
+        SearchBlockData() = default;
+
+        SearchBlockData( const SearchBlockData& ) = delete;
+        SearchBlockData( SearchBlockData&& ) = default;
+
+        SearchBlockData& operator =( const SearchBlockData& ) = delete;
+        SearchBlockData& operator =( SearchBlockData&& ) = default;
+
+        LineNumber chunkStart;
+        std::vector<QString> lines;
+        PartialSearchResults results;
     };
 
     PartialSearchResults filterLines( const QRegularExpression& regex,
@@ -284,50 +305,45 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     QSemaphore searchCompleted;
-    QSemaphore matchersDone;
     QSemaphore blocksDone;
 
-    using BlockData = std::tuple<LineNumber, std::vector<QString>, PartialSearchResults>;
-    using BlockQueue = moodycamel::BlockingConcurrentQueue<BlockData>;
+    using SearchBlockQueue = moodycamel::BlockingConcurrentQueue<SearchBlockData>;
+    using ProcessMatchQueue = moodycamel::BlockingConcurrentQueue<PartialSearchResults>;
 
-    BlockQueue matchQueue;
-    BlockQueue processMatchQueue;
+    SearchBlockQueue searchBlockQueue;
+    ProcessMatchQueue processMatchQueue;
 
     std::vector<QFuture<void>> matchers;
 
-    const auto matchingThreadsCount = config->useParallelSearch() ? qMax(1, QThread::idealThreadCount() - 2) : 1;
+    const auto matchingThreadsCount = config->useParallelSearch() ? qMax( 1, QThread::idealThreadCount() - 2 ) : 1;
 
     LOG(logINFO) << "Using " << matchingThreadsCount << " matching threads";
 
     auto localThreadPool = std::make_unique<QThreadPool>();
-    localThreadPool->setMaxThreadCount(matchingThreadsCount + 2);
+    localThreadPool->setMaxThreadCount( matchingThreadsCount + 2 );
 
-    const auto makeMatcher = [this, &matchQueue, &processMatchQueue, pool = localThreadPool.get()](size_t index)
+    const auto makeMatcher = [ this, &searchBlockQueue, &processMatchQueue, pool = localThreadPool.get() ] ( size_t index )
     {
         // copy and optimize regex for each thread
-        auto regexp = QRegularExpression{regexp_.pattern(), regexp_.patternOptions()};
+        auto regexp = QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() };
         regexp.optimize();
-        return QtConcurrent::run(pool, [regexp, index, &matchQueue, &processMatchQueue, this]()
+        return QtConcurrent::run( pool, [ regexp, index, &searchBlockQueue, &processMatchQueue, this ]()
         {
             for(;;) {
-                BlockData blockData;
-                matchQueue.wait_dequeue(blockData);
+                SearchBlockData blockData;
+                searchBlockQueue.wait_dequeue( blockData );
 
-                const auto& chunkStart = std::get<0>(blockData);
-                auto& lines = std::get<1>(blockData);
-                auto& results = std::get<2>(blockData);
+                LOG( logDEBUG ) << "Searcher " << index << " " << blockData.chunkStart;
 
-                LOG( logDEBUG ) << "Searcher " << index << " " << chunkStart;
-
-                const auto lastBlock = lines.empty();
+                const auto lastBlock = blockData.lines.empty();
 
                 if ( !lastBlock ) {
-                    results = filterLines( regexp, lines, chunkStart );
+                    blockData.results = filterLines( regexp, blockData.lines, blockData.chunkStart );
                 }
 
-                LOG( logDEBUG ) << "Searcher " << index << " sending matches " << results.matchingLines.size();
+                LOG( logDEBUG ) << "Searcher " << index << " sending matches " << blockData.results.matchingLines.size();
 
-                processMatchQueue.enqueue(std::move(blockData));
+                processMatchQueue.enqueue( std::move( blockData.results ) );
 
                 if ( lastBlock ) {
                     LOG( logDEBUG ) << "Searcher " << index << " last block";
@@ -341,18 +357,16 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         matchers.emplace_back( makeMatcher(i) );
     }
 
-    auto processMatches = QtConcurrent::run(localThreadPool.get(), [&]()
+    auto processMatches = QtConcurrent::run( localThreadPool.get(), [&]()
     {
+        size_t matchersDone = 0;
         for(;;) {
-            BlockData blockData;
-            processMatchQueue.wait_dequeue( blockData );
+            PartialSearchResults matchResults;
+            processMatchQueue.wait_dequeue( matchResults );
         
-            const auto& lines = std::get<1>( blockData );
+            LOG( logDEBUG ) << "Combining match results from " << matchResults.chunkStart;
 
-            LOG( logDEBUG ) << "Combining match results from " << std::get<0>( blockData );
-
-            if ( !lines.empty() ) {
-                const auto& matchResults = std::get<2>( blockData );
+            if ( matchResults.processedLines.get() ) {
 
                 maxLength = qMax( maxLength, matchResults.maxLength );
                 nbMatches += LinesCount( static_cast<LinesCount::UnderlyingType>( matchResults.matchingLines.size() ) );
@@ -366,13 +380,13 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 LOG( logDEBUG ) << "done Searching chunk starting at " << matchResults.chunkStart <<
                     ", " << matchResults.processedLines << " lines read.";
 
-                blocksDone.release( lines.size() );
+                blocksDone.release( matchResults.processedLines.get() );
             }
             else {
-                matchersDone.release();
+                matchersDone++;
             }
             
-            if (matchersDone.tryAcquire(matchers.size())) {
+            if ( matchersDone == matchers.size() ) {
                 searchCompleted.release();
                 return;
             }
@@ -408,14 +422,14 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
         blocksDone.acquire( lines.size() );
 
-        matchQueue.enqueue( std::make_tuple( chunkStart, std::move(lines), PartialSearchResults{} ) );
+        searchBlockQueue.enqueue( { chunkStart, std::move(lines), PartialSearchResults{} } );
 
         LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
     }
 
     for ( size_t i = 0; i < matchers.size(); ++ i ) {
-        matchQueue.enqueue( std::make_tuple(endLine, std::vector<QString>{}, PartialSearchResults{} ) );
+        searchBlockQueue.enqueue( { endLine, std::vector<QString>{}, PartialSearchResults{} } );
     }
     
     searchCompleted.acquire();

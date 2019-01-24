@@ -327,7 +327,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         // copy and optimize regex for each thread
         auto regexp = QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() };
         regexp.optimize();
-        return QtConcurrent::run( pool, [ regexp, index, &searchBlockQueue, &processMatchQueue, this ]()
+        return QtConcurrent::run( pool, [ regexp, index, &searchBlockQueue, &processMatchQueue ]()
         {
             for(;;) {
                 SearchBlockData blockData;

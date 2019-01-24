@@ -19,9 +19,9 @@
 
 #include <QFile>
 #include <QTextStream>
+#include <QtConcurrent>
 
-#include <stlab/concurrency/channel.hpp>
-#include <stlab/concurrency/default_executor.hpp>
+#include <moodycamel/blockingconcurrentqueue.h>
 
 #include "log.h"
 
@@ -322,42 +322,50 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
 auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 {
     using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
-    stlab::sender<BlockData> blockSender;
-    stlab::receiver<BlockData> indexer;
+    using BlockQueue = moodycamel::BlockingConcurrentQueue<BlockData>;
+    auto blockQueue = std::make_unique<BlockQueue>();
+    auto threadPool = std::make_unique<QThreadPool>();
+    threadPool->setMaxThreadCount(1);
 
-    std::tie( blockSender, indexer ) = stlab::channel<BlockData>( stlab::default_executor );
-
-    auto process = indexer | [this, &indexingState]( const BlockData& blockData )
+    auto consumerFuture = QtConcurrent::run(threadPool.get(), [queue = blockQueue.get(), &indexingState, this]
     {
-        const auto block_beginning = blockData.first;
-        const auto& block = blockData.second;
+        for(;;) {
+            BlockData blockData;
+            queue->wait_dequeue(blockData);
 
-        LOG(logDEBUG) << "Indexing block " << block_beginning;
+            const auto block_beginning = blockData.first;
+            const auto& block = blockData.second;
 
-        if ( block.isEmpty() ) {
-            indexingState.indexingSem.release();
-            return;
+            LOG(logDEBUG) << "Indexing block " << block_beginning;
+
+            if ( block.isEmpty() ) {
+                indexingState.indexingSem.release();
+                return;
+            }
+
+            guessEncoding( block, indexingState );
+
+            auto line_positions = parseDataBlock( block_beginning, block, indexingState );
+            indexing_data_->addAll( block.length(),
+                                LineLength( indexingState.max_length ),
+                                line_positions, indexingState.encodingGuess );
+
+            // Update the caller for progress indication
+            const auto progress = static_cast<int>( ( indexingState.file_size > 0 )
+                                                    ? indexingState.pos*100 / indexingState.file_size
+                                                    : 100 );
+            emit indexingProgressed( progress );
+
+            indexingState.blockSem.release(block.size());
         }
+    });
 
-        guessEncoding( block, indexingState );
-
-        auto line_positions = parseDataBlock( block_beginning, block, indexingState );
-        indexing_data_->addAll( block.length(),
-                               LineLength( indexingState.max_length ),
-                               line_positions, indexingState.encodingGuess );
-
-        // Update the caller for progress indication
-        const auto progress = static_cast<int>( ( indexingState.file_size > 0 )
-                                                ? indexingState.pos*100 / indexingState.file_size
-                                                : 100 );
-        emit indexingProgressed( progress );
-
-        indexingState.blockSem.release(block.size());
+    std::function<void(BlockData)> blockSender = [queue = blockQueue.get()](BlockData block)
+    {
+        queue->enqueue(std::move(block));
     };
 
-    indexer.set_ready();
-
-    return std::make_tuple(std::move(blockSender), std::move(indexer), std::move(process));
+    return std::make_tuple(std::move(blockSender), std::move(blockQueue), std::move(consumerFuture), std::move(threadPool));
 }
 
 void IndexOperation::doIndex(LineOffset initialPosition )
@@ -413,7 +421,6 @@ void IndexOperation::doIndex(LineOffset initialPosition )
         }
 
         blockSender(std::make_pair(state.file_size, QByteArray{}));
-        blockSender.close();
 
         {
            state.indexingSem.acquire();

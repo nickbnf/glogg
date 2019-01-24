@@ -123,7 +123,7 @@ class LinePosition
     inline LineOffset at( LineNumber::UnderlyingType i ) const
     {
         const auto pos = array.at( i );
-        LOG(logDEBUG) << "Line pos at " << i << " is " << pos;
+        LOG(logDEBUG2) << "Line pos at " << i << " is " << pos;
         return pos;
     }
     inline LineOffset operator[]( LineNumber::UnderlyingType i ) const

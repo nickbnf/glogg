@@ -27,6 +27,7 @@ matrix:
             - ninja
             - pandoc
             - qt
+          update: true
       env:
          - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"

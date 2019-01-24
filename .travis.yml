@@ -17,7 +17,7 @@ matrix:
           packages:
             - g++-7
             - mesa-common-dev
-            - qt511base
+            - qt59base
             - ninja-build
             - rpm
             - pandoc

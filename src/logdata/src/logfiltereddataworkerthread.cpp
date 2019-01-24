@@ -295,12 +295,19 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::vector<QFuture<void>> matchers;
 
-    const auto makeMatcher = [this, &matchQueue, &processMatchQueue](size_t index)
+    const auto matchingThreadsCount = config->useParallelSearch() ? qMax(1, QThread::idealThreadCount() - 2) : 1;
+
+    LOG(logINFO) << "Using " << matchingThreadsCount << " matching threads";
+
+    auto localThreadPool = std::make_unique<QThreadPool>();
+    localThreadPool->setMaxThreadCount(matchingThreadsCount + 2);
+
+    const auto makeMatcher = [this, &matchQueue, &processMatchQueue, pool = localThreadPool.get()](size_t index)
     {
         // copy and optimize regex for each thread
         auto regexp = QRegularExpression{regexp_.pattern(), regexp_.patternOptions()};
         regexp.optimize();
-        return QtConcurrent::run([regexp, index, &matchQueue, &processMatchQueue, this]()
+        return QtConcurrent::run(pool, [regexp, index, &matchQueue, &processMatchQueue, this]()
         {
             for(;;) {
                 BlockData blockData;
@@ -330,31 +337,21 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         });
     };
 
-    const auto threadsCount = config->useParallelSearch() ? qMax(1, QThread::idealThreadCount() - 2) : 1;
-
-    LOG(logINFO) << "Using " << threadsCount << " matching threads";
-
-    for ( int i = 0; i < threadsCount; ++i ) {
+    for ( int i = 0; i < matchingThreadsCount; ++i ) {
         matchers.emplace_back( makeMatcher(i) );
     }
 
-    auto processMatches = QtConcurrent::run([&]()
+    auto processMatches = QtConcurrent::run(localThreadPool.get(), [&]()
     {
         for(;;) {
-            std::vector<BlockData> matchedBlocks(matchers.size());
-            const auto processedBlocks = processMatchQueue.wait_dequeue_bulk(matchedBlocks.begin(), matchedBlocks.size());
+            BlockData blockData;
+            processMatchQueue.wait_dequeue( blockData );
+        
+            const auto& lines = std::get<1>( blockData );
 
-            for (size_t i = 0; i < processedBlocks; ++i) {
-                auto& blockData = matchedBlocks[i];
-                const auto& lines = std::get<1>( blockData );
+            LOG( logDEBUG ) << "Combining match results from " << std::get<0>( blockData );
 
-                LOG( logDEBUG ) << "Combining match results from " << std::get<0>( blockData );
-
-                if ( lines.empty() ) {
-                    matchersDone.release();
-                    continue;
-                }
-
+            if ( !lines.empty() ) {
                 const auto& matchResults = std::get<2>( blockData );
 
                 maxLength = qMax( maxLength, matchResults.maxLength );
@@ -371,7 +368,10 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
                 blocksDone.release( lines.size() );
             }
-
+            else {
+                matchersDone.release();
+            }
+            
             if (matchersDone.tryAcquire(matchers.size())) {
                 searchCompleted.release();
                 return;

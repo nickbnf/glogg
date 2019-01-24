@@ -323,9 +323,11 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 {
     using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
     using BlockQueue = moodycamel::BlockingConcurrentQueue<BlockData>;
-    std::unique_ptr<BlockQueue> blockQueue = std::make_unique<BlockQueue>();
+    auto blockQueue = std::make_unique<BlockQueue>();
+    auto threadPool = std::make_unique<QThreadPool>();
+    threadPool->setMaxThreadCount(1);
 
-    auto consumerFuture = QtConcurrent::run([queue = blockQueue.get(), &indexingState, this]
+    auto consumerFuture = QtConcurrent::run(threadPool.get(), [queue = blockQueue.get(), &indexingState, this]
     {
         for(;;) {
             BlockData blockData;
@@ -363,7 +365,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
         queue->enqueue(std::move(block));
     };
 
-    return std::make_tuple(std::move(blockSender), std::move(blockQueue), std::move(consumerFuture));
+    return std::make_tuple(std::move(blockSender), std::move(blockQueue), std::move(consumerFuture), std::move(threadPool));
 }
 
 void IndexOperation::doIndex(LineOffset initialPosition )

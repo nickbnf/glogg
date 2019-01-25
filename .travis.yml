@@ -6,6 +6,13 @@ matrix:
       sudo: required
       dist: xenial
       compiler: gcc
+
+      env:
+         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
+         - CPACK_GENERATOR="RPM;DEB"
+         - UPLOADTOOL_SUFFIX="linux"
+
       addons:
         artifacts: 
           paths:
@@ -21,17 +28,6 @@ matrix:
             - ninja-build
             - rpm
             - pandoc
-        homebrew:
-          packages:
-            - cmake
-            - ninja
-            - pandoc
-            - qt
-          update: true
-      env:
-         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
-         - CPACK_GENERATOR="RPM;DEB"
 
     - os: osx
       compiler: clang
@@ -39,10 +35,18 @@ matrix:
       env:
         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/osx"
         - CPACK_GENERATOR="DragNDrop"
+        - UPLOADTOOL_SUFFIX="osx"
       addons:
-        artifacts: 
+        artifacts:
           paths:
             - ./build/packages
+        homebrew:
+          packages:
+            - cmake
+            - ninja
+            - pandoc
+            - qt
+          update: true
 
 env:
     global:
@@ -72,3 +76,13 @@ script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || VERSION=$KLOGG_VERSION ${SCRIPTS_PATH}/make_appimage.sh'
  - cpack --verbose -G "${CPACK_GENERATOR}"
  - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg-$KLOGG_VERSION-x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'
+
+after_success:
+  - ls -lh packages/*
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - bash upload.sh packages/*
+
+branches:
+  except:
+    - # Do not build tags that we create when we upload to GitHub Releases
+    - /^(?i:continuous.*$)/

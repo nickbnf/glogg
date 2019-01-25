@@ -2,7 +2,7 @@
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 [ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
 
-CI builds 19.01.0.273 (x64):
+CI builds 19.01.0.296 (x64):
 [windows portable](https://ci.appveyor.com/api/buildjobs/3d13pa8h9e869dlg/artifacts/klogg-19.01.0.296-portable.zip) |
 [windows installer](https://ci.appveyor.com/api/buildjobs/3d13pa8h9e869dlg/artifacts/klogg-19.01.0.296-setup.exe) |
 [deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.1.0-r296-Linux.deb) |
@@ -10,7 +10,7 @@ CI builds 19.01.0.273 (x64):
 [appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.01.0.296-x86_64.AppImage) |
 [dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.2/build/packages/klogg-19.1.0-r296-OSX.dmg)
 
-CI builds 19.01.0.273 (x86):
+CI builds 19.01.0.296 (x86):
 [windows portable](https://ci.appveyor.com/api/buildjobs/853dhixbody1nslx/artifacts/klogg-19.01.0.296-portable.zip) |
 [windows installer](https://ci.appveyor.com/api/buildjobs/853dhixbody1nslx/artifacts/klogg-19.01.0.296-setup.exe) |
 

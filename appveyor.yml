@@ -15,6 +15,8 @@ environment:
   QTDIR32: C:\Qt\5.11\msvc2015
   CMAKE_GENERATOR_NAME: Ninja
   CMAKE_BUILD_TYPE: Release
+  GITHUB_TOKEN:
+      secure: 8TMbpzpjTfq926KWh4SXGoENBj2vM02PvBpX0F0M3lcJ6+BRpJ6eue+JfdInBeL0
 
 matrix:
     allow_failures:
@@ -61,6 +63,10 @@ artifacts:
     name: klogg_portable
   - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-setup.exe
     name: klogg_installer
+
+before_deploy:
+- if %platform%==x64 (set CI_TAG_URL=https://api.github.com/repos/variar/klogg/git/refs/tags/continuous-win)
+- if %platform%==x64 (curl -XDELETE --header "Authorization: token %GITHUB_TOKEN% " "%CI_TAG_URL%")
 
 deploy:
 - provider: GitHub

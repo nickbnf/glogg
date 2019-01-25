@@ -1,4 +1,5 @@
 version: '19.01.0.{build}'
+skip_tags: true
 
 os: Visual Studio 2017
 
@@ -60,3 +61,15 @@ artifacts:
     name: klogg_portable
   - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-setup.exe
     name: klogg_installer
+
+deploy:
+- provider: GitHub
+  tag: continuous-win
+  release: Continuous build (win)
+  auth_token:
+    secure: 8TMbpzpjTfq926KWh4SXGoENBj2vM02PvBpX0F0M3lcJ6+BRpJ6eue+JfdInBeL0
+  artifact: klogg_portable, klogg_installer
+  prerelease: true
+  force_update: true
+  on:
+    branch: master

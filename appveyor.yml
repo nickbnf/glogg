@@ -66,6 +66,7 @@ deploy:
 - provider: GitHub
   tag: continuous-win
   release: Continuous build (win)
+  description: 'Appveyor build: https://ci.appveyor.com/project/variar/klogg/builds/$(appveyor_build_id)'
   auth_token:
     secure: 8TMbpzpjTfq926KWh4SXGoENBj2vM02PvBpX0F0M3lcJ6+BRpJ6eue+JfdInBeL0
   artifact: klogg_portable, klogg_installer

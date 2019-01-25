@@ -329,9 +329,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         regexp.optimize();
         return QtConcurrent::run( pool, [ regexp, index, &searchBlockQueue, &processMatchQueue ]()
         {
+            moodycamel::ConsumerToken cToken( searchBlockQueue );
+            moodycamel::ProducerToken pToken( processMatchQueue );
+            
             for(;;) {
                 SearchBlockData blockData;
-                searchBlockQueue.wait_dequeue( blockData );
+                searchBlockQueue.wait_dequeue( cToken,  blockData );
 
                 LOG( logDEBUG ) << "Searcher " << index << " " << blockData.chunkStart;
 
@@ -343,7 +346,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
                 LOG( logDEBUG ) << "Searcher " << index << " sending matches " << blockData.results.matchingLines.size();
 
-                processMatchQueue.enqueue( std::move( blockData.results ) );
+                processMatchQueue.enqueue( pToken, std::move( blockData.results ) );
 
                 if ( lastBlock ) {
                     LOG( logDEBUG ) << "Searcher " << index << " last block";
@@ -359,10 +362,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     auto processMatches = QtConcurrent::run( localThreadPool.get(), [&]()
     {
+        moodycamel::ConsumerToken cToken( processMatchQueue );
+
         size_t matchersDone = 0;
         for(;;) {
             PartialSearchResults matchResults;
-            processMatchQueue.wait_dequeue( matchResults );
+            processMatchQueue.wait_dequeue( cToken, matchResults );
         
             LOG( logDEBUG ) << "Combining match results from " << matchResults.chunkStart;
 
@@ -393,6 +398,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         }
     });
 
+    moodycamel::ProducerToken pToken( searchBlockQueue );
+
     blocksDone.release( nbLinesInChunk.get() * ( static_cast<uint32_t>( matchers.size() ) + 1 ) );
 
     int reportedPercentage = 0;
@@ -422,14 +429,14 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
         blocksDone.acquire( static_cast<uint32_t>( lines.size() ) );
 
-        searchBlockQueue.enqueue( { chunkStart, std::move(lines), PartialSearchResults{} } );
+        searchBlockQueue.enqueue( pToken, { chunkStart, std::move(lines), PartialSearchResults{} } );
 
         LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
     }
 
     for ( size_t i = 0; i < matchers.size(); ++ i ) {
-        searchBlockQueue.enqueue( { endLine, std::vector<QString>{}, PartialSearchResults{} } );
+        searchBlockQueue.enqueue( pToken, { endLine, std::vector<QString>{}, PartialSearchResults{} } );
     }
     
     searchCompleted.acquire();

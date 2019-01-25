@@ -21,7 +21,7 @@
 #include <QTextStream>
 #include <QtConcurrent>
 
-#include <moodycamel/blockingconcurrentqueue.h>
+#include <moodycamel/readerwriterqueue.h>
 
 #include "log.h"
 
@@ -322,7 +322,7 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
 auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 {
     using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
-    using BlockQueue = moodycamel::BlockingConcurrentQueue<BlockData>;
+    using BlockQueue = moodycamel::BlockingReaderWriterQueue<BlockData>;
     auto blockQueue = std::make_unique<BlockQueue>();
     auto threadPool = std::make_unique<QThreadPool>();
     threadPool->setMaxThreadCount(1);

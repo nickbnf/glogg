@@ -32,6 +32,19 @@ install:
   - cinst pandoc
   - set PATH=%ProgramFiles(x86)%\Pandoc;%PATH%
   - pandoc -v
+  - ps: >-
+      if($env:platform -eq 'x64') {
+          $githubApi = 'https://api.github.com/repos/variar/klogg'
+          $headers = @{
+            "Authorization" = "token $env:GITHUB_TOKEN"
+            "Content-type" = "application/json"
+          }
+          $releaseTag = $env:GITHUB_RELEASE_TAG
+          $release = Invoke-RestMethod -Method Get -Uri "$githubApi/releases/tags/$releaseTag" -Headers $headers
+
+          echo $release
+          echo $release.id
+      }
 
 before_build:
 - if %platform%==x64 (set QTDIR=%QTDIR64%) else (set QTDIR=%QTDIR32%)
@@ -71,15 +84,16 @@ before_deploy:
         $githubApi = 'https://api.github.com/repos/variar/klogg'
         $headers = @{
           "Authorization" = "token $env:GITHUB_TOKEN"
+          "Content-type" = "application/json"
         }
         $releaseTag = $env:GITHUB_RELEASE_TAG
         $release = Invoke-RestMethod -Method Get -Uri "$githubApi/releases/tags/$releaseTag" -Headers $headers
 
-        echo 'Deleting release: $release.id'
+        echo "Deleting release: $release.id"
 
         Invoke-RestMethod -Method Delete -Uri "$githubApi/releases/$release.id" -Headers $headers
 
-        echo 'Deleting tag: $releaseTag'
+        echo "Deleting tag: $releaseTag"
 
         Invoke-RestMethod -Method Delete -Uri "$githubApi/git/refs/tags/$releaseTag" -Headers $headers
     }

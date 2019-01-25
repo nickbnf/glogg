@@ -5,12 +5,16 @@
     !define VERSION 'dev-build'
 !endif
 
+!ifndef PLATFORM
+    !define PLATFORM 'unknown'
+!endif
+
 # Headers
 !include "MUI2.nsh"
 !include "FileAssociation.nsh"
 
 # General
-OutFile "klogg-${VERSION}-setup.exe"
+OutFile "klogg-${VERSION}-${PLATFORM}-setup.exe"
 
 XpStyle on
 

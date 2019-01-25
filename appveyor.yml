@@ -89,9 +89,10 @@ before_deploy:
         $releaseTag = $env:GITHUB_RELEASE_TAG
         $release = Invoke-RestMethod -Method Get -Uri "$githubApi/releases/tags/$releaseTag" -Headers $headers
 
-        echo "Deleting release: $release.id"
+        $releaseId = $release.id
+        echo "Deleting release: $releaseId"
 
-        Invoke-RestMethod -Method Delete -Uri "$githubApi/releases/$release.id" -Headers $headers
+        Invoke-RestMethod -Method Delete -Uri "$githubApi/releases/$releaseId" -Headers $headers
 
         echo "Deleting tag: $releaseTag"
 

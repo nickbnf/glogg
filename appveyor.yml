@@ -16,7 +16,7 @@ environment:
   CMAKE_GENERATOR_NAME: Ninja
   CMAKE_BUILD_TYPE: Release
   GITHUB_TOKEN:
-      secure: 8TMbpzpjTfq926KWh4SXGoENBj2vM02PvBpX0F0M3lcJ6+BRpJ6eue+JfdInBeL0
+      secure: aE8TDUiHJOa/rVs/W0/8shXEhmyuJiIdJMLNviZpAlLXwL3jU3AmP5wU3wHAF2B0
 
 matrix:
     allow_failures:
@@ -66,7 +66,7 @@ artifacts:
 
 before_deploy:
 - if %platform%==x64 (set CI_TAG_URL=https://api.github.com/repos/variar/klogg/git/refs/tags/continuous-win)
-- curl -XDELETE "%CI_TAG_URL%"
+- curl -XDELETE --header "Authorization: token %GITHUB_TOKEN%" "%CI_TAG_URL%"
 
 deploy:
 - provider: GitHub
@@ -74,7 +74,7 @@ deploy:
   release: Continuous build (win)
   description: 'Appveyor build: https://ci.appveyor.com/project/variar/klogg/builds/$(appveyor_build_id)'
   auth_token:
-    secure: 8TMbpzpjTfq926KWh4SXGoENBj2vM02PvBpX0F0M3lcJ6+BRpJ6eue+JfdInBeL0
+    secure: aE8TDUiHJOa/rVs/W0/8shXEhmyuJiIdJMLNviZpAlLXwL3jU3AmP5wU3wHAF2B0
   artifact: klogg_portable, klogg_installer
   prerelease: true
   force_update: true

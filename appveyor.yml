@@ -17,6 +17,7 @@ environment:
   CMAKE_BUILD_TYPE: Release
   GITHUB_TOKEN:
       secure: aE8TDUiHJOa/rVs/W0/8shXEhmyuJiIdJMLNviZpAlLXwL3jU3AmP5wU3wHAF2B0
+  GITHUB_RELEASE_TAG: continuous-win
 
 matrix:
     allow_failures:
@@ -65,12 +66,27 @@ artifacts:
     name: klogg_installer
 
 before_deploy:
-- if %platform%==x64 (set CI_TAG_URL=https://api.github.com/repos/variar/klogg/git/refs/tags/continuous-win)
-- curl -XDELETE --header "Authorization: token %GITHUB_TOKEN%" "%CI_TAG_URL%"
+- ps: >-
+    if($env:platform -eq 'x64') {
+        $githubApi = 'https://api.github.com/repos/variar/klogg'
+        $headers = @{
+          "Authorization" = "token $env:GITHUB_TOKEN"
+        }
+        $releaseTag = $env:GITHUB_RELEASE_TAG
+        $release = Invoke-RestMethod -Method Get -Uri "$githubApi/releases/tags/$releaseTag" -Headers $headers
+
+        echo 'Deleting release: $release.id'
+
+        Invoke-RestMethod -Method Delete -Uri "$githubApi/releases/$release.id" -Headers $headers
+
+        echo 'Deleting tag: $releaseTag'
+
+        Invoke-RestMethod -Method Delete -Uri "$githubApi/git/refs/tags/$releaseTag" -Headers $headers
+    }
 
 deploy:
 - provider: GitHub
-  tag: continuous-win
+  tag: $(GITHUB_RELEASE_TAG)
   release: Continuous build (win)
   description: 'Appveyor build: https://ci.appveyor.com/project/variar/klogg/builds/$(appveyor_build_id)'
   auth_token:

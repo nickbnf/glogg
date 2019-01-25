@@ -3,8 +3,11 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QVariant>
 
 #include "log.h"
+#include "version.h"
 
 /*
  * Class receiving messages from another instance of glogg.
@@ -23,10 +26,23 @@ class MessageReceiver : public QObject
   public slots:
     void receiveMessage( quint32 instanceId, QByteArray message )
     {
-        LOG(logINFO) << "Message from  " << instanceId;
+        auto json = QJsonDocument::fromBinaryData( message );
+
+        LOG(logINFO) << "Message from  " << instanceId
+                     << json.toJson().toStdString();
 
         Q_UNUSED( instanceId );
-        emit loadFile( QString::fromUtf8(message) );
+
+        QVariantMap data = json.toVariant().toMap();
+        if (data["version"].toString() != GLOGG_VERSION) {
+            return;
+        }
+
+        QStringList filenames = data["files"].toStringList();
+
+        for ( const auto& f: filenames ) {
+            emit loadFile( f );
+        }
     }
 };
 

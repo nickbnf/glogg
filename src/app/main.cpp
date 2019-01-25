@@ -47,6 +47,7 @@ using namespace std;
 #include "messagereceiver.h"
 
 #include <QtWidgets/QApplication>
+#include <QtCore/QJsonDocument>
 
 #include <cli11/cli11.hpp>
 #include <singleapp/singleapplication.h>
@@ -139,12 +140,25 @@ int main(int argc, char *argv[])
 #ifdef _WIN32
             ::AllowSetForegroundWindow( app.primaryPid() );
 #endif
-            for ( const auto& filename : filenames ) {
+            QTimer::singleShot( 100, [&filenames, &app]
+            {
+                QStringList filesToOpen;
 
-                app.sendMessage( filename.toUtf8() );
-            }
+                for ( const auto& filename : filenames ) {
+                    filesToOpen.append(filename);
+                }
 
-            return 0;
+                QVariantMap data;
+                data.insert("version", GLOGG_VERSION);
+                data.insert("files",  QVariant{filesToOpen} );
+
+                auto json = QJsonDocument::fromVariant( data );
+                app.sendMessage(json.toBinaryData(), 5000);
+
+                QTimer::singleShot( 100, &app, &SingleApplication::quit );
+            });
+
+            return app.exec();
         }
     }
     else {
@@ -152,7 +166,8 @@ int main(int argc, char *argv[])
                     &app,
                     &SingleApplication::receivedMessage,
                     &messageReceiver,
-                    &MessageReceiver::receiveMessage);
+                    &MessageReceiver::receiveMessage,
+                    Qt::QueuedConnection);
     }
 
     // Register the configuration items

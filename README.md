@@ -3,16 +3,16 @@
 [ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
 
 CI builds 19.01.0.273 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/huf2obthk5e5853u/artifacts/klogg-19.01.0.273-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/huf2obthk5e5853u/artifacts/klogg-19.01.0.273-setup.exe) |
-[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.1/build/packages/klogg-19.1.0-r273-Linux.deb) |
-[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.1/build/packages/klogg-19.1.0-r273-Linux.rpm) |
-[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.1/build/packages/klogg-19.01.0.273-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/273/273.2/build/packages/klogg-19.1.0-r273-OSX.dmg)
+[windows portable](https://ci.appveyor.com/api/buildjobs/3d13pa8h9e869dlg/artifacts/klogg-19.01.0.296-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/3d13pa8h9e869dlg/artifacts/klogg-19.01.0.296-setup.exe) |
+[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.1.0-r296-Linux.deb) |
+[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.1.0-r296-Linux.rpm) |
+[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.01.0.296-x86_64.AppImage) |
+[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.2/build/packages/klogg-19.1.0-r296-OSX.dmg)
 
 CI builds 19.01.0.273 (x86):
-[windows portable](https://ci.appveyor.com/api/buildjobs/slyfsi3n9g06dl76/artifacts/klogg-19.01.0.273-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/slyfsi3n9g06dl76/artifacts/klogg-19.01.0.273-setup.exe) |
+[windows portable](https://ci.appveyor.com/api/buildjobs/853dhixbody1nslx/artifacts/klogg-19.01.0.296-portable.zip) |
+[windows installer](https://ci.appveyor.com/api/buildjobs/853dhixbody1nslx/artifacts/klogg-19.01.0.296-setup.exe) |
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 

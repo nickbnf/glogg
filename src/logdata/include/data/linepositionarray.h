@@ -42,7 +42,7 @@ class SimpleLinePositionStorage
     // Size of the array
     LinesCount size() const
     {
-        return LinesCount ( storage_.size() );
+        return LinesCount ( static_cast<LinesCount::UnderlyingType>( storage_.size() ) );
     }
 
     // Element at index

@@ -73,12 +73,12 @@ namespace
         LOG( logDEBUG ) << "Filter lines at " << chunkStart;
         PartialSearchResults results;
         results.chunkStart = chunkStart;
-        results.processedLines = LinesCount( lines.size() );
+        results.processedLines = LinesCount( static_cast<LinesCount::UnderlyingType>( lines.size() ) );
         for ( size_t i = 0; i < lines.size(); ++i ) {
             const auto& l = lines.at( i );
             if ( regex.match(l).hasMatch() ) {
                 results.maxLength = qMax( results.maxLength, AbstractLogData::getUntabifiedLength( l ) );
-                results.matchingLines.emplace_back( chunkStart + LinesCount( i ) );
+                results.matchingLines.emplace_back( chunkStart + LinesCount( static_cast<LinesCount::UnderlyingType> ( i ) ) );
             }
         }
         return results;
@@ -393,7 +393,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         }
     });
 
-    blocksDone.release( nbLinesInChunk.get() * ( matchers.size() + 1 ) );
+    blocksDone.release( nbLinesInChunk.get() * ( static_cast<uint32_t>( matchers.size() ) + 1 ) );
 
     int reportedPercentage = 0;
     auto reportedMatches = nbMatches;
@@ -420,7 +420,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart <<
              ", " << lines.size() << " lines read.";
 
-        blocksDone.acquire( lines.size() );
+        blocksDone.acquire( static_cast<uint32_t>( lines.size() ) );
 
         searchBlockQueue.enqueue( { chunkStart, std::move(lines), PartialSearchResults{} } );
 

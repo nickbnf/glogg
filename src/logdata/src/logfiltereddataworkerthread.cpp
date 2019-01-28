@@ -315,7 +315,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::vector<QFuture<void>> matchers;
 
-    const auto matchingThreadsCount = config->useParallelSearch() ? qMax( 1, QThread::idealThreadCount() - 2 ) : 1;
+    const auto matchingThreadsCount = config->useParallelSearch() ? qMax( 1, QThread::idealThreadCount() - 1) : 1;
 
     LOG(logINFO) << "Using " << matchingThreadsCount << " matching threads";
 

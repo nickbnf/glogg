@@ -17,7 +17,9 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef KLOGG_USE_TBB_MALLOC
 #include <tbb/tbbmalloc_proxy.h>
+#endif
 
 #include <QApplication>
 #include <QFileInfo>

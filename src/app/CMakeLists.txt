@@ -18,8 +18,15 @@ add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})
 set_target_properties(klogg PROPERTIES AUTORCC ON)
 set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
 
-target_link_libraries(klogg PUBLIC ui cli11 singleapp tbbmalloc_proxy)
-target_link_libraries(klogg_portable PUBLIC ui cli11 singleapp tbbmalloc_proxy)
+set(MAIN_LIBS ui cli11 singleapp)
+if (NOT APPLE)
+    LIST(APPEND MAIN_LIBS tbbmalloc_proxy)
+    target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
+    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
+endif()
+
+target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
+target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 

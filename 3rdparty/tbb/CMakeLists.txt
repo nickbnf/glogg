@@ -310,7 +310,7 @@ if(TBB_BUILD_TBBMALLOC)
     endif()
 
     if (UNIX)
-        target_compile_options(tbbmalloc_static PRIVATE -Wno-error)
+        target_compile_options(tbbmalloc_static PRIVATE -w)
     endif()
 
     install(TARGETS tbbmalloc_static ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR})
@@ -361,7 +361,7 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
     set_property(TARGET tbbmalloc_proxy_static APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
     
     if (UNIX)
-        target_compile_options(tbbmalloc_proxy_static PRIVATE -Wno-error)
+        target_compile_options(tbbmalloc_proxy_static PRIVATE -w)
     endif()
 
     install(TARGETS tbbmalloc_proxy_static ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR})

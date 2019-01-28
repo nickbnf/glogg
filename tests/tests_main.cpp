@@ -7,7 +7,7 @@
 int main(int argc, char *argv[]) {
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init( logWARNING, &appender );
+    plog::init( logINFO, &appender );
 
     return Catch::Session().run( argc, argv );
 }

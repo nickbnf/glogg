@@ -238,49 +238,49 @@ endif()
 add_custom_target(tbb_def_files DEPENDS tbb.def tbbmalloc.def)
 
 # TBB library
-if (TBB_BUILD_STATIC)
-  add_library(tbb_static STATIC ${tbb_src})
-  target_include_directories(tbb_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-  set_property(TARGET tbb_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_BUILD=1")
-  set_property(TARGET tbb_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_DYNAMIC_LOAD_ENABLED=0")
-  set_property(TARGET tbb_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_SOURCE_DIRECTLY_INCLUDED=1")
-  set_property(TARGET tbb_static APPEND_STRING PROPERTY COMPILE_FLAGS ${ENABLE_RTTI})
-  install(TARGETS tbb_static ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR})
-  if (MSVC)
-    target_compile_definitions(tbb_static PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1)
-  endif()
-
-  if (UNIX AND NOT APPLE)
-    target_link_libraries(tbb_static PUBLIC pthread dl)
-  endif()
-endif()
-
-if (TBB_BUILD_SHARED)
-  add_library(tbb SHARED ${tbb_src})
-  target_include_directories(tbb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-  set_property(TARGET tbb APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_BUILD=1")
-  set_property(TARGET tbb APPEND_STRING PROPERTY COMPILE_FLAGS ${ENABLE_RTTI})
-  add_dependencies(tbb tbb_def_files)
-
-  if (APPLE)
-    set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS "-Wl,-exported_symbols_list,\"${CMAKE_CURRENT_BINARY_DIR}/tbb.def\"")
-  elseif (MSVC)
-    set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS "/DEF:\"${CMAKE_CURRENT_BINARY_DIR}/tbb.def\"")
-  else ()
-    set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS "-Wl,-version-script,\"${CMAKE_CURRENT_BINARY_DIR}/tbb.def\"")
-  endif()
-
-  install(TARGETS tbb
-          LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
-          ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
-          RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
-  if (UNIX AND NOT APPLE)
-    target_link_libraries(tbb PUBLIC pthread dl)
-  endif()
-  if (MSVC)
-    target_compile_definitions(tbb PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1)
-  endif()
-endif()
+#if (TBB_BUILD_STATIC)
+#  add_library(tbb_static STATIC ${tbb_src})
+#  target_include_directories(tbb_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+#  set_property(TARGET tbb_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_BUILD=1")
+#  set_property(TARGET tbb_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_DYNAMIC_LOAD_ENABLED=0")
+#  set_property(TARGET tbb_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_SOURCE_DIRECTLY_INCLUDED=1")
+#  set_property(TARGET tbb_static APPEND_STRING PROPERTY COMPILE_FLAGS ${ENABLE_RTTI})
+#  install(TARGETS tbb_static ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR})
+#  if (MSVC)
+#    target_compile_definitions(tbb_static PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1)
+#  endif()
+#
+#  if (UNIX AND NOT APPLE)
+#    target_link_libraries(tbb_static PUBLIC pthread dl)
+#  endif()
+#endif()
+#
+#if (TBB_BUILD_SHARED)
+#  add_library(tbb SHARED ${tbb_src})
+#  target_include_directories(tbb INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+#  set_property(TARGET tbb APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_BUILD=1")
+#  set_property(TARGET tbb APPEND_STRING PROPERTY COMPILE_FLAGS ${ENABLE_RTTI})
+#  add_dependencies(tbb tbb_def_files)
+#
+#  if (APPLE)
+#    set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS "-Wl,-exported_symbols_list,\"${CMAKE_CURRENT_BINARY_DIR}/tbb.def\"")
+#  elseif (MSVC)
+#    set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS "/DEF:\"${CMAKE_CURRENT_BINARY_DIR}/tbb.def\"")
+#  else ()
+#    set_property(TARGET tbb APPEND PROPERTY LINK_FLAGS "-Wl,-version-script,\"${CMAKE_CURRENT_BINARY_DIR}/tbb.def\"")
+#  endif()
+#
+#  install(TARGETS tbb
+#          LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
+#          ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
+#          RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+#  if (UNIX AND NOT APPLE)
+#    target_link_libraries(tbb PUBLIC pthread dl)
+#  endif()
+#  if (MSVC)
+#    target_compile_definitions(tbb PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1)
+#  endif()
+#endif()
 
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -298,6 +298,9 @@ if(TBB_BUILD_TBBMALLOC)
   # TBB malloc library
   if (TBB_BUILD_STATIC)
     add_library(tbbmalloc_static STATIC ${tbbmalloc_static_src})
+
+    target_include_directories(tbbmalloc_static PUBLIC SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
     set_property(TARGET tbbmalloc_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
     set_property(TARGET tbbmalloc_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_DYNAMIC_LOAD_ENABLED=0")
     set_property(TARGET tbbmalloc_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_SOURCE_DIRECTLY_INCLUDED=1")
@@ -305,13 +308,22 @@ if(TBB_BUILD_TBBMALLOC)
     if (MSVC)
       target_compile_definitions(tbbmalloc_static PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1 __TBBMALLOC_NO_IMPLICIT_LINKAGE=1)
     endif()
+
+    if (UNIX)
+        target_compile_options(tbbmalloc_static PRIVATE -Wno-error)
+    endif()
+
     install(TARGETS tbbmalloc_static ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR})
   endif()
 
   if (TBB_BUILD_SHARED)
     add_library(tbbmalloc SHARED ${tbbmalloc_src})
+
+    target_include_directories(tbbmalloc INTERFACE SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
     set_property(TARGET tbbmalloc APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
     set_property(TARGET tbbmalloc APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
+
     add_dependencies(tbbmalloc tbb_def_files)
     if (APPLE)
       set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS "-Wl,-exported_symbols_list,\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
@@ -323,6 +335,11 @@ if(TBB_BUILD_TBBMALLOC)
     if (MSVC)
       target_compile_definitions(tbbmalloc PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1 __TBBMALLOC_NO_IMPLICIT_LINKAGE=1)
     endif()
+
+    if (UNIX)
+        target_compile_options(tbbmalloc PRIVATE -w)
+    endif()
+
     install(TARGETS tbbmalloc
             LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
             ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
@@ -337,23 +354,29 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
   # TBB malloc proxy library
   if (TBB_BUILD_STATIC)
     add_library(tbbmalloc_proxy_static STATIC ${tbbmalloc_proxy_src})
-    target_include_directories(tbbmalloc_proxy_static SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
     set_property(TARGET tbbmalloc_proxy_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
     set_property(TARGET tbbmalloc_proxy_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_DYNAMIC_LOAD_ENABLED=0")
     set_property(TARGET tbbmalloc_proxy_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_SOURCE_DIRECTLY_INCLUDED=1")
     set_property(TARGET tbbmalloc_proxy_static APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
     
+    if (UNIX)
+        target_compile_options(tbbmalloc_proxy_static PRIVATE -Wno-error)
+    endif()
+
     install(TARGETS tbbmalloc_proxy_static ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR})
   endif()
 
   if (TBB_BUILD_SHARED)
     add_library(tbbmalloc_proxy SHARED ${tbbmalloc_proxy_src})
-    target_include_directories(tbbmalloc_proxy SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-
     set_property(TARGET tbbmalloc_proxy APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
     set_property(TARGET tbbmalloc_proxy APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
     target_link_libraries(tbbmalloc_proxy PUBLIC tbbmalloc)
+
+    if (UNIX)
+        target_compile_options(tbbmalloc_proxy PRIVATE -w)
+    endif()
+
     install(TARGETS tbbmalloc_proxy
             LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
             ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}

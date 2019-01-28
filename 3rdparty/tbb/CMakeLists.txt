@@ -337,7 +337,7 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
   # TBB malloc proxy library
   if (TBB_BUILD_STATIC)
     add_library(tbbmalloc_proxy_static STATIC ${tbbmalloc_proxy_src})
-    target_include_directories(tbbmalloc_proxy_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_include_directories(tbbmalloc_proxy_static SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
     set_property(TARGET tbbmalloc_proxy_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
     set_property(TARGET tbbmalloc_proxy_static APPEND PROPERTY COMPILE_DEFINITIONS "__TBB_DYNAMIC_LOAD_ENABLED=0")
@@ -349,7 +349,7 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
 
   if (TBB_BUILD_SHARED)
     add_library(tbbmalloc_proxy SHARED ${tbbmalloc_proxy_src})
-    target_include_directories(tbbmalloc_proxy INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_include_directories(tbbmalloc_proxy SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
     set_property(TARGET tbbmalloc_proxy APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
     set_property(TARGET tbbmalloc_proxy APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})

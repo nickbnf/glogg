@@ -236,10 +236,10 @@ under the terms of MIT licence
 >MIT License.
 
 ===
->This product includes software developed by Cameron Desrochers:
->concurrentqueue (https://github.com/cameron314/concurrentqueue) licensed
->under the terms of Simplified BSD License
->
+This product includes software developed by Cameron Desrochers:
+concurrentqueue (https://github.com/cameron314/concurrentqueue) licensed
+under the terms of Simplified BSD License
+
 >Simplified BSD License:
 >
 >Copyright (c) 2013-2016, Cameron Desrochers. All rights reserved.
@@ -262,3 +262,45 @@ under the terms of MIT licence
 >LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 >OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 >THE POSSIBILITY OF SUCH DAMAGE.
+
+===
+This product includes software developed by Intel Corporation 
+Threading Building Blocks (http://threadingbuildingblocks.org) licensed
+under the terms of  Apache License Version 2.0
+
+>Copyright (c) 2005-2018 Intel Corporation
+>
+>Licensed under the Apache License, Version 2.0 (the "License");
+>you may not use this file except in compliance with the License.
+>You may obtain a copy of the License at
+>
+>    http://www.apache.org/licenses/LICENSE-2.0
+>
+>Unless required by applicable law or agreed to in writing, software
+>distributed under the License is distributed on an "AS IS" BASIS,
+>WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+>See the License for the specific language governing permissions and
+>limitations under the License.
+
+Intel, Thread Building Blocks, and TBB are either registered trademarks
+or trademarks of Intel Corporation in the United States and/or other countries
+
+===
+This product includes software developed by Wenzel Jakob 
+Threading Building Blocks CMake (https://github.com/wjakob/tbb) licensed
+under the terms of  Apache License Version 2.0
+
+>Copyright (c) 2005-2018 Wenzel Jakob
+>
+>Licensed under the Apache License, Version 2.0 (the "License");
+>you may not use this file except in compliance with the License.
+>You may obtain a copy of the License at
+>
+>    http://www.apache.org/licenses/LICENSE-2.0
+>
+>Unless required by applicable law or agreed to in writing, software
+>distributed under the License is distributed on an "AS IS" BASIS,
+>WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+>See the License for the specific language governing permissions and
+>limitations under the License.
+

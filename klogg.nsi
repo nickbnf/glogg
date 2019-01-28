@@ -117,6 +117,12 @@ Section "MSVC Runtime libraries" vcruntime
     File release\vcruntime140.dll
 SectionEnd
 
+Section "Intel TBB" tbb
+    SetOutPath $INSTDIR
+    File release\tbbmalloc.dll
+    File release\tbbmalloc_proxy.dll
+SectionEnd
+
 Section "Create Start menu shortcut" shortcut
     SetShellVarContext all
     CreateShortCut "$SMPROGRAMS\klogg.lnk" "$INSTDIR\klogg.exe" "" "$INSTDIR\klogg.exe" 0
@@ -133,6 +139,8 @@ SectionEnd
 you already have the Qt5 development kit installed."
     !insertmacro MUI_DESCRIPTION_TEXT ${vcruntime} "Needed by klogg, you have to install these unless \
 you already have the Microsoft Visual C++ 2017 Redistributable installed."
+    !insertmacro MUI_DESCRIPTION_TEXT ${tbb} "Needed by klogg, you have to install these unless \
+    you already have the Intel Threading Building Blocks installed."
     !insertmacro MUI_DESCRIPTION_TEXT ${shortcut} "Create a shortcut in the Start menu for klogg."
     !insertmacro MUI_DESCRIPTION_TEXT ${associate} "Make klogg the default viewer for .log files."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
@@ -159,6 +167,8 @@ Section "Uninstall"
     Delete "$INSTDIR\platforms\qminimal.dll"
     Delete "$INSTDIR\msvcp140.dll"
     Delete "$INSTDIR\vcruntime140.dll"
+    Delete "$INSTDIR\tbbmalloc.dll"
+    Delete "$INSTDIR\tbbmalloc_proxy.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

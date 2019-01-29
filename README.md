@@ -2,17 +2,10 @@
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 [ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
 
-CI builds 19.01.0.296 (x64):
-[windows portable](https://ci.appveyor.com/api/buildjobs/3d13pa8h9e869dlg/artifacts/klogg-19.01.0.296-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/3d13pa8h9e869dlg/artifacts/klogg-19.01.0.296-setup.exe) |
-[deb](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.1.0-r296-Linux.deb) |
-[rpm](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.1.0-r296-Linux.rpm) |
-[appimage](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.1/build/packages/klogg-19.01.0.296-x86_64.AppImage) |
-[dmg](https://s3.amazonaws.com/klogg.travis.build/variar/klogg/296/296.2/build/packages/klogg-19.1.0-r296-OSX.dmg)
-
-CI builds 19.01.0.296 (x86):
-[windows portable](https://ci.appveyor.com/api/buildjobs/853dhixbody1nslx/artifacts/klogg-19.01.0.296-portable.zip) |
-[windows installer](https://ci.appveyor.com/api/buildjobs/853dhixbody1nslx/artifacts/klogg-19.01.0.296-setup.exe) |
+Latest continuous integration builds can be downloaded from releases:
+[windows](https://github.com/variar/klogg/releases/tag/continuous-win) |
+[linux](https://github.com/variar/klogg/releases/tag/continuous-linux) |
+[mac](https://github.com/variar/klogg/releases/tag/continuous-osx)
 
 klogg is the fork of [glogg](https://github.com/nickbnf/glogg) - the fast, smart log explorer.
 
@@ -35,26 +28,19 @@ From original glogg description:
 * Is open source, released under the GPL
 
 ## Features of klogg
+* Multithreading support for file indexing and regular expression matching
 * Log encoding detection using [uchardet](https://www.freedesktop.org/wiki/Software/uchardet/) library (support utf8, utf16, cp1251 and more)
 * Limiting search to a part of open file
 * In-memory cache of search results per search pattern
-* Parallel regular expression matching (speed up search on multicore CPUs)
-* Watching for file changes using [Entropia File System Watcher](https://bitbucket.org/SpartanJ/efsw) on all platforms
-* Using [cli11](https://github.com/CLIUtils/CLI11) for command line parsing (no dependency on program_options library from boost)
-
-Latest win32 builds from master branch can be downloaded from Appveyor:
-https://ci.appveyor.com/project/variar/klogg/build/artifacts?branch=master
-
-Linux and Mac OS builds are uploaded from Travis CI to Amazon S3 (S3 browser software is required): https://s3.amazonaws.com/klogg.travis.build/
 
 ## Building from source
-Unlike upstream klogg is using cmake to generate build files.
+klogg is using cmake to generate build files.
 
 ### Requirements
 
-* cmake 3.2 or later
+* cmake 3.12 or later
 * C++ compiler with C++14 support (gcc 5, clang 3.4, msvc 2015)
-* Qt libraries (version 5.7 or later). QtCore, QtGui, QtWidgets and QtConcurrent are required on all platforms. QtNetwork is required on Windows and Mac OS. On Linux either QtNetwork or QtDBus can be used (selected during build configuration). QtTest is needed to build and run tests.
+* Qt libraries (version 5.9 or later: QtCore, QtGui, QtWidgets, QtConcurrent and QtNetwork). QtTest is needed to build and run tests.
 * pandoc to build documentation
 
 All other build dependencies are provided in 3rdparty directory. 
@@ -101,25 +87,36 @@ Installer can be built with NSIS (requires documentation to be built).
 cd <path_to_project_root>
 md release
 xcopy build\output\klogg.exe release\ /y
+xcopy build\output\klogg_tbbmalloc.dll release\ /y
+xcopy build\output\klogg_tbbmalloc_proxy.dll release\ /y
+
 xcopy build\output\readme.html release\ /y
+xcopy COPYING  release\ /y
+xcopy NOTICE   release\ /y
+
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" release\ /y
+xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" release\ /y
+
 xcopy %QT5%\bin\Qt5Core.dll release\ /y
 xcopy %QT5%\bin\Qt5Gui.dll release\ /y
 xcopy %QT5%\bin\Qt5Network.dll release\ /y
 xcopy %QT5%\bin\Qt5Widgets.dll release\ /y
 xcopy %QT5%\bin\Qt5Concurrent.dll release\ /y
+
 md release\platforms
 xcopy %QT5%\plugins\platforms\qwindows.dll release\platforms\ /y
-xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\msvcp140.dll" release\ /y
-xcopy "%VCToolsRedistDir%x64\Microsoft.VC141.CRT\vcruntime140.dll" release\ /y
 
-makensis -DVERSION=X.X.X klogg.nsi
+makensis -DVERSION=X.X.X -DPLATFORM=x64 klogg.nsi
 ```
 
 See `appveyor.yml` for more information on build process.
 
 ### Tests
-Test are built by default. To turn them off pass `-DBUILD_TESTS:BOOL=OFF` to cmake.
-Tests use google test and google mock (they are bundled with the project source) and require Qt5Test module. 
+Tests are built by default. To turn them off pass `-DBUILD_TESTS:BOOL=OFF` to cmake.
+Tests use catch2 (bundled with klogg sources) and require Qt5Test module. Tests can be run using ctest inside cmake build folder
+```
+ctest --build-config Release --verbose
+```
 
 
 ## Contact

@@ -317,35 +317,35 @@ if(TBB_BUILD_TBBMALLOC)
   endif()
 
   if (TBB_BUILD_SHARED)
-    add_library(tbbmalloc SHARED ${tbbmalloc_src})
+    add_library(klogg_tbbmalloc SHARED ${tbbmalloc_src})
 
-    target_include_directories(tbbmalloc INTERFACE SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_include_directories(klogg_tbbmalloc INTERFACE SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-    set_property(TARGET tbbmalloc APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
-    set_property(TARGET tbbmalloc APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
+    set_property(TARGET klogg_tbbmalloc APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
+    set_property(TARGET klogg_tbbmalloc APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
 
-    add_dependencies(tbbmalloc tbb_def_files)
+    add_dependencies(klogg_tbbmalloc tbb_def_files)
     if (APPLE)
-      set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS "-Wl,-exported_symbols_list,\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
+      set_property(TARGET klogg_tbbmalloc APPEND PROPERTY LINK_FLAGS "-Wl,-exported_symbols_list,\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
     elseif (MSVC)
-      set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS "/DEF:\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
+      set_property(TARGET klogg_tbbmalloc APPEND PROPERTY LINK_FLAGS "/DEF:\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
     else ()
-      set_property(TARGET tbbmalloc APPEND PROPERTY LINK_FLAGS "-Wl,-version-script,\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
+      set_property(TARGET klogg_tbbmalloc APPEND PROPERTY LINK_FLAGS "-Wl,-version-script,\"${CMAKE_CURRENT_BINARY_DIR}/tbbmalloc.def\"")
     endif()
     if (MSVC)
-      target_compile_definitions(tbbmalloc PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1 __TBBMALLOC_NO_IMPLICIT_LINKAGE=1)
+      target_compile_definitions(klogg_tbbmalloc PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1 __TBBMALLOC_NO_IMPLICIT_LINKAGE=1)
     endif()
 
     if (UNIX)
-        target_compile_options(tbbmalloc PRIVATE -w)
+        target_compile_options(klogg_tbbmalloc PRIVATE -w)
     endif()
 
-    install(TARGETS tbbmalloc
+    install(TARGETS klogg_tbbmalloc
             LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
             ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
             RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
     if (UNIX AND NOT APPLE)
-      target_link_libraries(tbbmalloc PUBLIC pthread dl)
+      target_link_libraries(klogg_tbbmalloc PUBLIC pthread dl)
     endif()
   endif()
 endif()
@@ -368,26 +368,26 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
   endif()
 
   if (TBB_BUILD_SHARED)
-    add_library(tbbmalloc_proxy SHARED ${tbbmalloc_proxy_src})
-    set_property(TARGET tbbmalloc_proxy APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
-    set_property(TARGET tbbmalloc_proxy APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
-    target_link_libraries(tbbmalloc_proxy PUBLIC tbbmalloc)
+    add_library(klogg_tbbmalloc_proxy SHARED ${tbbmalloc_proxy_src})
+    set_property(TARGET klogg_tbbmalloc_proxy APPEND PROPERTY COMPILE_DEFINITIONS "__TBBMALLOC_BUILD=1")
+    set_property(TARGET klogg_tbbmalloc_proxy APPEND_STRING PROPERTY COMPILE_FLAGS ${DISABLE_RTTI})
+    target_link_libraries(klogg_tbbmalloc_proxy PUBLIC klogg_tbbmalloc)
 
     if (UNIX)
-        target_compile_options(tbbmalloc_proxy PRIVATE -w)
+        target_compile_options(klogg_tbbmalloc_proxy PRIVATE -w)
     endif()
 
-    install(TARGETS tbbmalloc_proxy
+    install(TARGETS klogg_tbbmalloc_proxy
             LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
             ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
             RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
     if (UNIX AND NOT APPLE)
-      target_link_libraries(tbbmalloc_proxy PUBLIC pthread dl)
+      target_link_libraries(klogg_tbbmalloc_proxy PUBLIC pthread dl)
     endif()
   endif()
 endif()
 
-install(DIRECTORY include/tbb DESTINATION ${TBB_INSTALL_INCLUDE_DIR})
+#install(DIRECTORY include/tbb DESTINATION ${TBB_INSTALL_INCLUDE_DIR})
 
 # version_string.ver
 if (UNIX AND NOT TBB_NO_DATE)

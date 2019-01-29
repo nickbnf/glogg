@@ -31,9 +31,9 @@ or add following parameters to the linker options for the binary which is
 loaded during application startup. It can be either exe-file or dll.
 
 For win32
-tbbmalloc_proxy.lib /INCLUDE:"___TBB_malloc_proxy"
+klogg_tbbmalloc_proxy.lib /INCLUDE:"___TBB_malloc_proxy"
 win64
-tbbmalloc_proxy.lib /INCLUDE:"__TBB_malloc_proxy"
+klogg_tbbmalloc_proxy.lib /INCLUDE:"__TBB_malloc_proxy"
 */
 
 #ifndef __TBB_tbbmalloc_proxy_H
@@ -42,9 +42,9 @@ tbbmalloc_proxy.lib /INCLUDE:"__TBB_malloc_proxy"
 #if _MSC_VER
 
 #ifdef _DEBUG
-    #pragma comment(lib, "tbbmalloc_proxy_debug.lib")
+    #pragma comment(lib, "klogg_tbbmalloc_proxy_debug.lib")
 #else
-    #pragma comment(lib, "tbbmalloc_proxy.lib")
+    #pragma comment(lib, "klogg_tbbmalloc_proxy.lib")
 #endif
 
 #if defined(_WIN64)

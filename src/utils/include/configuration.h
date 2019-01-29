@@ -90,6 +90,10 @@ class Configuration : public Persistable {
     { return searchReadBufferSizeLines_; }
     void setSearchReadBufferSizeLines( uint32_t lines )
     { searchReadBufferSizeLines_ = lines; }
+    bool keepFileClosed() const
+    { return keepFileClosed_; }
+    void setKeepFileClosed( bool shouldKeepClosed )
+    { keepFileClosed_ = shouldKeepClosed; }
 
     // View settings
     bool isOverviewVisible() const
@@ -149,6 +153,8 @@ class Configuration : public Persistable {
     bool useParallelSearch_;
     uint32_t indexReadBufferSizeMb_;
     uint32_t searchReadBufferSizeLines_;
+    bool keepFileClosed_;
+    
 
 };
 

@@ -158,10 +158,11 @@ class LogData : public AbstractLogData {
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
-    void reOpenFile();
+    void reOpenFile() const;
 
     QString indexingFileName_;
-    std::unique_ptr<QFile> attached_file_;
+    mutable std::unique_ptr<QFile> attached_file_;
+    bool keepFileClosed_;
 
     // Indexing data, read by us, written by the worker thread
     IndexingData indexing_data_;

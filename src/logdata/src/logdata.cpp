@@ -24,11 +24,64 @@
 #include <cassert>
 
 #include <QFileInfo>
+#include <QIODevice>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <fcntl.h>
+#endif
 
 #include "log.h"
 
 #include "logdata.h"
 #include "logfiltereddata.h"
+
+namespace
+{
+    void openFileByHandle(QFile* file)
+    {
+        bool openedByHandle = false;
+
+#ifdef Q_OS_WIN
+        //
+        // The following code is adapted from Qt's QFSFileEnginePrivate::nativeOpen()
+        // by including the FILE_SHARE_DELETE share mode.
+        //
+
+        // Enable full sharing.
+        DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+
+        int accessRights = GENERIC_READ;
+        DWORD creationDisp = OPEN_EXISTING;
+
+        // Create the file handle.
+        SECURITY_ATTRIBUTES securityAtts = { sizeof(SECURITY_ATTRIBUTES), NULL, FALSE };
+        HANDLE fileHandle = CreateFileW(
+                (const wchar_t*)file->fileName().utf16(),
+                accessRights,
+                shareMode,
+                &securityAtts,
+                creationDisp,
+                FILE_ATTRIBUTE_NORMAL,
+                NULL);
+
+        if (fileHandle != INVALID_HANDLE_VALUE) {
+            // Convert the HANDLE to an fd and pass it to QFile's foreign-open
+            // function. The fd owns the handle, so when QFile later closes
+            // the fd the handle will be closed too.
+            int fd = _open_osfhandle((intptr_t)fileHandle, _O_RDONLY);
+            if (fd != -1) {
+                openedByHandle = file->open( fd, QIODevice::ReadOnly, QFile::AutoCloseHandle );
+            }
+        }
+#endif
+
+        if ( !openedByHandle ) {
+            LOG(logWARNING) << "Failed to open file by handle";
+            file->open( QIODevice::ReadOnly );
+        }
+    }
+}
 
 // Implementation of the 'start' functions for each operation
 
@@ -85,7 +138,7 @@ LogData::~LogData()
 {
     // Remove the current file from the watch list
     if ( attached_file_ )
-        FileWatcher::getFileWatcher().removeFile( attached_file_->fileName() );
+        FileWatcher::getFileWatcher().removeFile( indexingFileName_ );
 
     // FIXME
     // workerThread_.stop();
@@ -104,8 +157,10 @@ void LogData::attachFile( const QString& fileName )
         throw CantReattachErr();
     }
 
+    indexingFileName_ = fileName;
     attached_file_.reset( new QFile( fileName ) );
-    attached_file_->open( QIODevice::ReadOnly );
+
+    openFileByHandle( attached_file_.get() );
 
     std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
     enqueueOperation( std::move( operation ) );
@@ -187,8 +242,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
 {
     LOG(logINFO) << "signalFileChanged " << filename.toStdString();
 
-    const QString name = attached_file_->fileName();
-    QFileInfo info( name );
+    QFileInfo info( indexingFileName_ );
 
     const auto file_size = indexing_data_.getSize();
     LOG(logDEBUG) << "current indexed fileSize=" << file_size;
@@ -248,11 +302,11 @@ void LogData::indexingFinished( LoadingStatus status )
     if ( status == LoadingStatus::Successful ) {
         // Start watching we watch the file for updates
         fileChangedOnDisk_ = Unchanged;
-        FileWatcher::getFileWatcher().addFile( attached_file_->fileName() );
+        FileWatcher::getFileWatcher().addFile( indexingFileName_ );
 
         // Update the modified date/time if the file exists
         lastModifiedDate_ = QDateTime();
-        QFileInfo fileInfo( *attached_file_ );
+        QFileInfo fileInfo( indexingFileName_ );
         if ( fileInfo.exists() )
             lastModifiedDate_ = fileInfo.lastModified();
     }
@@ -456,8 +510,9 @@ QTextCodec* LogData::getDetectedEncoding() const
 // inode but really want the one now associated with the name)
 void LogData::reOpenFile()
 {
-    auto reopened = std::make_unique<QFile>( attached_file_->fileName() );
-    reopened->open( QIODevice::ReadOnly );
+    auto reopened = std::make_unique<QFile>( indexingFileName_ );
+    openFileByHandle( reopened.get() );
+    
     QMutexLocker locker( &fileMutex_ );
     attached_file_ = std::move( reopened );
 }

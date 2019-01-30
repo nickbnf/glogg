@@ -498,10 +498,13 @@ std::vector<QString> LogData::doGetLines( LineNumber first_line, LinesCount numb
     qint64 beginning = 0;
     qint64 end = 0;
     std::unique_ptr<QTextDecoder> decoder {codec_->makeDecoder()};
+
+    EncodingParameters encodingParams{codec_};
+
     for ( LineNumber line = first_line; (line <= last_line); ++line ) {
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
         list.emplace_back( decoder->toUnicode( buffer.data() + beginning,
-                                        static_cast<LineLength::UnderlyingType>( end - beginning - 1 ) ) );
+                                        static_cast<LineLength::UnderlyingType>( end - beginning - encodingParams.lineFeedWidth ) ) );
         beginning = end;
     }
 
@@ -548,10 +551,13 @@ std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCo
     qint64 beginning = 0;
     qint64 end = 0;
     std::unique_ptr<QTextDecoder> decoder {codec_->makeDecoder()};
+
+    EncodingParameters encodingParams{codec_};
+    
     for ( auto line = first_line; (line <= last_line); ++line ) {
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
         list.emplace_back( untabify( decoder->toUnicode( buffer.data() + beginning,
-                                                  static_cast<LineLength::UnderlyingType>( end - beginning - 1 ) ) ) );
+                                                  static_cast<LineLength::UnderlyingType>( end - beginning - encodingParams.lineFeedWidth ) ) ) );
         beginning = end;
     }
 

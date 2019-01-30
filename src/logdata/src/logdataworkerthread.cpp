@@ -237,10 +237,7 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
 
     const auto adjustToCharWidth = [ &state ] ( int pos )
     {
-        if ( state.encodingParams.lineFeedIndex > 0 ) {
-            pos -= state.encodingParams.lineFeedWidth;
-        }
-        return pos;
+        return pos - state.encodingParams.getBeforeCrOffset();
     };
 
     const auto expandTabs = [ & ] ( const char* search_start, int line_size )
@@ -259,7 +256,12 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
             const auto tab_substring_size = next_tab - tab_search_start;
             line_size -= tab_substring_size;
             tab_search_start = next_tab + 1;
-            next_tab = reinterpret_cast<const char*>( std::memchr( tab_search_start, '\t', line_size ) );
+            if ( line_size > 0 ) {
+                next_tab = reinterpret_cast<const char*>( std::memchr( tab_search_start, '\t', line_size ) );
+            }
+            else {
+                next_tab = nullptr;
+            }
         }
     };
 
@@ -271,16 +273,20 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
         const auto search_start = block.data() + pos_within_block;
         const auto search_line_size = block.size() - pos_within_block;
 
-        const auto next_line_feed = reinterpret_cast<const char*>( std::memchr( search_start, '\n', search_line_size ) );
+        if ( search_line_size > 0 ) {
+            const auto next_line_feed = reinterpret_cast<const char*>( std::memchr( search_start, '\n', search_line_size ) );
 
-        if ( next_line_feed != nullptr ) {
-            expandTabs( search_start, next_line_feed - search_start );
-            pos_within_block = adjustToCharWidth( next_line_feed - block.data() );
-
-            LOG(logDEBUG1) << "LF at " << pos_within_block;
+            if ( next_line_feed != nullptr ) {
+                expandTabs( search_start, next_line_feed - search_start );
+                pos_within_block = adjustToCharWidth( next_line_feed - block.data() );
+                LOG(logDEBUG1) << "LF at " << pos_within_block;
+            }
+            else {
+                expandTabs( search_start, search_line_size );
+                pos_within_block = -1;
+            }
         }
         else {
-            expandTabs( search_start, search_line_size );
             pos_within_block = -1;
         }
 

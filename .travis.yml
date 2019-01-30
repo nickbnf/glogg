@@ -8,13 +8,13 @@ matrix:
       compiler: gcc
 
       env:
-         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
          - CPACK_GENERATOR="RPM;DEB"
          - UPLOADTOOL_SUFFIX="linux"
 
       addons:
-        artifacts: 
+        artifacts:
           paths:
             - ./build/packages
         apt:
@@ -22,7 +22,7 @@ matrix:
             - ubuntu-toolchain-r-test
             - sourceline: ppa:beineri/opt-qt595-xenial
           packages:
-            - g++-7
+            - g++-8
             - mesa-common-dev
             - qt59base
             - ninja-build

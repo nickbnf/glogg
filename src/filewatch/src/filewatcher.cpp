@@ -133,43 +133,49 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         LOG( logDEBUG ) << "QtFileWatcher::fileChangedOnDisk " << directory << " " << filename
                         << ", old name " << oldFilename;
 
-        QMutexLocker lock( &mutex_ );
+        const auto fullChangedFilename = [&]() {
+            QMutexLocker lock( &mutex_ );
 
-        auto watchedDirectory
-            = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                            [&directory]( const auto& wd ) { return wd.name_ == directory; } );
+            auto watchedDirectory
+                = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
+                                [&directory]( const auto& wd ) { return wd.name_ == directory; } );
 
-        if ( watchedDirectory != watchedPaths_.end() ) {
-            std::string changedFilename;
+            if ( watchedDirectory != watchedPaths_.end() ) {
+                std::string changedFilename;
 
-            const auto isFileWatched
-                = std::any_of( watchedDirectory->files_.begin(), watchedDirectory->files_.end(),
-                               [&filename, &oldFilename, &changedFilename]( const auto& f ) {
-                                   if ( f == filename || f == oldFilename ) {
-                                       changedFilename = f;
-                                       return true;
-                                   }
+                const auto isFileWatched
+                    = std::any_of( watchedDirectory->files_.begin(), watchedDirectory->files_.end(),
+                                   [&filename, &oldFilename, &changedFilename]( const auto& f ) {
+                                       if ( f == filename || f == oldFilename ) {
+                                           changedFilename = f;
+                                           return true;
+                                       }
 
-                                   return false;
-                               } );
+                                       return false;
+                                   } );
 
-            if ( isFileWatched ) {
-                LOG( logINFO ) << "QtFileWatcher::fileChangedOnDisk - will notify for " << filename
-                               << ", old name " << oldFilename;
+                if ( isFileWatched ) {
+                    LOG( logINFO ) << "QtFileWatcher::fileChangedOnDisk - will notify for "
+                                   << filename << ", old name " << oldFilename;
 
-                const auto fullChangedFilename
-                    = QDir::cleanPath( QString::fromStdString( directory ) + QDir::separator()
-                                       + QString::fromStdString( changedFilename ) );
-
-                QMetaObject::invokeMethod( parent_, "fileChangedOnDisk", Qt::QueuedConnection,
-                                           Q_ARG( QString, fullChangedFilename ) );
+                    return QDir::cleanPath( QString::fromStdString( directory ) + QDir::separator()
+                                            + QString::fromStdString( changedFilename ) );
+                }
+                else {
+                    LOG( logDEBUG )
+                        << "QtFileWatcher::fileChangedOnDisk - call but no file monitored";
+                }
             }
             else {
-                LOG( logDEBUG ) << "QtFileWatcher::fileChangedOnDisk - call but no file monitored";
+                LOG( logDEBUG ) << "QtFileWatcher::fileChangedOnDisk - call but no dir monitored";
             }
-        }
-        else {
-            LOG( logDEBUG ) << "QtFileWatcher::fileChangedOnDisk - call but no dir monitored";
+
+            return QString{};
+        }();
+
+        if ( !fullChangedFilename.isEmpty() ) {
+            QMetaObject::invokeMethod( parent_, "fileChangedOnDisk", Qt::QueuedConnection,
+                                       Q_ARG( QString, fullChangedFilename ) );
         }
     }
 

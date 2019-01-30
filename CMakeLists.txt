@@ -45,7 +45,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${out_dir}")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -147,7 +147,10 @@ add_custom_target(installation SOURCES
 add_custom_target(docs SOURCES
     ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE}
     ${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.rst
+)
 
+add_custom_target(stuff SOURCES
+   .clang-format
 )
 
 option(BUILD_DOC "Build documentation" ON)
@@ -174,7 +177,7 @@ if (${BUILD_TESTS})
         COMMAND klogg -platform offscreen -v
     )
 
-    add_subdirectory(tests)   
+    add_subdirectory(tests)
 endif()
 
 # Installation and packaging

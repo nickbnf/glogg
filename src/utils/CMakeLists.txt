@@ -7,6 +7,7 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/perfcounter.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/persistable.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/persistentinfo.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/fileid.h
 )
 
 target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

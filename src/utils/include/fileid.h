@@ -22,6 +22,8 @@
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#else
+#include <sys/stat.h>
 #endif
 
 struct FileId
@@ -71,7 +73,12 @@ inline FileId getFileId(const QString& filename)
         ULARGE_INTEGER	fileIndex = {{ info.nFileIndexLow, info.nFileIndexHigh }};
         return FileId{ fileIndex.QuadPart, info.dwVolumeSerialNumber };
 #else
-   // TODO: nix implementation
-    return FileId{};
+    struct stat info;
+    if ( lstat(filename.toUtf8().constData(), &info) != 0 ) {
+        LOG(logDEBUG) << "Failed to get file info for " << filename.toStdString();
+        return FileId{};
+    }
+
+    return FileId{ info.st_ino, info.st_dev };
 #endif
 }

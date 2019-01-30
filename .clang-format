@@ -2,7 +2,7 @@
 BasedOnStyle: llvm
 AccessModifierOffset: -4
 BreakBeforeBinaryOperators: true
-ColumnLimit: 80
+ColumnLimit: 100
 Standard: Cpp11
 IndentWidth: 4
 BreakBeforeBraces: Linux
@@ -17,3 +17,9 @@ BreakBeforeBraces: Custom
 BraceWrapping:
     BeforeElse: true
     AfterFunction: true
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowAllParametersOfDeclarationOnNextLine: true
+Cpp11BracedListStyle: false
+SpacesInContainerLiterals: true
+BreakConstructorInitializers: BeforeComma

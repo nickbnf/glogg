@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other contributors
+ * Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other
+ * contributors
  *
  * This file is part of klogg.
  *
@@ -17,8 +18,8 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QtCore/QFileInfo>
 #include "log.h"
+#include <QtCore/QFileInfo>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -26,56 +27,53 @@
 #include <sys/stat.h>
 #endif
 
-struct FileId
-{
+struct FileId {
     uint64_t fileIndex;
     uint64_t volumeIndex;
 
-    bool operator != (const FileId& other) const
+    bool operator!=( const FileId& other ) const
     {
-        return fileIndex != other.fileIndex || 
-                volumeIndex != other.volumeIndex;
+        return fileIndex != other.fileIndex || volumeIndex != other.volumeIndex;
     }
 };
 
-inline FileId getFileId(const QString& filename)
+inline FileId getFileId( const QString& filename )
 {
 #ifdef Q_OS_WIN
-        DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
-        int accessRights = GENERIC_READ;
-        DWORD creationDisp = OPEN_EXISTING;
+    int accessRights = GENERIC_READ;
+    DWORD creationDisp = OPEN_EXISTING;
 
-        // Create the file handle.
-        SECURITY_ATTRIBUTES securityAtts = { sizeof(SECURITY_ATTRIBUTES), NULL, FALSE };
-        HANDLE fileHandle = CreateFileW(
-                (const wchar_t*)filename.utf16(),
-                accessRights,
-                shareMode,
-                &securityAtts,
-                creationDisp,
-                FILE_FLAG_BACKUP_SEMANTICS,
-                NULL);
+    // Create the file handle.
+    SECURITY_ATTRIBUTES securityAtts = { sizeof( SECURITY_ATTRIBUTES ), NULL, FALSE };
 
-        if ( fileHandle == INVALID_HANDLE_VALUE ) {
-            LOG(logDEBUG) << "Failed to get file info for " << filename.toStdString() << ", gle " << ::GetLastError();
-            return FileId{};
-        }
-        
-        std::unique_ptr<void, decltype(&CloseHandle)> fileHandleGuard{fileHandle, CloseHandle};
+    HANDLE fileHandle
+        = CreateFileW( (const wchar_t*)filename.utf16(), accessRights, shareMode, &securityAtts,
+                       creationDisp, FILE_FLAG_BACKUP_SEMANTICS, NULL );
 
-        BY_HANDLE_FILE_INFORMATION info;
-		if (!::GetFileInformationByHandle(fileHandle, &info)) {
-            LOG(logDEBUG) << "Failed to get file info for " << filename.toStdString() << ", gle " << ::GetLastError();
-			return FileId{};
-        }
+    if ( fileHandle == INVALID_HANDLE_VALUE ) {
+        LOG( logDEBUG ) << "Failed to get file info for " << filename.toStdString() << ", gle "
+                        << ::GetLastError();
+        return FileId{};
+    }
 
-        ULARGE_INTEGER	fileIndex = {{ info.nFileIndexLow, info.nFileIndexHigh }};
-        return FileId{ fileIndex.QuadPart, info.dwVolumeSerialNumber };
+    using FileHandleGuard = std::unique_ptr<void, decltype( &CloseHandle )>;
+    auto fileHandleGuard = FileHandleGuard{ fileHandle, CloseHandle };
+
+    BY_HANDLE_FILE_INFORMATION info;
+    if ( !::GetFileInformationByHandle( fileHandle, &info ) ) {
+        LOG( logDEBUG ) << "Failed to get file info for " << filename.toStdString() << ", gle "
+                        << ::GetLastError();
+        return FileId{};
+    }
+
+    ULARGE_INTEGER fileIndex = { info.nFileIndexLow, info.nFileIndexHigh };
+    return FileId{ fileIndex.QuadPart, info.dwVolumeSerialNumber };
 #else
     struct stat info;
-    if ( lstat(filename.toUtf8().constData(), &info) != 0 ) {
-        LOG(logDEBUG) << "Failed to get file info for " << filename.toStdString();
+    if ( lstat( filename.toUtf8().constData(), &info ) != 0 ) {
+        LOG( logDEBUG ) << "Failed to get file info for " << filename.toStdString();
         return FileId{};
     }
 

@@ -19,8 +19,8 @@
 
 #include <chrono>
 
-// This class is a counter that remembers the number of events occuring within one second
-// it can be used for performance measurement (e.g. FPS)
+// This class is a counter that remembers the number of events occuring within
+// one second it can be used for performance measurement (e.g. FPS)
 
 class PerfCounter {
   public:
@@ -28,14 +28,16 @@ class PerfCounter {
 
     // Count a new event, returns true if it has been counted.
     // If the function returns false, it indicates the current second is elapsed
-    // and the user should read and reset the counter before re-adding the event.
-    bool addEvent() {
+    // and the user should read and reset the counter before re-adding the
+    // event.
+    bool addEvent()
+    {
         using namespace std::chrono;
         if ( counter_ == 0 )
             first_event_date_ = steady_clock::now();
 
-        if ( duration_cast<microseconds>(
-                    steady_clock::now() - first_event_date_ ).count() < 1000000 ) {
+        if ( duration_cast<microseconds>( steady_clock::now() - first_event_date_ ).count()
+             < 1000000 ) {
             ++counter_;
             return true;
         }
@@ -44,9 +46,10 @@ class PerfCounter {
         }
     }
 
-    // Read and reset the counter. Returns the number of events that occured in the
-    // previous second.
-    uint32_t readAndReset() {
+    // Read and reset the counter. Returns the number of events that occured in
+    // the previous second.
+    uint32_t readAndReset()
+    {
         uint32_t value = counter_;
         counter_ = 0;
         return value;

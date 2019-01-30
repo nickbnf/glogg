@@ -22,8 +22,8 @@
 
 #include <memory>
 
-#include <QSettings>
 #include <QHash>
+#include <QSettings>
 
 class Persistable;
 
@@ -32,17 +32,13 @@ class Persistable;
 // then be saved/loaded.
 class PersistentInfo {
   public:
-    enum SettingsStorage {
-        Common,
-        Portable
-    };
+    enum SettingsStorage { Common, Portable };
 
-    // Initialise the storage backend for the Persistable, migrating the settings
-    // if needed. Must be called before any other function.
+    // Initialise the storage backend for the Persistable, migrating the
+    // settings if needed. Must be called before any other function.
     void migrateAndInit( SettingsStorage storage = Common );
     // Register a Persistable
-    void registerPersistable( std::shared_ptr<Persistable> object,
-            const QString& name );
+    void registerPersistable( std::shared_ptr<Persistable> object, const QString& name );
     // Get a Persistable (or NULL if it doesn't exist)
     std::shared_ptr<Persistable> getPersistable( const QString& name );
     // Save a persistable to its permanent storage
@@ -77,19 +73,15 @@ PersistentInfo& GetPersistentInfo();
 
 // Global function used to get a reference to an object
 // from the PersistentInfo store
-template<typename T>
-std::shared_ptr<T> Persistent( const char* name )
+template <typename T> std::shared_ptr<T> Persistent( const char* name )
 {
-    std::shared_ptr<Persistable> p =
-        GetPersistentInfo().getPersistable( QString( name ) );
-    return std::dynamic_pointer_cast<T>(p);
+    auto p = GetPersistentInfo().getPersistable( QString( name ) );
+    return std::dynamic_pointer_cast<T>( p );
 }
 
-template<typename T>
-std::shared_ptr<T> PersistentCopy( const char* name )
+template <typename T> std::shared_ptr<T> PersistentCopy( const char* name )
 {
-    std::shared_ptr<Persistable> p =
-        GetPersistentInfo().getPersistable( QString( name ) );
-    return std::make_shared<T>( *( std::dynamic_pointer_cast<T>(p) ) );
+    auto p = GetPersistentInfo().getPersistable( QString( name ) );
+    return std::make_shared<T>( *( std::dynamic_pointer_cast<T>( p ) ) );
 }
 #endif

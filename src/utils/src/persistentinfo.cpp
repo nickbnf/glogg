@@ -22,18 +22,18 @@
 
 #include "persistentinfo.h"
 
-#include <cassert>
-#include <QStringList>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QStringList>
+#include <cassert>
 
 #include "log.h"
 #include "persistable.h"
 
 PersistentInfo::PersistentInfo()
 {
-    settings_    = nullptr;
+    settings_ = nullptr;
     initialised_ = false;
 }
 
@@ -47,16 +47,15 @@ void PersistentInfo::migrateAndInit( SettingsStorage storage )
 {
     assert( initialised_ == false );
 
-    QString configurationFile = QDir::cleanPath( qApp->applicationDirPath() +
-                                       QDir::separator() + "klogg.conf" );
+    QString configurationFile
+        = QDir::cleanPath( qApp->applicationDirPath() + QDir::separator() + "klogg.conf" );
 
     if ( storage == Portable || QFileInfo::exists( configurationFile ) ) {
-        settings_ = new QSettings(configurationFile, QSettings::IniFormat);
+        settings_ = new QSettings( configurationFile, QSettings::IniFormat );
     }
     else {
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-        settings_ = new QSettings( QSettings::IniFormat,
-                QSettings::UserScope, "klogg", "klogg" );
+#ifdef Q_OS_WIN
+        settings_ = new QSettings( QSettings::IniFormat, QSettings::UserScope, "klogg", "klogg" );
 #else
         // We use default Qt storage on proper OSes
         settings_ = new QSettings( "klogg", "klogg" );
@@ -65,8 +64,7 @@ void PersistentInfo::migrateAndInit( SettingsStorage storage )
     initialised_ = true;
 }
 
-void PersistentInfo::registerPersistable( std::shared_ptr<Persistable> object,
-        const QString& name )
+void PersistentInfo::registerPersistable( std::shared_ptr<Persistable> object, const QString& name )
 {
     assert( initialised_ );
 
@@ -89,7 +87,7 @@ void PersistentInfo::save( const QString& name )
     if ( objectList_.contains( name ) )
         objectList_.value( name )->saveToStorage( *settings_ );
     else
-        LOG(logERROR) << "Unregistered persistable " << name.toStdString();
+        LOG( logERROR ) << "Unregistered persistable " << name.toStdString();
 
     // Sync to ensure it is propagated to other processes
     settings_->sync();
@@ -105,7 +103,7 @@ void PersistentInfo::retrieve( const QString& name )
     if ( objectList_.contains( name ) )
         objectList_.value( name )->retrieveFromStorage( *settings_ );
     else
-        LOG(logERROR) << "Unregistered persistable " << name.toStdString();
+        LOG( logERROR ) << "Unregistered persistable " << name.toStdString();
 }
 
 // Friend function to construct/get the singleton
@@ -114,4 +112,3 @@ PersistentInfo& GetPersistentInfo()
     static PersistentInfo pInfo;
     return pInfo;
 }
-

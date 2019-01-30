@@ -26,31 +26,31 @@
 Configuration::Configuration()
 {
     // Should have some sensible default values.
-    mainFont_ = QFont("monaco", 10);
+    mainFont_ = QFont( "monaco", 10 );
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
-    mainRegexpType_               = ExtendedRegexp;
-    quickfindRegexpType_          = FixedString;
-    quickfindIncremental_         = true;
+    mainRegexpType_ = ExtendedRegexp;
+    quickfindRegexpType_ = FixedString;
+    quickfindIncremental_ = true;
 
 #ifdef GLOGG_SUPPORTS_POLLING
-    pollingEnabled_               = true;
+    pollingEnabled_ = true;
 #else
-    pollingEnabled_               = false;
+    pollingEnabled_ = false;
 #endif
-    pollIntervalMs_               = 2000;
+    pollIntervalMs_ = 2000;
 
-    loadLastSession_              = true;
+    loadLastSession_ = true;
 
-    overviewVisible_              = true;
-    lineNumbersVisibleInMain_     = false;
+    overviewVisible_ = true;
+    lineNumbersVisibleInMain_ = false;
     lineNumbersVisibleInFiltered_ = true;
 
-    QFontInfo fi(mainFont_);
-    LOG(logDEBUG) << "Default font is " << fi.family().toStdString();
+    QFontInfo fi( mainFont_ );
+    LOG( logDEBUG ) << "Default font is " << fi.family().toStdString();
 
     searchAutoRefresh_ = false;
-    searchIgnoreCase_  = false;
+    searchIgnoreCase_ = false;
     splitterSizes_ << 400 << 100;
 
     useParallelSearch_ = true;
@@ -69,14 +69,14 @@ QFont Configuration::mainFont() const
 
 void Configuration::setMainFont( QFont newFont )
 {
-    LOG(logDEBUG) << "Configuration::setMainFont";
+    LOG( logDEBUG ) << "Configuration::setMainFont";
 
     mainFont_ = newFont;
 }
 
 void Configuration::retrieveFromStorage( QSettings& settings )
 {
-    LOG(logDEBUG) << "Configuration::retrieveFromStorage";
+    LOG( logDEBUG ) << "Configuration::retrieveFromStorage";
 
     // Fonts
     QString family = settings.value( "mainFont.family" ).toString();
@@ -88,9 +88,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 
     // Regexp types
     mainRegexpType_ = static_cast<SearchRegexpType>(
-            settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
+        settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
     quickfindRegexpType_ = static_cast<SearchRegexpType>(
-            settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
+        settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
     if ( settings.contains( "quickfind.incremental" ) )
         quickfindIncremental_ = settings.value( "quickfind.incremental" ).toBool();
 
@@ -117,16 +117,14 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "perf.keepFileClosed" ) )
         keepFileClosed_ = settings.value( "perf.keepFileClosed" ).toBool();
 
-
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
     if ( settings.contains( "view.lineNumbersVisibleInMain" ) )
-        lineNumbersVisibleInMain_ =
-            settings.value( "view.lineNumbersVisibleInMain" ).toBool();
+        lineNumbersVisibleInMain_ = settings.value( "view.lineNumbersVisibleInMain" ).toBool();
     if ( settings.contains( "view.lineNumbersVisibleInFiltered" ) )
-        lineNumbersVisibleInFiltered_ =
-            settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
+        lineNumbersVisibleInFiltered_
+            = settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
 
     // Some sanity check (mainly for people upgrading)
     if ( quickfindIncremental_ )
@@ -141,17 +139,16 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         splitterSizes_.clear();
 
         const auto sizes = settings.value( "defaultView.splitterSizes" ).toList();
-        std::transform( sizes.begin(), sizes.end(),
-                        std::back_inserter( splitterSizes_ ),
-                        [] ( auto v ) { return v.toInt(); } );
+        std::transform( sizes.begin(), sizes.end(), std::back_inserter( splitterSizes_ ),
+                        []( auto v ) { return v.toInt(); } );
     }
 }
 
 void Configuration::saveToStorage( QSettings& settings ) const
 {
-    LOG(logDEBUG) << "Configuration::saveToStorage";
+    LOG( logDEBUG ) << "Configuration::saveToStorage";
 
-    QFontInfo fi(mainFont_);
+    QFontInfo fi( mainFont_ );
 
     settings.setValue( "mainFont.family", fi.family() );
     settings.setValue( "mainFont.size", fi.pointSize() );
@@ -177,9 +174,9 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "defaultView.searchIgnoreCase", searchIgnoreCase_ );
 
     QList<QVariant> splitterSizes;
-    std::transform( splitterSizes_.begin() , splitterSizes_.end(),
+    std::transform( splitterSizes_.begin(), splitterSizes_.end(),
                     std::back_inserter( splitterSizes ),
-                    []( auto s) { return QVariant::fromValue( s ); } );
+                    []( auto s ) { return QVariant::fromValue( s ); } );
 
     settings.setValue( "defaultView.splitterSizes", splitterSizes );
 }

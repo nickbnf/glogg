@@ -24,13 +24,12 @@
 #include <memory>
 
 class EfswFileWatcher;
-struct EfswFileWatcherDeleter
-{
-  void operator()(EfswFileWatcher *p) const;
+struct EfswFileWatcherDeleter {
+    void operator()( EfswFileWatcher* p ) const;
 };
 
 class FileWatcher : public QObject {
-  Q_OBJECT
+    Q_OBJECT
   public:
     static FileWatcher& getFileWatcher();
 
@@ -54,14 +53,13 @@ class FileWatcher : public QObject {
     FileWatcher();
     ~FileWatcher() override; // for complete EfswFileWatcher
 
-    FileWatcher(const FileWatcher&) = delete;
-    FileWatcher(FileWatcher&&) = delete;
+    FileWatcher( const FileWatcher& ) = delete;
+    FileWatcher( FileWatcher&& ) = delete;
 
-    FileWatcher& operator =(const FileWatcher&) = delete;
-    FileWatcher& operator =(FileWatcher&&) = delete;
+    FileWatcher& operator=( const FileWatcher& ) = delete;
+    FileWatcher& operator=( FileWatcher&& ) = delete;
 
     std::unique_ptr<EfswFileWatcher, EfswFileWatcherDeleter> efswWatcher_;
 };
-
 
 #endif

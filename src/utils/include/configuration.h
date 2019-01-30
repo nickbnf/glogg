@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2009, 2010, 2011, 2013, 2015 Nicolas Bonnefon and other contributors
+ * Copyright (C) 2009, 2010, 2011, 2013, 2015 Nicolas Bonnefon and other
+ * contributors
  *
  * This file is part of glogg.
  *
@@ -28,7 +29,7 @@
 // Type of regexp to use for searches
 enum SearchRegexpType {
     ExtendedRegexp,
-    Wildcard,           // Disused!
+    Wildcard, // Disused!
     FixedString,
 };
 
@@ -43,85 +44,157 @@ class Configuration : public Persistable {
 
     // Accesses the regexp types
     SearchRegexpType mainRegexpType() const
-    { return mainRegexpType_; }
+    {
+        return mainRegexpType_;
+    }
     SearchRegexpType quickfindRegexpType() const
-    { return quickfindRegexpType_; }
+    {
+        return quickfindRegexpType_;
+    }
     bool isQuickfindIncremental() const
-    { return quickfindIncremental_; }
+    {
+        return quickfindIncremental_;
+    }
     void setMainRegexpType( SearchRegexpType type )
-    { mainRegexpType_ = type; }
+    {
+        mainRegexpType_ = type;
+    }
     void setQuickfindRegexpType( SearchRegexpType type )
-    { quickfindRegexpType_ = type; }
+    {
+        quickfindRegexpType_ = type;
+    }
     void setQuickfindIncremental( bool is_incremental )
-    { quickfindIncremental_ = is_incremental; }
+    {
+        quickfindIncremental_ = is_incremental;
+    }
 
     // "Advanced" settings
     bool pollingEnabled() const
-    { return pollingEnabled_; }
+    {
+        return pollingEnabled_;
+    }
     void setPollingEnabled( bool enabled )
-    { pollingEnabled_ = enabled; }
+    {
+        pollingEnabled_ = enabled;
+    }
     uint32_t pollIntervalMs() const
-    { return pollIntervalMs_; }
+    {
+        return pollIntervalMs_;
+    }
     void setPollIntervalMs( uint32_t interval )
-    { pollIntervalMs_ = interval; }
+    {
+        pollIntervalMs_ = interval;
+    }
     bool loadLastSession() const
-    { return loadLastSession_; }
+    {
+        return loadLastSession_;
+    }
     void setLoadLastSession( bool enabled )
-    { loadLastSession_ = enabled; }
+    {
+        loadLastSession_ = enabled;
+    }
 
     // perf settings
     bool useParallelSearch() const
-    { return useParallelSearch_; }
+    {
+        return useParallelSearch_;
+    }
     void setUseParallelSearch( bool enabled )
-    { useParallelSearch_ = enabled; }
+    {
+        useParallelSearch_ = enabled;
+    }
     bool useSearchResultsCache() const
-    { return useSearchResultsCache_; }
+    {
+        return useSearchResultsCache_;
+    }
     void setUseSearchResultsCache( bool enabled )
-    { useSearchResultsCache_ = enabled; }
+    {
+        useSearchResultsCache_ = enabled;
+    }
     uint32_t searchResultsCacheLines() const
-    { return searchResultsCacheLines_; }
+    {
+        return searchResultsCacheLines_;
+    }
     void setSearchResultsCacheLines( uint32_t lines )
-    { searchResultsCacheLines_ = lines; }
+    {
+        searchResultsCacheLines_ = lines;
+    }
     uint32_t indexReadBufferSizeMb() const
-    { return indexReadBufferSizeMb_; }
+    {
+        return indexReadBufferSizeMb_;
+    }
     void setIndexReadBufferSizeMb( uint32_t bufferSizeMb )
-    { indexReadBufferSizeMb_ = bufferSizeMb; }
+    {
+        indexReadBufferSizeMb_ = bufferSizeMb;
+    }
     uint32_t searchReadBufferSizeLines() const
-    { return searchReadBufferSizeLines_; }
+    {
+        return searchReadBufferSizeLines_;
+    }
     void setSearchReadBufferSizeLines( uint32_t lines )
-    { searchReadBufferSizeLines_ = lines; }
+    {
+        searchReadBufferSizeLines_ = lines;
+    }
     bool keepFileClosed() const
-    { return keepFileClosed_; }
+    {
+        return keepFileClosed_;
+    }
     void setKeepFileClosed( bool shouldKeepClosed )
-    { keepFileClosed_ = shouldKeepClosed; }
+    {
+        keepFileClosed_ = shouldKeepClosed;
+    }
 
     // View settings
     bool isOverviewVisible() const
-    { return overviewVisible_; }
+    {
+        return overviewVisible_;
+    }
     void setOverviewVisible( bool isVisible )
-    { overviewVisible_ = isVisible; }
+    {
+        overviewVisible_ = isVisible;
+    }
     bool mainLineNumbersVisible() const
-    { return lineNumbersVisibleInMain_; }
+    {
+        return lineNumbersVisibleInMain_;
+    }
     bool filteredLineNumbersVisible() const
-    { return lineNumbersVisibleInFiltered_; }
+    {
+        return lineNumbersVisibleInFiltered_;
+    }
     void setMainLineNumbersVisible( bool lineNumbersVisible )
-    { lineNumbersVisibleInMain_ = lineNumbersVisible; }
+    {
+        lineNumbersVisibleInMain_ = lineNumbersVisible;
+    }
     void setFilteredLineNumbersVisible( bool lineNumbersVisible )
-    { lineNumbersVisibleInFiltered_ = lineNumbersVisible; }
+    {
+        lineNumbersVisibleInFiltered_ = lineNumbersVisible;
+    }
 
     // Default settings for new views
     bool isSearchAutoRefreshDefault() const
-    { return searchAutoRefresh_; }
+    {
+        return searchAutoRefresh_;
+    }
     void setSearchAutoRefreshDefault( bool auto_refresh )
-    { searchAutoRefresh_ = auto_refresh; }
+    {
+        searchAutoRefresh_ = auto_refresh;
+    }
     bool isSearchIgnoreCaseDefault() const
-    { return searchIgnoreCase_; }
+    {
+        return searchIgnoreCase_;
+    }
     void setSearchIgnoreCaseDefault( bool ignore_case )
-    { searchIgnoreCase_ = ignore_case; }
+    {
+        searchIgnoreCase_ = ignore_case;
+    }
     QList<int> splitterSizes() const
-    { return splitterSizes_; }
+    {
+        return splitterSizes_;
+    }
     void setSplitterSizes( QList<int> sizes )
-    { splitterSizes_ = std::move( sizes ); }
+    {
+        splitterSizes_ = std::move( sizes );
+    }
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const override;
@@ -154,8 +227,6 @@ class Configuration : public Persistable {
     uint32_t indexReadBufferSizeMb_;
     uint32_t searchReadBufferSizeLines_;
     bool keepFileClosed_;
-    
-
 };
 
 #endif

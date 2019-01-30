@@ -135,24 +135,37 @@ class EfswFileWatcher : public efsw::FileWatchListener {
                                           [&directory](const auto& wd) { return wd.name_ == directory; });
 
         if ( watchedDirectory != watchedPaths_.end() ) {
-            if ( std::find( watchedDirectory->files_.begin(),
-                            watchedDirectory->files_.end(),
-                            filename ) != watchedDirectory->files_.end() ) {
+            std::string changedFilename;
 
-                LOG(logINFO) << "QtFileWatcher::fileChangedOnDisk - will notify";
+            const auto isFileWatched = std::any_of(
+                             watchedDirectory->files_.begin(),
+                             watchedDirectory->files_.end(), 
+                             [&filename, &oldFilename, &changedFilename] (const auto& f)
+                             {
+                                 if (f == filename || f == oldFilename) {
+                                     changedFilename = f;
+                                     return true;
+                                 }
+                                
+                                 return false;
 
-                const auto changedFileName = QDir::cleanPath( QString::fromStdString( directory )
+                             });
+
+            if ( isFileWatched ) {
+                LOG(logINFO) << "QtFileWatcher::fileChangedOnDisk - will notify for " << filename << ", old name " << oldFilename;
+
+                const auto fullChangedFilename = QDir::cleanPath( QString::fromStdString( directory )
                                                               + QDir::separator()
-                                                              + QString::fromStdString( filename ) );
+                                                              + QString::fromStdString( changedFilename ) );
 
-                QMetaObject::invokeMethod(parent_, "fileChangedOnDisk", Qt::QueuedConnection, Q_ARG( QString, changedFileName ) );
+                QMetaObject::invokeMethod(parent_, "fileChangedOnDisk", Qt::QueuedConnection, Q_ARG( QString, fullChangedFilename ) );
             }
             else {
-                LOG(logWARNING) << "QtFileWatcher::fileChangedOnDisk - call but no file monitored";
+                LOG(logDEBUG) << "QtFileWatcher::fileChangedOnDisk - call but no file monitored";
             }
         }
         else {
-            LOG(logWARNING) << "QtFileWatcher::fileChangedOnDisk - call but no dir monitored";
+            LOG(logDEBUG) << "QtFileWatcher::fileChangedOnDisk - call but no dir monitored";
         }
     }
 

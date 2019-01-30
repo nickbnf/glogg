@@ -35,6 +35,8 @@
 #include "filewatcher.h"
 #include "loadingstatus.h"
 
+#include "fileid.h"
+
 class LogFilteredData;
 
 // Thrown when trying to attach an already attached LogData
@@ -162,6 +164,8 @@ class LogData : public AbstractLogData {
 
     QString indexingFileName_;
     mutable std::unique_ptr<QFile> attached_file_;
+    mutable FileId attached_file_id_;
+
     bool keepFileClosed_;
 
     // Indexing data, read by us, written by the worker thread

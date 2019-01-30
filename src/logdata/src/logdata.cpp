@@ -77,11 +77,12 @@ namespace
                 openedByHandle = file->open( fd, QIODevice::ReadOnly, QFile::AutoCloseHandle );
             }
             else {
-                LOG(logWARNING) << "Failed to open file by handle";
+                LOG(logWARNING) << "Failed to open file by handle " << file->fileName();
+                ::CloseHandle(fileHandle);
             }
         }
         else {
-            LOG(logWARNING) << "Failed to open file by handle";
+            LOG(logWARNING) << "Failed to open file by handle " << file->fileName();
         }
 #endif
         if ( !openedByHandle ) {
@@ -176,6 +177,8 @@ void LogData::attachFile( const QString& fileName )
 
     openFileByHandle( attached_file_.get() );
 
+    attached_file_id_ = getFileId( indexingFileName_ );
+
     std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
     enqueueOperation( std::move( operation ) );
 }
@@ -259,11 +262,15 @@ void LogData::fileChangedOnDisk( const QString& filename )
     LOG(logINFO) << "signalFileChanged " << filename.toStdString();
 
     QFileInfo info( indexingFileName_ );
+    const auto currentFileId = getFileId( indexingFileName_ );
 
     const auto file_size = indexing_data_.getSize();
     LOG(logDEBUG) << "current indexed fileSize=" << file_size;
     LOG(logDEBUG) << "info file_->size()=" << info.size();
     LOG(logDEBUG) << "attached_file_->size()=" << attached_file_->size();
+    LOG(logDEBUG) << "attached_file_id_ index " << attached_file_id_.fileIndex;
+    LOG(logDEBUG) << "currentFileId index " << currentFileId.fileIndex;
+
     // In absence of any clearer information, we use the following size comparison
     // to determine whether we are following the same file or not (i.e. the file
     // has been moved and the inode we are following is now under a new name, if for
@@ -271,9 +278,13 @@ void LogData::fileChangedOnDisk( const QString& filename )
     // the file to ensure we are reading the right one.
     // This is a crude heuristic but necessary for notification services that do not
     // give details (e.g. kqueues)
-    if ( ( info.size() != attached_file_->size() )
+
+    const bool isFileIdChanged = attached_file_id_ != currentFileId;
+
+    if ( isFileIdChanged || ( info.size() != attached_file_->size() )
             || ( attached_file_->openMode() == QIODevice::NotOpen ) ) {
-        LOG(logINFO) << "Inconsistent size, the file might have changed, re-opening";
+
+        LOG(logINFO) << "Inconsistent size, or file index, the file might have changed, re-opening";
 
         reOpenFile();
 
@@ -288,7 +299,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
 
     const auto real_file_size = attached_file_->size();
 
-    if ( real_file_size < file_size ) {
+    if ( isFileIdChanged || real_file_size < file_size ) {
         fileChangedOnDisk_ = Truncated;
         LOG(logINFO) << "File truncated";
         newOperation = std::make_shared<FullIndexOperation>;
@@ -579,4 +590,5 @@ void LogData::reOpenFile() const
     
     QMutexLocker locker( &fileMutex_ );
     attached_file_ = std::move( reopened );
+    attached_file_id_ = getFileId( indexingFileName_ );
 }

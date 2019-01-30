@@ -44,6 +44,8 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     void on_buttonBox_clicked( QAbstractButton* button );
     void on_upFilterButton_clicked();
     void on_downFilterButton_clicked();
+    void on_foreColorButton_clicked();
+    void on_backColorButton_clicked();
     // Update the property (pattern, color...) fields from the
     // selected Filter.
     void updatePropertyFields();
@@ -58,7 +60,11 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     // Index of the row currently selected or -1 if none.
     int selectedRow_;
 
-    void populateColors();
+    QColor foreColor_ , backColor_;
+
+    static bool showColorPicker(const QColor& in , QColor& out);
+    void updateIcon(QPushButton* button , QColor color);
+
     void populateFilterList();
 };
 

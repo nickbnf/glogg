@@ -25,10 +25,13 @@
 
 #include "filtersdialog.h"
 
+#include <QColorDialog>
+
 static const char* DEFAULT_PATTERN = "New Filter";
 static const bool    DEFAULT_IGNORE_CASE = false;
-static const char* DEFAULT_FORE_COLOUR = "black";
-static const char* DEFAULT_BACK_COLOUR = "white";
+
+static const QColor DEFAULT_FORE_COLOUR("#000000");
+static const QColor DEFAULT_BACK_COLOUR("#FFFFFF");
 
 // Construct the box, including a copy of the global FilterSet
 // to handle ok/cancel/apply
@@ -41,7 +44,6 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     GetPersistentInfo().retrieve( "filterSet" );
     filterSet = PersistentCopy<FilterSet>( "filterSet" );
 
-    populateColors();
     populateFilterList();
 
     // Start with all buttons disabled except 'add'
@@ -50,10 +52,11 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     downFilterButton->setEnabled(false);
 
     // Default to black on white
-    int index = foreColorBox->findText( DEFAULT_FORE_COLOUR );
-    foreColorBox->setCurrentIndex( index );
-    index = backColorBox->findText( DEFAULT_BACK_COLOUR );
-    backColorBox->setCurrentIndex( index );
+    updateIcon( foreColorButton , DEFAULT_FORE_COLOUR );
+    updateIcon( backColorButton , DEFAULT_BACK_COLOUR );
+
+    foreColor_ = DEFAULT_FORE_COLOUR;
+    backColor_ = DEFAULT_BACK_COLOUR;
 
     // No filter selected by default
     selectedRow_ = -1;
@@ -62,11 +65,7 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
             this, SLOT( updatePropertyFields() ) );
     connect( patternEdit, SIGNAL( textEdited( const QString& ) ),
             this, SLOT( updateFilterProperties() ) );
-    connect( ignoreCaseCheckBox, SIGNAL( toggled(bool) ),
-            this, SLOT( updateFilterProperties() ) );
-    connect( foreColorBox, SIGNAL( activated( int ) ),
-            this, SLOT( updateFilterProperties() ) );
-    connect( backColorBox, SIGNAL( activated( int ) ),
+    connect( ignoreCaseCheckBox, SIGNAL( clicked(bool) ),
             this, SLOT( updateFilterProperties() ) );
 
     if ( !filterSet->filterList.empty() ) {
@@ -83,7 +82,8 @@ void FiltersDialog::on_addFilterButton_clicked()
     LOG(logDEBUG) << "on_addFilterButton_clicked()";
 
     Filter newFilter = Filter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
-            DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR );
+                               DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR );
+
     filterSet->filterList << newFilter;
 
     // Add and select the newly created filter
@@ -163,6 +163,40 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
         reject();
 }
 
+void FiltersDialog::on_foreColorButton_clicked()
+{
+    // this method should never be called without a selected row
+    // as all the property widgets should be disabled in this state
+    if( selectedRow_ >= 0 ) {
+        Filter& currentFilter = filterSet->filterList[ selectedRow_ ];
+
+        QColor new_color;
+        if ( showColorPicker( currentFilter.foreColor() , new_color ) ) {
+            currentFilter.setForeColor(new_color);
+            updateIcon(foreColorButton , currentFilter.foreColor());
+            filterListWidget->currentItem()->setForeground( QBrush( new_color ) );
+            foreColor_ = new_color;
+        }
+    }
+}
+
+void FiltersDialog::on_backColorButton_clicked()
+{
+    // this method should never be called without a selected row
+    // as all the property widgets should be disabled in this state
+    if( selectedRow_ >= 0 ) {
+        Filter& currentFilter = filterSet->filterList[ selectedRow_ ];
+
+        QColor new_color;
+        if ( showColorPicker( currentFilter.backColor() , new_color ) ) {
+            currentFilter.setBackColor(new_color);
+            updateIcon(backColorButton , currentFilter.backColor());
+            filterListWidget->currentItem()->setBackground( QBrush( new_color ) );
+            backColor_ = new_color;
+        }
+    }
+}
+
 void FiltersDialog::updatePropertyFields()
 {
     if ( filterListWidget->selectedItems().count() >= 1 )
@@ -182,37 +216,30 @@ void FiltersDialog::updatePropertyFields()
         ignoreCaseCheckBox->setChecked( currentFilter.ignoreCase() );
         ignoreCaseCheckBox->setEnabled( true );
 
-        int index = foreColorBox->findText( currentFilter.foreColorName() );
-        if ( index != -1 ) {
-            LOG(logDEBUG) << "fore index = " << index;
-            foreColorBox->setCurrentIndex( index );
-            foreColorBox->setEnabled( true );
-        }
-        index = backColorBox->findText( currentFilter.backColorName() );
-        if ( index != -1 ) {
-            LOG(logDEBUG) << "back index = " << index;
-            backColorBox->setCurrentIndex( index );
-            backColorBox->setEnabled( true );
-        }
+        updateIcon( foreColorButton , currentFilter.foreColor() );
+        updateIcon( backColorButton , currentFilter.backColor() );
+
+        foreColor_ = currentFilter.foreColor();
+        backColor_ = currentFilter.backColor();
 
         // Enable the buttons if needed
         removeFilterButton->setEnabled( true );
+        foreColorButton->setEnabled( true );
+        backColorButton->setEnabled( true );
         upFilterButton->setEnabled( selectedRow_ > 0 );
-        downFilterButton->setEnabled(
-                selectedRow_ < ( filterListWidget->count() - 1 ) );
+        downFilterButton->setEnabled( selectedRow_ < ( filterListWidget->count() - 1 ) );
     }
     else {
         // Nothing is selected, reset and disable the controls
         patternEdit->clear();
         patternEdit->setEnabled( false );
 
-        int index = foreColorBox->findText( DEFAULT_FORE_COLOUR );
-        foreColorBox->setCurrentIndex( index );
-        foreColorBox->setEnabled( false );
-        index = backColorBox->findText( DEFAULT_BACK_COLOUR );
-
-        backColorBox->setCurrentIndex( index );
-        backColorBox->setEnabled( false );
+        foreColorButton->setEnabled( false );
+        backColorButton->setEnabled( false );
+        updateIcon(foreColorButton , DEFAULT_FORE_COLOUR);
+        updateIcon(backColorButton , DEFAULT_BACK_COLOUR);
+        foreColor_ = DEFAULT_FORE_COLOUR;
+        backColor_ = DEFAULT_BACK_COLOUR;
 
         ignoreCaseCheckBox->setChecked( DEFAULT_IGNORE_CASE );
         ignoreCaseCheckBox->setEnabled( false );
@@ -233,15 +260,15 @@ void FiltersDialog::updateFilterProperties()
         // Update the internal data
         currentFilter.setPattern( patternEdit->text() );
         currentFilter.setIgnoreCase( ignoreCaseCheckBox->isChecked() );
-        currentFilter.setForeColor( foreColorBox->currentText() );
-        currentFilter.setBackColor( backColorBox->currentText() );
+        currentFilter.setForeColor( foreColor_ );
+        currentFilter.setBackColor( backColor_ );
 
         // Update the entry in the filterList widget
         filterListWidget->currentItem()->setText( patternEdit->text() );
         filterListWidget->currentItem()->setForeground(
-                QBrush( QColor( currentFilter.foreColorName() ) ) );
+                QBrush( QColor( currentFilter.foreColor() ) ) );
         filterListWidget->currentItem()->setBackground(
-                QBrush( QColor( currentFilter.backColorName() ) ) );
+                QBrush( QColor( currentFilter.backColor() ) ) );
     }
 }
 
@@ -249,66 +276,28 @@ void FiltersDialog::updateFilterProperties()
 // Private functions
 //
 
-// Fills the color selection combo boxes
-void FiltersDialog::populateColors()
+void FiltersDialog::updateIcon (QPushButton* button , QColor color)
 {
-    const QStringList colorNames = QStringList()
-        // Basic 16 HTML colors (minus greys):
-        << "black"
-        << "white"
-        << "maroon"
-        << "red"
-        << "purple"
-        << "fuchsia"
-        << "green"
-        << "lime"
-        << "olive"
-        << "yellow"
-        << "navy"
-        << "blue"
-        << "teal"
-        << "aqua"
-        // Greys
-        << "gainsboro"
-        << "lightgrey"
-        << "silver"
-        << "darkgrey"
-        << "grey"
-        << "dimgrey"
-        // Reds
-        << "tomato"
-        << "orangered"
-        << "orange"
-        << "crimson"
-        << "darkred"
-        // Greens
-        << "greenyellow"
-        << "lightgreen"
-        << "darkgreen"
-        << "lightseagreen"
-        // Blues
-        << "lightcyan"
-        << "darkturquoise"
-        << "steelblue"
-        << "lightblue"
-        << "royalblue"
-        << "darkblue"
-        << "midnightblue"
-        // Browns
-        << "bisque"
-        << "tan"
-        << "sandybrown"
-        << "chocolate";
+    QPixmap CustomPixmap( 20, 10 );
+    CustomPixmap.fill( color );
+    button->setIcon(QIcon( CustomPixmap ));
+}
 
-    for ( QStringList::const_iterator i = colorNames.constBegin();
-            i != colorNames.constEnd(); ++i ) {
-        QPixmap solidPixmap( 20, 10 );
-        solidPixmap.fill( QColor( *i ) );
-        QIcon solidIcon { solidPixmap };
+bool FiltersDialog::showColorPicker (const QColor& in , QColor& out)
+{
+    QColorDialog dialog;
 
-        foreColorBox->addItem( solidIcon, *i );
-        backColorBox->addItem( solidIcon, *i );
-    }
+    // non native dialog ensures they will have a default
+    // set of colors to pick from in a pallette. For example,
+    // on some linux desktops, the basic palette is missing
+    dialog.setOption( QColorDialog::DontUseNativeDialog , true);
+
+    dialog.setModal( true );
+    dialog.setCurrentColor( in );
+    dialog.exec();
+    out = dialog.currentColor();
+
+    return ( dialog.result() == QDialog::Accepted );
 }
 
 void FiltersDialog::populateFilterList()
@@ -317,8 +306,8 @@ void FiltersDialog::populateFilterList()
     for ( const Filter& filter : qAsConst(filterSet->filterList) ) {
         QListWidgetItem* new_item = new QListWidgetItem( filter.pattern() );
         // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
-        new_item->setForeground( QBrush( QColor( filter.foreColorName() ) ) );
-        new_item->setBackground( QBrush( QColor( filter.backColorName() ) ) );
+        new_item->setForeground( QBrush( filter.foreColor() ) );
+        new_item->setBackground( QBrush( filter.backColor() ) );
         filterListWidget->addItem( new_item );
     }
 }

@@ -40,7 +40,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../glogg.qrc">
+              <iconset resource="../../app/klogg.qrc">
                <normaloff>:/images/plus.png</normaloff>:/images/plus.png</iconset>
              </property>
             </widget>
@@ -54,7 +54,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../glogg.qrc">
+              <iconset resource="../../app/klogg.qrc">
                <normaloff>:/images/minus.png</normaloff>:/images/minus.png</iconset>
              </property>
             </widget>
@@ -81,7 +81,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../glogg.qrc">
+              <iconset resource="../../app/klogg.qrc">
                <normaloff>:/images/up.png</normaloff>:/images/up.png</iconset>
              </property>
             </widget>
@@ -95,7 +95,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../glogg.qrc">
+              <iconset resource="../../app/klogg.qrc">
                <normaloff>:/images/down.png</normaloff>:/images/down.png</iconset>
              </property>
             </widget>
@@ -129,20 +129,6 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QComboBox" name="backColorBox">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QComboBox" name="foreColorBox">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
            <item row="5" column="0">
             <widget class="QLabel" name="label_3">
              <property name="text">
@@ -160,6 +146,26 @@
              </property>
              <property name="checked">
               <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QPushButton" name="foreColorButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QPushButton" name="backColorButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string/>
              </property>
             </widget>
            </item>
@@ -184,7 +190,8 @@
   </layout>
  </widget>
  <resources>
-  <include location="../glogg.qrc"/>
+  <include location="../../app/klogg.qrc"/>
+  <include location="../../app/klogg.qrc"/>
  </resources>
  <connections/>
 </ui>

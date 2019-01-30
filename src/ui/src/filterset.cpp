@@ -25,7 +25,7 @@
 #include "log.h"
 #include "filterset.h"
 
-const int FilterSet::FILTERSET_VERSION = 1;
+const int FilterSet::FILTERSET_VERSION = 2;
 
 QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
 {
@@ -40,13 +40,13 @@ QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
 }
 
 Filter::Filter(const QString& pattern, bool ignoreCase,
-            const QString& foreColorName, const QString& backColorName ) :
+            const QColor& foreColor, const QColor& backColor ) :
     regexp_( pattern,  getPatternOptions( ignoreCase ) ),
-    foreColorName_( foreColorName ),
-    backColorName_( backColorName )
+    foreColor_( foreColor ),
+    backColor_( backColor )
 {
-    LOG(logDEBUG) << "New Filter, fore: " << foreColorName_.toStdString()
-        << " back: " << backColorName_.toStdString();
+    LOG(logDEBUG) << "New Filter, fore: " << foreColor_.name()
+        << " back: " << backColor_.name();
 }
 
 QString Filter::pattern() const
@@ -69,24 +69,24 @@ void Filter::setIgnoreCase( bool ignoreCase )
     regexp_.setPatternOptions( getPatternOptions( ignoreCase ) );
 }
 
-const QString& Filter::foreColorName() const
+const QColor& Filter::foreColor() const
 {
-    return foreColorName_;
+    return foreColor_;
 }
 
-void Filter::setForeColor( const QString& foreColorName )
+void Filter::setForeColor( const QColor& foreColor )
 {
-    foreColorName_ = foreColorName;
+    foreColor_ = foreColor;
 }
 
-const QString& Filter::backColorName() const
+const QColor& Filter::backColor() const
 {
-    return backColorName_;
+    return backColor_;
 }
 
-void Filter::setBackColor( const QString& backColorName )
+void Filter::setBackColor( const QColor& backColor )
 {
-    backColorName_ = backColorName;
+    backColor_ = backColor;
 }
 
 bool Filter::hasMatch( const QString& string ) const
@@ -102,8 +102,8 @@ QDataStream& operator<<( QDataStream& out, const Filter& object )
 {
     LOG(logDEBUG) << "<<operator from Filter";
     out << object.regexp_;
-    out << object.foreColorName_;
-    out << object.backColorName_;
+    out << object.foreColor_;
+    out << object.backColor_;
 
     return out;
 }
@@ -112,8 +112,8 @@ QDataStream& operator>>( QDataStream& in, Filter& object )
 {
     LOG(logDEBUG) << ">>operator from Filter";
     in >> object.regexp_;
-    in >> object.foreColorName_;
-    in >> object.backColorName_;
+    in >> object.foreColor_;
+    in >> object.backColor_;
 
     return in;
 }
@@ -133,8 +133,8 @@ bool FilterSet::matchLine( const QString& line,
     for ( QList<Filter>::const_iterator i = filterList.constBegin();
           i != filterList.constEnd(); ++i ) {
         if ( i->hasMatch( line ) ) {
-            foreColor->setNamedColor( i->foreColorName() );
-            backColor->setNamedColor( i->backColorName() );
+            *foreColor = i->foreColor();
+            *backColor = i->backColor();
             return true;
         }
     }
@@ -172,8 +172,9 @@ void Filter::saveToStorage( QSettings& settings ) const
 
     settings.setValue( "regexp", regexp_.pattern() );
     settings.setValue( "ignore_case", regexp_.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) );
-    settings.setValue( "fore_colour", foreColorName_ );
-    settings.setValue( "back_colour", backColorName_ );
+    // save colors as user friendly strings in config
+    settings.setValue( "fore_colour", foreColor_.name() );
+    settings.setValue( "back_colour", backColor_.name() );
 }
 
 void Filter::retrieveFromStorage( QSettings& settings )
@@ -182,8 +183,8 @@ void Filter::retrieveFromStorage( QSettings& settings )
 
     regexp_ = QRegularExpression( settings.value( "regexp" ).toString(),
                        getPatternOptions( settings.value( "ignore_case", false ).toBool() ) );
-    foreColorName_ = settings.value( "fore_colour" ).toString();
-    backColorName_ = settings.value( "back_colour" ).toString();
+    foreColor_ = QColor( settings.value( "fore_colour" ).toString() );
+    backColor_ = QColor( settings.value( "back_colour" ).toString() );
 }
 
 void FilterSet::saveToStorage( QSettings& settings ) const
@@ -210,7 +211,7 @@ void FilterSet::retrieveFromStorage( QSettings& settings )
 
     if ( settings.contains( "FilterSet/version" ) ) {
         settings.beginGroup( "FilterSet" );
-        if ( settings.value( "version" ) == FILTERSET_VERSION ) {
+        if ( settings.value( "version" ) <= FILTERSET_VERSION ) {
             int size = settings.beginReadArray( "filters" );
             for (int i = 0; i < size; ++i) {
                 settings.setArrayIndex(i);

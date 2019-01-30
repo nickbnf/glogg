@@ -18,6 +18,9 @@ add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})
 set_target_properties(klogg PROPERTIES AUTORCC ON)
 set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
 
+set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_property(TARGET klogg_portable PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 set(MAIN_LIBS ui cli11 singleapp)
 if (NOT APPLE)
     LIST(APPEND MAIN_LIBS klogg_tbbmalloc_proxy)
@@ -47,7 +50,7 @@ if (WIN32)
         COMPANY_COPYRIGHT ${COPYRIGHT}
     )
 
-    target_sources(klogg PRIVATE ${ProductVersionResourceFiles})  
+    target_sources(klogg PRIVATE ${ProductVersionResourceFiles})
     target_sources(klogg_portable PRIVATE ${ProductVersionResourceFiles})
 
 elseif (APPLE)

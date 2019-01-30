@@ -69,7 +69,7 @@ inline FileId getFileId( const QString& filename )
     }
 
     ULARGE_INTEGER fileIndex = { info.nFileIndexLow, info.nFileIndexHigh };
-    return FileId{ fileIndex.QuadPart, info.dwVolumeSerialNumber };
+    return FileId{ fileIndex.QuadPart, static_cast<uint64_t>( info.dwVolumeSerialNumber ) };
 #else
     struct stat info;
     if ( lstat( filename.toUtf8().constData(), &info ) != 0 ) {
@@ -77,6 +77,6 @@ inline FileId getFileId( const QString& filename )
         return FileId{};
     }
 
-    return FileId{ info.st_ino, info.st_dev };
+    return FileId{ info.st_ino, static_cast<uint64_t>( info.st_dev ) };
 #endif
 }

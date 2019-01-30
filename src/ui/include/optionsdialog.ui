@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>489</height>
+    <height>624</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,7 +26,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="general_tab">
       <attribute name="title">
@@ -327,6 +327,16 @@
             </property>
             <property name="maximum">
              <number>100000</number>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QCheckBox" name="keepFileClosedCheckBox">
+            <property name="toolTip">
+             <string>File will be kept closed as much as possible. Affects only files opened after check state changed</string>
+            </property>
+            <property name="text">
+             <string>Keep file closed</string>
             </property>
            </widget>
           </item>

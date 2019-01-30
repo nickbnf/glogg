@@ -76,11 +76,15 @@ namespace
             if (fd != -1) {
                 openedByHandle = file->open( fd, QIODevice::ReadOnly, QFile::AutoCloseHandle );
             }
+            else {
+                LOG(logWARNING) << "Failed to open file by handle";
+            }
+        }
+        else {
+            LOG(logWARNING) << "Failed to open file by handle";
         }
 #endif
-
         if ( !openedByHandle ) {
-            LOG(logWARNING) << "Failed to open file by handle";
             file->open( QIODevice::ReadOnly );
         }
     }

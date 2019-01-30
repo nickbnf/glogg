@@ -51,7 +51,7 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
             [this](auto){ this->onIncrementalChanged(); } );
     connect(pollingCheckBox, &QCheckBox::toggled,
             [this](auto){ this->onPollingChanged(); } );
-    connect(searchResultsCacheCheckBox,&QCheckBox::toggled,
+    connect(searchResultsCacheCheckBox, &QCheckBox::toggled,
             [this](auto){ this->onSearchResultsCacheChanged(); } );
 
     updateDialogFromConfig();
@@ -70,6 +70,10 @@ void OptionsDialog::setupTabs()
 {
 #ifndef GLOGG_SUPPORTS_POLLING
     pollBox->setVisible(false);
+#endif
+
+#ifndef Q_OS_WIN
+    keepFileClosedCheckBox->setVisible(false);
 #endif
 }
 
@@ -193,6 +197,7 @@ void OptionsDialog::updateDialogFromConfig()
     searchCacheSpinBox->setValue( config->searchResultsCacheLines() );
     indexReadBufferSpinBox->setValue( config->indexReadBufferSizeMb() );
     searchReadBufferSpinBox->setValue( config->searchReadBufferSizeLines() );
+    keepFileClosedCheckBox->setChecked( config->keepFileClosed() );
 }
 
 //
@@ -247,6 +252,7 @@ void OptionsDialog::updateConfigFromDialog()
     config->setSearchResultsCacheLines( searchCacheSpinBox->value() );
     config->setIndexReadBufferSizeMb( indexReadBufferSpinBox->value() );
     config->setSearchReadBufferSizeLines( searchReadBufferSpinBox->value() );
+    config->setKeepFileClosed( keepFileClosedCheckBox->isChecked() );
 
     emit optionsChanged();
 }

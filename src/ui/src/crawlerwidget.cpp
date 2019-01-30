@@ -84,8 +84,8 @@ class CrawlerWidgetContext : public ViewContextInterface {
     QList<LineNumber::UnderlyingType> marks() const { return marks_; }
 
   private:
-	void loadFromString( const QString& string );
-	void loadFromJson( const QString& json );
+    void loadFromString( const QString& string );
+    void loadFromJson( const QString& json );
 
   private:
     QList<int> sizes_;
@@ -286,7 +286,7 @@ CrawlerWidget::doGetViewContext() const
             ( ignoreCaseCheck->checkState() == Qt::Checked ),
             ( searchRefreshCheck->checkState() == Qt::Checked ),
             logMainView->isFollowEnabled(),
-			logFilteredData_->getMarks() );
+            logFilteredData_->getMarks() );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
 }
@@ -525,15 +525,15 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
     emit loadingFinished( status );
 
     // Also change the data available icon
-	if ( firstLoadDone_ ) {
-		changeDataStatus(DataStatus::NEW_DATA);
-	}
-	else {
-		firstLoadDone_ = true;
+    if ( firstLoadDone_ ) {
+        changeDataStatus(DataStatus::NEW_DATA);
+    }
+    else {
+        firstLoadDone_ = true;
         for ( const auto& m : savedMarkedLines_ ) {
-			logFilteredData_->addMark( m );
-		}
-	}
+            logFilteredData_->addMark( m );
+        }
+    }
 }
 
 void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
@@ -959,8 +959,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 
         // Set the pattern case insensitive if needed
         QRegularExpression::PatternOptions patternOptions =
-                QRegularExpression::UseUnicodePropertiesOption
-                | QRegularExpression::OptimizeOnFirstUsageOption;
+                QRegularExpression::UseUnicodePropertiesOption;
 
         if ( ignoreCaseCheck->checkState() == Qt::Checked )
             patternOptions |= QRegularExpression::CaseInsensitiveOption;
@@ -1183,99 +1182,99 @@ void CrawlerWidget::SearchState::startSearch()
  */
 CrawlerWidgetContext::CrawlerWidgetContext( const QString &string )
 {
-	if ( string.startsWith( '{' ) ) {
-		loadFromJson( string );
-	}
-	else {
-		loadFromString( string );
-	}
+    if ( string.startsWith( '{' ) ) {
+        loadFromJson( string );
+    }
+    else {
+        loadFromString( string );
+    }
 }
 
 void CrawlerWidgetContext::loadFromString( const QString &string )
 {
-	QRegularExpression regex( "S(\\d+):(\\d+)" );
-	QRegularExpressionMatch match = regex.match( string );
-	if ( match.hasMatch() ) {
-		sizes_ = { match.captured(1).toInt(), match.captured(2).toInt() };
-		LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
-	}
-	else {
-		LOG(logWARNING) << "Unrecognised view size: " << string.toLocal8Bit().data();
+    QRegularExpression regex( "S(\\d+):(\\d+)" );
+    QRegularExpressionMatch match = regex.match( string );
+    if ( match.hasMatch() ) {
+        sizes_ = { match.captured(1).toInt(), match.captured(2).toInt() };
+        LOG(logDEBUG) << "sizes_: " << sizes_[0] << " " << sizes_[1];
+    }
+    else {
+        LOG(logWARNING) << "Unrecognised view size: " << string.toLocal8Bit().data();
 
-		// Default values;
+        // Default values;
         sizes_ = { 400, 100 };
-	}
+    }
 
-	QRegularExpression case_refresh_regex( "IC(\\d+):AR(\\d+)" );
-	match = case_refresh_regex.match( string );
-	if ( match.hasMatch() ) {
-		ignore_case_ = ( match.captured(1).toInt() == 1 );
-		auto_refresh_ = ( match.captured(2).toInt() == 1 );
+    QRegularExpression case_refresh_regex( "IC(\\d+):AR(\\d+)" );
+    match = case_refresh_regex.match( string );
+    if ( match.hasMatch() ) {
+        ignore_case_ = ( match.captured(1).toInt() == 1 );
+        auto_refresh_ = ( match.captured(2).toInt() == 1 );
 
-		LOG(logDEBUG) << "ignore_case_: " << ignore_case_ << " auto_refresh_: "
-			<< auto_refresh_;
-	}
-	else {
-		LOG(logWARNING) << "Unrecognised case/refresh: " << string.toLocal8Bit().data();
-		ignore_case_ = false;
-		auto_refresh_ = false;
-	}
+        LOG(logDEBUG) << "ignore_case_: " << ignore_case_ << " auto_refresh_: "
+            << auto_refresh_;
+    }
+    else {
+        LOG(logWARNING) << "Unrecognised case/refresh: " << string.toLocal8Bit().data();
+        ignore_case_ = false;
+        auto_refresh_ = false;
+    }
 
-	QRegularExpression follow_regex( "AR(\\d+):FF(\\d+)" );
-	match = follow_regex.match( string );
-	if ( match.hasMatch() ) {
-		follow_file_ = ( match.captured(2).toInt() == 1 );
+    QRegularExpression follow_regex( "AR(\\d+):FF(\\d+)" );
+    match = follow_regex.match( string );
+    if ( match.hasMatch() ) {
+        follow_file_ = ( match.captured(2).toInt() == 1 );
 
-		LOG(logDEBUG) << "follow_file_: " << follow_file_;
-	}
-	else {
-		LOG(logWARNING) << "Unrecognised follow file " << string.toLocal8Bit().data();
-		follow_file_ = false;
-	}
+        LOG(logDEBUG) << "follow_file_: " << follow_file_;
+    }
+    else {
+        LOG(logWARNING) << "Unrecognised follow file " << string.toLocal8Bit().data();
+        follow_file_ = false;
+    }
 }
 
 void CrawlerWidgetContext::loadFromJson( const QString& json )
 {
-	const auto properties = QJsonDocument::fromJson( json.toLatin1() ).toVariant().toMap();
-	
-	if ( properties.contains("S") ) {
-		const auto sizes = properties.value( "S" ).toList();
-		for (const auto& s : sizes) {
-			sizes_.append( s.toInt() );
-		}
-	}
+    const auto properties = QJsonDocument::fromJson( json.toLatin1() ).toVariant().toMap();
 
-	ignore_case_ = properties.value( "IC" ).toBool();
-	auto_refresh_ = properties.value( "AR" ).toBool();
-	follow_file_ = properties.value( "FF" ).toBool();
+    if ( properties.contains("S") ) {
+        const auto sizes = properties.value( "S" ).toList();
+        for (const auto& s : sizes) {
+            sizes_.append( s.toInt() );
+        }
+    }
 
-	if ( properties.contains( "M" ) ) {
-		const auto marks = properties.value( "M" ).toList();
-		for ( const auto& m : marks ) {
-			marks_.append( m.toUInt() );
-		}
-	}
+    ignore_case_ = properties.value( "IC" ).toBool();
+    auto_refresh_ = properties.value( "AR" ).toBool();
+    follow_file_ = properties.value( "FF" ).toBool();
+
+    if ( properties.contains( "M" ) ) {
+        const auto marks = properties.value( "M" ).toList();
+        for ( const auto& m : marks ) {
+            marks_.append( m.toUInt() );
+        }
+    }
 }
 
 QString CrawlerWidgetContext::toString() const
 {
-	const auto toVariantList = []( const auto& list ) -> QVariantList {
-		QVariantList variantList;
-		for ( const auto& item : list ) {
+    const auto toVariantList = []( const auto& list ) -> QVariantList {
+        QVariantList variantList;
+        for ( const auto& item : list ) {
             variantList.append( item );
-		}
-		return variantList;
-	};
+        }
+        return variantList;
+    };
 
-	QVariantMap properies;
+    QVariantMap properies;
 
-	properies["S"] = toVariantList( sizes_ );
-	properies["IC"] = ignore_case_;
-	properies["AR"] = auto_refresh_;
-	properies["FF"] = follow_file_;
-	properies["M"] = toVariantList( marks_ );
+    properies["S"] = toVariantList( sizes_ );
+    properies["IC"] = ignore_case_;
+    properies["AR"] = auto_refresh_;
+    properies["FF"] = follow_file_;
+    properies["M"] = toVariantList( marks_ );
 
-	return QJsonDocument::fromVariant( properies )
-		.toJson( QJsonDocument::Compact );
+    return QJsonDocument::fromVariant( properies )
+        .toJson( QJsonDocument::Compact );
 }
-   
+

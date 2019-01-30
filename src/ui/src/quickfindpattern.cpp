@@ -66,8 +66,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
 void QuickFindPattern::changeSearchPattern( const QString& pattern, bool ignoreCase )
 {
     QRegularExpression::PatternOptions options =
-            QRegularExpression::UseUnicodePropertiesOption
-            | QRegularExpression::OptimizeOnFirstUsageOption;
+            QRegularExpression::UseUnicodePropertiesOption;
 
     if ( ignoreCase )
         options |= QRegularExpression::CaseInsensitiveOption;

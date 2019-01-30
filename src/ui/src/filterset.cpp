@@ -30,8 +30,7 @@ const int FilterSet::FILTERSET_VERSION = 2;
 QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
 {
     QRegularExpression::PatternOptions options =
-            QRegularExpression::UseUnicodePropertiesOption
-            | QRegularExpression::OptimizeOnFirstUsageOption;
+            QRegularExpression::UseUnicodePropertiesOption;
 
     if ( ignoreCase ) {
         options |= QRegularExpression::CaseInsensitiveOption;

@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QThread>
 
 #include "file_write_helper.h"
 #include <log.h>
@@ -42,6 +43,11 @@ int main( int argc, const char** argv )
 	for ( int i = 0; i < numberOfLines; i++ ) {
 		snprintf( newLine, 89, sl_format, i );
 		file.write( newLine, qstrlen( newLine ) );
+
+		if ( flag == WriteFileModification::DelayClosingFile )
+		{
+			QThread::sleep(2);
+		}
 	}
 
 	if ( flag == WriteFileModification::EndWithPartialLineBegin )

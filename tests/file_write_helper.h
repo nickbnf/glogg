@@ -10,4 +10,5 @@ enum class WriteFileModification
 	None = 0,
 	StartWithPartialLineEnd = 1,
 	EndWithPartialLineBegin = 2,
+	DelayClosingFile = 4,
 };

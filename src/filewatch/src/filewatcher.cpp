@@ -1,23 +1,45 @@
 #include "filewatcher.h"
 
 #include "log.h"
+#include "persistentinfo.h"
+#include "configuration.h"
 
 #include <efsw/efsw.hpp>
 #include <vector>
 
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QTimer>
 
 namespace {
+
+struct WatchedFile {
+    std::string name;
+    int64_t mTime;
+    int64_t size;
+
+    bool operator==(const std::string& filename) const
+    {
+        return name == filename;
+    }
+
+    bool operator!=(const WatchedFile& other) const
+    {
+        return name != other.name || mTime != other.mTime || size != other.size;
+    }
+};
+
 struct WatchedDirecotry {
-    efsw::WatchID watchId_;
+    efsw::WatchID watchId;
 
     // filenames are in utf8
-    std::string name_;
-    std::vector<std::string> files_;
+    std::string name;
+    std::vector<WatchedFile> files;
 };
+
 } // namespace
 
 class EfswFileWatcher final : public efsw::FileWatchListener {
@@ -36,14 +58,15 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         const QFileInfo fileInfo = QFileInfo( fullFileName );
 
-        const auto filename = fileInfo.fileName().toStdString();
+        auto watchedFile = WatchedFile{ fileInfo.fileName().toStdString(), fileInfo.lastModified().toMSecsSinceEpoch(), fileInfo.size() };
+
         const auto directory = fileInfo.canonicalPath().toStdString();
 
         const auto wasEmpty = watchedPaths_.empty();
 
         auto watchedDirectory
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                            [&directory]( const auto& wd ) { return wd.name_ == directory; } );
+                            [&directory]( const auto& wd ) { return wd.name == directory; } );
 
         if ( watchedDirectory == watchedPaths_.end() ) {
             auto watchId = watcher_.addWatch( directory, this, false );
@@ -55,22 +78,23 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             }
 
             WatchedDirecotry wd;
-            wd.watchId_ = watchId;
-            wd.name_ = directory;
-            wd.files_.push_back( std::move( filename ) );
+            wd.watchId = watchId;
+            wd.name = directory;
 
-            watchedPaths_.push_back( std::move( wd ) );
+            wd.files.emplace_back( std::move( watchedFile ) );
+
+            watchedPaths_.emplace_back( std::move( wd ) );
         }
         else {
-            if ( std::find( watchedDirectory->files_.begin(), watchedDirectory->files_.end(),
-                            filename )
-                 != watchedDirectory->files_.end() ) {
-                LOG( logDEBUG ) << "QtFileWatcher: already watching " << filename << " in "
+            if ( std::find( watchedDirectory->files.begin(), watchedDirectory->files.end(),
+                            watchedFile.name )
+                 != watchedDirectory->files.end() ) {
+                LOG( logDEBUG ) << "QtFileWatcher: already watching " << watchedFile.name << " in "
                                 << directory;
                 return;
             }
 
-            watchedDirectory->files_.push_back( std::move( filename ) );
+            watchedDirectory->files.emplace_back( std::move( watchedFile ) );
         }
 
         if ( wasEmpty ) {
@@ -91,19 +115,19 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         auto watchedDirectory
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                            [&directory]( const auto& wd ) { return wd.name_ == directory; } );
+                            [&directory]( const auto& wd ) { return wd.name == directory; } );
 
         if ( watchedDirectory != watchedPaths_.end() ) {
 
-            auto watchedFile = std::find( watchedDirectory->files_.begin(),
-                                          watchedDirectory->files_.end(), filename );
+            auto watchedFile = std::find( watchedDirectory->files.begin(),
+                                          watchedDirectory->files.end(), filename );
 
-            if ( watchedFile != watchedDirectory->files_.end() ) {
-                watchedDirectory->files_.erase( watchedFile );
+            if ( watchedFile != watchedDirectory->files.end() ) {
+                watchedDirectory->files.erase( watchedFile );
             }
 
-            if ( watchedDirectory->files_.empty() ) {
-                watcher_.removeWatch( watchedDirectory->watchId_ );
+            if ( watchedDirectory->files.empty() ) {
+                watcher_.removeWatch( watchedDirectory->watchId );
                 watchedPaths_.erase( watchedDirectory );
             }
         }
@@ -113,6 +137,41 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         for ( const auto& d : watcher_.directories() ) {
             LOG( logERROR ) << "Directories still watched: " << d;
+        }
+    }
+
+    void checkWatches()
+    {
+        const auto collectChangedFiles = [this]()
+        {
+            QMutexLocker lock( &mutex_ );
+
+            std::vector<QString> changedFiles;
+
+            for ( auto& dir : watchedPaths_ ) {
+                for ( auto& file : dir.files ) {
+                    const auto path = QDir::cleanPath( QString::fromStdString( dir.name ) + QDir::separator()
+                                                + QString::fromStdString( file.name ) );
+
+                    const auto fileInfo = QFileInfo{ path };
+
+                    auto watchedFile = WatchedFile{ fileInfo.fileName().toStdString(), fileInfo.lastModified().toMSecsSinceEpoch(), fileInfo.size() };
+
+                    if ( file != watchedFile ) {
+                        changedFiles.push_back( path );
+                        LOG( logINFO ) << "QtFileWatcher::checkWatches - will notify for " << path;
+                    }
+
+                    file = std::move( watchedFile );
+                }
+            }
+
+            return changedFiles;
+        };
+
+        for ( const auto& changedFile : collectChangedFiles() ) {
+            QMetaObject::invokeMethod( parent_, "fileChangedOnDisk", Qt::QueuedConnection,
+                                                    Q_ARG( QString, changedFile ) );
         }
     }
 
@@ -138,16 +197,16 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
             auto watchedDirectory
                 = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                                [&directory]( const auto& wd ) { return wd.name_ == directory; } );
+                                [&directory]( const auto& wd ) { return wd.name == directory; } );
 
             if ( watchedDirectory != watchedPaths_.end() ) {
                 std::string changedFilename;
 
                 const auto isFileWatched
-                    = std::any_of( watchedDirectory->files_.begin(), watchedDirectory->files_.end(),
+                    = std::any_of( watchedDirectory->files.begin(), watchedDirectory->files.end(),
                                    [&filename, &oldFilename, &changedFilename]( const auto& f ) {
-                                       if ( f == filename || f == oldFilename ) {
-                                           changedFilename = f;
+                                       if ( f.name == filename || f.name == oldFilename ) {
+                                           changedFilename = f.name;
                                            return true;
                                        }
 
@@ -193,8 +252,10 @@ void EfswFileWatcherDeleter::operator()( EfswFileWatcher* watcher ) const
 }
 
 FileWatcher::FileWatcher()
+    : checkTimer_ { new QTimer() }
+    , efswWatcher_{ new EfswFileWatcher( this ) }
 {
-    efswWatcher_.reset( new EfswFileWatcher( this ) );
+    connect( checkTimer_.get(), &QTimer::timeout, this, &FileWatcher::checkWatches );
 }
 
 FileWatcher::~FileWatcher() {}
@@ -208,14 +269,37 @@ FileWatcher& FileWatcher::getFileWatcher()
 void FileWatcher::addFile( const QString& fileName )
 {
     efswWatcher_->addFile( fileName );
+
+    setPolling();
 }
 
 void FileWatcher::removeFile( const QString& fileName )
 {
     efswWatcher_->removeFile( fileName );
+
+    setPolling();
 }
 
 void FileWatcher::fileChangedOnDisk( const QString& fileName )
 {
     emit fileChanged( fileName );
+}
+
+void FileWatcher::setPolling()
+{
+ const auto config = Persistent<Configuration>( "settings" );
+
+    if ( config->pollingEnabled() ) {
+        LOG( logINFO ) << "Polling files enabled";
+        checkTimer_->start( config->pollIntervalMs() );
+    }
+    else {
+        LOG( logINFO ) << "Polling files disabled";
+        checkTimer_->stop();
+    }
+}
+
+void FileWatcher::checkWatches( )
+{
+    efswWatcher_->checkWatches();
 }

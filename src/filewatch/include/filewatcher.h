@@ -21,6 +21,8 @@
 #define FILEWATCHER_H
 
 #include <QObject>
+#include <QTimer>
+
 #include <memory>
 
 class EfswFileWatcher;
@@ -47,6 +49,7 @@ class FileWatcher : public QObject {
 
   private slots:
     void fileChangedOnDisk( const QString& );
+    void checkWatches();
 
   private:
     // Create an empty object
@@ -59,6 +62,9 @@ class FileWatcher : public QObject {
     FileWatcher& operator=( const FileWatcher& ) = delete;
     FileWatcher& operator=( FileWatcher&& ) = delete;
 
+    void setPolling();
+
+    std::unique_ptr<QTimer> checkTimer_;
     std::unique_ptr<EfswFileWatcher, EfswFileWatcherDeleter> efswWatcher_;
 };
 

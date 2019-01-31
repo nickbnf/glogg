@@ -93,8 +93,11 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         quickfindIncremental_ = settings.value( "quickfind.incremental" ).toBool();
 
     // "Advanced" settings
+#ifdef GLOGG_SUPPORTS_POLLING
     if ( settings.contains( "polling.enabled" ) )
         pollingEnabled_ = settings.value( "polling.enabled" ).toBool();
+#endif
+
     if ( settings.contains( "polling.intervalMs" ) )
         pollIntervalMs_ = settings.value( "polling.intervalMs" ).toInt();
 

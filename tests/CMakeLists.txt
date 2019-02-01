@@ -9,6 +9,7 @@ add_executable(glogg_tests
 set(TEST_LIBS ui catch Qt5::Test)
 
 target_link_libraries(glogg_tests ${TEST_LIBS})
+set_property(TARGET glogg_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_executable(file_write_helper
 	file_write_helper.cpp
@@ -26,6 +27,8 @@ add_executable(glogg_itests
 target_link_libraries(glogg_itests ${TEST_LIBS})
 
 add_dependencies(glogg_itests file_write_helper)
+set_property(TARGET glogg_itests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 
 add_test(
     NAME glogg_tests

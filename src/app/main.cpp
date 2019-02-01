@@ -28,9 +28,8 @@
 
 #include <iomanip>
 #include <iostream>
-using namespace std;
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif // _WIN32
@@ -70,7 +69,7 @@ int main( int argc, char* argv[] )
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
 
-    vector<QString> filenames;
+    std::vector<QString> filenames;
 
     // Configuration
     bool new_session = false;
@@ -106,18 +105,22 @@ int main( int argc, char* argv[] )
             },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
-        vector<string> files;
-        options.add_option( "files", files, "files to open" );
+        options.add_option( "files", 
+            [&filenames](CLI::results_t res)
+            {
+                filenames.clear();
+                for(const auto &a : res) {
+                    filenames.emplace_back( QFile::decodeName( a.c_str() ) );
+                }
+                return !filenames.empty();
+            }, "files to open" );
 
         options.parse( argc, argv );
 
-        for ( const auto& file : files ) {
-            filenames.push_back( QFile::decodeName( file.c_str() ) );
-        }
     } catch ( const CLI::ParseError& e ) {
         return options.exit( e );
-    } catch ( ... ) {
-        cerr << "Exception of unknown type!\n";
+    } catch ( const std::exception& e ) {
+        std::cerr << "Exception of unknown type: " << e.what() << std::endl;
     }
 
     std::unique_ptr<plog::IAppender> logAppender;
@@ -151,7 +154,7 @@ int main( int argc, char* argv[] )
         LOG( logINFO ) << "Found another klogg, pid " << app.primaryPid();
 
         if ( !multi_instance ) {
-#ifdef _WIN32
+#ifdef Q_OS_WIN
             ::AllowSetForegroundWindow( app.primaryPid() );
 #endif
             QTimer::singleShot( 100, [&filenames, &app] {
@@ -201,12 +204,6 @@ int main( int argc, char* argv[] )
                                              QString( "versionChecker" ) );
 #endif
 
-#ifdef _WIN32
-    // Allow the app to raise it's own windows (in case an external
-    // glogg send us a file to open)
-    AllowSetForegroundWindow( ASFW_ANY );
-#endif
-
     // We support high-dpi (aka Retina) displays
     app.setAttribute( Qt::AA_UseHighDpiPixmaps );
 
@@ -246,12 +243,12 @@ int main( int argc, char* argv[] )
 
 static void print_version()
 {
-    cout << "glogg " GLOGG_VERSION "\n";
+    std::cout << "glogg " GLOGG_VERSION "\n";
 #ifdef GLOGG_COMMIT
-    cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "(" GLOGG_GIT_VERSION ")\n";
+    std::cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "(" GLOGG_GIT_VERSION ")\n";
 #endif
-    cout << "Copyright (C) 2017 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
-    cout << "This is free software.  You may redistribute copies of it under the terms of\n";
-    cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
-    cout << "There is NO WARRANTY, to the extent permitted by law.\n";
+    std::cout << "Copyright (C) 2017 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
+    std::cout << "This is free software.  You may redistribute copies of it under the terms of\n";
+    std::cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
+    std::cout << "There is NO WARRANTY, to the extent permitted by law.\n";
 }

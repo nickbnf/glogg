@@ -24,7 +24,7 @@
 #include <iostream>
 #include <cassert>
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif // _WIN32
@@ -751,7 +751,7 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     // This is a bit of a hack but has been tested on:
     // Qt 5.3 / Gnome / Linux
     // Qt 4.8 / Win7
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     // Hack copied from http://qt-project.org/forums/viewthread/6164
     ::SetWindowPos((HWND) effectiveWinId(), HWND_TOPMOST,
             0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);

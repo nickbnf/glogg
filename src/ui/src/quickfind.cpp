@@ -234,8 +234,8 @@ OptionalLineNumber QuickFind::searchBackward()
 OptionalLineNumber QuickFind::doSearchForward( const FilePosition &start_position )
 {
     bool found = false;
-    int found_start_col;
-    int found_end_col;
+    int found_start_col{};
+    int found_end_col{};
 
     if ( ! quickFindPattern_->isActive() )
         return {};
@@ -305,8 +305,8 @@ OptionalLineNumber QuickFind::doSearchForward( const FilePosition &start_positio
 OptionalLineNumber QuickFind::doSearchBackward( const FilePosition &start_position )
 {
     bool found = false;
-    int start_col;
-    int end_col;
+    int start_col{};
+    int end_col{};
 
     if ( ! quickFindPattern_->isActive() )
         return {};

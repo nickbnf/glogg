@@ -83,6 +83,7 @@ class MainWindow : public QMainWindow
     void selectAll();
     void copy();
     void find();
+    void clearLog();
     void filters();
     void options();
     void about();
@@ -190,6 +191,7 @@ class MainWindow : public QMainWindow
     QAction *copyAction;
     QAction *selectAllAction;
     QAction *findAction;
+    QAction *clearLogAction;
     QAction *overviewVisibleAction;
     QAction *lineNumbersVisibleInMainAction;
     QAction *lineNumbersVisibleInFilteredAction;

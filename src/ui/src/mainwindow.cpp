@@ -299,6 +299,11 @@ void MainWindow::createActions()
     connect( findAction, &QAction::triggered,
              [this](auto){ this->find(); });
 
+    clearLogAction = new QAction(tr("Clear file"), this);
+    findAction->setStatusTip(tr("Clear current file"));
+    connect( clearLogAction, &QAction::triggered,
+             [this](auto){ this->clearLog(); });
+
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
     overviewVisibleAction->setChecked( config->isOverviewVisible() );
@@ -393,6 +398,9 @@ void MainWindow::createMenus()
     editMenu->addAction( selectAllAction );
     editMenu->addSeparator();
     editMenu->addAction( findAction );
+    editMenu->addSeparator();
+    editMenu->addAction( clearLogAction );
+    editMenu->setEnabled( false );
 
     viewMenu = menuBar()->addMenu( tr("&View") );
     viewMenu->addAction( overviewVisibleAction );
@@ -532,6 +540,16 @@ void MainWindow::copy()
 void MainWindow::find()
 {
     displayQuickFindBar( QuickFindMux::Forward );
+}
+
+
+// Display the QuickFind bar
+void MainWindow::clearLog()
+{
+    const auto current_file = session_->getFilename( currentCrawlerWidget() );
+    if ( QMessageBox::question( this, "klogg - clear file", QString( "Clear file %1?" ).arg( current_file ) ) == QMessageBox::Yes ) {
+        QFile::resize( current_file, 0 );
+    }
 }
 
 // Opens the 'Filters' dialog box
@@ -700,6 +718,10 @@ void MainWindow::closeTab( int index )
     mainTabWidget_.removeTab( index );
     session_->close( widget );
     delete widget;
+
+    if ( mainTabWidget_.count() == 0 ) {
+        editMenu->setEnabled( false );
+    }
 }
 
 void MainWindow::currentTabChanged( int index )
@@ -889,6 +911,7 @@ bool MainWindow::loadFile( const QString& fileName )
         recentFiles_->addRecent( fileName );
         GetPersistentInfo().save( "recentFiles" );
         updateRecentFileActions();
+        editMenu->setEnabled( true );
     }
     catch ( FileUnreadableErr ) {
         LOG(logDEBUG) << "Can't open file " << fileName.toStdString();

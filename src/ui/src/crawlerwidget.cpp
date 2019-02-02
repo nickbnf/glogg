@@ -131,6 +131,14 @@ QString CrawlerWidget::getSelectedText() const
         return logMainView->getSelection();
 }
 
+bool CrawlerWidget::isPartialSelection() const
+{
+    if ( filteredView->hasFocus() )
+        return filteredView->isPartialSelection();
+    else
+        return logMainView->isPartialSelection();
+}
+
 void CrawlerWidget::selectAll()
 {
     activeView()->selectAll();

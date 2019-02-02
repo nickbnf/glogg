@@ -61,6 +61,8 @@ class CrawlerWidget : public QSplitter,
     LineNumber getTopLine() const;
     // Get the selected text as a string (from the main window)
     QString getSelectedText() const;
+    // True for partial selection
+    bool isPartialSelection() const;
 
     // Display the QFB at the bottom, remembering where the focus was
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
@@ -305,7 +307,7 @@ class CrawlerWidget : public QSplitter,
     // Is it not the first time we are loading something?
     bool            firstLoadDone_;
 
-	// Saved marked lines to be restored on first load
+    // Saved marked lines to be restored on first load
     std::vector<LineNumber> savedMarkedLines_;
 
     // Current number of matches

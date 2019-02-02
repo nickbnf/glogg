@@ -258,7 +258,7 @@ OptionalLineNumber LogFilteredData::getMarkAfter( LineNumber line ) const
 OptionalLineNumber LogFilteredData::getMarkBefore( LineNumber line ) const
 {
     OptionalLineNumber marked_line;
-
+    
     for ( const auto& mark : marks_ ) {
         if ( mark.lineNumber() >= line ) {
             break;
@@ -347,10 +347,12 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 
             searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
 
-            size_t cacheSize = 0;
-            for ( const auto& results: qAsConst( searchResultsCache_ ) ) {
-                cacheSize += results.matching_lines.size();
-            }
+            auto cacheSize = std::accumulate(
+                searchResultsCache_.cbegin(), searchResultsCache_.cend(), std::size_t{}, 
+                []( auto val, const auto& cachedResults )
+                {
+                    return val + cachedResults.matching_lines.size();
+                });
 
             LOG(logDEBUG) << "LogFilteredData: cache size " << cacheSize;
 

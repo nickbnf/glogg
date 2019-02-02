@@ -766,6 +766,7 @@ void CrawlerWidget::setup()
     searchLineEdit->addItems( savedSearches_->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     searchLineEdit->setSizeAdjustPolicy( QComboBox::AdjustToMinimumContentsLengthWithIcon );
+    searchLineEdit->lineEdit()->setMaxLength( std::numeric_limits<int>::max() / 1024 );
 
     searchLabel->setBuddy( searchLineEdit );
 

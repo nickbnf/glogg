@@ -94,12 +94,11 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
     REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
     REQUIRE( log_data.getFileSize() == 200 * (SL_LINE_LENGTH+1LL) );
 
-#ifndef _WIN32
     auto finishedSpyCount = finishedSpy->count();
     // Add some data to it
     if ( file.isOpen() ) {
         // To test the edge case when the final line is not complete
-#ifdef _WIN32
+#ifdef Q_OS_WIN
         writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
 #else
         writeDataToFile(file, 200, WriteFileModification::EndWithPartialLineBegin);
@@ -124,7 +123,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
 
         // Add a couple more lines, including the end of the unfinished one.
         if ( file.isOpen() ) {
-#ifdef _WIN32
+#ifdef Q_OS_WIN
             writeDataToFileBackground( file, 20, WriteFileModification::StartWithPartialLineEnd );
 #else
             writeDataToFile(file, 20, WriteFileModification::StartWithPartialLineEnd);
@@ -159,7 +158,6 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
         REQUIRE( log_data.getMaxLength().get() == 0 );
         REQUIRE( log_data.getFileSize() == 0LL );
     }
-#endif
 }
 
 SCENARIO( "Attaching log data to files", "[logdata]" ) {

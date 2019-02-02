@@ -32,6 +32,11 @@ int main(int argc, char *argv[]) {
         Persistent<Configuration>( "settings" );
     config->setSearchReadBufferSizeLines(10);
 
+#ifdef Q_OS_WIN
+    config->setPollingEnabled(true);
+    config->setPollIntervalMs(1000);
+#endif
+
     QtConcurrent::run( [&a, &argc, &argv]()
     {
         int result = Catch::Session().run( argc, argv );

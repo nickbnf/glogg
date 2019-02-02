@@ -113,7 +113,7 @@ endif()
 
 if (APPLE)
     ucm_add_flags(CXX -stdlib=libc++)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.11)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
 endif()
 
 if (WIN32)

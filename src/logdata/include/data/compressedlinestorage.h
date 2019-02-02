@@ -93,6 +93,9 @@ class CompressedLinePositionStorage
 
     // Copy constructor would be slow, delete!
     CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
+    CompressedLinePositionStorage& operator=(
+            const CompressedLinePositionStorage& orig ) = delete;
+
 
     // Move constructor
     CompressedLinePositionStorage( CompressedLinePositionStorage&& orig );

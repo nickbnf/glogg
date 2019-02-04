@@ -28,6 +28,14 @@
 class SimpleLinePositionStorage
 {
   public:
+    SimpleLinePositionStorage() = default;
+
+    SimpleLinePositionStorage(const SimpleLinePositionStorage&) = delete;
+    SimpleLinePositionStorage& operator=(const SimpleLinePositionStorage&) = delete;
+
+    SimpleLinePositionStorage(SimpleLinePositionStorage&&) = default;
+    SimpleLinePositionStorage& operator=(SimpleLinePositionStorage&&) = default;
+
     // Append the passed end-of-line to the storage
     void append( LineOffset pos )
     {

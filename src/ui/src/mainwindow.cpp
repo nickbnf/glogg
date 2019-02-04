@@ -811,7 +811,7 @@ void MainWindow::newVersionNotification( const QString& new_version )
 
     QMessageBox msgBox;
     msgBox.setText( QString( "A new version of glogg (%1) is available for download <p>"
-                "<a href=\"http://glogg.bonnefon.org/download.html\">http://glogg.bonnefon.org/download.html</a>" 
+                "<a href=\"http://glogg.bonnefon.org/download.html\">http://glogg.bonnefon.org/download.html</a>"
                 ).arg( new_version ) );
     msgBox.exec();
 }
@@ -1082,6 +1082,14 @@ void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
     // Warn crawlers so they can save the position of the focus in order
     // to do incremental search in the right view.
     emit enteringQuickFind();
+
+    const auto crawler = currentCrawlerWidget();
+    if ( crawler !=  nullptr && crawler->isPartialSelection() ) {
+        auto selection = crawler->getSelectedText();
+        if ( !selection.isEmpty() ) {
+            quickFindWidget_.changeDisplayedPattern( selection );
+        }
+    }
 
     quickFindMux_.setDirection( direction );
     quickFindWidget_.userActivate();

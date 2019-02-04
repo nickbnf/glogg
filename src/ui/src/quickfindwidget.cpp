@@ -103,6 +103,7 @@ void QuickFindWidget::userActivate()
     userRequested_ = true;
     QWidget::show();
     editQuickFind_->setFocus( Qt::ShortcutFocusReason );
+    editQuickFind_->selectAll();
 }
 
 //

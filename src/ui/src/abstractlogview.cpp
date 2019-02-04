@@ -560,9 +560,9 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     };
 
     if ( keyEvent->key() == Qt::Key_Up && noModifier)
-	      moveSelectionUp();
+          moveSelectionUp();
     if ( keyEvent->key() == Qt::Key_Down && noModifier)
-	      moveSelectionDown();
+          moveSelectionDown();
     if ( keyEvent->key() == Qt::Key_Left && noModifier )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
     else if ( keyEvent->key() == Qt::Key_Right  && noModifier )
@@ -635,6 +635,15 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     break;
                 }
             case Qt::Key_G:
+                if ( controlModifier ) {
+                     if ( shiftModifier ) {
+                          emit searchPrevious();
+                     }
+                     else {
+                         emit searchNext();
+                     }
+                     break;
+                }
                 if ( shiftModifier ) {
                     jumpToBottomLine();
                 }
@@ -1227,6 +1236,11 @@ LineNumber AbstractLogView::getTopLine() const
 QString AbstractLogView::getSelection() const
 {
     return selection_.getSelectedText( logData );
+}
+
+bool AbstractLogView::isPartialSelection() const
+{
+    return selection_.isPortion();
 }
 
 void AbstractLogView::selectAll()

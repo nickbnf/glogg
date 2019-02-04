@@ -172,6 +172,8 @@ class AbstractLogView :
     LineNumber getTopLine() const;
     // Return the text of the current selection.
     QString getSelection() const;
+    // True for partial selection
+    bool isPartialSelection() const;
     // Instructs the widget to select the whole text.
     void selectAll();
 

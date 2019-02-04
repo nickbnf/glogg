@@ -40,6 +40,11 @@ struct WatchedDirecotry {
     std::vector<WatchedFile> files;
 };
 
+bool  isOnlyForPolling(const WatchedDirecotry& wd)
+{
+    return wd.watchId < 0;
+}
+
 } // namespace
 
 class EfswFileWatcher final : public efsw::FileWatchListener {
@@ -68,24 +73,27 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
                             [&directory]( const auto& wd ) { return wd.name == directory; } );
 
-        if ( watchedDirectory == watchedPaths_.end() ) {
+        const auto tryWatchDirectory = [this](const std::string& directory)
+        {
             auto watchId = watcher_.addWatch( directory, this, false );
 
             if ( watchId < 0 ) {
                 LOG( logWARNING ) << "QtFileWatcher::addFile failed to add watch " << directory
                                   << " error " << watchId;
-                return;
             }
 
-            WatchedDirecotry wd;
-            wd.watchId = watchId;
-            wd.name = directory;
+            return watchId;
+        };
 
-            wd.files.emplace_back( std::move( watchedFile ) );
-
-            watchedPaths_.emplace_back( std::move( wd ) );
+        if ( watchedDirectory == watchedPaths_.end() ) {
+            watchedPaths_.push_back( { tryWatchDirectory( directory ), directory,  { std::move( watchedFile ) } } );
         }
         else {
+
+            if ( isOnlyForPolling( *watchedDirectory ) ) {
+                watchedDirectory->watchId = tryWatchDirectory( directory );
+            }
+
             if ( std::find( watchedDirectory->files.begin(), watchedDirectory->files.end(),
                             watchedFile.name )
                  != watchedDirectory->files.end() ) {
@@ -127,7 +135,11 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             }
 
             if ( watchedDirectory->files.empty() ) {
-                watcher_.removeWatch( watchedDirectory->watchId );
+
+                if ( !isOnlyForPolling( *watchedDirectory ) ) {
+                    watcher_.removeWatch( watchedDirectory->watchId );
+                }
+
                 watchedPaths_.erase( watchedDirectory );
             }
         }
@@ -136,7 +148,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         }
 
         for ( const auto& d : watcher_.directories() ) {
-            LOG( logERROR ) << "Directories still watched: " << d;
+            LOG( logINFO ) << "Directories still watched: " << d;
         }
     }
 
@@ -156,6 +168,9 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
                     const auto fileInfo = QFileInfo{ path };
 
                     auto watchedFile = WatchedFile{ fileInfo.fileName().toStdString(), fileInfo.lastModified().toMSecsSinceEpoch(), fileInfo.size() };
+
+                    LOG( logINFO ) << "Watched file " << path << ", mtime " 
+                    << fileInfo.lastModified().toMSecsSinceEpoch() << ", size " << fileInfo.size();
 
                     if ( file != watchedFile ) {
                         changedFiles.push_back( path );

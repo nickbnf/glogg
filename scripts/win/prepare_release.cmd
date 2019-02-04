@@ -24,5 +24,5 @@ xcopy %APPVEYOR_BUILD_FOLDER%\build\readme.html  %APPVEYOR_BUILD_FOLDER%\release
 md %APPVEYOR_BUILD_FOLDER%\chocolately
 md %APPVEYOR_BUILD_FOLDER%\chocolately\tools
 xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\klogg.nuspec %APPVEYOR_BUILD_FOLDER%\chocolately /y
-xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\chocolatelyInstall.ps1 %APPVEYOR_BUILD_FOLDER%\chocolately\tools\chocolatelyInstall.ps1 /y
+xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\chocolatelyInstall.ps1 %APPVEYOR_BUILD_FOLDER%\chocolately\tools\ /y
 

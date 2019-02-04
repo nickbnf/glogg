@@ -831,7 +831,6 @@ void MainWindow::closeEvent( QCloseEvent *event )
 void MainWindow::changeEvent( QEvent *event )
 {
     if ( event->type() ==  QEvent::WindowStateChange) {
-        auto stateChangedEvent = static_cast<QWindowStateChangeEvent*>( event );
         isMaximized_ = windowState().testFlag( Qt::WindowMaximized );
     }
 

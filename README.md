@@ -106,7 +106,7 @@ xcopy %QT5%\bin\Qt5Concurrent.dll release\ /y
 md release\platforms
 xcopy %QT5%\plugins\platforms\qwindows.dll release\platforms\ /y
 
-makensis -DVERSION=X.X.X -DPLATFORM=x64 klogg.nsi
+makensis -DVERSION=X.X.X -DPLATFORM=x64 packaging\windows\klogg.nsi
 ```
 
 See `appveyor.yml` for more information on build process.

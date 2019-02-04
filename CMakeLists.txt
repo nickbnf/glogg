@@ -139,8 +139,8 @@ add_custom_target(ci_config SOURCES
 )
 
 add_custom_target(installation SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/klogg.nsi
-    ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
+    ${CMAKE_CURRENT_SOURCE_DIR}/packaging/windows/klogg.nsi
+    ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
 )
 
@@ -231,7 +231,7 @@ if(UNIX)
         endif()
 
         install(FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/klogg.desktop
+            ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop
             DESTINATION share/applications
         )
 

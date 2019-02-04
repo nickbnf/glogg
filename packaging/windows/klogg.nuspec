@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>klogg</id>
+    <version>1.0.0</version>
+    <owners>Anton Filimonov</owners>
+    <title>klogg - the fast, smart log explorer</title>
+    <authors>Nicolas Bonnefon, Anton Filimonov</authors>
+    <projectUrl>https://github.com/variar/klogg</projectUrl>
+    <iconUrl>https://github.com/variar/klogg/blob/master/src/app/images/hicolor/32x32/klogg.png</iconUrl>
+    <docsUrl>>https://github.com/variar/klogg/blob/master/README.md</docsUrl>
+    <bugTrackerUrl>>https://github.com/variar/klogg/issues</bugTrackerUrl>
+    <copyright>Copyright © 2019 Nicolas Bonnefon, Anton Filimonov</copyright>
+    <licenseUrl>https://github.com/variar/klogg/blob/master/COPYING</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>log tail grep glogg klogg admin</tags>
+    <summary>The fast, smart log explorer</summary>
+    <description>klogg is a fork of glogg a multi-platform GUI application to browse and search through long or complex log files.
+     It is designed with programmers and system administrators in mind. klogg can be seen as a graphical, interactive combination of grep and less.
+     </description>
+    <releaseNotes>https://github.com/variar/klogg/commits/master</releaseNotes>
+    <packageSourceUrl>https://github.com/variar/klogg/blob/master/packaging/windows</packageSourceUrl>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

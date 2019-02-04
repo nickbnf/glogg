@@ -719,10 +719,6 @@ void MainWindow::closeTab( int index )
     mainTabWidget_.removeTab( index );
     session_->close( widget );
     delete widget;
-
-    if ( mainTabWidget_.count() == 0 ) {
-        editMenu->setEnabled( false );
-    }
 }
 
 void MainWindow::currentTabChanged( int index )
@@ -744,6 +740,8 @@ void MainWindow::currentTabChanged( int index )
 
         // Update the title bar
         updateTitleBar( session_->getFilename( crawler_widget ) );
+
+        editMenu->setEnabled( true );
     }
     else
     {
@@ -755,6 +753,8 @@ void MainWindow::currentTabChanged( int index )
         infoLine->clear();
 
         updateTitleBar( QString() );
+
+        editMenu->setEnabled( false );
     }
 }
 
@@ -927,7 +927,6 @@ bool MainWindow::loadFile( const QString& fileName )
         recentFiles_->addRecent( fileName );
         GetPersistentInfo().save( "recentFiles" );
         updateRecentFileActions();
-        editMenu->setEnabled( true );
     }
     catch ( FileUnreadableErr ) {
         LOG(logDEBUG) << "Can't open file " << fileName.toStdString();

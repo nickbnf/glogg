@@ -326,6 +326,7 @@ void MainWindow::createActions()
              this, &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr("&Follow File"), this );
+    followAction->setIcon( QIcon( ":/images/follow14.png" ) );
     followAction->setShortcut(Qt::Key_F);
     followAction->setCheckable(true);
     connect( followAction, &QAction::toggled,
@@ -445,19 +446,12 @@ void MainWindow::createToolBars()
     lineNbField->setMinimumSize(
             lineNbField->fontMetrics().size( 0, "Line 0000000") );
 
-    followCheckBox = new QCheckBox("&Follow file");
-    followCheckBox->setLayoutDirection(Qt::RightToLeft);
-    connect( followAction, SIGNAL(toggled( bool )),
-            followCheckBox, SLOT( setChecked(bool) ) );
-    connect( followCheckBox, SIGNAL(toggled( bool )),
-            followAction, SLOT( setChecked(bool) ) );
-
     toolBar = addToolBar( tr("&Toolbar") );
     toolBar->setIconSize( QSize( 14, 14 ) );
     toolBar->setMovable( false );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
-    toolBar->addWidget(followCheckBox);
+    toolBar->addAction( followAction );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
     toolBar->addWidget( lineNbField );

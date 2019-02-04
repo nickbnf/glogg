@@ -71,7 +71,7 @@ after_test:
 - 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.zip @scripts\win\7z_klogg_listfile.txt
 
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% -DPLATFORM=%PLATFORM%  klogg.nsi
-- xcopy klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-setup.exe %APPVEYOR_BUILD_FOLDER%\chocolately\tools\klogg-setup.exe /y
+- copy klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-setup.exe %APPVEYOR_BUILD_FOLDER%\chocolately\tools\klogg-setup.exe /Y
 - choco pack %APPVEYOR_BUILD_FOLDER%\chocolately\klogg.nuspec --version %APPVEYOR_BUILD_VERSION% 
 
 artifacts:

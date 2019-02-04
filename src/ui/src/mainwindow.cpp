@@ -42,6 +42,7 @@
 #include <QDragEnterEvent>
 #include <QMimeData>
 #include <QUrl>
+#include <QWindow>
 
 #include "log.h"
 
@@ -772,23 +773,28 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     // Try to get the window to the front
     // This is a bit of a hack but has been tested on:
     // Qt 5.3 / Gnome / Linux
-    // Qt 4.8 / Win7
+    // Qt 5.11 / Win10
 #ifdef Q_OS_WIN
-    // Hack copied from http://qt-project.org/forums/viewthread/6164
-    ::SetWindowPos((HWND) effectiveWinId(), HWND_TOPMOST,
-            0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-    ::SetWindowPos((HWND) effectiveWinId(), HWND_NOTOPMOST,
-            0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    const auto isMaximized = isMaximized_;
+
+    for ( QWindow* appWindow : QGuiApplication::allWindows() ) {
+        appWindow->show();
+        appWindow->raise();
+        appWindow->requestActivate();
+    }
+
+    if ( isMaximized ) {
+        QTimer::singleShot(50, [this] { setWindowState( windowState() | Qt::WindowMaximized ); } );
+    }
+
 #else
     Qt::WindowFlags window_flags = windowFlags();
     window_flags |= Qt::WindowStaysOnTopHint;
     setWindowFlags( window_flags );
-#endif
 
-    activateWindow();
     raise();
+    activateWindow();
 
-#ifndef _WIN32
     window_flags = windowFlags();
     window_flags &= ~Qt::WindowStaysOnTopHint;
     setWindowFlags( window_flags );
@@ -819,6 +825,17 @@ void MainWindow::closeEvent( QCloseEvent *event )
 {
     writeSettings();
     event->accept();
+}
+
+// Minimize handling the application
+void MainWindow::changeEvent( QEvent *event )
+{
+    if ( event->type() ==  QEvent::WindowStateChange) {
+        auto stateChangedEvent = static_cast<QWindowStateChangeEvent*>( event );
+        isMaximized_ = windowState().testFlag( Qt::WindowMaximized );
+    }
+
+    QMainWindow::changeEvent( event );
 }
 
 // Accepts the drag event if it looks like a filename

@@ -70,6 +70,8 @@ class MainWindow : public QMainWindow
 
   protected:
     void closeEvent( QCloseEvent* event ) override;
+    void changeEvent( QEvent* event ) override;
+    
     // Drag and drop support
     void dragEnterEvent( QDragEnterEvent* event ) override;
     void dropEvent( QDropEvent* event ) override;
@@ -223,6 +225,8 @@ class MainWindow : public QMainWindow
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     VersionChecker versionChecker_;
 #endif
+
+    bool isMaximized_ = false;
 };
 
 #endif

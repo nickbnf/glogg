@@ -112,6 +112,7 @@ void QuickFindWidget::userActivate()
 void QuickFindWidget::changeDisplayedPattern( const QString& newPattern )
 {
     editQuickFind_->setText( newPattern );
+    editQuickFind_->setCursorPosition( patternCursorPosition_ );
 }
 
 void QuickFindWidget::notify( const QFNotification& message )
@@ -184,6 +185,7 @@ void QuickFindWidget::notificationTimeout()
 
 void QuickFindWidget::textChanged()
 {
+    patternCursorPosition_ = editQuickFind_->cursorPosition();
     emit patternUpdated( editQuickFind_->text(), isIgnoreCase() );
 }
 

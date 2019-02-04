@@ -98,6 +98,8 @@ class QuickFindWidget : public QWidget
 
     // Whether the user explicitely wants us on the screen
     bool         userRequested_;
+
+    int          patternCursorPosition_;
 };
 
 #endif

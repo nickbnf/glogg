@@ -798,15 +798,15 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     currentCrawlerWidget()->setFocus();
 }
 
-void MainWindow::newVersionNotification( const QString& new_version )
+void MainWindow::newVersionNotification( const QString& new_version, const QString& url )
 {
     LOG(logDEBUG) << "newVersionNotification( " <<
-        new_version.toStdString() << " )";
+        new_version << " from " << url << " )";
 
     QMessageBox msgBox;
-    msgBox.setText( QString( "A new version of glogg (%1) is available for download <p>"
-                "<a href=\"http://glogg.bonnefon.org/download.html\">http://glogg.bonnefon.org/download.html</a>"
-                ).arg( new_version ) );
+    msgBox.setText( QString( "A new version of klogg (%1) is available for download <p>"
+                "<a href=\"%2\">%2</a>"
+                ).arg( new_version, url ) );
     msgBox.exec();
 }
 
@@ -1046,6 +1046,8 @@ void MainWindow::writeSettings()
 
     // User settings
     GetPersistentInfo().save( QString( "settings" ) );
+    // User settings
+    GetPersistentInfo().save( QString( "versionChecker" ) );
 }
 
 // Read settings from permanent storage

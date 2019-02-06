@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>635</height>
+    <height>661</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -162,6 +162,22 @@
            <widget class="QCheckBox" name="loadLastSessionCheckBox">
             <property name="text">
              <string>Load last session</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="versionCheckingBox">
+         <property name="title">
+          <string>Version checking options</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <item>
+           <widget class="QCheckBox" name="checkForNewVersionCheckBox">
+            <property name="text">
+             <string>Check for new version</string>
             </property>
            </widget>
           </item>

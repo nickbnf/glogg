@@ -70,7 +70,7 @@ class VersionChecker : public QObject
 
   signals:
     // New version "version" is available
-    void newVersionFound( const QString& version );
+    void newVersionFound( const QString& version, const QString& url );
 
   private slots:
     // Called when download is finished

@@ -43,6 +43,7 @@
 #include "savedsearches.h"
 #include "session.h"
 #include "sessioninfo.h"
+#include "versionchecker.h"
 
 #include "log.h"
 
@@ -105,7 +106,7 @@ int main( int argc, char* argv[] )
             },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
-        options.add_option( "files", 
+        options.add_option( "files",
             [&filenames](CLI::results_t res)
             {
                 filenames.clear();
@@ -199,10 +200,8 @@ int main( int argc, char* argv[] )
                                              QString( "savedSearches" ) );
     GetPersistentInfo().registerPersistable( std::make_shared<RecentFiles>(),
                                              QString( "recentFiles" ) );
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     GetPersistentInfo().registerPersistable( std::make_shared<VersionCheckerConfig>(),
                                              QString( "versionChecker" ) );
-#endif
 
     // We support high-dpi (aka Retina) displays
     app.setAttribute( Qt::AA_UseHighDpiPixmaps );

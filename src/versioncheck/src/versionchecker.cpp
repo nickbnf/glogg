@@ -23,26 +23,25 @@
 
 #include "log.h"
 
-#if defined(_WIN64)
-#  define GLOGG_OS "win64"
-#elif defined(_WIN32)
-#  define GLOGG_OS "win32"
-#elif defined(__APPLE__)
-#  define GLOGG_OS "OSX"
-#elif defined(__linux__)
-#  define GLOGG_OS "linux"
+#include "version.h"
+
+#include <QNetworkProxyFactory>
+
+const char* VersionChecker::VERSION_URL
+    = "https://raw.githubusercontent.com/variar/klogg/master/latest.json";
+
+const uint64_t VersionChecker::CHECK_INTERVAL_S = 3600 * 24 * 7; /* 7 days */
+
+#if defined(Q_OS_WIN)
+#define OS_SUFFIX "-win"
+#elif defined (Q_OS_OSX)
+#define OS_SUFFIX "-osx"
 #else
-#  define GLOGG_OS "other"
+#define OS_SUFFIX "-linux"
 #endif
 
-const char* VersionChecker::VERSION_URL =
-    "http://gloggversion.bonnefon.org/latest";
-
-const uint64_t VersionChecker::CHECK_INTERVAL_S =
-    3600 * 24 * 7; /* 7 days */
-
 namespace {
-    bool isVersionNewer( const QString& current, const QString& new_version );
+bool isVersionNewer( const QString& current, const QString& new_version );
 };
 
 VersionCheckerConfig::VersionCheckerConfig()
@@ -62,65 +61,81 @@ void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 void VersionCheckerConfig::saveToStorage( QSettings& settings ) const
 {
     settings.setValue( "versionchecker.enabled", enabled_ );
-    settings.setValue( "versionchecker.nextDeadline",
-            static_cast<long long>( next_deadline_ ) );
+    settings.setValue( "versionchecker.nextDeadline", static_cast<long long>( next_deadline_ ) );
 }
 
-VersionChecker::VersionChecker() : QObject(), manager_( this )
+VersionChecker::VersionChecker()
+    : QObject()
+    , manager_( this )
 {
+    QNetworkProxyFactory::setUseSystemConfiguration( true );
 }
 
-VersionChecker::~VersionChecker()
-{
-}
+VersionChecker::~VersionChecker() {}
 
 void VersionChecker::startCheck()
 {
-    LOG(logDEBUG) << "VersionChecker::startCheck()";
+    LOG( logDEBUG ) << "VersionChecker::startCheck()";
 
     GetPersistentInfo().retrieve( "versionChecker" );
 
     auto config = Persistent<VersionCheckerConfig>( "versionChecker" );
 
-    if ( config->versionCheckingEnabled() )
-    {
+    if ( config->versionCheckingEnabled() ) {
         // Check the deadline has been reached
-        if ( config->nextDeadline() < std::time( nullptr ) )
-        {
-            connect( &manager_, &QNetworkAccessManager::finished,
-                    this, &VersionChecker::downloadFinished );
+        if ( config->nextDeadline() < std::time( nullptr ) ) {
+            connect( &manager_, &QNetworkAccessManager::finished, this,
+                     &VersionChecker::downloadFinished );
 
             QNetworkRequest request;
             request.setUrl( QUrl( VERSION_URL ) );
-            request.setRawHeader( "User-Agent", "glogg-" GLOGG_VERSION " (" GLOGG_OS ")" );
             manager_.get( request );
         }
-        else
-        {
-            LOG(logDEBUG) << "Deadline not reached yet, next check in "
-                << std::difftime( config->nextDeadline(), std::time( nullptr ) );
+        else {
+            LOG( logDEBUG ) << "Deadline not reached yet, next check in "
+                            << std::difftime( config->nextDeadline(), std::time( nullptr ) );
         }
     }
 }
 
 void VersionChecker::downloadFinished( QNetworkReply* reply )
 {
-    LOG(logDEBUG) << "VersionChecker::downloadFinished()";
+    LOG( logDEBUG ) << "VersionChecker::downloadFinished()";
 
-    if ( reply->error() == QNetworkReply::NoError )
-    {
-        QString new_version = QString( reply->read( 256 ) ).remove( '\n' );
+    if ( reply->error() == QNetworkReply::NoError ) {
+        const auto currentVersion = QString( GLOGG_VERSION );
 
-        LOG(logDEBUG) << "Latest version is " << new_version.toStdString();
-        if ( isVersionNewer( QString( GLOGG_VERSION ), new_version ) )
-        {
-            LOG(logDEBUG) << "Sending new version notification";
-            emit newVersionFound( new_version );
+        const auto rawReply = reply->readAll();
+        LOG( logDEBUG ) << "Version reply: " << QString::fromUtf8( rawReply );
+
+        const auto latestJson = QJsonDocument::fromJson( rawReply );
+        const auto latestVersionMap = latestJson.toVariant().toMap();
+
+        const auto [ latestVersion, url ] = [&]() {
+            const auto stableVersions = latestVersionMap.value( "releases" ).toList();
+
+            if ( std::any_of( stableVersions.begin(), stableVersions.end(),
+                              [&currentVersion]( const auto& version ) {
+                                  return version.toString() == currentVersion;
+                              } ) ) {
+                return std::make_pair( latestVersionMap.value( "stable" ).toString(),
+                                       latestVersionMap.value( "stable_url" ).toString() );
+            }
+            else {
+                return std::make_pair( latestVersionMap.value( "ci" ).toString(),
+                                       latestVersionMap.value( "ci_url" ).toString() + OS_SUFFIX );
+            }
+        }();
+
+        LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "
+                        << latestVersion << ", url " << url;
+        if ( isVersionNewer( currentVersion, latestVersion ) ) {
+            LOG( logDEBUG ) << "Sending new version notification";
+            emit newVersionFound( latestVersion, url );
         }
     }
-    else
-    {
-        LOG(logWARNING) << "Download failed: err " << reply->error();
+    else {
+        LOG( logWARNING ) << "Download failed: err " << reply->error();
     }
 
     reply->deleteLater();
@@ -134,39 +149,17 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 }
 
 namespace {
-    bool isVersionNewer( const QString& current, const QString& new_version )
-    {
-        QRegularExpression version_regex( "(\\d+)\\.(\\d+)\\.(\\d+)(-(\\S+))?" );
+bool isVersionNewer( const QString& current_version, const QString& new_version )
+{
+    const auto parseVersion = []( const QString& version_string ) {
+        int tweak_index = 0;
+        auto version = QVersionNumber::fromString( version_string, &tweak_index );
+        return std::make_pair( version, version_string.rightRef( tweak_index + 1 ).toUInt() );
+    };
 
-        // Main version is the three first digits
-        // Add is the part after '-' if there
-        unsigned current_main_version = 0;
-        unsigned current_add_version = 0;
-        unsigned new_main_version = 0;
-        unsigned new_add_version = 0;
+    const auto& [ old_version, old_tweak ] = parseVersion( current_version );
+    const auto& [ next_version, next_tweak ] = parseVersion( new_version );
 
-        QRegularExpressionMatch currentMatch = version_regex.match( current );
-        if ( currentMatch.hasMatch() )
-        {
-            current_main_version = currentMatch.captured(3).toInt()
-                + currentMatch.captured(2).toInt() * 100
-                + currentMatch.captured(1).toInt() * 10000;
-            current_add_version = currentMatch.captured(5).isEmpty() ? 0 : 1;
-        }
-
-        QRegularExpressionMatch newMatch = version_regex.match( new_version );
-        if ( version_regex.indexIn( new_version ) != -1 )
-        {
-            new_main_version = newMatch.captured(3).toInt()
-                + newMatch.captured(2).toInt() * 100
-                + newMatch.captured(1).toInt() * 10000;
-            new_add_version = newMatch.captured(5).isEmpty() ? 0 : 1;
-        }
-
-        LOG(logDEBUG) << "Current version: " << current_main_version;
-        LOG(logDEBUG) << "New version: " << new_main_version;
-
-        // We only consider the main part for testing for now
-        return new_main_version > current_main_version;
-    }
-};
+    return next_version > old_version || ( next_version == old_version && next_tweak > old_tweak );
+}
+}; // namespace

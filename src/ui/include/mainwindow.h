@@ -71,7 +71,7 @@ class MainWindow : public QMainWindow
   protected:
     void closeEvent( QCloseEvent* event ) override;
     void changeEvent( QEvent* event ) override;
-    
+
     // Drag and drop support
     void dragEnterEvent( QDragEnterEvent* event ) override;
     void dropEvent( QDropEvent* event ) override;
@@ -126,7 +126,7 @@ class MainWindow : public QMainWindow
     void changeQFPattern( const QString& newPattern );
 
     // Notify the user a new version is available
-    void newVersionNotification( const QString& new_version );
+    void newVersionNotification( const QString& new_version , const QString &url );
 
   signals:
     // Is emitted when new settings must be used

@@ -19,18 +19,19 @@
 
 #include <QtGui>
 
-
 #include "optionsdialog.h"
 
+#include "configuration.h"
 #include "log.h"
 #include "persistentinfo.h"
-#include "configuration.h"
+#include "versionchecker.h"
 
 static const uint32_t POLL_INTERVAL_MIN = 10;
 static const uint32_t POLL_INTERVAL_MAX = 3600000;
 
 // Constructor
-OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
+OptionsDialog::OptionsDialog( QWidget* parent )
+    : QDialog( parent )
 {
     setupUi( this );
 
@@ -39,20 +40,18 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
     setupRegexp();
 
     // Validators
-    QValidator* polling_interval_validator_ = new QIntValidator(
-           POLL_INTERVAL_MIN, POLL_INTERVAL_MAX, this );
+    QValidator* polling_interval_validator_
+        = new QIntValidator( POLL_INTERVAL_MIN, POLL_INTERVAL_MAX, this );
     pollIntervalLineEdit->setValidator( polling_interval_validator_ );
 
-    connect(buttonBox, &QDialogButtonBox::clicked,
-            this, &OptionsDialog::onButtonBoxClicked );
-    connect(fontFamilyBox, QOverload<const QString&>::of(&QComboBox::currentIndexChanged),
-            this, &OptionsDialog::updateFontSize );
-    connect(incrementalCheckBox, &QCheckBox::toggled,
-            [this](auto){ this->onIncrementalChanged(); } );
-    connect(pollingCheckBox, &QCheckBox::toggled,
-            [this](auto){ this->onPollingChanged(); } );
-    connect(searchResultsCacheCheckBox, &QCheckBox::toggled,
-            [this](auto){ this->onSearchResultsCacheChanged(); } );
+    connect( buttonBox, &QDialogButtonBox::clicked, this, &OptionsDialog::onButtonBoxClicked );
+    connect( fontFamilyBox, QOverload<const QString&>::of( &QComboBox::currentIndexChanged ), this,
+             &OptionsDialog::updateFontSize );
+    connect( incrementalCheckBox, &QCheckBox::toggled,
+             [this]( auto ) { this->onIncrementalChanged(); } );
+    connect( pollingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->onPollingChanged(); } );
+    connect( searchResultsCacheCheckBox, &QCheckBox::toggled,
+             [this]( auto ) { this->onSearchResultsCacheChanged(); } );
 
     updateDialogFromConfig();
 
@@ -69,11 +68,15 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
 void OptionsDialog::setupTabs()
 {
 #ifndef GLOGG_SUPPORTS_POLLING
-    pollBox->setVisible(false);
+    pollBox->setVisible( false );
+#endif
+
+#ifndef GLOGG_SUPPORTS_VERSION_CHECKING
+    versionCheckingBox->setVisible( false );
 #endif
 
 #ifndef Q_OS_WIN
-    keepFileClosedCheckBox->setVisible(false);
+    keepFileClosedCheckBox->setVisible( false );
 #endif
 }
 
@@ -84,10 +87,10 @@ void OptionsDialog::setupFontList()
 
     // We only show the fixed fonts
     const auto families = database.families();
-    for ( const QString &str : families ) {
-         if ( database.isFixedPitch( str ) )
-             fontFamilyBox->addItem( str );
-     }
+    for ( const QString& str : families ) {
+        if ( database.isFixedPitch( str ) )
+            fontFamilyBox->addItem( str );
+    }
 }
 
 // Populate the regexp ComboBoxes
@@ -95,7 +98,7 @@ void OptionsDialog::setupRegexp()
 {
     QStringList regexpTypes;
 
-    regexpTypes << tr("Extended Regexp") << tr("Fixed Strings");
+    regexpTypes << tr( "Extended Regexp" ) << tr( "Fixed Strings" );
 
     mainSearchBox->addItems( regexpTypes );
     quickFindSearchBox->addItems( regexpTypes );
@@ -106,8 +109,7 @@ void OptionsDialog::setupRegexp()
 void OptionsDialog::setupIncremental()
 {
     if ( incrementalCheckBox->isChecked() ) {
-        quickFindSearchBox->setCurrentIndex(
-                getRegexpIndex( FixedString ) );
+        quickFindSearchBox->setCurrentIndex( getRegexpIndex( FixedString ) );
         quickFindSearchBox->setEnabled( false );
     }
     else {
@@ -131,12 +133,12 @@ int OptionsDialog::getRegexpIndex( SearchRegexpType syntax ) const
     int index;
 
     switch ( syntax ) {
-        case FixedString:
-            index = 1;
-            break;
-        default:
-            index = 0;
-            break;
+    case FixedString:
+        index = 1;
+        break;
+    default:
+        index = 0;
+        break;
     }
 
     return index;
@@ -148,12 +150,12 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
     SearchRegexpType type;
 
     switch ( index ) {
-        case 1:
-            type = FixedString;
-            break;
-        default:
-            type = ExtendedRegexp;
-            break;
+    case 1:
+        type = FixedString;
+        break;
+    default:
+        type = ExtendedRegexp;
+        break;
     }
 
     return type;
@@ -162,8 +164,7 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    auto config = Persistent<Configuration>( "settings" );
 
     // Main font
     QFontInfo fontInfo = QFontInfo( config->mainFont() );
@@ -172,15 +173,13 @@ void OptionsDialog::updateDialogFromConfig()
     if ( familyIndex != -1 )
         fontFamilyBox->setCurrentIndex( familyIndex );
 
-    int sizeIndex = fontSizeBox->findText( QString::number(fontInfo.pointSize()) );
+    int sizeIndex = fontSizeBox->findText( QString::number( fontInfo.pointSize() ) );
     if ( sizeIndex != -1 )
         fontSizeBox->setCurrentIndex( sizeIndex );
 
     // Regexp types
-    mainSearchBox->setCurrentIndex(
-            getRegexpIndex( config->mainRegexpType() ) );
-    quickFindSearchBox->setCurrentIndex(
-            getRegexpIndex( config->quickfindRegexpType() ) );
+    mainSearchBox->setCurrentIndex( getRegexpIndex( config->mainRegexpType() ) );
+    quickFindSearchBox->setCurrentIndex( getRegexpIndex( config->quickfindRegexpType() ) );
 
     incrementalCheckBox->setChecked( config->isQuickfindIncremental() );
 
@@ -198,49 +197,48 @@ void OptionsDialog::updateDialogFromConfig()
     indexReadBufferSpinBox->setValue( config->indexReadBufferSizeMb() );
     searchReadBufferSpinBox->setValue( config->searchReadBufferSizeLines() );
     keepFileClosedCheckBox->setChecked( config->keepFileClosed() );
+
+    // version checking
+    auto versionChecking = Persistent<VersionCheckerConfig>( "versionChecker" );
+    checkForNewVersionCheckBox->setChecked( versionChecking->versionCheckingEnabled() );
 }
 
 //
 // Slots
 //
 
-void OptionsDialog::updateFontSize(const QString& fontFamily)
+void OptionsDialog::updateFontSize( const QString& fontFamily )
 {
     QFontDatabase database;
     QString oldFontSize = fontSizeBox->currentText();
     const QList<int> sizes = database.pointSizes( fontFamily, "" );
 
     fontSizeBox->clear();
-    for (int size : sizes) {
-        fontSizeBox->addItem( QString::number(size) );
+    for ( int size : sizes ) {
+        fontSizeBox->addItem( QString::number( size ) );
     }
     // Now restore the size we had before
-    int i = fontSizeBox->findText(oldFontSize);
+    int i = fontSizeBox->findText( oldFontSize );
     if ( i != -1 )
-        fontSizeBox->setCurrentIndex(i);
+        fontSizeBox->setCurrentIndex( i );
 }
 
 void OptionsDialog::updateConfigFromDialog()
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    auto config = Persistent<Configuration>( "settings" );
 
-    QFont font = QFont(
-            fontFamilyBox->currentText(),
-            (fontSizeBox->currentText()).toInt() );
-    config->setMainFont(font);
+    QFont font = QFont( fontFamilyBox->currentText(), ( fontSizeBox->currentText() ).toInt() );
+    config->setMainFont( font );
 
-    config->setMainRegexpType(
-            getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
-    config->setQuickfindRegexpType(
-            getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
+    config->setMainRegexpType( getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
+    config->setQuickfindRegexpType( getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
     config->setQuickfindIncremental( incrementalCheckBox->isChecked() );
 
     config->setPollingEnabled( pollingCheckBox->isChecked() );
     uint32_t poll_interval = pollIntervalLineEdit->text().toUInt();
     if ( poll_interval < POLL_INTERVAL_MIN )
         poll_interval = POLL_INTERVAL_MIN;
-    else if (poll_interval > POLL_INTERVAL_MAX )
+    else if ( poll_interval > POLL_INTERVAL_MAX )
         poll_interval = POLL_INTERVAL_MAX;
 
     config->setPollIntervalMs( poll_interval );
@@ -254,14 +252,17 @@ void OptionsDialog::updateConfigFromDialog()
     config->setSearchReadBufferSizeLines( searchReadBufferSpinBox->value() );
     config->setKeepFileClosed( keepFileClosedCheckBox->isChecked() );
 
+    // version checking
+    auto versionChecking = Persistent<VersionCheckerConfig>( "versionChecker" );
+    versionChecking->setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
+
     emit optionsChanged();
 }
 
 void OptionsDialog::onButtonBoxClicked( QAbstractButton* button )
 {
     QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
-    if (   ( role == QDialogButtonBox::AcceptRole )
-        || ( role == QDialogButtonBox::ApplyRole ) ) {
+    if ( ( role == QDialogButtonBox::AcceptRole ) || ( role == QDialogButtonBox::ApplyRole ) ) {
         updateConfigFromDialog();
     }
 

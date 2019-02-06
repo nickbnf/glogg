@@ -23,7 +23,6 @@ add_library(ui STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/sessioninfo.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/signalmux.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/tabbedcrawlerwidget.h
-         #${CMAKE_CURRENT_SOURCE_DIR}/include/versionchecker.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/viewinterface.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/viewtools.h
 
@@ -53,7 +52,6 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/sessioninfo.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/signalmux.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/tabbedcrawlerwidget.cpp
-        #${CMAKE_CURRENT_SOURCE_DIR}/src/versionchecker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/viewtools.cpp
 )
 
@@ -62,7 +60,7 @@ set_property(TARGET ui APPEND PROPERTY AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOU
 set_property(TARGET ui PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 target_include_directories(ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(ui PUBLIC Qt5::Widgets logdata absl::any)
+target_link_libraries(ui PUBLIC Qt5::Widgets logdata versioncheck absl::any)
 
 add_dependencies(ui generate_version)
 

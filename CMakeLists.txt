@@ -52,6 +52,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
+find_package(Qt5Network REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -117,7 +118,11 @@ if (APPLE)
 endif()
 
 if (WIN32)
-    add_definitions(-DNOMINMAX -DGLOGG_SUPPORTS_POLLING)
+    add_definitions(-DNOMINMAX)
+
+    add_definitions(-DGLOGG_SUPPORTS_POLLING)
+    add_definitions(-DGLOGG_SUPPORTS_VERSION_CHECKING)
+
 endif()
 
 option(PERF "Build for performance test" OFF)
@@ -130,6 +135,7 @@ ucm_print_flags()
 add_custom_target(ci_config SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
     ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/latest.json
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/prepare_release.cmd
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_klogg_listfile.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_dll_listfile.txt

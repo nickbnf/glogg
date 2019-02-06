@@ -2,6 +2,6 @@
     "ci":"19.2.0.350",
     "ci_url" : "https://github.com/variar/klogg/releases/tag/continuous",
     "stable": "17.12.0.245",
-    "statble_url" : "https://github.com/variar/klogg/releases/tag/17.12.0",
+    "stable_url" : "https://github.com/variar/klogg/releases/tag/17.12.0",
     "releases": ["17.12.0.245"]
 }

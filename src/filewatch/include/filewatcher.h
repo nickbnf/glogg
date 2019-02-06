@@ -43,6 +43,8 @@ class FileWatcher : public QObject {
     // (do nothing if said file is not monitored)
     void removeFile( const QString& fileName );
 
+    void setPolling();
+
   signals:
     // Sent when the file on disk has changed in any way.
     void fileChanged( const QString& );
@@ -61,8 +63,6 @@ class FileWatcher : public QObject {
 
     FileWatcher& operator=( const FileWatcher& ) = delete;
     FileWatcher& operator=( FileWatcher&& ) = delete;
-
-    void setPolling();
 
     std::unique_ptr<QTimer> checkTimer_;
     std::unique_ptr<EfswFileWatcher, EfswFileWatcherDeleter> efswWatcher_;

@@ -476,6 +476,8 @@ void CrawlerWidget::applyConfiguration()
 
     // Update the SearchLine (history)
     updateSearchCombo();
+
+    FileWatcher::getFileWatcher().setPolling();
 }
 
 void CrawlerWidget::enteringQuickFind()

@@ -41,7 +41,20 @@ const uint64_t VersionChecker::CHECK_INTERVAL_S = 3600 * 24 * 7; /* 7 days */
 #endif
 
 namespace {
-bool isVersionNewer( const QString& current, const QString& new_version );
+bool isVersionNewer( const QString& current_version, const QString& new_version )
+{
+    const auto parseVersion = []( const QString& version_string ) {
+        int tweak_index = 0;
+        auto version = QVersionNumber::fromString( version_string, &tweak_index );
+        return std::make_pair( version, version_string.rightRef( tweak_index + 1 ).toUInt() );
+    };
+
+    const auto& [ old_version, old_tweak ] = parseVersion( current_version );
+    const auto& [ next_version, next_tweak ] = parseVersion( new_version );
+
+    return next_version > old_version || ( next_version == old_version && next_tweak > old_tweak );
+}
+
 };
 
 VersionCheckerConfig::VersionCheckerConfig()
@@ -69,6 +82,7 @@ VersionChecker::VersionChecker()
     , manager_( this )
 {
     QNetworkProxyFactory::setUseSystemConfiguration( true );
+    manager_.setRedirectPolicy( QNetworkRequest::NoLessSafeRedirectPolicy );
 }
 
 VersionChecker::~VersionChecker() {}
@@ -86,6 +100,8 @@ void VersionChecker::startCheck()
         if ( config->nextDeadline() < std::time( nullptr ) ) {
             connect( &manager_, &QNetworkAccessManager::finished, this,
                      &VersionChecker::downloadFinished );
+            
+            LOG( logDEBUG ) << "Requesting new version info from " << VERSION_URL;
 
             QNetworkRequest request;
             request.setUrl( QUrl( VERSION_URL ) );
@@ -115,15 +131,15 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
             const auto stableVersions = latestVersionMap.value( "releases" ).toList();
 
             if ( std::any_of( stableVersions.begin(), stableVersions.end(),
-                              [&currentVersion]( const auto& version ) {
-                                  return version.toString() == currentVersion;
-                              } ) ) {
+                            [&currentVersion]( const auto& version ) {
+                                return version.toString() == currentVersion;
+                            } ) ) {
                 return std::make_pair( latestVersionMap.value( "stable" ).toString(),
-                                       latestVersionMap.value( "stable_url" ).toString() );
+                                    latestVersionMap.value( "stable_url" ).toString() );
             }
             else {
                 return std::make_pair( latestVersionMap.value( "ci" ).toString(),
-                                       latestVersionMap.value( "ci_url" ).toString() + OS_SUFFIX );
+                                    latestVersionMap.value( "ci_url" ).toString() + OS_SUFFIX );
             }
         }();
 
@@ -147,19 +163,3 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 
     GetPersistentInfo().save( "versionChecker" );
 }
-
-namespace {
-bool isVersionNewer( const QString& current_version, const QString& new_version )
-{
-    const auto parseVersion = []( const QString& version_string ) {
-        int tweak_index = 0;
-        auto version = QVersionNumber::fromString( version_string, &tweak_index );
-        return std::make_pair( version, version_string.rightRef( tweak_index + 1 ).toUInt() );
-    };
-
-    const auto& [ old_version, old_tweak ] = parseVersion( current_version );
-    const auto& [ next_version, next_tweak ] = parseVersion( new_version );
-
-    return next_version > old_version || ( next_version == old_version && next_tweak > old_tweak );
-}
-}; // namespace

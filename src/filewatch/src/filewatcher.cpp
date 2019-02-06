@@ -297,11 +297,11 @@ void FileWatcher::fileChangedOnDisk( const QString& fileName )
 
 void FileWatcher::setPolling()
 {
- const auto config = Persistent<Configuration>( "settings" );
+ const auto& config = Persistent<Configuration>( "settings" );
 
-    if ( config->pollingEnabled() ) {
+    if ( config.pollingEnabled() ) {
         LOG( logINFO ) << "Polling files enabled";
-        checkTimer_->start( config->pollIntervalMs() );
+        checkTimer_->start( config.pollIntervalMs() );
     }
     else {
         LOG( logINFO ) << "Polling files disabled";

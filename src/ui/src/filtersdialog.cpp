@@ -42,7 +42,7 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     // Reload the filter list from disk (in case it has been changed
     // by another glogg instance) and copy it to here.
     GetPersistentInfo().retrieve( "filterSet" );
-    filterSet = PersistentCopy<FilterSet>( "filterSet" );
+    filterSet_ = Persistent<FilterSet>( "filterSet" );
 
     populateFilterList();
 
@@ -68,7 +68,7 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
     connect( ignoreCaseCheckBox, SIGNAL( clicked(bool) ),
             this, SLOT( updateFilterProperties() ) );
 
-    if ( !filterSet->filterList.empty() ) {
+    if ( !filterSet_.filterList.empty() ) {
         filterListWidget->setCurrentItem( filterListWidget->item( 0 ) );
     }
 }
@@ -84,7 +84,7 @@ void FiltersDialog::on_addFilterButton_clicked()
     Filter newFilter = Filter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
                                DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR );
 
-    filterSet->filterList << newFilter;
+    filterSet_.filterList << newFilter;
 
     // Add and select the newly created filter
     filterListWidget->addItem( DEFAULT_PATTERN );
@@ -97,7 +97,7 @@ void FiltersDialog::on_removeFilterButton_clicked()
     LOG(logDEBUG) << "on_removeFilterButton_clicked() index " << index;
 
     if ( index >= 0 ) {
-        filterSet->filterList.removeAt( index );
+        filterSet_.filterList.removeAt( index );
         filterListWidget->setCurrentRow( -1 );
         delete filterListWidget->takeItem( index );
 
@@ -122,7 +122,7 @@ void FiltersDialog::on_upFilterButton_clicked()
     LOG(logDEBUG) << "on_upFilterButton_clicked() index " << index;
 
     if ( index > 0 ) {
-        filterSet->filterList.move( index, index - 1 );
+        filterSet_.filterList.move( index, index - 1 );
 
         QListWidgetItem* item = filterListWidget->takeItem( index );
         filterListWidget->insertItem( index - 1, item );
@@ -136,7 +136,7 @@ void FiltersDialog::on_downFilterButton_clicked()
     LOG(logDEBUG) << "on_downFilterButton_clicked() index " << index;
 
     if ( ( index >= 0 ) && ( index < ( filterListWidget->count() - 1 ) ) ) {
-        filterSet->filterList.move( index, index + 1 );
+        filterSet_.filterList.move( index, index + 1 );
 
         QListWidgetItem* item = filterListWidget->takeItem( index );
         filterListWidget->insertItem( index + 1, item );
@@ -152,7 +152,7 @@ void FiltersDialog::on_buttonBox_clicked( QAbstractButton* button )
     if (   ( role == QDialogButtonBox::AcceptRole )
         || ( role == QDialogButtonBox::ApplyRole ) ) {
         // Copy the filter set and persist it to disk
-        *( Persistent<FilterSet>( "filterSet" ) ) = *filterSet;
+        Persistent<FilterSet>( "filterSet" ) = filterSet_;
         GetPersistentInfo().save( "filterSet" );
         emit optionsChanged();
     }
@@ -168,7 +168,7 @@ void FiltersDialog::on_foreColorButton_clicked()
     // this method should never be called without a selected row
     // as all the property widgets should be disabled in this state
     if( selectedRow_ >= 0 ) {
-        Filter& currentFilter = filterSet->filterList[ selectedRow_ ];
+        Filter& currentFilter = filterSet_.filterList[ selectedRow_ ];
 
         QColor new_color;
         if ( showColorPicker( currentFilter.foreColor() , new_color ) ) {
@@ -185,7 +185,7 @@ void FiltersDialog::on_backColorButton_clicked()
     // this method should never be called without a selected row
     // as all the property widgets should be disabled in this state
     if( selectedRow_ >= 0 ) {
-        Filter& currentFilter = filterSet->filterList[ selectedRow_ ];
+        Filter& currentFilter = filterSet_.filterList[ selectedRow_ ];
 
         QColor new_color;
         if ( showColorPicker( currentFilter.backColor() , new_color ) ) {
@@ -208,7 +208,7 @@ void FiltersDialog::updatePropertyFields()
     LOG(logDEBUG) << "updatePropertyFields(), row = " << selectedRow_;
 
     if ( selectedRow_ >= 0 ) {
-        const Filter& currentFilter = filterSet->filterList.at( selectedRow_ );
+        const Filter& currentFilter = filterSet_.filterList.at( selectedRow_ );
 
         patternEdit->setText( currentFilter.pattern() );
         patternEdit->setEnabled( true );
@@ -255,7 +255,7 @@ void FiltersDialog::updateFilterProperties()
 
     // If a row is selected
     if ( selectedRow_ >= 0 ) {
-        Filter& currentFilter = filterSet->filterList[selectedRow_];
+        Filter& currentFilter = filterSet_.filterList[selectedRow_];
 
         // Update the internal data
         currentFilter.setPattern( patternEdit->text() );
@@ -303,7 +303,7 @@ bool FiltersDialog::showColorPicker (const QColor& in , QColor& out)
 void FiltersDialog::populateFilterList()
 {
     filterListWidget->clear();
-    for ( const Filter& filter : qAsConst(filterSet->filterList) ) {
+    for ( const Filter& filter : qAsConst(filterSet_.filterList) ) {
         QListWidgetItem* new_item = new QListWidgetItem( filter.pattern() );
         // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
         new_item->setForeground( QBrush( filter.foreColor() ) );

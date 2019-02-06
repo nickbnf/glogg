@@ -53,7 +53,7 @@ class ViewInterface {
     { doSetQuickFindPattern( qfp ); }
 
     // Set the (shared) search history object
-    void setSavedSearches( std::shared_ptr<SavedSearches> saved_searches )
+    void setSavedSearches( SavedSearches* saved_searches )
     { doSetSavedSearches( saved_searches ); }
 
     // For save/restore of the context
@@ -73,7 +73,7 @@ class ViewInterface {
     virtual void doSetQuickFindPattern(
             std::shared_ptr<QuickFindPattern> qfp ) = 0;
     virtual void doSetSavedSearches(
-            std::shared_ptr<SavedSearches> saved_searches ) = 0;
+            SavedSearches* saved_searches ) = 0;
     virtual void doSetViewContext(
             const QString& view_context ) = 0;
     virtual std::shared_ptr<const ViewContextInterface>

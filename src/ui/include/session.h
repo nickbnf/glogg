@@ -121,7 +121,7 @@ class Session {
     OpenFileMap openFiles_;
 
     // Global search history
-    std::shared_ptr<SavedSearches> savedSearches_;
+    SavedSearches* savedSearches_;
 
     // Global quickfind pattern
     std::shared_ptr<QuickFindPattern> quickFindPattern_;

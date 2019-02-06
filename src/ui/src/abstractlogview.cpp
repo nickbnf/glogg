@@ -326,8 +326,7 @@ void AbstractLogView::changeEvent( QEvent* changeEvent )
 
 void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     if ( mouseEvent->button() == Qt::LeftButton )
     {
@@ -394,7 +393,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         }
 
         // "Add to search" only makes sense in regexp mode
-        if ( config->mainRegexpType() != ExtendedRegexp )
+        if ( config.mainRegexpType() != ExtendedRegexp )
             addToSearchAction_->setEnabled( false );
 
         // Display the popup (blocking)
@@ -1612,8 +1611,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     const int paintDeviceHeight = paint_device->height() / viewport()->devicePixelRatio();
     const int paintDeviceWidth = paint_device->width() / viewport()->devicePixelRatio();
     const QPalette& palette = viewport()->palette();
-    std::shared_ptr<const FilterSet> filterSet =
-        Persistent<FilterSet>( "filterSet" );
+    const auto& filterSet = Persistent<FilterSet>( "filterSet" );
     QColor foreColor, backColor;
 
     static const QBrush normalBulletBrush = QBrush( Qt::white );
@@ -1712,7 +1710,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
             backColor = palette.color( QPalette::Highlight );
             painter.setPen(palette.color(QPalette::Text));
         }
-        else if ( filterSet->matchLine( logData->getLineString( line_index ),
+        else if ( filterSet.matchLine( logData->getLineString( line_index ),
                     &foreColor, &backColor ) ) {
             // Apply a filter to the line
         }

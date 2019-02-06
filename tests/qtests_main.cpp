@@ -21,20 +21,21 @@ int main(int argc, char *argv[]) {
     // Register the configuration items
     GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
     GetPersistentInfo().registerPersistable(
-     std::make_shared<Configuration>(), QString( "settings" ) );
+     std::make_unique<Configuration>(), "settings" );
 
 
     qRegisterMetaType<LinesCount>( "LinesCount" );
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
 
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-    config->setSearchReadBufferSizeLines(10);
+    auto& config = Persistent<Configuration>( "settings" );
+    config.setSearchReadBufferSizeLines(10);
 
 #ifdef Q_OS_WIN
-    config->setPollingEnabled(true);
-    config->setPollIntervalMs(1000);
+    config.setPollingEnabled(true);
+    config.setPollIntervalMs(1000);
+#else
+    config.setPollingEnabled(false);
 #endif
 
     QtConcurrent::run( [&a, &argc, &argv]()

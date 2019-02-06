@@ -138,8 +138,8 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
     connect( &workerThread_, &LogDataWorkerThread::indexingFinished,
             this, &LogData::indexingFinished );
 
-    auto config = Persistent<Configuration>( "settings" );
-    keepFileClosed_ = config->keepFileClosed();
+    const auto& config = Persistent<Configuration>( "settings" );
+    keepFileClosed_ = config.keepFileClosed();
 
     if ( keepFileClosed_ ) {
         LOG(logINFO) << "Keep file closed option is set";
@@ -564,7 +564,7 @@ std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCo
     std::unique_ptr<QTextDecoder> decoder {codec_->makeDecoder()};
 
     EncodingParameters encodingParams{codec_};
-    
+
     for ( auto line = first_line; (line <= last_line); ++line ) {
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
         list.emplace_back( untabify( decoder->toUnicode( buffer.data() + beginning,
@@ -587,7 +587,7 @@ void LogData::reOpenFile() const
 {
     auto reopened = std::make_unique<QFile>( indexingFileName_ );
     openFileByHandle( reopened.get() );
-    
+
     QMutexLocker locker( &fileMutex_ );
     attached_file_ = std::move( reopened );
     attached_file_id_ = getFileId( indexingFileName_ );

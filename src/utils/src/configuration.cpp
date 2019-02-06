@@ -25,40 +25,12 @@
 
 Configuration::Configuration()
 {
-    // Should have some sensible default values.
-    mainFont_ = QFont( "monaco", 10 );
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
-
-    mainRegexpType_ = ExtendedRegexp;
-    quickfindRegexpType_ = FixedString;
-    quickfindIncremental_ = true;
-
-#ifdef GLOGG_SUPPORTS_POLLING
-    pollingEnabled_ = true;
-#else
-    pollingEnabled_ = false;
-#endif
-    pollIntervalMs_ = 2000;
-
-    loadLastSession_ = true;
-
-    overviewVisible_ = true;
-    lineNumbersVisibleInMain_ = false;
-    lineNumbersVisibleInFiltered_ = true;
 
     QFontInfo fi( mainFont_ );
     LOG( logDEBUG ) << "Default font is " << fi.family().toStdString();
 
-    searchAutoRefresh_ = false;
-    searchIgnoreCase_ = false;
     splitterSizes_ << 400 << 100;
-
-    useParallelSearch_ = true;
-    useSearchResultsCache_ = true;
-    searchResultsCacheLines_ = 1000000;
-    indexReadBufferSizeMb_ = 16;
-    searchReadBufferSizeLines_ = 5000;
-    keepFileClosed_ = false;
 }
 
 // Accessor functions

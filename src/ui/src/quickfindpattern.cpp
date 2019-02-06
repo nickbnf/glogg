@@ -40,7 +40,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
 
     // Determine the type of regexp depending on the config
     QString searchPattern;
-    switch ( Persistent<Configuration>( "settings" )->quickfindRegexpType() ) {
+    switch ( Persistent<Configuration>( "settings" ).quickfindRegexpType() ) {
         case Wildcard:
             searchPattern = pattern;
             searchPattern.replace('*', ".*").replace('?', ".");

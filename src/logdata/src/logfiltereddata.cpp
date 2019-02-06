@@ -110,8 +110,7 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
 {
     LOG(logDEBUG) << "Entering runSearch";
 
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
 
     clearSearch();
@@ -119,7 +118,7 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
     currentSearchKey_ = makeCacheKey( regExp, startLine, endLine );
 
     bool shouldRunSearch = true;
-    if ( config->useSearchResultsCache() ) {
+    if ( config.useSearchResultsCache() ) {
         const auto cachedResults = searchResultsCache_.find( currentSearchKey_ );
         if ( cachedResults != std::end( searchResultsCache_ ) ) {
             LOG(logDEBUG) << "Got result from cache";
@@ -258,7 +257,7 @@ OptionalLineNumber LogFilteredData::getMarkAfter( LineNumber line ) const
 OptionalLineNumber LogFilteredData::getMarkBefore( LineNumber line ) const
 {
     OptionalLineNumber marked_line;
-    
+
     for ( const auto& mark : marks_ ) {
         if ( mark.lineNumber() >= line ) {
             break;
@@ -303,11 +302,11 @@ void LogFilteredData::clearMarks()
 
 QList<LineNumber> LogFilteredData::getMarks() const
 {
-	QList<LineNumber> markedLines;
-	for ( const auto& m : marks_ ) {
-		markedLines.append( m.lineNumber() );
-	}
-	return markedLines;
+    QList<LineNumber> markedLines;
+    for ( const auto& m : marks_ ) {
+        markedLines.append( m.lineNumber() );
+    }
+    return markedLines;
 }
 
 void LogFilteredData::setVisibility( Visibility visi )
@@ -320,8 +319,7 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine )
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;
@@ -330,15 +328,15 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
-    if ( progress == 100 && config->useSearchResultsCache()
+    if ( progress == 100 && config.useSearchResultsCache()
          && nbLinesProcessed_.get() == getExpectedSearchEnd( currentSearchKey_ ).get() ) {
 
-        const auto maxCacheLines = config->searchResultsCacheLines();
+        const auto maxCacheLines = config.searchResultsCacheLines();
 
         if ( matching_lines_.size() > maxCacheLines ) {
             LOG(logDEBUG) << "LogFilteredData: too many matches to place in cache";
         }
-        else if ( !config->useSearchResultsCache() ) {
+        else if ( !config.useSearchResultsCache() ) {
             LOG(logDEBUG) << "LogFilteredData: search results cache disabled by configs";
         }
         else {
@@ -348,7 +346,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
             searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
 
             auto cacheSize = std::accumulate(
-                searchResultsCache_.cbegin(), searchResultsCache_.cend(), std::size_t{}, 
+                searchResultsCache_.cbegin(), searchResultsCache_.cend(), std::size_t{},
                 []( auto val, const auto& cachedResults )
                 {
                     return val + cachedResults.matching_lines.size();

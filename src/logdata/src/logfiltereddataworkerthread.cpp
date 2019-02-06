@@ -284,14 +284,13 @@ SearchOperation::SearchOperation( const LogData* sourceLogData,
 
 void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     const auto nbSourceLines = sourceLogData_->getNbLine();
     LineLength maxLength = 0_length;
     LinesCount nbMatches = searchData.getNbMatches();
 
-    const auto nbLinesInChunk = LinesCount(config->searchReadBufferSizeLines());
+    const auto nbLinesInChunk = LinesCount(config.searchReadBufferSizeLines());
 
     LOG( logDEBUG ) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
@@ -315,7 +314,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::vector<QFuture<void>> matchers;
 
-    const auto matchingThreadsCount = config->useParallelSearch() ? qMax( 1, QThread::idealThreadCount() - 1) : 1;
+    const auto matchingThreadsCount = config.useParallelSearch() ? qMax( 1, QThread::idealThreadCount() - 1) : 1;
 
     LOG(logINFO) << "Using " << matchingThreadsCount << " matching threads";
 
@@ -331,7 +330,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         {
             moodycamel::ConsumerToken cToken( searchBlockQueue );
             moodycamel::ProducerToken pToken( processMatchQueue );
-            
+
             for(;;) {
                 SearchBlockData blockData;
                 searchBlockQueue.wait_dequeue( cToken,  blockData );
@@ -368,7 +367,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         for(;;) {
             PartialSearchResults matchResults;
             processMatchQueue.wait_dequeue( cToken, matchResults );
-        
+
             LOG( logDEBUG ) << "Combining match results from " << matchResults.chunkStart;
 
             if ( matchResults.processedLines.get() ) {
@@ -390,7 +389,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             else {
                 matchersDone++;
             }
-            
+
             if ( matchersDone == matchers.size() ) {
                 searchCompleted.release();
                 return;
@@ -438,7 +437,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     for ( size_t i = 0; i < matchers.size(); ++ i ) {
         searchBlockQueue.enqueue( pToken, { endLine, std::vector<QString>{}, PartialSearchResults{} } );
     }
-    
+
     searchCompleted.acquire();
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();

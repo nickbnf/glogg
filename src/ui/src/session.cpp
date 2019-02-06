@@ -34,11 +34,11 @@
 
 Session::Session()
 {
-    GetPersistentInfo().retrieve( QString( "savedSearches" ) );
+    GetPersistentInfo().retrieve( "savedSearches" );
 
     // Get the global search history (it remains the property
     // of the Persistent)
-    savedSearches_ = Persistent<SavedSearches>( "savedSearches" );
+    savedSearches_ = &(Persistent<SavedSearches>( "savedSearches" ));
 
     quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
@@ -101,22 +101,20 @@ void Session::save( const std::vector<
         session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
-    std::shared_ptr<SessionInfo> session =
-        Persistent<SessionInfo>( "session" );
-    session->setOpenFiles( session_files );
-    session->setGeometry( geometry );
-    GetPersistentInfo().save( QString( "session" ) );
+    auto& session = Persistent<SessionInfo>( "session" );
+    session.setOpenFiles( session_files );
+    session.setGeometry( geometry );
+    GetPersistentInfo().save( "session" );
 }
 
 std::vector<std::pair<QString, ViewInterface*>> Session::restore(
         const std::function<ViewInterface*()>& view_factory,
         int *current_file_index )
 {
-    GetPersistentInfo().retrieve( QString( "session" ) );
-    std::shared_ptr<SessionInfo> session =
-        Persistent<SessionInfo>( "session" );
+    GetPersistentInfo().retrieve( "session" );
+    const auto& session = Persistent<SessionInfo>( "session" );
 
-    std::vector<SessionInfo::OpenFile> session_files = session->openFiles();
+    std::vector<SessionInfo::OpenFile> session_files = session.openFiles();
     LOG(logDEBUG) << "Session returned " << session_files.size();
     std::vector<std::pair<QString, ViewInterface*>> result;
 
@@ -134,11 +132,10 @@ std::vector<std::pair<QString, ViewInterface*>> Session::restore(
 
 void Session::storedGeometry( QByteArray* geometry ) const
 {
-    GetPersistentInfo().retrieve( QString( "session" ) );
-    std::shared_ptr<SessionInfo> session =
-        Persistent<SessionInfo>( "session" );
+    GetPersistentInfo().retrieve( "session" );
+    const auto& session = Persistent<SessionInfo>( "session" );
 
-    *geometry = session->geometry();
+    *geometry = session.geometry();
 }
 
 QString Session::getFilename( const ViewInterface* view ) const

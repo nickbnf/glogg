@@ -190,18 +190,18 @@ int main( int argc, char* argv[] )
     GetPersistentInfo().migrateAndInit( PersistentInfo::Common );
 #endif
 
-    GetPersistentInfo().registerPersistable( std::make_shared<SessionInfo>(),
-                                             QString( "session" ) );
-    GetPersistentInfo().registerPersistable( std::make_shared<Configuration>(),
-                                             QString( "settings" ) );
-    GetPersistentInfo().registerPersistable( std::make_shared<FilterSet>(),
-                                             QString( "filterSet" ) );
-    GetPersistentInfo().registerPersistable( std::make_shared<SavedSearches>(),
-                                             QString( "savedSearches" ) );
-    GetPersistentInfo().registerPersistable( std::make_shared<RecentFiles>(),
-                                             QString( "recentFiles" ) );
-    GetPersistentInfo().registerPersistable( std::make_shared<VersionCheckerConfig>(),
-                                             QString( "versionChecker" ) );
+    GetPersistentInfo().registerPersistable( std::make_unique<SessionInfo>(),
+                                             "session" );
+    GetPersistentInfo().registerPersistable( std::make_unique<Configuration>(),
+                                             "settings" );
+    GetPersistentInfo().registerPersistable( std::make_unique<FilterSet>(),
+                                             "filterSet" );
+    GetPersistentInfo().registerPersistable( std::make_unique<SavedSearches>(),
+                                             "savedSearches" );
+    GetPersistentInfo().registerPersistable( std::make_unique<RecentFiles>(),
+                                             "recentFiles" );
+    GetPersistentInfo().registerPersistable( std::make_unique<VersionCheckerConfig>(),
+                                             "versionChecker" );
 
     // We support high-dpi (aka Retina) displays
     app.setAttribute( Qt::AA_UseHighDpiPixmaps );
@@ -210,7 +210,7 @@ int main( int argc, char* argv[] )
     app.setAttribute( Qt::AA_DontShowIconsInMenus );
 
     // FIXME: should be replaced by a two staged init of MainWindow
-    GetPersistentInfo().retrieve( QString( "settings" ) );
+    GetPersistentInfo().retrieve( "settings" );
 
     std::unique_ptr<Session> session( new Session() );
     MainWindow mw( std::move( session ) );
@@ -224,8 +224,8 @@ int main( int argc, char* argv[] )
     mw.reloadGeometry();
 
     // Load the existing session if needed
-    std::shared_ptr<Configuration> config = Persistent<Configuration>( "settings" );
-    if ( load_session || ( filenames.empty() && !new_session && config->loadLastSession() ) )
+    const auto& config = Persistent<Configuration>( "settings" );
+    if ( load_session || ( filenames.empty() && !new_session && config.loadLastSession() ) )
         mw.reloadSession();
 
     LOG( logDEBUG ) << "MainWindow created.";

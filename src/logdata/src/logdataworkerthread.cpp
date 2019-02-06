@@ -95,7 +95,7 @@ void IndexingData::addAll(qint64 size, LineLength length,
 
 void IndexingData::clear()
 {
-	QMutexLocker locker(&dataMutex_);
+    QMutexLocker locker(&dataMutex_);
 
     maxLength_   = 0_length;
     indexedSize_ = 0;
@@ -376,11 +376,10 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 
 void IndexOperation::doIndex(LineOffset initialPosition )
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     const uint32_t sizeChunk = 1024 * 1024;
-    const auto prefetchBufferSize = config->indexReadBufferSizeMb() * sizeChunk;
+    const auto prefetchBufferSize = config.indexReadBufferSizeMb() * sizeChunk;
 
     QFile file( fileName_ );
 

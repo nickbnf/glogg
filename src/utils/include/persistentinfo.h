@@ -38,32 +38,28 @@ class PersistentInfo {
     // settings if needed. Must be called before any other function.
     void migrateAndInit( SettingsStorage storage = Common );
     // Register a Persistable
-    void registerPersistable( std::shared_ptr<Persistable> object, const QString& name );
+    void registerPersistable(std::unique_ptr<Persistable> object, const char *name );
     // Get a Persistable (or NULL if it doesn't exist)
-    std::shared_ptr<Persistable> getPersistable( const QString& name );
+    Persistable& getPersistable( const char* name ) const;
     // Save a persistable to its permanent storage
-    void save( const QString& name );
+    void save(const char *name ) const;
     // Retrieve a persistable from permanent storage
-    void retrieve( const QString& name );
+    void retrieve(const char *name ) const;
 
   private:
     // Can't be constructed or copied (singleton)
-    PersistentInfo();
-    ~PersistentInfo();
+    PersistentInfo() = default;
 
     PersistentInfo( const PersistentInfo& ) = delete;
     PersistentInfo& operator=( const PersistentInfo& ) = delete;
     PersistentInfo( PersistentInfo&& ) = delete;
     PersistentInfo& operator=( PersistentInfo&& ) = delete;
 
-    // Has migrateAndInit() been called?
-    bool initialised_;
-
     // List of persistables
-    QHash<QString, std::shared_ptr<Persistable>> objectList_;
+    mutable std::unordered_map<std::string, std::unique_ptr<Persistable>> objectList_;
 
     // Qt setting object
-    QSettings* settings_;
+    std::unique_ptr<QSettings> settings_;
 
     // allow this function to create one instance
     friend PersistentInfo& GetPersistentInfo();
@@ -73,15 +69,10 @@ PersistentInfo& GetPersistentInfo();
 
 // Global function used to get a reference to an object
 // from the PersistentInfo store
-template <typename T> std::shared_ptr<T> Persistent( const char* name )
+template <typename T>
+T& Persistent( const char* name )
 {
-    auto p = GetPersistentInfo().getPersistable( QString( name ) );
-    return std::dynamic_pointer_cast<T>( p );
-}
-
-template <typename T> std::shared_ptr<T> PersistentCopy( const char* name )
-{
-    auto p = GetPersistentInfo().getPersistable( QString( name ) );
-    return std::make_shared<T>( *( std::dynamic_pointer_cast<T>( p ) ) );
+    auto& p = GetPersistentInfo().getPersistable( name );
+    return static_cast<T&>( p );
 }
 #endif

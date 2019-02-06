@@ -114,7 +114,7 @@ class CrawlerWidget : public QSplitter,
     void doSetQuickFindPattern(
             std::shared_ptr<QuickFindPattern> qfp ) override;
     void doSetSavedSearches(
-            std::shared_ptr<SavedSearches> saved_searches ) override;
+            SavedSearches* saved_searches ) override;
     void doSetViewContext( const QString& view_context ) override;
     std::shared_ptr<const ViewContextInterface>
         doGetViewContext( void ) const override;
@@ -273,7 +273,7 @@ class CrawlerWidget : public QSplitter,
     // Default palette to be remembered
     QPalette        searchInfoLineDefaultPalette;
 
-    std::shared_ptr<SavedSearches> savedSearches_;
+    SavedSearches* savedSearches_;
 
     // Reference to the QuickFind Pattern (not owned)
     std::shared_ptr<QuickFindPattern> quickFindPattern_;

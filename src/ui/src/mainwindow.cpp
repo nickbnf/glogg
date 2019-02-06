@@ -249,8 +249,7 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
 // Menu actions
 void MainWindow::createActions()
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
@@ -307,21 +306,21 @@ void MainWindow::createActions()
 
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
-    overviewVisibleAction->setChecked( config->isOverviewVisible() );
+    overviewVisibleAction->setChecked( config.isOverviewVisible() );
     connect( overviewVisibleAction, &QAction::toggled,
             this, &MainWindow::toggleOverviewVisibility );
 
     lineNumbersVisibleInMainAction =
         new QAction( tr("Line &numbers in main view"), this );
     lineNumbersVisibleInMainAction->setCheckable( true );
-    lineNumbersVisibleInMainAction->setChecked( config->mainLineNumbersVisible() );
+    lineNumbersVisibleInMainAction->setChecked( config.mainLineNumbersVisible() );
     connect( lineNumbersVisibleInMainAction,  &QAction::toggled,
              this, &MainWindow::toggleMainLineNumbersVisibility );
 
     lineNumbersVisibleInFilteredAction =
         new QAction( tr("Line &numbers in filtered view"), this );
     lineNumbersVisibleInFilteredAction->setCheckable( true );
-    lineNumbersVisibleInFilteredAction->setChecked( config->filteredLineNumbersVisible() );
+    lineNumbersVisibleInFilteredAction->setChecked( config.filteredLineNumbersVisible() );
     connect( lineNumbersVisibleInFilteredAction, &QAction::toggled,
              this, &MainWindow::toggleFilteredLineNumbersVisibility );
 
@@ -601,25 +600,24 @@ void MainWindow::encodingChanged( QAction* action )
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-    config->setOverviewVisible( isVisible );
+    auto& config = Persistent<Configuration>( "settings" );
+    config.setOverviewVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-    config->setMainLineNumbersVisible( isVisible );
+    auto& config = Persistent<Configuration>( "settings" );
+
+    config.setMainLineNumbersVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-    config->setFilteredLineNumbersVisible( isVisible );
+    auto& config = Persistent<Configuration>( "settings" );
+
+    config.setFilteredLineNumbersVisible( isVisible );
     emit optionsChanged();
 }
 
@@ -692,14 +690,14 @@ memory to hold the index for this file. The file will now be closed." );
 
 void MainWindow::handleSearchRefreshChanged( int state )
 {
-    auto config = Persistent<Configuration>( "settings" );
-    config->setSearchAutoRefreshDefault( state == Qt::Checked );
+    auto& config = Persistent<Configuration>( "settings" );
+    config.setSearchAutoRefreshDefault( state == Qt::Checked );
 }
 
 void MainWindow::handleIgnoreCaseChanged( int state )
 {
-    auto config = Persistent<Configuration>( "settings" );
-    config->setSearchIgnoreCaseDefault( state == Qt::Checked );
+    auto& config = Persistent<Configuration>( "settings" );
+    config.setSearchIgnoreCaseDefault( state == Qt::Checked );
 }
 
 void MainWindow::closeTab( int index )
@@ -918,7 +916,7 @@ bool MainWindow::loadFile( const QString& fileName )
         // Update the recent files list
         // (reload the list first in case another glogg changed it)
         GetPersistentInfo().retrieve( "recentFiles" );
-        recentFiles_->addRecent( fileName );
+        recentFiles_.addRecent( fileName );
         GetPersistentInfo().save( "recentFiles" );
         updateRecentFileActions();
     }
@@ -966,7 +964,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
 // Must be called after having added a new name to the list.
 void MainWindow::updateRecentFileActions()
 {
-    QStringList recent_files = recentFiles_->recentFiles();
+    QStringList recent_files = recentFiles_.recentFiles();
 
     for ( int j = 0; j < MaxRecentFiles; ++j ) {
         if ( j < recent_files.count() ) {
@@ -1045,28 +1043,28 @@ void MainWindow::writeSettings()
     session_->save( widget_list, saveGeometry() );
 
     // User settings
-    GetPersistentInfo().save( QString( "settings" ) );
+    GetPersistentInfo().save( "settings" );
     // User settings
-    GetPersistentInfo().save( QString( "versionChecker" ) );
+    GetPersistentInfo().save( "versionChecker" );
 }
 
 // Read settings from permanent storage
 void MainWindow::readSettings()
 {
     // Get and restore the session
-    // GetPersistentInfo().retrieve( QString( "session" ) );
-    // SessionInfo session = Persistent<SessionInfo>( "session" );
+    // GetPersistentInfo().retrieve( "session" );
+    // SessionInfo& session = Persistent<SessionInfo>( "session" );
     /*
      * FIXME: should be in the session
     crawlerWidget->restoreState( session.crawlerState() );
     */
 
     // History of recent files
-    GetPersistentInfo().retrieve( QString( "recentFiles" ) );
+    GetPersistentInfo().retrieve( "recentFiles" );
     updateRecentFileActions();
 
-    // GetPersistentInfo().retrieve( QString( "settings" ) );
-    GetPersistentInfo().retrieve( QString( "filterSet" ) );
+    // GetPersistentInfo().retrieve( "settings" );
+    GetPersistentInfo().retrieve( "filterSet" );
 }
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )

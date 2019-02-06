@@ -103,13 +103,12 @@ void QuickFindMux::searchBackward()
 void QuickFindMux::setNewPattern(
         const QString& new_pattern, bool ignore_case )
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     LOG(logDEBUG) << "QuickFindMux::setNewPattern";
 
     // If we must do an incremental search, we do it now
-    if ( config->isQuickfindIncremental() ) {
+    if ( config.isQuickfindIncremental() ) {
         pattern_->changeSearchPattern( new_pattern, ignore_case );
         if ( auto searchable = getSearchableWidget() ) {
             if ( currentDirection_ == Forward )
@@ -123,24 +122,17 @@ void QuickFindMux::setNewPattern(
 void QuickFindMux::confirmPattern(
         const QString& new_pattern, bool ignore_case )
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-
     pattern_->changeSearchPattern( new_pattern, ignore_case );
 
-    if ( config->isQuickfindIncremental() ) {
+    if ( Persistent<Configuration>( "settings" ).isQuickfindIncremental() ) {
         if ( auto searchable = getSearchableWidget() )
             searchable->incrementalSearchStop();
-
     }
 }
 
 void QuickFindMux::cancelSearch()
 {
-    static std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-
-    if ( config->isQuickfindIncremental() ) {
+    if ( Persistent<Configuration>( "settings" ).isQuickfindIncremental() ) {
         if ( auto searchable = getSearchableWidget() )
             searchable->incrementalSearchAbort();
     }

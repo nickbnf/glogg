@@ -164,10 +164,10 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
-    auto config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistent<Configuration>( "settings" );
 
     // Main font
-    QFontInfo fontInfo = QFontInfo( config->mainFont() );
+    QFontInfo fontInfo = QFontInfo( config.mainFont() );
 
     int familyIndex = fontFamilyBox->findText( fontInfo.family() );
     if ( familyIndex != -1 )
@@ -178,29 +178,29 @@ void OptionsDialog::updateDialogFromConfig()
         fontSizeBox->setCurrentIndex( sizeIndex );
 
     // Regexp types
-    mainSearchBox->setCurrentIndex( getRegexpIndex( config->mainRegexpType() ) );
-    quickFindSearchBox->setCurrentIndex( getRegexpIndex( config->quickfindRegexpType() ) );
+    mainSearchBox->setCurrentIndex( getRegexpIndex( config.mainRegexpType() ) );
+    quickFindSearchBox->setCurrentIndex( getRegexpIndex( config.quickfindRegexpType() ) );
 
-    incrementalCheckBox->setChecked( config->isQuickfindIncremental() );
+    incrementalCheckBox->setChecked( config.isQuickfindIncremental() );
 
     // Polling
-    pollingCheckBox->setChecked( config->pollingEnabled() );
-    pollIntervalLineEdit->setText( QString::number( config->pollIntervalMs() ) );
+    pollingCheckBox->setChecked( config.pollingEnabled() );
+    pollIntervalLineEdit->setText( QString::number( config.pollIntervalMs() ) );
 
     // Last session
-    loadLastSessionCheckBox->setChecked( config->loadLastSession() );
+    loadLastSessionCheckBox->setChecked( config.loadLastSession() );
 
     // Perf
-    parallelSearchCheckBox->setChecked( config->useParallelSearch() );
-    searchResultsCacheCheckBox->setChecked( config->useSearchResultsCache() );
-    searchCacheSpinBox->setValue( config->searchResultsCacheLines() );
-    indexReadBufferSpinBox->setValue( config->indexReadBufferSizeMb() );
-    searchReadBufferSpinBox->setValue( config->searchReadBufferSizeLines() );
-    keepFileClosedCheckBox->setChecked( config->keepFileClosed() );
+    parallelSearchCheckBox->setChecked( config.useParallelSearch() );
+    searchResultsCacheCheckBox->setChecked( config.useSearchResultsCache() );
+    searchCacheSpinBox->setValue( config.searchResultsCacheLines() );
+    indexReadBufferSpinBox->setValue( config.indexReadBufferSizeMb() );
+    searchReadBufferSpinBox->setValue( config.searchReadBufferSizeLines() );
+    keepFileClosedCheckBox->setChecked( config.keepFileClosed() );
 
     // version checking
-    auto versionChecking = Persistent<VersionCheckerConfig>( "versionChecker" );
-    checkForNewVersionCheckBox->setChecked( versionChecking->versionCheckingEnabled() );
+    const auto& versionChecking = Persistent<VersionCheckerConfig>( "versionChecker" );
+    checkForNewVersionCheckBox->setChecked( versionChecking.versionCheckingEnabled() );
 }
 
 //
@@ -225,36 +225,36 @@ void OptionsDialog::updateFontSize( const QString& fontFamily )
 
 void OptionsDialog::updateConfigFromDialog()
 {
-    auto config = Persistent<Configuration>( "settings" );
+    auto& config = Persistent<Configuration>( "settings" );
 
     QFont font = QFont( fontFamilyBox->currentText(), ( fontSizeBox->currentText() ).toInt() );
-    config->setMainFont( font );
+    config.setMainFont( font );
 
-    config->setMainRegexpType( getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
-    config->setQuickfindRegexpType( getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
-    config->setQuickfindIncremental( incrementalCheckBox->isChecked() );
+    config.setMainRegexpType( getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
+    config.setQuickfindRegexpType( getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
+    config.setQuickfindIncremental( incrementalCheckBox->isChecked() );
 
-    config->setPollingEnabled( pollingCheckBox->isChecked() );
+    config.setPollingEnabled( pollingCheckBox->isChecked() );
     uint32_t poll_interval = pollIntervalLineEdit->text().toUInt();
     if ( poll_interval < POLL_INTERVAL_MIN )
         poll_interval = POLL_INTERVAL_MIN;
     else if ( poll_interval > POLL_INTERVAL_MAX )
         poll_interval = POLL_INTERVAL_MAX;
 
-    config->setPollIntervalMs( poll_interval );
+    config.setPollIntervalMs( poll_interval );
 
-    config->setLoadLastSession( loadLastSessionCheckBox->isChecked() );
+    config.setLoadLastSession( loadLastSessionCheckBox->isChecked() );
 
-    config->setUseParallelSearch( parallelSearchCheckBox->isChecked() );
-    config->setUseSearchResultsCache( searchResultsCacheCheckBox->isChecked() );
-    config->setSearchResultsCacheLines( searchCacheSpinBox->value() );
-    config->setIndexReadBufferSizeMb( indexReadBufferSpinBox->value() );
-    config->setSearchReadBufferSizeLines( searchReadBufferSpinBox->value() );
-    config->setKeepFileClosed( keepFileClosedCheckBox->isChecked() );
+    config.setUseParallelSearch( parallelSearchCheckBox->isChecked() );
+    config.setUseSearchResultsCache( searchResultsCacheCheckBox->isChecked() );
+    config.setSearchResultsCacheLines( searchCacheSpinBox->value() );
+    config.setIndexReadBufferSizeMb( indexReadBufferSpinBox->value() );
+    config.setSearchReadBufferSizeLines( searchReadBufferSpinBox->value() );
+    config.setKeepFileClosed( keepFileClosedCheckBox->isChecked() );
 
     // version checking
-    auto versionChecking = Persistent<VersionCheckerConfig>( "versionChecker" );
-    versionChecking->setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
+    auto& versionChecking = Persistent<VersionCheckerConfig>( "versionChecker" );
+    versionChecking.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     emit optionsChanged();
 }

@@ -202,31 +202,38 @@ class Configuration : public Persistable {
 
   private:
     // Configuration settings
-    QFont mainFont_;
-    SearchRegexpType mainRegexpType_;
-    SearchRegexpType quickfindRegexpType_;
-    bool quickfindIncremental_;
-    bool pollingEnabled_;
-    uint32_t pollIntervalMs_;
-    bool loadLastSession_;
+    QFont mainFont_ = { "monaco", 10 };
+    SearchRegexpType mainRegexpType_ = ExtendedRegexp;
+    SearchRegexpType quickfindRegexpType_ = FixedString;
+    bool quickfindIncremental_ = true;
+
+#ifdef GLOGG_SUPPORTS_POLLING
+    bool pollingEnabled_ = true;
+#else
+    bool pollingEnabled_ = false;
+#endif
+
+    uint32_t pollIntervalMs_ = 2000;
+
+    bool loadLastSession_ = true;
 
     // View settings
-    bool overviewVisible_;
-    bool lineNumbersVisibleInMain_;
-    bool lineNumbersVisibleInFiltered_;
+    bool overviewVisible_ = true;
+    bool lineNumbersVisibleInMain_ = false;
+    bool lineNumbersVisibleInFiltered_ = true;
 
     // Default settings for new views
-    bool searchAutoRefresh_;
-    bool searchIgnoreCase_;
+    bool searchAutoRefresh_ = false;
+    bool searchIgnoreCase_ = false;
     QList<int> splitterSizes_;
 
     // Performance settings
-    bool useSearchResultsCache_;
-    uint32_t searchResultsCacheLines_;
-    bool useParallelSearch_;
-    uint32_t indexReadBufferSizeMb_;
-    uint32_t searchReadBufferSizeLines_;
-    bool keepFileClosed_;
+    bool useSearchResultsCache_ = true;
+    uint32_t searchResultsCacheLines_ = 1000000;
+    bool useParallelSearch_ = true;
+    uint32_t indexReadBufferSizeMb_ = 16;
+    uint32_t searchReadBufferSizeLines_ = 5000;
+    bool keepFileClosed_ = false;
 };
 
 #endif

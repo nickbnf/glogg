@@ -255,7 +255,7 @@ void CrawlerWidget::doSetQuickFindPattern(
 }
 
 void CrawlerWidget::doSetSavedSearches(
-        std::shared_ptr<SavedSearches> saved_searches )
+        SavedSearches* saved_searches )
 {
     savedSearches_ = saved_searches;
 
@@ -447,9 +447,8 @@ void CrawlerWidget::markLineFromFiltered( LineNumber line )
 
 void CrawlerWidget::applyConfiguration()
 {
-    std::shared_ptr<Configuration> config =
-        Persistent<Configuration>( "settings" );
-    QFont font = config->mainFont();
+   const auto& config = Persistent<Configuration>( "settings" );
+    QFont font = config.mainFont();
 
     LOG(logDEBUG) << "CrawlerWidget::applyConfiguration";
 
@@ -463,10 +462,10 @@ void CrawlerWidget::applyConfiguration()
     logMainView->setFont(font);
     filteredView->setFont(font);
 
-    logMainView->setLineNumbersVisible( config->mainLineNumbersVisible() );
-    filteredView->setLineNumbersVisible( config->filteredLineNumbersVisible() );
+    logMainView->setLineNumbersVisible( config.mainLineNumbersVisible() );
+    filteredView->setLineNumbersVisible( config.filteredLineNumbersVisible() );
 
-    overview_.setVisible( config->isOverviewVisible() );
+    overview_.setVisible( config.isOverviewVisible() );
     logMainView->refreshOverview();
 
     logMainView->updateDisplaySize();
@@ -810,16 +809,16 @@ void CrawlerWidget::setup()
     addWidget( bottomWindow );
 
     // Default search checkboxes
-    auto config = Persistent<Configuration>( "settings" );
-    searchRefreshCheck->setCheckState( config->isSearchAutoRefreshDefault() ?
+    auto& config = Persistent<Configuration>( "settings" );
+    searchRefreshCheck->setCheckState( config.isSearchAutoRefreshDefault() ?
             Qt::Checked : Qt::Unchecked );
     // Manually call the handler as it is not called when changing the state programmatically
     searchRefreshChangedHandler( searchRefreshCheck->checkState() );
-    ignoreCaseCheck->setCheckState( config->isSearchIgnoreCaseDefault() ?
+    ignoreCaseCheck->setCheckState( config.isSearchIgnoreCaseDefault() ?
             Qt::Checked : Qt::Unchecked );
 
     // Default splitter position (usually overridden by the config file)
-    setSizes( config->splitterSizes() );
+    setSizes( config.splitterSizes() );
 
     // Connect the signals
     connect( searchLineEdit->lineEdit(), &QLineEdit::returnPressed,
@@ -885,8 +884,8 @@ void CrawlerWidget::setup()
     connect( filteredView, &FilteredView::clearSearchLimits,
              this, &CrawlerWidget::clearSearchLimits );
 
-    auto saveSplitterSizes = [this, config]() {
-        config->setSplitterSizes( this->sizes() );
+    auto saveSplitterSizes = [this, &config]() {
+        config.setSplitterSizes( this->sizes() );
     };
 
     connect( logMainView, &LogMainView::saveDefaultSplitterSizes,
@@ -953,9 +952,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         QString pattern;
 
         // Determine the type of regexp depending on the config
-        static std::shared_ptr<Configuration> config =
-            Persistent<Configuration>( "settings" );
-        switch ( config->mainRegexpType() ) {
+        const auto& config = Persistent<Configuration>( "settings" );
+        switch ( config.mainRegexpType() ) {
             case Wildcard:
                 pattern = searchText;
                 pattern.replace('*', ".*").replace('?', ".");

@@ -31,79 +31,67 @@
 #include "log.h"
 #include "persistable.h"
 
-PersistentInfo::PersistentInfo()
-{
-    settings_ = nullptr;
-    initialised_ = false;
-}
-
-PersistentInfo::~PersistentInfo()
-{
-    if ( initialised_ )
-        delete settings_;
-}
-
 void PersistentInfo::migrateAndInit( SettingsStorage storage )
 {
-    assert( initialised_ == false );
+    assert( !settings_ );
 
     QString configurationFile
         = QDir::cleanPath( qApp->applicationDirPath() + QDir::separator() + "klogg.conf" );
 
     if ( storage == Portable || QFileInfo::exists( configurationFile ) ) {
-        settings_ = new QSettings( configurationFile, QSettings::IniFormat );
+        settings_ = std::make_unique<QSettings>( configurationFile, QSettings::IniFormat );
     }
     else {
 #ifdef Q_OS_WIN
-        settings_ = new QSettings( QSettings::IniFormat, QSettings::UserScope, "klogg", "klogg" );
+        settings_ = std::make_unique<QSettings>( QSettings::IniFormat, QSettings::UserScope,
+                                                 "klogg", "klogg" );
 #else
         // We use default Qt storage on proper OSes
-        settings_ = new QSettings( "klogg", "klogg" );
+        settings_ = std::make_unique<QSettings>( "klogg", "klogg" );
 #endif
     }
-    initialised_ = true;
 }
 
-void PersistentInfo::registerPersistable( std::shared_ptr<Persistable> object, const QString& name )
+void PersistentInfo::registerPersistable( std::unique_ptr<Persistable> object, const char* name )
 {
-    assert( initialised_ );
+    assert( settings_ );
 
-    objectList_.insert( name, object );
+    objectList_.emplace( name, std::move(object) );
 }
 
-std::shared_ptr<Persistable> PersistentInfo::getPersistable( const QString& name )
+Persistable& PersistentInfo::getPersistable( const char* name ) const
 {
-    assert( initialised_ );
+    assert( settings_ );
 
-    std::shared_ptr<Persistable> object = objectList_.value( name, nullptr );
+    auto& object = objectList_[name];
 
-    return object;
+    return *object.get();
 }
 
-void PersistentInfo::save( const QString& name )
+void PersistentInfo::save( const char* name ) const
 {
-    assert( initialised_ );
+    assert( settings_ );
 
-    if ( objectList_.contains( name ) )
-        objectList_.value( name )->saveToStorage( *settings_ );
+    if ( objectList_.count( name ) )
+        objectList_[name]->saveToStorage( *settings_ );
     else
-        LOG( logERROR ) << "Unregistered persistable " << name.toStdString();
+        LOG( logERROR ) << "Unregistered persistable " << name;
 
     // Sync to ensure it is propagated to other processes
     settings_->sync();
 }
 
-void PersistentInfo::retrieve( const QString& name )
+void PersistentInfo::retrieve( const char* name ) const
 {
-    assert( initialised_ );
+    assert( settings_ );
 
     // Sync to ensure it has been propagated from other processes
     settings_->sync();
 
-    if ( objectList_.contains( name ) )
-        objectList_.value( name )->retrieveFromStorage( *settings_ );
+    if ( objectList_.count( name ) )
+        objectList_[name]->retrieveFromStorage( *settings_ );
     else
-        LOG( logERROR ) << "Unregistered persistable " << name.toStdString();
+        LOG( logERROR ) << "Unregistered persistable " << name;
 }
 
 // Friend function to construct/get the singleton

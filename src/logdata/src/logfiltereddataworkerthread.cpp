@@ -110,14 +110,13 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
     QMutexLocker locker( &dataMutex_ );
 
     maxLength_ = qMax( maxLength_, length );
-    nbLinesProcessed_ = lines;
+    nbLinesProcessed_ = qMax( nbLinesProcessed_, lines );
 
     // This does a copy as we want the final array to be
     // linear.
     const auto originalSize = matches_.size();
     matches_.insert( std::end( matches_ ), std::begin( matches ), std::end( matches ) );
-
-    std::inplace_merge(matches_.begin(), matches_.begin() + originalSize, matches_.end());
+    std::inplace_merge( matches_.begin(), matches_.begin() + originalSize, matches_.end() );
 }
 
 LinesCount SearchData::getNbMatches() const
@@ -344,7 +343,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                         = filterLines( regexp, blockData.lines, blockData.chunkStart );
                 }
 
-                LOG( logINFO ) << "Searcher " << index << " sending matches "
+                LOG( logDEBUG ) << "Searcher " << index << " sending matches "
                                 << blockData.results.matchingLines.size();
 
                 processMatchQueue.enqueue( pToken, std::move( blockData.results ) );
@@ -368,6 +367,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
         int reportedPercentage = 0;
         auto reportedMatches = nbMatches;
+        LinesCount totalProcessedLines = 0_lcount;
 
         for ( ;; ) {
             PartialSearchResults matchResults;
@@ -384,6 +384,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 const auto processedLines = LinesCount{ matchResults.chunkStart.get()
                                                         + matchResults.processedLines.get() };
 
+                totalProcessedLines += matchResults.processedLines;
+
                 // After each block, copy the data to shared data
                 // and update the client
                 searchData.addAll( maxLength, matchResults.matchingLines, processedLines );
@@ -397,11 +399,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 matchersDone++;
             }
 
-            const int percentage = ( matchResults.chunkStart - initialLine ).get() * 100
-                                   / ( endLine - initialLine ).get();
+            const int percentage
+                = ( totalProcessedLines ).get() * 100 / ( endLine - initialLine ).get();
 
-            if ( percentage != reportedPercentage || nbMatches != reportedMatches ) {
+            if ( percentage > reportedPercentage || nbMatches > reportedMatches ) {
 
+                LOG( logINFO ) << "Progress " << percentage;
                 emit searchProgressed( nbMatches, std::min( 99, percentage ), initialLine );
 
                 reportedPercentage = percentage;

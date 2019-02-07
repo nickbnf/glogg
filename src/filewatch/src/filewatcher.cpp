@@ -196,11 +196,15 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         Q_UNUSED( watchid );
         Q_UNUSED( action );
 
+        LOG(logINFO) << "Notification from esfw for " << dir;
+
         // post to other thread to avoid deadlock between internal esfw lock and our mutex_
-        QObject signalSource;
-        QObject::connect( &signalSource, &QObject::destroyed, parent_,
+        auto signalSource = new QObject;
+        QObject::connect( signalSource, &QObject::destroyed, parent_,
                           [&]( QObject* ) { notifyOnFileAction( dir, filename, oldFilename ); },
                           Qt::QueuedConnection );
+        signalSource->moveToThread(parent_->thread());
+        signalSource->deleteLater();
     }
 
     void notifyOnFileAction( const std::string& dir, const std::string& filename,
@@ -213,7 +217,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         const auto directory = qtDir.toStdString();
 
-        LOG( logDEBUG ) << "fileChangedOnDisk " << directory << " " << filename << ", old name "
+        LOG( logINFO ) << "fileChangedOnDisk " << directory << " " << filename << ", old name "
                         << oldFilename;
 
         const auto fullChangedFilename = findChangedFilename( directory, filename, oldFilename );

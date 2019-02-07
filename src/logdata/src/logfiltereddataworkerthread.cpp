@@ -374,6 +374,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         auto reportedMatches = nbMatches;
         LinesCount totalProcessedLines = 0_lcount;
 
+        const auto totalLines = endLine - initialLine;
+
         for ( ;; ) {
             PartialSearchResults matchResults;
             processMatchQueue.wait_dequeue( cToken, matchResults );
@@ -404,8 +406,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 matchersDone++;
             }
 
-            const int percentage
-                = ( totalProcessedLines ).get() * 100 / ( endLine - initialLine ).get();
+            const int percentage 
+                = static_cast<int>( std::floor( 100.f * ( totalProcessedLines ).get() / totalLines.get() ) );
 
             if ( percentage > reportedPercentage || nbMatches > reportedMatches ) {
 

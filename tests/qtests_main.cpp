@@ -30,7 +30,7 @@ int main( int argc, char* argv[] )
     auto& config = Persistent<Configuration>( "settings" );
     config.setSearchReadBufferSizeLines( 10 );
     config.setUseSearchResultsCache( false );
-    //config.setUseParallelSearch( false );
+    
 
 #ifdef Q_OS_WIN
     config.setPollingEnabled( true );

@@ -310,8 +310,16 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::vector<QFuture<void>> matchers;
 
-    const auto matchingThreadsCount
-        = config.useParallelSearch() ? qMax( 1, QThread::idealThreadCount() - 1 ) : 1;
+    const auto matchingThreadsCount = [&config]()
+    {
+        if ( !config.useParallelSearch() ) {
+            return 1;
+        }
+
+        return qMax( 1,  config.searchThreadPoolSize() == 0 
+                        ? QThread::idealThreadCount() - 1 
+                        : static_cast<int>( config.searchThreadPoolSize() ) );    
+    }();
 
     LOG( logINFO ) << "Using " << matchingThreadsCount << " matching threads";
 
@@ -324,8 +332,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         auto regexp = QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() };
         regexp.optimize();
         return QtConcurrent::run( pool, [regexp, index, &searchBlockQueue, &processMatchQueue]() {
-            moodycamel::ConsumerToken cToken( searchBlockQueue );
-            moodycamel::ProducerToken pToken( processMatchQueue );
+            auto cToken = moodycamel::ConsumerToken{ searchBlockQueue };
+            auto pToken = moodycamel::ProducerToken{ processMatchQueue };
 
             for ( ;; ) {
                 SearchBlockData blockData;
@@ -358,7 +366,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     }
 
     auto processMatches = QtConcurrent::run( localThreadPool.get(), [&]() {
-        moodycamel::ConsumerToken cToken( processMatchQueue );
+        auto cToken = moodycamel::ConsumerToken{ processMatchQueue };
 
         size_t matchersDone = 0;
 
@@ -414,7 +422,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         }
     } );
 
-    moodycamel::ProducerToken pToken( searchBlockQueue );
+    auto pToken =  moodycamel::ProducerToken{ searchBlockQueue };
 
     blocksDone.release( nbLinesInChunk.get() * ( static_cast<uint32_t>( matchers.size() ) + 1 ) );
 

@@ -86,6 +86,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         indexReadBufferSizeMb_ = settings.value( "perf.indexReadBufferSizeMb" ).toUInt();
     if ( settings.contains( "perf.searchReadBufferSizeLines" ) )
         searchReadBufferSizeLines_ = settings.value( "perf.searchReadBufferSizeLines" ).toUInt();
+    if ( settings.contains( "perf.searchThreadPoolSize" ) )
+        searchThreadPoolSize_ = settings.value( "perf.searchThreadPoolSize" ).toUInt();
     if ( settings.contains( "perf.keepFileClosed" ) )
         keepFileClosed_ = settings.value( "perf.keepFileClosed" ).toBool();
 
@@ -136,6 +138,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "perf.searchResultsCacheLines", searchResultsCacheLines_ );
     settings.setValue( "perf.indexReadBufferSizeMb", indexReadBufferSizeMb_ );
     settings.setValue( "perf.searchReadBufferSizeLines", searchReadBufferSizeLines_ );
+    settings.setValue( "perf.searchThreadPoolSize", searchThreadPoolSize_ );
     settings.setValue( "perf.keepFileClosed", keepFileClosed_ );
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );

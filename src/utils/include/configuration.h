@@ -135,6 +135,14 @@ class Configuration : public Persistable {
     {
         searchReadBufferSizeLines_ = lines;
     }
+    uint32_t searchThreadPoolSize() const
+    {
+        return searchThreadPoolSize_;
+    }
+    void setSearchThreadPoolSize( uint32_t threads )
+    {
+        searchThreadPoolSize_ = threads;
+    }
     bool keepFileClosed() const
     {
         return keepFileClosed_;
@@ -233,6 +241,7 @@ class Configuration : public Persistable {
     bool useParallelSearch_ = true;
     uint32_t indexReadBufferSizeMb_ = 16;
     uint32_t searchReadBufferSizeLines_ = 5000;
+    uint32_t searchThreadPoolSize_ = 0;
     bool keepFileClosed_ = false;
 };
 

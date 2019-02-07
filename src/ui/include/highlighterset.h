@@ -17,8 +17,8 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTERSET_H
-#define FILTERSET_H
+#ifndef highlighterSet_H
+#define highlighterSet_H
 
 #include <QRegularExpression>
 #include <QColor>
@@ -28,12 +28,12 @@
 
 // Represents a filter, i.e. a regexp and the colors matching text
 // should be rendered in.
-class Filter
+class Highlighter
 {
   public:
-    // Construct an uninitialized Filter (when reading from a config file)
-    Filter() = default;
-    Filter(const QString& pattern, bool ignoreCase,
+    // Construct an uninitialized Highlighter (when reading from a config file)
+    Highlighter() = default;
+    Highlighter(const QString& pattern, bool ignoreCase,
             const QColor& foreColor, const QColor& backColor );
 
     bool hasMatch( const QString& string ) const;
@@ -50,8 +50,8 @@ class Filter
 
     // Operators for serialization
     // (must be kept to migrate filters from <=0.8.2)
-    friend QDataStream& operator<<( QDataStream& out, const Filter& object );
-    friend QDataStream& operator>>( QDataStream& in, Filter& object );
+    friend QDataStream& operator<<( QDataStream& out, const Highlighter& object );
+    friend QDataStream& operator>>( QDataStream& in, Highlighter& object );
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
@@ -64,11 +64,11 @@ class Filter
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
-class FilterSet : public Persistable
+class HighlighterSet : public Persistable
 {
   public:
     // Construct an empty filter set
-    FilterSet();
+    HighlighterSet();
 
     // Returns weither the passed line match a filter of the set,
     // if so, it returns the fore/back colors the line should use.
@@ -82,27 +82,28 @@ class FilterSet : public Persistable
 
     // Should be private really, but I don't know how to have 
     // it recognised by QVariant then.
-    using FilterList = QList<Filter>;
+    using HighlighterList = QList<Highlighter>;
 
     // Operators for serialization
     // (must be kept to migrate filters from <=0.8.2)
     friend QDataStream& operator<<(
-            QDataStream& out, const FilterSet& object );
+            QDataStream& out, const HighlighterSet& object );
     friend QDataStream& operator>>(
-            QDataStream& in, FilterSet& object );
+            QDataStream& in, HighlighterSet& object );
 
   private:
-    static const int FILTERSET_VERSION;
+    static const int HighlighterSet_VERSION;
+    static const int FilterSet_VERSION;
 
-    FilterList filterList;
+    HighlighterList highlighterList_;
 
-    // To simplify this class interface, FilterDialog can access our
+    // To simplify this class interface, HighlightersDialog can access our
     // internal structure directly.
-    friend class FiltersDialog;
+    friend class HighlightersDialog;
 };
 
-Q_DECLARE_METATYPE(Filter)
-Q_DECLARE_METATYPE(FilterSet)
-Q_DECLARE_METATYPE(FilterSet::FilterList)
+Q_DECLARE_METATYPE(Highlighter)
+Q_DECLARE_METATYPE(HighlighterSet)
+Q_DECLARE_METATYPE(HighlighterSet::HighlighterList)
 
 #endif

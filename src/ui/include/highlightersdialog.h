@@ -24,38 +24,38 @@
 
 #include <QDialog>
 
-#include "filterset.h"
-#include "ui_filtersdialog.h"
+#include "highlighterset.h"
+#include "ui_highlightersdialog.h"
 
-class FiltersDialog : public QDialog, public Ui::FiltersDialog
+class HighlightersDialog : public QDialog, public Ui::HighlightersDialog
 {
   Q_OBJECT
 
   public:
-    FiltersDialog( QWidget* parent = nullptr );
+    HighlightersDialog( QWidget* parent = nullptr );
 
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
 
   private slots:
-    void on_addFilterButton_clicked();
-    void on_removeFilterButton_clicked();
+    void on_addHighlighterButton_clicked();
+    void on_removeHighlighterButton_clicked();
     void on_buttonBox_clicked( QAbstractButton* button );
-    void on_upFilterButton_clicked();
-    void on_downFilterButton_clicked();
+    void on_upHighlighterButton_clicked();
+    void on_downHighlighterButton_clicked();
     void on_foreColorButton_clicked();
     void on_backColorButton_clicked();
     // Update the property (pattern, color...) fields from the
-    // selected Filter.
+    // selected Highlighter.
     void updatePropertyFields();
-    // Update the selected Filter from the values in the property fields.
-    void updateFilterProperties();
+    // Update the selected Highlighter from the values in the property fields.
+    void updateHighlighterProperties();
 
   private:
-    // Temporary filterset modified by the dialog
+    // Temporary HighlighterSet modified by the dialog
     // it is copied from the one in Config()
-    FilterSet filterSet_;
+    HighlighterSet highlighterSet_;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;
@@ -65,7 +65,7 @@ class FiltersDialog : public QDialog, public Ui::FiltersDialog
     static bool showColorPicker(const QColor& in , QColor& out);
     void updateIcon(QPushButton* button , QColor color);
 
-    void populateFilterList();
+    void populateHighlighterList();
 };
 
 #endif

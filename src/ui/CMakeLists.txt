@@ -2,8 +2,8 @@ add_library(ui STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/abstractlogview.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/crawlerwidget.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/filteredview.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/filtersdialog.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/filterset.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighterset.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/infoline.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/logmainview.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/mainwindow.h
@@ -26,14 +26,14 @@ add_library(ui STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/viewinterface.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/viewtools.h
 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/filtersdialog.ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/optionsdialog.ui
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/abstractlogview.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/crawlerwidget.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/filteredview.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/filtersdialog.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/filterset.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/highlightersdialog.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/highlighterset.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/infoline.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logmainview.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/mainwindow.cpp

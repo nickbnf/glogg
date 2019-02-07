@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FiltersDialog</class>
- <widget class="QDialog" name="FiltersDialog">
+ <class>HighlightersDialog</class>
+ <widget class="QDialog" name="HighlightersDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Filters</string>
+   <string>Highlighters</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
@@ -24,7 +24,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QListWidget" name="filterListWidget"/>
+          <widget class="QListWidget" name="highlighterListWidget"/>
          </item>
          <item>
           <layout class="QHBoxLayout" name="buttonsLayout">
@@ -32,9 +32,9 @@
             <number>6</number>
            </property>
            <item>
-            <widget class="QToolButton" name="addFilterButton">
+            <widget class="QToolButton" name="addHighlighterButton">
              <property name="toolTip">
-              <string>New Filter</string>
+              <string>New Highlighter</string>
              </property>
              <property name="text">
               <string/>
@@ -46,9 +46,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="removeFilterButton">
+            <widget class="QToolButton" name="removeHighlighterButton">
              <property name="toolTip">
-              <string>Delete Filter</string>
+              <string>Delete Highlighter</string>
              </property>
              <property name="text">
               <string/>
@@ -73,9 +73,9 @@
             </spacer>
            </item>
            <item>
-            <widget class="QToolButton" name="upFilterButton">
+            <widget class="QToolButton" name="upHighlighterButton">
              <property name="toolTip">
-              <string>Move Filter Up</string>
+              <string>Move Highlighter Up</string>
              </property>
              <property name="text">
               <string/>
@@ -87,9 +87,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="downFilterButton">
+            <widget class="QToolButton" name="downHighlighterButton">
              <property name="toolTip">
-              <string>Move Filter Down</string>
+              <string>Move Highlighter Down</string>
              </property>
              <property name="text">
               <string/>

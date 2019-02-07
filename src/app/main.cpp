@@ -36,7 +36,7 @@
 
 #include "configuration.h"
 #include "data/loadingstatus.h"
-#include "filterset.h"
+#include "highlighterset.h"
 #include "mainwindow.h"
 #include "persistentinfo.h"
 #include "recentfiles.h"
@@ -194,8 +194,8 @@ int main( int argc, char* argv[] )
                                              "session" );
     GetPersistentInfo().registerPersistable( std::make_unique<Configuration>(),
                                              "settings" );
-    GetPersistentInfo().registerPersistable( std::make_unique<FilterSet>(),
-                                             "filterSet" );
+    GetPersistentInfo().registerPersistable( std::make_unique<HighlighterSet>(),
+                                             "HighlighterSet" );
     GetPersistentInfo().registerPersistable( std::make_unique<SavedSearches>(),
                                              "savedSearches" );
     GetPersistentInfo().registerPersistable( std::make_unique<RecentFiles>(),

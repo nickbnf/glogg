@@ -22,7 +22,8 @@
 
 #include <memory>
 
-#include <QHash>
+#include <unordered_map>
+
 #include <QSettings>
 
 class Persistable;
@@ -38,13 +39,13 @@ class PersistentInfo {
     // settings if needed. Must be called before any other function.
     void migrateAndInit( SettingsStorage storage = Common );
     // Register a Persistable
-    void registerPersistable(std::unique_ptr<Persistable> object, const char *name );
+    void registerPersistable( std::unique_ptr<Persistable> object, const char* name );
     // Get a Persistable (or NULL if it doesn't exist)
     Persistable& getPersistable( const char* name ) const;
     // Save a persistable to its permanent storage
-    void save(const char *name ) const;
+    void save( const char* name ) const;
     // Retrieve a persistable from permanent storage
-    void retrieve(const char *name ) const;
+    void retrieve( const char* name ) const;
 
   private:
     // Can't be constructed or copied (singleton)
@@ -69,8 +70,7 @@ PersistentInfo& GetPersistentInfo();
 
 // Global function used to get a reference to an object
 // from the PersistentInfo store
-template <typename T>
-T& Persistent( const char* name )
+template <typename T> T& Persistent( const char* name )
 {
     auto& p = GetPersistentInfo().getPersistable( name );
     return static_cast<T&>( p );

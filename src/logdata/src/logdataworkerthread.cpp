@@ -358,7 +358,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
                                 line_positions, indexingState.encodingGuess );
 
             // Update the caller for progress indication
-            const auto progress = static_cast<int>( std::floorf( ( indexingState.file_size > 0 )
+            const auto progress = static_cast<int>( std::floor( ( indexingState.file_size > 0 )
                                                     ? indexingState.pos*100.f / indexingState.file_size
                                                     : 100 ) );
             emit indexingProgressed( progress );

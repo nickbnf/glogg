@@ -64,13 +64,13 @@ endmacro()
 
 # warnings and optimization
 if(NOT MSVC)
-    ucm_add_flags(-O2 -g)
+    ucm_add_flags(-O2 -g -ffast-math)
     ucm_add_flags(-Werror -Wall -Wextra)
     ucm_add_flags(-Wnarrowing -Wshadow)
     ucm_add_flags(CXX -Wnon-virtual-dtor)
     remove_release_flag("-O3")
 else()
-    ucm_add_flags(/O2)
+    ucm_add_flags(/O2 /fp:fast)
 
     IF (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
         STRING(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

@@ -408,7 +408,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             }
 
             const int percentage 
-                = static_cast<int>( std::floorf( 100.f * ( totalProcessedLines ).get() / totalLines.get() ) );
+                = static_cast<int>( std::floor( 100.f * ( totalProcessedLines ).get() / totalLines.get() ) );
 
             if ( percentage > reportedPercentage || nbMatches > reportedMatches ) {
 

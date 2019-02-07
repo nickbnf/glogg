@@ -201,7 +201,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         // post to other thread to avoid deadlock between internal esfw lock and our mutex_
         auto signalSource = new QObject;
         QObject::connect( signalSource, &QObject::destroyed, parent_,
-                          [&]( QObject* ) { notifyOnFileAction( dir, filename, oldFilename ); },
+                          [=]( QObject* ) { notifyOnFileAction( dir, filename, oldFilename ); },
                           Qt::QueuedConnection );
         signalSource->moveToThread(parent_->thread());
         signalSource->deleteLater();

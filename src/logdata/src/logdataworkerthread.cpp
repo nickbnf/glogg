@@ -32,6 +32,7 @@
 #include "configuration.h"
 
 #include <chrono>
+#include <cmath>
 
 qint64 IndexingData::getSize() const
 {
@@ -357,9 +358,9 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
                                 line_positions, indexingState.encodingGuess );
 
             // Update the caller for progress indication
-            const auto progress = static_cast<int>( ( indexingState.file_size > 0 )
-                                                    ? indexingState.pos*100 / indexingState.file_size
-                                                    : 100 );
+            const auto progress = static_cast<int>( std::floorf( ( indexingState.file_size > 0 )
+                                                    ? indexingState.pos*100.f / indexingState.file_size
+                                                    : 100 ) );
             emit indexingProgressed( progress );
 
             indexingState.blockSem.release(block.size());

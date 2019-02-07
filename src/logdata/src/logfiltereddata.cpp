@@ -169,7 +169,7 @@ LineNumber LogFilteredData::getMatchingLineNumber( LineNumber matchNum ) const
 
 LineNumber LogFilteredData::getLineIndexNumber( LineNumber lineNumber ) const
 {
-    return findFilteredLine( lineNumber );;
+    return findFilteredLine( lineNumber );
 }
 
 // Scan the list for the 'lineNumber' passed
@@ -380,14 +380,16 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
             line = matching_lines_[lineNum.get()].lineNumber();
         }
         else {
-            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum
+                          << " matches size " << matching_lines_.size();
         }
     }
     else if ( visibility_ == MarksOnly ) {
         if ( lineNum.get() < marks_.size() )
             line = marks_.getLineMarkedByIndex( lineNum.get() );
         else
-            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum
+                          << " marks size " << marks_.size();
     }
     else {
         // Regenerate the cache if needed
@@ -397,7 +399,8 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
         if ( lineNum.get() < filteredItemsCache_.size() )
             line = filteredItemsCache_[ lineNum.get() ].lineNumber();
         else
-            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum;
+            LOG(logERROR) << "Index too big in LogFilteredData: " << lineNum
+                          << " fic size " << filteredItemsCache_.size();
     }
 
     return line;
@@ -425,6 +428,7 @@ LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
         lineIndex = lookupLineNumber( filteredItemsCache_.begin(),
                                       filteredItemsCache_.end(),
                                       lineNum );
+
     }
 
     return lineIndex;
@@ -569,5 +573,5 @@ void LogFilteredData::regenerateFilteredItemsCache() const
 
     filteredItemsCacheDirty_ = false;
 
-    LOG(logDEBUG) << "finished regenerateFilteredItemsCache";
+    LOG(logDEBUG) << "finished regenerateFilteredItemsCache, size " << filteredItemsCache_.size();
 }

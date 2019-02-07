@@ -89,12 +89,7 @@ void SearchData::getAll( LineLength* length, SearchResultArray* matches, LinesCo
 
     *length = maxLength_;
     *lines = nbLinesProcessed_;
-
-    // This is a copy (potentially slow)
-    const auto originalSize = matches->size();
-    matches->insert( matches->end(), matches_.begin() + originalSize, matches_.end() );
-
-    //*matches = matches_;
+    *matches = matches_;
 }
 
 void SearchData::setAll( LineLength length, SearchResultArray&& matches )
@@ -114,9 +109,11 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
 
     // This does a copy as we want the final array to be
     // linear.
-    const auto originalSize = matches_.size();
-    matches_.insert( std::end( matches_ ), std::begin( matches ), std::end( matches ) );
-    std::inplace_merge( matches_.begin(), matches_.begin() + originalSize, matches_.end() );
+    if ( !matches.empty() ) {
+        const auto originalSize = matches_.size();
+        matches_.insert( std::end( matches_ ), std::begin( matches ), std::end( matches ) );
+        std::inplace_merge( matches_.begin(), matches_.begin() + originalSize, matches_.end() );
+    }
 }
 
 LinesCount SearchData::getNbMatches() const
@@ -404,7 +401,6 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
             if ( percentage > reportedPercentage || nbMatches > reportedMatches ) {
 
-                LOG( logINFO ) << "Progress " << percentage;
                 emit searchProgressed( nbMatches, std::min( 99, percentage ), initialLine );
 
                 reportedPercentage = percentage;

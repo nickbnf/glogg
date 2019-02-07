@@ -163,6 +163,9 @@ SCENARIO( "filtered log data", "[logdata]") {
             }
 
             WHEN( "Add marks at matched line" ) {
+                const auto& firstMatchedLine = filtered_data->getLineString(0_lnum);
+                REQUIRE( firstMatchedLine.right(2).toStdString() == "09");
+
                 filtered_data->addMark( 9_lnum );
 
                 THEN( "Has same number of lines" ) {
@@ -233,6 +236,10 @@ SCENARIO( "filtered log data", "[logdata]") {
 
                 WHEN( "For matched line" ) {
                     auto original_line = filtered_data->getMatchingLineNumber( 1_lnum );
+
+                    const auto& firstMatchedLine = filtered_data->getLineString(1_lnum);
+                    REQUIRE( firstMatchedLine.right(2).toStdString() == "09");
+
                     THEN( "Original line is on match" ) {
                         REQUIRE( original_line == 9_lnum );
                     }

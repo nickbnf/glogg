@@ -894,7 +894,7 @@ void CrawlerWidget::setup()
              saveSplitterSizes );
 
     connect( logFilteredData_, &LogFilteredData::searchProgressed,
-            this, &CrawlerWidget::updateFilteredView );
+            this, &CrawlerWidget::updateFilteredView, Qt::QueuedConnection );
 
     // Sent load file update to MainWindow (for status update)
     connect( logData_, &LogData::loadingProgressed,

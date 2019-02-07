@@ -12,8 +12,8 @@ target_link_libraries(glogg_tests ${TEST_LIBS})
 set_property(TARGET glogg_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_executable(file_write_helper
-	file_write_helper.cpp
-	file_write_helper.h
+        file_write_helper.cpp
+        file_write_helper.h
 )
 
 target_link_libraries(file_write_helper ${TEST_LIBS})

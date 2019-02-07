@@ -52,6 +52,7 @@ class FileWatcher : public QObject {
   private slots:
     void fileChangedOnDisk( const QString& );
     void checkWatches();
+    void notifyFileChangedOnDisk();
 
   private:
     // Create an empty object
@@ -64,7 +65,10 @@ class FileWatcher : public QObject {
     FileWatcher& operator=( const FileWatcher& ) = delete;
     FileWatcher& operator=( FileWatcher&& ) = delete;
 
-    std::unique_ptr<QTimer> checkTimer_;
+    QTimer* checkTimer_;
+    QTimer* notificationTimer_;
+    std::vector<QString> changes_;
+
     std::unique_ptr<EfswFileWatcher, EfswFileWatcherDeleter> efswWatcher_;
 };
 

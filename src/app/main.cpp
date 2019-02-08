@@ -17,6 +17,25 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Copyright (C) 2016 -- 2019 Anton Filimonov and other contributors
+ *
+ * This file is part of klogg.
+ *
+ * klogg is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * klogg is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifdef KLOGG_USE_TBB_MALLOC
 #include <tbb/tbbmalloc_proxy.h>
 #endif
@@ -246,7 +265,7 @@ static void print_version()
 #ifdef GLOGG_COMMIT
     std::cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "(" GLOGG_GIT_VERSION ")\n";
 #endif
-    std::cout << "Copyright (C) 2017 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
+    std::cout << "Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
     std::cout << "This is free software.  You may redistribute copies of it under the terms of\n";
     std::cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
     std::cout << "There is NO WARRANTY, to the extent permitted by law.\n";

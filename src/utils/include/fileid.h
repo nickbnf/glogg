@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other
- * contributors
+ * Copyright (C) 2019 Anton Filimonov
  *
  * This file is part of klogg.
  *

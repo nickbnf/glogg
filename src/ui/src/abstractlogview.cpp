@@ -1133,21 +1133,20 @@ void AbstractLogView::updateSearchLimits()
     textAreaCache_.invalid_ = true;
     update();
 
-    emit changeSearchLimits(displayLineNumber(searchStart_) - 1_lcount,
-                         displayLineNumber(searchEnd_) - 1_lcount);
+    emit changeSearchLimits(searchStart_, searchEnd_);
 }
 
 void AbstractLogView::setSearchStart()
 {
     const auto selectedLine = selection_.selectedLine();
-    searchStart_ = selectedLine.has_value() ? *selectedLine : 1_lnum;
+    searchStart_ = selectedLine.has_value() ? displayLineNumber(*selectedLine) - 1_lcount : 0_lnum;
     updateSearchLimits();
 }
 
 void AbstractLogView::setSearchEnd()
 {
     const auto selectedLine = selection_.selectedLine();
-    searchEnd_ = selectedLine.has_value() ? *selectedLine  + 1_lcount
+    searchEnd_ = selectedLine.has_value() ? displayLineNumber(*selectedLine)
                                           : LineNumber( logData->getNbLine().get() );
     updateSearchLimits();
 }
@@ -1281,8 +1280,8 @@ void AbstractLogView::forceRefresh()
 
 void AbstractLogView::setSearchLimits( LineNumber startLine, LineNumber endLine )
 {
-    searchStart_ = lineIndex( startLine );
-    searchEnd_ = lineIndex( endLine );
+    searchStart_ = startLine;
+    searchEnd_ = endLine;
 
     textAreaCache_.invalid_ = true;
     update();
@@ -1536,7 +1535,7 @@ void AbstractLogView::createMenu()
     connect( setSearchEndAction_, &QAction::triggered,
             [this](auto){ this->setSearchEnd(); } );
 
-    clearSearchLimitAction_ = new QAction( tr("Clear search limit"), this );
+    clearSearchLimitAction_ = new QAction( tr("Clear search limits"), this );
     connect( clearSearchLimitAction_, &QAction::triggered,
             [this](auto){ this->clearSearchLimits(); } );
 
@@ -1692,6 +1691,9 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     // used for mouse calculation etc...
     leftMarginPx_ = contentStartPosX + SEPARATOR_WIDTH;
 
+    const auto searchStartIndex = lineIndex(searchStart_);
+    const auto searchEndIndex = lineIndex(searchEnd_);
+
     // Then draw each line
     for (auto i = 0_lcount; i < nbLines; ++i) {
         const auto line_index = firstLine + i;
@@ -1716,8 +1718,8 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
         }
         else {
             // Use the default colors
-            if ( line_index < searchStart_ ||
-                    line_index >= searchEnd_ ) {
+            if ( line_index < searchStartIndex ||
+                    line_index >= searchEndIndex ) {
                  foreColor = palette.brush( QPalette::Disabled, QPalette::Text ).color();
             }
             else {

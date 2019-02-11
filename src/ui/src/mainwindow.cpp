@@ -788,16 +788,15 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
 #ifdef Q_OS_WIN
     const auto isMaximized = isMaximized_;
 
-    for ( QWindow* appWindow : QGuiApplication::allWindows() ) {
-        appWindow->show();
-        appWindow->raise();
-        appWindow->requestActivate();
-    }
-
     if ( isMaximized ) {
-        QTimer::singleShot(50, [this] { setWindowState( windowState() | Qt::WindowMaximized ); } );
+        showMaximized();
+    }
+    else {
+        showNormal();
     }
 
+    activateWindow();
+    raise();
 #else
     Qt::WindowFlags window_flags = windowFlags();
     window_flags |= Qt::WindowStaysOnTopHint;

@@ -1367,7 +1367,7 @@ void AbstractLogView::createMenu()
 
     findPreviousAction_ = new QAction( tr("Find &previous"), this );
     findPreviousAction_->setShortcut( tr("#")  );
-    findPreviousAction_->setStatusTip( tr("Find the previous occurence") );
+    findPreviousAction_->setStatusTip( tr("Find the previous occurrence") );
     connect( findPreviousAction_, SIGNAL(triggered()),
             this, SLOT( findPreviousSelected() ) );
 

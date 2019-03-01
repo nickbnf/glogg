@@ -167,14 +167,14 @@ class LogFilteredData : public AbstractLogData {
     void regenerateFilteredItemsCache() const;
     // start_index can be passed in as an optimization when finding the item.
     // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was inserted.
-    void insertIntoFilteredItemsCache( size_t start_index, FilteredItem item );
-    void insertIntoFilteredItemsCache( FilteredItem item );
+    void insertIntoFilteredItemsCache( size_t start_index, FilteredItem &&item );
+    void insertIntoFilteredItemsCache( FilteredItem &&item );
     // Insert entries from matching_lines_ into filteredItemsCache_ starting by start_index.
     void insertMatchesIntoFilteredItemsCache( size_t start_index );
     // remove_index can be passed in as an optimization when finding the item.
     // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was removed.
-    void removeFromFilteredItemsCache( size_t remove_index, FilteredItem item );
-    void removeFromFilteredItemsCache( FilteredItem item );
+    void removeFromFilteredItemsCache( size_t remove_index, const FilteredItem &item );
+    void removeFromFilteredItemsCache( const FilteredItem &item );
     void removeAllFromFilteredItemsCache( FilteredLineType type );
 
     // update maxLengthMarks_ when a Mark was removed.
@@ -206,11 +206,8 @@ inline LogFilteredData::FilteredLineType operator~(LogFilteredData::FilteredLine
 // of pointer (less small allocations and no RTTI).
 class LogFilteredData::FilteredItem {
   public:
-    // A default ctor seems to be necessary for QVector
-    FilteredItem()
-    { lineNumber_ = 0; }
     FilteredItem( LineNumber lineNumber, FilteredLineType type )
-    { lineNumber_ = lineNumber; type_ = type; }
+    : lineNumber_{ lineNumber }, type_{ type } {}
 
     LineNumber lineNumber() const
     { return lineNumber_; }
@@ -225,7 +222,7 @@ class LogFilteredData::FilteredItem {
     { return type_ &= ~type; }
 
     bool operator <( const LogFilteredData::FilteredItem& other ) const
-    { return lineNumber_ < other.lineNumber_; }
+    { return *this < other.lineNumber_; }
 
     bool operator <( const LineNumber& lineNumber ) const
     { return lineNumber_ < lineNumber; }

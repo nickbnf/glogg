@@ -45,7 +45,6 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
     /* Prevent any more searching */
     maxLength_ = 0;
     maxLengthMarks_ = 0;
-    searchDone_ = true;
     visibility_ = MarksAndMatches;
 
     filteredItemsCacheDirty_ = true;
@@ -67,8 +66,6 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     nbLinesProcessed_ = 0;
 
     sourceLogData_ = logData;
-
-    searchDone_ = false;
 
     visibility_ = MarksAndMatches;
 
@@ -280,7 +277,6 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress, qint6
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;
 
-    // searchDone_ = true;
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 

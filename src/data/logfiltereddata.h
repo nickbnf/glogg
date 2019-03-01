@@ -140,7 +140,6 @@ class LogFilteredData : public AbstractLogData {
 
     const LogData* sourceLogData_;
     QRegularExpression currentRegExp_;
-    bool searchDone_;
     int maxLength_;
     int maxLengthMarks_;
     // Number of lines of the LogData that has been searched for:

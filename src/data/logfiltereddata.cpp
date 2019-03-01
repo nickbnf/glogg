@@ -24,7 +24,6 @@
 #include "log.h"
 
 #include <QString>
-#include <cassert>
 #include <limits>
 
 #include "utils.h"

@@ -23,8 +23,9 @@
 
 #include "log.h"
 
+#include <QtGlobal>
 #include <QString>
-#include <cassert>
+#include <algorithm>
 #include <limits>
 #include <utility>
 
@@ -295,7 +296,7 @@ void LogFilteredData::handleSearchProgressed( int nbMatches, int progress, qint6
         << nbMatches << " progress=" << progress;
 
     // searchDone_ = true;
-    assert( nbMatches >= 0 );
+    Q_ASSERT( nbMatches >= 0 );
 
     size_t start_index = matching_lines_.size();
 
@@ -520,7 +521,7 @@ void LogFilteredData::insertMatchesIntoFilteredItemsCache( size_t start_index )
     using std::end;
     using std::next;
 
-    assert( start_index <= matching_lines_.size() );
+    Q_ASSERT( start_index <= matching_lines_.size() );
 
     if ( visibility_ != MarksAndMatches ) {
         // this is invalidated and will be regenerated when we need it
@@ -529,7 +530,7 @@ void LogFilteredData::insertMatchesIntoFilteredItemsCache( size_t start_index )
         return;
     }
 
-    assert( start_index <= filteredItemsCache_.size() );
+    Q_ASSERT( start_index <= filteredItemsCache_.size() );
 
     filteredItemsCache_.reserve( matching_lines_.size() + marks_.size() );
     // (it's an overestimate but probably not by much so it's fine)
@@ -542,7 +543,7 @@ void LogFilteredData::insertMatchesIntoFilteredItemsCache( size_t start_index )
         if ( filteredIt == end( filteredItemsCache_ ) || filteredIt->lineNumber() > matchesIt->lineNumber() ) {
             filteredIt = filteredItemsCache_.emplace( filteredIt, matchesIt->lineNumber(), Match );
         } else {
-            assert( filteredIt->lineNumber() == matchesIt->lineNumber() );
+            Q_ASSERT( filteredIt->lineNumber() == matchesIt->lineNumber() );
             filteredIt->add( Match );
         }
     }

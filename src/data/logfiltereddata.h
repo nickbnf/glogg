@@ -80,9 +80,13 @@ class LogFilteredData : public AbstractLogData {
     // Returns the number of marks (independently of the visibility)
     LineNumber getNbMarks() const;
 
+    // Flags indicating why the line is filtered.
+    enum FilteredLineType {
+        Match = 0x1,
+        Mark  = 0x2,
+    };
     // Returns the reason why the line at the passed index is in the filtered
-    // data.  It can be because it is either a mark or a match.
-    enum FilteredLineType { Match, Mark };
+    // data.
     FilteredLineType filteredLineTypeByIndex( int index ) const;
 
     // Marks interface (delegated to a Marks object)
@@ -152,7 +156,6 @@ class LogFilteredData : public AbstractLogData {
     // when visibility_ == MarksAndMatches
     // (QVector store actual objects instead of pointers)
     mutable std::vector<FilteredItem> filteredItemsCache_;
-    mutable bool filteredItemsCacheDirty_;
 
     LogFilteredDataWorkerThread workerThread_;
     Marks marks_;
@@ -162,7 +165,38 @@ class LogFilteredData : public AbstractLogData {
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
     void regenerateFilteredItemsCache() const;
+    // start_index can be passed in as an optimization when finding the item.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was inserted.
+    void insertIntoFilteredItemsCache( size_t start_index, FilteredItem &&item );
+    void insertIntoFilteredItemsCache( FilteredItem &&item );
+    // Insert entries from matching_lines_ into filteredItemsCache_ starting by start_index.
+    void insertMatchesIntoFilteredItemsCache( size_t start_index );
+    // remove_index can be passed in as an optimization when finding the item.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was removed.
+    void removeFromFilteredItemsCache( size_t remove_index, const FilteredItem &item );
+    void removeFromFilteredItemsCache( const FilteredItem &item );
+    void removeAllFromFilteredItemsCache( FilteredLineType type );
+
+    // update maxLengthMarks_ when a Mark was removed.
+    void updateMaxLengthMarks( qint64 removed_line );
 };
+
+inline LogFilteredData::FilteredLineType& operator|=(LogFilteredData::FilteredLineType& a, LogFilteredData::FilteredLineType b)
+{
+    a = LogFilteredData::FilteredLineType( a | b );
+    return a;
+}
+
+inline LogFilteredData::FilteredLineType& operator&=(LogFilteredData::FilteredLineType& a, LogFilteredData::FilteredLineType b)
+{
+    a = LogFilteredData::FilteredLineType( a & b );
+    return a;
+}
+
+inline LogFilteredData::FilteredLineType operator~(LogFilteredData::FilteredLineType a)
+{
+    return LogFilteredData::FilteredLineType( ~static_cast<int>( a ) );
+}
 
 // A class representing a Mark or Match.
 // Conceptually it should be a base class for Mark and MatchingLine,
@@ -172,19 +206,23 @@ class LogFilteredData : public AbstractLogData {
 // of pointer (less small allocations and no RTTI).
 class LogFilteredData::FilteredItem {
   public:
-    // A default ctor seems to be necessary for QVector
-    FilteredItem()
-    { lineNumber_ = 0; }
     FilteredItem( LineNumber lineNumber, FilteredLineType type )
-    { lineNumber_ = lineNumber; type_ = type; }
+    : lineNumber_{ lineNumber }, type_{ type } {}
 
     LineNumber lineNumber() const
     { return lineNumber_; }
     FilteredLineType type() const
     { return type_; }
 
+    void add( FilteredLineType type )
+    { type_ |= type; }
+
+    // Returns whether any type-flag is left.
+    bool remove( FilteredLineType type )
+    { return type_ &= ~type; }
+
     bool operator <( const LogFilteredData::FilteredItem& other ) const
-    { return lineNumber_ < other.lineNumber_; }
+    { return *this < other.lineNumber_; }
 
     bool operator <( const LineNumber& lineNumber ) const
     { return lineNumber_ < lineNumber; }

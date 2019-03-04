@@ -32,7 +32,7 @@ Marks::Marks() : marks_()
 {
 }
 
-void Marks::addMark( qint64 line, QChar mark )
+int Marks::addMark( qint64 line, QChar mark )
 {
     // Look for the index immediately before
     int index;
@@ -50,6 +50,8 @@ void Marks::addMark( qint64 line, QChar mark )
 
     // 'mark' is not used yet
     mark = mark;
+
+    return index;
 }
 
 qint64 Marks::getMark( QChar mark ) const
@@ -66,20 +68,29 @@ bool Marks::isLineMarked( qint64 line ) const
     return lookupLineNumber< QList<Mark> >( marks_, line, &index );
 }
 
-void Marks::deleteMark( QChar mark )
+int Marks::findMark( QChar mark )
 {
     // 'mark' is not used yet
     mark = mark;
+
+    return -1;
 }
 
-void Marks::deleteMark( qint64 line )
+void Marks::deleteMarkAt( int index )
 {
-    int index;
+    marks_.removeAt( index );
+}
+
+int Marks::deleteMark( qint64 line )
+{
+    int index = -1;
 
     if ( lookupLineNumber< QList<Mark> >( marks_, line, &index ) )
     {
-        marks_.removeAt( index );
+        deleteMarkAt( index );
     }
+
+    return index;
 }
 
 void Marks::clear()

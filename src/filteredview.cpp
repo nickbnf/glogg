@@ -61,7 +61,7 @@ AbstractLogView::LineType FilteredView::lineType( int lineNumber ) const
 {
     LogFilteredData::FilteredLineType type =
         logFilteredData_->filteredLineTypeByIndex( lineNumber );
-    if ( type == LogFilteredData::Mark )
+    if ( type & LogFilteredData::Mark ) // If both Mark and Match, Mark wins
         return Marked;
     else
         return Match;

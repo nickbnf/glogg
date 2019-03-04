@@ -49,16 +49,22 @@ class Marks {
     // Add a mark at the given line, optionally identified by the given char
     // If a mark for this char already exist, the previous one is replaced.
     // It will happily add marks anywhere, even at stupid indexes.
-    void addMark( qint64 line, QChar mark = QChar() );
+    // Returns the index at which the mark was inserted,
+    // such that getLineMarkedByIndex( addMark( line ) ) == line.
+    int addMark( qint64 line, QChar mark = QChar() );
     // Get the (unique) mark identified by the passed char.
     qint64 getMark( QChar mark ) const;
     // Returns wheither the passed line has a mark on it.
     bool isLineMarked( qint64 line ) const;
-    // Delete the mark identified by the passed char.
-    void deleteMark( QChar mark );
+    // Find a mark.
+    // Returns the index of the mark or -1 if it was not found.
+    int findMark( QChar mark );
+    // Delete the mark at an index.
+    void deleteMarkAt( int index );
     // Delete the mark present on the passed line or do nothing if there is
     // none.
-    void deleteMark( qint64 line );
+    // Returns the index where the mark used to be.
+    int deleteMark( qint64 line );
     // Get the line marked identified by the index (in this list) passed.
     qint64 getLineMarkedByIndex( int index ) const
     { return marks_[index].lineNumber(); }

@@ -256,7 +256,7 @@ add_custom_target(tbb_def_files DEPENDS tbb.def tbbmalloc.def)
   endif()
 
   if (UNIX)
-      target_compile_options(tbb_static PRIVATE -Wno-non-virtual-dtor)
+      target_compile_options(tbb_static PRIVATE -w)
   endif()
 
 #endif()

@@ -36,11 +36,13 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 #include "blockpool.h"
 #include "linetypes.h"
+
+#include "tbb/enumerable_thread_specific.h"
 
 // This class is a compressed storage backend for LinePositionArray
 // It emulates the interface of a vector, but take advantage of the nature
@@ -98,39 +100,44 @@
 #ifndef COMPRESSEDLINESTORAGE_H
 #define COMPRESSEDLINESTORAGE_H
 
-//template<int BLOCK_SIZE = 128>
-class CompressedLinePositionStorage
-{
+// template<int BLOCK_SIZE = 128>
+class CompressedLinePositionStorage {
   public:
     // Default constructor
     CompressedLinePositionStorage()
-        : block_index_ {0}
-        , long_block_index_ {0}
-        , first_long_line_{std::numeric_limits<LineNumber::UnderlyingType>::max()}
+        : block_index_{ 0 }
+        , long_block_index_{ 0 }
+        , first_long_line_{ std::numeric_limits<LineNumber::UnderlyingType>::max() }
     {
     }
 
     // Copy constructor would be slow, delete!
     CompressedLinePositionStorage( const CompressedLinePositionStorage& orig ) = delete;
-    CompressedLinePositionStorage& operator=(
-            const CompressedLinePositionStorage& orig ) = delete;
-
+    CompressedLinePositionStorage& operator=( const CompressedLinePositionStorage& orig ) = delete;
 
     // Move constructor
     CompressedLinePositionStorage( CompressedLinePositionStorage&& orig );
     // Move assignement
-    CompressedLinePositionStorage& operator=(
-            CompressedLinePositionStorage&& orig );
+    CompressedLinePositionStorage& operator=( CompressedLinePositionStorage&& orig );
 
     // Append the passed end-of-line to the storage
     void append( LineOffset pos );
-    void push_back( LineOffset pos ) { append( pos ); }
+    void push_back( LineOffset pos )
+    {
+        append( pos );
+    }
 
     // Size of the array
-    LinesCount size() const { return nb_lines_; }
+    LinesCount size() const
+    {
+        return nb_lines_;
+    }
 
     // Element at index
-    LineOffset at( uint32_t i ) const { return at( LineNumber( i ) ); }
+    LineOffset at( uint32_t i ) const
+    {
+        return at( LineNumber( i ) );
+    }
     LineOffset at( LineNumber i ) const;
 
     // Add one list to the other
@@ -139,9 +146,9 @@ class CompressedLinePositionStorage
     // Pop the last element of the storage
     void pop_back();
 
-    using BlockOffset = fluent::NamedType<uint64_t, struct block_offset,
-                            fluent::Incrementable, fluent::Addable,
-                            fluent::Comparable>;
+    using BlockOffset = fluent::NamedType<uint64_t, struct block_offset, fluent::Incrementable,
+                                          fluent::Addable, fluent::Comparable>;
+
   private:
     // Utility for move ctor/assign
     void move_from( CompressedLinePositionStorage&& orig );
@@ -181,15 +188,18 @@ class CompressedLinePositionStorage
     // This is to speed up consecutive reads (whole page)
     struct Cache {
         Cache()
-          : index{std::numeric_limits<uint32_t>::max() - 1U}
-          , position{0}
-          , offset{0}
-        {}
+            : index{ std::numeric_limits<uint32_t>::max() - 1U }
+            , position{ 0 }
+            , offset{ 0 }
+        {
+        }
 
         LineNumber index;
         LineOffset position;
         BlockOffset offset;
     };
+
+    mutable tbb::enumerable_thread_specific<Cache> cache_;
 };
 
 #endif

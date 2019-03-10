@@ -253,8 +253,12 @@ add_custom_target(tbb_def_files DEPENDS tbb.def tbbmalloc.def)
 
   if (UNIX AND NOT APPLE)
     target_link_libraries(tbb_static PUBLIC pthread dl)
-    target_compile_options(tbb_static PRIVATE -Wno-non-virtual-dtor)
   endif()
+
+  if (UNIX)
+      target_compile_options(tbb_static PRIVATE -Wno-non-virtual-dtor)
+  endif()
+
 #endif()
 #
 #if (TBB_BUILD_SHARED)

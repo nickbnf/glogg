@@ -43,6 +43,7 @@
 #include "highlightersdialog.h"
 
 #include <QColorDialog>
+#include <utility>
 
 static const char* DEFAULT_PATTERN = "New Highlighter";
 static const bool    DEFAULT_IGNORE_CASE = false;
@@ -165,19 +166,26 @@ void HighlightersDialog::on_buttonBox_clicked( QAbstractButton* button )
     LOG(logDEBUG) << "on_buttonBox_clicked()";
 
     QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
-    if (   ( role == QDialogButtonBox::AcceptRole )
-        || ( role == QDialogButtonBox::ApplyRole ) ) {
-        // Copy the highlighter set and persist it to disk
-        auto &persistentHighlighterSet = Persistable::getUnsynced<HighlighterSet>();
-        persistentHighlighterSet = highlighterSet_;
-        persistentHighlighterSet.save();
-        emit optionsChanged();
+    if ( role == QDialogButtonBox::RejectRole ) {
+        reject();
+        return;
     }
 
-    if ( role == QDialogButtonBox::AcceptRole )
+    // persist it to disk
+    auto &persistentHighlighterSet = Persistable::getUnsynced<HighlighterSet>();
+    if ( role == QDialogButtonBox::AcceptRole ) {
+        persistentHighlighterSet = std::move( highlighterSet_ );
         accept();
-    else if ( role == QDialogButtonBox::RejectRole )
-        reject();
+    }
+    else if ( role == QDialogButtonBox::ApplyRole ) {
+        persistentHighlighterSet = highlighterSet_;
+    }
+    else {
+        LOG(logERROR) << "unhandled role : " << role;
+        return;
+    }
+    persistentHighlighterSet.save();
+    emit optionsChanged();
 }
 
 void HighlightersDialog::on_foreColorButton_clicked()

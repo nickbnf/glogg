@@ -68,10 +68,10 @@ bool isVersionNewer( const QString& current_version, const QString& new_version 
         return std::make_pair( version, version_string.rightRef( tweak_index + 1 ).toUInt() );
     };
 
-    const auto& [ old_version, old_tweak ] = parseVersion( current_version );
-    const auto& [ next_version, next_tweak ] = parseVersion( new_version );
+    const auto old = parseVersion( current_version );
+    const auto next = parseVersion( new_version );
 
-    return next_version > old_version || ( next_version == old_version && next_tweak > old_tweak );
+    return next > old;
 }
 
 }; // namespace
@@ -138,21 +138,21 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
         const auto latestJson = QJsonDocument::fromJson( rawReply );
         const auto latestVersionMap = latestJson.toVariant().toMap();
 
-        const auto [ latestVersion, url ] = [&]() {
-            const auto stableVersions = latestVersionMap.value( "releases" ).toList();
+        QString latestVersion;
+        QString url;
+        const auto stableVersions = latestVersionMap.value( "releases" ).toList();
 
-            if ( std::any_of( stableVersions.begin(), stableVersions.end(),
-                              [&currentVersion]( const auto& version ) {
-                                  return version.toString() == currentVersion;
-                              } ) ) {
-                return std::make_pair( latestVersionMap.value( "stable" ).toString(),
-                                       latestVersionMap.value( "stable_url" ).toString() );
-            }
-            else {
-                return std::make_pair( latestVersionMap.value( "ci" ).toString(),
-                                       latestVersionMap.value( "ci_url" ).toString() + OS_SUFFIX );
-            }
-        }();
+        if ( std::any_of( stableVersions.begin(), stableVersions.end(),
+                          [&currentVersion]( const auto& version ) {
+                              return version.toString() == currentVersion;
+                          } ) ) {
+            latestVersion = latestVersionMap.value( "stable" ).toString();
+            url = latestVersionMap.value( "stable_url" ).toString();
+        }
+        else {
+            latestVersion = latestVersionMap.value( "ci" ).toString();
+            url = latestVersionMap.value( "ci_url" ).toString();
+        }
 
         LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "
                         << latestVersion << ", url " << url;

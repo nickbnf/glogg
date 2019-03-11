@@ -1334,17 +1334,14 @@ OptionalLineNumber AbstractLogView::convertCoordToLine(int yPos) const
 // This function ensure the pos exists in the file.
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
-    auto line = convertCoordToLine( pos.y() );
-    if ( !line.has_value() ) {
-        line = LineNumber{};
-    }
-    if ( *line >= logData->getNbLine() )
+    auto line = convertCoordToLine( pos.y() ).value_or( LineNumber{} );
+    if ( line >= logData->getNbLine() )
         line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
 
     // Determine column in screen space and convert it to file space
     int column = firstCol + ( pos.x() - leftMarginPx_ ) / charWidth_;
 
-    const auto length = static_cast<decltype(column)>( logData->getLineLength( *line ).get() );
+    const auto length = static_cast<decltype(column)>( logData->getLineLength( line ).get() );
 
     if ( column >= length )
         column = length - 1;
@@ -1353,7 +1350,7 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 
     LOG(logDEBUG4) << "AbstractLogView::convertCoordToFilePos col="
         << column << " line=" << line;
-    QPoint point( column, line->get() );
+    QPoint point( column, line.get() );
 
     return point;
 }

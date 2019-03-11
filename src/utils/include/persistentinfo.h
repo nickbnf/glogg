@@ -39,10 +39,6 @@
 #ifndef PERSISTENTINFO_H
 #define PERSISTENTINFO_H
 
-#include <memory>
-
-#include <unordered_map>
-
 #include <QSettings>
 
 class Persistable;
@@ -52,14 +48,7 @@ class Persistable;
 // then be saved/loaded.
 class PersistentInfo {
   public:
-    // Register a Persistable
-    void registerPersistable( std::unique_ptr<Persistable> object, const char* name );
-    // Get a Persistable (or NULL if it doesn't exist)
-    Persistable& getPersistable( const char* name );
-    // Save a persistable to its permanent storage
-    void save( const char* name );
-    // Retrieve a persistable from permanent storage
-    void retrieve( const char* name );
+    static QSettings& getSettings();
 
   private:
     struct ConfigFileParameters {
@@ -74,28 +63,6 @@ class PersistentInfo {
     // Can't be constructed or copied (singleton)
     PersistentInfo( ConfigFileParameters config = {} );
 
-    PersistentInfo( const PersistentInfo& ) = delete;
-    PersistentInfo& operator=( const PersistentInfo& ) = delete;
-    PersistentInfo( PersistentInfo&& ) = delete;
-    PersistentInfo& operator=( PersistentInfo&& ) = delete;
-
-    // List of persistables
-    std::unordered_map<const char*, std::unique_ptr<Persistable>> objectList_;
-
-    // Qt setting object
     QSettings settings_;
-
-    // allow this function to create one instance
-    friend PersistentInfo& GetPersistentInfo();
 };
-
-PersistentInfo& GetPersistentInfo();
-
-// Global function used to get a reference to an object
-// from the PersistentInfo store
-template <typename T> T& Persistent( const char* name )
-{
-    auto& p = GetPersistentInfo().getPersistable( name );
-    return static_cast<T&>( p );
-}
 #endif

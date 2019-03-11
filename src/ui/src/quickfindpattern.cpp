@@ -43,7 +43,6 @@
 
 #include "quickfindpattern.h"
 
-#include "persistentinfo.h"
 #include "configuration.h"
 
 QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
@@ -59,7 +58,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
 
     // Determine the type of regexp depending on the config
     QString searchPattern;
-    switch ( Persistent<Configuration>( "settings" ).quickfindRegexpType() ) {
+    switch ( Persistable::getUnsynced<Configuration>().quickfindRegexpType() ) {
         case Wildcard:
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
             searchPattern = QRegularExpression::wildcardToRegularExpression(pattern);

@@ -38,8 +38,6 @@
 
 #include "log.h"
 
-#include "configuration.h"
-#include "persistentinfo.h"
 #include "highlighterset.h"
 
 #include "highlightersdialog.h"
@@ -60,8 +58,7 @@ HighlightersDialog::HighlightersDialog( QWidget* parent ) : QDialog( parent )
 
     // Reload the highlighter list from disk (in case it has been changed
     // by another glogg instance) and copy it to here.
-    GetPersistentInfo().retrieve( "HighlighterSet" );
-    highlighterSet_ = Persistent<HighlighterSet>( "HighlighterSet" );
+    highlighterSet_ = Persistable::getSynced<HighlighterSet>();
 
     populateHighlighterList();
 
@@ -171,8 +168,9 @@ void HighlightersDialog::on_buttonBox_clicked( QAbstractButton* button )
     if (   ( role == QDialogButtonBox::AcceptRole )
         || ( role == QDialogButtonBox::ApplyRole ) ) {
         // Copy the highlighter set and persist it to disk
-        Persistent<HighlighterSet>( "HighlighterSet" ) = highlighterSet_;
-        GetPersistentInfo().save( "HighlighterSet" );
+        auto &persistentHighlighterSet = Persistable::getUnsynced<HighlighterSet>();
+        persistentHighlighterSet = highlighterSet_;
+        persistentHighlighterSet.save();
         emit optionsChanged();
     }
 

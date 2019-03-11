@@ -20,6 +20,8 @@
 #ifndef PERSISTABLE_H
 #define PERSISTABLE_H
 
+#include <type_traits>
+
 class QSettings;
 
 // Must be implemented by classes which could be saved to persistent
@@ -28,6 +30,24 @@ class Persistable {
   public:
     virtual ~Persistable() = default;
 
+    void save() const;
+    void retrieve();
+
+    template<typename T>
+    static T& getUnsynced() {
+        static_assert( std::is_base_of<Persistable, T>::value, "" );
+        static T persistable;
+        return persistable;
+    }
+
+    template<typename T>
+    static T& getSynced() {
+        T& persistable = getUnsynced<T>();
+        persistable.retrieve();
+        return persistable;
+    }
+
+  protected:
     // Must be implemented to save/retrieve from Qt Settings
     virtual void saveToStorage( QSettings& settings ) const = 0;
     virtual void retrieveFromStorage( QSettings& settings ) = 0;

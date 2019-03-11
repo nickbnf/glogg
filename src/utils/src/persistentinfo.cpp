@@ -49,8 +49,6 @@
 #include "log.h"
 #include "persistable.h"
 
-{
-
 
 PersistentInfo::ConfigFileParameters::ConfigFileParameters()
 {
@@ -72,43 +70,22 @@ PersistentInfo::PersistentInfo( ConfigFileParameters config )
 {
 }
 
-// Friend function to construct/get the singleton
-PersistentInfo& GetPersistentInfo()
+QSettings& PersistentInfo::getSettings()
 {
     static PersistentInfo pInfo;
-    return pInfo;
+    return pInfo.settings_;
 }
 
-void PersistentInfo::registerPersistable( std::unique_ptr<Persistable> object, const char* name )
+void Persistable::save() const
 {
-    objectList_.emplace( name, std::move(object) );
+    auto& settings = PersistentInfo::getSettings();
+    saveToStorage( settings );
+    settings.sync();
 }
 
-Persistable& PersistentInfo::getPersistable( const char* name )
+void Persistable::retrieve()
 {
-    auto& object = objectList_[name];
-
-    return *object.get();
-}
-
-void PersistentInfo::save( const char* name )
-{
-    if ( objectList_.count( name ) )
-        objectList_[name]->saveToStorage( settings_ );
-    else
-        LOG( logERROR ) << "Unregistered persistable " << name;
-
-    // Sync to ensure it is propagated to other processes
-    settings_.sync();
-}
-
-void PersistentInfo::retrieve( const char* name )
-{
-    // Sync to ensure it has been propagated from other processes
-    settings_.sync();
-
-    if ( objectList_.count( name ) )
-        objectList_[name]->retrieveFromStorage( settings_ );
-    else
-        LOG( logERROR ) << "Unregistered persistable " << name;
+    auto& settings = PersistentInfo::getSettings();
+    settings.sync();
+    retrieveFromStorage( settings );
 }

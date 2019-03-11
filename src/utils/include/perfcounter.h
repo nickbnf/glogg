@@ -19,7 +19,7 @@
 
 #include <chrono>
 
-// This class is a counter that remembers the number of events occuring within
+// This class is a counter that remembers the number of events occurring within
 // one second it can be used for performance measurement (e.g. FPS)
 
 class PerfCounter {
@@ -46,7 +46,7 @@ class PerfCounter {
         }
     }
 
-    // Read and reset the counter. Returns the number of events that occured in
+    // Read and reset the counter. Returns the number of events that occurred in
     // the previous second.
     uint32_t readAndReset()
     {

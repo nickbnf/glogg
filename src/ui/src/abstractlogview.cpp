@@ -1043,7 +1043,7 @@ void AbstractLogView::addToSearch()
     }
 }
 
-// Find next occurence of the selected text (*)
+// Find next occurrence of the selected text (*)
 void AbstractLogView::findNextSelected()
 {
     // Use the selected 'word' and search forward
@@ -1530,13 +1530,13 @@ void AbstractLogView::createMenu()
     // as keys event anyway (in keyPressEvent).
     findNextAction_ = new QAction(tr("Find &next"), this);
     findNextAction_->setShortcut( Qt::Key_Asterisk );
-    findNextAction_->setStatusTip( tr("Find the next occurence") );
+    findNextAction_->setStatusTip( tr("Find the next occurrence") );
     connect( findNextAction_, &QAction::triggered,
             [this](auto){ this->findNextSelected(); } );
 
     findPreviousAction_ = new QAction( tr("Find &previous"), this );
     findPreviousAction_->setShortcut( tr("/")  );
-    findPreviousAction_->setStatusTip( tr("Find the previous occurence") );
+    findPreviousAction_->setStatusTip( tr("Find the previous occurrence") );
     connect( findPreviousAction_, &QAction::triggered,
              [this](auto){ this->findPreviousSelected(); } );
 

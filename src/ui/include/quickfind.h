@@ -100,7 +100,7 @@ class QuickFind : public QObject
     void setSearchStartPoint( QPoint startPoint );
 
     // Used for incremental searches
-    // Return the first occurence of the passed pattern from the starting
+    // Return the first occurrence of the passed pattern from the starting
     // point.  These searches don't use the QFP and don't change the
     // starting point.
     // TODO Update comment
@@ -118,7 +118,7 @@ class QuickFind : public QObject
     void incrementalSearchAbort();
 
     // Used for 'repeated' (n/N) QF searches using the current direction
-    // Return the line of the first occurence of the QFP and
+    // Return the line of the first occurrence of the QFP and
     // update the selection. It returns -1 if nothing is found.
     /*
     int searchNext();

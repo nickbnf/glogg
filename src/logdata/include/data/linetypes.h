@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include <algorithm>
 #include <named_type/named_type.hpp>
 #include <limits>
 
@@ -143,53 +144,15 @@ Q_DECLARE_METATYPE(LinesCount)
 // foundIndex is the index of the found number or the index
 // of the closest greater element.
 template <typename T> bool lookupLineNumber(
-        const T& list, LineNumber lineNumber, uint32_t* foundIndex )
+        const T& list, LineNumber lineNumber, uint32_t& foundIndex )
 {
-    auto minIndex = 0u;
-    auto maxIndex = static_cast<uint32_t>( list.size() - 1 );
-
-    if ( list.empty() ) {
-        *foundIndex = 0;
-        return false;
-    }
-
-    // If the list is not empty
-    // First we test the ends
-    if ( list[minIndex].lineNumber() == lineNumber ) {
-        *foundIndex = minIndex;
-        return true;
-    }
-    else if ( list[maxIndex].lineNumber() == lineNumber ) {
-        *foundIndex = maxIndex;
-        return true;
-    }
-
-    // Then we test the rest
-    while ( (maxIndex - minIndex) > 1 ) {
-        const int tryIndex = (minIndex + maxIndex) / 2;
-        const auto currentMatchingNumber =
-            list[tryIndex].lineNumber();
-        if ( currentMatchingNumber > lineNumber )
-            maxIndex = tryIndex;
-        else if ( currentMatchingNumber < lineNumber )
-            minIndex = tryIndex;
-        else if ( currentMatchingNumber == lineNumber ) {
-            *foundIndex = tryIndex;
-            return true;
-        }
-    }
-
-    // If we haven't found anything...
-    // ... end of the list or before the next
-    if ( lineNumber > list[maxIndex].lineNumber() )
-        *foundIndex = maxIndex + 1;
-    else if ( lineNumber > list[minIndex].lineNumber() )
-        *foundIndex = minIndex + 1;
-    else
-        *foundIndex = minIndex;
-
-
-    return false;
+    using std::begin;
+    using std::distance;
+    using std::end;
+    auto notLess = std::lower_bound( begin( list ), end( list ), lineNumber,
+        [](typename T::const_reference lhs, typename T::const_reference rhs) { return lhs.lineNumber() < rhs.lineNumber(); });
+    foundIndex = static_cast<uint32_t>( distance( begin( list ), notLess ) );
+    return notLess != end( list ) && notLess->lineNumber() == lineNumber;
 }
 
 template<typename Iterator>

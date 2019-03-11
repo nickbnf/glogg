@@ -196,7 +196,7 @@ bool LogFilteredData::isLineInMatchingList( LineNumber lineNumber )
 {
     uint32_t index;                                    // Not used
     return lookupLineNumber<SearchResultArray>(
-            matching_lines_, lineNumber, &index);
+            matching_lines_, lineNumber, index);
 }
 
 

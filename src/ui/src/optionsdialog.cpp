@@ -230,7 +230,11 @@ void OptionsDialog::updateFontSize( const QString& fontFamily )
 {
     QFontDatabase database;
     QString oldFontSize = fontSizeBox->currentText();
-    const QList<int> sizes = database.pointSizes( fontFamily, "" );
+    auto sizes = database.pointSizes( fontFamily, "" );
+
+    if (sizes.empty()) {
+        sizes = QFontDatabase::standardSizes();
+    }
 
     fontSizeBox->clear();
     for ( int size : sizes ) {

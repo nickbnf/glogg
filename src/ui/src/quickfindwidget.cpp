@@ -51,8 +51,8 @@
 
 const int QuickFindWidget::NOTIFICATION_TIMEOUT = 5000;
 
-const QString QFNotification::REACHED_EOF = "Reached end of file, no occurence found.";
-const QString QFNotification::REACHED_BOF = "Reached beginning of file, no occurence found.";
+const QString QFNotification::REACHED_EOF = "Reached end of file, no occurrence found.";
+const QString QFNotification::REACHED_BOF = "Reached beginning of file, no occurrence found.";
 
 QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 {

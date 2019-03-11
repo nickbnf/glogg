@@ -61,8 +61,14 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
     QString searchPattern;
     switch ( Persistent<Configuration>( "settings" ).quickfindRegexpType() ) {
         case Wildcard:
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
+            searchPattern = QRegularExpression::wildcardToRegularExpression(pattern);
+            searchPattern = searchPattern.mid(2, searchPattern.size() - 4);
+#else
             searchPattern = pattern;
             searchPattern.replace('*', ".*").replace('?', ".");
+#endif
+
             break;
         case FixedString:
             searchPattern = QRegularExpression::escape(pattern);

@@ -47,7 +47,7 @@
 // Type of regexp to use for searches
 enum SearchRegexpType {
     ExtendedRegexp,
-    Wildcard,           // Disused!
+    Wildcard,
     FixedString,
 };
 

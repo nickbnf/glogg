@@ -447,9 +447,8 @@ void MainWindow::createMenus()
     menuBar()->addSeparator();
 
     helpMenu = menuBar()->addMenu( tr("&Help") );
-    helpMenu->addAction( aboutAction );
     helpMenu->addAction( aboutQtAction );
-
+    helpMenu->addAction( aboutAction );
 }
 
 void MainWindow::createToolBars()

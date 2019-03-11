@@ -77,6 +77,12 @@
 #include <plog/Appenders/RollingFileAppender.h>
 #include <singleapp/singleapplication.h>
 
+#ifdef KLOGG_PORTABLE
+const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+#else
+const bool PersistentInfo::ConfigFileParameters::forcePortable = false;
+#endif
+
 static void print_version();
 
 int main( int argc, char* argv[] )
@@ -203,12 +209,6 @@ int main( int argc, char* argv[] )
     }
 
     // Register the configuration items
-#ifdef KLOGG_PORTABLE
-    GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
-#else
-    GetPersistentInfo().migrateAndInit( PersistentInfo::Common );
-#endif
-
     GetPersistentInfo().registerPersistable( std::make_unique<SessionInfo>(),
                                              "session" );
     GetPersistentInfo().registerPersistable( std::make_unique<Configuration>(),

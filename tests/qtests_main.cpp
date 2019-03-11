@@ -31,6 +31,8 @@
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
+const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+
 int main( int argc, char* argv[] )
 {
     QApplication a( argc, argv );
@@ -39,7 +41,6 @@ int main( int argc, char* argv[] )
     plog::init( logINFO, &appender );
 
     // Register the configuration items
-    GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
     GetPersistentInfo().registerPersistable( std::make_unique<Configuration>(), "settings" );
 
     qRegisterMetaType<LinesCount>( "LinesCount" );

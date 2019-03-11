@@ -52,23 +52,27 @@ class Persistable;
 // then be saved/loaded.
 class PersistentInfo {
   public:
-    enum SettingsStorage { Common, Portable };
-
-    // Initialise the storage backend for the Persistable, migrating the
-    // settings if needed. Must be called before any other function.
-    void migrateAndInit( SettingsStorage storage = Common );
     // Register a Persistable
     void registerPersistable( std::unique_ptr<Persistable> object, const char* name );
     // Get a Persistable (or NULL if it doesn't exist)
-    Persistable& getPersistable( const char* name ) const;
+    Persistable& getPersistable( const char* name );
     // Save a persistable to its permanent storage
-    void save( const char* name ) const;
+    void save( const char* name );
     // Retrieve a persistable from permanent storage
-    void retrieve( const char* name ) const;
+    void retrieve( const char* name );
 
   private:
+    struct ConfigFileParameters {
+        QString path;
+        QSettings::Format format;
+
+        ConfigFileParameters();
+
+        static const bool forcePortable;
+    };
+
     // Can't be constructed or copied (singleton)
-    PersistentInfo() = default;
+    PersistentInfo( ConfigFileParameters config = {} );
 
     PersistentInfo( const PersistentInfo& ) = delete;
     PersistentInfo& operator=( const PersistentInfo& ) = delete;
@@ -76,10 +80,10 @@ class PersistentInfo {
     PersistentInfo& operator=( PersistentInfo&& ) = delete;
 
     // List of persistables
-    mutable std::unordered_map<std::string, std::unique_ptr<Persistable>> objectList_;
+    std::unordered_map<const char*, std::unique_ptr<Persistable>> objectList_;
 
     // Qt setting object
-    std::unique_ptr<QSettings> settings_;
+    QSettings settings_;
 
     // allow this function to create one instance
     friend PersistentInfo& GetPersistentInfo();

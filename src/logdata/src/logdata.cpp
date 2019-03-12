@@ -156,7 +156,7 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
     connect( &workerThread_, &LogDataWorkerThread::indexingFinished,
             this, &LogData::indexingFinished );
 
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
     keepFileClosed_ = config.keepFileClosed();
 
     if ( keepFileClosed_ ) {

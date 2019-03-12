@@ -28,7 +28,7 @@
 
 // Keeps track of the previously used searches and allows the application
 // to retrieve them.
-class SavedSearches : public Persistable
+class SavedSearches final : public Persistable
 {
   public:
     // Creates an empty set of saved searches

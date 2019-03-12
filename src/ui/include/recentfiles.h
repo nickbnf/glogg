@@ -26,7 +26,7 @@
 #include "persistable.h"
 
 // Manage the list of recently opened files
-class RecentFiles : public Persistable
+class RecentFiles final : public Persistable
 {
   public:
     // Creates an empty set of recent files

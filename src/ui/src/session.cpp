@@ -98,7 +98,7 @@ void Session::save( const std::vector<
         session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
-    auto& session = Persistable::getUnsynced<SessionInfo>();
+    auto& session = Persistable::get<SessionInfo>();
     session.setOpenFiles( session_files );
     session.setGeometry( geometry );
     session.save();

@@ -189,7 +189,7 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
     // Main font
     QFontInfo fontInfo = QFontInfo( config.mainFont() );
@@ -224,7 +224,7 @@ void OptionsDialog::updateDialogFromConfig()
     keepFileClosedCheckBox->setChecked( config.keepFileClosed() );
 
     // version checking
-    const auto& versionChecking = Persistable::getUnsynced<VersionCheckerConfig>();
+    const auto& versionChecking = Persistable::get<VersionCheckerConfig>();
     checkForNewVersionCheckBox->setChecked( versionChecking.versionCheckingEnabled() );
 }
 
@@ -254,7 +254,7 @@ void OptionsDialog::updateFontSize( const QString& fontFamily )
 
 void OptionsDialog::updateConfigFromDialog()
 {
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
 
     QFont font = QFont( fontFamilyBox->currentText(), ( fontSizeBox->currentText() ).toInt() );
     config.setMainFont( font );
@@ -282,7 +282,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setKeepFileClosed( keepFileClosedCheckBox->isChecked() );
 
     // version checking
-    auto& versionChecking = Persistable::getUnsynced<VersionCheckerConfig>();
+    auto& versionChecking = Persistable::get<VersionCheckerConfig>();
     versionChecking.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     emit optionsChanged();

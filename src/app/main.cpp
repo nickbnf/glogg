@@ -229,7 +229,7 @@ int main( int argc, char* argv[] )
     mw.reloadGeometry();
 
     // Load the existing session if needed
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
     if ( load_session || ( filenames.empty() && !new_session && config.loadLastSession() ) )
         mw.reloadSession();
 

@@ -44,7 +44,7 @@ int main( int argc, char* argv[] )
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
 
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
     config.setSearchReadBufferSizeLines( 10 );
     config.setUseSearchResultsCache( false );
     

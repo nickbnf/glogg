@@ -469,7 +469,7 @@ void CrawlerWidget::markLineFromFiltered( LineNumber line )
 
 void CrawlerWidget::applyConfiguration()
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
     QFont font = config.mainFont();
 
     LOG( logDEBUG ) << "CrawlerWidget::applyConfiguration";
@@ -828,7 +828,7 @@ void CrawlerWidget::setup()
     addWidget( bottomWindow );
 
     // Default search checkboxes
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
     searchRefreshCheck->setCheckState( config.isSearchAutoRefreshDefault() ? Qt::Checked
                                                                            : Qt::Unchecked );
     // Manually call the handler as it is not called when changing the state programmatically
@@ -952,7 +952,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         QString pattern;
 
         // Determine the type of regexp depending on the config
-        const auto& config = Persistable::getUnsynced<Configuration>();
+        const auto& config = Persistable::get<Configuration>();
         switch ( config.mainRegexpType() ) {
         case Wildcard:
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))

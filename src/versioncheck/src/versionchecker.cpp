@@ -166,7 +166,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
     reply->deleteLater();
 
     // Extend the deadline
-    auto& config = Persistable::getUnsynced<VersionCheckerConfig>();
+    auto& config = Persistable::get<VersionCheckerConfig>();
 
     config.setNextDeadline( std::time( nullptr ) + CHECK_INTERVAL_S );
 

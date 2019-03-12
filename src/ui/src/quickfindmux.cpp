@@ -103,7 +103,7 @@ void QuickFindMux::searchBackward()
 void QuickFindMux::setNewPattern(
         const QString& new_pattern, bool ignore_case )
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
     LOG(logDEBUG) << "QuickFindMux::setNewPattern";
 
@@ -124,7 +124,7 @@ void QuickFindMux::confirmPattern(
 {
     pattern_->changeSearchPattern( new_pattern, ignore_case );
 
-    if ( Persistable::getUnsynced<Configuration>().isQuickfindIncremental() ) {
+    if ( Persistable::get<Configuration>().isQuickfindIncremental() ) {
         if ( auto searchable = getSearchableWidget() )
             searchable->incrementalSearchStop();
     }
@@ -132,7 +132,7 @@ void QuickFindMux::confirmPattern(
 
 void QuickFindMux::cancelSearch()
 {
-    if ( Persistable::getUnsynced<Configuration>().isQuickfindIncremental() ) {
+    if ( Persistable::get<Configuration>().isQuickfindIncremental() ) {
         if ( auto searchable = getSearchableWidget() )
             searchable->incrementalSearchAbort();
     }

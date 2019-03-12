@@ -128,7 +128,7 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
 {
     LOG(logDEBUG) << "Entering runSearch";
 
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
 
     clearSearch();
@@ -337,7 +337,7 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine )
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;

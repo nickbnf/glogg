@@ -299,7 +299,7 @@ SearchOperation::SearchOperation( const LogData* sourceLogData, const QRegularEx
 
 void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
     const auto nbSourceLines = sourceLogData_->getNbLine();
     LineLength maxLength = 0_length;

@@ -161,7 +161,7 @@ SCENARIO( "filtered log data", "[logdata]") {
 
             const auto threadPoolSize = GENERATE(0, 1, 2, 3);
 
-            auto& config = Persistable::getUnsynced<Configuration>();
+            auto& config = Persistable::get<Configuration>();
             config.setSearchThreadPoolSize( threadPoolSize );    
             config.setUseParallelSearch( threadPoolSize > 0 );    
 

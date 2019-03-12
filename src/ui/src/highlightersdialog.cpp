@@ -172,7 +172,7 @@ void HighlightersDialog::on_buttonBox_clicked( QAbstractButton* button )
     }
 
     // persist it to disk
-    auto &persistentHighlighterSet = Persistable::getUnsynced<HighlighterSet>();
+    auto &persistentHighlighterSet = Persistable::get<HighlighterSet>();
     if ( role == QDialogButtonBox::AcceptRole ) {
         persistentHighlighterSet = std::move( highlighterSet_ );
         accept();

@@ -53,7 +53,7 @@ enum SearchRegexpType {
 };
 
 // Configuration class containing everything in the "Settings" dialog
-class Configuration : public Persistable {
+class Configuration final : public Persistable {
   public:
     Configuration();
 

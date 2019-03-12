@@ -58,7 +58,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
 
     // Determine the type of regexp depending on the config
     QString searchPattern;
-    switch ( Persistable::getUnsynced<Configuration>().quickfindRegexpType() ) {
+    switch ( Persistable::get<Configuration>().quickfindRegexpType() ) {
         case Wildcard:
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
             searchPattern = QRegularExpression::wildcardToRegularExpression(pattern);

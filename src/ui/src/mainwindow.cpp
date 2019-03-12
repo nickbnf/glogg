@@ -82,7 +82,7 @@ static QString readableSize( qint64 size );
 
 MainWindow::MainWindow(std::unique_ptr<Session> session) :
     session_( std::move( session )  ),
-    recentFiles_( Persistable::getUnsynced<RecentFiles>() ),
+    recentFiles_( Persistable::get<RecentFiles>() ),
     mainIcon_(),
     signalMux_(),
     quickFindMux_( session_->getQuickFindPattern() ),
@@ -267,7 +267,7 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
 // Menu actions
 void MainWindow::createActions()
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
@@ -617,14 +617,14 @@ void MainWindow::encodingChanged( QAction* action )
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )
 {
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
     config.setOverviewVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 {
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
 
     config.setMainLineNumbersVisible( isVisible );
     emit optionsChanged();
@@ -632,7 +632,7 @@ void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 
 void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
 {
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
 
     config.setFilteredLineNumbersVisible( isVisible );
     emit optionsChanged();
@@ -707,13 +707,13 @@ memory to hold the index for this file. The file will now be closed." );
 
 void MainWindow::handleSearchRefreshChanged( int state )
 {
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
     config.setSearchAutoRefreshDefault( state == Qt::Checked );
 }
 
 void MainWindow::handleIgnoreCaseChanged( int state )
 {
-    auto& config = Persistable::getUnsynced<Configuration>();
+    auto& config = Persistable::get<Configuration>();
     config.setSearchIgnoreCaseDefault( state == Qt::Checked );
 }
 
@@ -1059,10 +1059,10 @@ void MainWindow::writeSettings()
     session_->save( widget_list, saveGeometry() );
 
     // User settings
-    Persistable::getUnsynced<Configuration>().save();
+    Persistable::get<Configuration>().save();
     // User settings
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    Persistable::getUnsynced<VersionCheckerConfig>().save();
+    Persistable::get<VersionCheckerConfig>().save();
 #endif
 }
 

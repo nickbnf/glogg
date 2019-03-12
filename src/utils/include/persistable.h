@@ -31,10 +31,9 @@ class Persistable {
     virtual ~Persistable() = default;
 
     void save() const;
-    void retrieve();
 
     template<typename T>
-    static T& getUnsynced() {
+    static T& get() {
         static_assert( std::is_base_of<Persistable, T>::value, "" );
         static T persistable;
         return persistable;
@@ -42,7 +41,7 @@ class Persistable {
 
     template<typename T>
     static T& getSynced() {
-        T& persistable = getUnsynced<T>();
+        T& persistable = get<T>();
         persistable.retrieve();
         return persistable;
     }
@@ -51,6 +50,9 @@ class Persistable {
     // Must be implemented to save/retrieve from Qt Settings
     virtual void saveToStorage( QSettings& settings ) const = 0;
     virtual void retrieveFromStorage( QSettings& settings ) = 0;
+
+  private:
+    void retrieve();
 };
 
 #endif

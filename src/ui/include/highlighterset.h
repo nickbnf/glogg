@@ -83,7 +83,7 @@ class Highlighter
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
-class HighlighterSet : public Persistable
+class HighlighterSet final : public Persistable
 {
   public:
     // Construct an empty filter set

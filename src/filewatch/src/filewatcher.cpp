@@ -352,7 +352,7 @@ void FileWatcher::notifyFileChangedOnDisk()
 
 void FileWatcher::setPolling()
 {
-    const auto& config = Persistable::getUnsynced<Configuration>();
+    const auto& config = Persistable::get<Configuration>();
 
     if ( config.pollingEnabled() ) {
         LOG( logINFO ) << "Polling files enabled";

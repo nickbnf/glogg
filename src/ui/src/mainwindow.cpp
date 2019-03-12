@@ -82,7 +82,6 @@ static QString readableSize( qint64 size );
 
 MainWindow::MainWindow(std::unique_ptr<Session> session) :
     session_( std::move( session )  ),
-    recentFiles_( Persistable::get<RecentFiles>() ),
     mainIcon_(),
     signalMux_(),
     quickFindMux_( session_->getQuickFindPattern() ),
@@ -932,7 +931,7 @@ bool MainWindow::loadFile( const QString& fileName )
         // Update the recent files list
         // (reload the list first in case another glogg changed it)
         auto& recentFiles = Persistable::getSynced<RecentFiles>();
-        recentFiles_.addRecent( fileName );
+        recentFiles.addRecent( fileName );
         recentFiles.save();
         updateRecentFileActions();
     }
@@ -980,7 +979,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
 // Must be called after having added a new name to the list.
 void MainWindow::updateRecentFileActions()
 {
-    QStringList recent_files = recentFiles_.recentFiles();
+    QStringList recent_files = Persistable::get<RecentFiles>().recentFiles();
 
     for ( int j = 0; j < MaxRecentFiles; ++j ) {
         if ( j < recent_files.count() ) {
@@ -1080,7 +1079,6 @@ void MainWindow::readSettings()
     Persistable::getSynced<RecentFiles>();
     updateRecentFileActions();
 
-    // Persistable::getSynced<Configuration>();
     Persistable::getSynced<HighlighterSet>();
 }
 

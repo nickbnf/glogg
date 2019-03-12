@@ -78,6 +78,8 @@ bool isVersionNewer( const QString& current_version, const QString& new_version 
 
 void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 {
+    LOG( logDEBUG ) << "VersionCheckerConfig::retrieveFromStorage";
+
     if ( settings.contains( "versionchecker.enabled" ) )
         enabled_ = settings.value( "versionchecker.enabled" ).toBool();
     if ( settings.contains( "versionchecker.nextDeadline" ) )
@@ -86,6 +88,8 @@ void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 
 void VersionCheckerConfig::saveToStorage( QSettings& settings ) const
 {
+    LOG( logDEBUG ) << "VersionCheckerConfig::saveToStorage";
+
     settings.setValue( "versionchecker.enabled", enabled_ );
     settings.setValue( "versionchecker.nextDeadline", static_cast<long long>( next_deadline_ ) );
 }

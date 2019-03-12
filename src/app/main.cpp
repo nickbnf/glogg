@@ -216,6 +216,7 @@ int main( int argc, char* argv[] )
 
     // FIXME: should be replaced by a two staged init of MainWindow
     Persistable::getSynced<Configuration>();
+    Persistable::getSynced<VersionCheckerConfig>();
 
     std::unique_ptr<Session> session( new Session() );
     MainWindow mw( std::move( session ) );

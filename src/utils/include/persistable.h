@@ -21,6 +21,7 @@
 #define PERSISTABLE_H
 
 #include <type_traits>
+#include "log.h"
 
 class QSettings;
 
@@ -34,14 +35,12 @@ class Persistable {
 
     template<typename T>
     static T& get() {
-        static_assert( std::is_base_of<Persistable, T>::value, "" );
-        static T persistable;
-        return persistable;
+      return getPersistable<T>(false);
     }
 
     template<typename T>
     static T& getSynced() {
-        T& persistable = get<T>();
+        T& persistable = getPersistable<T>(true);
         persistable.retrieve();
         return persistable;
     }
@@ -52,6 +51,26 @@ class Persistable {
     virtual void retrieveFromStorage( QSettings& settings ) = 0;
 
   private:
+    template<typename T>
+    static T& getPersistable(bool willBeInitialized = false) {
+        static_assert( std::is_base_of<Persistable, T>::value, "" );
+
+        static bool persistableInitialized = false;
+        if (!persistableInitialized && !willBeInitialized)
+        {
+          LOG(logERROR) << "Access to not initialized persistable";
+          throw std::logic_error("Access to not initialized persistable");
+        }
+
+        if (!persistableInitialized)
+        {
+          persistableInitialized = willBeInitialized;
+        }
+
+        static T persistable;
+        return persistable;
+    }
+
     void retrieve();
 };
 

@@ -177,7 +177,6 @@ class MainWindow : public QMainWindow
     void updateInfoLine();
 
     std::unique_ptr<Session> session_;
-    RecentFiles& recentFiles_;
     QString loadingFileName;
 
     // Encoding

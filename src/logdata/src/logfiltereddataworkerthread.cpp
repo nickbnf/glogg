@@ -45,7 +45,6 @@
 #include "logfiltereddataworkerthread.h"
 
 #include "configuration.h"
-#include "persistentinfo.h"
 
 #include <moodycamel/blockingconcurrentqueue.h>
 
@@ -300,7 +299,7 @@ SearchOperation::SearchOperation( const LogData* sourceLogData, const QRegularEx
 
 void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
     const auto nbSourceLines = sourceLogData_->getNbLine();
     LineLength maxLength = 0_length;

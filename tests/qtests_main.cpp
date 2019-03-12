@@ -31,6 +31,8 @@
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
+const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+
 int main( int argc, char* argv[] )
 {
     QApplication a( argc, argv );
@@ -38,15 +40,11 @@ int main( int argc, char* argv[] )
     plog::ConsoleAppender<plog::GloggFormatter> appender;
     plog::init( logINFO, &appender );
 
-    // Register the configuration items
-    GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
-    GetPersistentInfo().registerPersistable( std::make_unique<Configuration>(), "settings" );
-
     qRegisterMetaType<LinesCount>( "LinesCount" );
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
 
-    auto& config = Persistent<Configuration>( "settings" );
+    auto& config = Persistable::getUnsynced<Configuration>();
     config.setSearchReadBufferSizeLines( 10 );
     config.setUseSearchResultsCache( false );
     

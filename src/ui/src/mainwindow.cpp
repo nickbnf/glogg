@@ -72,7 +72,6 @@
 #include "crawlerwidget.h"
 #include "highlightersdialog.h"
 #include "optionsdialog.h"
-#include "persistentinfo.h"
 #include "menuactiontooltipbehavior.h"
 #include "tabbedcrawlerwidget.h"
 
@@ -83,7 +82,7 @@ static QString readableSize( qint64 size );
 
 MainWindow::MainWindow(std::unique_ptr<Session> session) :
     session_( std::move( session )  ),
-    recentFiles_( Persistent<RecentFiles>( "recentFiles" ) ),
+    recentFiles_( Persistable::getUnsynced<RecentFiles>() ),
     mainIcon_(),
     signalMux_(),
     quickFindMux_( session_->getQuickFindPattern() ),
@@ -268,7 +267,7 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
 // Menu actions
 void MainWindow::createActions()
 {
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcut(QKeySequence::Open);
@@ -618,14 +617,14 @@ void MainWindow::encodingChanged( QAction* action )
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )
 {
-    auto& config = Persistent<Configuration>( "settings" );
+    auto& config = Persistable::getUnsynced<Configuration>();
     config.setOverviewVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 {
-    auto& config = Persistent<Configuration>( "settings" );
+    auto& config = Persistable::getUnsynced<Configuration>();
 
     config.setMainLineNumbersVisible( isVisible );
     emit optionsChanged();
@@ -633,7 +632,7 @@ void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 
 void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
 {
-    auto& config = Persistent<Configuration>( "settings" );
+    auto& config = Persistable::getUnsynced<Configuration>();
 
     config.setFilteredLineNumbersVisible( isVisible );
     emit optionsChanged();
@@ -708,13 +707,13 @@ memory to hold the index for this file. The file will now be closed." );
 
 void MainWindow::handleSearchRefreshChanged( int state )
 {
-    auto& config = Persistent<Configuration>( "settings" );
+    auto& config = Persistable::getUnsynced<Configuration>();
     config.setSearchAutoRefreshDefault( state == Qt::Checked );
 }
 
 void MainWindow::handleIgnoreCaseChanged( int state )
 {
-    auto& config = Persistent<Configuration>( "settings" );
+    auto& config = Persistable::getUnsynced<Configuration>();
     config.setSearchIgnoreCaseDefault( state == Qt::Checked );
 }
 
@@ -932,9 +931,9 @@ bool MainWindow::loadFile( const QString& fileName )
 
         // Update the recent files list
         // (reload the list first in case another glogg changed it)
-        GetPersistentInfo().retrieve( "recentFiles" );
+        auto& recentFiles = Persistable::getSynced<RecentFiles>();
         recentFiles_.addRecent( fileName );
-        GetPersistentInfo().save( "recentFiles" );
+        recentFiles.save();
         updateRecentFileActions();
     }
     catch ( FileUnreadableErr ) {
@@ -1060,28 +1059,29 @@ void MainWindow::writeSettings()
     session_->save( widget_list, saveGeometry() );
 
     // User settings
-    GetPersistentInfo().save( "settings" );
+    Persistable::getUnsynced<Configuration>().save();
     // User settings
-    GetPersistentInfo().save( "versionChecker" );
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+    Persistable::getUnsynced<VersionCheckerConfig>().save();
+#endif
 }
 
 // Read settings from permanent storage
 void MainWindow::readSettings()
 {
     // Get and restore the session
-    // GetPersistentInfo().retrieve( "session" );
-    // SessionInfo& session = Persistent<SessionInfo>( "session" );
+    // auto& session = Persistable::getSynced<SessionInfo>();
     /*
      * FIXME: should be in the session
     crawlerWidget->restoreState( session.crawlerState() );
     */
 
     // History of recent files
-    GetPersistentInfo().retrieve( "recentFiles" );
+    Persistable::getSynced<RecentFiles>();
     updateRecentFileActions();
 
-    // GetPersistentInfo().retrieve( "settings" );
-    GetPersistentInfo().retrieve( "HighlighterSet" );
+    // Persistable::getSynced<Configuration>();
+    Persistable::getSynced<HighlighterSet>();
 }
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )

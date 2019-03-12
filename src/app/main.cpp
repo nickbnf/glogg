@@ -77,6 +77,12 @@
 #include <plog/Appenders/RollingFileAppender.h>
 #include <singleapp/singleapplication.h>
 
+#ifdef KLOGG_PORTABLE
+const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+#else
+const bool PersistentInfo::ConfigFileParameters::forcePortable = false;
+#endif
+
 static void print_version();
 
 int main( int argc, char* argv[] )
@@ -202,26 +208,6 @@ int main( int argc, char* argv[] )
                           &MessageReceiver::receiveMessage, Qt::QueuedConnection );
     }
 
-    // Register the configuration items
-#ifdef KLOGG_PORTABLE
-    GetPersistentInfo().migrateAndInit( PersistentInfo::Portable );
-#else
-    GetPersistentInfo().migrateAndInit( PersistentInfo::Common );
-#endif
-
-    GetPersistentInfo().registerPersistable( std::make_unique<SessionInfo>(),
-                                             "session" );
-    GetPersistentInfo().registerPersistable( std::make_unique<Configuration>(),
-                                             "settings" );
-    GetPersistentInfo().registerPersistable( std::make_unique<HighlighterSet>(),
-                                             "HighlighterSet" );
-    GetPersistentInfo().registerPersistable( std::make_unique<SavedSearches>(),
-                                             "savedSearches" );
-    GetPersistentInfo().registerPersistable( std::make_unique<RecentFiles>(),
-                                             "recentFiles" );
-    GetPersistentInfo().registerPersistable( std::make_unique<VersionCheckerConfig>(),
-                                             "versionChecker" );
-
     // We support high-dpi (aka Retina) displays
     app.setAttribute( Qt::AA_UseHighDpiPixmaps );
 
@@ -229,7 +215,7 @@ int main( int argc, char* argv[] )
     app.setAttribute( Qt::AA_DontShowIconsInMenus );
 
     // FIXME: should be replaced by a two staged init of MainWindow
-    GetPersistentInfo().retrieve( "settings" );
+    Persistable::getSynced<Configuration>();
 
     std::unique_ptr<Session> session( new Session() );
     MainWindow mw( std::move( session ) );
@@ -243,7 +229,7 @@ int main( int argc, char* argv[] )
     mw.reloadGeometry();
 
     // Load the existing session if needed
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
     if ( load_session || ( filenames.empty() && !new_session && config.loadLastSession() ) )
         mw.reloadSession();
 

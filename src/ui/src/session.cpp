@@ -26,7 +26,6 @@
 #include <algorithm>
 
 #include "viewinterface.h"
-#include "persistentinfo.h"
 #include "savedsearches.h"
 #include "sessioninfo.h"
 #include "data/logdata.h"
@@ -34,11 +33,9 @@
 
 Session::Session()
 {
-    GetPersistentInfo().retrieve( "savedSearches" );
-
     // Get the global search history (it remains the property
     // of the Persistent)
-    savedSearches_ = &(Persistent<SavedSearches>( "savedSearches" ));
+    savedSearches_ = &Persistable::getSynced<SavedSearches>();
 
     quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
@@ -101,18 +98,17 @@ void Session::save( const std::vector<
         session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
-    auto& session = Persistent<SessionInfo>( "session" );
+    auto& session = Persistable::getUnsynced<SessionInfo>();
     session.setOpenFiles( session_files );
     session.setGeometry( geometry );
-    GetPersistentInfo().save( "session" );
+    session.save();
 }
 
 std::vector<std::pair<QString, ViewInterface*>> Session::restore(
         const std::function<ViewInterface*()>& view_factory,
         int *current_file_index )
 {
-    GetPersistentInfo().retrieve( "session" );
-    const auto& session = Persistent<SessionInfo>( "session" );
+    const auto& session = Persistable::getSynced<SessionInfo>();
 
     std::vector<SessionInfo::OpenFile> session_files = session.openFiles();
     LOG(logDEBUG) << "Session returned " << session_files.size();
@@ -132,8 +128,7 @@ std::vector<std::pair<QString, ViewInterface*>> Session::restore(
 
 void Session::storedGeometry( QByteArray* geometry ) const
 {
-    GetPersistentInfo().retrieve( "session" );
-    const auto& session = Persistent<SessionInfo>( "session" );
+    const auto& session = Persistable::getSynced<SessionInfo>();
 
     *geometry = session.geometry();
 }

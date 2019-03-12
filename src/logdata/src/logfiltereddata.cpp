@@ -50,7 +50,6 @@
 #include "marks.h"
 #include "logfiltereddata.h"
 
-#include "persistentinfo.h"
 #include "configuration.h"
 
 namespace {
@@ -129,7 +128,7 @@ void LogFilteredData::runSearch(const QRegularExpression& regExp,
 {
     LOG(logDEBUG) << "Entering runSearch";
 
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
 
     clearSearch();
@@ -338,7 +337,7 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine )
 {
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;

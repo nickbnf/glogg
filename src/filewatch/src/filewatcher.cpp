@@ -21,7 +21,6 @@
 
 #include "configuration.h"
 #include "log.h"
-#include "persistentinfo.h"
 
 #include <efsw/efsw.hpp>
 #include <vector>
@@ -353,7 +352,7 @@ void FileWatcher::notifyFileChangedOnDisk()
 
 void FileWatcher::setPolling()
 {
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
     if ( config.pollingEnabled() ) {
         LOG( logINFO ) << "Polling files enabled";

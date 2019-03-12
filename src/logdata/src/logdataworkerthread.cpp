@@ -47,7 +47,6 @@
 #include "logdata.h"
 #include "logdataworkerthread.h"
 
-#include "persistentinfo.h"
 #include "configuration.h"
 
 #include <chrono>
@@ -396,7 +395,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState &indexingState )
 
 void IndexOperation::doIndex(LineOffset initialPosition )
 {
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
     const uint32_t sizeChunk = 1024 * 1024;
     const auto prefetchBufferSize = config.indexReadBufferSizeMb() * sizeChunk;

@@ -48,6 +48,9 @@ class TabbedCrawlerWidget : public QTabWidget
       void keyPressEvent( QKeyEvent* event ) override;
       void mouseReleaseEvent( QMouseEvent *event) override;
 
+    private slots:
+      void showContextMenu(const QPoint &);
+
     private:
       const QIcon olddata_icon_;
       const QIcon newdata_icon_;

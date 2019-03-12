@@ -21,34 +21,35 @@
 
 #include <QKeyEvent>
 #include <QLabel>
+#include <QMenu>
 
 #include "crawlerwidget.h"
 
 #include "log.h"
 
-TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(),
-    olddata_icon_( ":/images/olddata_icon.png" ),
-    newdata_icon_( ":/images/newdata_icon.png" ),
-    newfiltered_icon_( ":/images/newfiltered_icon.png" ),
-    myTabBar_()
+TabbedCrawlerWidget::TabbedCrawlerWidget()
+    : QTabWidget()
+    , olddata_icon_( ":/images/olddata_icon.png" )
+    , newdata_icon_( ":/images/newdata_icon.png" )
+    , newfiltered_icon_( ":/images/newfiltered_icon.png" )
+    , myTabBar_()
 {
 #ifdef WIN32
     myTabBar_.setStyleSheet( "QTabBar::tab {\
             height: 20px; "
-            "} "
-            "QTabBar::close-button {\
+                             "} "
+                             "QTabBar::close-button {\
               height: 6px; width: 6px;\
               subcontrol-origin: padding;\
               subcontrol-position: left;\
              }" );
 #else
     // On GTK style, it looks better with a smaller font
-    myTabBar_.setStyleSheet(
-            "QTabBar::tab {"
-            " height: 20px; "
-            " font-size: 9pt; "
-            "} "
-            "QTabBar::close-button {\
+    myTabBar_.setStyleSheet( "QTabBar::tab {"
+                             " height: 20px; "
+                             " font-size: 9pt; "
+                             "} "
+                             "QTabBar::close-button {\
               height: 6px; width: 6px;\
               subcontrol-origin: padding;\
               subcontrol-position: left;\
@@ -57,6 +58,9 @@ TabbedCrawlerWidget::TabbedCrawlerWidget() : QTabWidget(),
     setTabBar( &myTabBar_ );
     myTabBar_.hide();
 
+    myTabBar_.setContextMenuPolicy( Qt::CustomContextMenu );
+    connect( &myTabBar_, &QWidget::customContextMenuRequested, this,
+             &TabbedCrawlerWidget::showContextMenu );
 }
 
 // I know hiding non-virtual functions from the base class is bad form
@@ -74,7 +78,7 @@ int TabbedCrawlerWidget::addTab( QWidget* page, const QString& label )
 
         // Listen for a changing data status:
         connect( crawler, &CrawlerWidget::dataStatusChanged,
-                [ this, index ]( DataStatus status ) { setTabDataStatus( index, status ); } );
+                 [this, index]( DataStatus status ) { setTabDataStatus( index, status ); } );
     }
 
     // Display the icon
@@ -83,8 +87,8 @@ int TabbedCrawlerWidget::addTab( QWidget* page, const QString& label )
     icon_label->setAlignment( Qt::AlignCenter );
     myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label );
 
-    LOG(logDEBUG) << "addTab, count = " << count();
-    LOG(logDEBUG) << "width = " << olddata_icon_.pixmap( 11, 12 ).devicePixelRatio();
+    LOG( logDEBUG ) << "addTab, count = " << count();
+    LOG( logDEBUG ) << "width = " << olddata_icon_.pixmap( 11, 12 ).devicePixelRatio();
 
     if ( count() > 1 )
         myTabBar_.show();
@@ -100,17 +104,71 @@ void TabbedCrawlerWidget::removeTab( int index )
         myTabBar_.hide();
 }
 
-void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent *event)
+void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent* event )
 {
-    LOG(logDEBUG) << "TabbedCrawlerWidget::mouseReleaseEvent";
+    LOG( logDEBUG ) << "TabbedCrawlerWidget::mouseReleaseEvent";
 
-    if (event->button() == Qt::MidButton)
-    {
+    if ( event->button() == Qt::MidButton ) {
         int tab = this->myTabBar_.tabAt( event->pos() );
-        if (-1 != tab)
-        {
+        if ( -1 != tab ) {
             emit tabCloseRequested( tab );
+            event->accept();
         }
+    }
+
+    event->ignore();
+}
+
+void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
+{
+    int tab = myTabBar_.tabAt( point );
+    if ( -1 != tab ) {
+        QMenu menu( this );
+        auto closeThis = menu.addAction( "Close this" );
+        auto closeOthers = menu.addAction( "Close others" );
+        auto closeLeft = menu.addAction( "Close to the left" );
+        auto closeRight = menu.addAction( "Close to the right" );
+        auto closeAll = menu.addAction( "Close all" );
+
+        connect( closeThis, &QAction::triggered, [tab, this] { emit tabCloseRequested( tab ); } );
+
+        connect( closeOthers, &QAction::triggered, [tabWidget = widget( tab ), this] {
+            while ( count() != 1 ) {
+                for ( int i = 0; i < count(); ++i ) {
+                    if ( i != indexOf( tabWidget ) ) {
+                        emit tabCloseRequested( i );
+                        break;
+                    }
+                }
+            }
+        } );
+
+        connect( closeLeft, &QAction::triggered, [tabWidget = widget( tab ), this] {
+            while ( indexOf( tabWidget ) != 0 ) {
+                emit tabCloseRequested( 0 );
+            }
+        } );
+
+        connect( closeRight, &QAction::triggered, [tab, this] {
+            while ( count() > tab + 1 ) {
+                emit tabCloseRequested( tab + 1 );
+            }
+        } );
+
+        connect( closeAll, &QAction::triggered, [this] {
+            while ( count() ) {
+                emit tabCloseRequested( 0 );
+            }
+        } );
+
+        if ( tab == 0 ) {
+            closeLeft->setDisabled( true );
+        }
+        else if ( tab == count() - 1 ) {
+            closeRight->setDisabled( true );
+        }
+
+        menu.exec( myTabBar_.mapToGlobal( point ) );
     }
 }
 
@@ -119,16 +177,18 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
     const auto mod = event->modifiers();
     const auto key = event->key();
 
-    LOG(logDEBUG) << "TabbedCrawlerWidget::keyPressEvent";
+    LOG( logDEBUG ) << "TabbedCrawlerWidget::keyPressEvent";
 
     // Ctrl + tab
-    if ( ( mod == Qt::ControlModifier && key == Qt::Key_Tab ) ||
-         ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier ) && key == Qt::Key_Right ) ) {
+    if ( ( mod == Qt::ControlModifier && key == Qt::Key_Tab )
+         || ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier )
+              && key == Qt::Key_Right ) ) {
         setCurrentIndex( ( currentIndex() + 1 ) % count() );
     }
     // Ctrl + shift + tab
-    else if ( ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && key == Qt::Key_Tab ) ||
-              ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier ) && key == Qt::Key_Left ) ) {
+    else if ( ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && key == Qt::Key_Tab )
+              || ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier )
+                   && key == Qt::Key_Left ) ) {
         setCurrentIndex( ( currentIndex() - 1 >= 0 ) ? currentIndex() - 1 : count() - 1 );
     }
     // Ctrl + numbers
@@ -141,7 +201,7 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
     else if ( mod == Qt::ControlModifier && key == Qt::Key_9 ) {
         setCurrentIndex( count() - 1 );
     }
-    else if ( mod == Qt::ControlModifier && (key == Qt::Key_Q || key == Qt::Key_W) ) {
+    else if ( mod == Qt::ControlModifier && ( key == Qt::Key_Q || key == Qt::Key_W ) ) {
         emit tabCloseRequested( currentIndex() );
     }
     else {
@@ -151,28 +211,26 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
 
 void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 {
-    LOG(logDEBUG) << "TabbedCrawlerWidget::setTabDataStatus " << index;
+    LOG( logDEBUG ) << "TabbedCrawlerWidget::setTabDataStatus " << index;
 
-    auto* icon_label = dynamic_cast<QLabel*>(
-            myTabBar_.tabButton( index, QTabBar::RightSide ) );
+    auto* icon_label = dynamic_cast<QLabel*>( myTabBar_.tabButton( index, QTabBar::RightSide ) );
 
     if ( icon_label ) {
         const QIcon* icon;
         switch ( status ) {
-            case DataStatus::OLD_DATA:
-                icon = &olddata_icon_;
-                break;
-            case DataStatus::NEW_DATA:
-                icon = &newdata_icon_;
-                break;
-            case DataStatus::NEW_FILTERED_DATA:
-                icon = &newfiltered_icon_;
-                break;
+        case DataStatus::OLD_DATA:
+            icon = &olddata_icon_;
+            break;
+        case DataStatus::NEW_DATA:
+            icon = &newdata_icon_;
+            break;
+        case DataStatus::NEW_FILTERED_DATA:
+            icon = &newfiltered_icon_;
+            break;
         default:
             return;
         }
 
-        icon_label->setPixmap ( icon->pixmap(12,12) );
-
+        icon_label->setPixmap( icon->pixmap( 12, 12 ) );
     }
 }

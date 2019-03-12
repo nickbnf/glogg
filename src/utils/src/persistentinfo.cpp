@@ -61,7 +61,7 @@ PersistentInfo::ConfigFileParameters::ConfigFileParameters()
 #ifdef Q_OS_WIN
         format = QSettings::IniFormat;
 #endif
-        path = QSettings{ "klogg", "klogg" }.fileName();
+        path = QSettings{ format, QSettings::UserScope, "klogg", "klogg" }.fileName();
     }
 }
 

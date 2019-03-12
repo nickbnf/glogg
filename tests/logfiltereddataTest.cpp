@@ -23,7 +23,6 @@
 
 #include "configuration.h"
 #include "log.h"
-#include "persistentinfo.h"
 #include "test_utils.h"
 
 #include "data/logdata.h"
@@ -162,7 +161,7 @@ SCENARIO( "filtered log data", "[logdata]") {
 
             const auto threadPoolSize = GENERATE(0, 1, 2, 3);
 
-            auto& config = Persistent<Configuration>( "settings" );
+            auto& config = Persistable::getUnsynced<Configuration>();
             config.setSearchThreadPoolSize( threadPoolSize );    
             config.setUseParallelSearch( threadPoolSize > 0 );    
 

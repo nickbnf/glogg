@@ -55,7 +55,6 @@
 #include "logdata.h"
 #include "logfiltereddata.h"
 
-#include "persistentinfo.h"
 #include "configuration.h"
 
 namespace
@@ -157,7 +156,7 @@ LogData::LogData() : AbstractLogData(), indexing_data_(),
     connect( &workerThread_, &LogDataWorkerThread::indexingFinished,
             this, &LogData::indexingFinished );
 
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
     keepFileClosed_ = config.keepFileClosed();
 
     if ( keepFileClosed_ ) {

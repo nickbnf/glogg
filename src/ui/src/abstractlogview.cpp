@@ -64,7 +64,6 @@
 
 #include "log.h"
 
-#include "persistentinfo.h"
 #include "highlighterset.h"
 #include "logmainview.h"
 #include "quickfind.h"
@@ -345,7 +344,7 @@ void AbstractLogView::changeEvent( QEvent* changeEvent )
 
 void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
-    const auto& config = Persistent<Configuration>( "settings" );
+    const auto& config = Persistable::getUnsynced<Configuration>();
 
     if ( mouseEvent->button() == Qt::LeftButton )
     {
@@ -1626,7 +1625,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     const int paintDeviceHeight = paint_device->height() / viewport()->devicePixelRatio();
     const int paintDeviceWidth = paint_device->width() / viewport()->devicePixelRatio();
     const QPalette& palette = viewport()->palette();
-    const auto& highlighterSet = Persistent<HighlighterSet>( "HighlighterSet" );
+    const auto& highlighterSet = Persistable::getUnsynced<HighlighterSet>();
     QColor foreColor, backColor;
 
     static const QBrush normalBulletBrush = QBrush( Qt::white );

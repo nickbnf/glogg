@@ -102,9 +102,7 @@ void VersionChecker::startCheck()
 {
     LOG( logDEBUG ) << "VersionChecker::startCheck()";
 
-    GetPersistentInfo().retrieve( "versionChecker" );
-
-    const auto& config = Persistent<VersionCheckerConfig>( "versionChecker" );
+    const auto& config = Persistable::getSynced<VersionCheckerConfig>();
 
     if ( config.versionCheckingEnabled() ) {
         // Check the deadline has been reached
@@ -168,9 +166,9 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
     reply->deleteLater();
 
     // Extend the deadline
-    auto& config = Persistent<VersionCheckerConfig>( "versionChecker" );
+    auto& config = Persistable::getUnsynced<VersionCheckerConfig>();
 
     config.setNextDeadline( std::time( nullptr ) + CHECK_INTERVAL_S );
 
-    GetPersistentInfo().save( "versionChecker" );
+    config.save();
 }

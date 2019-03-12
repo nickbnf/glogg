@@ -102,13 +102,33 @@ PartialSearchResults filterLines( const QRegularExpression& regex,
 }
 } // namespace
 
-void SearchData::getAll( LineLength* length, SearchResultArray* matches, LinesCount* lines ) const
+void SearchData::getAll( LineLength* length, SearchResultArray* matches, LinesCount* nbLinesProcessed ) const
 {
+    matches->clear();
+    getAllMissing( length, matches, nbLinesProcessed );
+}
+
+void SearchData::getAllMissing( LineLength* length, SearchResultArray* matches, LinesCount* nbLinesProcessed ) const
+{
+    using std::begin;
+    using std::end;
+    using std::next;
+
     QMutexLocker locker( &dataMutex_ );
 
-    *length = maxLength_;
-    *lines = nbLinesProcessed_;
-    *matches = matches_;
+    *length             = maxLength_;
+    *nbLinesProcessed   = nbLinesProcessed_;
+
+    if ( matches_.size() < matches->size() ) {
+        LOG(logWARNING) << "Cannot append search-data to smaller match-array";
+        return;
+    }
+
+    matches->reserve( matches_.size() );
+
+    // This is a copy (potentially slow)
+    std::insert_iterator<SearchResultArray> inserter{ *matches, end( *matches ) };
+    copy( next( begin( matches_ ), matches->size() ), end( matches_ ), inserter );
 }
 
 void SearchData::setAll( LineLength length, SearchResultArray&& matches )
@@ -230,11 +250,11 @@ void LogFilteredDataWorkerThread::interrupt()
 }
 
 // This will do an atomic copy of the object
-void LogFilteredDataWorkerThread::getSearchResult( LineLength* maxLength,
-                                                   SearchResultArray* searchMatches,
-                                                   LinesCount* nbLinesProcessed )
+void LogFilteredDataWorkerThread::updateSearchResult( LineLength* maxLength,
+                                                      SearchResultArray* searchMatches,
+                                                      LinesCount* nbLinesProcessed )
 {
-    searchData_.getAll( maxLength, searchMatches, nbLinesProcessed );
+    searchData_.getAllMissing( maxLength, searchMatches, nbLinesProcessed );
 }
 
 // This is the thread's main loop

@@ -74,12 +74,13 @@ class CrawlerWidgetContext : public ViewContextInterface {
     // Construct from the stored string representation
     explicit CrawlerWidgetContext( const QString& string );
     // Construct from the value passsed
-    CrawlerWidgetContext( QList<int> sizes, bool ignore_case, bool auto_refresh, bool follow_file,
+    CrawlerWidgetContext( QList<int> sizes, bool ignore_case, bool auto_refresh, bool follow_file, bool use_regexp,
                           QList<LineNumber> markedLines )
         : sizes_( sizes )
         , ignore_case_( ignore_case )
         , auto_refresh_( auto_refresh )
         , follow_file_( follow_file )
+        , use_regexp_( use_regexp )
     {
         std::transform( markedLines.begin(), markedLines.end(), std::back_inserter( marks_ ),
                         []( const auto& m ) { return m.get(); } );
@@ -106,6 +107,10 @@ class CrawlerWidgetContext : public ViewContextInterface {
     {
         return follow_file_;
     }
+    bool useRegexp() const
+    {
+        return use_regexp_;
+    }
 
     QList<LineNumber::UnderlyingType> marks() const
     {
@@ -122,6 +127,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
     bool ignore_case_;
     bool auto_refresh_;
     bool follow_file_;
+    bool use_regexp_;
 
     QList<LineNumber::UnderlyingType> marks_;
 };
@@ -297,7 +303,8 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
     const auto context = CrawlerWidgetContext{ view_context };
 
     setSizes( context.sizes() );
-    ignoreCaseCheck->setCheckState( context.ignoreCase() ? Qt::Checked : Qt::Unchecked );
+    matchCaseButton->setChecked( !context.ignoreCase() );
+    useRegexpButton->setChecked( context.useRegexp() );
 
     auto auto_refresh_check_state = context.autoRefresh() ? Qt::Checked : Qt::Unchecked;
     searchRefreshCheck->setCheckState( auto_refresh_check_state );
@@ -314,8 +321,11 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
 std::shared_ptr<const ViewContextInterface> CrawlerWidget::doGetViewContext() const
 {
     auto context = std::make_shared<const CrawlerWidgetContext>(
-        sizes(), ( ignoreCaseCheck->checkState() == Qt::Checked ),
-        ( searchRefreshCheck->checkState() == Qt::Checked ), logMainView->isFollowEnabled(),
+        sizes(), 
+        ( !matchCaseButton->isChecked() ),
+        ( searchRefreshCheck->checkState() == Qt::Checked ), 
+        logMainView->isFollowEnabled(),
+        useRegexpButton->isChecked(),
         logFilteredData_->getMarks() );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
@@ -775,7 +785,18 @@ void CrawlerWidget::setup()
     searchInfoLine->setLineWidth( 1 );
     searchInfoLineDefaultPalette = searchInfoLine->palette();
 
-    ignoreCaseCheck = new QCheckBox( "Ignore &case" );
+    matchCaseButton = new QPushButton();
+    matchCaseButton->setToolTip( "Match case" ); 
+    matchCaseButton->setIcon( QIcon( ":/images/case48.png" ) );
+    matchCaseButton->setCheckable( true );
+    matchCaseButton->setFocusPolicy( Qt::NoFocus );
+
+    useRegexpButton = new QPushButton();
+    useRegexpButton->setToolTip( "Use regex" ); 
+    useRegexpButton->setIcon( QIcon( ":/images/regex.png" ) );
+    useRegexpButton->setCheckable( true );
+    useRegexpButton->setFocusPolicy( Qt::NoFocus ); 
+
     searchRefreshCheck = new QCheckBox( "Auto-&refresh" );
 
     // Construct the Search line
@@ -802,7 +823,9 @@ void CrawlerWidget::setup()
     stopButton->setEnabled( false );
 
     auto* searchLineLayout = new QHBoxLayout;
-    searchLineLayout->addWidget( searchLabel );
+    searchLineLayout->addWidget( matchCaseButton );
+    searchLineLayout->addWidget( useRegexpButton );
+    //searchLineLayout->addWidget( searchLabel );
     searchLineLayout->addWidget( searchLineEdit );
     searchLineLayout->addWidget( searchButton );
     searchLineLayout->addWidget( stopButton );
@@ -813,8 +836,9 @@ void CrawlerWidget::setup()
     auto* searchInfoLineLayout = new QHBoxLayout;
     searchInfoLineLayout->addWidget( visibilityBox );
     searchInfoLineLayout->addWidget( searchInfoLine );
-    searchInfoLineLayout->addWidget( ignoreCaseCheck );
-    searchInfoLineLayout->addWidget( searchRefreshCheck );
+
+    // TODO: this seems to be broken
+    //searchInfoLineLayout->addWidget( searchRefreshCheck ); 
 
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;
@@ -833,8 +857,9 @@ void CrawlerWidget::setup()
                                                                            : Qt::Unchecked );
     // Manually call the handler as it is not called when changing the state programmatically
     searchRefreshChangedHandler( searchRefreshCheck->checkState() );
-    ignoreCaseCheck->setCheckState( config.isSearchIgnoreCaseDefault() ? Qt::Checked
-                                                                       : Qt::Unchecked );
+    matchCaseButton->setChecked( config.isSearchIgnoreCaseDefault() ? false : true );
+
+    useRegexpButton->setChecked( config.mainRegexpType() == ExtendedRegexp );
 
     // Default splitter position (usually overridden by the config file)
     setSizes( config.splitterSizes() );
@@ -913,7 +938,7 @@ void CrawlerWidget::setup()
     // (for maintaining default config)
     connect( searchRefreshCheck, &QCheckBox::stateChanged, this,
              &CrawlerWidget::searchRefreshChanged );
-    connect( ignoreCaseCheck, &QCheckBox::stateChanged, this, &CrawlerWidget::ignoreCaseChanged );
+    connect( matchCaseButton, &QPushButton::toggled, this, &CrawlerWidget::matchCaseChanged );
 
     // Switch between views
     connect( logMainView, &LogMainView::exitView, filteredView,
@@ -951,32 +976,18 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 
         QString pattern;
 
-        // Determine the type of regexp depending on the config
-        const auto& config = Persistable::get<Configuration>();
-        switch ( config.mainRegexpType() ) {
-        case Wildcard:
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
-            pattern = QRegularExpression::wildcardToRegularExpression(searchText);
-            pattern = pattern.mid(2, pattern.size() - 4);
-#else
-            pattern = searchText;
-            pattern.replace( '*', ".*" ).replace( '?', "." );
-#endif
-
-            break;
-        case FixedString:
+        if ( !useRegexpButton->isChecked() ) {
             pattern = QRegularExpression::escape( searchText );
-            break;
-        default:
+        }
+        else {
             pattern = searchText;
-            break;
         }
 
         // Set the pattern case insensitive if needed
         QRegularExpression::PatternOptions patternOptions
             = QRegularExpression::UseUnicodePropertiesOption;
 
-        if ( ignoreCaseCheck->checkState() == Qt::Checked )
+        if ( !matchCaseButton->isChecked() )
             patternOptions |= QRegularExpression::CaseInsensitiveOption;
 
         // Constructs the regexp
@@ -1246,6 +1257,8 @@ void CrawlerWidgetContext::loadFromString( const QString& string )
         LOG( logWARNING ) << "Unrecognised follow file " << string.toLocal8Bit().data();
         follow_file_ = false;
     }
+
+    use_regexp_ = Persistable::get<Configuration>().mainRegexpType() == ExtendedRegexp;
 }
 
 void CrawlerWidgetContext::loadFromJson( const QString& json )
@@ -1262,6 +1275,12 @@ void CrawlerWidgetContext::loadFromJson( const QString& json )
     ignore_case_ = properties.value( "IC" ).toBool();
     auto_refresh_ = properties.value( "AR" ).toBool();
     follow_file_ = properties.value( "FF" ).toBool();
+    if ( properties.contains( "RE" ) ) {
+        use_regexp_ = properties.value( "RE" ).toBool();
+    }
+    else {
+        use_regexp_ = Persistable::get<Configuration>().mainRegexpType() == ExtendedRegexp;
+    }
 
     if ( properties.contains( "M" ) ) {
         const auto marks = properties.value( "M" ).toList();
@@ -1287,6 +1306,7 @@ QString CrawlerWidgetContext::toString() const
     properies[ "IC" ] = ignore_case_;
     properies[ "AR" ] = auto_refresh_;
     properies[ "FF" ] = follow_file_;
+    properies[ "RE" ] = use_regexp_;
     properies[ "M" ] = toVariantList( marks_ );
 
     return QJsonDocument::fromVariant( properies ).toJson( QJsonDocument::Compact );

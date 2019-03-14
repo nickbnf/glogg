@@ -165,7 +165,7 @@ class CrawlerWidget : public QSplitter,
     // "auto-refresh" check has been changed
     void searchRefreshChanged( int state );
     // "ignore case" check has been changed
-    void ignoreCaseChanged( int state );
+    void matchCaseChanged( bool matchCase );
 
     // Sent when the data status (whether new not seen data are
     // available) has changed
@@ -285,7 +285,8 @@ class CrawlerWidget : public QSplitter,
     FilteredView*   filteredView;
     QComboBox*      visibilityBox;
     InfoLine*       searchInfoLine;
-    QCheckBox*      ignoreCaseCheck;
+    QPushButton*    matchCaseButton;
+    QPushButton*    useRegexpButton;
     QCheckBox*      searchRefreshCheck;
     OverviewWidget* overviewWidget_;
 

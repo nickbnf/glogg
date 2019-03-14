@@ -139,8 +139,8 @@ MainWindow::MainWindow(std::unique_ptr<Session> session) :
     // Register for checkbox changes
     signalMux_.connect( SIGNAL( searchRefreshChanged( int ) ),
             this, SLOT( handleSearchRefreshChanged( int ) ) );
-    signalMux_.connect( SIGNAL( ignoreCaseChanged( int ) ),
-            this, SLOT( handleIgnoreCaseChanged( int ) ) );
+    signalMux_.connect( SIGNAL( matchCaseChanged( bool ) ),
+            this, SLOT( handleMatchCaseChanged( bool ) ) );
 
     // Configure the main tabbed widget
     mainTabWidget_.setDocumentMode( true );
@@ -710,10 +710,10 @@ void MainWindow::handleSearchRefreshChanged( int state )
     config.setSearchAutoRefreshDefault( state == Qt::Checked );
 }
 
-void MainWindow::handleIgnoreCaseChanged( int state )
+void MainWindow::handleMatchCaseChanged( bool matchCase )
 {
     auto& config = Persistable::get<Configuration>();
-    config.setSearchIgnoreCaseDefault( state == Qt::Checked );
+    config.setSearchIgnoreCaseDefault( !matchCase );
 }
 
 void MainWindow::closeTab( int index )

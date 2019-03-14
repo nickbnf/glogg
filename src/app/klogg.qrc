@@ -24,5 +24,7 @@
     <file>images/arrowdown.png</file>
     <file>images/arrowup.png</file>
     <file>images/darkclosebutton.png</file>
+    <file>images/case48.png</file>
+    <file>images/regex.png</file>
 </qresource>
 </RCC>

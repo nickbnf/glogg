@@ -96,6 +96,7 @@ int main( int argc, char* argv[] )
     qRegisterMetaType<LineLength>( "LineLength" );
 
     std::vector<QString> filenames;
+    std::vector<std::string> raw_filenames;
 
     // Configuration
     bool new_session = false;
@@ -131,15 +132,7 @@ int main( int argc, char* argv[] )
             },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
-        options.add_option( "files",
-            [&filenames](CLI::results_t res)
-            {
-                filenames.clear();
-                for(const auto &a : res) {
-                    filenames.emplace_back( QFile::decodeName( a.c_str() ) );
-                }
-                return !filenames.empty();
-            }, "files to open" );
+        options.add_option( "files", raw_filenames, "files to open" );
 
         options.parse( argc, argv );
 
@@ -147,6 +140,10 @@ int main( int argc, char* argv[] )
         return options.exit( e );
     } catch ( const std::exception& e ) {
         std::cerr << "Exception of unknown type: " << e.what() << std::endl;
+    }
+
+    for ( const auto& file : raw_filenames ) {
+        filenames.emplace_back( QFile::decodeName( file.c_str() ) );
     }
 
     std::unique_ptr<plog::IAppender> logAppender;

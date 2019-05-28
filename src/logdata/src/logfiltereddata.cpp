@@ -342,10 +342,6 @@ void LogFilteredData::setVisibility( Visibility visi )
 //
 void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine )
 {
-    using std::begin;
-    using std::end;
-    using std::next;
-
     const auto& config = Persistable::get<Configuration>();
 
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
@@ -354,11 +350,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
     assert( nbMatches >= 0_lcount );
 
     SearchResultArray new_matches = workerThread_.newSearchResults( maxLength_, nbLinesProcessed_ );
-    auto middle = end( matching_lines_ );
-    matching_lines_.insert( end( matching_lines_ ), begin( new_matches ), end( new_matches ) );
-    std::inplace_merge( begin( matching_lines_ ), middle, middle, end( matching_lines_ ) );
-    //FIXME: klogg has multi-threaded search so we can't pass an optimized start_index
-    insertMatchesIntoFilteredItemsCache( 0 );
+    insertNewMatches( new_matches );
 
     if ( progress == 100 && config.useSearchResultsCache()
          && nbLinesProcessed_.get() == getExpectedSearchEnd( currentSearchKey_ ).get() ) {
@@ -629,39 +621,50 @@ void LogFilteredData::insertIntoFilteredItemsCache( FilteredItem&& item )
     insertIntoFilteredItemsCache( 0, std::move( item ) );
 }
 
-void LogFilteredData::insertMatchesIntoFilteredItemsCache( size_t start_index )
+void LogFilteredData::insertNewMatches( const SearchResultArray& new_matches )
 {
     using std::begin;
     using std::end;
-    using std::next;
-
-    assert( start_index <= matching_lines_.size() );
 
     if ( visibility_ != Visibility::MarksAndMatches ) {
         // this is invalidated and will be regenerated when we need it
         filteredItemsCache_.clear();
-        LOG(logDEBUG) << "cache is invalidated";
+        if ( matching_lines_.size() == 0 ) {
+            LOG(logDEBUG) << "cache is invalidated";
+        }
+        matching_lines_.insert( end( matching_lines_ ), begin( new_matches ), end( new_matches ) );
         return;
     }
 
-    assert( start_index <= filteredItemsCache_.size() );
-
-    filteredItemsCache_.reserve( matching_lines_.size() + marks_.size() );
+    filteredItemsCache_.reserve( matching_lines_.size() + marks_.size() + new_matches.size() );
     // (it's an overestimate but probably not by much so it's fine)
 
+    // Merge into matching_lines_ as we go
+    SearchResultArray old_matches;
+    std::swap( old_matches, matching_lines_ );
+    matching_lines_.reserve( old_matches.size() + new_matches.size() );
+    auto oldLinesIt = begin( old_matches );
+
     // Search for the corresponding index.
-    // We can start the search from insert_index, since lineNumber >= index is always true.
-    auto filteredIt = next( begin( filteredItemsCache_ ), start_index );
-    for ( auto matchesIt = next( begin( matching_lines_ ), start_index ); matchesIt != end( matching_lines_ ); ++matchesIt ) {
-        FilteredItem item{ matchesIt->lineNumber(), FilteredLineTypeFlags::Match };
+    auto filteredIt = begin( filteredItemsCache_ );
+    for ( const auto& line : new_matches ) {
+        FilteredItem item{ line.lineNumber(), FilteredLineTypeFlags::Match };
+
         filteredIt = std::lower_bound( filteredIt, end( filteredItemsCache_ ), item );
         if ( filteredIt == end( filteredItemsCache_ ) || filteredIt->lineNumber() > item.lineNumber() ) {
             filteredIt = filteredItemsCache_.insert( filteredIt, item );
         } else {
-            assert( filteredIt->lineNumber() == matchesIt->lineNumber() );
+            assert( filteredIt->lineNumber() == line.lineNumber() );
             filteredIt->add( item.type() );
         }
+
+        auto oldLinesBound = std::lower_bound( oldLinesIt, end( old_matches ), line );
+        matching_lines_.insert( end( matching_lines_ ), oldLinesIt, oldLinesBound );
+        oldLinesIt = oldLinesBound;
+        matching_lines_.push_back( line );
     }
+
+    matching_lines_.insert( end( matching_lines_ ), oldLinesIt, end( old_matches ) );
 }
 
 void LogFilteredData::removeFromFilteredItemsCache( size_t remove_index, FilteredItem&& item )

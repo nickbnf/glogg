@@ -222,8 +222,8 @@ class LogFilteredData : public AbstractLogData {
     // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was inserted.
     void insertIntoFilteredItemsCache( size_t start_index, FilteredItem&& item );
     void insertIntoFilteredItemsCache( FilteredItem&& item );
-    // Insert entries from matching_lines_ into filteredItemsCache_ starting by start_index.
-    void insertMatchesIntoFilteredItemsCache( size_t start_index );
+    // Insert new matches into matching_lines_ and filteredItemsCache_
+    void insertNewMatches( const SearchResultArray& new_matches );
     // remove_index can be passed in as an optimization when finding the item.
     // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was removed.
     void removeFromFilteredItemsCache( size_t remove_index, FilteredItem&& item );

@@ -77,14 +77,8 @@ using SearchResultArray = std::vector<MatchingLine>;
 class SearchData
 {
   public:
-    SearchData() : maxLength_{0} { }
-
-    // Atomically get all the search data
-    // appending more results to passed array
-    void getAll( LineLength* length, SearchResultArray* matches, LinesCount* nbLinesProcessed ) const;
-    // Atomically get all the search data
-    // appending the missing entries. Does not check that the existing entries match.
-    void getAllMissing( LineLength* length, SearchResultArray* matches, LinesCount* nbLinesProcessed ) const;
+    // Atomically move all the search data
+    SearchResultArray takeAll( LineLength& length, LinesCount& nbLinesProcessed );
     // Atomically set all the search data
     // (overwriting the existing)
     // (the matches are always moved)
@@ -105,8 +99,9 @@ class SearchData
     mutable QMutex dataMutex_;
 
     SearchResultArray matches_;
-    LineLength maxLength_;
+    LineLength maxLength_{ 0 };
     LinesCount nbLinesProcessed_;
+    LineNumber lastMatchedLineNumber_{ 0 };
 };
 
 class SearchOperation : public QObject
@@ -185,8 +180,9 @@ class LogFilteredDataWorkerThread : public QThread
     // Interrupts the search if one is in progress
     void interrupt();
 
-    // Updates the array by copying the current indexing data
-    void updateSearchResult( LineLength* maxLength, SearchResultArray* searchMatches, LinesCount* nbLinesProcessed );
+    // get the current indexing data
+    // the data is cleared, so that successive calls do not return the same results
+    SearchResultArray newSearchResults( LineLength& maxLength, LinesCount& nbLinesProcessed );
 
   signals:
     // Sent during the indexing process to signal progress

@@ -50,6 +50,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <utility>
 
 namespace {
 struct PartialSearchResults {
@@ -102,33 +103,13 @@ PartialSearchResults filterLines( const QRegularExpression& regex,
 }
 } // namespace
 
-void SearchData::getAll( LineLength* length, SearchResultArray* matches, LinesCount* nbLinesProcessed ) const
+SearchResultArray SearchData::takeAll( LineLength& length, LinesCount& nbLinesProcessed )
 {
-    matches->clear();
-    getAllMissing( length, matches, nbLinesProcessed );
-}
-
-void SearchData::getAllMissing( LineLength* length, SearchResultArray* matches, LinesCount* nbLinesProcessed ) const
-{
-    using std::begin;
-    using std::end;
-    using std::next;
-
     QMutexLocker locker( &dataMutex_ );
 
-    *length             = maxLength_;
-    *nbLinesProcessed   = nbLinesProcessed_;
-
-    if ( matches_.size() < matches->size() ) {
-        LOG(logWARNING) << "Cannot append search-data to smaller match-array";
-        return;
-    }
-
-    matches->reserve( matches_.size() );
-
-    // This is a copy (potentially slow)
-    std::insert_iterator<SearchResultArray> inserter{ *matches, end( *matches ) };
-    copy( next( begin( matches_ ), matches->size() ), end( matches_ ), inserter );
+    length           = maxLength_;
+    nbLinesProcessed = nbLinesProcessed_;
+    return std::exchange( matches_, {} );
 }
 
 void SearchData::setAll( LineLength length, SearchResultArray&& matches )
@@ -155,6 +136,8 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
         const auto insertIt = std::lower_bound( begin( matches_ ), end( matches_ ), matches.front() );
         assert( insertIt == end( matches_ ) || ! ( *insertIt < matches.back() ) );
         matches_.insert( insertIt, begin( matches ), end( matches ) );
+
+        lastMatchedLineNumber_ = std::max( lastMatchedLineNumber_, matches.back().lineNumber() );
     }
 }
 
@@ -167,7 +150,7 @@ LinesCount SearchData::getNbMatches() const
 
 LineNumber SearchData::getLastMatchedLineNumber() const
 {
-     return matches_.empty() ? LineNumber{ 0 } : matches_.back().lineNumber();
+    return lastMatchedLineNumber_;
 }
 
 void SearchData::clear()
@@ -250,11 +233,9 @@ void LogFilteredDataWorkerThread::interrupt()
 }
 
 // This will do an atomic copy of the object
-void LogFilteredDataWorkerThread::updateSearchResult( LineLength* maxLength,
-                                                      SearchResultArray* searchMatches,
-                                                      LinesCount* nbLinesProcessed )
+SearchResultArray LogFilteredDataWorkerThread::newSearchResults( LineLength& maxLength, LinesCount& nbLinesProcessed )
 {
-    searchData_.getAllMissing( maxLength, searchMatches, nbLinesProcessed );
+    return searchData_.takeAll( maxLength, nbLinesProcessed );
 }
 
 // This is the thread's main loop

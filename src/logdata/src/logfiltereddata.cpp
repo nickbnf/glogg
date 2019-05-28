@@ -43,6 +43,7 @@
 #include "log.h"
 
 #include <QString>
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <utility>
@@ -352,14 +353,12 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 
     assert( nbMatches >= 0_lcount );
 
-    size_t start_index = matching_lines_.size();
-    //FIXME: klogg has multi-threaded search
-    start_index = 0;
-    matching_lines_.clear();
-
-    workerThread_.updateSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
-
-    insertMatchesIntoFilteredItemsCache( start_index );
+    SearchResultArray new_matches = workerThread_.newSearchResults( maxLength_, nbLinesProcessed_ );
+    auto middle = end( matching_lines_ );
+    matching_lines_.insert( end( matching_lines_ ), begin( new_matches ), end( new_matches ) );
+    std::inplace_merge( begin( matching_lines_ ), middle, middle, end( matching_lines_ ) );
+    //FIXME: klogg has multi-threaded search so we can't pass an optimized start_index
+    insertMatchesIntoFilteredItemsCache( 0 );
 
     if ( progress == 100 && config.useSearchResultsCache()
          && nbLinesProcessed_.get() == getExpectedSearchEnd( currentSearchKey_ ).get() ) {

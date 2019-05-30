@@ -576,24 +576,24 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         jumpToBottom();
     };
 
-    if ( keyEvent->key() == Qt::Key_Up && noModifier)
+    if ( keyEvent->key() == Qt::Key_Up && noModifier )
           moveSelectionUp();
-    if ( keyEvent->key() == Qt::Key_Down && noModifier)
+    else if ( keyEvent->key() == Qt::Key_Down && noModifier )
           moveSelectionDown();
-    if ( keyEvent->key() == Qt::Key_Left && noModifier )
+    else if ( keyEvent->key() == Qt::Key_Left && noModifier )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepSub);
     else if ( keyEvent->key() == Qt::Key_Right  && noModifier )
         horizontalScrollBar()->triggerAction(QScrollBar::SliderPageStepAdd);
-    else if ( keyEvent->key() == Qt::Key_Home && !controlModifier)
+    else if ( keyEvent->key() == Qt::Key_Home && !controlModifier )
         jumpToStartOfLine();
-    else if ( keyEvent->key() == Qt::Key_End  && !controlModifier)
+    else if ( keyEvent->key() == Qt::Key_End  && !controlModifier )
         jumpToRightOfScreen();
-    else if ( (keyEvent->key() == Qt::Key_PageDown && controlModifier)
+    else if ( (keyEvent->key() == Qt::Key_PageDown && controlModifier )
            || (keyEvent->key() == Qt::Key_End && controlModifier) )
     {
        jumpToBottomLine(); // Same as G
     }
-    else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
+    else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier )
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
         selectAndDisplayLine( 0_lnum );
     else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
@@ -603,13 +603,15 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( keyEvent->key() == Qt::Key_Space && noModifier )
         emit exitView();
     else {
-        const auto character = keyEvent->text().at( 0 ).toLatin1();
+        const auto text = keyEvent->text();
 
-        if ( keyEvent->modifiers() == Qt::NoModifier &&
-                ( ( ( character > '0' ) && ( character <= '9' ) ) ||
-                ( !digitsBuffer_.isEmpty() && character == '0' ) ) ) {
-            // Adds the digit to the timed buffer
-            digitsBuffer_.add( character );
+        if ( keyEvent->modifiers() == Qt::NoModifier && text.count() == 1 ) {
+            const auto character = text.at( 0 ).toLatin1();
+            if ( ( ( character > '0' ) && ( character <= '9' ) ) ||
+                   ( !digitsBuffer_.isEmpty() && character == '0' ) ) {
+                // Adds the digit to the timed buffer
+                digitsBuffer_.add( character );
+            }
         }
         else {
             switch ( keyEvent->key() ) {

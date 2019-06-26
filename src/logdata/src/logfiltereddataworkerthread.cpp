@@ -121,6 +121,9 @@ void SearchData::setAll( LineLength length, SearchResultArray&& matches )
 
 void SearchData::addAll( LineLength length, const SearchResultArray& matches, LinesCount lines )
 {
+    using std::begin;
+    using std::end;
+
     QMutexLocker locker( &dataMutex_ );
 
     maxLength_ = qMax( maxLength_, length );
@@ -129,9 +132,9 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
     // This does a copy as we want the final array to be
     // linear.
     if ( !matches.empty() ) {
-        const auto originalSize = matches_.size();
-        matches_.insert( std::end( matches_ ), std::begin( matches ), std::end( matches ) );
-        std::inplace_merge( matches_.begin(), matches_.begin() + originalSize, matches_.end() );
+        const auto insertIt = std::lower_bound( begin( matches_ ), end( matches_ ), matches.front() );
+        assert( insertIt == end( matches_ ) || ! ( *insertIt < matches.back() ) );
+        matches_.insert( insertIt, begin( matches ), end( matches ) );
     }
 }
 
@@ -142,24 +145,9 @@ LinesCount SearchData::getNbMatches() const
     return LinesCount( static_cast<LinesCount::UnderlyingType>( matches_.size() ) );
 }
 
-// This function starts searching from the end since we use it
-// to remove the final match.
-void SearchData::deleteMatch( LineNumber line )
+LineNumber SearchData::getLastMatchedLineNumber() const
 {
-    QMutexLocker locker( &dataMutex_ );
-
-    auto i = matches_.end();
-    while ( i != matches_.begin() ) {
-        --i;
-        const auto this_line = i->lineNumber();
-        if ( this_line == line ) {
-            matches_.erase( i );
-            break;
-        }
-        // Exit if we have passed the line number to look for.
-        if ( this_line < line )
-            break;
-    }
+     return matches_.empty() ? LineNumber{ 0 } : matches_.back().lineNumber();
 }
 
 void SearchData::clear()
@@ -335,9 +323,9 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             return 1;
         }
 
-        return qMax( 1,  config.searchThreadPoolSize() == 0 
-                        ? QThread::idealThreadCount() - 1 
-                        : static_cast<int>( config.searchThreadPoolSize() ) );    
+        return qMax( 1,  config.searchThreadPoolSize() == 0
+                        ? QThread::idealThreadCount() - 1
+                        : static_cast<int>( config.searchThreadPoolSize() ) );
     }();
 
     LOG( logINFO ) << "Using " << matchingThreadsCount << " matching threads";
@@ -425,7 +413,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 matchersDone++;
             }
 
-            const int percentage 
+            const int percentage
                 = static_cast<int>( std::floor( 100.f * ( totalProcessedLines ).get() / totalLines.get() ) );
 
             if ( percentage > reportedPercentage || nbMatches > reportedMatches ) {
@@ -503,12 +491,10 @@ void UpdateSearchOperation::start( SearchData& searchData )
 {
     auto initial_line = initialPosition_;
 
-    if ( initial_line.get() >= 1 ) {
+    if ( initial_line.get() >= 1 && searchData.getLastMatchedLineNumber() != initial_line ) {
         // We need to re-search the last line because it might have
         // been updated (if it was not LF-terminated)
         --initial_line;
-        // In case the last line matched, we don't want it to match twice.
-        searchData.deleteMatch( initial_line );
     }
 
     doSearch( searchData, initial_line );

@@ -321,9 +321,9 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
 std::shared_ptr<const ViewContextInterface> CrawlerWidget::doGetViewContext() const
 {
     auto context = std::make_shared<const CrawlerWidgetContext>(
-        sizes(), 
+        sizes(),
         ( !matchCaseButton->isChecked() ),
-        ( searchRefreshCheck->checkState() == Qt::Checked ), 
+        ( searchRefreshCheck->checkState() == Qt::Checked ),
         logMainView->isFollowEnabled(),
         useRegexpButton->isChecked(),
         logFilteredData_->getMarks() );
@@ -460,7 +460,7 @@ void CrawlerWidget::markLineFromFiltered( LineNumber line )
 {
     if ( line < logFilteredData_->getNbLine() ) {
         const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
-        if ( logFilteredData_->filteredLineTypeByIndex( line ) == LogFilteredData::Mark )
+        if ( logFilteredData_->filteredLineTypeByIndex( line ).testFlag( LogFilteredData::FilteredLineTypeFlags::Mark ) )
             logFilteredData_->deleteMark( line_in_file );
         else
             logFilteredData_->addMark( line_in_file );
@@ -731,21 +731,21 @@ void CrawlerWidget::setup()
     QPixmap marksAndMatchesPixmap( 16, 10 );
     marksAndMatchesPixmap.fill( Qt::gray );
     marksAndMatchesItem->setIcon( QIcon( marksAndMatchesPixmap ) );
-    marksAndMatchesItem->setData( FilteredView::MarksAndMatches );
+    marksAndMatchesItem->setData( QVariant::fromValue( FilteredView::Visibility::MarksAndMatches ) );
     visibilityModel_->appendRow( marksAndMatchesItem );
 
     QStandardItem* marksItem = new QStandardItem( tr( "Marks" ) );
     QPixmap marksPixmap( 16, 10 );
     marksPixmap.fill( Qt::blue );
     marksItem->setIcon( QIcon( marksPixmap ) );
-    marksItem->setData( FilteredView::MarksOnly );
+    marksItem->setData( QVariant::fromValue( FilteredView::Visibility::MarksOnly ) );
     visibilityModel_->appendRow( marksItem );
 
     QStandardItem* matchesItem = new QStandardItem( tr( "Matches" ) );
     QPixmap matchesPixmap( 16, 10 );
     matchesPixmap.fill( Qt::red );
     matchesItem->setIcon( QIcon( matchesPixmap ) );
-    matchesItem->setData( FilteredView::MatchesOnly );
+    matchesItem->setData( QVariant::fromValue( FilteredView::Visibility::MatchesOnly ) );
     visibilityModel_->appendRow( matchesItem );
 
     auto* visibilityView = new QListView( this );
@@ -786,16 +786,16 @@ void CrawlerWidget::setup()
     searchInfoLineDefaultPalette = searchInfoLine->palette();
 
     matchCaseButton = new QPushButton();
-    matchCaseButton->setToolTip( "Match case" ); 
+    matchCaseButton->setToolTip( "Match case" );
     matchCaseButton->setIcon( QIcon( ":/images/case48.png" ) );
     matchCaseButton->setCheckable( true );
     matchCaseButton->setFocusPolicy( Qt::NoFocus );
 
     useRegexpButton = new QPushButton();
-    useRegexpButton->setToolTip( "Use regex" ); 
+    useRegexpButton->setToolTip( "Use regex" );
     useRegexpButton->setIcon( QIcon( ":/images/regex.png" ) );
     useRegexpButton->setCheckable( true );
-    useRegexpButton->setFocusPolicy( Qt::NoFocus ); 
+    useRegexpButton->setFocusPolicy( Qt::NoFocus );
 
     searchRefreshCheck = new QCheckBox( "Auto-&refresh" );
 
@@ -838,7 +838,7 @@ void CrawlerWidget::setup()
     searchInfoLineLayout->addWidget( searchInfoLine );
 
     // TODO: this seems to be broken
-    //searchInfoLineLayout->addWidget( searchRefreshCheck ); 
+    //searchInfoLineLayout->addWidget( searchRefreshCheck );
 
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;

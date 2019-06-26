@@ -67,6 +67,9 @@ void runSearch( LogFilteredData* filtered_data,  const QString& regexp,
 
 SCENARIO( "filtered log data", "[logdata]") {
 
+    using Visibility = LogFilteredData::Visibility;
+    using LineType = LogFilteredData::FilteredLineTypeFlags;
+
     GIVEN( "loaded log data" ) {
         QTemporaryFile file;
         REQUIRE( generateDataFiles( file ) );
@@ -162,8 +165,8 @@ SCENARIO( "filtered log data", "[logdata]") {
             const auto threadPoolSize = GENERATE(0, 1, 2, 3);
 
             auto& config = Persistable::get<Configuration>();
-            config.setSearchThreadPoolSize( threadPoolSize );    
-            config.setUseParallelSearch( threadPoolSize > 0 );    
+            config.setSearchThreadPoolSize( threadPoolSize );
+            config.setUseParallelSearch( threadPoolSize > 0 );
 
             auto filtered_lines = filtered_data->getNbLine();
             REQUIRE( filtered_lines.get() == 0);
@@ -214,7 +217,7 @@ SCENARIO( "filtered log data", "[logdata]") {
 
                 WHEN( "Only marks are visible" ) {
 
-                    filtered_data->setVisibility( LogFilteredData::MarksOnly );
+                    filtered_data->setVisibility( Visibility::MarksOnly );
 
                     THEN( "Has only marked lines count" ) {
                         REQUIRE( filtered_data->getNbLine() == 2_lcount );
@@ -222,7 +225,7 @@ SCENARIO( "filtered log data", "[logdata]") {
                 }
 
                 WHEN( "Only mathes are visible" ) {
-                    filtered_data->setVisibility( LogFilteredData::MatchesOnly );
+                    filtered_data->setVisibility( Visibility::MatchesOnly );
 
                     THEN( "Has only matches lines count" ) {
                         REQUIRE( filtered_data->getNbLine() == 50_lcount );
@@ -230,23 +233,24 @@ SCENARIO( "filtered log data", "[logdata]") {
                 }
 
                 WHEN( "Ask for marked line type" ) {
-                    auto type = filtered_data->filteredLineTypeByIndex( 1_lnum );
+                    auto type = filtered_data->filteredLineTypeByIndex( 0_lnum );
                     THEN( "Return mark" ) {
-                        REQUIRE( type == LogFilteredData::Mark );
+                        REQUIRE( type.testFlag( LineType::Mark ) );
                     }
                 }
 
                 WHEN( "Ask for matched line type" ) {
                     auto type = filtered_data->filteredLineTypeByIndex( 50_lnum );
                     THEN( "Return match" ) {
-                        REQUIRE( type == LogFilteredData::Match );
+                        REQUIRE( type.testFlag( LineType::Match ) );
                     }
                 }
 
                 WHEN( "Ask for mixed line type" ) {
                     auto type = filtered_data->filteredLineTypeByIndex( 1_lnum );
                     THEN( "Return mark" ) {
-                        REQUIRE( type == LogFilteredData::Mark );
+                        REQUIRE( type.testFlag( LineType::Mark ) );
+                        REQUIRE( type.testFlag( LineType::Match ) );
                     }
                 }
             }

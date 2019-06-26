@@ -70,8 +70,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
     maxLength_ = 0_length;
     maxLengthMarks_ = 0_length;
     nbLinesProcessed_ = 0_lcount;
-    searchDone_ = true;
-    visibility_ = MarksAndMatches;
+    visibility_ = Visibility::MarksAndMatches;
 
     filteredItemsCacheDirty_ = true;
 }
@@ -93,9 +92,7 @@ LogFilteredData::LogFilteredData( const LogData* logData )
 
     sourceLogData_ = logData;
 
-    searchDone_ = false;
-
-    visibility_ = MarksAndMatches;
+    visibility_ = Visibility::MarksAndMatches;
 
     filteredItemsCacheDirty_ = true;
 
@@ -219,17 +216,19 @@ LogFilteredData::FilteredLineType
 {
     // If we are only showing one type, the line is there because
     // it is of this type.
-    if ( visibility_ == MatchesOnly )
-        return Match;
-    else if ( visibility_ == MarksOnly )
-        return Mark;
+    if ( visibility_ == Visibility::MatchesOnly )
+        return FilteredLineTypeFlags::Match;
+    else if ( visibility_ == Visibility::MarksOnly )
+        return FilteredLineTypeFlags::Mark;
     else {
         // If it is MarksAndMatches, we have to look.
         // Regenerate the cache if needed
         if ( filteredItemsCacheDirty_ )
             regenerateFilteredItemsCache();
 
-        return filteredItemsCache_[ index.get() ].type();
+        auto type = filteredItemsCache_[ index.get() ].type();
+        assert( !!type );
+        return type;
     }
 }
 
@@ -342,7 +341,6 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
     LOG(logDEBUG) << "LogFilteredData::handleSearchProgressed matches="
         << nbMatches << " progress=" << progress;
 
-    // searchDone_ = true;
     workerThread_.getSearchResult( &maxLength_, &matching_lines_, &nbLinesProcessed_ );
     filteredItemsCacheDirty_ = true;
 
@@ -393,7 +391,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
     auto line = maxValue<LineNumber>();
-    if ( visibility_ == MatchesOnly ) {
+    if ( visibility_ == Visibility::MatchesOnly ) {
         if ( lineNum.get() < matching_lines_.size() ) {
             line = matching_lines_[lineNum.get()].lineNumber();
         }
@@ -402,7 +400,7 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
                           << " matches size " << matching_lines_.size();
         }
     }
-    else if ( visibility_ == MarksOnly ) {
+    else if ( visibility_ == Visibility::MarksOnly ) {
         if ( lineNum.get() < marks_.size() )
             line = marks_.getLineMarkedByIndex( lineNum.get() );
         else
@@ -410,6 +408,7 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
                           << " marks size " << marks_.size();
     }
     else {
+        assert( visibility_ == Visibility::MarksAndMatches );
         // Regenerate the cache if needed
         if ( filteredItemsCacheDirty_ )
             regenerateFilteredItemsCache();
@@ -428,17 +427,19 @@ LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
 {
     auto lineIndex = maxValue<LineNumber>();
 
-    if ( visibility_ == MatchesOnly ) {
+    if ( visibility_ == Visibility::MatchesOnly ) {
         lineIndex = lookupLineNumber( matching_lines_.begin(),
                                       matching_lines_.end(),
                                       lineNum );
     }
-    else if ( visibility_ == MarksOnly ) {
+    else if ( visibility_ == Visibility::MarksOnly ) {
         lineIndex = lookupLineNumber( marks_.begin(),
                                       marks_.end(),
                                       lineNum );
     }
     else {
+        assert( visibility_ == Visibility::MarksAndMatches );
+
         // Regenerate the cache if needed
         if ( filteredItemsCacheDirty_ )
             regenerateFilteredItemsCache();
@@ -497,11 +498,13 @@ LinesCount LogFilteredData::doGetNbLine() const
 {
     size_t nbLines {};
 
-    if ( visibility_ == MatchesOnly )
+    if ( visibility_ == Visibility::MatchesOnly )
         nbLines = matching_lines_.size();
-    else if ( visibility_ == MarksOnly )
+    else if ( visibility_ == Visibility::MarksOnly )
         nbLines = marks_.size();
     else {
+        assert( visibility_ == Visibility::MarksAndMatches );
+
         // Regenerate the cache if needed (hopefully most of the time
         // it won't be necessarily)
         if ( filteredItemsCacheDirty_ )
@@ -517,12 +520,15 @@ LineLength LogFilteredData::doGetMaxLength() const
 {
     LineLength max_length;
 
-    if ( visibility_ == MatchesOnly )
+    if ( visibility_ == Visibility::MatchesOnly )
         max_length = maxLength_;
-    else if ( visibility_ == MarksOnly )
+    else if ( visibility_ == Visibility::MarksOnly )
         max_length = maxLengthMarks_;
-    else
+    else {
+        assert( visibility_ == Visibility::MarksAndMatches );
+
         max_length = qMax( maxLength_, maxLengthMarks_ );
+    }
 
     return max_length;
 }
@@ -559,32 +565,27 @@ void LogFilteredData::regenerateFilteredItemsCache() const
 
     while ( ( i != matching_lines_.cend() ) || ( j != marks_.end() ) ) {
 
-        const auto next_mark =
-            ( j != marks_.end() ) ? j->lineNumber() : maxValue<LineNumber>();
-
-        const auto next_match =
-            ( i != matching_lines_.cend() ) ? i->lineNumber() : maxValue<LineNumber>();
+        const auto next_mark = ( j != marks_.end() ) ? j->lineNumber() : maxValue<LineNumber>();
+        const auto next_match = ( i != matching_lines_.cend() ) ? i->lineNumber() : maxValue<LineNumber>();
 
         LineNumber line;
-        FilteredLineType lineType = Match;
+        FilteredLineType lineType = FilteredLineTypeFlags::None;
 
         if ( next_mark <= next_match ) {
             // LOG(logDEBUG) << "Add mark at " << next_mark;
             line = next_mark;
-            lineType = Mark;
+            lineType = FilteredLineTypeFlags::Mark;
             ++j;
         }
 
         if ( next_mark >= next_match ) {
             // LOG(logDEBUG) << "Add match at " << next_match;
             line = next_match;
-
-            // We choose a Mark over a Match if a line is both,
-            // just an arbitrary choice really.
-            lineType = lineType == Mark ? Mark : Match;
-
+            lineType |= FilteredLineTypeFlags::Match;
             ++i;
         }
+
+        assert( !! lineType );
 
         filteredItemsCache_.emplace_back( line, lineType );
     }

@@ -105,7 +105,15 @@ class LogFilteredData : public AbstractLogData {
 
     // Returns the reason why the line at the passed index is in the filtered
     // data.  It can be because it is either a mark or a match.
-    enum FilteredLineType { Match, Mark };
+    enum class FilteredLineTypeFlags
+    {
+        None  = 0,        // this is for internal use
+        Match = 1 << 0,
+        Mark  = 1 << 1,
+    };
+
+    Q_DECLARE_FLAGS(FilteredLineType, FilteredLineTypeFlags)
+
     FilteredLineType filteredLineTypeByIndex(LineNumber index ) const;
 
     // Marks interface (delegated to a Marks object)
@@ -128,12 +136,18 @@ class LogFilteredData : public AbstractLogData {
     void deleteMark( LineNumber line );
     // Completely clear the marks list.
     void clearMarks();
-	// Get all marked lines
-	QList<LineNumber> getMarks() const;
+    // Get all marked lines
+    QList<LineNumber> getMarks() const;
 
     // Changes what the AbstractLogData returns via its getXLines/getNbLines
     // API.
-    enum Visibility { MatchesOnly, MarksOnly, MarksAndMatches };
+    enum class Visibility
+    {
+        MatchesOnly,
+        MarksOnly,
+        MarksAndMatches
+    };
+    Q_ENUM( Visibility );
     void setVisibility( Visibility visibility );
 
   signals:
@@ -219,12 +233,25 @@ class LogFilteredData::FilteredItem {
     // A default ctor seems to be necessary for QVector
     FilteredItem();
     FilteredItem( LineNumber lineNumber, FilteredLineType type )
-    { lineNumber_ = lineNumber; type_ = type; }
+        : lineNumber_{ lineNumber }
+        , type_ { type }
+    {}
 
     LineNumber lineNumber() const
     { return lineNumber_; }
+
     FilteredLineType type() const
     { return type_; }
+
+    void add( FilteredLineType type )
+    { type_ |= type; }
+
+    // Returns whether any type-flag is left.
+    bool remove( FilteredLineType type )
+    {
+        type_ &= ~type;
+        return !!type_;
+    }
 
     bool operator <( const LogFilteredData::FilteredItem& other ) const
     { return lineNumber_ < other.lineNumber_; }
@@ -236,5 +263,8 @@ class LogFilteredData::FilteredItem {
     LineNumber lineNumber_;
     FilteredLineType type_;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(LogFilteredData::FilteredLineType)
+
 
 #endif

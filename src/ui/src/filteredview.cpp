@@ -56,21 +56,7 @@ void FilteredView::setVisibility( Visibility visi )
 {
     assert( logFilteredData_ );
 
-    LogFilteredData::Visibility data_visibility =
-        LogFilteredData::MarksAndMatches;
-    switch ( visi ) {
-        case MarksOnly:
-            data_visibility = LogFilteredData::MarksOnly;
-            break;
-        case MatchesOnly:
-            data_visibility = LogFilteredData::MatchesOnly;
-            break;
-        case MarksAndMatches:
-            data_visibility = LogFilteredData::MarksAndMatches;
-            break;
-    };
-
-    logFilteredData_->setVisibility( data_visibility );
+    logFilteredData_->setVisibility( visi );
 
     updateData();
 }
@@ -78,9 +64,8 @@ void FilteredView::setVisibility( Visibility visi )
 // For the filtered view, a line is always matching!
 AbstractLogView::LineType FilteredView::lineType( LineNumber lineNumber ) const
 {
-    const auto type =
-        logFilteredData_->filteredLineTypeByIndex( lineNumber );
-    if ( type == LogFilteredData::Mark )
+    const auto type = logFilteredData_->filteredLineTypeByIndex( lineNumber );
+    if ( type.testFlag( LogFilteredData::FilteredLineTypeFlags::Mark ) )
         return Marked;
     else
         return Match;

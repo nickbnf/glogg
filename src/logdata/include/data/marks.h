@@ -112,6 +112,9 @@ class Marks {
         const Mark* operator->() const
         { return &(*internal_iter_); }
 
+        bool operator==( const const_iterator& other ) const
+        { return ( internal_iter_ != other.internal_iter_ ); }
+
         bool operator!=( const const_iterator& other ) const
         { return ( internal_iter_ != other.internal_iter_ ); }
 

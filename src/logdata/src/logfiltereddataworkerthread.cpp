@@ -150,6 +150,24 @@ LineNumber SearchData::getLastMatchedLineNumber() const
      return matches_.empty() ? LineNumber{ 0 } : matches_.back().lineNumber();
 }
 
+void SearchData::deleteMatch( LineNumber line )
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    auto i = matches_.end();
+    while ( i != matches_.begin() ) {
+        --i;
+        const auto this_line = i->lineNumber();
+        if ( this_line == line ) {
+            matches_.erase( i );
+            break;
+        }
+        // Exit if we have passed the line number to look for.
+        if ( this_line < line )
+            break;
+    }
+}
+
 void SearchData::clear()
 {
     QMutexLocker locker( &dataMutex_ );
@@ -491,10 +509,12 @@ void UpdateSearchOperation::start( SearchData& searchData )
 {
     auto initial_line = initialPosition_;
 
-    if ( initial_line.get() >= 1 && searchData.getLastMatchedLineNumber() != initial_line ) {
+    if ( initial_line.get() >= 1 ) {
         // We need to re-search the last line because it might have
         // been updated (if it was not LF-terminated)
         --initial_line;
+        // In case the last line matched, we don't want it to match twice.
+        searchData.deleteMatch( initial_line );
     }
 
     doSearch( searchData, initial_line );

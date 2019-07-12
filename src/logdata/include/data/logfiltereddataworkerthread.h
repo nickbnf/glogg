@@ -96,6 +96,9 @@ class SearchData
     // 0 if no matches have been found yet
     LineNumber getLastMatchedLineNumber() const;
 
+    // Delete the match for the passed line (if it exist)
+    void deleteMatch( LineNumber line );
+
     // Atomically clear the data.
     void clear();
 

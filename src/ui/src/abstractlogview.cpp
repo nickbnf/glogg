@@ -187,9 +187,11 @@ inline void LineDrawer::draw( QPainter& painter,
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
     const int fontAscent = fm.ascent();
-    // For some reason on Qt 4.8.2 for Win, maxWidth() is wrong but the
-    // following give the right result, not sure why:
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+    const int fontWidth = fm.horizontalAdvance( QChar('a') );
+#else
     const int fontWidth = fm.width( QChar('a') );
+#endif
 
     int xPos = initialXPos;
     int yPos = initialYPos;
@@ -1218,9 +1220,11 @@ void AbstractLogView::updateDisplaySize()
     // Font is assumed to be mono-space (is restricted by options dialog)
     QFontMetrics fm = fontMetrics();
     charHeight_ = fm.height();
-    // For some reason on Qt 4.8.2 for Win, maxWidth() is wrong but the
-    // following give the right result, not sure why:
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+    charWidth_ = fm.horizontalAdvance( QChar('a') );
+#else
     charWidth_ = fm.width( QChar('a') );
+#endif
 
     // Update the scroll bars
     updateScrollBars();

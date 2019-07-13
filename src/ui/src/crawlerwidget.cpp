@@ -487,10 +487,9 @@ void CrawlerWidget::applyConfiguration()
     // Whatever font we use, we should NOT use kerning
     font.setKerning( false );
     font.setFixedPitch( true );
-#if QT_VERSION > 0x040700
     // Necessary on systems doing subpixel positionning (e.g. Ubuntu 12.04)
     font.setStyleStrategy( QFont::ForceIntegerMetrics );
-#endif
+
     logMainView->setFont( font );
     filteredView->setFont( font );
 

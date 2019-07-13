@@ -216,6 +216,7 @@ void OptionsDialog::updateDialogFromConfig()
     indexReadBufferSpinBox->setValue( config.indexReadBufferSizeMb() );
     searchReadBufferSpinBox->setValue( config.searchReadBufferSizeLines() );
     keepFileClosedCheckBox->setChecked( config.keepFileClosed() );
+    useLineEndingCacheCheckBox->setChecked( config.useLineEndingCache() );
 
     // version checking
     const auto& versionChecking = Persistable::get<VersionCheckerConfig>();
@@ -274,6 +275,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setIndexReadBufferSizeMb( indexReadBufferSpinBox->value() );
     config.setSearchReadBufferSizeLines( searchReadBufferSpinBox->value() );
     config.setKeepFileClosed( keepFileClosedCheckBox->isChecked() );
+    config.setUseLineEndingCache( useLineEndingCacheCheckBox->isChecked() );
 
     // version checking
     auto& versionChecking = Persistable::get<VersionCheckerConfig>();

@@ -109,6 +109,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         searchThreadPoolSize_ = settings.value( "perf.searchThreadPoolSize" ).toUInt();
     if ( settings.contains( "perf.keepFileClosed" ) )
         keepFileClosed_ = settings.value( "perf.keepFileClosed" ).toBool();
+    if ( settings.contains( "perf.useLineEndingCache" ) )
+        useLineEndingCache_ = settings.value( "perf.useLineEndingCache" ).toBool();
 
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
@@ -159,6 +161,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "perf.searchReadBufferSizeLines", searchReadBufferSizeLines_ );
     settings.setValue( "perf.searchThreadPoolSize", searchThreadPoolSize_ );
     settings.setValue( "perf.keepFileClosed", keepFileClosed_ );
+    settings.setValue( "perf.useLineEndingCache", useLineEndingCache_ );
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );

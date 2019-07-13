@@ -41,6 +41,7 @@
 #include <cstdlib>
 
 #include "compressedlinestorage.h"
+#include "configuration.h"
 
 #define BLOCK_SIZE 256
 
@@ -286,6 +287,7 @@ void CompressedLinePositionStorage::append( LineOffset pos )
 // template<int BLOCK_SIZE>
 LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
 {
+    const auto& config = Persistable::get<Configuration>();
     auto& last_read = cache_.local();
 
     const uint8_t* block = nullptr;
@@ -295,7 +297,9 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
     if ( index < first_long_line_ ) {
         block = pool32_[ index.get() / BLOCK_SIZE ];
 
-        if ( ( index.get() == last_read.index.get() + 1 ) && ( index.get() % BLOCK_SIZE != 0 ) ) {
+        if ( config.useLineEndingCache()
+             && ( index.get() == last_read.index.get() + 1 )
+             && ( index.get() % BLOCK_SIZE != 0 ) ) {
             position = last_read.position;
             offset = last_read.offset;
 

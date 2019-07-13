@@ -171,6 +171,15 @@ class Configuration final : public Persistable {
         keepFileClosed_ = shouldKeepClosed;
     }
 
+    bool useLineEndingCache() const
+    {
+        return useLineEndingCache_;
+    }
+    void setUseLineEndingCache( bool useLineEndingCache )
+    {
+        useLineEndingCache_ = useLineEndingCache;
+    }
+
     // View settings
     bool isOverviewVisible() const
     {
@@ -262,6 +271,8 @@ class Configuration final : public Persistable {
     uint32_t searchReadBufferSizeLines_ = 5000;
     uint32_t searchThreadPoolSize_ = 0;
     bool keepFileClosed_ = false;
+
+    bool useLineEndingCache_ = true;
 };
 
 #endif

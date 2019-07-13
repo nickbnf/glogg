@@ -32,7 +32,7 @@ set_property(TARGET klogg_itests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_test(
     NAME klogg_tests
-    COMMAND klogg_tests
+    COMMAND klogg_tests -platform offscreen
 )
 
 add_test(

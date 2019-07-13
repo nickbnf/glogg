@@ -20,10 +20,17 @@
 #define CATCH_CONFIG_RUNNER
 #include <catch.hpp>
 
+#include <QApplication>
+
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
+#include <persistentinfo.h>
+
+const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+
 int main(int argc, char *argv[]) {
+    QApplication a( argc, argv );
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
     plog::init( logINFO, &appender );

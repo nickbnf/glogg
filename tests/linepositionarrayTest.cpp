@@ -29,7 +29,13 @@
 #include <vector>
 #include <algorithm>
 
+#include <configuration.h>
+
 SCENARIO( "LinePositionArray with small number of lines", "[linepositionarray]") {
+
+    auto useEndingCache = GENERATE(true, false);
+    auto& config = Persistable::getSynced<Configuration>();
+    config.setUseLineEndingCache(useEndingCache);
 
     std::vector<LineOffset> offsets = {
         4_offset,
@@ -129,6 +135,10 @@ SCENARIO( "LinePositionArray with small number of lines", "[linepositionarray]")
 
 SCENARIO( "LinePositionArray with full block of lines", "[linepositionarray]") {
 
+    auto useEndingCache = GENERATE(true, false);
+    auto& config = Persistable::getSynced<Configuration>();
+    config.setUseLineEndingCache(useEndingCache);
+
     GIVEN( "LinePositionArray with block of lines") {
 
         LinePositionArray line_array;
@@ -164,6 +174,10 @@ SCENARIO( "LinePositionArray with full block of lines", "[linepositionarray]") {
 }
 
 SCENARIO( "LinePositionArray with UINT32_MAX offsets", "[linepositionarray]") {
+
+    auto useEndingCache = GENERATE(true, false);
+    auto& config = Persistable::getSynced<Configuration>();
+    config.setUseLineEndingCache(useEndingCache);
 
     std::vector<LineOffset> offsets = {
         4_offset,

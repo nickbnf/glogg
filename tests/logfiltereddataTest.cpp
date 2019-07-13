@@ -70,6 +70,10 @@ SCENARIO( "filtered log data", "[logdata]") {
     using Visibility = LogFilteredData::Visibility;
     using LineType = LogFilteredData::FilteredLineTypeFlags;
 
+    auto useParallelSearch = GENERATE(true, false);
+    auto& config = Persistable::get<Configuration>();
+    config.setUseParallelSearch(useParallelSearch);
+
     GIVEN( "loaded log data" ) {
         QTemporaryFile file;
         REQUIRE( generateDataFiles( file ) );
@@ -164,7 +168,6 @@ SCENARIO( "filtered log data", "[logdata]") {
 
             const auto threadPoolSize = GENERATE(0, 1, 2, 3);
 
-            auto& config = Persistable::get<Configuration>();
             config.setSearchThreadPoolSize( threadPoolSize );
             config.setUseParallelSearch( threadPoolSize > 0 );
 

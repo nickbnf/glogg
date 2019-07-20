@@ -64,7 +64,7 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     pollIntervalLineEdit->setValidator( polling_interval_validator_ );
 
     connect( buttonBox, &QDialogButtonBox::clicked, this, &OptionsDialog::onButtonBoxClicked );
-    connect( fontFamilyBox, QOverload<const QString&>::of( &QComboBox::currentIndexChanged ), this,
+    connect( fontFamilyBox, &QComboBox::currentTextChanged, this,
              &OptionsDialog::updateFontSize );
     connect( incrementalCheckBox, &QCheckBox::toggled,
              [this]( auto ) { this->onIncrementalChanged(); } );

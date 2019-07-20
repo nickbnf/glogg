@@ -33,6 +33,40 @@
 
 const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
 
+class TestRunner : public QObject {
+    Q_OBJECT
+
+  public:
+    TestRunner( int argc, char** argv )
+        : argc_( argc )
+        , argv_( argv )
+    {
+    }
+
+    int result()
+    {
+        return result_;
+    }
+
+  public slots:
+    void process()
+    {
+        result_ = Catch::Session().run( argc_, argv_ );
+        emit finished(result_);
+    }
+
+  signals:
+    void finished(int);
+
+  private:
+    int argc_;
+    char** argv_;
+
+    int result_;
+};
+
+#include "qtests_main.moc"
+
 int main( int argc, char* argv[] )
 {
     QApplication a( argc, argv );
@@ -46,8 +80,8 @@ int main( int argc, char* argv[] )
 
     auto& config = Persistable::getSynced<Configuration>();
     config.setSearchReadBufferSizeLines( 10 );
+    config.setIndexReadBufferSizeMb( 1 );
     config.setUseSearchResultsCache( false );
-    
 
 #ifdef Q_OS_WIN
     config.setPollingEnabled( true );
@@ -56,11 +90,24 @@ int main( int argc, char* argv[] )
     config.setPollingEnabled( false );
 #endif
 
-    QtConcurrent::run( [&a, &argc, &argv]() {
-        int result = Catch::Session().run( argc, argv );
-        a.processEvents();
-        a.exit( result );
-    } );
+    QThreadPool::globalInstance()->reserveThread();
+
+    QThread* testThread = new QThread;
+    TestRunner* runner = new TestRunner(argc, argv);
+
+    runner->moveToThread(testThread);
+
+    QObject::connect(testThread, &QThread::started, runner, &TestRunner::process);
+
+
+    QObject::connect(runner, &TestRunner::finished, runner, &TestRunner::deleteLater);
+
+    QObject::connect(runner, &TestRunner::finished, testThread, &QThread::quit);
+    QObject::connect(testThread, &QThread::finished, testThread, &QThread::deleteLater);
+
+    QObject::connect(runner, &TestRunner::finished, &a, &QApplication::exit);
+
+    testThread->start();
 
     return a.exec();
 }

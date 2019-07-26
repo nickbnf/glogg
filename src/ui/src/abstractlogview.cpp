@@ -746,7 +746,7 @@ void AbstractLogView::resizeEvent( QResizeEvent* )
     if ( logData == nullptr )
         return;
 
-    LOG(logDEBUG) << "resizeEvent received";
+    LOG(logDEBUG1) << "resizeEvent received";
 
     updateDisplaySize();
 }
@@ -848,7 +848,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         textAreaCache_.first_line_   = firstLine;
         textAreaCache_.first_column_ = firstCol;
 
-        LOG(logDEBUG) << "End of writing " <<
+        LOG(logDEBUG1) << "End of writing " <<
             std::chrono::duration_cast<std::chrono::microseconds>
             ( std::chrono::system_clock::now() - start ).count();
     }
@@ -865,7 +865,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 
     if ( pullToFollowHeight
             && ( pullToFollowCache_.nb_columns_ != getNbVisibleCols() ) ) {
-        LOG(logDEBUG) << "Drawing pull to follow bar";
+        LOG(logDEBUG1) << "Drawing pull to follow bar";
         pullToFollowCache_.pixmap_ = drawPullToFollowBar(
                 viewport()->width(), viewport()->devicePixelRatio() );
         pullToFollowCache_.nb_columns_ = getNbVisibleCols();
@@ -903,7 +903,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 pullToFollowCache_.pixmap_ );
     }
 
-    LOG(logDEBUG) << "End of repaint " <<
+    LOG(logDEBUG1) << "End of repaint " <<
         std::chrono::duration_cast<std::chrono::microseconds>
         ( std::chrono::system_clock::now() - start ).count();
 }
@@ -1654,9 +1654,9 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
 
     const int bottomOfTextPx = nbLines.get() * fontHeight;
 
-    LOG(logDEBUG) << "drawing lines from " << firstLine << " (" << nbLines << " lines)";
-    LOG(logDEBUG) << "bottomOfTextPx: " << bottomOfTextPx;
-    LOG(logDEBUG) << "Height: " << paintDeviceHeight;
+    LOG(logDEBUG1) << "drawing lines from " << firstLine << " (" << nbLines << " lines)";
+    LOG(logDEBUG1) << "bottomOfTextPx: " << bottomOfTextPx;
+    LOG(logDEBUG1) << "Height: " << paintDeviceHeight;
 
     // Lines to write
     const auto lines = logData->getExpandedLines( firstLine, nbLines );

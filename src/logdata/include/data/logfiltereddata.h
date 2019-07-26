@@ -169,6 +169,9 @@ class LogFilteredData : public AbstractLogData {
     void doSetDisplayEncoding( const char* encoding ) override;
     QTextCodec* doGetDisplayEncoding() const override;
 
+    void doAttachReader() const override;
+    void doDetachReader() const override;
+
     // List of the matching line numbers
     SearchResultArray matching_lines_;
 

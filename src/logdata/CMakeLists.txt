@@ -11,6 +11,8 @@ add_library(logdata STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddataworker.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/marks.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/linetypes.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/fileholder.h
+
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/abstractlogdata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/blockpool.cpp
@@ -21,6 +23,7 @@ add_library(logdata STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logfiltereddata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logfiltereddataworker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/marks.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/fileholder.cpp
 
 )
 

@@ -45,11 +45,6 @@
 #include <QFileInfo>
 #include <QIODevice>
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <fcntl.h>
-#endif
-
 #include "log.h"
 
 #include "logdata.h"
@@ -57,119 +52,59 @@
 
 #include "configuration.h"
 
-namespace
-{
-    void openFileByHandle(QFile* file)
-    {
-        bool openedByHandle = false;
-
-#ifdef Q_OS_WIN
-        //
-        // The following code is adapted from Qt's QFSFileEnginePrivate::nativeOpen()
-        // by including the FILE_SHARE_DELETE share mode.
-        //
-
-        // Enable full sharing.
-        DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-
-        int accessRights = GENERIC_READ;
-        DWORD creationDisp = OPEN_EXISTING;
-
-        // Create the file handle.
-        SECURITY_ATTRIBUTES securityAtts = { sizeof(SECURITY_ATTRIBUTES), NULL, FALSE };
-        HANDLE fileHandle = CreateFileW(
-                (const wchar_t*)file->fileName().utf16(),
-                accessRights,
-                shareMode,
-                &securityAtts,
-                creationDisp,
-                FILE_ATTRIBUTE_NORMAL,
-                NULL);
-
-        if (fileHandle != INVALID_HANDLE_VALUE) {
-            // Convert the HANDLE to an fd and pass it to QFile's foreign-open
-            // function. The fd owns the handle, so when QFile later closes
-            // the fd the handle will be closed too.
-            int fd = _open_osfhandle((intptr_t)fileHandle, _O_RDONLY);
-            if (fd != -1) {
-                openedByHandle = file->open( fd, QIODevice::ReadOnly, QFile::AutoCloseHandle );
-            }
-            else {
-                LOG(logWARNING) << "Failed to open file by handle " << file->fileName();
-                ::CloseHandle(fileHandle);
-            }
-        }
-        else {
-            LOG(logWARNING) << "Failed to open file by handle " << file->fileName();
-        }
-#endif
-        if ( !openedByHandle ) {
-            file->open( QIODevice::ReadOnly );
-        }
-    }
-}
-
 // Implementation of the 'start' functions for each operation
 
-void LogData::AttachOperation::doStart(
-        LogDataWorker& workerThread ) const
+void LogData::AttachOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG(logDEBUG) << "Attaching " << filename_.toStdString();
+    LOG( logDEBUG ) << "Attaching " << filename_.toStdString();
     workerThread.attachFile( filename_ );
     workerThread.indexAll();
 }
 
-void LogData::FullIndexOperation::doStart(
-        LogDataWorker& workerThread ) const
+void LogData::FullIndexOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG(logDEBUG) << "Reindexing (full)";
-    workerThread.indexAll(forcedEncoding_);
+    LOG( logDEBUG ) << "Reindexing (full)";
+    workerThread.indexAll( forcedEncoding_ );
 }
 
-void LogData::PartialIndexOperation::doStart(
-        LogDataWorker& workerThread ) const
+void LogData::PartialIndexOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG(logDEBUG) << "Reindexing (partial)";
+    LOG( logDEBUG ) << "Reindexing (partial)";
     workerThread.indexAdditionalLines();
 }
 
-
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), indexing_data_(),
-    fileMutex_(), workerThread_( indexing_data_ )
+LogData::LogData()
+    : AbstractLogData()
+    , indexing_data_()
+    , workerThread_( indexing_data_ )
 {
     // Start with an "empty" log
     attached_file_ = nullptr;
     currentOperation_ = nullptr;
-    nextOperation_    = nullptr;
+    nextOperation_ = nullptr;
 
     codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
     // Initialise the file watcher
-    connect( &FileWatcher::getFileWatcher(), &FileWatcher::fileChanged,
-            this, &LogData::fileChangedOnDisk, Qt::QueuedConnection );
+    connect( &FileWatcher::getFileWatcher(), &FileWatcher::fileChanged, this,
+             &LogData::fileChangedOnDisk, Qt::QueuedConnection );
 
     // Forward the update signal
-    connect( &workerThread_, &LogDataWorker::indexingProgressed,
-            this, &LogData::loadingProgressed );
-    connect( &workerThread_, &LogDataWorker::indexingFinished,
-            this, &LogData::indexingFinished );
+    connect( &workerThread_, &LogDataWorker::indexingProgressed, this,
+             &LogData::loadingProgressed );
+    connect( &workerThread_, &LogDataWorker::indexingFinished, this, &LogData::indexingFinished );
 
     const auto& config = Persistable::get<Configuration>();
     keepFileClosed_ = config.keepFileClosed();
 
     if ( keepFileClosed_ ) {
-        LOG(logINFO) << "Keep file closed option is set";
+        LOG( logINFO ) << "Keep file closed option is set";
     }
 }
 
-LogData::~LogData()
-{
-    // Remove the current file from the watch list
-    if ( attached_file_ )
-        FileWatcher::getFileWatcher().removeFile( indexingFileName_ );
-}
+LogData::~LogData() {}
 
 //
 // Public functions
@@ -177,7 +112,7 @@ LogData::~LogData()
 
 void LogData::attachFile( const QString& fileName )
 {
-    LOG(logDEBUG) << "LogData::attachFile " << fileName.toStdString();
+    LOG( logDEBUG ) << "LogData::attachFile " << fileName.toStdString();
 
     if ( attached_file_ ) {
         // We cannot reattach
@@ -185,11 +120,8 @@ void LogData::attachFile( const QString& fileName )
     }
 
     indexingFileName_ = fileName;
-    attached_file_.reset( new QFile( fileName ) );
-
-    openFileByHandle( attached_file_.get() );
-
-    attached_file_id_ = getFileId( indexingFileName_ );
+    attached_file_.reset( new FileHolder( keepFileClosed_ ) );
+    attached_file_->open( indexingFileName_ );
 
     std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
     enqueueOperation( std::move( operation ) );
@@ -218,14 +150,14 @@ LogFilteredData* LogData::getNewFilteredData() const
     return newFilteredData;
 }
 
-void LogData::reload(QTextCodec* forcedEncoding)
+void LogData::reload( QTextCodec* forcedEncoding )
 {
     workerThread_.interrupt();
 
     // Re-open the file, useful in case the file has been moved
-    reOpenFile();
+    attached_file_->reOpenFile();
 
-    enqueueOperation( std::make_shared<FullIndexOperation>(forcedEncoding) );
+    enqueueOperation( std::make_shared<FullIndexOperation>( forcedEncoding ) );
 }
 
 //
@@ -236,14 +168,12 @@ void LogData::reload(QTextCodec* forcedEncoding)
 // there is none ongoing.
 void LogData::enqueueOperation( std::shared_ptr<const LogDataOperation> new_operation )
 {
-    if ( currentOperation_ == nullptr )
-    {
+    if ( currentOperation_ == nullptr ) {
         // We do it immediately
-        currentOperation_ =  new_operation;
+        currentOperation_ = new_operation;
         startOperation();
     }
-    else
-    {
+    else {
         // An operation is in progress...
         // ... we schedule the attach op for later
         nextOperation_ = new_operation;
@@ -254,11 +184,10 @@ void LogData::enqueueOperation( std::shared_ptr<const LogDataOperation> new_oper
 // signal will be received when it's finished.
 void LogData::startOperation()
 {
-    reOpenFile();
+    attached_file_->attachReader();
 
-    if ( currentOperation_ )
-    {
-        LOG(logDEBUG) << "startOperation found something to do.";
+    if ( currentOperation_ ) {
+        LOG( logDEBUG ) << "startOperation found something to do.";
 
         // Let the operation do its stuff
         currentOperation_->start( workerThread_ );
@@ -271,17 +200,18 @@ void LogData::startOperation()
 
 void LogData::fileChangedOnDisk( const QString& filename )
 {
-    LOG(logINFO) << "signalFileChanged " << filename.toStdString();
+    LOG( logINFO ) << "signalFileChanged " << filename.toStdString();
 
     QFileInfo info( indexingFileName_ );
-    const auto currentFileId = getFileId( indexingFileName_ );
+    const auto currentFileId = FileId::getFileId( indexingFileName_ );
+    const auto attachedFileId = attached_file_->getFileId();
 
     const auto file_size = indexing_data_.getSize();
-    LOG(logDEBUG) << "current indexed fileSize=" << file_size;
-    LOG(logDEBUG) << "info file_->size()=" << info.size();
-    LOG(logDEBUG) << "attached_file_->size()=" << attached_file_->size();
-    LOG(logDEBUG) << "attached_file_id_ index " << attached_file_id_.fileIndex;
-    LOG(logDEBUG) << "currentFileId index " << currentFileId.fileIndex;
+    LOG( logDEBUG ) << "current indexed fileSize=" << file_size;
+    LOG( logDEBUG ) << "info file_->size()=" << info.size();
+    LOG( logDEBUG ) << "attached_file_->size()=" << attached_file_->size();
+    LOG( logDEBUG ) << "attached_file_id_ index " << attachedFileId.fileIndex;
+    LOG( logDEBUG ) << "currentFileId index " << currentFileId.fileIndex;
 
     // In absence of any clearer information, we use the following size comparison
     // to determine whether we are following the same file or not (i.e. the file
@@ -291,14 +221,15 @@ void LogData::fileChangedOnDisk( const QString& filename )
     // This is a crude heuristic but necessary for notification services that do not
     // give details (e.g. kqueues)
 
-    const bool isFileIdChanged = attached_file_id_ != currentFileId;
+    const bool isFileIdChanged = attachedFileId != currentFileId;
 
     if ( isFileIdChanged || ( info.size() != attached_file_->size() )
-            || ( attached_file_->openMode() == QIODevice::NotOpen ) ) {
+         || ( !attached_file_->isOpen() ) ) {
 
-        LOG(logINFO) << "Inconsistent size, or file index, the file might have changed, re-opening";
+        LOG( logINFO )
+            << "Inconsistent size, or file index, the file might have changed, re-opening";
 
-        reOpenFile();
+        attached_file_->reOpenFile();
 
         // We don't force a (slow) full reindex as this routinely happens if
         // the file is appended quickly.
@@ -313,20 +244,15 @@ void LogData::fileChangedOnDisk( const QString& filename )
 
     if ( isFileIdChanged || real_file_size < file_size ) {
         fileChangedOnDisk_ = Truncated;
-        LOG(logINFO) << "File truncated";
+        LOG( logINFO ) << "File truncated";
         newOperation = std::make_shared<FullIndexOperation>;
     }
     else if ( real_file_size == file_size ) {
-        LOG(logINFO) << "No change in file";
-
-        if ( keepFileClosed_ ) {
-            QMutexLocker locker( &fileMutex_ );
-            attached_file_->close();
-        }
+        LOG( logINFO ) << "No change in file";
     }
     else if ( fileChangedOnDisk_ != DataAdded ) {
         fileChangedOnDisk_ = DataAdded;
-        LOG(logINFO) << "New data on disk";
+        LOG( logINFO ) << "New data on disk";
         newOperation = std::make_shared<PartialIndexOperation>;
     }
 
@@ -339,14 +265,10 @@ void LogData::fileChangedOnDisk( const QString& filename )
 
 void LogData::indexingFinished( LoadingStatus status )
 {
-    LOG(logDEBUG) << "indexingFinished: " <<
-        ( status == LoadingStatus::Successful ) <<
-        ", found " << indexing_data_.getNbLines() << " lines.";
+    attached_file_->detachReader();
 
-    if ( keepFileClosed_ ) {
-        QMutexLocker locker( &fileMutex_ );
-        attached_file_->close();
-    }
+    LOG( logDEBUG ) << "indexingFinished: " << ( status == LoadingStatus::Successful ) << ", found "
+                    << indexing_data_.getNbLines() << " lines.";
 
     if ( status == LoadingStatus::Successful ) {
         // Start watching we watch the file for updates
@@ -364,7 +286,7 @@ void LogData::indexingFinished( LoadingStatus status )
     // were indexing.
     fileChangedOnDisk_ = Unchanged;
 
-    LOG(logDEBUG) << "Sending indexingFinished.";
+    LOG( logDEBUG ) << "Sending indexingFinished.";
     emit loadingFinished( status );
 
     // So now the operation is done, let's see if there is something
@@ -375,7 +297,7 @@ void LogData::indexingFinished( LoadingStatus status )
     nextOperation_.reset();
 
     if ( currentOperation_ ) {
-        LOG(logDEBUG) << "indexingFinished is performing the next operation";
+        LOG( logDEBUG ) << "indexingFinished is performing the next operation";
         startOperation();
     }
 }
@@ -395,24 +317,26 @@ LineLength LogData::doGetMaxLength() const
 
 LineLength LogData::doGetLineLength( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) { return 0_length; /* exception? */ }
+    if ( line >= indexing_data_.getNbLines() ) {
+        return 0_length; /* exception? */
+    }
 
     return LineLength( doGetExpandedLineString( line ).length() );
 }
 
 void LogData::doSetDisplayEncoding( const char* encoding )
 {
-    LOG(logDEBUG) << "AbstractLogData::setDisplayEncoding: " << encoding;
+    LOG( logDEBUG ) << "AbstractLogData::setDisplayEncoding: " << encoding;
     codec_ = QTextCodec::codecForName( encoding );
 
     const QTextCodec* currentIndexCodec = indexing_data_.getForcedEncoding();
-    if (!currentIndexCodec) currentIndexCodec = indexing_data_.getEncodingGuess();
+    if ( !currentIndexCodec )
+        currentIndexCodec = indexing_data_.getEncodingGuess();
 
-    if (codec_->mibEnum() != currentIndexCodec->mibEnum())
-    {
-        if (EncodingParameters(codec_) != EncodingParameters(currentIndexCodec)) {
+    if ( codec_->mibEnum() != currentIndexCodec->mibEnum() ) {
+        if ( EncodingParameters( codec_ ) != EncodingParameters( currentIndexCodec ) ) {
             bool isGuessedCodec = codec_->mibEnum() == indexing_data_.getEncodingGuess()->mibEnum();
-            reload( isGuessedCodec  ? nullptr : codec_);
+            reload( isGuessedCodec ? nullptr : codec_ );
         }
     }
 }
@@ -424,23 +348,18 @@ QTextCodec* LogData::doGetDisplayEncoding() const
 
 QString LogData::doGetLineString( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) { return ""; /* exception? */ }
-
-    if ( keepFileClosed_ ) {
-        reOpenFile();
+    if ( line >= indexing_data_.getNbLines() ) {
+        return ""; /* exception? */
     }
 
     QByteArray rawString;
 
     {
-        QMutexLocker locker( &fileMutex_ );
+        ScopedFileHolder<FileHolder> locker( attached_file_.get() );
 
-        attached_file_->seek( ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount ).get() );
-        rawString = attached_file_->readLine();
-
-        if ( keepFileClosed_ ) {
-            attached_file_->close();
-        }
+        locker.getFile()->seek(
+            ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount ).get() );
+        rawString = locker.getFile()->readLine();
     }
 
     auto string = codec_->toUnicode( rawString );
@@ -451,23 +370,18 @@ QString LogData::doGetLineString( LineNumber line ) const
 
 QString LogData::doGetExpandedLineString( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) { return ""; /* exception? */ }
-
-    if ( keepFileClosed_ ) {
-        reOpenFile();
+    if ( line >= indexing_data_.getNbLines() ) {
+        return ""; /* exception? */
     }
 
     QByteArray rawString;
 
     {
-        QMutexLocker locker( &fileMutex_ );
+        ScopedFileHolder<FileHolder> locker( attached_file_.get() );
 
-        attached_file_->seek( ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount).get() );
-        rawString = attached_file_->readLine();
-
-        if ( keepFileClosed_ ) {
-            attached_file_->close();
-        }
+         locker.getFile()->seek(
+            ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount ).get() );
+        rawString =  locker.getFile()->readLine();
     }
 
     auto string = untabify( codec_->toUnicode( rawString ) );
@@ -490,29 +404,22 @@ std::vector<QString> LogData::doGetLines( LineNumber first_line, LinesCount numb
     }
 
     if ( last_line >= indexing_data_.getNbLines() ) {
-        LOG(logWARNING) << "LogData::doGetLines Lines out of bound asked for";
+        LOG( logWARNING ) << "LogData::doGetLines Lines out of bound asked for";
         return std::vector<QString>(); /* exception? */
     }
 
-    const auto first_byte = (first_line.get() == 0) ?
-        0 : indexing_data_.getPosForLine( first_line - 1_lcount ).get();
-    const auto last_byte  = indexing_data_.getPosForLine( last_line ).get();
-
-    if ( keepFileClosed_ ) {
-        reOpenFile();
-    }
+    const auto first_byte = ( first_line.get() == 0 )
+                                ? 0
+                                : indexing_data_.getPosForLine( first_line - 1_lcount ).get();
+    const auto last_byte = indexing_data_.getPosForLine( last_line ).get();
 
     QByteArray buffer;
 
     {
-        QMutexLocker locker( &fileMutex_ );
+        ScopedFileHolder<FileHolder> locker( attached_file_.get() );
 
-        attached_file_->seek( first_byte );
-        buffer = attached_file_->read( last_byte - first_byte );
-
-        if ( keepFileClosed_ ) {
-            attached_file_->close();
-        }
+        locker.getFile()->seek( first_byte );
+        buffer = locker.getFile()->read( last_byte - first_byte );
     }
 
     std::vector<QString> list;
@@ -520,14 +427,15 @@ std::vector<QString> LogData::doGetLines( LineNumber first_line, LinesCount numb
 
     qint64 beginning = 0;
     qint64 end = 0;
-    std::unique_ptr<QTextDecoder> decoder {codec_->makeDecoder()};
+    std::unique_ptr<QTextDecoder> decoder{ codec_->makeDecoder() };
 
-    EncodingParameters encodingParams{codec_};
+    EncodingParameters encodingParams{ codec_ };
 
-    for ( LineNumber line = first_line; (line <= last_line); ++line ) {
+    for ( LineNumber line = first_line; ( line <= last_line ); ++line ) {
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
-        list.emplace_back( decoder->toUnicode( buffer.data() + beginning,
-                                        static_cast<LineLength::UnderlyingType>( end - beginning - encodingParams.lineFeedWidth ) ) );
+        list.emplace_back( decoder->toUnicode(
+            buffer.data() + beginning, static_cast<LineLength::UnderlyingType>(
+                                           end - beginning - encodingParams.lineFeedWidth ) ) );
         beginning = end;
     }
 
@@ -543,29 +451,22 @@ std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCo
     }
 
     if ( last_line >= indexing_data_.getNbLines() ) {
-        LOG(logWARNING) << "LogData::doGetExpandedLines Lines out of bound asked for";
+        LOG( logWARNING ) << "LogData::doGetExpandedLines Lines out of bound asked for";
         return std::vector<QString>(); /* exception? */
     }
 
-    if ( keepFileClosed_ ) {
-        reOpenFile();
-    }
-
-    const auto first_byte = (first_line.get() == 0) ?
-        0 : indexing_data_.getPosForLine( first_line-1_lcount ).get();
-    const auto last_byte  = indexing_data_.getPosForLine( last_line ).get();
+    const auto first_byte = ( first_line.get() == 0 )
+                                ? 0
+                                : indexing_data_.getPosForLine( first_line - 1_lcount ).get();
+    const auto last_byte = indexing_data_.getPosForLine( last_line ).get();
 
     QByteArray buffer;
 
     {
-        QMutexLocker locker( &fileMutex_ );
+        ScopedFileHolder<FileHolder> locker( attached_file_.get() );
 
-        attached_file_->seek( first_byte );
-        buffer = attached_file_->read( last_byte - first_byte );
-
-        if ( keepFileClosed_ ) {
-            attached_file_->close();
-        }
+        locker.getFile()->seek( first_byte );
+        buffer = locker.getFile()->read( last_byte - first_byte );
     }
 
     std::vector<QString> list;
@@ -573,14 +474,15 @@ std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCo
 
     qint64 beginning = 0;
     qint64 end = 0;
-    std::unique_ptr<QTextDecoder> decoder {codec_->makeDecoder()};
+    std::unique_ptr<QTextDecoder> decoder{ codec_->makeDecoder() };
 
-    EncodingParameters encodingParams{codec_};
+    EncodingParameters encodingParams{ codec_ };
 
-    for ( auto line = first_line; (line <= last_line); ++line ) {
+    for ( auto line = first_line; ( line <= last_line ); ++line ) {
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
-        list.emplace_back( untabify( decoder->toUnicode( buffer.data() + beginning,
-                                                  static_cast<LineLength::UnderlyingType>( end - beginning - encodingParams.lineFeedWidth ) ) ) );
+        list.emplace_back( untabify( decoder->toUnicode(
+            buffer.data() + beginning, static_cast<LineLength::UnderlyingType>(
+                                           end - beginning - encodingParams.lineFeedWidth ) ) ) );
         beginning = end;
     }
 
@@ -592,15 +494,12 @@ QTextCodec* LogData::getDetectedEncoding() const
     return indexing_data_.getEncodingGuess();
 }
 
-// Close and reopen the file.
-// Used if we suspect the file has been moved (we follow the old
-// inode but really want the one now associated with the name)
-void LogData::reOpenFile() const
+void LogData::doAttachReader() const
 {
-    auto reopened = std::make_unique<QFile>( indexingFileName_ );
-    openFileByHandle( reopened.get() );
+    attached_file_->attachReader();
+}
 
-    QMutexLocker locker( &fileMutex_ );
-    attached_file_ = std::move( reopened );
-    attached_file_id_ = getFileId( indexingFileName_ );
+void LogData::doDetachReader() const
+{
+    attached_file_->detachReader();
 }

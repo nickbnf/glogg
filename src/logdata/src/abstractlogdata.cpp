@@ -96,3 +96,14 @@ QTextCodec* AbstractLogData::getDisplayEncoding() const
     return doGetDisplayEncoding();
 }
 
+void AbstractLogData::attachReader() const
+{
+    doAttachReader();
+}
+
+void AbstractLogData::detachReader() const
+{
+    doDetachReader();
+}
+
+

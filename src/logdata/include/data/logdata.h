@@ -52,8 +52,7 @@
 #include "logdataworker.h"
 #include "filewatcher.h"
 #include "loadingstatus.h"
-
-#include "fileid.h"
+#include "fileholder.h"
 
 class LogFilteredData;
 
@@ -175,14 +174,18 @@ class LogData : public AbstractLogData {
     LineLength doGetLineLength(LineNumber line ) const override;
     void doSetDisplayEncoding( const char* encoding ) override;
     QTextCodec* doGetDisplayEncoding() const override;
+    void doAttachReader() const override;
+    void doDetachReader() const override;
 
     void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
     void startOperation();
     void reOpenFile() const;
 
+    mutable std::unique_ptr<FileHolder> attached_file_;
+
     QString indexingFileName_;
-    mutable std::unique_ptr<QFile> attached_file_;
-    mutable FileId attached_file_id_;
+    //mutable std::unique_ptr<QFile> attached_file_;
+    //mutable FileId attached_file_id_;
 
     bool keepFileClosed_;
 
@@ -201,7 +204,7 @@ class LogData : public AbstractLogData {
     int after_cr_offset_  = 0;
 
     // To protect the file:
-    mutable QMutex fileMutex_;
+    //mutable QMutex fileMutex_;
     // (are mutable to allow 'const' function to touch it,
     // while remaining const)
     // When acquiring both, data should be help before locking file.

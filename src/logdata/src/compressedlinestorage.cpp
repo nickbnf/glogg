@@ -298,8 +298,7 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
     if ( index < first_long_line_ ) {
         block = pool32_[ index.get() / BLOCK_SIZE ];
 
-        if ( config.useLineEndingCache()
-             && ( index.get() == last_read.index.get() + 1 )
+        if ( config.useLineEndingCache() && ( index.get() == last_read.index.get() + 1 )
              && ( index.get() % BLOCK_SIZE != 0 ) ) {
             position = last_read.position;
             offset = last_read.offset;
@@ -319,7 +318,7 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
         const auto index_in_64 = index - first_long_line_;
         block = pool64_[ index_in_64.get() / BLOCK_SIZE ];
 
-        if ( ( index.get() == last_read.index.get() + 1 )
+        if ( config.useLineEndingCache() && ( index.get() == last_read.index.get() + 1 )
              && ( index_in_64.get() % BLOCK_SIZE != 0 ) ) {
             position = last_read.position;
             offset = last_read.offset;

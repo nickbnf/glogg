@@ -77,6 +77,9 @@ class AbstractLogData : public QObject {
 
     QTextCodec* getDisplayEncoding() const;
 
+    void attachReader() const;
+    void detachReader() const;
+
     // Length of a tab stop
     static const int tabStop = 8;
 
@@ -116,6 +119,9 @@ class AbstractLogData : public QObject {
     // Internal function called to set the encoding
     virtual void doSetDisplayEncoding( const char* encoding ) = 0;
     virtual QTextCodec* doGetDisplayEncoding() const = 0;
+
+    virtual void doAttachReader() const = 0;
+    virtual void doDetachReader() const = 0;
 
     static QString untabify( const QString& line ) {
         QString untabified_line;

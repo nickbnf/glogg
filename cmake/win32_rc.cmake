@@ -92,8 +92,8 @@ function(generate_product_version outfiles)
         set(PRODUCT_FILE_DESCRIPTION "${PRODUCT_NAME}")
     endif()
 
-    set (_VersionInfoFile ${CMAKE_CURRENT_BINARY_DIR}/version_info.h)
-    set (_VersionResourceFile ${CMAKE_CURRENT_BINARY_DIR}/version_resource.rc)
+    set (_VersionInfoFile ${CMAKE_BINARY_DIR}/generated/version_info.h)
+    set (_VersionResourceFile ${CMAKE_BINARY_DIR}/generated/version_resource.rc)
     configure_file(
         ${GenerateProductVersionCurrentDir}/version_info.h.in
         ${_VersionInfoFile}

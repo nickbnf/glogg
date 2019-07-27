@@ -342,6 +342,10 @@ if(TBB_BUILD_TBBMALLOC)
       target_compile_definitions(klogg_tbbmalloc PUBLIC __TBB_NO_IMPLICIT_LINKAGE=1 __TBBMALLOC_NO_IMPLICIT_LINKAGE=1)
     endif()
 
+    if (WIN32)
+        target_sources(klogg_tbbmalloc PRIVATE ${ProductVersionResourceFiles})
+    endif()
+
     if (UNIX)
         target_compile_options(klogg_tbbmalloc PRIVATE -w)
     endif()
@@ -381,6 +385,10 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
 
     if (UNIX)
         target_compile_options(klogg_tbbmalloc_proxy PRIVATE -w)
+    endif()
+
+    if (WIN32)
+        target_sources(klogg_tbbmalloc_proxy PRIVATE ${ProductVersionResourceFiles})
     endif()
 
     install(TARGETS klogg_tbbmalloc_proxy

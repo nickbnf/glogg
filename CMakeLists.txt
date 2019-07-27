@@ -35,7 +35,6 @@ set(COPYING_FILE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
 set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.rst)
 set(README_HTML ${CMAKE_BINARY_DIR}/readme.html)
 
-
 include(prepare_version)
 
 set(out_dir "${CMAKE_BINARY_DIR}/output")

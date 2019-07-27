@@ -37,21 +37,6 @@ target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 
 if (WIN32)
 
-    include(win32_rc)
-
-    generate_product_version(
-        ProductVersionResourceFiles
-        NAME "${PROJECT_DESCRIPTION}"
-        ORIGINAL_FILENAME ${PROJECT_NAME}
-        ICON "${ICON_FILE}"
-        VERSION_MAJOR ${PROJECT_VERSION_MAJOR}
-        VERSION_MINOR ${PROJECT_VERSION_MINOR}
-        VERSION_PATCH ${PROJECT_VERSION_PATCH}
-        VERSION_REVISION ${PRODUCT_VERSION_TWEAK}
-        COMPANY_NAME ${COMPANY}
-        COMPANY_COPYRIGHT ${COPYRIGHT}
-    )
-
     target_sources(klogg PRIVATE ${ProductVersionResourceFiles})
     target_sources(klogg_portable PRIVATE ${ProductVersionResourceFiles})
 

@@ -30,9 +30,9 @@
 Selection::Selection()
 {
     selectedPartial_.startColumn = 0;
-    selectedPartial_.endColumn   = 0;
+    selectedPartial_.endColumn = 0;
 
-    selectedRange_.endLine   = 0_lnum;
+    selectedRange_.endLine = 0_lnum;
 }
 
 void Selection::selectPortion( LineNumber line, int start_column, int end_column )
@@ -42,8 +42,8 @@ void Selection::selectPortion( LineNumber line, int start_column, int end_column
     selectedRange_.startLine = {};
 
     selectedPartial_.line = line;
-    selectedPartial_.startColumn = qMin ( start_column, end_column );
-    selectedPartial_.endColumn   = qMax ( start_column, end_column );
+    selectedPartial_.startColumn = qMin( start_column, end_column );
+    selectedPartial_.endColumn = qMax( start_column, end_column );
 }
 
 void Selection::selectRange( LineNumber start_line, LineNumber end_line )
@@ -52,8 +52,8 @@ void Selection::selectRange( LineNumber start_line, LineNumber end_line )
     selectedLine_ = {};
     selectedPartial_.line = {};
 
-    selectedRange_.startLine = qMin ( start_line, end_line );
-    selectedRange_.endLine   = qMax ( start_line, end_line );
+    selectedRange_.startLine = qMin( start_line, end_line );
+    selectedRange_.endLine = qMax( start_line, end_line );
 
     selectedRange_.firstLine = start_line;
 }
@@ -76,7 +76,7 @@ void Selection::selectRangeFromPrevious( LineNumber line )
 
 void Selection::crop( LineNumber last_line )
 {
-    if ( selectedLine_.has_value() &&  *selectedLine_ > last_line )
+    if ( selectedLine_.has_value() && *selectedLine_ > last_line )
         selectedLine_ = {};
 
     if ( selectedPartial_.line.has_value() && *selectedPartial_.line > last_line )
@@ -93,7 +93,7 @@ bool Selection::getPortionForLine( LineNumber line, int* start_column, int* end_
 {
     if ( selectedPartial_.line.has_value() && *selectedPartial_.line == line ) {
         *start_column = selectedPartial_.startColumn;
-        *end_column   = selectedPartial_.endColumn;
+        *end_column = selectedPartial_.endColumn;
 
         return true;
     }
@@ -104,11 +104,10 @@ bool Selection::getPortionForLine( LineNumber line, int* start_column, int* end_
 
 bool Selection::isLineSelected( LineNumber line ) const
 {
-    if ( selectedLine_.has_value()  && line == *selectedLine_ )
+    if ( selectedLine_.has_value() && line == *selectedLine_ )
         return true;
     else if ( selectedRange_.startLine.has_value() )
-        return ( ( line >= *selectedRange_.startLine )
-                && ( line <= selectedRange_.endLine ) );
+        return ( ( line >= *selectedRange_.startLine ) && ( line <= selectedRange_.endLine ) );
     else
         return false;
 }
@@ -147,19 +146,22 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
         text = logData->getLineString( *selectedLine_ );
     }
     else if ( selectedPartial_.line.has_value() ) {
-        text = logData->getExpandedLineString( *selectedPartial_.line ).
-            mid( selectedPartial_.startColumn, ( selectedPartial_.endColumn -
-                        selectedPartial_.startColumn ) + 1 );
+        text = logData->getExpandedLineString( *selectedPartial_.line )
+                   .mid( selectedPartial_.startColumn,
+                         ( selectedPartial_.endColumn - selectedPartial_.startColumn ) + 1 );
     }
     else if ( selectedRange_.startLine.has_value() ) {
-        const auto list = logData->getLines( *selectedRange_.startLine,
-                LinesCount( selectedRange_.endLine.get() - selectedRange_.startLine->get() + 1 ) );
+        const auto list = logData->getLines(
+            *selectedRange_.startLine,
+            LinesCount( selectedRange_.endLine.get() - selectedRange_.startLine->get() + 1 ) );
 
-        text.reserve( std::accumulate( list.begin(), list.end(), list.size(),
+        text.reserve( std::accumulate(
+            list.begin(), list.end(), list.size(),
             []( const auto value, const auto& line ) { return value + line.size(); } ) );
 
         for ( const auto& line : list ) {
-            if ( !text.isEmpty() ) {
+            if ( !text.isEmpty() && !text.endsWith( QChar::CarriageReturn )
+                 && !text.endsWith( QChar::LineFeed ) ) {
                 text.append( QChar::LineFeed );
             }
             text.append( line );
@@ -181,7 +183,7 @@ FilePosition Selection::getNextPosition() const
         line = selectedRange_.endLine + 1_lcount;
     }
     else if ( selectedPartial_.line.has_value() ) {
-        line   = *selectedPartial_.line;
+        line = *selectedPartial_.line;
         column = selectedPartial_.endColumn + 1;
     }
 
@@ -200,7 +202,7 @@ FilePosition Selection::getPreviousPosition() const
         line = *selectedRange_.startLine;
     }
     else if ( selectedPartial_.line.has_value() ) {
-        line   = *selectedPartial_.line;
+        line = *selectedPartial_.line;
         column = qMax( selectedPartial_.startColumn - 1, 0 );
     }
 

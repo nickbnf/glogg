@@ -364,30 +364,16 @@ QString LogData::doGetLineString( LineNumber line ) const
 
     auto string = codec_->toUnicode( rawString );
     string.chop( 1 );
+    if ( string.endsWith( QChar::CarriageReturn ) ) {
+        string.chop( 1 );
+    }
 
     return string;
 }
 
 QString LogData::doGetExpandedLineString( LineNumber line ) const
 {
-    if ( line >= indexing_data_.getNbLines() ) {
-        return ""; /* exception? */
-    }
-
-    QByteArray rawString;
-
-    {
-        ScopedFileHolder<FileHolder> locker( attached_file_.get() );
-
-         locker.getFile()->seek(
-            ( line.get() == 0 ) ? 0 : indexing_data_.getPosForLine( line - 1_lcount ).get() );
-        rawString =  locker.getFile()->readLine();
-    }
-
-    auto string = untabify( codec_->toUnicode( rawString ) );
-    string.chop( 1 );
-
-    return string;
+    return untabify( doGetLineString( line ) );
 }
 
 // Note this function is also called from the LogFilteredDataWorker thread, so

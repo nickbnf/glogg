@@ -300,7 +300,7 @@ void MainWindow::createActions()
     connect( exitAction, &QAction::triggered, [this](auto){ this->close(); });
 
     copyAction = new QAction(tr("&Copy"), this);
-    copyAction->setShortcut(QKeySequence::Copy);
+    copyAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Copy ) );
     copyAction->setStatusTip(tr("Copy the selection"));
     connect( copyAction, &QAction::triggered, [this](auto){ this->copy(); });
 

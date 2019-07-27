@@ -35,19 +35,19 @@ target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 
-include(win32_rc)
-
 if (WIN32)
+
+    include(win32_rc)
 
     generate_product_version(
         ProductVersionResourceFiles
         NAME "${PROJECT_DESCRIPTION}"
         ORIGINAL_FILENAME ${PROJECT_NAME}
         ICON "${ICON_FILE}"
-        VERSION_MAJOR ${PRODUC_VERSION_MAJOR}
-        VERSION_MINOR ${PRODUC_VERSION_MINOR}
-        VERSION_PATCH ${PRODUC_VERSION_PATCH}
-        VERSION_REVISION ${PRODUC_VERSION_TWEAK}
+        VERSION_MAJOR ${PROJECT_VERSION_MAJOR}
+        VERSION_MINOR ${PROJECT_VERSION_MINOR}
+        VERSION_PATCH ${PROJECT_VERSION_PATCH}
+        VERSION_REVISION ${PRODUCT_VERSION_TWEAK}
         COMPANY_NAME ${COMPANY}
         COMPANY_COPYRIGHT ${COPYRIGHT}
     )

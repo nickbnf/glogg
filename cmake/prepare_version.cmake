@@ -41,5 +41,7 @@ include_directories(${CMAKE_BINARY_DIR}/generated)
 add_custom_target (generate_version ALL
     COMMAND ${CMAKE_COMMAND} -DBUILD_VERSION=${PROJECT_VERSION}.${PROJECT_VERSION_TWEAK} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_version_h.cmake
     SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_version_h.cmake
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version_info.h.in
+            ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version_resource.rc.in
 )
 

@@ -62,16 +62,16 @@ function(generate_product_version outfiles)
         set(PRODUCT_ICON "${CMAKE_SOURCE_DIR}/product.ico")
     endif()
 
-    if (NOT PRODUCT_VERSION_MAJOR OR "${PRODUCT_VERSION_MAJOR}" STREQUAL "")
+    if (NOT PRODUCT_VERSION_MAJOR EQUAL 0 AND (NOT PRODUCT_VERSION_MAJOR OR "${PRODUCT_VERSION_MAJOR}" STREQUAL ""))
         set(PRODUCT_VERSION_MAJOR 1)
     endif()
-    if (NOT PRODUCT_VERSION_MINOR OR "${PRODUCT_VERSION_MINOR}" STREQUAL "")
+    if (NOT PRODUCT_VERSION_MINOR EQUAL 0 AND (NOT PRODUCT_VERSION_MINOR OR "${PRODUCT_VERSION_MINOR}" STREQUAL ""))
         set(PRODUCT_VERSION_MINOR 0)
     endif()
-    if (NOT PRODUCT_VERSION_PATCH OR "${PRODUCT_VERSION_PATCH}" STREQUAL "")
+    if (NOT PRODUCT_VERSION_PATCH EQUAL 0 AND (NOT PRODUCT_VERSION_PATCH OR "${PRODUCT_VERSION_PATCH}" STREQUAL ""))
         set(PRODUCT_VERSION_PATCH 0)
     endif()
-    if (NOT PRODUCT_VERSION_REVISION OR "${PRODUCT_VERSION_REVISION}" STREQUAL "")
+    if (NOT PRODUCT_VERSION_REVISION EQUAL 0 AND (NOT PRODUCT_VERSION_REVISION OR "${PRODUCT_VERSION_REVISION}" STREQUAL ""))
         set(PRODUCT_VERSION_REVISION 0)
     endif()
 
@@ -92,14 +92,14 @@ function(generate_product_version outfiles)
         set(PRODUCT_FILE_DESCRIPTION "${PRODUCT_NAME}")
     endif()
 
-    set (_VersionInfoFile ${CMAKE_CURRENT_BINARY_DIR}/VersionInfo.h)
-    set (_VersionResourceFile ${CMAKE_CURRENT_BINARY_DIR}/VersionResource.rc)
+    set (_VersionInfoFile ${CMAKE_CURRENT_BINARY_DIR}/version_info.h)
+    set (_VersionResourceFile ${CMAKE_CURRENT_BINARY_DIR}/version_resource.rc)
     configure_file(
-        ${GenerateProductVersionCurrentDir}/VersionInfo.in
+        ${GenerateProductVersionCurrentDir}/version_info.h.in
         ${_VersionInfoFile}
         @ONLY)
     configure_file(
-        ${GenerateProductVersionCurrentDir}/VersionResource.rc
+        ${GenerateProductVersionCurrentDir}/version_resource.rc.in
         ${_VersionResourceFile}
         COPYONLY)
     list(APPEND ${outfiles} ${_VersionInfoFile} ${_VersionResourceFile})

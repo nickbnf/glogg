@@ -111,6 +111,8 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Concurrent.dll
     SetOutPath $INSTDIR\platforms
     File release\platforms\qwindows.dll
+    SetOutPath $INSTDIR\styles
+    File release\styles\qwindowsvistastyle.dll
 SectionEnd
 
 Section "MSVC Runtime libraries" vcruntime
@@ -159,6 +161,7 @@ Section "Uninstall"
     Delete "$INSTDIR\Qt5Concurrent.dll"
     Delete "$INSTDIR\platforms\qwindows.dll"
     Delete "$INSTDIR\platforms\qminimal.dll"
+    Delete "$INSTDIR\styles\qwindowsvistastyle.dll"
     Delete "$INSTDIR\msvcp140.dll"
     Delete "$INSTDIR\vcruntime140.dll"
     Delete "$INSTDIR\tbbmalloc.dll"

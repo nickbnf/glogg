@@ -16,6 +16,8 @@ xcopy %QTDIR%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %QTDIR%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 md %APPVEYOR_BUILD_FOLDER%\release\platforms
 xcopy %QTDIR%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
+md %APPVEYOR_BUILD_FOLDER%\release\styles
+xcopy %QTDIR%\plugins\styles\qwindowsvistastyle.dll %APPVEYOR_BUILD_FOLDER%\release\styles /y
 
 xcopy %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y

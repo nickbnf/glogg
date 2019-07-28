@@ -172,7 +172,7 @@ SCENARIO( "filtered log data", "[logdata]") {
             config.setUseParallelSearch( threadPoolSize > 0 );
 
             auto filtered_lines = filtered_data->getNbLine();
-            REQUIRE( filtered_lines.get() == 0);
+            REQUIRE( filtered_lines.get() == 0 );
 
             SafeQSignalSpy searchProgressSpy {
                         filtered_data.get(),
@@ -183,21 +183,21 @@ SCENARIO( "filtered log data", "[logdata]") {
 
             THEN( "Matched lines are in data" ) {
                 QList<QVariant> progressArgs = searchProgressSpy.last();
-                REQUIRE( qvariant_cast<LinesCount>( progressArgs.at(0) ) == 50_lcount );
+                REQUIRE( qvariant_cast<LinesCount>( progressArgs.at( 0 ) ) == 50_lcount );
 
                 const auto matches_count = filtered_data->getNbMatches();
                 REQUIRE( matches_count == 50_lcount );
 
-                const auto lines = filtered_data->getExpandedLines(0_lnum,
-                                                                   matches_count );
-                for ( const auto& l: lines) {
+                const auto lines = filtered_data->getExpandedLines( 0_lnum,
+                                                                    matches_count );
+                for ( const auto& l: lines ) {
                     REQUIRE( l.endsWith( '9' ) );
                 }
             }
 
             WHEN( "Add marks at matched line" ) {
-                const auto& firstMatchedLine = filtered_data->getLineString(0_lnum);
-                REQUIRE( firstMatchedLine.right(2).toStdString() == "09");
+                const auto& firstMatchedLine = filtered_data->getLineString( 0_lnum );
+                REQUIRE( firstMatchedLine.right(2).toStdString() == "09" );
 
                 filtered_data->addMark( 9_lnum );
 
@@ -214,7 +214,7 @@ SCENARIO( "filtered log data", "[logdata]") {
                 }
             }
 
-            WHEN( "Has mixed marks and mathes" ) {
+            WHEN( "Has mixed marks and matches" ) {
                 filtered_data->addMark( 9_lnum );
                 filtered_data->addMark( 5_lnum );
 
@@ -227,7 +227,7 @@ SCENARIO( "filtered log data", "[logdata]") {
                     }
                 }
 
-                WHEN( "Only mathes are visible" ) {
+                WHEN( "Only matches are visible" ) {
                     filtered_data->setVisibility( Visibility::MatchesOnly );
 
                     THEN( "Has only matches lines count" ) {
@@ -271,7 +271,7 @@ SCENARIO( "filtered log data", "[logdata]") {
                 WHEN( "For matched line" ) {
                     auto original_line = filtered_data->getMatchingLineNumber( 1_lnum );
 
-                    const auto& firstMatchedLine = filtered_data->getLineString(1_lnum);
+                    const auto& firstMatchedLine = filtered_data->getLineString( 1_lnum );
                     REQUIRE( firstMatchedLine.right(2).toStdString() == "09");
 
                     THEN( "Original line is on match" ) {

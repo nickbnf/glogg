@@ -178,7 +178,6 @@ class LogFilteredData : public AbstractLogData {
     const LogData* sourceLogData_;
 
     QRegularExpression currentRegExp_;
-    bool searchDone_;
     LineLength maxLength_;
     LineLength maxLengthMarks_;
     // Number of lines of the LogData that has been searched for:
@@ -190,7 +189,6 @@ class LogFilteredData : public AbstractLogData {
     // when visibility_ == MarksAndMatches
     // (QVector store actual objects instead of pointers)
     mutable std::vector<FilteredItem> filteredItemsCache_;
-    mutable bool filteredItemsCacheDirty_;
 
     LogFilteredDataWorker workerThread_;
     Marks marks_;
@@ -220,6 +218,20 @@ class LogFilteredData : public AbstractLogData {
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
     void regenerateFilteredItemsCache() const;
+    // start_index can be passed in as an optimization when finding the item.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was inserted.
+    void insertIntoFilteredItemsCache( size_t start_index, FilteredItem&& item );
+    void insertIntoFilteredItemsCache( FilteredItem&& item );
+    // Insert new matches into matching_lines_ and filteredItemsCache_
+    void insertNewMatches( const SearchResultArray& new_matches );
+    // remove_index can be passed in as an optimization when finding the item.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was removed.
+    void removeFromFilteredItemsCache( size_t remove_index, FilteredItem&& item );
+    void removeFromFilteredItemsCache( FilteredItem&& item );
+    void removeAllFromFilteredItemsCache( FilteredLineType type );
+
+    // update maxLengthMarks_ when a Mark was removed.
+    void updateMaxLengthMarks( LineNumber removed_line );
 };
 
 // A class representing a Mark or Match.

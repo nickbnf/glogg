@@ -50,7 +50,7 @@ Marks::Marks() : marks_()
 {
 }
 
-void Marks::addMark( LineNumber line, QChar mark )
+uint32_t Marks::addMark( LineNumber line, QChar mark )
 {
     // Look for the index immediately before
     uint32_t index;
@@ -68,6 +68,8 @@ void Marks::addMark( LineNumber line, QChar mark )
 
     // 'mark' is not used yet
     mark = mark;
+
+    return index;
 }
 
 LineNumber Marks::getMark( QChar mark ) const
@@ -90,7 +92,7 @@ void Marks::deleteMark( QChar mark )
     mark = mark;
 }
 
-void Marks::deleteMark( LineNumber line )
+uint32_t Marks::deleteMark( LineNumber line )
 {
     uint32_t index;
 
@@ -98,6 +100,8 @@ void Marks::deleteMark( LineNumber line )
     {
         marks_.erase( marks_.begin() + index );
     }
+
+    return index;
 }
 
 void Marks::clear()

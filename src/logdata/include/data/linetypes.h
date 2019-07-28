@@ -149,8 +149,7 @@ template <typename T> bool lookupLineNumber(
     using std::begin;
     using std::distance;
     using std::end;
-    auto notLess = std::lower_bound( begin( list ), end( list ), lineNumber,
-        [](typename T::const_reference lhs, typename T::const_reference rhs) { return lhs.lineNumber() < rhs.lineNumber(); });
+    auto notLess = std::lower_bound( begin( list ), end( list ), lineNumber );
     foundIndex = static_cast<uint32_t>( distance( begin( list ), notLess ) );
     return notLess != end( list ) && notLess->lineNumber() == lineNumber;
 }
@@ -159,5 +158,6 @@ template<typename Iterator>
 LineNumber lookupLineNumber( Iterator begin, Iterator end, LineNumber lineNum )
 {
     const auto lowerBound = std::lower_bound( begin, end, lineNum );
-    return LineNumber( static_cast<LineNumber::UnderlyingType>( std::distance( begin, lowerBound ) ) );
+    const auto it = lowerBound != end || begin == end ? lowerBound : std::prev( end );
+    return LineNumber( static_cast<LineNumber::UnderlyingType>( std::distance( begin, it ) ) );
 }

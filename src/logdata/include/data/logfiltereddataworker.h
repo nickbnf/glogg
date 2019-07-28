@@ -84,15 +84,9 @@ using SearchResultArray = std::vector<MatchingLine>;
 // It is thread safe.
 class SearchData {
   public:
-    SearchData()
-        : maxLength_{ 0 }
-    {
-    }
+    // Atomically move all the search data
+    SearchResultArray takeAll( LineLength& length, LinesCount& nbLinesProcessed );
 
-    // Atomically get all the search data
-    // appending more results to passed array
-    void getAll( LineLength* length, SearchResultArray* matches,
-                 LinesCount* nbLinesProcessed ) const;
     // Atomically set all the search data
     // (overwriting the existing)
     // (the matches are always moved)
@@ -116,8 +110,9 @@ class SearchData {
     mutable QMutex dataMutex_;
 
     SearchResultArray matches_;
-    LineLength maxLength_;
-    LinesCount nbLinesProcessed_;
+    LineLength maxLength_{ 0 };
+    LinesCount nbLinesProcessed_ { 0 };
+    LineNumber lastMatchedLineNumber_{ 0 };
 };
 
 class SearchOperation : public QObject {
@@ -192,9 +187,9 @@ class LogFilteredDataWorker : public QObject {
     // Interrupts the search if one is in progress
     void interrupt();
 
-    // Returns a copy of the current indexing data
-    void getSearchResult( LineLength* maxLength, SearchResultArray* searchMatches,
-                          LinesCount* nbLinesProcessed );
+    // get the current indexing data
+    // the data is cleared, so that successive calls do not return the same results
+    SearchResultArray newSearchResults( LineLength& maxLength, LinesCount& nbLinesProcessed );
 
   signals:
     // Sent during the indexing process to signal progress

@@ -50,6 +50,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <utility>
 
 namespace {
 struct PartialSearchResults {
@@ -102,13 +103,13 @@ PartialSearchResults filterLines( const QRegularExpression& regex,
 }
 } // namespace
 
-void SearchData::getAll( LineLength* length, SearchResultArray* matches, LinesCount* lines ) const
+SearchResultArray SearchData::takeAll( LineLength& length, LinesCount& nbLinesProcessed )
 {
     QMutexLocker locker( &dataMutex_ );
 
-    *length = maxLength_;
-    *lines = nbLinesProcessed_;
-    *matches = matches_;
+    length           = maxLength_;
+    nbLinesProcessed = nbLinesProcessed_;
+    return std::exchange( matches_, {} );
 }
 
 void SearchData::setAll( LineLength length, SearchResultArray&& matches )
@@ -136,6 +137,8 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
             = std::lower_bound( begin( matches_ ), end( matches_ ), matches.front() );
         assert( insertIt == end( matches_ ) || !( *insertIt < matches.back() ) );
         matches_.insert( insertIt, begin( matches ), end( matches ) );
+
+        lastMatchedLineNumber_ = std::max( lastMatchedLineNumber_, matches.back().lineNumber() );
     }
 }
 
@@ -148,7 +151,8 @@ LinesCount SearchData::getNbMatches() const
 
 LineNumber SearchData::getLastMatchedLineNumber() const
 {
-    return matches_.empty() ? LineNumber{ 0 } : matches_.back().lineNumber();
+    QMutexLocker locker( &dataMutex_ );
+    return lastMatchedLineNumber_;
 }
 
 void SearchData::deleteMatch( LineNumber line )
@@ -175,6 +179,7 @@ void SearchData::clear()
 
     maxLength_ = LineLength( 0 );
     nbLinesProcessed_ = LinesCount( 0 );
+    lastMatchedLineNumber_ = LineNumber( 0 );
     matches_.clear();
 }
 
@@ -247,11 +252,9 @@ void LogFilteredDataWorker::interrupt()
 }
 
 // This will do an atomic copy of the object
-void LogFilteredDataWorker::getSearchResult( LineLength* maxLength,
-                                             SearchResultArray* searchMatches,
-                                             LinesCount* nbLinesProcessed )
+SearchResultArray LogFilteredDataWorker::newSearchResults( LineLength& maxLength, LinesCount& nbLinesProcessed )
 {
-    searchData_.getAll( maxLength, searchMatches, nbLinesProcessed );
+    return searchData_.takeAll( maxLength, nbLinesProcessed );
 }
 
 //

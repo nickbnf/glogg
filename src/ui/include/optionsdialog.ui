@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>661</height>
+    <height>698</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -162,6 +162,13 @@
            <widget class="QCheckBox" name="loadLastSessionCheckBox">
             <property name="text">
              <string>Load last session</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="minimizeToTrayCheckBox">
+            <property name="text">
+             <string>Minimize to tray</string>
             </property>
            </widget>
           </item>

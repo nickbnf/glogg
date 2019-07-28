@@ -108,8 +108,9 @@ MainWindow::MainWindow(std::unique_ptr<Session> session) :
     mainIcon_.addFile( ":/images/hicolor/48x48/klogg.png" );
 
     setWindowIcon( mainIcon_ );
-
     readSettings();
+
+    createTrayIcon();
 
     // Connect the signals to the mux (they will be forwarded to the
     // "current" crawlerwidget
@@ -476,6 +477,49 @@ void MainWindow::createToolBars()
     toolBar->addWidget( lineNbField );
 }
 
+void MainWindow::createTrayIcon()
+{
+    trayIcon_ = new QSystemTrayIcon( this );
+
+    QMenu* trayMenu = new QMenu( this );
+    QAction* openWindowAction = new QAction(tr("Open window"), this);
+    QAction* quitAction = new QAction(tr("Quit"), this);
+
+    trayMenu->addAction( openWindowAction );
+    trayMenu->addAction( quitAction );
+
+    connect( openWindowAction, &QAction::triggered, this, &QMainWindow::show );
+    connect( quitAction, &QAction::triggered, [this]
+    {
+        this->isCloseFromTray_ = true;
+        this->close();
+    });
+
+    trayIcon_->setIcon( mainIcon_ );
+    trayIcon_->setToolTip("klogg log viewer");
+    trayIcon_->setContextMenu( trayMenu );
+
+    connect( trayIcon_, &QSystemTrayIcon::activated,
+             [this](QSystemTrayIcon::ActivationReason reason)
+    {
+        switch (reason){
+            case QSystemTrayIcon::Trigger:
+                if(!this->isVisible()){
+                    this->show();
+                } else {
+                    this->hide();
+                }
+                break;
+            default:
+                break;
+            }
+    });
+
+
+    if ( Persistable::get<Configuration>().minimizeToTray() ) {
+        trayIcon_->show();
+    }
+}
 //
 // Slots
 //
@@ -835,7 +879,17 @@ void MainWindow::newVersionNotification( const QString& new_version, const QStri
 void MainWindow::closeEvent( QCloseEvent *event )
 {
     writeSettings();
-    event->accept();
+
+    if( !isCloseFromTray_ && this->isVisible()
+            && Persistable::get<Configuration>().minimizeToTray() ){
+          event->ignore();
+          trayIcon_->show();
+          this->hide();
+    }
+    else {
+        event->accept();
+        trayIcon_->hide();
+    }
 }
 
 // Minimize handling the application
@@ -843,6 +897,16 @@ void MainWindow::changeEvent( QEvent *event )
 {
     if ( event->type() ==  QEvent::WindowStateChange) {
         isMaximized_ = windowState().testFlag( Qt::WindowMaximized );
+
+        if (this->windowState() & Qt::WindowMinimized) {
+            if ( Persistable::get<Configuration>().minimizeToTray() ) {
+                QTimer::singleShot(0, [this]
+                {
+                    trayIcon_->show();
+                    this->hide();
+                });
+            }
+        }
     }
 
     QMainWindow::changeEvent( event );

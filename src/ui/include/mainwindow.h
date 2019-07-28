@@ -41,6 +41,8 @@
 
 #include <memory>
 #include <QMainWindow>
+#include <QSystemTrayIcon>
+
 #include <array>
 
 #include "session.h"
@@ -165,6 +167,7 @@ class MainWindow : public QMainWindow
     void createToolBars();
     void createStatusBar();
     void createRecentFileToolTipTimer();
+    void createTrayIcon();
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName );
@@ -225,6 +228,8 @@ class MainWindow : public QMainWindow
     QActionGroup *encodingGroup;
     std::array<QAction*, static_cast<int>(CrawlerWidget::Encoding::MAX)> encodingAction;
 
+    QSystemTrayIcon *trayIcon_;
+
     QIcon mainIcon_;
 
     // Multiplex signals to any of the CrawlerWidgets
@@ -245,6 +250,7 @@ class MainWindow : public QMainWindow
 #endif
 
     bool isMaximized_ = false;
+    bool isCloseFromTray_ = false;
 };
 
 #endif

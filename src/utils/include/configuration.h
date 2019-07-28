@@ -197,6 +197,10 @@ class Configuration final : public Persistable {
     {
         return lineNumbersVisibleInFiltered_;
     }
+    bool minimizeToTray() const
+    {
+        return minimizeToTray_;
+    }
     void setMainLineNumbersVisible( bool lineNumbersVisible )
     {
         lineNumbersVisibleInMain_ = lineNumbersVisible;
@@ -204,6 +208,10 @@ class Configuration final : public Persistable {
     void setFilteredLineNumbersVisible( bool lineNumbersVisible )
     {
         lineNumbersVisibleInFiltered_ = lineNumbersVisible;
+    }
+    bool setMinimizeToTray( bool minimizeToTray )
+    {
+        return minimizeToTray_ = minimizeToTray;
     }
 
     // Default settings for new views
@@ -257,6 +265,7 @@ class Configuration final : public Persistable {
     bool overviewVisible_ = true;
     bool lineNumbersVisibleInMain_ = false;
     bool lineNumbersVisibleInFiltered_ = true;
+    bool minimizeToTray_ = false;
 
     // Default settings for new views
     bool searchAutoRefresh_ = false;

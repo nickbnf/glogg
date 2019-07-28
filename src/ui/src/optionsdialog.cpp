@@ -208,6 +208,7 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Last session
     loadLastSessionCheckBox->setChecked( config.loadLastSession() );
+    minimizeToTrayCheckBox->setChecked( config.minimizeToTray() );
 
     // Perf
     parallelSearchCheckBox->setChecked( config.useParallelSearch() );
@@ -268,6 +269,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setPollIntervalMs( poll_interval );
 
     config.setLoadLastSession( loadLastSessionCheckBox->isChecked() );
+    config.setMinimizeToTray( minimizeToTrayCheckBox->isChecked() );
 
     config.setUseParallelSearch( parallelSearchCheckBox->isChecked() );
     config.setUseSearchResultsCache( searchResultsCacheCheckBox->isChecked() );

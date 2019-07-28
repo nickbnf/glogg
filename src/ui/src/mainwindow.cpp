@@ -269,13 +269,13 @@ void MainWindow::createActions()
     const auto& config = Persistable::get<Configuration>();
 
     openAction = new QAction(tr("&Open..."), this);
-    openAction->setShortcut(QKeySequence::Open);
+    openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open) );
     openAction->setIcon( QIcon( ":/images/open14.png" ) );
     openAction->setStatusTip(tr("Open a file"));
     connect(openAction, &QAction::triggered, [this](auto){ this->open(); });
 
     closeAction = new QAction(tr("&Close"), this);
-    closeAction->setShortcut(tr("Ctrl+W"));
+    closeAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Close ) );
     closeAction->setStatusTip(tr("Close document"));
     connect(closeAction, &QAction::triggered, [this](auto){ this->closeTab(); });
 
@@ -343,13 +343,17 @@ void MainWindow::createActions()
 
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setIcon( QIcon( ":/images/follow14.png" ) );
-    followAction->setShortcut(Qt::Key_F);
+
+    followAction->setShortcuts(QList<QKeySequence>()
+                               << QKeySequence(Qt::Key_F)
+                               << QKeySequence(Qt::Key_F10));
+
     followAction->setCheckable(true);
     connect( followAction, &QAction::toggled,
              this, &MainWindow::followSet );
 
     reloadAction = new QAction( tr("&Reload"), this );
-    reloadAction->setShortcut(QKeySequence::Refresh);
+    reloadAction->setShortcuts(QKeySequence::keyBindings( QKeySequence::Refresh ) );
     reloadAction->setIcon( QIcon(":/images/reload14.png") );
     signalMux_.connect( reloadAction, SIGNAL(triggered()), SLOT(reload()) );
 

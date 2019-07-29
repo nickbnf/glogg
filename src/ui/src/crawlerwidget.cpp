@@ -549,6 +549,7 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
 
     // See if we need to auto-refresh the search
     if ( searchState_.isAutorefreshAllowed() ) {
+        searchEndLine_ = LineNumber( logData_->getNbLine().get() );
         if ( searchState_.isFileTruncated() )
             // We need to restart the search
             replaceCurrentSearch( searchLineEdit->currentText() );
@@ -837,7 +838,7 @@ void CrawlerWidget::setup()
     searchInfoLineLayout->addWidget( searchInfoLine );
 
     // TODO: this seems to be broken
-    //searchInfoLineLayout->addWidget( searchRefreshCheck );
+    searchInfoLineLayout->addWidget( searchRefreshCheck );
 
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;

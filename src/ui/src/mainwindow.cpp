@@ -1192,7 +1192,7 @@ static QString readableSize( qint64 size )
     QString output;
     if ( i == 0 )
         // No decimal part if we display straight bytes.
-        output = defaultLocale.toString( (int) humanSize );
+        output = defaultLocale.toString( static_cast<int>( humanSize ) );
     else
         output = defaultLocale.toString( humanSize, 'f', 1 );
 

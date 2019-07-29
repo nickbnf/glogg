@@ -837,7 +837,6 @@ void CrawlerWidget::setup()
     searchInfoLineLayout->addWidget( visibilityBox );
     searchInfoLineLayout->addWidget( searchInfoLine );
 
-    // TODO: this seems to be broken
     searchInfoLineLayout->addWidget( searchRefreshCheck );
 
     // Construct the bottom window

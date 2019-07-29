@@ -52,6 +52,9 @@ Marks::Marks() : marks_()
 
 void Marks::addMark( LineNumber line, QChar mark )
 {
+    // 'mark' is not used yet
+    Q_UNUSED(mark);
+
     // Look for the index immediately before
     uint32_t index;
     if ( ! lookupLineNumber( marks_, line, index ) )
@@ -65,15 +68,12 @@ void Marks::addMark( LineNumber line, QChar mark )
     {
         LOG(logERROR) << "Trying to add an existing mark at line " << line;
     }
-
-    // 'mark' is not used yet
-    mark = mark;
 }
 
 LineNumber Marks::getMark( QChar mark ) const
 {
     // 'mark' is not used yet
-    mark = mark;
+    Q_UNUSED(mark);
 
     return 0_lnum;
 }
@@ -87,7 +87,7 @@ bool Marks::isLineMarked( LineNumber line ) const
 void Marks::deleteMark( QChar mark )
 {
     // 'mark' is not used yet
-    mark = mark;
+    Q_UNUSED(mark);
 }
 
 void Marks::deleteMark( LineNumber line )

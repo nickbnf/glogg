@@ -51,7 +51,7 @@ void SignalMux::disconnect( QObject *sender,
     auto connection = std::find_if(
             connectionList_.begin(), connectionList_.end(),
             [sender, signal, slot]( const Connection& c ) -> bool
-            { return ((QObject*)c.source == sender) && (c.sink == nullptr) &&
+            { return (c.source.data() == sender) && (c.sink == nullptr) &&
                 (qstrcmp( c.signal, signal) == 0) && (qstrcmp( c.slot, slot) == 0); } );
 
     if ( connection != connectionList_.end() )
@@ -88,7 +88,7 @@ void SignalMux::disconnect( const char *signal,
     auto connection = std::find_if(
             connectionList_.begin(), connectionList_.end(),
             [receiver, signal, slot]( const Connection& c ) -> bool
-            { return ((QObject*)c.sink == receiver) && (c.source == nullptr) &&
+            { return (c.sink.data() == receiver) && (c.source == nullptr) &&
                 (qstrcmp( c.signal, signal) == 0) && (qstrcmp( c.slot, slot) == 0); } );
 
     if ( connection != connectionList_.end() )

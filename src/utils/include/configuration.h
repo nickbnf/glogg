@@ -209,9 +209,27 @@ class Configuration final : public Persistable {
     {
         lineNumbersVisibleInFiltered_ = lineNumbersVisible;
     }
-    bool setMinimizeToTray( bool minimizeToTray )
+    void setMinimizeToTray( bool minimizeToTray )
     {
-        return minimizeToTray_ = minimizeToTray;
+        minimizeToTray_ = minimizeToTray;
+    }
+
+    bool enableLogging() const
+    {
+        return enableLogging_;
+    }
+    uint8_t loggingLevel() const
+    {
+        return loggingLevel_;
+    }
+
+    void setEnableLogging( bool enableLogging )
+    {
+        enableLogging_ = enableLogging;
+    }
+    void setLoggingLevel( uint8_t level )
+    {
+        loggingLevel_ = level;
     }
 
     // Default settings for new views
@@ -282,6 +300,9 @@ class Configuration final : public Persistable {
     bool keepFileClosed_ = false;
 
     bool useLineEndingCache_ = true;
+
+    bool enableLogging_ = false;
+    uint8_t loggingLevel_ = 4;
 };
 
 #endif

@@ -626,6 +626,9 @@ void MainWindow::options()
     signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
     dialog.exec();
     signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
+
+    const auto& config = Persistable::get<Configuration>();
+    plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 }
 
 // Opens the 'About' dialog box.

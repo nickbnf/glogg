@@ -94,6 +94,13 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "session.loadLast" ) )
         loadLastSession_ = settings.value( "session.loadLast" ).toBool();
 
+    if ( settings.contains( "logging.enableLogging" ) )
+        enableLogging_
+            = settings.value( "logging.enableLogging" ).toBool();
+    if ( settings.contains( "logging.verbosity" ) )
+        loggingLevel_
+            = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toUInt() );
+
     // "Perf" settings
     if ( settings.contains( "perf.useParallelSearch" ) )
         useParallelSearch_ = settings.value( "perf.useParallelSearch" ).toBool();
@@ -156,6 +163,9 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
     settings.setValue( "session.loadLast", loadLastSession_ );
+
+    settings.setValue( "logging.enableLogging", enableLogging_ );
+    settings.setValue( "logging.verbosity", loggingLevel_ );
 
     settings.setValue( "perf.useParallelSearch", useParallelSearch_ );
     settings.setValue( "perf.useSearchResultsCache", useSearchResultsCache_ );

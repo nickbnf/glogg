@@ -66,12 +66,6 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void updateConfigFromDialog();
     // Called when a ok/cancel/apply button is clicked.
     void onButtonBoxClicked( QAbstractButton* button );
-    // Called when the 'incremental' button is toggled.
-    void onIncrementalChanged();
-    // Called when the 'polling' checkbox is toggled.
-    void onPollingChanged();
-    // Called when the 'search results cache' checkbox is toggled.
-    void onSearchResultsCacheChanged();
 
   private:
     void setupTabs();
@@ -80,6 +74,7 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void setupIncremental();
     void setupPolling();
     void setupSearchResultsCache();
+    void setupLogging();
 
     int getRegexpIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;

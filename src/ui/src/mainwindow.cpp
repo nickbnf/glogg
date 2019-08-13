@@ -62,6 +62,7 @@
 #include <QMimeData>
 #include <QUrl>
 #include <QWindow>
+#include <QTemporaryFile>
 
 #include "log.h"
 
@@ -194,6 +195,10 @@ MainWindow::MainWindow(std::unique_ptr<Session> session) :
     central_widget->setLayout( main_layout );
 
     setCentralWidget( central_widget );
+
+    auto clipboard = QGuiApplication::clipboard();
+    connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::onClipboardDataChanged);
+    onClipboardDataChanged();
 }
 
 void MainWindow::reloadGeometry()
@@ -318,9 +323,15 @@ void MainWindow::createActions()
              [this](auto){ this->find(); });
 
     clearLogAction = new QAction(tr("Clear file"), this);
-    findAction->setStatusTip(tr("Clear current file"));
+    clearLogAction->setStatusTip(tr("Clear current file"));
     connect( clearLogAction, &QAction::triggered,
              [this](auto){ this->clearLog(); });
+
+    openClipboardAction = new QAction(tr("Open from clipboard"), this);
+    openClipboardAction->setStatusTip(tr("Open clipboard as log file"));
+    openClipboardAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Paste ) );
+    connect( openClipboardAction, &QAction::triggered,
+             [this](auto){ this->openClipboard(); });
 
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
@@ -402,6 +413,7 @@ void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu( tr("&File") );
     fileMenu->addAction( openAction );
+    fileMenu->addAction( openClipboardAction );
     fileMenu->addAction( closeAction );
     fileMenu->addAction( closeAllAction );
     fileMenu->addSeparator();
@@ -600,14 +612,39 @@ void MainWindow::find()
     displayQuickFindBar( QuickFindMux::Forward );
 }
 
-
-// Display the QuickFind bar
 void MainWindow::clearLog()
 {
     const auto current_file = session_->getFilename( currentCrawlerWidget() );
     if ( QMessageBox::question( this, "klogg - clear file", QString( "Clear file %1?" ).arg( current_file ) ) == QMessageBox::Yes ) {
         QFile::resize( current_file, 0 );
     }
+}
+
+void MainWindow::onClipboardDataChanged()
+{
+    auto clipboard = QGuiApplication::clipboard();
+    auto text = clipboard->text();
+    openClipboardAction->setEnabled(!text.isEmpty());
+}
+
+void MainWindow::openClipboard()
+{
+    auto clipboard = QGuiApplication::clipboard();
+    auto text = clipboard->text();
+    if (text.isEmpty())
+    {
+        return;
+    }
+
+    auto tempFile = new QTemporaryFile(QDir::temp().filePath("klogg_clipboard"), this);
+    if (tempFile->open())
+    {
+        tempFile->write(text.toUtf8());
+        tempFile->flush();
+
+        loadFile(tempFile->fileName());
+    }
+
 }
 
 // Opens the 'Highlighters' dialog box

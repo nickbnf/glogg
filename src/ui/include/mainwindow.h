@@ -107,6 +107,7 @@ class MainWindow : public QMainWindow
     void copy();
     void find();
     void clearLog();
+    void openClipboard();
     void highlighters();
     void options();
     void about();
@@ -149,6 +150,7 @@ class MainWindow : public QMainWindow
     // Notify the user a new version is available
     void newVersionNotification( const QString& new_version , const QString &url );
 
+    void onClipboardDataChanged();
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
@@ -215,6 +217,7 @@ class MainWindow : public QMainWindow
     QAction *selectAllAction;
     QAction *findAction;
     QAction *clearLogAction;
+    QAction *openClipboardAction;
     QAction *overviewVisibleAction;
     QAction *lineNumbersVisibleInMainAction;
     QAction *lineNumbersVisibleInFilteredAction;

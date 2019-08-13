@@ -1125,13 +1125,14 @@ void AbstractLogView::saveToFile()
         return true;
     };
 
+    const auto maxThreadCount = QThreadPool::globalInstance()->maxThreadCount();
     QThreadPool::globalInstance()->setMaxThreadCount( 1 );
     futureWatcher.setFuture( QtConcurrent::map( offsets, writeLines ) );
 
     progressDialog.exec();
     futureWatcher.waitForFinished();
 
-    QThreadPool::globalInstance()->setMaxThreadCount( QThread::idealThreadCount() );
+    QThreadPool::globalInstance()->setMaxThreadCount( maxThreadCount );
 
     if ( futureWatcher.isFinished() ) {
         saveFile.commit();

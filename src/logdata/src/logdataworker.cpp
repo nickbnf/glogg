@@ -59,6 +59,14 @@ qint64 IndexingData::getSize() const
     return indexedSize_;
 }
 
+
+QByteArray IndexingData::getHash() const
+{
+    QMutexLocker locker( &dataMutex_ );
+
+    return indexedHash_.result();
+}
+
 LineLength IndexingData::getMaxLength() const
 {
     QMutexLocker locker( &dataMutex_ );
@@ -98,15 +106,17 @@ QTextCodec* IndexingData::getForcedEncoding() const
     return encodingForced_;
 }
 
-void IndexingData::addAll( qint64 size, LineLength length,
+void IndexingData::addAll( const QByteArray& block, LineLength length,
                            const FastLinePositionArray& linePosition, QTextCodec* encoding )
 
 {
     QMutexLocker locker( &dataMutex_ );
 
-    indexedSize_ += size;
+    indexedSize_ += block.size();
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
+
+    indexedHash_.addData( block );
 
     encodingGuess_ = encoding;
 }
@@ -117,6 +127,7 @@ void IndexingData::clear()
 
     maxLength_ = 0_length;
     indexedSize_ = 0;
+    indexedHash_.reset();
     linePosition_ = LinePositionArray();
     encodingGuess_ = QTextCodec::codecForLocale();
     encodingForced_ = nullptr;
@@ -336,7 +347,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState& indexingState )
                   guessEncoding( block, indexingState );
 
                   auto line_positions = parseDataBlock( block_beginning, block, indexingState );
-                  indexing_data_.addAll( block.length(), LineLength( indexingState.max_length ),
+                  indexing_data_.addAll( block, LineLength( indexingState.max_length ),
                                          line_positions, indexingState.encodingGuess );
 
                   // Update the caller for progress indication
@@ -422,7 +433,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
             line_position.append( LineOffset( state.file_size + 1 ) );
             line_position.setFakeFinalLF();
 
-            indexing_data_.addAll( 0, 0_length, line_position, state.encodingGuess );
+            indexing_data_.addAll( {}, 0_length, line_position, state.encodingGuess );
         }
 
         high_resolution_clock::time_point t2 = high_resolution_clock::now();

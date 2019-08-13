@@ -44,6 +44,8 @@
 
 #include <QFileInfo>
 #include <QIODevice>
+#include <QtConcurrent>
+#include <QtPromise>
 
 #include "log.h"
 
@@ -56,20 +58,20 @@
 
 void LogData::AttachOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logDEBUG ) << "Attaching " << filename_.toStdString();
+    LOG( logINFO ) << "Attaching " << filename_.toStdString();
     workerThread.attachFile( filename_ );
     workerThread.indexAll();
 }
 
 void LogData::FullIndexOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logDEBUG ) << "Reindexing (full)";
+    LOG( logINFO ) << "Reindexing (full)";
     workerThread.indexAll( forcedEncoding_ );
 }
 
 void LogData::PartialIndexOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logDEBUG ) << "Reindexing (partial)";
+    LOG( logINFO ) << "Reindexing (partial)";
     workerThread.indexAdditionalLines();
 }
 
@@ -200,15 +202,20 @@ void LogData::startOperation()
 
 void LogData::fileChangedOnDisk( const QString& filename )
 {
-    LOG( logINFO ) << "signalFileChanged " << filename.toStdString();
+    LOG( logINFO ) << "signalFileChanged " << filename;
+
+    ScopedFileHolder<FileHolder> locker( attached_file_.get() );
 
     QFileInfo info( indexingFileName_ );
     const auto currentFileId = FileId::getFileId( indexingFileName_ );
     const auto attachedFileId = attached_file_->getFileId();
 
     const auto file_size = indexing_data_.getSize();
-    LOG( logDEBUG ) << "current indexed fileSize=" << file_size;
-    LOG( logDEBUG ) << "info file_->size()=" << info.size();
+    const auto indexedHash = indexing_data_.getHash();
+    LOG( logINFO ) << "current indexed fileSize=" << file_size;
+    LOG( logINFO ) << "current indexed hash=" << QString( indexedHash.toHex() );
+    LOG( logINFO ) << "info file_->size()=" << info.size();
+
     LOG( logDEBUG ) << "attached_file_->size()=" << attached_file_->size();
     LOG( logDEBUG ) << "attached_file_id_ index " << attachedFileId.fileIndex;
     LOG( logDEBUG ) << "currentFileId index " << currentFileId.fileIndex;
@@ -238,29 +245,77 @@ void LogData::fileChangedOnDisk( const QString& filename )
         // and with a size greater than the old one (should be rare in practice).
     }
 
-    std::function<std::shared_ptr<LogDataOperation>()> newOperation;
-
     const auto real_file_size = attached_file_->size();
+    auto fileStatusPromise = QtPromise::resolve(
+        QtConcurrent::run( [this, indexedSize = indexing_data_.getSize(), indexedHash,
+                            isFileIdChanged, real_file_size, file_size] {
+            if ( isFileIdChanged || real_file_size < file_size ) {
+                LOG( logINFO ) << "File truncated";
+                return Truncated;
+            }
 
-    if ( isFileIdChanged || real_file_size < file_size ) {
-        fileChangedOnDisk_ = Truncated;
-        LOG( logINFO ) << "File truncated";
-        newOperation = std::make_shared<FullIndexOperation>;
-    }
-    else if ( real_file_size == file_size ) {
-        LOG( logINFO ) << "No change in file";
-    }
-    else if ( fileChangedOnDisk_ != DataAdded ) {
-        fileChangedOnDisk_ = DataAdded;
-        LOG( logINFO ) << "New data on disk";
-        newOperation = std::make_shared<PartialIndexOperation>;
-    }
+            ScopedFileHolder<FileHolder> newLocker( attached_file_.get() );
 
-    if ( newOperation ) {
-        enqueueOperation( newOperation() );
-        lastModifiedDate_ = info.lastModified();
-        emit fileChanged( fileChangedOnDisk_ );
-    }
+            QByteArray buffer{ 1024 * 1024, 0 };
+            QCryptographicHash hash{ QCryptographicHash::Md5 };
+            auto readSize = 0ll;
+            auto totalSize = 0ll;
+            do {
+
+                readSize = newLocker.getFile()->read(
+                    buffer.data(),
+                    qMin( static_cast<qint64>( buffer.length() ), indexedSize - totalSize ) );
+
+                hash.addData( buffer.data(), readSize );
+
+                totalSize += readSize;
+            } while ( readSize > 0 && totalSize < indexedSize );
+
+            const auto realHash = hash.result();
+            LOG( logINFO ) << "real file hash " << QString( realHash.toHex() );
+
+            if ( !std::equal( indexedHash.begin(), indexedHash.end(), realHash.begin(),
+                              realHash.end() ) ) {
+                LOG( logINFO ) << "File changed in indexed range";
+                return Truncated;
+            }
+            else if ( real_file_size > file_size ) {
+                LOG( logINFO ) << "New data on disk";
+                return DataAdded;
+            }
+            else {
+                LOG( logINFO ) << "No change in file";
+                return Unchanged;
+            }
+        } ) )
+        .then( [this, info]( MonitoredFileStatus status ) {
+            std::function<std::shared_ptr<LogDataOperation>()> newOperation;
+            if (fileChangedOnDisk_ != Truncated)
+            {
+                switch ( status ) {
+                case Truncated:
+                    fileChangedOnDisk_ = Truncated;
+                    newOperation = std::make_shared<FullIndexOperation>;
+                    break;
+                case DataAdded:
+                    fileChangedOnDisk_ = DataAdded;
+                    newOperation = std::make_shared<PartialIndexOperation>;
+                    break;
+                case Unchanged:
+                    fileChangedOnDisk_ = Unchanged;
+                    break;
+                }
+            }
+            else {
+                newOperation = std::make_shared<FullIndexOperation>;
+            }
+
+            if ( newOperation ) {
+                enqueueOperation( newOperation() );
+                lastModifiedDate_ = info.lastModified();
+                emit fileChanged( fileChangedOnDisk_ );
+            }
+        } );
 }
 
 void LogData::indexingFinished( LoadingStatus status )

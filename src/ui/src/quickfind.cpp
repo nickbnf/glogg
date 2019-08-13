@@ -452,5 +452,5 @@ void QuickFind::resetLimits()
 void QuickFind::sendNotification( QFNotification notification )
 {
     QMetaObject::invokeMethod(
-        this, [this, message = std::move( notification )] { emit notify( message ); } );
+        this, "notify", Qt::QueuedConnection, Q_ARG(const QFNotification&, notification) );
 }

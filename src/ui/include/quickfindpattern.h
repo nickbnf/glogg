@@ -43,7 +43,6 @@
 #include <QObject>
 #include <QRegularExpression>
 #include <QString>
-#include <QThread>
 
 class QuickFind;
 

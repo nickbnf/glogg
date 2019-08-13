@@ -42,7 +42,8 @@
 #include <QObject>
 #include <QPoint>
 #include <QTime>
-#include <QtPromise>
+#include <QFuture>
+#include <QFutureWatcher>
 
 #include "qfnotifications.h"
 #include "quickfindpattern.h"
@@ -139,6 +140,7 @@ class QuickFind : public QObject {
 
   private slots:
     void sendNotification(QFNotification notification);
+    void onSearchFutureReady();
 
   private:
     enum QFDirection {
@@ -236,7 +238,8 @@ class QuickFind : public QObject {
                               const QuickFindMatcher& matcher );
 
     AtomicFlag interruptRequested_;
-    std::unique_ptr<QtPromise::QPromise<void>> searchPromise_;
+    QFuture<Portion> operationFuture_;
+    QFutureWatcher<Portion> operationWatcher_;
 };
 
 #endif

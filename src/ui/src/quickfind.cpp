@@ -44,7 +44,6 @@
 
 #include <QApplication>
 #include <QtConcurrent>
-#include <QtPromise>
 
 #include "data/abstractlogdata.h"
 #include "log.h"
@@ -68,8 +67,6 @@ void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
     else
         progress = current_line * 100 / nb_lines;
     emit notify( QFNotificationProgress( progress ) );
-
-    QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
     startTime_ = QTime::currentTime().addMSecs( -800 );
 }
 
@@ -124,10 +121,12 @@ QuickFind::QuickFind( const AbstractLogData& logData )
     : logData_( logData )
     , searchingNotifier_()
     , incrementalSearchStatus_()
-    , searchPromise_{ new QtPromise::QPromise<void>( QtPromise::resolve() ) }
 {
     connect( &searchingNotifier_, &SearchingNotifier::notify, this, &QuickFind::sendNotification,
              Qt::DirectConnection );
+
+    connect( &operationWatcher_, &QFutureWatcher<Portion>::finished, this,
+             &QuickFind::onSearchFutureReady );
 }
 
 Selection QuickFind::incrementalSearchStop()
@@ -161,7 +160,22 @@ void QuickFind::stopSearch()
 {
     LOG( logINFO ) << "Stop search for quickfind " << this;
     interruptRequested_.set();
-    searchPromise_->wait();
+    operationWatcher_.waitForFinished();
+}
+
+void QuickFind::onSearchFutureReady()
+{
+    auto selection = operationFuture_.result();
+
+    if ( selection.isValid() ) {
+        emit searchDone( true, selection );
+    }
+    else if ( incrementalSearchStatus_.direction() != None ) {
+        emit searchDone( false, Portion{ incrementalSearchStatus_.position().line(), 0, 0 } );
+    }
+    else {
+        emit searchDone( false, selection );
+    }
 }
 
 void QuickFind::incrementallySearchForward( Selection selection, QuickFindMatcher matcher )
@@ -169,7 +183,7 @@ void QuickFind::incrementallySearchForward( Selection selection, QuickFindMatche
     LOG( logDEBUG ) << "QuickFind::incrementallySearchForward";
 
     interruptRequested_.set();
-    searchPromise_->wait();
+    operationWatcher_.waitForFinished();
 
     // Position where we start the search from
     FilePosition start_position = selection.getNextPosition();
@@ -185,22 +199,9 @@ void QuickFind::incrementallySearchForward( Selection selection, QuickFindMatche
         incrementalSearchStatus_ = IncrementalSearchStatus( Forward, start_position, selection );
     }
 
-    searchPromise_ = std::make_unique<QtPromise::QPromise<void>>(
-        QtPromise::resolve( QtConcurrent::run( this, &QuickFind::doSearchForward, start_position,
-                                               selection, matcher ) )
-            .then( [this]( Portion line_found ) {
-                if ( line_found.isValid() ) {
-                    // We have found a result...
-                    // ... the caller will jump to this line.
-                    emit searchDone( true, line_found );
-                }
-                else {
-                    // No result...
-                    // ... we want the client to show the initial line.
-                    emit searchDone( false,
-                                     Portion{ incrementalSearchStatus_.position().line(), 0, 0 } );
-                }
-            } ) );
+    operationFuture_ = QtConcurrent::run( this, &QuickFind::doSearchForward, start_position,
+                                          selection, matcher );
+    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void QuickFind::incrementallySearchBackward( Selection selection, QuickFindMatcher matcher )
@@ -208,7 +209,7 @@ void QuickFind::incrementallySearchBackward( Selection selection, QuickFindMatch
     LOG( logDEBUG ) << "QuickFind::incrementallySearchBackward";
 
     interruptRequested_.set();
-    searchPromise_->wait();
+    operationWatcher_.waitForFinished();
 
     // Position where we start the search from
     FilePosition start_position = selection.getPreviousPosition();
@@ -224,50 +225,29 @@ void QuickFind::incrementallySearchBackward( Selection selection, QuickFindMatch
         incrementalSearchStatus_ = IncrementalSearchStatus( Backward, start_position, selection );
     }
 
-    searchPromise_ = std::make_unique<QtPromise::QPromise<void>>(
-        QtPromise::resolve( QtConcurrent::run( this, &QuickFind::doSearchBackward, start_position,
-                                               selection, matcher ) )
-            .then( [this]( Portion line_found ) {
-                if ( line_found.isValid() ) {
-                    // We have found a result...
-                    // ... the caller will jump to this line.
-                    emit searchDone( true, line_found );
-                }
-                else {
-                    // No result...
-                    // ... we want the client to show the initial line.
-                    emit searchDone( false,
-                                     Portion{ incrementalSearchStatus_.position().line(), 0, 0 } );
-                }
-            } ) );
+    operationFuture_ = QtConcurrent::run( this, &QuickFind::doSearchBackward, start_position,
+                                          selection, matcher );
+    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void QuickFind::searchForward( Selection selection, QuickFindMatcher matcher )
 {
     incrementalSearchStatus_ = IncrementalSearchStatus();
     interruptRequested_.set();
-    searchPromise_->wait();
+    operationWatcher_.waitForFinished();
 
-    searchPromise_ = std::make_unique<QtPromise::QPromise<void>>(
-        QtPromise::resolve(
-            QtConcurrent::run( this, &QuickFind::doSearchForward, selection, matcher ) )
-            .then( [this]( Portion line_found ) {
-                emit searchDone( line_found.isValid(), line_found );
-            } ) );
+    operationFuture_ = QtConcurrent::run( this, &QuickFind::doSearchForward, selection, matcher );
+    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void QuickFind::searchBackward( Selection selection, QuickFindMatcher matcher )
 {
     incrementalSearchStatus_ = IncrementalSearchStatus();
     interruptRequested_.set();
-    searchPromise_->wait();
+    operationWatcher_.waitForFinished();
 
-    searchPromise_ = std::make_unique<QtPromise::QPromise<void>>(
-        QtPromise::resolve(
-            QtConcurrent::run( this, &QuickFind::doSearchBackward, selection, matcher ) )
-            .then( [this]( Portion line_found ) {
-                emit searchDone( line_found.isValid(), line_found );
-            } ) );
+    operationFuture_ = QtConcurrent::run( this, &QuickFind::doSearchBackward, selection, matcher );
+    operationWatcher_.setFuture( operationFuture_ );
 }
 
 Portion QuickFind::doSearchForward( const Selection& selection, const QuickFindMatcher& matcher )
@@ -451,6 +431,6 @@ void QuickFind::resetLimits()
 
 void QuickFind::sendNotification( QFNotification notification )
 {
-    QMetaObject::invokeMethod(
-        this, "notify", Qt::QueuedConnection, Q_ARG(const QFNotification&, notification) );
+    QMetaObject::invokeMethod( this, "notify", Qt::QueuedConnection,
+                               Q_ARG( const QFNotification&, notification ) );
 }

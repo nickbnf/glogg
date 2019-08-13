@@ -943,11 +943,7 @@ void AbstractLogView::searchUsingFunction(
     void ( QuickFind::*search_function )( Selection, QuickFindMatcher ) )
 {
     disableFollow();
-    QMetaObject::invokeMethod( quickFind_,
-                               [qf = quickFind_, selection = selection_,
-                                matcher = quickFindPattern_->getMatcher(),
-                                search_function] { ( qf->*search_function )( selection, matcher ); },
-                               Qt::QueuedConnection );
+    (quickFind_->*search_function )( selection_, quickFindPattern_->getMatcher());
 }
 
 void AbstractLogView::setQuickFindResult( bool hasMatch, Portion portion )

@@ -182,6 +182,7 @@ class AbstractLogView :
     AbstractLogView( const AbstractLogData* newLogData,
             const QuickFindPattern* const quickFind, QWidget* parent=nullptr );
 
+    virtual ~AbstractLogView();
     // Refresh the widget when the data set has changed.
     void updateData();
     // Instructs the widget to update it's content geometry,
@@ -316,6 +317,7 @@ class AbstractLogView :
     void saveToFile();
     void setSearchStart();
     void setSearchEnd();
+    void setQuickFindResult(bool hasMatch, Portion selection);
 
   private:
     // Graphic parameters
@@ -399,7 +401,7 @@ class AbstractLogView :
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;
     // Our own QuickFind object
-    QuickFind quickFind_;
+    QuickFind* quickFind_;
 
 #ifdef GLOGG_PERF_MEASURE_FPS
     // Performance measurement
@@ -447,7 +449,7 @@ class AbstractLogView :
     void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
-    void searchUsingFunction( OptionalLineNumber (QuickFind::*search_function)() );
+    void searchUsingFunction( void (QuickFind::*search_function)(Selection, QuickFindMatcher) );
 
     void updateScrollBars();
 

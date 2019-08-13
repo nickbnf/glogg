@@ -275,7 +275,7 @@ AbstractLogView::AbstractLogView( const AbstractLogData* newLogData,
     , selection_()
     , searchStart_()
     , quickFindPattern_( quickFindPattern )
-    , quickFind_( newLogData, &selection_, quickFindPattern )
+    , quickFind_( new QuickFind( *newLogData ) )
 {
     logData = newLogData;
     searchEnd_ = LineNumber( logData->getNbLine().get() );
@@ -311,13 +311,22 @@ AbstractLogView::AbstractLogView( const AbstractLogData* newLogData,
 
     // Signals
     connect( quickFindPattern_, SIGNAL( patternUpdated() ), this, SLOT( handlePatternUpdated() ) );
-    connect( &quickFind_, SIGNAL( notify( const QFNotification& ) ), this,
+    connect( quickFind_, SIGNAL( notify( const QFNotification& ) ), this,
              SIGNAL( notifyQuickFind( const QFNotification& ) ) );
-    connect( &quickFind_, SIGNAL( clearNotification() ), this,
+    connect( quickFind_, SIGNAL( clearNotification() ), this,
              SIGNAL( clearQuickFindNotification() ) );
+
+    connect( quickFind_, &QuickFind::searchDone, this, &AbstractLogView::setQuickFindResult,
+             Qt::QueuedConnection );
+
     connect( &followElasticHook_, SIGNAL( lengthChanged() ), this, SLOT( repaint() ) );
     connect( &followElasticHook_, SIGNAL( hooked( bool ) ), this,
              SIGNAL( followModeChanged( bool ) ) );
+}
+
+AbstractLogView::~AbstractLogView()
+{
+    quickFind_->stopSearch();
 }
 
 //
@@ -930,15 +939,27 @@ LineNumber AbstractLogView::getViewPosition() const
     return line;
 }
 
-void AbstractLogView::searchUsingFunction( OptionalLineNumber ( QuickFind::*search_function )() )
+void AbstractLogView::searchUsingFunction(
+    void ( QuickFind::*search_function )( Selection, QuickFindMatcher ) )
 {
     disableFollow();
+    QMetaObject::invokeMethod( quickFind_,
+                               [qf = quickFind_, selection = selection_,
+                                matcher = quickFindPattern_->getMatcher(),
+                                search_function] { ( qf->*search_function )( selection, matcher ); },
+                               Qt::QueuedConnection );
+}
 
-    const auto line = ( quickFind_.*search_function )();
-    if ( line.has_value() ) {
-        LOG( logDEBUG ) << "search " << line;
-        displayLine( *line );
-        emit updateLineNumber( *line );
+void AbstractLogView::setQuickFindResult( bool hasMatch, Portion portion )
+{
+    if ( portion.isValid() ) {
+        LOG( logDEBUG ) << "search " << portion.line();
+        displayLine( portion.line() );
+        selection_.selectPortion( portion );
+        emit updateLineNumber( portion.line() );
+    }
+    else if ( !hasMatch ) {
+        selection_.clear();
     }
 }
 
@@ -964,13 +985,16 @@ void AbstractLogView::incrementallySearchBackward()
 
 void AbstractLogView::incrementalSearchAbort()
 {
-    quickFind_.incrementalSearchAbort();
+    selection_ = quickFind_->incrementalSearchAbort();
     emit changeQuickFind( "", QuickFindMux::Forward );
 }
 
 void AbstractLogView::incrementalSearchStop()
 {
-    quickFind_.incrementalSearchStop();
+    auto oldSelection = quickFind_->incrementalSearchStop();
+    if ( selection_.isEmpty() ) {
+        selection_ = std::move( oldSelection );
+    }
 }
 
 void AbstractLogView::followSet( bool checked )
@@ -1002,7 +1026,7 @@ void AbstractLogView::handlePatternUpdated()
 {
     LOG( logDEBUG ) << "AbstractLogView::handlePatternUpdated()";
 
-    quickFind_.resetLimits();
+    quickFind_->resetLimits();
     update();
 }
 
@@ -1173,7 +1197,7 @@ void AbstractLogView::updateData()
     LineNumber last_line = qMin( lastLineNumber, firstLine + getNbVisibleLines() );
 
     // Reset the QuickFind in case we have new stuff to search into
-    quickFind_.resetLimits();
+    quickFind_->resetLimits();
 
     if ( followMode_ )
         jumpToBottom();

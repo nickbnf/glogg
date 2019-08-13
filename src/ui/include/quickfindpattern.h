@@ -39,55 +39,54 @@
 #ifndef QUICKFINDPATTERN_H
 #define QUICKFINDPATTERN_H
 
-#include <QObject>
-#include <QString>
-#include <QRegularExpression>
 #include <QList>
+#include <QObject>
+#include <QRegularExpression>
+#include <QString>
+#include <QThread>
+
+class QuickFind;
 
 // Represents a match result for QuickFind
-class QuickFindMatch
-{
+class QuickFindMatch {
   public:
     // Construct a match (must be initialised)
     QuickFindMatch( int start_column, int length )
-    { startColumn_ = start_column; length_ = length; }
+    {
+        startColumn_ = start_column;
+        length_ = length;
+    }
 
     // Accessor functions
-    int startColumn() const { return startColumn_; }
-    int length() const { return length_; }
+    int startColumn() const
+    {
+        return startColumn_;
+    }
+    int length() const
+    {
+        return length_;
+    }
 
   private:
     int startColumn_;
     int length_;
 };
 
-// Represents a search pattern for QuickFind (without its results)
-class QuickFindPattern : public QObject
-{
-  Q_OBJECT
-
+class QuickFindMatcher {
   public:
-    // Construct an empty search
-    QuickFindPattern();
+    QuickFindMatcher()
+    {}
 
-    // Set the search to a new pattern, using the current
-    // case status
-    void changeSearchPattern( const QString& pattern );
+    QuickFindMatcher( bool isActive, QRegularExpression regexp )
+        : isActive_( isActive )
+        , regexp_{ std::move( regexp ) }
+    {
+    }
 
-    // Set the search to a new pattern, as well as the case status
-    void changeSearchPattern( const QString& pattern, bool ignoreCase );
-
-    // Returns whether the search is active (i.e. valid and non empty regexp)
-    bool isActive() const { return active_; }
-
-    // Return the text of the regex
-    QString getPattern() const { return pattern_; }
-
-    // Returns whether the passed line match the quick find search.
-    // If so, it populate the passed list with the list of matches
-    // within this particular line.
-    bool matchLine( const QString& line,
-            std::vector<QuickFindMatch>& matches ) const;
+    bool isActive() const
+    {
+        return isActive_;
+    }
 
     // Returns whether there is a match in the passed line, starting at
     // the passed column.
@@ -101,17 +100,56 @@ class QuickFindPattern : public QObject
     // the position of the first match found.
     void getLastMatch( int* start_col, int* end_col ) const;
 
+  private:
+    bool isActive_ = false;
+    QRegularExpression regexp_;
+
+    mutable int lastMatchStart_ = 0;
+    mutable int lastMatchEnd_ = 0;
+};
+
+// Represents a search pattern for QuickFind (without its results)
+class QuickFindPattern : public QObject {
+    Q_OBJECT
+
+  public:
+    // Construct an empty search
+    QuickFindPattern() = default;
+
+    // Set the search to a new pattern, using the current
+    // case status
+    void changeSearchPattern( const QString& pattern );
+
+    // Set the search to a new pattern, as well as the case status
+    void changeSearchPattern( const QString& pattern, bool ignoreCase );
+
+    // Returns whether the search is active (i.e. valid and non empty regexp)
+    bool isActive() const
+    {
+        return active_;
+    }
+
+    // Return the text of the regex
+    QString getPattern() const
+    {
+        return pattern_;
+    }
+
+    // Returns whether the passed line match the quick find search.
+    // If so, it populate the passed list with the list of matches
+    // within this particular line.
+    bool matchLine( const QString& line, std::vector<QuickFindMatch>& matches ) const;
+
+    QuickFindMatcher getMatcher() const;
+
   signals:
     // Sent when the pattern is changed
     void patternUpdated();
 
   private:
-    bool active_;
+    bool active_ = false;
     QRegularExpression regexp_;
     QString pattern_;
-
-    mutable int lastMatchStart_;
-    mutable int lastMatchEnd_;
 };
 
 #endif

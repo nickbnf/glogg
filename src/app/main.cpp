@@ -94,6 +94,14 @@ int main( int argc, char* argv[] )
     qRegisterMetaType<LinesCount>( "LinesCount" );
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
+    qRegisterMetaType<Portion>( "Portion" );
+    qRegisterMetaType<Selection>( "Selection" );
+    qRegisterMetaType<QFNotification>( "QFNotification" );
+    qRegisterMetaType<QFNotificationReachedEndOfFile>( "QFNotificationReachedEndOfFile" );
+    qRegisterMetaType<QFNotificationReachedBegininningOfFile>( "QFNotificationReachedBegininningOfFile" );
+    qRegisterMetaType<QFNotificationProgress>( "QFNotificationProgress" );
+    qRegisterMetaType<QFNotificationInterrupted>( "QFNotificationInterrupted" );
+    qRegisterMetaType<QuickFindMatcher>( "QuickFindMatcher" );
 
     std::vector<QString> filenames;
     std::vector<std::string> raw_filenames;

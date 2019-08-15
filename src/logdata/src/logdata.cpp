@@ -208,15 +208,15 @@ void LogData::fileChangedOnDisk( const QString& filename )
     const auto currentFileId = FileId::getFileId( indexingFileName_ );
     const auto attachedFileId = attached_file_->getFileId();
 
-    const auto file_size = indexing_data_.getSize();
     const auto indexedHash = indexing_data_.getHash();
-    LOG( logINFO ) << "current indexed fileSize=" << file_size;
-    LOG( logINFO ) << "current indexed hash=" << QString( indexedHash.toHex() );
+
+    LOG( logINFO ) << "current indexed fileSize=" << indexedHash.size;
+    LOG( logINFO ) << "current indexed hash=" << QString( indexedHash.hash.toHex() );
     LOG( logINFO ) << "info file_->size()=" << info.size();
 
-    LOG( logDEBUG ) << "attached_file_->size()=" << attached_file_->size();
-    LOG( logDEBUG ) << "attached_file_id_ index " << attachedFileId.fileIndex;
-    LOG( logDEBUG ) << "currentFileId index " << currentFileId.fileIndex;
+    LOG( logINFO ) << "attached_file_->size()=" << attached_file_->size();
+    LOG( logINFO ) << "attached_file_id_ index " << attachedFileId.fileIndex;
+    LOG( logINFO ) << "currentFileId index " << currentFileId.fileIndex;
 
     // In absence of any clearer information, we use the following size comparison
     // to determine whether we are following the same file or not (i.e. the file
@@ -228,7 +228,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
 
     const bool isFileIdChanged = attachedFileId != currentFileId;
 
-    if ( !isFileIdChanged &&  filename != indexingFileName_ ) {
+    if ( !isFileIdChanged && filename != indexingFileName_ ) {
         LOG( logINFO ) << "ignore other file update";
         return;
     }
@@ -240,25 +240,18 @@ void LogData::fileChangedOnDisk( const QString& filename )
             << "Inconsistent size, or file index, the file might have changed, re-opening";
 
         attached_file_->reOpenFile();
-
-        // We don't force a (slow) full reindex as this routinely happens if
-        // the file is appended quickly.
-        // This means we can occasionally have false negatives (should be dealt with at
-        // a lower level): e.g. if a new file is created with the same name as the old one
-        // and with a size greater than the old one (should be rare in practice).
     }
 
     const auto real_file_size = attached_file_->size();
     auto fileStatusPromise
         = QtPromise::resolve(
-              QtConcurrent::run( [this, indexedSize = indexing_data_.getSize(), indexedHash,
-                                  isFileIdChanged, real_file_size, file_size] {
-                  if ( isFileIdChanged || real_file_size < file_size ) {
+              QtConcurrent::run( [this, indexedHash, real_file_size] {
+                  if ( real_file_size < indexedHash.size ) {
                       LOG( logINFO ) << "File truncated";
                       return Truncated;
                   }
 
-                  ScopedFileHolder<FileHolder> newLocker( attached_file_.get() );
+                  ScopedFileHolder<FileHolder> locker( attached_file_.get() );
 
                   QByteArray buffer{ 1024 * 1024, 0 };
                   QCryptographicHash hash{ QCryptographicHash::Md5 };
@@ -266,24 +259,24 @@ void LogData::fileChangedOnDisk( const QString& filename )
                   auto totalSize = 0ll;
                   do {
 
-                      readSize = newLocker.getFile()->read(
-                          buffer.data(),
-                          qMin( static_cast<qint64>( buffer.length() ), indexedSize - totalSize ) );
+                      readSize = locker.getFile()->read(
+                          buffer.data(), qMin( static_cast<qint64>( buffer.length() ),
+                                               indexedHash.size - totalSize ) );
 
                       hash.addData( buffer.data(), readSize );
 
                       totalSize += readSize;
-                  } while ( readSize > 0 && totalSize < indexedSize );
+                  } while ( readSize > 0 && totalSize < indexedHash.size );
 
                   const auto realHash = hash.result();
                   LOG( logINFO ) << "real file hash " << QString( realHash.toHex() );
 
-                  if ( !std::equal( indexedHash.begin(), indexedHash.end(), realHash.begin(),
-                                    realHash.end() ) ) {
+                  if ( !std::equal( indexedHash.hash.begin(), indexedHash.hash.end(),
+                                    realHash.begin(), realHash.end() ) ) {
                       LOG( logINFO ) << "File changed in indexed range";
                       return Truncated;
                   }
-                  else if ( real_file_size > file_size ) {
+                  else if ( real_file_size > indexedHash.size ) {
                       LOG( logINFO ) << "New data on disk";
                       return DataAdded;
                   }
@@ -293,10 +286,8 @@ void LogData::fileChangedOnDisk( const QString& filename )
                   }
               } ) )
               .then( [this, indexedHash, info]( MonitoredFileStatus status ) {
-
-                  LOG( logINFO ) << "File " << info.fileName()
-                                 << ", hash " << QString( indexedHash.toHex() )
-                                 << " status " << status;
+                  LOG( logINFO ) << "File " << info.fileName() << ", hash "
+                                 << QString( indexedHash.hash.toHex() ) << " status " << status;
 
                   std::function<std::shared_ptr<LogDataOperation>()> newOperation;
                   if ( fileChangedOnDisk_ != Truncated ) {

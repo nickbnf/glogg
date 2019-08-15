@@ -53,6 +53,12 @@
 
 #include "atomicflag.h"
 
+struct IndexedHash
+{
+    qint64 size = 0;
+    QByteArray hash;
+};
+
 // This class is a thread-safe set of indexing data.
 class IndexingData {
   public:
@@ -60,8 +66,6 @@ class IndexingData {
         : dataMutex_()
         , linePosition_()
         , maxLength_( 0 )
-        , indexedSize_( 0 )
-        , indexedHash_( QCryptographicHash::Md5 )
         , encodingGuess_( QTextCodec::codecForLocale() )
         , encodingForced_( nullptr )
     {
@@ -70,7 +74,7 @@ class IndexingData {
     // Get the total indexed size
     qint64 getSize() const;
 
-    QByteArray getHash() const;
+    IndexedHash getHash() const;
 
     // Get the length of the longest line
     LineLength getMaxLength() const;
@@ -101,8 +105,9 @@ class IndexingData {
 
     LinePositionArray linePosition_;
     LineLength maxLength_;
-    qint64 indexedSize_;
-    QCryptographicHash indexedHash_;
+
+    QCryptographicHash indexHash_ {QCryptographicHash::Md5};
+    IndexedHash hash_;
 
     QTextCodec* encodingGuess_;
     QTextCodec* encodingForced_;

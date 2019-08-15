@@ -56,15 +56,15 @@ qint64 IndexingData::getSize() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    return indexedSize_;
+    return hash_.size;
 }
 
 
-QByteArray IndexingData::getHash() const
+IndexedHash IndexingData::getHash() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    return indexedHash_.result();
+    return hash_;
 }
 
 LineLength IndexingData::getMaxLength() const
@@ -112,11 +112,12 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
 {
     QMutexLocker locker( &dataMutex_ );
 
-    indexedSize_ += block.size();
+    hash_.size += block.size();
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
-    indexedHash_.addData( block );
+    indexHash_.addData( block );
+    hash_.hash = indexHash_.result();
 
     encodingGuess_ = encoding;
 }
@@ -126,8 +127,8 @@ void IndexingData::clear()
     QMutexLocker locker( &dataMutex_ );
 
     maxLength_ = 0_length;
-    indexedSize_ = 0;
-    indexedHash_.reset();
+    hash_ = {};
+    indexHash_.reset();
     linePosition_ = LinePositionArray();
     encodingGuess_ = QTextCodec::codecForLocale();
     encodingForced_ = nullptr;

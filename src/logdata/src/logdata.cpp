@@ -246,7 +246,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
     auto fileStatusPromise
         = QtPromise::resolve(
               QtConcurrent::run( [this, indexedHash, real_file_size] {
-                  if ( real_file_size < indexedHash.size ) {
+                  if (real_file_size == 0 || real_file_size < indexedHash.size ) {
                       LOG( logINFO ) << "File truncated";
                       return Truncated;
                   }
@@ -263,9 +263,11 @@ void LogData::fileChangedOnDisk( const QString& filename )
                           buffer.data(), qMin( static_cast<qint64>( buffer.length() ),
                                                indexedHash.size - totalSize ) );
 
-                      hash.addData( buffer.data(), readSize );
+                      if (readSize > 0) {
+                          hash.addData( buffer.data(), readSize );
+                          totalSize += readSize;
+                      }
 
-                      totalSize += readSize;
                   } while ( readSize > 0 && totalSize < indexedHash.size );
 
                   const auto realHash = hash.result();

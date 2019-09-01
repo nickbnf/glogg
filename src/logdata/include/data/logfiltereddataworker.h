@@ -46,6 +46,8 @@
 #include <QFuture>
 #include <QFutureWatcher>
 
+#include <immer/flex_vector.hpp>
+
 #include "atomicflag.h"
 #include "linetypes.h"
 
@@ -78,14 +80,22 @@ class MatchingLine {
 // This is an array of matching lines.
 // It shall be implemented for random lookup speed, so
 // a fixed "in-place" array (vector) is probably fine.
-using SearchResultArray = std::vector<MatchingLine>;
+using SearchResultArray = immer::flex_vector<MatchingLine>;
+
+struct SearchResults
+{
+    SearchResultArray allMatches;
+    SearchResultArray newMatches;
+    LineLength maxLength;
+    LinesCount processedLines;
+};
 
 // This class is a mutex protected set of search result data.
 // It is thread safe.
 class SearchData {
   public:
-    // Atomically move all the search data
-    SearchResultArray takeAll( LineLength& length, LinesCount& nbLinesProcessed );
+    // will clear new matches
+    SearchResults takeCurrentResults() const;
 
     // Atomically set all the search data
     // (overwriting the existing)
@@ -110,8 +120,9 @@ class SearchData {
     mutable QMutex dataMutex_;
 
     SearchResultArray matches_;
+    mutable SearchResultArray newMatches_;
     LineLength maxLength_{ 0 };
-    LinesCount nbLinesProcessed_ { 0 };
+    LinesCount nbLinesProcessed_{ 0 };
     LineNumber lastMatchedLineNumber_{ 0 };
 };
 
@@ -188,8 +199,7 @@ class LogFilteredDataWorker : public QObject {
     void interrupt();
 
     // get the current indexing data
-    // the data is cleared, so that successive calls do not return the same results
-    SearchResultArray newSearchResults( LineLength& maxLength, LinesCount& nbLinesProcessed );
+    SearchResults getSearchResults() const;
 
   signals:
     // Sent during the indexing process to signal progress

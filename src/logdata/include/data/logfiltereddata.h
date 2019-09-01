@@ -53,6 +53,7 @@
 
 class LogData;
 class Marks;
+class QTimer;
 
 // A list of matches found in a LogData, it stores all the matching lines,
 // which can be accessed using the AbstractLogData interface, together with

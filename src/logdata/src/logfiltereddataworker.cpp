@@ -95,21 +95,23 @@ PartialSearchResults filterLines( const QRegularExpression& regex,
         if ( regex.match( l ).hasMatch() ) {
             results.maxLength
                 = qMax( results.maxLength, AbstractLogData::getUntabifiedLength( l ) );
-            results.matchingLines.emplace_back(
-                chunkStart + LinesCount( static_cast<LinesCount::UnderlyingType>( i ) ) );
+            results.matchingLines
+                = std::move( results.matchingLines )
+                      .push_back( chunkStart
+                                  + LinesCount( static_cast<LinesCount::UnderlyingType>( i ) ) );
         }
     }
     return results;
 }
 } // namespace
 
-SearchResultArray SearchData::takeAll( LineLength& length, LinesCount& nbLinesProcessed )
+SearchResults SearchData::takeCurrentResults() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    length           = maxLength_;
-    nbLinesProcessed = nbLinesProcessed_;
-    return std::exchange( matches_, {} );
+    auto results = SearchResults {matches_, std::move( newMatches_ ), maxLength_, nbLinesProcessed_ };
+    newMatches_ = {};
+    return results;
 }
 
 void SearchData::setAll( LineLength length, SearchResultArray&& matches )
@@ -118,6 +120,7 @@ void SearchData::setAll( LineLength length, SearchResultArray&& matches )
 
     maxLength_ = length;
     matches_ = matches;
+    newMatches_ = matches;
 }
 
 void SearchData::addAll( LineLength length, const SearchResultArray& matches, LinesCount lines )
@@ -133,12 +136,21 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
     // This does a copy as we want the final array to be
     // linear.
     if ( !matches.empty() ) {
-        const auto insertIt
-            = std::lower_bound( begin( matches_ ), end( matches_ ), matches.front() );
-        assert( insertIt == end( matches_ ) || !( *insertIt < matches.back() ) );
-        matches_.insert( insertIt, begin( matches ), end( matches ) );
-
         lastMatchedLineNumber_ = std::max( lastMatchedLineNumber_, matches.back().lineNumber() );
+
+        const auto insertNewMatches = [&matches](SearchResultArray& oldMatches)
+        {
+            const auto insertIt
+                = std::lower_bound( begin( oldMatches ), end( oldMatches ), matches.front() );
+            assert( insertIt == end( oldMatches ) || !( *insertIt < matches.back() ) );
+
+            auto insertPos = std::distance( begin( oldMatches ), insertIt);
+
+            oldMatches = std::move( oldMatches ).insert( insertPos, matches );
+        };
+
+        insertNewMatches(matches_);
+        insertNewMatches(newMatches_);
     }
 }
 
@@ -159,12 +171,12 @@ void SearchData::deleteMatch( LineNumber line )
 {
     QMutexLocker locker( &dataMutex_ );
 
-    auto i = matches_.end();
-    while ( i != matches_.begin() ) {
+    auto i = matches_.size();
+    while ( i != 0 ) {
         --i;
-        const auto this_line = i->lineNumber();
+        const auto this_line = matches_.at( i ).lineNumber();
         if ( this_line == line ) {
-            matches_.erase( i );
+            matches_ = std::move( matches_ ).erase( i );
             break;
         }
         // Exit if we have passed the line number to look for.
@@ -180,7 +192,8 @@ void SearchData::clear()
     maxLength_ = LineLength( 0 );
     nbLinesProcessed_ = LinesCount( 0 );
     lastMatchedLineNumber_ = LineNumber( 0 );
-    matches_.clear();
+    matches_ = {};
+    newMatches_ = {};
 }
 
 LogFilteredDataWorker::LogFilteredDataWorker( const LogData& sourceLogData )
@@ -252,9 +265,9 @@ void LogFilteredDataWorker::interrupt()
 }
 
 // This will do an atomic copy of the object
-SearchResultArray LogFilteredDataWorker::newSearchResults( LineLength& maxLength, LinesCount& nbLinesProcessed )
+SearchResults LogFilteredDataWorker::getSearchResults() const
 {
-    return searchData_.takeAll( maxLength, nbLinesProcessed );
+    return searchData_.takeCurrentResults();
 }
 
 //

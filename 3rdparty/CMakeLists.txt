@@ -16,3 +16,5 @@ mark_as_advanced(FORCE TBB_CI_BUILD)
 add_subdirectory(singleapp)
 add_subdirectory(concurrentqueue)
 add_subdirectory(qtpromise)
+add_subdirectory(immer)
+

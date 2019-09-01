@@ -231,8 +231,7 @@ int main( int argc, char* argv[] )
     Persistable::getSynced<Configuration>();
     Persistable::getSynced<VersionCheckerConfig>();
 
-    std::unique_ptr<Session> session( new Session() );
-    MainWindow mw( std::move( session ) );
+    MainWindow mw;
 
     if ( app.isPrimary() ) {
         QObject::connect( &messageReceiver, &MessageReceiver::loadFile, &mw,

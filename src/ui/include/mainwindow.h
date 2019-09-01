@@ -71,7 +71,7 @@ class MainWindow : public QMainWindow
   public:
     // Constructor
     // The ownership of the session is transferred to us
-    MainWindow( std::unique_ptr<Session> session);
+    MainWindow();
 
     // Re-install the geometry stored in config file
     // (should be done before 'Widget::show()')
@@ -181,7 +181,7 @@ class MainWindow : public QMainWindow
     void updateMenuBarFromDocument( const CrawlerWidget* crawler );
     void updateInfoLine();
 
-    std::unique_ptr<Session> session_;
+    Session session_;
     QString loadingFileName;
 
     // Encoding

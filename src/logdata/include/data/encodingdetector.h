@@ -59,8 +59,8 @@ public:
 
     static EncodingDetector& getInstance()
     {
-        static auto * const instance = new EncodingDetector();
-        return *instance;
+        static EncodingDetector instance;
+        return instance;
     }
 
     EncodingDetector(const EncodingDetector&) = delete;

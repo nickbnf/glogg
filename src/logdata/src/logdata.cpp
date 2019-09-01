@@ -145,11 +145,9 @@ QDateTime LogData::getLastModifiedDate() const
 }
 
 // Return an initialised LogFilteredData. The search is not started.
-LogFilteredData* LogData::getNewFilteredData() const
+std::unique_ptr<LogFilteredData> LogData::getNewFilteredData() const
 {
-    auto* newFilteredData = new LogFilteredData( this );
-
-    return newFilteredData;
+    return std::make_unique<LogFilteredData>( this );
 }
 
 void LogData::reload( QTextCodec* forcedEncoding )

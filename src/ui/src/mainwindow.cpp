@@ -81,11 +81,10 @@
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow(std::unique_ptr<Session> session) :
-    session_( std::move( session )  ),
+MainWindow::MainWindow() :
     mainIcon_(),
     signalMux_(),
-    quickFindMux_( session_->getQuickFindPattern() ),
+    quickFindMux_( session_.getQuickFindPattern() ),
     mainTabWidget_()
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     ,versionChecker_()
@@ -205,7 +204,7 @@ void MainWindow::reloadGeometry()
 {
     QByteArray geometry;
 
-    session_->storedGeometry( &geometry );
+    session_.storedGeometry( &geometry );
     restoreGeometry( geometry );
 }
 
@@ -213,7 +212,7 @@ void MainWindow::reloadSession()
 {
     int current_file_index = -1;
 
-    for ( const auto& open_file: session_->restore(
+    for ( const auto& open_file: session_.restore(
                []() { return new CrawlerWidget(); },
                &current_file_index ) )
     {
@@ -544,7 +543,7 @@ void MainWindow::open()
     // Default to the path of the current file if there is one
     if ( auto current = currentCrawlerWidget() )
     {
-        QString current_file = session_->getFilename( current );
+        QString current_file = session_.getFilename( current );
         QFileInfo fileInfo = QFileInfo( current_file );
         defaultDir = fileInfo.path();
     }
@@ -614,7 +613,7 @@ void MainWindow::find()
 
 void MainWindow::clearLog()
 {
-    const auto current_file = session_->getFilename( currentCrawlerWidget() );
+    const auto current_file = session_.getFilename( currentCrawlerWidget() );
     if ( QMessageBox::question( this, "klogg - clear file", QString( "Clear file %1?" ).arg( current_file ) ) == QMessageBox::Yes ) {
         QFile::resize( current_file, 0 );
     }
@@ -741,7 +740,7 @@ void MainWindow::updateLoadingProgress( int progress )
     LOG(logDEBUG) << "Loading progress: " << progress;
 
     QString current_file =
-        session_->getFilename( currentCrawlerWidget() );
+        session_.getFilename( currentCrawlerWidget() );
 
     // We ignore 0% and 100% to avoid a flash when the file (or update)
     // is very short.
@@ -813,7 +812,7 @@ void MainWindow::closeTab( int index )
 
     widget->stopLoading();
     mainTabWidget_.removeTab( index );
-    session_->close( widget );
+    session_.close( widget );
     delete widget;
 }
 
@@ -835,7 +834,7 @@ void MainWindow::currentTabChanged( int index )
         updateMenuBarFromDocument( crawler_widget );
 
         // Update the title bar
-        updateTitleBar( session_->getFilename( crawler_widget ) );
+        updateTitleBar( session_.getFilename( crawler_widget ) );
 
         editMenu->setEnabled( true );
     }
@@ -1005,7 +1004,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     // First check if the file is already open...
     auto* existing_crawler = dynamic_cast<CrawlerWidget*>(
-            session_->getViewIfOpen( fileName ) );
+            session_.getViewIfOpen( fileName ) );
     if ( existing_crawler ) {
         // ... and switch to it.
         mainTabWidget_.setCurrentWidget( existing_crawler );
@@ -1018,7 +1017,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     try {
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
-                session_->open( fileName,
+                session_.open( fileName,
                     []() { return new CrawlerWidget(); } ) );
         assert( crawler_widget );
 
@@ -1123,13 +1122,13 @@ void MainWindow::updateInfoLine()
     // Following should always work as we will only receive enter
     // this slot if there is a crawler connected.
     QString current_file =
-        session_->getFilename( currentCrawlerWidget() );
+        session_.getFilename( currentCrawlerWidget() );
 
     uint64_t fileSize;
     uint32_t fileNbLine;
     QDateTime lastModified;
 
-    session_->getFileInfo( currentCrawlerWidget(),
+    session_.getFileInfo( currentCrawlerWidget(),
             &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
         const QString date =
@@ -1163,7 +1162,7 @@ void MainWindow::writeSettings()
                 0UL,
                 view->context() );
     }
-    session_->save( widget_list, saveGeometry() );
+    session_.save( widget_list, saveGeometry() );
 
     // User settings
     Persistable::get<Configuration>().save();

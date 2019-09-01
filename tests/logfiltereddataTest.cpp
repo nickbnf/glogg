@@ -83,7 +83,7 @@ SCENARIO( "filtered log data", "[logdata]") {
         log_data.attachFile( file.fileName() );
         REQUIRE( loadEndSpy.safeWait( 10000 ) );
 
-        auto filtered_data = std::unique_ptr<LogFilteredData>( log_data.getNewFilteredData() );
+        auto filtered_data = log_data.getNewFilteredData();
 
         WHEN( "Adding mark outside file" ) {
             filtered_data->addMark( LineNumber( SL_NB_LINES + 25 ) );

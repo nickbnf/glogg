@@ -42,24 +42,29 @@
 #include <QObject>
 #include <QPoint>
 #include <QTime>
+#include <QFuture>
+#include <QFutureWatcher>
 
 #include "qfnotifications.h"
+#include "quickfindpattern.h"
 #include "selection.h"
+#include "atomicflag.h"
 
 class QuickFindPattern;
 class AbstractLogData;
-class Portion;
 
 // Handle "long processing" notifications to the UI.
 // reset() shall be called at the beginning of the search
 // and then ping() should be called periodically during the processing.
 // The notify() signal should be forwarded to the UI.
-class SearchingNotifier : public QObject
-{
-  Q_OBJECT
+class SearchingNotifier : public QObject {
+    Q_OBJECT
 
   public:
-    SearchingNotifier() : dotToDisplay_{ 0 } {}
+    SearchingNotifier()
+        : dotToDisplay_{ 0 }
+    {
+    }
 
     // Reset internal timers at the beiginning of the processing
     void reset();
@@ -68,7 +73,8 @@ class SearchingNotifier : public QObject
     // Pass the current line number and total number of line so that
     // a progress percentage is calculated and displayed.
     // (line shall be negative if ging in reverse)
-    inline void ping( qint64 line, qint64 nb_lines ) {
+    inline void ping( qint64 line, qint64 nb_lines )
+    {
         if ( startTime_.msecsTo( QTime::currentTime() ) > 1000 )
             sendNotification( line, nb_lines );
     }
@@ -87,57 +93,54 @@ class SearchingNotifier : public QObject
 // Represents a search made with Quick Find (without its results)
 // it keeps a pointer to a set of data and to a QuickFindPattern which
 // are used for the searches. (the caller retains ownership of both).
-class QuickFind : public QObject
-{
-  Q_OBJECT
+class QuickFind : public QObject {
+    Q_OBJECT
 
   public:
     // Construct a search
-    QuickFind( const AbstractLogData* const logData, Selection* selection,
-            const QuickFindPattern* const quickFindPattern );
+    QuickFind( const AbstractLogData& logData);
 
     // Set the starting point that will be used by the next search
     void setSearchStartPoint( QPoint startPoint );
 
+    // Make the object forget the 'no more match' flag.
+    void resetLimits();
+
+  public slots:
     // Used for incremental searches
     // Return the first occurrence of the passed pattern from the starting
-    // point.  These searches don't use the QFP and don't change the
-    // starting point.
-    // TODO Update comment
-    OptionalLineNumber incrementallySearchForward();
-    OptionalLineNumber incrementallySearchBackward();
+    // point.  These searches don't change the starting point.
+    void incrementallySearchForward( Selection selection, QuickFindMatcher matcher );
+    void incrementallySearchBackward( Selection selection, QuickFindMatcher matcher );
 
     // Stop the currently ongoing incremental search, leave the selection
     // where it is if a match has been found, restore the old one
     // if not. Also throw away the start point associated with
     // the search.
-    void incrementalSearchStop();
+    Selection incrementalSearchStop();
 
     // Throw away the current search and restore the initial
     // position/selection
-    void incrementalSearchAbort();
-
-    // Used for 'repeated' (n/N) QF searches using the current direction
-    // Return the line of the first occurrence of the QFP and
-    // update the selection. It returns -1 if nothing is found.
-    /*
-    int searchNext();
-    int searchPrevious();
-    */
+    Selection incrementalSearchAbort();
 
     // Idem but ignore the direction and always search in the
     // specified direction
-    OptionalLineNumber searchForward();
-    OptionalLineNumber searchBackward();
+    void searchForward( Selection selection, QuickFindMatcher matcher );
+    void searchBackward( Selection selection, QuickFindMatcher matcher );
 
-    // Make the object forget the 'no more match' flag.
-    void resetLimits();
+    void stopSearch();
 
   signals:
     // Sent when the UI shall display a message to the user.
     void notify( const QFNotification& message );
     // Sent when the UI shall clear the notification.
     void clearNotification();
+    // Sent when search is completed
+    void searchDone( bool hasMatch, Portion selection );
+
+  private slots:
+    void sendNotification(QFNotification notification);
+    void onSearchFutureReady();
 
   private:
     enum QFDirection {
@@ -148,15 +151,22 @@ class QuickFind : public QObject
 
     class LastMatchPosition {
       public:
-        LastMatchPosition() : column_( -1 ) {}
+        LastMatchPosition()
+            : column_( -1 )
+        {
+        }
         void set( LineNumber line, int column );
         void set( const FilePosition& position );
-        void reset() { line_ = {}; column_ = -1; }
+        void reset()
+        {
+            line_ = {};
+            column_ = -1;
+        }
         // Does the passed position come after the recorded one
-        bool isLater(OptionalLineNumber line, int column ) const;
+        bool isLater( OptionalLineNumber line, int column ) const;
         bool isLater( const FilePosition& position ) const;
         // Does the passed position come before the recorded one
-        bool isSooner(OptionalLineNumber line, int column ) const;
+        bool isSooner( OptionalLineNumber line, int column ) const;
         bool isSooner( const FilePosition& position ) const;
 
       private:
@@ -167,20 +177,37 @@ class QuickFind : public QObject
     class IncrementalSearchStatus {
       public:
         /* Constructors */
-        IncrementalSearchStatus() :
-            ongoing_( None ), position_(), initialSelection_() {}
-        IncrementalSearchStatus(
-                QFDirection direction,
-                const FilePosition& position,
-                const Selection& initial_selection ) :
-            ongoing_( direction ),
-            position_( position ),
-            initialSelection_( initial_selection ) {}
+        IncrementalSearchStatus()
+            : ongoing_( None )
+            , position_()
+            , initialSelection_()
+        {
+        }
+        IncrementalSearchStatus( QFDirection direction, const FilePosition& position,
+                                 const Selection& initial_selection )
+            : ongoing_( direction )
+            , position_( position )
+            , initialSelection_( initial_selection )
+        {
+        }
 
-        bool isOngoing() const { return ( ongoing_ != None ); }
-        QFDirection direction() const { return ongoing_; }
-        FilePosition position() const { return position_; }
-        Selection initialSelection() const { return initialSelection_; }
+        bool isOngoing() const
+        {
+            return ( ongoing_ != None );
+        }
+        QFDirection direction() const
+        {
+            return ongoing_;
+        }
+        FilePosition position() const
+        {
+            return position_;
+        }
+        Selection initialSelection() const
+        {
+            return initialSelection_;
+        }
+
       private:
         QFDirection ongoing_;
         FilePosition position_;
@@ -188,9 +215,7 @@ class QuickFind : public QObject
     };
 
     // Pointers to external objects
-    const AbstractLogData* const logData_;
-    Selection* selection_;
-    const QuickFindPattern* const quickFindPattern_;
+    const AbstractLogData& logData_;
 
     // Owned objects
 
@@ -205,8 +230,16 @@ class QuickFind : public QObject
     IncrementalSearchStatus incrementalSearchStatus_;
 
     // Private functions
-    OptionalLineNumber doSearchForward( const FilePosition &start_position );
-    OptionalLineNumber doSearchBackward( const FilePosition &start_position );
+    Portion doSearchForward( const Selection& selection, const QuickFindMatcher& matcher );
+    Portion doSearchForward( const FilePosition& start_position, const Selection& selection,
+                             const QuickFindMatcher& matcher );
+    Portion doSearchBackward( const Selection& selection, const QuickFindMatcher& matcher );
+    Portion doSearchBackward( const FilePosition& start_position, const Selection& selection,
+                              const QuickFindMatcher& matcher );
+
+    AtomicFlag interruptRequested_;
+    QFuture<Portion> operationFuture_;
+    QFutureWatcher<Portion> operationWatcher_;
 };
 
 #endif

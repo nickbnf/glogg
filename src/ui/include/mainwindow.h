@@ -41,6 +41,8 @@
 
 #include <memory>
 #include <QMainWindow>
+#include <QSystemTrayIcon>
+
 #include <array>
 
 #include "session.h"
@@ -69,7 +71,7 @@ class MainWindow : public QMainWindow
   public:
     // Constructor
     // The ownership of the session is transferred to us
-    MainWindow( std::unique_ptr<Session> session);
+    MainWindow();
 
     // Re-install the geometry stored in config file
     // (should be done before 'Widget::show()')
@@ -105,6 +107,7 @@ class MainWindow : public QMainWindow
     void copy();
     void find();
     void clearLog();
+    void openClipboard();
     void highlighters();
     void options();
     void about();
@@ -147,6 +150,7 @@ class MainWindow : public QMainWindow
     // Notify the user a new version is available
     void newVersionNotification( const QString& new_version , const QString &url );
 
+    void onClipboardDataChanged();
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
@@ -165,6 +169,7 @@ class MainWindow : public QMainWindow
     void createToolBars();
     void createStatusBar();
     void createRecentFileToolTipTimer();
+    void createTrayIcon();
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName );
@@ -176,7 +181,7 @@ class MainWindow : public QMainWindow
     void updateMenuBarFromDocument( const CrawlerWidget* crawler );
     void updateInfoLine();
 
-    std::unique_ptr<Session> session_;
+    Session session_;
     QString loadingFileName;
 
     // Encoding
@@ -212,6 +217,7 @@ class MainWindow : public QMainWindow
     QAction *selectAllAction;
     QAction *findAction;
     QAction *clearLogAction;
+    QAction *openClipboardAction;
     QAction *overviewVisibleAction;
     QAction *lineNumbersVisibleInMainAction;
     QAction *lineNumbersVisibleInFilteredAction;
@@ -224,6 +230,8 @@ class MainWindow : public QMainWindow
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
     std::array<QAction*, static_cast<int>(CrawlerWidget::Encoding::MAX)> encodingAction;
+
+    QSystemTrayIcon *trayIcon_;
 
     QIcon mainIcon_;
 
@@ -245,6 +253,7 @@ class MainWindow : public QMainWindow
 #endif
 
     bool isMaximized_ = false;
+    bool isCloseFromTray_ = false;
 };
 
 #endif

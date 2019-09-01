@@ -197,6 +197,10 @@ class Configuration final : public Persistable {
     {
         return lineNumbersVisibleInFiltered_;
     }
+    bool minimizeToTray() const
+    {
+        return minimizeToTray_;
+    }
     void setMainLineNumbersVisible( bool lineNumbersVisible )
     {
         lineNumbersVisibleInMain_ = lineNumbersVisible;
@@ -204,6 +208,28 @@ class Configuration final : public Persistable {
     void setFilteredLineNumbersVisible( bool lineNumbersVisible )
     {
         lineNumbersVisibleInFiltered_ = lineNumbersVisible;
+    }
+    void setMinimizeToTray( bool minimizeToTray )
+    {
+        minimizeToTray_ = minimizeToTray;
+    }
+
+    bool enableLogging() const
+    {
+        return enableLogging_;
+    }
+    uint8_t loggingLevel() const
+    {
+        return loggingLevel_;
+    }
+
+    void setEnableLogging( bool enableLogging )
+    {
+        enableLogging_ = enableLogging;
+    }
+    void setLoggingLevel( uint8_t level )
+    {
+        loggingLevel_ = level;
     }
 
     // Default settings for new views
@@ -257,6 +283,7 @@ class Configuration final : public Persistable {
     bool overviewVisible_ = true;
     bool lineNumbersVisibleInMain_ = false;
     bool lineNumbersVisibleInFiltered_ = true;
+    bool minimizeToTray_ = false;
 
     // Default settings for new views
     bool searchAutoRefresh_ = false;
@@ -273,6 +300,9 @@ class Configuration final : public Persistable {
     bool keepFileClosed_ = false;
 
     bool useLineEndingCache_ = true;
+
+    bool enableLogging_ = false;
+    uint8_t loggingLevel_ = 4;
 };
 
 #endif

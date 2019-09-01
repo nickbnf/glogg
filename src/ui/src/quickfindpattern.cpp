@@ -41,84 +41,17 @@
 // current search pattern, once it has been confirmed (return pressed),
 // it can be asked to return the matches in a specific string.
 
+#include <iostream>
+
 #include "quickfindpattern.h"
 
 #include "configuration.h"
 
-QuickFindPattern::QuickFindPattern() : QObject(), regexp_()
+#include "quickfind.h"
+
+bool QuickFindMatcher::isLineMatching( const QString& line, int column ) const
 {
-    active_ = false;
-}
-
-#include <iostream>
-
-void QuickFindPattern::changeSearchPattern( const QString& pattern )
-{
-    pattern_ = pattern;
-
-    // Determine the type of regexp depending on the config
-    QString searchPattern;
-    switch ( Persistable::get<Configuration>().quickfindRegexpType() ) {
-        case Wildcard:
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 12, 0))
-            searchPattern = QRegularExpression::wildcardToRegularExpression(pattern);
-            searchPattern = searchPattern.mid(2, searchPattern.size() - 4);
-#else
-            searchPattern = pattern;
-            searchPattern.replace('*', ".*").replace('?', ".");
-#endif
-
-            break;
-        case FixedString:
-            searchPattern = QRegularExpression::escape(pattern);
-            break;
-        default:
-            searchPattern = pattern;
-            break;
-    }
-
-    regexp_.setPattern( searchPattern );
-
-    if ( regexp_.isValid() && ( ! searchPattern.isEmpty() ) )
-        active_ = true;
-    else
-        active_ = false;
-
-    emit patternUpdated();
-}
-
-void QuickFindPattern::changeSearchPattern( const QString& pattern, bool ignoreCase )
-{
-    QRegularExpression::PatternOptions options =
-            QRegularExpression::UseUnicodePropertiesOption;
-
-    if ( ignoreCase )
-        options |= QRegularExpression::CaseInsensitiveOption;
-
-    regexp_.setPatternOptions(options);
-    changeSearchPattern( pattern );
-}
-
-bool QuickFindPattern::matchLine(const QString& line,
-        std::vector<QuickFindMatch> &matches ) const
-{
-    matches.clear();
-
-    if ( active_ ) {
-        QRegularExpressionMatchIterator matchIterator = regexp_.globalMatch(line);
-
-        while( matchIterator.hasNext() ) {
-            QRegularExpressionMatch match = matchIterator.next();
-            matches.emplace_back( match.capturedStart(), match.capturedLength() );
-        }
-    }
-
-    return ( matches.size() > 0 );
-}
-
-bool QuickFindPattern::isLineMatching( const QString& line, int column ) const
-{
-    if ( ! active_ )
+    if ( !isActive_ )
         return false;
 
     QRegularExpressionMatch match = regexp_.match( line, column );
@@ -132,13 +65,12 @@ bool QuickFindPattern::isLineMatching( const QString& line, int column ) const
     }
 }
 
-bool QuickFindPattern::isLineMatchingBackward(
-        const QString& line, int column ) const
+bool QuickFindMatcher::isLineMatchingBackward( const QString& line, int column ) const
 {
-    if ( ! active_ )
+    if ( !isActive_ )
         return false;
 
-    QRegularExpressionMatchIterator matches = regexp_.globalMatch(line);
+    QRegularExpressionMatchIterator matches = regexp_.globalMatch( line );
     QRegularExpressionMatch lastMatch;
     while ( matches.hasNext() ) {
         QRegularExpressionMatch nextMatch = matches.peekNext();
@@ -159,8 +91,75 @@ bool QuickFindPattern::isLineMatchingBackward(
     }
 }
 
-void QuickFindPattern::getLastMatch( int* start_col, int* end_col ) const
+void QuickFindMatcher::getLastMatch( int* start_col, int* end_col ) const
 {
     *start_col = lastMatchStart_;
-    *end_col   = lastMatchEnd_;
+    *end_col = lastMatchEnd_;
+}
+
+void QuickFindPattern::changeSearchPattern( const QString& pattern )
+{
+    pattern_ = pattern;
+
+    // Determine the type of regexp depending on the config
+    QString searchPattern;
+    switch ( Persistable::get<Configuration>().quickfindRegexpType() ) {
+    case Wildcard:
+#if ( QT_VERSION >= QT_VERSION_CHECK( 5, 12, 0 ) )
+        searchPattern = QRegularExpression::wildcardToRegularExpression( pattern );
+        searchPattern = searchPattern.mid( 2, searchPattern.size() - 4 );
+#else
+        searchPattern = pattern;
+        searchPattern.replace( '*', ".*" ).replace( '?', "." );
+#endif
+
+        break;
+    case FixedString:
+        searchPattern = QRegularExpression::escape( pattern );
+        break;
+    default:
+        searchPattern = pattern;
+        break;
+    }
+
+    regexp_.setPattern( searchPattern );
+
+    if ( regexp_.isValid() && ( !searchPattern.isEmpty() ) )
+        active_ = true;
+    else
+        active_ = false;
+
+    emit patternUpdated();
+}
+
+void QuickFindPattern::changeSearchPattern( const QString& pattern, bool ignoreCase )
+{
+    QRegularExpression::PatternOptions options = QRegularExpression::UseUnicodePropertiesOption;
+
+    if ( ignoreCase )
+        options |= QRegularExpression::CaseInsensitiveOption;
+
+    regexp_.setPatternOptions( options );
+    changeSearchPattern( pattern );
+}
+
+bool QuickFindPattern::matchLine( const QString& line, std::vector<QuickFindMatch>& matches ) const
+{
+    matches.clear();
+
+    if ( active_ ) {
+        QRegularExpressionMatchIterator matchIterator = regexp_.globalMatch( line );
+
+        while ( matchIterator.hasNext() ) {
+            QRegularExpressionMatch match = matchIterator.next();
+            matches.emplace_back( match.capturedStart(), match.capturedLength() );
+        }
+    }
+
+    return ( matches.size() > 0 );
+}
+
+QuickFindMatcher QuickFindPattern::getMatcher() const
+{
+    return QuickFindMatcher( active_, regexp_ );
 }

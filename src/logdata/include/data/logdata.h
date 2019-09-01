@@ -83,7 +83,7 @@ class LogData : public AbstractLogData {
     void interruptLoading();
     // Creates a new filtered data.
     // ownership is passed to the caller
-    LogFilteredData* getNewFilteredData() const;
+    std::unique_ptr<LogFilteredData> getNewFilteredData() const;
     // Returns the size if the file in bytes
     qint64 getFileSize() const;
     // Returns the last modification date for the file.

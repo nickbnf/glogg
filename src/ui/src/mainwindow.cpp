@@ -62,6 +62,7 @@
 #include <QMimeData>
 #include <QUrl>
 #include <QWindow>
+#include <QTemporaryFile>
 
 #include "log.h"
 
@@ -80,11 +81,10 @@
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow(std::unique_ptr<Session> session) :
-    session_( std::move( session )  ),
+MainWindow::MainWindow() :
     mainIcon_(),
     signalMux_(),
-    quickFindMux_( session_->getQuickFindPattern() ),
+    quickFindMux_( session_.getQuickFindPattern() ),
     mainTabWidget_()
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     ,versionChecker_()
@@ -108,8 +108,9 @@ MainWindow::MainWindow(std::unique_ptr<Session> session) :
     mainIcon_.addFile( ":/images/hicolor/48x48/klogg.png" );
 
     setWindowIcon( mainIcon_ );
-
     readSettings();
+
+    createTrayIcon();
 
     // Connect the signals to the mux (they will be forwarded to the
     // "current" crawlerwidget
@@ -193,13 +194,17 @@ MainWindow::MainWindow(std::unique_ptr<Session> session) :
     central_widget->setLayout( main_layout );
 
     setCentralWidget( central_widget );
+
+    auto clipboard = QGuiApplication::clipboard();
+    connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::onClipboardDataChanged);
+    onClipboardDataChanged();
 }
 
 void MainWindow::reloadGeometry()
 {
     QByteArray geometry;
 
-    session_->storedGeometry( &geometry );
+    session_.storedGeometry( &geometry );
     restoreGeometry( geometry );
 }
 
@@ -207,7 +212,7 @@ void MainWindow::reloadSession()
 {
     int current_file_index = -1;
 
-    for ( const auto& open_file: session_->restore(
+    for ( const auto& open_file: session_.restore(
                []() { return new CrawlerWidget(); },
                &current_file_index ) )
     {
@@ -269,13 +274,13 @@ void MainWindow::createActions()
     const auto& config = Persistable::get<Configuration>();
 
     openAction = new QAction(tr("&Open..."), this);
-    openAction->setShortcut(QKeySequence::Open);
+    openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open) );
     openAction->setIcon( QIcon( ":/images/open14.png" ) );
     openAction->setStatusTip(tr("Open a file"));
     connect(openAction, &QAction::triggered, [this](auto){ this->open(); });
 
     closeAction = new QAction(tr("&Close"), this);
-    closeAction->setShortcut(tr("Ctrl+W"));
+    closeAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Close ) );
     closeAction->setStatusTip(tr("Close document"));
     connect(closeAction, &QAction::triggered, [this](auto){ this->closeTab(); });
 
@@ -317,9 +322,15 @@ void MainWindow::createActions()
              [this](auto){ this->find(); });
 
     clearLogAction = new QAction(tr("Clear file"), this);
-    findAction->setStatusTip(tr("Clear current file"));
+    clearLogAction->setStatusTip(tr("Clear current file"));
     connect( clearLogAction, &QAction::triggered,
              [this](auto){ this->clearLog(); });
+
+    openClipboardAction = new QAction(tr("Open from clipboard"), this);
+    openClipboardAction->setStatusTip(tr("Open clipboard as log file"));
+    openClipboardAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Paste ) );
+    connect( openClipboardAction, &QAction::triggered,
+             [this](auto){ this->openClipboard(); });
 
     overviewVisibleAction = new QAction( tr("Matches &overview"), this );
     overviewVisibleAction->setCheckable( true );
@@ -343,13 +354,17 @@ void MainWindow::createActions()
 
     followAction = new QAction( tr("&Follow File"), this );
     followAction->setIcon( QIcon( ":/images/follow14.png" ) );
-    followAction->setShortcut(Qt::Key_F);
+
+    followAction->setShortcuts(QList<QKeySequence>()
+                               << QKeySequence(Qt::Key_F)
+                               << QKeySequence(Qt::Key_F10));
+
     followAction->setCheckable(true);
     connect( followAction, &QAction::toggled,
              this, &MainWindow::followSet );
 
     reloadAction = new QAction( tr("&Reload"), this );
-    reloadAction->setShortcut(QKeySequence::Refresh);
+    reloadAction->setShortcuts(QKeySequence::keyBindings( QKeySequence::Refresh ) );
     reloadAction->setIcon( QIcon(":/images/reload14.png") );
     signalMux_.connect( reloadAction, SIGNAL(triggered()), SLOT(reload()) );
 
@@ -397,6 +412,7 @@ void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu( tr("&File") );
     fileMenu->addAction( openAction );
+    fileMenu->addAction( openClipboardAction );
     fileMenu->addAction( closeAction );
     fileMenu->addAction( closeAllAction );
     fileMenu->addSeparator();
@@ -472,6 +488,49 @@ void MainWindow::createToolBars()
     toolBar->addWidget( lineNbField );
 }
 
+void MainWindow::createTrayIcon()
+{
+    trayIcon_ = new QSystemTrayIcon( this );
+
+    QMenu* trayMenu = new QMenu( this );
+    QAction* openWindowAction = new QAction(tr("Open window"), this);
+    QAction* quitAction = new QAction(tr("Quit"), this);
+
+    trayMenu->addAction( openWindowAction );
+    trayMenu->addAction( quitAction );
+
+    connect( openWindowAction, &QAction::triggered, this, &QMainWindow::show );
+    connect( quitAction, &QAction::triggered, [this]
+    {
+        this->isCloseFromTray_ = true;
+        this->close();
+    });
+
+    trayIcon_->setIcon( mainIcon_ );
+    trayIcon_->setToolTip("klogg log viewer");
+    trayIcon_->setContextMenu( trayMenu );
+
+    connect( trayIcon_, &QSystemTrayIcon::activated,
+             [this](QSystemTrayIcon::ActivationReason reason)
+    {
+        switch (reason){
+            case QSystemTrayIcon::Trigger:
+                if(!this->isVisible()){
+                    this->show();
+                } else {
+                    this->hide();
+                }
+                break;
+            default:
+                break;
+            }
+    });
+
+
+    if ( Persistable::get<Configuration>().minimizeToTray() ) {
+        trayIcon_->show();
+    }
+}
 //
 // Slots
 //
@@ -484,7 +543,7 @@ void MainWindow::open()
     // Default to the path of the current file if there is one
     if ( auto current = currentCrawlerWidget() )
     {
-        QString current_file = session_->getFilename( current );
+        QString current_file = session_.getFilename( current );
         QFileInfo fileInfo = QFileInfo( current_file );
         defaultDir = fileInfo.path();
     }
@@ -552,14 +611,39 @@ void MainWindow::find()
     displayQuickFindBar( QuickFindMux::Forward );
 }
 
-
-// Display the QuickFind bar
 void MainWindow::clearLog()
 {
-    const auto current_file = session_->getFilename( currentCrawlerWidget() );
+    const auto current_file = session_.getFilename( currentCrawlerWidget() );
     if ( QMessageBox::question( this, "klogg - clear file", QString( "Clear file %1?" ).arg( current_file ) ) == QMessageBox::Yes ) {
         QFile::resize( current_file, 0 );
     }
+}
+
+void MainWindow::onClipboardDataChanged()
+{
+    auto clipboard = QGuiApplication::clipboard();
+    auto text = clipboard->text();
+    openClipboardAction->setEnabled(!text.isEmpty());
+}
+
+void MainWindow::openClipboard()
+{
+    auto clipboard = QGuiApplication::clipboard();
+    auto text = clipboard->text();
+    if (text.isEmpty())
+    {
+        return;
+    }
+
+    auto tempFile = new QTemporaryFile(QDir::temp().filePath("klogg_clipboard"), this);
+    if (tempFile->open())
+    {
+        tempFile->write(text.toUtf8());
+        tempFile->flush();
+
+        loadFile(tempFile->fileName());
+    }
+
 }
 
 // Opens the 'Highlighters' dialog box
@@ -578,6 +662,9 @@ void MainWindow::options()
     signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
     dialog.exec();
     signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
+
+    const auto& config = Persistable::get<Configuration>();
+    plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 }
 
 // Opens the 'About' dialog box.
@@ -653,7 +740,7 @@ void MainWindow::updateLoadingProgress( int progress )
     LOG(logDEBUG) << "Loading progress: " << progress;
 
     QString current_file =
-        session_->getFilename( currentCrawlerWidget() );
+        session_.getFilename( currentCrawlerWidget() );
 
     // We ignore 0% and 100% to avoid a flash when the file (or update)
     // is very short.
@@ -725,7 +812,7 @@ void MainWindow::closeTab( int index )
 
     widget->stopLoading();
     mainTabWidget_.removeTab( index );
-    session_->close( widget );
+    session_.close( widget );
     delete widget;
 }
 
@@ -747,7 +834,7 @@ void MainWindow::currentTabChanged( int index )
         updateMenuBarFromDocument( crawler_widget );
 
         // Update the title bar
-        updateTitleBar( session_->getFilename( crawler_widget ) );
+        updateTitleBar( session_.getFilename( crawler_widget ) );
 
         editMenu->setEnabled( true );
     }
@@ -831,7 +918,17 @@ void MainWindow::newVersionNotification( const QString& new_version, const QStri
 void MainWindow::closeEvent( QCloseEvent *event )
 {
     writeSettings();
-    event->accept();
+
+    if( !isCloseFromTray_ && this->isVisible()
+            && Persistable::get<Configuration>().minimizeToTray() ){
+          event->ignore();
+          trayIcon_->show();
+          this->hide();
+    }
+    else {
+        event->accept();
+        trayIcon_->hide();
+    }
 }
 
 // Minimize handling the application
@@ -839,6 +936,16 @@ void MainWindow::changeEvent( QEvent *event )
 {
     if ( event->type() ==  QEvent::WindowStateChange) {
         isMaximized_ = windowState().testFlag( Qt::WindowMaximized );
+
+        if (this->windowState() & Qt::WindowMinimized) {
+            if ( Persistable::get<Configuration>().minimizeToTray() ) {
+                QTimer::singleShot(0, [this]
+                {
+                    trayIcon_->show();
+                    this->hide();
+                });
+            }
+        }
     }
 
     QMainWindow::changeEvent( event );
@@ -897,7 +1004,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     // First check if the file is already open...
     auto* existing_crawler = dynamic_cast<CrawlerWidget*>(
-            session_->getViewIfOpen( fileName ) );
+            session_.getViewIfOpen( fileName ) );
     if ( existing_crawler ) {
         // ... and switch to it.
         mainTabWidget_.setCurrentWidget( existing_crawler );
@@ -910,7 +1017,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
     try {
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
-                session_->open( fileName,
+                session_.open( fileName,
                     []() { return new CrawlerWidget(); } ) );
         assert( crawler_widget );
 
@@ -1015,13 +1122,13 @@ void MainWindow::updateInfoLine()
     // Following should always work as we will only receive enter
     // this slot if there is a crawler connected.
     QString current_file =
-        session_->getFilename( currentCrawlerWidget() );
+        session_.getFilename( currentCrawlerWidget() );
 
     uint64_t fileSize;
     uint32_t fileNbLine;
     QDateTime lastModified;
 
-    session_->getFileInfo( currentCrawlerWidget(),
+    session_.getFileInfo( currentCrawlerWidget(),
             &fileSize, &fileNbLine, &lastModified );
     if ( lastModified.isValid() ) {
         const QString date =
@@ -1055,7 +1162,7 @@ void MainWindow::writeSettings()
                 0UL,
                 view->context() );
     }
-    session_->save( widget_list, saveGeometry() );
+    session_.save( widget_list, saveGeometry() );
 
     // User settings
     Persistable::get<Configuration>().save();
@@ -1124,7 +1231,7 @@ static QString readableSize( qint64 size )
     QString output;
     if ( i == 0 )
         // No decimal part if we display straight bytes.
-        output = defaultLocale.toString( (int) humanSize );
+        output = defaultLocale.toString( static_cast<int>( humanSize ) );
     else
         output = defaultLocale.toString( humanSize, 'f', 1 );
 

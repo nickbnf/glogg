@@ -94,6 +94,14 @@ int main( int argc, char* argv[] )
     qRegisterMetaType<LinesCount>( "LinesCount" );
     qRegisterMetaType<LineNumber>( "LineNumber" );
     qRegisterMetaType<LineLength>( "LineLength" );
+    qRegisterMetaType<Portion>( "Portion" );
+    qRegisterMetaType<Selection>( "Selection" );
+    qRegisterMetaType<QFNotification>( "QFNotification" );
+    qRegisterMetaType<QFNotificationReachedEndOfFile>( "QFNotificationReachedEndOfFile" );
+    qRegisterMetaType<QFNotificationReachedBegininningOfFile>( "QFNotificationReachedBegininningOfFile" );
+    qRegisterMetaType<QFNotificationProgress>( "QFNotificationProgress" );
+    qRegisterMetaType<QFNotificationInterrupted>( "QFNotificationInterrupted" );
+    qRegisterMetaType<QuickFindMatcher>( "QuickFindMatcher" );
 
     std::vector<QString> filenames;
     std::vector<std::string> raw_filenames;
@@ -146,19 +154,27 @@ int main( int argc, char* argv[] )
         filenames.emplace_back( QFile::decodeName( file.c_str() ) );
     }
 
-    std::unique_ptr<plog::IAppender> logAppender;
+     QString log_file_name = QString("klogg_%1_%2.log")
+             .arg( QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss") )
+             .arg( app.applicationPid() );
 
+    auto tempLogAppender = std::make_unique<plog::RollingFileAppender<plog::GloggFormatter>>(
+                QDir::temp().filePath(log_file_name).toStdString().c_str(),
+                10*1024*1024,
+                5);
+
+    plog::init<1>( plog::none, tempLogAppender.get() );
+
+    std::unique_ptr<plog::IAppender> logAppender;
     if ( log_to_file ) {
-        char file_name[ 255 ];
-        snprintf( file_name, sizeof file_name, "klogg_%lld.log", app.applicationPid() );
         logAppender
-            = std::make_unique<plog::RollingFileAppender<plog::GloggFormatter>>( file_name );
+            = std::make_unique<plog::RollingFileAppender<plog::GloggFormatter>>( log_file_name.toStdString().c_str() );
     }
     else {
         logAppender = std::make_unique<plog::ColorConsoleAppender<plog::GloggFormatter>>();
     }
 
-    plog::init( logLevel, logAppender.get() );
+    plog::init( logLevel, logAppender.get() ).addAppender(plog::get<1>());
 
     for ( auto& filename : filenames ) {
         if ( !filename.isEmpty() ) {
@@ -215,8 +231,7 @@ int main( int argc, char* argv[] )
     Persistable::getSynced<Configuration>();
     Persistable::getSynced<VersionCheckerConfig>();
 
-    std::unique_ptr<Session> session( new Session() );
-    MainWindow mw( std::move( session ) );
+    MainWindow mw;
 
     if ( app.isPrimary() ) {
         QObject::connect( &messageReceiver, &MessageReceiver::loadFile, &mw,
@@ -228,6 +243,8 @@ int main( int argc, char* argv[] )
 
     // Load the existing session if needed
     const auto& config = Persistable::get<Configuration>();
+    plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
+
     if ( load_session || ( filenames.empty() && !new_session && config.loadLastSession() ) )
         mw.reloadSession();
 

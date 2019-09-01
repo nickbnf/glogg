@@ -34,7 +34,7 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
     , newfiltered_icon_( ":/images/newfiltered_icon.png" )
     , myTabBar_()
 {
-#ifdef WIN32
+#ifdef Q_OS_WIN
     myTabBar_.setStyleSheet( "QTabBar::tab {\
             height: 20px; "
                              "} "

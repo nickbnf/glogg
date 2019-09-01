@@ -10,7 +10,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Helper macros that get context info
 
-#   define PLOG_GET_THIS()      0
+#   define PLOG_GET_THIS()      nullptr
 
 #ifdef _MSC_VER
 #   define PLOG_GET_FUNC()      __FUNCTION__

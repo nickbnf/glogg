@@ -62,5 +62,21 @@ class GloggFormatter {
         return ss.str();
     }
 };
+
+inline void EnableLogging(bool isEnabled, uint8_t logLevel)
+{
+    if ( isEnabled ) {
+        const auto severity = static_cast<plog::Severity>( logLevel );
+        plog::get<0>()->setMaxSeverity( severity );
+        plog::get<1>()->setMaxSeverity( severity );
+
+        LOG(logINFO) << "Logging enabled at level " << plog::severityToString( severity );
+    }
+    else {
+         LOG(logINFO) << "Logging disabled";
+         plog::get<1>()->setMaxSeverity( plog::none );
+    }
+}
+
 } // namespace plog
 #endif //__LOG_H__

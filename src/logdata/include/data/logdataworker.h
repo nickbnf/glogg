@@ -39,6 +39,7 @@
 #ifndef LOGDATAWORKERTHREAD_H
 #define LOGDATAWORKERTHREAD_H
 
+#include <QCryptographicHash>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QMutex>
@@ -52,6 +53,12 @@
 
 #include "atomicflag.h"
 
+struct IndexedHash
+{
+    qint64 size = 0;
+    QByteArray hash;
+};
+
 // This class is a thread-safe set of indexing data.
 class IndexingData {
   public:
@@ -59,7 +66,6 @@ class IndexingData {
         : dataMutex_()
         , linePosition_()
         , maxLength_( 0 )
-        , indexedSize_( 0 )
         , encodingGuess_( QTextCodec::codecForLocale() )
         , encodingForced_( nullptr )
     {
@@ -67,6 +73,8 @@ class IndexingData {
 
     // Get the total indexed size
     qint64 getSize() const;
+
+    IndexedHash getHash() const;
 
     // Get the length of the longest line
     LineLength getMaxLength() const;
@@ -86,7 +94,7 @@ class IndexingData {
 
     // Atomically add to all the existing
     // indexing data.
-    void addAll( qint64 size, LineLength length, const FastLinePositionArray& linePosition,
+    void addAll( const QByteArray& block, LineLength length, const FastLinePositionArray& linePosition,
                  QTextCodec* encoding );
 
     // Completely clear the indexing data.
@@ -97,7 +105,9 @@ class IndexingData {
 
     LinePositionArray linePosition_;
     LineLength maxLength_;
-    qint64 indexedSize_;
+
+    QCryptographicHash indexHash_ {QCryptographicHash::Md5};
+    IndexedHash hash_;
 
     QTextCodec* encodingGuess_;
     QTextCodec* encodingForced_;
@@ -172,7 +182,8 @@ class FullIndexOperation : public IndexOperation {
 class PartialIndexOperation : public IndexOperation {
     Q_OBJECT
   public:
-    PartialIndexOperation( const QString& fileName, IndexingData& indexingData, AtomicFlag& interruptRequest )
+    PartialIndexOperation( const QString& fileName, IndexingData& indexingData,
+                           AtomicFlag& interruptRequest )
         : IndexOperation( fileName, indexingData, interruptRequest )
     {
     }

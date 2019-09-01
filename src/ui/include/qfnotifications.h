@@ -20,19 +20,27 @@
 #ifndef QFNOTIFICATIONS_H
 #define QFNOTIFICATIONS_H
 
+#include <QFontMetrics>
 #include <QObject>
 #include <QWidget>
-#include <QFontMetrics>
 
 // Notifications sent by the QF for displaying to the user
 // and their translation in UI text.
 class QFNotification {
   public:
-    virtual ~QFNotification()= default;
-    virtual QString message() const = 0;
+    QFNotification( QString message = "" )
+        : message_{ message }
+    {
+    }
+
+    QString message() const
+    {
+        return message_;
+    }
 
     // Max width of the message (in pixels)
-    static int maxWidth( const QWidget* widget ) {
+    static int maxWidth( const QWidget* widget )
+    {
         QFontMetrics fm = widget->fontMetrics();
         return qMax( fm.size( Qt::TextSingleLine, REACHED_BOF ).width(),
                      fm.size( Qt::TextSingleLine, REACHED_EOF ).width() );
@@ -41,34 +49,44 @@ class QFNotification {
   protected:
     static const QString REACHED_EOF;
     static const QString REACHED_BOF;
+    static const QString INTERRUPTED;
+
+
+  private:
+    QString message_;
 };
 
-class QFNotificationReachedEndOfFile : public QFNotification
-{
-    QString message() const override {
-        return REACHED_EOF;
+class QFNotificationReachedEndOfFile : public QFNotification {
+  public:
+    QFNotificationReachedEndOfFile()
+        : QFNotification( REACHED_EOF )
+    {
     }
 };
 
-class QFNotificationReachedBegininningOfFile : public QFNotification
-{
-    QString message() const override {
-        return REACHED_BOF;
+class QFNotificationReachedBegininningOfFile : public QFNotification {
+  public:
+    QFNotificationReachedBegininningOfFile()
+        : QFNotification( REACHED_BOF )
+    {
+    }
+};
+
+class QFNotificationInterrupted : public QFNotification {
+  public:
+    QFNotificationInterrupted()
+        : QFNotification( INTERRUPTED )
+    {
     }
 };
 
 class QFNotificationProgress : public QFNotification {
   public:
     // Constructor taking the progress (in percent)
-    QFNotificationProgress( int progress_percent )
-    { progressPercent_ = progress_percent; }
-
-    QString message() const override {
-        return QString( QObject::tr("Searching (position %1 %)")
-                .arg( progressPercent_ ) );
+    QFNotificationProgress( int progress_percent = 0 )
+        : QFNotification( QObject::tr( "Searching (position %1 %)" ).arg( progress_percent ) )
+    {
     }
-  private:
-    int progressPercent_;
 };
 
 #endif

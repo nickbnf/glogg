@@ -67,16 +67,19 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     connect( fontFamilyBox, &QComboBox::currentTextChanged, this,
              &OptionsDialog::updateFontSize );
     connect( incrementalCheckBox, &QCheckBox::toggled,
-             [this]( auto ) { this->onIncrementalChanged(); } );
-    connect( pollingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->onPollingChanged(); } );
+             [this]( auto ) { this->setupIncremental(); } );
+    connect( pollingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupPolling(); } );
     connect( searchResultsCacheCheckBox, &QCheckBox::toggled,
-             [this]( auto ) { this->onSearchResultsCacheChanged(); } );
+             [this]( auto ) { this->setupSearchResultsCache(); } );
+    connect( loggingCheckBox, &QCheckBox::toggled,
+             [this]( auto ) { this->setupLogging(); } );
 
     updateDialogFromConfig();
 
     setupIncremental();
     setupPolling();
     setupSearchResultsCache();
+    setupLogging();
 }
 
 //
@@ -146,6 +149,11 @@ void OptionsDialog::setupSearchResultsCache()
     searchCacheSpinBox->setEnabled( searchResultsCacheCheckBox->isChecked() );
 }
 
+void OptionsDialog::setupLogging()
+{
+    verbositySpinBox->setEnabled( loggingCheckBox->isChecked() );
+}
+
 // Convert a regexp type to its index in the list
 int OptionsDialog::getRegexpIndex( SearchRegexpType syntax ) const
 {
@@ -208,6 +216,9 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Last session
     loadLastSessionCheckBox->setChecked( config.loadLastSession() );
+    minimizeToTrayCheckBox->setChecked( config.minimizeToTray() );
+    loggingCheckBox->setChecked( config.enableLogging() );
+    verbositySpinBox->setValue( config.loggingLevel() );
 
     // Perf
     parallelSearchCheckBox->setChecked( config.useParallelSearch() );
@@ -268,6 +279,9 @@ void OptionsDialog::updateConfigFromDialog()
     config.setPollIntervalMs( poll_interval );
 
     config.setLoadLastSession( loadLastSessionCheckBox->isChecked() );
+    config.setMinimizeToTray( minimizeToTrayCheckBox->isChecked() );
+    config.setEnableLogging( loggingCheckBox->isChecked() );
+    config.setLoggingLevel( verbositySpinBox->value() );
 
     config.setUseParallelSearch( parallelSearchCheckBox->isChecked() );
     config.setUseSearchResultsCache( searchResultsCacheCheckBox->isChecked() );
@@ -295,19 +309,4 @@ void OptionsDialog::onButtonBoxClicked( QAbstractButton* button )
         accept();
     else if ( role == QDialogButtonBox::RejectRole )
         reject();
-}
-
-void OptionsDialog::onIncrementalChanged()
-{
-    setupIncremental();
-}
-
-void OptionsDialog::onPollingChanged()
-{
-    setupPolling();
-}
-
-void OptionsDialog::onSearchResultsCacheChanged()
-{
-    setupSearchResultsCache();
 }

@@ -94,6 +94,13 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "session.loadLast" ) )
         loadLastSession_ = settings.value( "session.loadLast" ).toBool();
 
+    if ( settings.contains( "logging.enableLogging" ) )
+        enableLogging_
+            = settings.value( "logging.enableLogging" ).toBool();
+    if ( settings.contains( "logging.verbosity" ) )
+        loggingLevel_
+            = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toUInt() );
+
     // "Perf" settings
     if ( settings.contains( "perf.useParallelSearch" ) )
         useParallelSearch_ = settings.value( "perf.useParallelSearch" ).toBool();
@@ -120,6 +127,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "view.lineNumbersVisibleInFiltered" ) )
         lineNumbersVisibleInFiltered_
             = settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
+    if ( settings.contains( "view.minimizeToTray" ) )
+        minimizeToTray_
+            = settings.value( "view.minimizeToTray" ).toBool();
 
     // Some sanity check (mainly for people upgrading)
     if ( quickfindIncremental_ )
@@ -154,6 +164,9 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
     settings.setValue( "session.loadLast", loadLastSession_ );
 
+    settings.setValue( "logging.enableLogging", enableLogging_ );
+    settings.setValue( "logging.verbosity", loggingLevel_ );
+
     settings.setValue( "perf.useParallelSearch", useParallelSearch_ );
     settings.setValue( "perf.useSearchResultsCache", useSearchResultsCache_ );
     settings.setValue( "perf.searchResultsCacheLines", searchResultsCacheLines_ );
@@ -166,6 +179,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );
+    settings.setValue( "view.minimizeToTray", minimizeToTray_ );
 
     settings.setValue( "defaultView.searchAutoRefresh", searchAutoRefresh_ );
     settings.setValue( "defaultView.searchIgnoreCase", searchIgnoreCase_ );

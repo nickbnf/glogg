@@ -88,6 +88,14 @@ class Configuration final : public Persistable {
     }
 
     // "Advanced" settings
+    bool nativeFileWatchEnabled() const
+    {
+        return nativeFileWatchEnabled_;
+    }
+    void setNativeFileWatchEnabled( bool enabled )
+    {
+        nativeFileWatchEnabled_ = enabled;
+    }
     bool pollingEnabled() const
     {
         return pollingEnabled_;
@@ -269,6 +277,7 @@ class Configuration final : public Persistable {
     SearchRegexpType quickfindRegexpType_ = FixedString;
     bool quickfindIncremental_ = true;
 
+    bool nativeFileWatchEnabled_ = true;
 #ifdef GLOGG_SUPPORTS_POLLING
     bool pollingEnabled_ = true;
 #else

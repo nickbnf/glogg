@@ -73,6 +73,30 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
     {
     }
 
+    void enableWatch( bool enable )
+    {
+        QMutexLocker lock( &mutex_ );
+
+        if ( nativeWatchEnabled_ == enable ) {
+            return;
+        }
+
+        nativeWatchEnabled_ = enable;
+
+        if ( enable ) {
+            for ( auto& dir : watchedPaths_ ) {
+                LOG( logINFO ) << "Will reenable watch for " << dir.name;
+                dir.watchId = watcher_.addWatch( dir.name, this, false );
+            }
+        }
+        else {
+            for ( auto& dir : watchedPaths_ ) {
+                LOG( logINFO ) << "Will disable watch for " << dir.name;
+                watcher_.removeWatch( dir.watchId );
+            }
+        }
+    }
+
     void addFile( const QString& fullFileName )
     {
         QMutexLocker lock( &mutex_ );
@@ -94,7 +118,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
                             [&directory]( const auto& wd ) { return wd.name == directory; } );
 
         const auto tryWatchDirectory = [this]( const std::string& path ) {
-            auto watchId = watcher_.addWatch( path, this, false );
+            auto watchId = nativeWatchEnabled_ ? watcher_.addWatch( path, this, false ) : -111;
 
             if ( watchId < 0 ) {
                 LOG( logWARNING ) << "failed to add watch " << path << " error " << watchId;
@@ -236,7 +260,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         const auto directory = qtDir.toStdString();
 
         LOG( logDEBUG ) << "fileChangedOnDisk " << directory << " " << filename << ", old name "
-                       << oldFilename;
+                        << oldFilename;
 
         const auto fullChangedFilename = findChangedFilename( directory, filename, oldFilename );
 
@@ -271,7 +295,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
             if ( isFileWatched ) {
                 LOG( logDEBUG ) << "fileChangedOnDisk - will notify for " << filename
-                               << ", old name " << oldFilename;
+                                << ", old name " << oldFilename;
 
                 return QDir::cleanPath( QString::fromStdString( directory ) + QDir::separator()
                                         + QString::fromStdString( changedFilename ) );
@@ -291,6 +315,8 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
     efsw::FileWatcher watcher_;
     std::vector<WatchedDirecotry> watchedPaths_;
     FileWatcher* parent_;
+
+    bool nativeWatchEnabled_ = true;
 
     QMutex mutex_;
 };
@@ -320,14 +346,14 @@ void FileWatcher::addFile( const QString& fileName )
 {
     efswWatcher_->addFile( fileName );
 
-    setPolling();
+    updateConfiguration();
 }
 
 void FileWatcher::removeFile( const QString& fileName )
 {
     efswWatcher_->removeFile( fileName );
 
-    setPolling();
+    updateConfiguration();
 }
 
 void FileWatcher::fileChangedOnDisk( const QString& fileName )
@@ -343,14 +369,14 @@ void FileWatcher::fileChangedOnDisk( const QString& fileName )
 
 void FileWatcher::notifyFileChangedOnDisk()
 {
-    for (const auto& fileName : changes_ ) {
+    for ( const auto& fileName : changes_ ) {
         emit fileChanged( fileName );
     }
 
     changes_.clear();
 }
 
-void FileWatcher::setPolling()
+void FileWatcher::updateConfiguration()
 {
     const auto& config = Persistable::get<Configuration>();
 
@@ -362,6 +388,8 @@ void FileWatcher::setPolling()
         LOG( logINFO ) << "Polling files disabled";
         checkTimer_->stop();
     }
+
+    efswWatcher_->enableWatch( config.nativeFileWatchEnabled() );
 }
 
 void FileWatcher::checkWatches()

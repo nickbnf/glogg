@@ -86,6 +86,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         quickfindIncremental_ = settings.value( "quickfind.incremental" ).toBool();
 
     // "Advanced" settings
+    if ( settings.contains( "nativeFileWatch.enabled" ) )
+        nativeFileWatchEnabled_ = settings.value( "nativeFileWatch.enabled" ).toBool();
     if ( settings.contains( "polling.enabled" ) )
         pollingEnabled_ = settings.value( "polling.enabled" ).toBool();
     if ( settings.contains( "polling.intervalMs" ) )
@@ -160,6 +162,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
+    settings.setValue( "nativeFileWatch.enabled", nativeFileWatchEnabled_ );
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
     settings.setValue( "session.loadLast", loadLastSession_ );

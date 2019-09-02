@@ -64,15 +64,13 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     pollIntervalLineEdit->setValidator( polling_interval_validator_ );
 
     connect( buttonBox, &QDialogButtonBox::clicked, this, &OptionsDialog::onButtonBoxClicked );
-    connect( fontFamilyBox, &QComboBox::currentTextChanged, this,
-             &OptionsDialog::updateFontSize );
+    connect( fontFamilyBox, &QComboBox::currentTextChanged, this, &OptionsDialog::updateFontSize );
     connect( incrementalCheckBox, &QCheckBox::toggled,
              [this]( auto ) { this->setupIncremental(); } );
     connect( pollingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupPolling(); } );
     connect( searchResultsCacheCheckBox, &QCheckBox::toggled,
              [this]( auto ) { this->setupSearchResultsCache(); } );
-    connect( loggingCheckBox, &QCheckBox::toggled,
-             [this]( auto ) { this->setupLogging(); } );
+    connect( loggingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupLogging(); } );
 
     updateDialogFromConfig();
 
@@ -89,10 +87,6 @@ OptionsDialog::OptionsDialog( QWidget* parent )
 // Setups the tabs depending on the configuration
 void OptionsDialog::setupTabs()
 {
-#ifndef GLOGG_SUPPORTS_POLLING
-    pollBox->setVisible( false );
-#endif
-
 #ifndef GLOGG_SUPPORTS_VERSION_CHECKING
     versionCheckingBox->setVisible( false );
 #endif
@@ -211,6 +205,7 @@ void OptionsDialog::updateDialogFromConfig()
     incrementalCheckBox->setChecked( config.isQuickfindIncremental() );
 
     // Polling
+    nativeFileWatchCheckBox->setChecked( config.nativeFileWatchEnabled() );
     pollingCheckBox->setChecked( config.pollingEnabled() );
     pollIntervalLineEdit->setText( QString::number( config.pollIntervalMs() ) );
 
@@ -244,7 +239,7 @@ void OptionsDialog::updateFontSize( const QString& fontFamily )
     QString oldFontSize = fontSizeBox->currentText();
     auto sizes = database.pointSizes( fontFamily, "" );
 
-    if (sizes.empty()) {
+    if ( sizes.empty() ) {
         sizes = QFontDatabase::standardSizes();
     }
 
@@ -269,6 +264,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setQuickfindRegexpType( getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
     config.setQuickfindIncremental( incrementalCheckBox->isChecked() );
 
+    config.setNativeFileWatchEnabled( nativeFileWatchCheckBox->isChecked() );
     config.setPollingEnabled( pollingCheckBox->isChecked() );
     uint32_t poll_interval = pollIntervalLineEdit->text().toUInt();
     if ( poll_interval < POLL_INTERVAL_MIN )

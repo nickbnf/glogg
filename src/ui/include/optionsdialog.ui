@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>750</height>
+    <height>682</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -176,43 +176,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="loggingBox">
-         <property name="title">
-          <string>Logging</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_8">
-          <item>
-           <widget class="QCheckBox" name="loggingCheckBox">
-            <property name="text">
-             <string>Enable logging</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="verbosityLabel">
-              <property name="text">
-               <string>Verbosity</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="verbositySpinBox">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="maximum">
-               <number>6</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="QGroupBox" name="versionCheckingBox">
          <property name="title">
           <string>Version checking options</string>
@@ -243,33 +206,37 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="advanced_tab">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+     <widget class="QWidget" name="file_watch_tab">
       <attribute name="title">
-       <string>Advanced</string>
+       <string>File</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
+      <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <widget class="QGroupBox" name="pollBox">
+        <widget class="QGroupBox" name="fileChangeBox">
          <property name="title">
-          <string>File polling</string>
+          <string>File change monitoring</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="QCheckBox" name="pollingCheckBox">
+           <widget class="QCheckBox" name="nativeFileWatchCheckBox">
             <property name="text">
-             <string>Enable Polling</string>
+             <string>Enable filesystem change monitoring</string>
             </property>
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <widget class="QCheckBox" name="pollingCheckBox">
+            <property name="text">
+             <string>Enable polling</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Time Interval (ms):</string>
+               <string>Polling interval (ms):</string>
               </property>
              </widget>
             </item>
@@ -288,26 +255,36 @@
             </item>
            </layout>
           </item>
-          <item>
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Files will be polled at the interval specified here.</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
          </layout>
         </widget>
        </item>
        <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="advanced_tab">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Advanced</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
         <widget class="QGroupBox" name="perfBox">
          <property name="title">
-          <string>Performance</string>
+          <string>Indexing and search</string>
          </property>
          <layout class="QFormLayout" name="formLayout_2">
           <property name="fieldGrowthPolicy">
@@ -320,33 +297,6 @@
            <widget class="QCheckBox" name="parallelSearchCheckBox">
             <property name="text">
              <string>Use parallel search</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="searchResultsCacheCheckBox">
-            <property name="text">
-             <string>Enable search results cache</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Search cache size (lines):</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QSpinBox" name="searchCacheSpinBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximum">
-             <number>10000000</number>
             </property>
            </widget>
           </item>
@@ -400,7 +350,25 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="0">
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="cachingBox">
+         <property name="title">
+          <string>Caching</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+         <property name="flat">
+          <bool>false</bool>
+         </property>
+         <layout class="QFormLayout" name="formLayout">
+          <property name="labelAlignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+          <item row="0" column="0">
            <widget class="QCheckBox" name="useLineEndingCacheCheckBox">
             <property name="text">
              <string>Use line ending cache</string>
@@ -409,6 +377,70 @@
              <bool>true</bool>
             </property>
            </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QCheckBox" name="searchResultsCacheCheckBox">
+            <property name="text">
+             <string>Enable search results cache</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Search cache size (lines):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="searchCacheSpinBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximum">
+             <number>10000000</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="loggingBox">
+         <property name="title">
+          <string>Logging</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QCheckBox" name="loggingCheckBox">
+            <property name="text">
+             <string>Enable logging</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLabel" name="verbosityLabel">
+              <property name="text">
+               <string>Verbosity</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="verbositySpinBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="maximum">
+               <number>6</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -421,7 +453,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>40</height>
+           <height>20</height>
           </size>
          </property>
         </spacer>

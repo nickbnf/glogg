@@ -62,7 +62,7 @@ class FileWatcher : public QObject {
     // (do nothing if said file is not monitored)
     void removeFile( const QString& fileName );
 
-    void setPolling();
+    void updateConfiguration();
 
   signals:
     // Sent when the file on disk has changed in any way.

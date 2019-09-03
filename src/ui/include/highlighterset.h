@@ -83,7 +83,7 @@ class Highlighter
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
-class HighlighterSet final : public Persistable
+class HighlighterSet final : public Persistable<HighlighterSet>
 {
   public:
     // Construct an empty filter set
@@ -96,10 +96,10 @@ class HighlighterSet final : public Persistable
             QColor* foreColor, QColor* backColor ) const;
 
     // Reads/writes the current config in the QSettings object passed
-    void saveToStorage( QSettings& settings ) const override;
-    void retrieveFromStorage( QSettings& settings ) override;
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
 
-    // Should be private really, but I don't know how to have 
+    // Should be private really, but I don't know how to have
     // it recognised by QVariant then.
     using HighlighterList = QList<Highlighter>;
 

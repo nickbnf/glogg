@@ -48,7 +48,7 @@
 
 // This class holds the configuration options and persistent
 // data for the version checker
-class VersionCheckerConfig final : public Persistable {
+class VersionCheckerConfig final : public Persistable<VersionCheckerConfig> {
   public:
     // Accessors
     bool versionCheckingEnabled() const

@@ -288,7 +288,7 @@ void CompressedLinePositionStorage::append( LineOffset pos )
 // template<int BLOCK_SIZE>
 LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
     auto& last_read = cache_.local();
 
     const uint8_t* block = nullptr;

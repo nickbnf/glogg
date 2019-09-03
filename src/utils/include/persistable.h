@@ -20,58 +20,59 @@
 #ifndef PERSISTABLE_H
 #define PERSISTABLE_H
 
+#include <named_type/crtp.hpp>
 #include <type_traits>
+
 #include "log.h"
+#include "persistentinfo.h"
 
 class QSettings;
 
-// Must be implemented by classes which could be saved to persistent
-// storage by PersistentInfo.
-class Persistable {
-  public:
-    virtual ~Persistable() = default;
+template <typename T>
+class Persistable : public fluent::crtp<T, Persistable> {
 
-    void save() const;
-
-    template<typename T>
-    static T& get() {
-      return getPersistable<T>(false);
+public:
+    static T& get()
+    {
+        return getPersistable( false );
     }
 
-    template<typename T>
-    static T& getSynced() {
-        T& persistable = getPersistable<T>(true);
+    static T& getSynced()
+    {
+        auto& persistable = getPersistable( true );
         persistable.retrieve();
         return persistable;
     }
 
-  protected:
-    // Must be implemented to save/retrieve from Qt Settings
-    virtual void saveToStorage( QSettings& settings ) const = 0;
-    virtual void retrieveFromStorage( QSettings& settings ) = 0;
+    void save() const
+    {
+        auto& settings = PersistentInfo::getSettings();
+        this->underlying().saveToStorage( settings );
+    }
 
-  private:
-    template<typename T>
-    static T& getPersistable(bool willBeInitialized = false) {
-        static_assert( std::is_base_of<Persistable, T>::value, "" );
+private:
 
+    static T& getPersistable( bool willBeInitialized = false )
+    {
         static bool persistableInitialized = false;
-        if (!persistableInitialized && !willBeInitialized)
-        {
-          LOG(logERROR) << "Access to not initialized persistable";
-          throw std::logic_error("Access to not initialized persistable");
+        if ( !persistableInitialized && !willBeInitialized ) {
+            LOG( logERROR ) << "Access to not initialized persistable";
+            throw std::logic_error( "Access to not initialized persistable" );
         }
 
-        if (!persistableInitialized)
-        {
-          persistableInitialized = willBeInitialized;
+        if ( !persistableInitialized ) {
+            persistableInitialized = willBeInitialized;
         }
 
         static T persistable;
         return persistable;
     }
 
-    void retrieve();
+    void retrieve()
+    {
+        auto& settings = PersistentInfo::getSettings();
+        this->underlying().retrieveFromStorage( settings );
+    }
 };
 
 #endif

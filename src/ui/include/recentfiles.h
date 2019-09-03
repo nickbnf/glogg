@@ -26,7 +26,7 @@
 #include "persistable.h"
 
 // Manage the list of recently opened files
-class RecentFiles final : public Persistable
+class RecentFiles final : public Persistable<RecentFiles>
 {
   public:
     // Creates an empty set of recent files
@@ -39,8 +39,8 @@ class RecentFiles final : public Persistable
     QStringList recentFiles() const;
 
     // Reads/writes the current config in the QSettings object passed
-    void saveToStorage( QSettings& settings ) const override;
-    void retrieveFromStorage( QSettings& settings ) override;
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
 
   private:
     static const int RECENTFILES_VERSION;

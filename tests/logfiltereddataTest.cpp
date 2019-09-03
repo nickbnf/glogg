@@ -71,7 +71,7 @@ SCENARIO( "filtered log data", "[logdata]") {
     using LineType = LogFilteredData::FilteredLineTypeFlags;
 
     auto useParallelSearch = GENERATE(true, false);
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
     config.setUseParallelSearch(useParallelSearch);
 
     GIVEN( "loaded log data" ) {

@@ -49,7 +49,6 @@
 #include "log.h"
 #include "persistable.h"
 
-
 PersistentInfo::ConfigFileParameters::ConfigFileParameters()
 {
     QString portableConfigPath = qApp->applicationDirPath() + QDir::separator() + "klogg.conf";
@@ -74,18 +73,4 @@ QSettings& PersistentInfo::getSettings()
 {
     static PersistentInfo pInfo;
     return pInfo.settings_;
-}
-
-void Persistable::save() const
-{
-    auto& settings = PersistentInfo::getSettings();
-    saveToStorage( settings );
-    settings.sync();
-}
-
-void Persistable::retrieve()
-{
-    auto& settings = PersistentInfo::getSettings();
-    settings.sync();
-    retrieveFromStorage( settings );
 }

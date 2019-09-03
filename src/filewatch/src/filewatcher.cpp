@@ -378,7 +378,7 @@ void FileWatcher::notifyFileChangedOnDisk()
 
 void FileWatcher::updateConfiguration()
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
 
     if ( config.pollingEnabled() ) {
         LOG( logINFO ) << "Polling files enabled";

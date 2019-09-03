@@ -34,7 +34,7 @@
 SCENARIO( "LinePositionArray with small number of lines", "[linepositionarray]") {
 
     auto useEndingCache = GENERATE(true, false);
-    auto& config = Persistable::getSynced<Configuration>();
+    auto& config = Configuration::getSynced();
     config.setUseLineEndingCache(useEndingCache);
 
     std::vector<LineOffset> offsets = {
@@ -136,7 +136,7 @@ SCENARIO( "LinePositionArray with small number of lines", "[linepositionarray]")
 SCENARIO( "LinePositionArray with full block of lines", "[linepositionarray]") {
 
     auto useEndingCache = GENERATE(true, false);
-    auto& config = Persistable::getSynced<Configuration>();
+    auto& config = Configuration::getSynced();
     config.setUseLineEndingCache(useEndingCache);
 
     GIVEN( "LinePositionArray with block of lines") {
@@ -176,7 +176,7 @@ SCENARIO( "LinePositionArray with full block of lines", "[linepositionarray]") {
 SCENARIO( "LinePositionArray with UINT32_MAX offsets", "[linepositionarray]") {
 
     auto useEndingCache = GENERATE(true, false);
-    auto& config = Persistable::getSynced<Configuration>();
+    auto& config = Configuration::getSynced();
     config.setUseLineEndingCache(useEndingCache);
 
     std::vector<LineOffset> offsets = {

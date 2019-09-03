@@ -35,7 +35,7 @@ Session::Session()
 {
     // Get the global search history (it remains the property
     // of the Persistent)
-    savedSearches_ = &Persistable::getSynced<SavedSearches>();
+    savedSearches_ = &SavedSearches::getSynced();
 
     quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
@@ -98,7 +98,7 @@ void Session::save( const std::vector<
         session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
-    auto& session = Persistable::get<SessionInfo>();
+    auto& session = SessionInfo::get();
     session.setOpenFiles( session_files );
     session.setGeometry( geometry );
     session.save();
@@ -108,7 +108,7 @@ std::vector<std::pair<QString, ViewInterface*>> Session::restore(
         const std::function<ViewInterface*()>& view_factory,
         int *current_file_index )
 {
-    const auto& session = Persistable::getSynced<SessionInfo>();
+    const auto& session = SessionInfo::getSynced();
 
     std::vector<SessionInfo::OpenFile> session_files = session.openFiles();
     LOG(logDEBUG) << "Session returned " << session_files.size();
@@ -128,7 +128,7 @@ std::vector<std::pair<QString, ViewInterface*>> Session::restore(
 
 void Session::storedGeometry( QByteArray* geometry ) const
 {
-    const auto& session = Persistable::getSynced<SessionInfo>();
+    const auto& session = SessionInfo::getSynced();
 
     *geometry = session.geometry();
 }

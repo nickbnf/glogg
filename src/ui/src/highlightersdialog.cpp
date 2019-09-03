@@ -59,7 +59,7 @@ HighlightersDialog::HighlightersDialog( QWidget* parent ) : QDialog( parent )
 
     // Reload the highlighter list from disk (in case it has been changed
     // by another glogg instance) and copy it to here.
-    highlighterSet_ = Persistable::getSynced<HighlighterSet>();
+    highlighterSet_ = HighlighterSet::getSynced();
 
     populateHighlighterList();
 
@@ -172,7 +172,7 @@ void HighlightersDialog::on_buttonBox_clicked( QAbstractButton* button )
     }
 
     // persist it to disk
-    auto &persistentHighlighterSet = Persistable::get<HighlighterSet>();
+    auto &persistentHighlighterSet = HighlighterSet::get();
     if ( role == QDialogButtonBox::AcceptRole ) {
         persistentHighlighterSet = std::move( highlighterSet_ );
         accept();

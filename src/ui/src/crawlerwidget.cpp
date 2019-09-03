@@ -339,7 +339,7 @@ void CrawlerWidget::startNewSearch()
 {
     // Record the search line in the recent list
     // (reload the list first in case another glogg changed it)
-    auto &searches = Persistable::getSynced<SavedSearches>();
+    auto &searches = SavedSearches::getSynced();
     savedSearches_->addRecent( searchLineEdit->currentText() );
     searches.save();
 
@@ -481,7 +481,7 @@ void CrawlerWidget::markLineFromFiltered( LineNumber line )
 
 void CrawlerWidget::applyConfiguration()
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
     QFont font = config.mainFont();
 
     LOG( logDEBUG ) << "CrawlerWidget::applyConfiguration";
@@ -856,7 +856,7 @@ void CrawlerWidget::setup()
     addWidget( bottomWindow );
 
     // Default search checkboxes
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
     searchRefreshCheck->setCheckState( config.isSearchAutoRefreshDefault() ? Qt::Checked
                                                                            : Qt::Unchecked );
     // Manually call the handler as it is not called when changing the state programmatically
@@ -1265,7 +1265,7 @@ void CrawlerWidgetContext::loadFromString( const QString& string )
         follow_file_ = false;
     }
 
-    use_regexp_ = Persistable::get<Configuration>().mainRegexpType() == ExtendedRegexp;
+    use_regexp_ = Configuration::get().mainRegexpType() == ExtendedRegexp;
 }
 
 void CrawlerWidgetContext::loadFromJson( const QString& json )
@@ -1286,7 +1286,7 @@ void CrawlerWidgetContext::loadFromJson( const QString& json )
         use_regexp_ = properties.value( "RE" ).toBool();
     }
     else {
-        use_regexp_ = Persistable::get<Configuration>().mainRegexpType() == ExtendedRegexp;
+        use_regexp_ = Configuration::get().mainRegexpType() == ExtendedRegexp;
     }
 
     if ( properties.contains( "M" ) ) {

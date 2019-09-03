@@ -53,7 +53,7 @@ enum SearchRegexpType {
 };
 
 // Configuration class containing everything in the "Settings" dialog
-class Configuration final : public Persistable {
+class Configuration final : public Persistable<Configuration> {
   public:
     Configuration();
 
@@ -267,8 +267,8 @@ class Configuration final : public Persistable {
     }
 
     // Reads/writes the current config in the QSettings object passed
-    void saveToStorage( QSettings& settings ) const override;
-    void retrieveFromStorage( QSettings& settings ) override;
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
 
   private:
     // Configuration settings

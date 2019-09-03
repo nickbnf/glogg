@@ -28,7 +28,7 @@
 
 // Keeps track of the previously used searches and allows the application
 // to retrieve them.
-class SavedSearches final : public Persistable
+class SavedSearches final : public Persistable<SavedSearches>
 {
   public:
     // Creates an empty set of saved searches
@@ -46,8 +46,8 @@ class SavedSearches final : public Persistable
     friend QDataStream& operator>>( QDataStream& in, SavedSearches& object );
 
     // Reads/writes the current config in the QSettings object passed
-    void saveToStorage( QSettings& settings ) const override;
-    void retrieveFromStorage( QSettings& settings ) override;
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
 
   private:
     static const int SAVEDSEARCHES_VERSION;

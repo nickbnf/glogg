@@ -185,7 +185,7 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
 
     // Main font
     QFontInfo fontInfo = QFontInfo( config.mainFont() );
@@ -225,7 +225,7 @@ void OptionsDialog::updateDialogFromConfig()
     useLineEndingCacheCheckBox->setChecked( config.useLineEndingCache() );
 
     // version checking
-    const auto& versionChecking = Persistable::get<VersionCheckerConfig>();
+    const auto& versionChecking = VersionCheckerConfig::get();
     checkForNewVersionCheckBox->setChecked( versionChecking.versionCheckingEnabled() );
 }
 
@@ -255,7 +255,7 @@ void OptionsDialog::updateFontSize( const QString& fontFamily )
 
 void OptionsDialog::updateConfigFromDialog()
 {
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
 
     QFont font = QFont( fontFamilyBox->currentText(), ( fontSizeBox->currentText() ).toInt() );
     config.setMainFont( font );
@@ -288,7 +288,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setUseLineEndingCache( useLineEndingCacheCheckBox->isChecked() );
 
     // version checking
-    auto& versionChecking = Persistable::get<VersionCheckerConfig>();
+    auto& versionChecking = VersionCheckerConfig::get();
     versionChecking.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     emit optionsChanged();

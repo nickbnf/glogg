@@ -271,7 +271,7 @@ const MainWindow::EncodingList MainWindow::encoding_list[] = {
 // Menu actions
 void MainWindow::createActions()
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
 
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open) );
@@ -527,7 +527,7 @@ void MainWindow::createTrayIcon()
     });
 
 
-    if ( Persistable::get<Configuration>().minimizeToTray() ) {
+    if ( Configuration::get().minimizeToTray() ) {
         trayIcon_->show();
     }
 }
@@ -663,7 +663,7 @@ void MainWindow::options()
     dialog.exec();
     signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
 
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
     plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 }
 
@@ -703,14 +703,14 @@ void MainWindow::encodingChanged( QAction* action )
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )
 {
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
     config.setOverviewVisible( isVisible );
     emit optionsChanged();
 }
 
 void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 {
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
 
     config.setMainLineNumbersVisible( isVisible );
     emit optionsChanged();
@@ -718,7 +718,7 @@ void MainWindow::toggleMainLineNumbersVisibility( bool isVisible )
 
 void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
 {
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
 
     config.setFilteredLineNumbersVisible( isVisible );
     emit optionsChanged();
@@ -793,13 +793,13 @@ memory to hold the index for this file. The file will now be closed." );
 
 void MainWindow::handleSearchRefreshChanged( int state )
 {
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
     config.setSearchAutoRefreshDefault( state == Qt::Checked );
 }
 
 void MainWindow::handleMatchCaseChanged( bool matchCase )
 {
-    auto& config = Persistable::get<Configuration>();
+    auto& config = Configuration::get();
     config.setSearchIgnoreCaseDefault( !matchCase );
 }
 
@@ -920,7 +920,7 @@ void MainWindow::closeEvent( QCloseEvent *event )
     writeSettings();
 
     if( !isCloseFromTray_ && this->isVisible()
-            && Persistable::get<Configuration>().minimizeToTray() ){
+            && Configuration::get().minimizeToTray() ){
           event->ignore();
           trayIcon_->show();
           this->hide();
@@ -938,7 +938,7 @@ void MainWindow::changeEvent( QEvent *event )
         isMaximized_ = windowState().testFlag( Qt::WindowMaximized );
 
         if (this->windowState() & Qt::WindowMinimized) {
-            if ( Persistable::get<Configuration>().minimizeToTray() ) {
+            if ( Configuration::get().minimizeToTray() ) {
                 QTimer::singleShot(0, [this]
                 {
                     trayIcon_->show();
@@ -1037,7 +1037,7 @@ bool MainWindow::loadFile( const QString& fileName )
 
         // Update the recent files list
         // (reload the list first in case another glogg changed it)
-        auto& recentFiles = Persistable::getSynced<RecentFiles>();
+        auto& recentFiles = RecentFiles::getSynced();
         recentFiles.addRecent( fileName );
         recentFiles.save();
         updateRecentFileActions();
@@ -1086,7 +1086,7 @@ void MainWindow::updateTitleBar( const QString& file_name )
 // Must be called after having added a new name to the list.
 void MainWindow::updateRecentFileActions()
 {
-    QStringList recent_files = Persistable::get<RecentFiles>().recentFiles();
+    QStringList recent_files = RecentFiles::get().recentFiles();
 
     for ( int j = 0; j < MaxRecentFiles; ++j ) {
         if ( j < recent_files.count() ) {
@@ -1165,10 +1165,10 @@ void MainWindow::writeSettings()
     session_.save( widget_list, saveGeometry() );
 
     // User settings
-    Persistable::get<Configuration>().save();
+    Configuration::get().save();
     // User settings
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    Persistable::get<VersionCheckerConfig>().save();
+    VersionCheckerConfig::get().save();
 #endif
 }
 
@@ -1176,17 +1176,17 @@ void MainWindow::writeSettings()
 void MainWindow::readSettings()
 {
     // Get and restore the session
-    // auto& session = Persistable::getSynced<SessionInfo>();
+    // auto& session = SessionInfo::getSynced();
     /*
      * FIXME: should be in the session
     crawlerWidget->restoreState( session.crawlerState() );
     */
 
     // History of recent files
-    Persistable::getSynced<RecentFiles>();
+    RecentFiles::getSynced();
     updateRecentFileActions();
 
-    Persistable::getSynced<HighlighterSet>();
+    HighlighterSet::getSynced();
 }
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )

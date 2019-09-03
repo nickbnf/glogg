@@ -289,7 +289,7 @@ SearchOperation::SearchOperation( const LogData& sourceLogData, AtomicFlag& inte
 
 void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
 
     const auto nbSourceLines = sourceLogData_.getNbLine();
     LineLength maxLength = 0_length;

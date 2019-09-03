@@ -98,7 +98,7 @@ LogData::LogData()
              &LogData::loadingProgressed );
     connect( &workerThread_, &LogDataWorker::indexingFinished, this, &LogData::indexingFinished );
 
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
     keepFileClosed_ = config.keepFileClosed();
 
     if ( keepFileClosed_ ) {

@@ -30,7 +30,7 @@
 
 // Simple component class containing information related to the session
 // to be persisted and reloaded upon start
-class SessionInfo : public Persistable {
+class SessionInfo : public Persistable<SessionInfo> {
   public:
     SessionInfo() : openFiles_() { }
 
@@ -64,8 +64,8 @@ class SessionInfo : public Persistable {
     { openFiles_ = loaded_files; }
 
     // Reads/writes the current config in the QSettings object passed
-    void saveToStorage( QSettings& settings ) const override;
-    void retrieveFromStorage( QSettings& settings ) override;
+    void saveToStorage( QSettings& settings ) const;
+    void retrieveFromStorage( QSettings& settings );
 
   private:
     static const int OPENFILES_VERSION;

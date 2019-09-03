@@ -228,8 +228,8 @@ int main( int argc, char* argv[] )
     app.setAttribute( Qt::AA_DontShowIconsInMenus );
 
     // FIXME: should be replaced by a two staged init of MainWindow
-    Persistable::getSynced<Configuration>();
-    Persistable::getSynced<VersionCheckerConfig>();
+    Configuration::getSynced();
+    VersionCheckerConfig::getSynced();
 
     MainWindow mw;
 
@@ -242,7 +242,7 @@ int main( int argc, char* argv[] )
     mw.reloadGeometry();
 
     // Load the existing session if needed
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
     plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 
     if ( load_session || ( filenames.empty() && !new_session && config.loadLastSession() ) )

@@ -41,8 +41,6 @@
 
 #include <QSettings>
 
-class Persistable;
-
 // Singleton class managing the saving of persistent data to permanent storage
 // Clients must implement Persistable and register with this object, they can
 // then be saved/loaded.

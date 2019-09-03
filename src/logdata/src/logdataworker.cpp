@@ -371,7 +371,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState& indexingState )
 
 void IndexOperation::doIndex( LineOffset initialPosition )
 {
-    const auto& config = Persistable::get<Configuration>();
+    const auto& config = Configuration::get();
 
     const uint32_t sizeChunk = 1024 * 1024;
     const auto prefetchBufferSize = config.indexReadBufferSizeMb() * sizeChunk;

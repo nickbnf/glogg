@@ -40,10 +40,7 @@
 
 #include "optionsdialog.h"
 
-#include "configuration.h"
 #include "log.h"
-#include "persistentinfo.h"
-#include "versionchecker.h"
 
 static const uint32_t POLL_INTERVAL_MIN = 10;
 static const uint32_t POLL_INTERVAL_MAX = 3600000;
@@ -225,8 +222,7 @@ void OptionsDialog::updateDialogFromConfig()
     useLineEndingCacheCheckBox->setChecked( config.useLineEndingCache() );
 
     // version checking
-    const auto& versionChecking = VersionCheckerConfig::get();
-    checkForNewVersionCheckBox->setChecked( versionChecking.versionCheckingEnabled() );
+    checkForNewVersionCheckBox->setChecked( config.versionCheckingEnabled() );
 }
 
 //
@@ -288,8 +284,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setUseLineEndingCache( useLineEndingCacheCheckBox->isChecked() );
 
     // version checking
-    auto& versionChecking = VersionCheckerConfig::get();
-    versionChecking.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
+    config.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     emit optionsChanged();
 }

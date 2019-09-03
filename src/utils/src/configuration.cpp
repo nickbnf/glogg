@@ -103,6 +103,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         loggingLevel_
             = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toUInt() );
 
+    if ( settings.contains( "versionchecker.enabled" ) )
+        enableVersionChecking_ = settings.value( "versionchecker.enabled" ).toBool();
+
     // "Perf" settings
     if ( settings.contains( "perf.useParallelSearch" ) )
         useParallelSearch_ = settings.value( "perf.useParallelSearch" ).toBool();
@@ -169,6 +172,8 @@ void Configuration::saveToStorage( QSettings& settings ) const
 
     settings.setValue( "logging.enableLogging", enableLogging_ );
     settings.setValue( "logging.verbosity", loggingLevel_ );
+
+    settings.setValue( "versionchecker.enabled", enableVersionChecking_ );
 
     settings.setValue( "perf.useParallelSearch", useParallelSearch_ );
     settings.setValue( "perf.useSearchResultsCache", useSearchResultsCache_ );

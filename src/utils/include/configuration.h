@@ -188,6 +188,16 @@ class Configuration final : public Persistable<Configuration> {
         useLineEndingCache_ = useLineEndingCache;
     }
 
+    // Accessors
+    bool versionCheckingEnabled() const
+    {
+        return enableVersionChecking_;
+    }
+    void setVersionCheckingEnabled( bool enabled )
+    {
+        enableVersionChecking_ = enabled;
+    }
+
     // View settings
     bool isOverviewVisible() const
     {
@@ -312,6 +322,8 @@ class Configuration final : public Persistable<Configuration> {
 
     bool enableLogging_ = false;
     uint8_t loggingLevel_ = 4;
+
+    bool enableVersionChecking_ = true;
 };
 
 #endif

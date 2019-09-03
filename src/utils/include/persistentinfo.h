@@ -42,15 +42,21 @@
 #include <QSettings>
 
 // Singleton class managing the saving of persistent data to permanent storage
-// Clients must implement Persistable and register with this object, they can
-// then be saved/loaded.
+// Clients must implement Persistable
+
+struct app_settings {};
+struct session_settings {};
+
 class PersistentInfo {
   public:
-    static QSettings& getSettings();
+    static QSettings& getSettings(app_settings);
+    static QSettings& getSettings(session_settings);
 
   private:
     struct ConfigFileParameters {
-        QString path;
+        QString appSettingsPath;
+        QString sessionSettingsPath;
+
         QSettings::Format format;
 
         ConfigFileParameters();
@@ -61,6 +67,9 @@ class PersistentInfo {
     // Can't be constructed or copied (singleton)
     PersistentInfo( ConfigFileParameters config = {} );
 
-    QSettings settings_;
+    static PersistentInfo& getInstance();
+
+    QSettings appSettings_;
+    QSettings sessionSettings_;
 };
 #endif

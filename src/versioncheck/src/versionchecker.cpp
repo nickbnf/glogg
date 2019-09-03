@@ -37,9 +37,7 @@
  */
 
 #include "versionchecker.h"
-
-#include "persistentinfo.h"
-
+#include "configuration.h"
 #include "log.h"
 
 #include "version.h"
@@ -80,8 +78,6 @@ void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 {
     LOG( logDEBUG ) << "VersionCheckerConfig::retrieveFromStorage";
 
-    if ( settings.contains( "versionchecker.enabled" ) )
-        enabled_ = settings.value( "versionchecker.enabled" ).toBool();
     if ( settings.contains( "versionchecker.nextDeadline" ) )
         next_deadline_ = settings.value( "versionchecker.nextDeadline" ).toLongLong();
 }
@@ -90,7 +86,6 @@ void VersionCheckerConfig::saveToStorage( QSettings& settings ) const
 {
     LOG( logDEBUG ) << "VersionCheckerConfig::saveToStorage";
 
-    settings.setValue( "versionchecker.enabled", enabled_ );
     settings.setValue( "versionchecker.nextDeadline", static_cast<long long>( next_deadline_ ) );
 }
 
@@ -106,11 +101,12 @@ void VersionChecker::startCheck()
 {
     LOG( logDEBUG ) << "VersionChecker::startCheck()";
 
-    const auto& config = VersionCheckerConfig::getSynced();
+    const auto& deadlineConfig = VersionCheckerConfig::getSynced();
+    const auto& appConfig = Configuration::get();
 
-    if ( config.versionCheckingEnabled() ) {
+    if ( appConfig.versionCheckingEnabled() ) {
         // Check the deadline has been reached
-        if ( config.nextDeadline() < std::time( nullptr ) ) {
+        if ( deadlineConfig.nextDeadline() < std::time( nullptr ) ) {
             connect( manager_, &QNetworkAccessManager::finished, this,
                      &VersionChecker::downloadFinished );
 
@@ -122,7 +118,7 @@ void VersionChecker::startCheck()
         }
         else {
             LOG( logDEBUG ) << "Deadline not reached yet, next check in "
-                            << std::difftime( config.nextDeadline(), std::time( nullptr ) );
+                            << std::difftime( deadlineConfig.nextDeadline(), std::time( nullptr ) );
         }
     }
 }

@@ -20,7 +20,6 @@
 #ifndef PERSISTABLE_H
 #define PERSISTABLE_H
 
-#include <named_type/crtp.hpp>
 #include <type_traits>
 
 #include "log.h"
@@ -28,8 +27,8 @@
 
 class QSettings;
 
-template <typename T>
-class Persistable : public fluent::crtp<T, Persistable> {
+template <typename T, typename SettingsType = app_settings>
+class Persistable {
 
 public:
     static T& get()
@@ -46,8 +45,8 @@ public:
 
     void save() const
     {
-        auto& settings = PersistentInfo::getSettings();
-        this->underlying().saveToStorage( settings );
+        auto& settings = PersistentInfo::getSettings(SettingsType{});
+        static_cast<const T&>(*this).saveToStorage( settings );
     }
 
 private:
@@ -70,8 +69,8 @@ private:
 
     void retrieve()
     {
-        auto& settings = PersistentInfo::getSettings();
-        this->underlying().retrieveFromStorage( settings );
+        auto& settings = PersistentInfo::getSettings(SettingsType{});
+        static_cast<T&>(*this).retrieveFromStorage( settings );
     }
 };
 

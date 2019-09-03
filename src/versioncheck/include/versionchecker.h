@@ -48,17 +48,9 @@
 
 // This class holds the configuration options and persistent
 // data for the version checker
-class VersionCheckerConfig final : public Persistable<VersionCheckerConfig> {
+class VersionCheckerConfig final : public Persistable<VersionCheckerConfig, session_settings> {
   public:
-    // Accessors
-    bool versionCheckingEnabled() const
-    {
-        return enabled_;
-    }
-    void setVersionCheckingEnabled( bool enabled )
-    {
-        enabled_ = enabled;
-    }
+
     std::time_t nextDeadline() const
     {
         return next_deadline_;

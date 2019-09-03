@@ -229,7 +229,6 @@ int main( int argc, char* argv[] )
 
     // FIXME: should be replaced by a two staged init of MainWindow
     Configuration::getSynced();
-    VersionCheckerConfig::getSynced();
 
     MainWindow mw;
 

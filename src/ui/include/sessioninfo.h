@@ -30,7 +30,7 @@
 
 // Simple component class containing information related to the session
 // to be persisted and reloaded upon start
-class SessionInfo : public Persistable<SessionInfo> {
+class SessionInfo : public Persistable<SessionInfo, session_settings> {
   public:
     SessionInfo() : openFiles_() { }
 

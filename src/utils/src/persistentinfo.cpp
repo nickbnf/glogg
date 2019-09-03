@@ -54,23 +54,40 @@ PersistentInfo::ConfigFileParameters::ConfigFileParameters()
     QString portableConfigPath = qApp->applicationDirPath() + QDir::separator() + "klogg.conf";
     if ( forcePortable || QFileInfo::exists( portableConfigPath ) ) {
         format = QSettings::IniFormat;
-        path = portableConfigPath;
+        appSettingsPath = portableConfigPath;
     }
     else {
 #ifdef Q_OS_WIN
         format = QSettings::IniFormat;
 #endif
-        path = QSettings{ format, QSettings::UserScope, "klogg", "klogg" }.fileName();
+        appSettingsPath = QSettings{ format, QSettings::UserScope, "klogg", "klogg" }.fileName();
+    }
+
+    sessionSettingsPath
+        = QFileInfo( appSettingsPath ).absoluteDir().filePath( "klogg_session.conf" );
+    if ( !QFileInfo::exists( sessionSettingsPath ) && QFileInfo::exists( appSettingsPath ) ) {
+        QFile::copy( appSettingsPath, sessionSettingsPath );
     }
 }
 
 PersistentInfo::PersistentInfo( ConfigFileParameters config )
-    : settings_{ config.path, config.format }
+    : appSettings_{ config.appSettingsPath, config.format }
+    , sessionSettings_{ config.sessionSettingsPath, config.format }
 {
 }
 
-QSettings& PersistentInfo::getSettings()
+PersistentInfo& PersistentInfo::getInstance()
 {
     static PersistentInfo pInfo;
-    return pInfo.settings_;
+    return pInfo;
+}
+
+QSettings& PersistentInfo::getSettings( app_settings )
+{
+    return getInstance().appSettings_;
+}
+
+QSettings& PersistentInfo::getSettings( session_settings )
+{
+    return getInstance().sessionSettings_;
 }

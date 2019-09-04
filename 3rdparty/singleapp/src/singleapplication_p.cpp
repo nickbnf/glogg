@@ -50,8 +50,8 @@
     #include <lmcons.h>
 #endif
 
-SingleApplicationPrivate::SingleApplicationPrivate( SingleApplication *q_ptr_ )
-    : q_ptr( q_ptr_ )
+SingleApplicationPrivate::SingleApplicationPrivate( SingleApplication *ptr )
+    : q_ptr( ptr )
 {
     server = nullptr;
     socket = nullptr;

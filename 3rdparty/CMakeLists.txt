@@ -1,4 +1,4 @@
-add_subdirectory(cli11)
+add_subdirectory(cli11) #1.8.0
 add_subdirectory(abseil)
 mark_as_advanced(FORCE ABSL_RUN_TESTS)
 mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
@@ -13,7 +13,7 @@ add_subdirectory(catch)
 add_subdirectory(tbb)
 mark_as_advanced(FORCE TBB_BUILD_TESTS)
 mark_as_advanced(FORCE TBB_CI_BUILD)
-add_subdirectory(singleapp)
+add_subdirectory(singleapp) #3.0.15
 add_subdirectory(concurrentqueue)
 add_subdirectory(qtpromise)
 add_subdirectory(immer)

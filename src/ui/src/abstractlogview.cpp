@@ -1690,7 +1690,16 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     leftMarginPx_ = contentStartPosX + SEPARATOR_WIDTH;
 
     const auto searchStartIndex = lineIndex( searchStart_ );
-    const auto searchEndIndex = lineIndex( searchEnd_ );
+    const auto searchEndIndex = [this] {
+            auto index = lineIndex( searchEnd_ );
+            if (searchEnd_ + 1_lcount != displayLineNumber(index)) {
+                // in filtered view lineIndex for "past the end" returns last line
+                // it should not be marked as excluded
+                index = index + 1_lcount;
+            }
+
+            return index;
+    }();
 
     // Then draw each line
     for ( auto i = 0_lcount; i < nbLines; ++i ) {

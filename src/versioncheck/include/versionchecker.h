@@ -65,7 +65,6 @@ class VersionCheckerConfig final : public Persistable<VersionCheckerConfig, sess
     virtual void retrieveFromStorage( QSettings& settings );
 
   private:
-    bool enabled_ = true;
     std::time_t next_deadline_ = {};
 };
 

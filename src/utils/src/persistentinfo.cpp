@@ -49,6 +49,9 @@
 #include "log.h"
 #include "persistable.h"
 
+constexpr uint8_t AppSettingsVersion = 1;
+constexpr uint8_t SessionSettingsVersion = 1;
+
 PersistentInfo::ConfigFileParameters::ConfigFileParameters()
 {
     QString portableConfigPath = qApp->applicationDirPath() + QDir::separator() + "klogg.conf";
@@ -74,6 +77,28 @@ PersistentInfo::PersistentInfo( ConfigFileParameters config )
     : appSettings_{ config.appSettingsPath, config.format }
     , sessionSettings_{ config.sessionSettingsPath, config.format }
 {
+    const auto oldAppSettingsVerson = appSettings_.value( "version", 0 ).toUInt();
+    if ( oldAppSettingsVerson != AppSettingsVersion ) {
+        appSettings_.remove( "geometry" );
+        appSettings_.remove( "versionchecker.nextDeadline" );
+        appSettings_.remove( "OpenFiles" );
+        appSettings_.remove( "RecentFiles" );
+        appSettings_.remove( "SavedSearches" );
+    }
+
+    const auto oldSessionSettinsVersion = sessionSettings_.value( "version", 0 ).toUInt();
+    if ( oldSessionSettinsVersion != SessionSettingsVersion ) {
+        sessionSettings_.setValue( "Window/geometry", sessionSettings_.value( "geometry" ) );
+        sessionSettings_.setValue( "VersionChecker/nextDeadline",
+                                   sessionSettings_.value( "versionchecker.nextDeadline" ) );
+        sessionSettings_.remove( "HighlighterSet" );
+        for ( const auto& key : sessionSettings_.childKeys() ) {
+            sessionSettings_.remove( key );
+        }
+    }
+
+    appSettings_.setValue( "version", AppSettingsVersion );
+    sessionSettings_.setValue( "version", SessionSettingsVersion );
 }
 
 PersistentInfo& PersistentInfo::getInstance()

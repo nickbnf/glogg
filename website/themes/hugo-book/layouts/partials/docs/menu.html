@@ -1,0 +1,24 @@
+<nav>
+{{ partial "docs/brand" . }}
+{{ partial "docs/search" . }}
+{{ partial "docs/inject/menu-before" . }}
+
+{{ if .Site.Params.BookMenuBundle }}
+    {{ partial "docs/menu-bundle" . }}
+{{ else }}
+    {{ partial "docs/menu-filetree" . }}
+{{ end }}
+
+{{ partial "docs/inject/menu-after" . }}
+</nav>
+
+<!-- Restore menu position as soon as possible to avoid flickering -->
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>

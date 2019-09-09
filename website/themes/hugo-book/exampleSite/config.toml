@@ -1,15 +1,24 @@
-baseURL = "https://klogg.filimonov.dev/"
-languageCode = "en-us"
-title = "KLOGG"
+# hugo server --minify --themesDir ... --baseURL=http://0.0.0.0:1313/example
 
+baseURL = 'https://example.com/'
+title = 'Hugo Book'
 theme = 'hugo-book'
 disableKinds = ['taxonomy', 'taxonomyTerm']
+# themesDir = '../..'
+
+# Book configuration
+disablePathToLower = true
+enableGitInfo = true
+
+# Code highlight
+# pygmentsStyle = 'monokailight'
+pygmentsCodeFences = true
 
 [params]
   # (Optional, default 6) Set how many table of contents levels to be showed on page.
   # Use false to hide ToC, note that 0 will default to 6 (https://gohugo.io/functions/default/)
   # You can also specify this parameter per page in front matter
-  BookToC = 2
+  BookToC = 3
 
   # (Optional, default none) Set the path to a logo for the book. If the logo is
   # /static/logo.png then the path would be logo.png
@@ -17,7 +26,7 @@ disableKinds = ['taxonomy', 'taxonomyTerm']
 
   # (Optional, default none) Set leaf bundle to render as side menu
   # When not specified file structure and weights will be used
-  # BookMenuBundle = '/menu'
+  BookMenuBundle = '/menu'
 
   # (Optional, default docs) Specify section of content to render as menu
   # You can also set value to '*' to render all sections to menu
@@ -42,4 +51,4 @@ disableKinds = ['taxonomy', 'taxonomyTerm']
 
   # (Optional, default true) Enables search function with lunr.js, 
   # Index is built on fly, therefore it might slowdown your website.
-  BookSearch = false
+  BookSearch = true

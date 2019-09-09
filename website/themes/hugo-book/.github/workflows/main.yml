@@ -1,0 +1,18 @@
+name: Build with Hugo
+
+on: [push]
+
+jobs:
+  hugo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Install Hugo
+        run: |
+          wget https://github.com/gohugoio/hugo/releases/download/v0.57.2/hugo_0.57.2_Linux-64bit.deb -O /tmp/hugo.deb
+          sudo dpkg -i /tmp/hugo.deb
+
+      - name: Run Hugo
+        working-directory: exampleSite
+        run: hugo --themesDir ../..

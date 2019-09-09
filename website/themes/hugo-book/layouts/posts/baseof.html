@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.Language.Lang }}">
+
+<head>
+  {{ partial "docs/html-head" . }}
+  {{ partial "docs/inject/head" . }}
+</head>
+
+<body>
+  <input type="checkbox" class="hidden" id="menu-control" />
+  <main class="flex container">
+    <aside class="book-menu fixed">
+      {{ partial "docs/menu" . }}
+    </aside>
+
+    <div class="book-posts">
+      {{ partial "docs/mobile-header" . }}
+      {{ template "main" . }}
+      {{ partial "docs/inject/footer" . }}
+    </div>
+  </main>
+
+  {{ partial "docs/inject/body" . }}
+  {{ template "_internal/google_analytics_async.html" . }}
+</body>
+
+</html>

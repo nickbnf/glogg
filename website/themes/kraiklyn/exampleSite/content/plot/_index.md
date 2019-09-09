@@ -1,0 +1,16 @@
+---
+title: "Plot summary"
+date: 2018-01-28T21:48:57+01:00
+anchor: "summary"
+weight: 15
+---
+
+The Culture and the Idiran Empire are at war in a galaxy-spanning conflict. A Culture Mind, fleeing the destruction of its ship in an Idiran ambush, takes refuge on Schar's World. The Dra'Azon, godlike incorporeal beings, maintain Schar's World as a monument to its extinct civilisation, forbidding access to both the Culture and the Idirans. Horza, a shape-changing mercenary, is rescued from execution by the Idirans who believe the Dra'Azon guardian may let him onto the planet as in the past he was part of a small group of Changers who acted as stewards. They instruct him to retrieve the Mind.
+
+During Horza's extraction, the Idirans also capture a Special Circumstances agent, Perosteck Balveda. However, the Idiran starship on which he is travelling is soon attacked by a Culture vessel, and Horza is ejected. He is picked up by a pirate ship, the Clear Air Turbulence (CAT). He is forced to fight and kill one of the crew to earn a place. The captain, Kraiklyn, leads them on two disastrous pirate raids in which several of the crew perish. After the second raid Horza is taken prisoner by a cult living on an island on the orbital Vavatch. He escapes after killing the cult leader and makes his way to the main city of Vavatch where he finds Kraiklyn, who is playing "Damage"—a high stakes card game.
+
+Having now changed his appearance to mimic that of the CAT captain, Horza follows him back to the CAT, kills him and returns to the CAT meeting the few remaining original crew. He is introduced to a newly recruited member, whom he recognises as a disguised Perosteck Balveda. Culture agents outside try to capture the ship. Horza manages to lift off and as the fugitives warp away from Vavatch, they see the Orbital destroyed by the Culture warships to prevent it from falling into enemy hands. Balveda reveals Horza's identity and he convinces the crew to carry out his mission. A Vavatch drone, Unaha-Closp, has been trapped on the ship and reluctantly joins the team.
+
+They land on Schar's World and search for the Mind in the Command System, a complex of subterranean train stations. They soon discover that the Mind is being hunted by a pair of Idiran soldiers who have killed all the Changers stationed on the planet, and who regard Horza and his crew as enemies, having no knowledge of the Changers' alliance with the Idirans. Horza has kept Balveda alive, and she is taken into the complex. The CAT's crew encounter the Idirans in one of the Command System stations, and after a firefight apparently kill one and capture the other. After tracking the Mind to another station, the drone Unaha-Closp discovers it hiding in the reactor car of a Command System train. The second Idiran, who had been mortally wounded but not killed, sets one of the trains for a collision course to the station. The captured Idiran, Xoxarle, frees himself and in the ensuing impact and firefight the remaining members of the Clear Air Turbulence are killed. Horza pursues Xoxarle and is fatally injured, but the Idiran is killed by Balveda.
+
+Horza dies soon after Balveda gets him to the surface and the Mind is returned to the Culture. In an epilogue, the Mind becomes a starship, and names itself the Bora Horza Gobuchul.

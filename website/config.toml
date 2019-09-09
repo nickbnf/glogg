@@ -1,0 +1,23 @@
+baseURL = "https://klogg.filimonov.dev/"
+languageCode = "en-us"
+title = "KLOGG"
+
+theme = "kraiklyn"
+
+pygmentsCodeFences = true
+pygmentsStyle = "monokailight"
+
+[params]
+externalTitle = "Links"
+sidebarColor = "default"
+customCss = []
+
+[[menu.shortcuts]]
+name = "klogg on Github"
+url = "https://github.com/variar/klogg"
+weight = 10
+
+[[menu.shortcuts]]
+name = "glogg on Github"
+url = "https://github.com/nickbnf/glogg"
+weight = 20

@@ -40,3 +40,4 @@ build/
 # VS-specific
 /.vs
 /.vscode
+website/public

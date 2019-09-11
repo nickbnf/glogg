@@ -29,6 +29,12 @@ enum class LoadingStatus {
     NoMemory
 };
 
+enum class MonitoredFileStatus { 
+	Unchanged, 
+	DataAdded, 
+	Truncated 
+};
+
 // Data status (whether new, not seen, data is available)
 enum class DataStatus {
     OLD_DATA,
@@ -38,5 +44,6 @@ enum class DataStatus {
 
 Q_DECLARE_METATYPE( DataStatus )
 Q_DECLARE_METATYPE( LoadingStatus )
+Q_DECLARE_METATYPE( MonitoredFileStatus )
 
 #endif

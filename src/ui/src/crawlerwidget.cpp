@@ -578,10 +578,10 @@ void CrawlerWidget::loadingFinishedHandler( LoadingStatus status )
     }
 }
 
-void CrawlerWidget::fileChangedHandler( LogData::MonitoredFileStatus status )
+void CrawlerWidget::fileChangedHandler( MonitoredFileStatus status )
 {
     // Handle the case where the file has been truncated
-    if ( status == LogData::Truncated ) {
+    if ( status == MonitoredFileStatus::Truncated ) {
         // Clear all marks (TODO offer the option to keep them)
         logFilteredData_->clearMarks();
         if ( !searchInfoLine->text().isEmpty() ) {

@@ -70,8 +70,6 @@ class LogData : public AbstractLogData {
     // Destroy an object
     ~LogData() override;
 
-    enum MonitoredFileStatus { Unchanged, DataAdded, Truncated };
-
     // Attaches the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately
     // Attaching to a non existant file works and the file is reported
@@ -103,13 +101,15 @@ class LogData : public AbstractLogData {
     void loadingFinished( LoadingStatus status );
     // Sent when the file on disk has changed, will be followed
     // by loadingProgressed if needed and then a loadingFinished.
-    void fileChanged( LogData::MonitoredFileStatus status );
+    void fileChanged( MonitoredFileStatus status );
 
   private slots:
     // Consider reloading the file when it changes on disk updated
     void fileChangedOnDisk(const QString &filename);
     // Called when the worker thread signals the current operation ended
     void indexingFinished( LoadingStatus status );
+    // Called when the worker thread signals the current operation ended
+    void checkFileChangesFinished( MonitoredFileStatus status );
 
   private:
     // This class models an indexing operation.
@@ -158,6 +158,12 @@ class LogData : public AbstractLogData {
 
     // Indexing part of the current file (from fileSize)
     class PartialIndexOperation : public LogDataOperation {
+      protected:
+        void doStart( LogDataWorker& workerThread ) const override;
+    };
+
+	// Attaching a new file (change name + full index)
+    class CheckFileChangesOperation : public LogDataOperation {
       protected:
         void doStart( LogDataWorker& workerThread ) const override;
     };
@@ -211,7 +217,5 @@ class LogData : public AbstractLogData {
 
     LogDataWorker workerThread_;
 };
-
-Q_DECLARE_METATYPE( LogData::MonitoredFileStatus )
 
 #endif

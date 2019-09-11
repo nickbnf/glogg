@@ -52,13 +52,43 @@
 #include <chrono>
 #include <cmath>
 
+namespace {
+
+template <class... Fs> struct overload;
+
+template <class F0, class... Frest> struct overload<F0, Frest...> : F0, overload<Frest...> {
+    overload( F0 f0, Frest... rest )
+        : F0( f0 )
+        , overload<Frest...>( rest... )
+    {
+    }
+
+    using F0::operator();
+    using overload<Frest...>::operator();
+};
+
+template <class F0> struct overload<F0> : F0 {
+    overload( F0 f0 )
+        : F0( f0 )
+    {
+    }
+
+    using F0::operator();
+};
+
+template <class... Fs> auto make_visitor( Fs... fs )
+{
+    return overload<Fs...>( fs... );
+}
+
+}
+
 qint64 IndexingData::getSize() const
 {
     QMutexLocker locker( &dataMutex_ );
 
     return hash_.size;
 }
-
 
 IndexedHash IndexingData::getHash() const
 {
@@ -112,12 +142,12 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
 {
     QMutexLocker locker( &dataMutex_ );
 
-    hash_.size += block.size();
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
     indexHash_.addData( block );
     hash_.hash = indexHash_.result();
+    hash_.size += block.size();
 
     encodingGuess_ = encoding;
 }
@@ -137,7 +167,7 @@ void IndexingData::clear()
 LogDataWorker::LogDataWorker( IndexingData& indexing_data )
     : indexing_data_( indexing_data )
 {
-    connect( &operationWatcher_, &QFutureWatcher<bool>::finished, this,
+    connect( &operationWatcher_, &QFutureWatcher<OperationResult>::finished, this,
              &LogDataWorker::onOperationFinished, Qt::QueuedConnection );
 }
 
@@ -145,7 +175,7 @@ LogDataWorker::~LogDataWorker()
 {
     interruptRequest_.set();
     QMutexLocker locker( &mutex_ );
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
 }
 
 void LogDataWorker::attachFile( const QString& fileName )
@@ -188,7 +218,25 @@ void LogDataWorker::indexAdditionalLines()
     operationWatcher_.setFuture( operationFuture_ );
 }
 
-bool LogDataWorker::connectSignalsAndRun( IndexOperation* operationRequested )
+void LogDataWorker::checkFileChanges()
+{
+    QMutexLocker locker( &mutex_ );
+    LOG( logDEBUG ) << "Check file changes requested";
+
+    operationWatcher_.waitForFinished();
+    interruptRequest_.clear();
+
+    operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
+        auto operationRequested = std::make_unique<CheckFileChangesOperation>(
+            fileName, indexing_data_, interruptRequest_ );
+
+		return operationRequested->start();
+    } );
+
+    operationWatcher_.setFuture( operationFuture_ );
+}
+
+OperationResult LogDataWorker::connectSignalsAndRun( IndexOperation* operationRequested )
 {
     connect( operationRequested, &IndexOperation::indexingProgressed, this,
              &LogDataWorker::indexingProgressed );
@@ -204,14 +252,25 @@ void LogDataWorker::interrupt()
 
 void LogDataWorker::onOperationFinished()
 {
-    if ( operationWatcher_.result() ) {
-        LOG( logDEBUG ) << "... finished copy in workerThread.";
-        emit indexingFinished( LoadingStatus::Successful );
-    }
-    else {
-        LOG( logINFO ) << "indexing interrupted";
-        emit indexingFinished( LoadingStatus::Interrupted );
-    }
+    const auto variantResult = operationWatcher_.result();
+    absl::visit(
+        make_visitor(
+            [this]( bool result ) {
+                if ( result ) {
+                    LOG( logDEBUG ) << "... finished copy in workerThread.";
+                    emit indexingFinished( LoadingStatus::Successful );
+				}
+                else {
+                    LOG( logINFO ) << "indexing interrupted";
+                    emit indexingFinished( LoadingStatus::Interrupted );
+				}
+			},
+            [this]( MonitoredFileStatus result ) { 
+				LOG( logINFO ) << "checking file finished";
+                emit checkFileChangesFinished( result );
+            }
+        ),
+        variantResult );
 }
 
 //
@@ -456,7 +515,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 }
 
 // Called in the worker thread's context
-bool FullIndexOperation::start()
+OperationResult FullIndexOperation::start()
 {
     LOG( logDEBUG ) << "FullIndexOperation::start(), file " << fileName_.toStdString();
 
@@ -477,7 +536,7 @@ bool FullIndexOperation::start()
     return ( interruptRequest_ ? false : true );
 }
 
-bool PartialIndexOperation::start()
+OperationResult PartialIndexOperation::start()
 {
     LOG( logDEBUG ) << "PartialIndexOperation::start(), file " << fileName_.toStdString();
 
@@ -493,4 +552,61 @@ bool PartialIndexOperation::start()
     LOG( logDEBUG ) << "PartialIndexOperation: ... finished counting.";
 
     return ( interruptRequest_ ? false : true );
+}
+
+OperationResult CheckFileChangesOperation::start()
+{
+    LOG( logDEBUG ) << "CheckFileChangesOperation::start(), file " << fileName_.toStdString();
+
+    QFileInfo info( fileName_ );
+    const auto indexedHash = indexing_data_.getHash();
+    const auto realFileSize = info.size();
+
+    if ( realFileSize == 0 || realFileSize < indexedHash.size ) {
+        LOG( logINFO ) << "File truncated";
+		return MonitoredFileStatus::Truncated;
+    }
+    else {
+        QFile file( fileName_ );
+
+        QByteArray buffer{ static_cast<int>( indexedHash.size ), 0 };
+        QCryptographicHash hash{ QCryptographicHash::Md5 };
+
+        if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
+            auto readSize = 0ll;
+            auto totalSize = 0ll;
+            do {
+
+                readSize = file.read( buffer.data(), buffer.size() );
+
+                if ( readSize > 0 ) {
+                    hash.addData( buffer.data(), readSize );
+                    totalSize += readSize;
+                }
+
+            } while ( readSize > 0 && totalSize < indexedHash.size );
+
+            const auto realHash = hash.result();
+
+            LOG( logINFO ) << "indexed hash " << indexedHash.hash.toHex() << ", real file hash " << QString( realHash.toHex() );
+
+            if ( !std::equal( indexedHash.hash.begin(), indexedHash.hash.end(), realHash.begin(),
+                              realHash.end() ) ) {
+                LOG( logINFO ) << "File changed in indexed range";
+                return MonitoredFileStatus::Truncated;
+            }
+            else if ( realFileSize > indexedHash.size ) {
+                LOG( logINFO ) << "New data on disk";
+                return MonitoredFileStatus::DataAdded;
+            }
+            else {
+                LOG( logINFO ) << "No change in file";
+                return MonitoredFileStatus::Unchanged;
+            }
+        }
+        else {
+            LOG( logINFO ) << "File failed to open";
+            return MonitoredFileStatus::Truncated;
+        }
+    }
 }

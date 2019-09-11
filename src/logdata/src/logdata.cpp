@@ -75,6 +75,12 @@ void LogData::PartialIndexOperation::doStart( LogDataWorker& workerThread ) cons
     workerThread.indexAdditionalLines();
 }
 
+void LogData::CheckFileChangesOperation::doStart( LogDataWorker& workerThread ) const
+{
+    LOG( logINFO ) << "Checking file changes";
+    workerThread.checkFileChanges();
+}
+
 // Constructs an empty log file.
 // It must be displayed without error.
 LogData::LogData()
@@ -97,6 +103,8 @@ LogData::LogData()
     connect( &workerThread_, &LogDataWorker::indexingProgressed, this,
              &LogData::loadingProgressed );
     connect( &workerThread_, &LogDataWorker::indexingFinished, this, &LogData::indexingFinished );
+    connect( &workerThread_, &LogDataWorker::checkFileChangesFinished, this,
+             &LogData::checkFileChangesFinished );
 
     const auto& config = Configuration::get();
     keepFileClosed_ = config.keepFileClosed();
@@ -240,81 +248,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
         attached_file_->reOpenFile();
     }
 
-    const auto real_file_size = attached_file_->size();
-    auto fileStatusPromise
-        = QtPromise::resolve(
-              QtConcurrent::run( [this, indexedHash, real_file_size] {
-                  if (real_file_size == 0 || real_file_size < indexedHash.size ) {
-                      LOG( logINFO ) << "File truncated";
-                      return Truncated;
-                  }
-
-                  ScopedFileHolder<FileHolder> locker( attached_file_.get() );
-
-                  QByteArray buffer{ 1024 * 1024, 0 };
-                  QCryptographicHash hash{ QCryptographicHash::Md5 };
-                  auto readSize = 0ll;
-                  auto totalSize = 0ll;
-                  do {
-
-                      readSize = locker.getFile()->read(
-                          buffer.data(), qMin( static_cast<qint64>( buffer.length() ),
-                                               indexedHash.size - totalSize ) );
-
-                      if (readSize > 0) {
-                          hash.addData( buffer.data(), readSize );
-                          totalSize += readSize;
-                      }
-
-                  } while ( readSize > 0 && totalSize < indexedHash.size );
-
-                  const auto realHash = hash.result();
-                  LOG( logINFO ) << "real file hash " << QString( realHash.toHex() );
-
-                  if ( !std::equal( indexedHash.hash.begin(), indexedHash.hash.end(),
-                                    realHash.begin(), realHash.end() ) ) {
-                      LOG( logINFO ) << "File changed in indexed range";
-                      return Truncated;
-                  }
-                  else if ( real_file_size > indexedHash.size ) {
-                      LOG( logINFO ) << "New data on disk";
-                      return DataAdded;
-                  }
-                  else {
-                      LOG( logINFO ) << "No change in file";
-                      return Unchanged;
-                  }
-              } ) )
-              .then( [this, indexedHash, info]( MonitoredFileStatus status ) {
-                  LOG( logINFO ) << "File " << info.fileName() << ", hash "
-                                 << QString( indexedHash.hash.toHex() ) << " status " << status;
-
-                  std::function<std::shared_ptr<LogDataOperation>()> newOperation;
-                  if ( fileChangedOnDisk_ != Truncated ) {
-                      switch ( status ) {
-                      case Truncated:
-                          fileChangedOnDisk_ = Truncated;
-                          newOperation = std::make_shared<FullIndexOperation>;
-                          break;
-                      case DataAdded:
-                          fileChangedOnDisk_ = DataAdded;
-                          newOperation = std::make_shared<PartialIndexOperation>;
-                          break;
-                      case Unchanged:
-                          fileChangedOnDisk_ = Unchanged;
-                          break;
-                      }
-                  }
-                  else {
-                      newOperation = std::make_shared<FullIndexOperation>;
-                  }
-
-                  if ( newOperation ) {
-                      enqueueOperation( newOperation() );
-                      lastModifiedDate_ = info.lastModified();
-                      emit fileChanged( fileChangedOnDisk_ );
-                  }
-              } );
+    enqueueOperation( std::make_shared<CheckFileChangesOperation>() );
 }
 
 void LogData::indexingFinished( LoadingStatus status )
@@ -326,8 +260,6 @@ void LogData::indexingFinished( LoadingStatus status )
                     << indexing_data_.getNbLines() << " lines.";
 
     if ( status == LoadingStatus::Successful ) {
-        // Start watching we watch the file for updates
-        fileChangedOnDisk_ = Unchanged;
         FileWatcher::getFileWatcher().addFile( indexingFileName_ );
 
         // Update the modified date/time if the file exists
@@ -337,9 +269,7 @@ void LogData::indexingFinished( LoadingStatus status )
             lastModifiedDate_ = fileInfo.lastModified();
     }
 
-    // FIXME be cleverer here as a notification might have arrived whilst we
-    // were indexing.
-    fileChangedOnDisk_ = Unchanged;
+    fileChangedOnDisk_ = MonitoredFileStatus::Unchanged;
 
     LOG( logDEBUG ) << "Sending indexingFinished.";
     emit loadingFinished( status );
@@ -353,6 +283,47 @@ void LogData::indexingFinished( LoadingStatus status )
 
     if ( currentOperation_ ) {
         LOG( logDEBUG ) << "indexingFinished is performing the next operation";
+        startOperation();
+    }
+}
+
+void LogData::checkFileChangesFinished( MonitoredFileStatus status )
+{
+    attached_file_->detachReader();
+
+    LOG( logINFO ) << "File " << indexingFileName_ << " status " << static_cast<int>(status);
+
+    std::function<std::shared_ptr<LogDataOperation>()> newOperation;
+    if ( fileChangedOnDisk_ != MonitoredFileStatus::Truncated ) {
+        switch ( status ) {
+        case MonitoredFileStatus::Truncated:
+            fileChangedOnDisk_ = MonitoredFileStatus::Truncated;
+            newOperation = std::make_shared<FullIndexOperation>;
+            break;
+        case MonitoredFileStatus::DataAdded:
+            fileChangedOnDisk_ = MonitoredFileStatus::DataAdded;
+            newOperation = std::make_shared<PartialIndexOperation>;
+            break;
+        case MonitoredFileStatus::Unchanged:
+            fileChangedOnDisk_ = MonitoredFileStatus::Unchanged;
+            break;
+        }
+    }
+    else {
+        newOperation = std::make_shared<FullIndexOperation>;
+    }
+
+    if ( newOperation ) {
+        emit fileChanged( fileChangedOnDisk_ );
+
+        enqueueOperation( newOperation() );
+    }
+
+	currentOperation_ = std::move( nextOperation_ );
+    nextOperation_.reset();
+
+    if ( currentOperation_ ) {
+        LOG( logDEBUG ) << "checkFileChangesFinished is performing the next operation";
         startOperation();
     }
 }

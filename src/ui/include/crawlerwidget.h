@@ -196,7 +196,7 @@ class CrawlerWidget : public QSplitter,
 
     void loadingFinishedHandler( LoadingStatus status );
     // Manages the info lines to inform the user the file has changed.
-    void fileChangedHandler( LogData::MonitoredFileStatus );
+    void fileChangedHandler( MonitoredFileStatus );
 
     void searchForward();
     void searchBackward();

@@ -93,7 +93,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
     auto finishedSpy = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
     SafeQSignalSpy progressSpy( &log_data, SIGNAL( loadingProgressed( int ) ) );
     SafeQSignalSpy changedSpy( &log_data,
-            SIGNAL( fileChanged( LogData::MonitoredFileStatus ) ) );
+            SIGNAL( fileChanged( MonitoredFileStatus ) ) );
 
     // Generate a small file
     QFile file { tempDir.path() + QDir::separator() + QLatin1Literal("testlog.txt") };

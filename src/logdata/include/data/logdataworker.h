@@ -47,6 +47,8 @@
 #include <QSemaphore>
 #include <QTextCodec>
 
+#include <absl/types/variant.h>
+
 #include "encodingdetector.h"
 #include "linepositionarray.h"
 #include "loadingstatus.h"
@@ -128,6 +130,8 @@ struct IndexingState {
     QSemaphore blockSem;
 };
 
+using OperationResult = absl::variant<bool, MonitoredFileStatus>;
+
 class IndexOperation : public QObject {
     Q_OBJECT
   public:
@@ -141,7 +145,7 @@ class IndexOperation : public QObject {
 
     // Start the indexing operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
-    virtual bool start() = 0;
+    virtual OperationResult start() = 0;
 
   signals:
     void indexingProgressed( int );
@@ -173,7 +177,7 @@ class FullIndexOperation : public IndexOperation {
         , forcedEncoding_( forcedEncoding )
     {
     }
-    bool start() override;
+    OperationResult start() override;
 
   private:
     QTextCodec* forcedEncoding_;
@@ -188,7 +192,19 @@ class PartialIndexOperation : public IndexOperation {
     {
     }
 
-    bool start() override;
+    OperationResult start() override;
+};
+
+class CheckFileChangesOperation : public IndexOperation {
+    Q_OBJECT
+  public:
+    CheckFileChangesOperation( const QString& fileName, IndexingData& indexingData,
+                           AtomicFlag& interruptRequest )
+        : IndexOperation( fileName, indexingData, interruptRequest )
+    {
+    }
+
+    OperationResult start() override;
 };
 
 class LogDataWorker : public QObject {
@@ -209,6 +225,9 @@ class LogDataWorker : public QObject {
     // Instructs the thread to start a partial indexing (starting at
     // the end of the file as indexed).
     void indexAdditionalLines();
+
+	void checkFileChanges();
+
     // Interrupts the indexing if one is in progress
     void interrupt();
 
@@ -220,16 +239,19 @@ class LogDataWorker : public QObject {
     // to copy the new data back.
     void indexingFinished( LoadingStatus status );
 
+	// Sent when check file is finished, signals the client
+    // to copy the new data back.
+    void checkFileChangesFinished( MonitoredFileStatus status );
+
   private slots:
     void onOperationFinished();
 
   private:
-    void doIndexAll();
+    OperationResult connectSignalsAndRun( IndexOperation* operationRequested );
 
-    bool connectSignalsAndRun( IndexOperation* operationRequested );
+    QFuture<OperationResult> operationFuture_;
+    QFutureWatcher<OperationResult> operationWatcher_;
 
-    QFuture<bool> operationFuture_;
-    QFutureWatcher<bool> operationWatcher_;
     AtomicFlag interruptRequest_;
 
     // Mutex to protect operationRequested_ and friends

@@ -1,5 +1,5 @@
 {
-    "ci":"19.9.0.454",
+    "ci":"19.9.0.457",
     "ci_url" : "https://github.com/variar/klogg/releases/tag/continuous",
     "stable": "19.2.0.366",
     "stable_url" : "https://github.com/variar/klogg/releases/tag/v19.2",

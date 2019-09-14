@@ -21,9 +21,9 @@ set(IDENTIFIER "com.github.variar.klogg")
 set(PROJECT_DESCRIPTION "${PROJECT_NAME} log viewer")
 
 if (WIN32)
-    set(ICON_NAME glogg48.ico)
+    set(ICON_NAME klogg.ico)
 elseif(APPLE)
-    set(ICON_NAME glogg.icns)
+    set(ICON_NAME klogg.icns)
 endif()
 
 if (NOT ${ICON_NAME} STREQUAL "")

@@ -103,7 +103,7 @@ MainWindow::MainWindow() :
             geometry.width() - 140, geometry.height() - 140 );
 
     mainIcon_.addFile( ":/images/hicolor/16x16/klogg.png" );
-    mainIcon_.addFile( ":/images/hicolor/24x24/klogg.png" );
+    //mainIcon_.addFile( ":/images/hicolor/24x24/klogg.png" );
     mainIcon_.addFile( ":/images/hicolor/32x32/klogg.png" );
     mainIcon_.addFile( ":/images/hicolor/48x48/klogg.png" );
 

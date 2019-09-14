@@ -64,11 +64,14 @@ void FilteredView::setVisibility( Visibility visi )
 // For the filtered view, a line is always matching!
 AbstractLogView::LineType FilteredView::lineType( LineNumber lineNumber ) const
 {
-    const auto type = logFilteredData_->filteredLineTypeByIndex( lineNumber );
-    if ( type.testFlag( LogFilteredData::FilteredLineTypeFlags::Mark ) )
+    const auto line_in_file = logFilteredData_->getMatchingLineNumber( lineNumber );
+
+    if ( logFilteredData_->isLineMarked( line_in_file ) ) {
         return Marked;
-    else
+    }
+    else {
         return Match;
+    }
 }
 
 LineNumber FilteredView::displayLineNumber( LineNumber lineNumber ) const

@@ -462,7 +462,7 @@ void CrawlerWidget::markLineFromFiltered( LineNumber line )
 {
     if ( line < logFilteredData_->getNbLine() ) {
         const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
-        if ( logFilteredData_->filteredLineTypeByIndex( line ).testFlag( LogFilteredData::FilteredLineTypeFlags::Mark ) )
+        if ( logFilteredData_->isLineMarked( line_in_file ) )
             logFilteredData_->deleteMark( line_in_file );
         else
             logFilteredData_->addMark( line_in_file );

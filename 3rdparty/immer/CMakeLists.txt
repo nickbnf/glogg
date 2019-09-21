@@ -73,46 +73,46 @@ endif()
 add_library(immer INTERFACE)
 target_include_directories(immer SYSTEM INTERFACE
   $<BUILD_INTERFACE:${immer_BINARY_DIR}/>
-  $<BUILD_INTERFACE:${immer_SOURCE_DIR}/>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-install(TARGETS immer EXPORT ImmerConfig)
-install(EXPORT ImmerConfig DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Immer")
-install(DIRECTORY immer DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+  $<BUILD_INTERFACE:${immer_SOURCE_DIR}/>)
+  #$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+#install(TARGETS immer EXPORT ImmerConfig)
+#install(EXPORT ImmerConfig DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Immer")
+#install(DIRECTORY immer DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 # development target to be used in tests, examples, benchmarks...
 immer_canonicalize_cmake_booleans(
   DISABLE_FREE_LIST
   DISABLE_THREAD_SAFETY
   CHECK_SLOW_TESTS)
-add_library(immer-dev INTERFACE)
-target_include_directories(immer-dev SYSTEM INTERFACE
-  ${Boost_INCLUDE_DIR}
-  ${BOEHM_GC_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR}/tools/include)
-target_link_libraries(immer-dev INTERFACE
-  immer
-  ${BOEHM_GC_LIBRARIES}
-  ${CMAKE_THREAD_LIBS_INIT})
-target_compile_definitions(immer-dev INTERFACE
-  -DIMMER_CXX_STANDARD=${CXX_STANDARD}
-  -DIMMER_HAS_LIBGC=1
-  -DIMMER_NO_FREE_LIST=${DISABLE_FREE_LIST}
-  -DIMMER_NO_THREAD_SAFETY=${DISABLE_THREAD_SAFETY}
-  -DIMMER_SLOW_TESTS=${CHECK_SLOW_TESTS})
-if (ENABLE_COVERAGE)
-  target_compile_options(immer-dev INTERFACE "--coverage")
-  target_link_libraries(immer-dev INTERFACE "--coverage")
-endif()
+#add_library(immer-dev INTERFACE)
+#target_include_directories(immer-dev SYSTEM INTERFACE
+#  ${Boost_INCLUDE_DIR}
+#  ${BOEHM_GC_INCLUDE_DIR}
+#  ${CMAKE_SOURCE_DIR}/tools/include)
+#target_link_libraries(immer-dev INTERFACE
+#  immer
+#  ${BOEHM_GC_LIBRARIES}
+#  ${CMAKE_THREAD_LIBS_INIT})
+#target_compile_definitions(immer-dev INTERFACE
+#  -DIMMER_CXX_STANDARD=${CXX_STANDARD}
+#  -DIMMER_HAS_LIBGC=1
+#  -DIMMER_NO_FREE_LIST=${DISABLE_FREE_LIST}
+#  -DIMMER_NO_THREAD_SAFETY=${DISABLE_THREAD_SAFETY}
+#  -DIMMER_SLOW_TESTS=${CHECK_SLOW_TESTS})
+#if (ENABLE_COVERAGE)
+#  target_compile_options(immer-dev INTERFACE "--coverage")
+#  target_link_libraries(immer-dev INTERFACE "--coverage")
+#endif()
 
 #  Testing
 #  =======
 
-enable_testing()
+#enable_testing()
 
-add_custom_target(check
-  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  COMMENT "Build and run all the tests and examples.")
+#add_custom_target(check
+#  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#  COMMENT "Build and run all the tests and examples.")
 
 #add_subdirectory(test)
 #add_subdirectory(benchmark)

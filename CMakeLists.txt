@@ -172,6 +172,7 @@ endif()
 
 add_subdirectory(3rdparty)
 add_subdirectory(src)
+add_subdirectory(website)
 
 option(BUILD_TESTS "Build tests" ON)
 if (${BUILD_TESTS})

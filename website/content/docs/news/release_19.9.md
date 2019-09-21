@@ -12,11 +12,13 @@ There were some usabiltiy improvements, UI became more responsive
 and a few minor features sneaked in.
 
 Configuration file is now split in two parts:
+
  - user settings (they can be changed through UI and _klogg_ does not edit them)
  - application settings (history of opened files, search patterns, etc.,
  these are changed automatically by _klogg_)
 
 This release has following changes:
+
  - fixes for reindexing files that are changing on disk
  - autorefresh of search results
  - quickfind searching on separate thread (avoiding ui freezes)

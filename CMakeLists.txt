@@ -218,6 +218,11 @@ if(UNIX)
         )
 
         install(FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/scalable/klogg.svg
+            DESTINATION share/icons/hicolor/scalable/apps
+        )
+
+        install(FILES
             ${COPYING_FILE} ${NOTICE_FILE}
             DESTINATION share/doc/klogg)
 

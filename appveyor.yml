@@ -43,7 +43,7 @@ after_build:
 - xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - 7z a glogg-%APPVEYOR_BUILD_VERSION%.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll README.md COPYING
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- makensis -DVERSION="%APPVEYOR_BUILD_VERSION%" glogg.nsi
+- makensis -DVERSION="%APPVEYOR_BUILD_VERSION%" -DPLATFORM=%PLATFORM% glogg.nsi
 
 artifacts:
   - path: glogg-%APPVEYOR_BUILD_VERSION%.zip

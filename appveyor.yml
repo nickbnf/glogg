@@ -23,6 +23,7 @@ matrix:
 before_build:
 - if %platform%==x64 (set QT5=%QTDIR64%) else (set QT5=%QTDIR32%)
 - if %platform%==x64 (set MINGW=%MINGW_64%) else (set MINGW=%MINGW_32%)
+- if %platform%==x64 (set ERR_LIB=libgcc_s_seh-1.dll) else (set ERR_LIB=libgcc_s_dw2-1.dll)
 - set PATH=%MINGW%\bin;%QT5%\bin;%NSIS%;%PATH%
 
 build_script:
@@ -39,7 +40,7 @@ after_build:
 - md %APPVEYOR_BUILD_FOLDER%\release\platforms
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 - xcopy %MINGW%\bin\libstdc++-6.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-- xcopy %MINGW%\bin\libgcc_s_dw2-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+- xcopy %MINGW%\bin\%ERR_LIB% %APPVEYOR_BUILD_FOLDER%\release\ /y
 - xcopy %MINGW%\bin\libwinpthread-1.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 - 7z a glogg-%APPVEYOR_BUILD_VERSION%.zip -r %APPVEYOR_BUILD_FOLDER%\release\*.exe %APPVEYOR_BUILD_FOLDER%\release\*.dll README.md COPYING
 - xcopy %QT5%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\ /y

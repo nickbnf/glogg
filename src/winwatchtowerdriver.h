@@ -26,7 +26,7 @@
 #include <condition_variable>
 #include <iterator>
 #include <vector>
-#include <<functional>
+#include <functional>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

@@ -100,7 +100,7 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Network.dll
     File release\Qt5Widgets.dll
     File release\libwinpthread-1.dll
-!ifndef X64
+!if ${PLATFORM} == "x86"
     File release\libgcc_s_dw2-1.dll
 !else
     File release\libgcc_s_seh-1.dll

@@ -9,7 +9,7 @@ weight: 60
 
 The main focus of this release was fixing bugs with reading changing files.
 There were some usabiltiy improvements, UI became more responsive
-and a few minor features sneaked in.
+and a few minor features sneaked in. And new icons by wiz0u.
 
 Configuration file is now split in two parts:
 
@@ -24,7 +24,6 @@ This release has following changes:
  - quickfind searching on separate thread (avoiding ui freezes)
  - usabiltiy improvements (tab closing options, search bar layout)
  - option to paste data from clipboard and do usual searching (data is saved to temporary file)
- - option to clear log file
  - abitlity to open several files from 'Open file' dialog
  - 3rdparty libraries updates
 

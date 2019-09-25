@@ -739,8 +739,8 @@ void MainWindow::updateLoadingProgress( int progress )
 {
     LOG(logDEBUG) << "Loading progress: " << progress;
 
-    QString current_file =
-        session_.getFilename( currentCrawlerWidget() );
+    QString current_file = QDir::toNativeSeparators(
+        session_.getFilename( currentCrawlerWidget() ) );
 
     // We ignore 0% and 100% to avoid a flash when the file (or update)
     // is very short.
@@ -1121,8 +1121,8 @@ void MainWindow::updateInfoLine()
 
     // Following should always work as we will only receive enter
     // this slot if there is a crawler connected.
-    QString current_file =
-        session_.getFilename( currentCrawlerWidget() );
+    QString current_file = QDir::toNativeSeparators(
+        session_.getFilename( currentCrawlerWidget() ) );
 
     uint64_t fileSize;
     uint32_t fileNbLine;

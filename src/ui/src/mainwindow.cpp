@@ -570,6 +570,10 @@ void MainWindow::closeTab()
     {
         closeTab(currentIndex);
     }
+    else
+    {
+        this->close();
+    }
 }
 
 // Close all tabs

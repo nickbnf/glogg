@@ -25,5 +25,10 @@
     <file>images/darkclosebutton.png</file>
     <file>images/case48.png</file>
     <file>images/regex.png</file>
+    <file>images/icons8-refresh-16.png</file>
+    <file>images/icons8-search-16.png</file>
+    <file>images/icons8-font-size-16.png</file>
+    <file>images/icons8-document-32.png</file>
+    <file>images/icons8-database-backup-16.png</file>
 </qresource>
 </RCC>

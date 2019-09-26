@@ -163,7 +163,7 @@ class CrawlerWidget : public QSplitter,
     void updateLineNumber( LineNumber line );
 
     // "auto-refresh" check has been changed
-    void searchRefreshChanged( int state );
+    void searchRefreshChanged( bool isRefreshing );
     // "ignore case" check has been changed
     void matchCaseChanged( bool matchCase );
 
@@ -202,7 +202,7 @@ class CrawlerWidget : public QSplitter,
     void searchBackward();
 
     // Called when the checkbox for search auto-refresh is changed
-    void searchRefreshChangedHandler( int state );
+    void searchRefreshChangedHandler( bool isRefreshing );
 
     // Called when the text on the search line is modified
     void searchTextChangeHandler( QString );
@@ -287,7 +287,7 @@ class CrawlerWidget : public QSplitter,
     InfoLine*       searchInfoLine;
     QPushButton*    matchCaseButton;
     QPushButton*    useRegexpButton;
-    QCheckBox*      searchRefreshCheck;
+    QPushButton*    searchRefreshButton;
     OverviewWidget* overviewWidget_;
 
     // Default palette to be remembered

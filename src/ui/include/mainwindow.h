@@ -135,7 +135,7 @@ class MainWindow : public QMainWindow
 
     // Save the new state as default setting when a crawler
     // is changing their view options.
-    void handleSearchRefreshChanged( int state );
+    void handleSearchRefreshChanged( bool isRefreshing );
     void handleMatchCaseChanged( bool matchCase );
 
     // Close the tab with the passed index
@@ -206,6 +206,9 @@ class MainWindow : public QMainWindow
 
     InfoLine *infoLine;
     QLabel* lineNbField;
+    QLabel* sizeField;
+    QLabel* dateField;
+    QLabel* encodingField;
     QToolBar *toolBar;
     QCheckBox *followCheckBox;
 

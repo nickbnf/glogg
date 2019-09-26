@@ -306,10 +306,9 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
     matchCaseButton->setChecked( !context.ignoreCase() );
     useRegexpButton->setChecked( context.useRegexp() );
 
-    auto auto_refresh_check_state = context.autoRefresh() ? Qt::Checked : Qt::Unchecked;
-    searchRefreshCheck->setCheckState( auto_refresh_check_state );
+    searchRefreshButton->setChecked( context.autoRefresh() );
     // Manually call the handler as it is not called when changing the state programmatically
-    searchRefreshChangedHandler( auto_refresh_check_state );
+    searchRefreshChangedHandler( context.autoRefresh() );
 
     logMainView->followSet( context.followFile() );
 
@@ -323,7 +322,7 @@ std::shared_ptr<const ViewContextInterface> CrawlerWidget::doGetViewContext() co
     auto context = std::make_shared<const CrawlerWidgetContext>(
         sizes(),
         ( !matchCaseButton->isChecked() ),
-        ( searchRefreshCheck->checkState() == Qt::Checked ),
+        searchRefreshButton->isChecked(),
         logMainView->isFollowEnabled(),
         useRegexpButton->isChecked(),
         logFilteredData_->getMarks() );
@@ -370,6 +369,8 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress,
         searchInfoLine->hideGauge();
         // De-activate the stop button
         stopButton->setEnabled( false );
+        stopButton->hide();
+        searchButton->show();
     }
     else {
         // Search in progress
@@ -631,9 +632,9 @@ void CrawlerWidget::searchBackward()
     activeView()->searchBackward();
 }
 
-void CrawlerWidget::searchRefreshChangedHandler( int state )
+void CrawlerWidget::searchRefreshChangedHandler( bool isRefreshing )
 {
-    searchState_.setAutorefresh( state == Qt::Checked );
+    searchState_.setAutorefresh( isRefreshing );
     printSearchInfoMessage( logFilteredData_->getNbMatches() );
 }
 
@@ -752,7 +753,7 @@ void CrawlerWidget::setup()
 
     auto* visibilityView = new QListView( this );
     visibilityView->setMovement( QListView::Static );
-    visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
+    //visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
 
     visibilityBox = new QComboBox();
     visibilityBox->setModel( visibilityModel_ );
@@ -764,7 +765,7 @@ void CrawlerWidget::setup()
     // TODO: Maybe there is some way to set the popup width to be
     // sized-to-content (as it is when the stylesheet is not overriden) in the
     // stylesheet as opposed to setting a hard min-width on the view above.
-    visibilityBox->setStyleSheet( " \
+    /*visibilityBox->setStyleSheet( " \
         QComboBox:on {\
             padding: 1px 2px 1px 6px;\
             width: 19px;\
@@ -779,20 +780,21 @@ void CrawlerWidget::setup()
             width: 0px;\
             border-width: 0px;\
         } \
-" );
+" );*/
 
     // Construct the Search Info line
     searchInfoLine = new InfoLine();
     searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
+    searchInfoLine->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
     auto searchInfoLineSizePolicy = searchInfoLine->sizePolicy();
-    searchInfoLineSizePolicy.setRetainSizeWhenHidden( true );
+    searchInfoLineSizePolicy.setRetainSizeWhenHidden( false );
     searchInfoLine->setSizePolicy( searchInfoLineSizePolicy );
     searchInfoLineDefaultPalette = searchInfoLine->palette();
 
     matchCaseButton = new QPushButton();
     matchCaseButton->setToolTip( "Match case" );
-    matchCaseButton->setIcon( QIcon( ":/images/case48.png" ) );
+    matchCaseButton->setIcon( QIcon( ":/images/icons8-font-size-16.png" ) );
     matchCaseButton->setCheckable( true );
     matchCaseButton->setFocusPolicy( Qt::NoFocus );
 
@@ -802,7 +804,11 @@ void CrawlerWidget::setup()
     useRegexpButton->setCheckable( true );
     useRegexpButton->setFocusPolicy( Qt::NoFocus );
 
-    searchRefreshCheck = new QCheckBox( "Auto-&refresh" );
+    searchRefreshButton = new QPushButton();
+    searchRefreshButton->setToolTip( "Auto-refresh" );
+    searchRefreshButton->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
+    searchRefreshButton->setCheckable( true );
+    searchRefreshButton->setFocusPolicy( Qt::NoFocus );
 
     // Construct the Search line
     searchLabel = new QLabel( tr( "&Text: " ) );
@@ -819,6 +825,7 @@ void CrawlerWidget::setup()
     setFocusProxy( searchLineEdit );
 
     searchButton = new QToolButton();
+    searchButton->setIcon( QIcon( ":/images/icons8-search-16.png" ) );
     searchButton->setText( tr( "&Search" ) );
     searchButton->setAutoRaise( true );
 
@@ -826,28 +833,26 @@ void CrawlerWidget::setup()
     stopButton->setIcon( QIcon( ":/images/stop14.png" ) );
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
+    stopButton->setVisible( false );
 
     auto* searchLineLayout = new QHBoxLayout;
+    searchLineLayout->addWidget( visibilityBox );
     searchLineLayout->addWidget( matchCaseButton );
     searchLineLayout->addWidget( useRegexpButton );
+
     //searchLineLayout->addWidget( searchLabel );
     searchLineLayout->addWidget( searchLineEdit );
     searchLineLayout->addWidget( searchButton );
     searchLineLayout->addWidget( stopButton );
+    searchLineLayout->addWidget( searchRefreshButton );
+    searchLineLayout->addWidget( searchInfoLine );
     searchLineLayout->setContentsMargins( 6, 0, 6, 0 );
     stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
     searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
-    auto* searchInfoLineLayout = new QHBoxLayout;
-    searchInfoLineLayout->addWidget( visibilityBox );
-    searchInfoLineLayout->addWidget( searchInfoLine );
-
-    searchInfoLineLayout->addWidget( searchRefreshCheck );
-
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout( searchLineLayout );
-    bottomMainLayout->addLayout( searchInfoLineLayout );
     bottomMainLayout->addWidget( filteredView );
     bottomMainLayout->setContentsMargins( 2, 1, 2, 1 );
     bottomWindow->setLayout( bottomMainLayout );
@@ -857,10 +862,9 @@ void CrawlerWidget::setup()
 
     // Default search checkboxes
     auto& config = Configuration::get();
-    searchRefreshCheck->setCheckState( config.isSearchAutoRefreshDefault() ? Qt::Checked
-                                                                           : Qt::Unchecked );
+    searchRefreshButton->setChecked( config.isSearchAutoRefreshDefault() );
     // Manually call the handler as it is not called when changing the state programmatically
-    searchRefreshChangedHandler( searchRefreshCheck->checkState() );
+    searchRefreshChangedHandler( searchRefreshButton->isChecked() );
     matchCaseButton->setChecked( config.isSearchIgnoreCaseDefault() ? false : true );
 
     useRegexpButton->setChecked( config.mainRegexpType() == ExtendedRegexp );
@@ -935,12 +939,12 @@ void CrawlerWidget::setup()
     connect( logData_, &LogData::fileChanged, this, &CrawlerWidget::fileChangedHandler );
 
     // Search auto-refresh
-    connect( searchRefreshCheck, &QCheckBox::stateChanged, this,
+    connect( searchRefreshButton, &QPushButton::toggled, this,
              &CrawlerWidget::searchRefreshChangedHandler );
 
     // Advise the parent the checkboxes have been changed
     // (for maintaining default config)
-    connect( searchRefreshCheck, &QCheckBox::stateChanged, this,
+    connect( searchRefreshButton, &QPushButton::toggled, this,
              &CrawlerWidget::searchRefreshChanged );
     connect( matchCaseButton, &QPushButton::toggled, this, &CrawlerWidget::matchCaseChanged );
 
@@ -1000,6 +1004,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         if ( regexp.isValid() ) {
             // Activate the stop button
             stopButton->setEnabled( true );
+            stopButton->show();
+            searchButton->hide();
             // Start a new asynchronous search
             logFilteredData_->runSearch( regexp, searchStartLine_, searchEndLine_ );
             // Accept auto-refresh of the search
@@ -1053,18 +1059,14 @@ void CrawlerWidget::printSearchInfoMessage( LinesCount nbMatches )
         // Blank text is fine
         break;
     case SearchState::Static:
-        text = tr( "%1 match%2 found." )
-                   .arg( nbMatches.get() )
-                   .arg( nbMatches.get() > 1 ? "es" : "" );
-        break;
     case SearchState::Autorefreshing:
-        text = tr( "%1 match%2 found. Search is auto-refreshing..." )
+        text = tr( "%1 match%2 found." )
                    .arg( nbMatches.get() )
                    .arg( nbMatches.get() > 1 ? "es" : "" );
         break;
     case SearchState::FileTruncated:
     case SearchState::TruncatedAutorefreshing:
-        text = tr( "File truncated on disk, previous search results are not valid anymore." );
+        text = tr( "File truncated on disk" );
         break;
     }
 

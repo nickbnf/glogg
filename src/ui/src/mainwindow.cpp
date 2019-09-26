@@ -138,8 +138,8 @@ MainWindow::MainWindow() :
             this, SLOT( handleLoadingFinished( LoadingStatus ) ) );
 
     // Register for checkbox changes
-    signalMux_.connect( SIGNAL( searchRefreshChanged( int ) ),
-            this, SLOT( handleSearchRefreshChanged( int ) ) );
+    signalMux_.connect( SIGNAL( searchRefreshChanged( bool ) ),
+            this, SLOT( handleSearchRefreshChanged( bool ) ) );
     signalMux_.connect( SIGNAL( matchCaseChanged( bool ) ),
             this, SLOT( handleMatchCaseChanged( bool ) ) );
 
@@ -353,7 +353,7 @@ void MainWindow::createActions()
              this, &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr("&Follow File"), this );
-    followAction->setIcon( QIcon( ":/images/follow14.png" ) );
+    followAction->setIcon( QIcon( ":/images/icons8-database-backup-16.png" ) );
 
     followAction->setShortcuts(QList<QKeySequence>()
                                << QKeySequence(Qt::Key_F)
@@ -676,15 +676,16 @@ void MainWindow::about()
 {
     QMessageBox::about(this, tr("About klogg"),
             tr("<h2>klogg " GLOGG_VERSION "</h2>"
-                "<p>A fast, advanced log explorer."
+                "<p>A fast, advanced log explorer.</p>"
 #ifdef GLOGG_COMMIT
-                "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT
+                "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT "</p>"
 #endif
                 "<p><a href=\"https://github.com/variar/klogg\">https://github.com/variar/klogg</a></p>"
                 "<p>This is fork of glogg</p>"
                 "<p><a href=\"http://glogg.bonnefon.org/\">http://glogg.bonnefon.org/</a></p>"
-                "<p>Copyright &copy; 2019 Nicolas Bonnefon, Anton Filimonov and other contributors"
-                "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later)." ) );
+                "<p>Using icons form <a href=\"https://icons8.com\">icons8.com</a> project</p>"
+                "<p>Copyright &copy; 2019 Nicolas Bonnefon, Anton Filimonov and other contributors</p>"
+                "<p>You may modify and redistribute the program under the terms of the GPL (version 3 or later).</p>" ) );
 }
 
 // Opens the 'About Qt' dialog box.
@@ -795,10 +796,10 @@ memory to hold the index for this file. The file will now be closed." );
     // mainTabWidget_.setEnabled( true );
 }
 
-void MainWindow::handleSearchRefreshChanged( int state )
+void MainWindow::handleSearchRefreshChanged( bool isRefreshing )
 {
     auto& config = Configuration::get();
-    config.setSearchAutoRefreshDefault( state == Qt::Checked );
+    config.setSearchAutoRefreshDefault( isRefreshing );
 }
 
 void MainWindow::handleMatchCaseChanged( bool matchCase )

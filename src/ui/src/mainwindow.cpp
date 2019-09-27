@@ -63,6 +63,7 @@
 #include <QUrl>
 #include <QWindow>
 #include <QTemporaryFile>
+#include <QDesktopServices>
 
 #include "log.h"
 
@@ -326,6 +327,21 @@ void MainWindow::createActions()
     connect( clearLogAction, &QAction::triggered,
              [this](auto){ this->clearLog(); });
 
+    openContainingFolderAction = new QAction(tr("Open containing folder"), this);
+    openContainingFolderAction->setStatusTip(tr("Open folder containing current file"));
+    connect( openContainingFolderAction, &QAction::triggered,
+             [this](auto){ this->openContainingFolder(); });
+
+    openInEditorAction = new QAction(tr("Open in editor"), this);
+    openInEditorAction->setStatusTip(tr("Open current file in default editor"));
+    connect( openInEditorAction, &QAction::triggered,
+             [this](auto){ this->openInEditor(); });
+
+    copyPathToClipboardAction = new QAction(tr("Copy full path"), this);
+    copyPathToClipboardAction->setStatusTip(tr("Copy full path for file to clipboard"));
+    connect( copyPathToClipboardAction, &QAction::triggered,
+             [this](auto){ this->copyFullPath(); });
+
     openClipboardAction = new QAction(tr("Open from clipboard"), this);
     openClipboardAction->setStatusTip(tr("Open clipboard as log file"));
     openClipboardAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Paste ) );
@@ -433,6 +449,10 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction( findAction );
     editMenu->addSeparator();
+    editMenu->addAction( copyPathToClipboardAction );
+    editMenu->addAction( openContainingFolderAction );
+    editMenu->addSeparator();
+    editMenu->addAction( openInEditorAction );
     editMenu->addAction( clearLogAction );
     editMenu->setEnabled( false );
 
@@ -621,6 +641,27 @@ void MainWindow::clearLog()
     if ( QMessageBox::question( this, "klogg - clear file", QString( "Clear file %1?" ).arg( current_file ) ) == QMessageBox::Yes ) {
         QFile::resize( current_file, 0 );
     }
+}
+
+void MainWindow::copyFullPath()
+{
+    const auto current_file = session_.getFilename( currentCrawlerWidget() );
+    QApplication::clipboard()->setText( QDir::toNativeSeparators( current_file ) );
+}
+
+
+void MainWindow::openContainingFolder()
+{
+    const auto& current_file = session_.getFilename( currentCrawlerWidget() );
+    const auto& dir = QFileInfo( current_file ).absolutePath();
+    QDesktopServices::openUrl( QUrl( QDir::toNativeSeparators( dir ) ) );
+}
+
+
+void MainWindow::openInEditor()
+{
+    const auto& current_file = session_.getFilename( currentCrawlerWidget() );
+    QDesktopServices::openUrl( QUrl( QDir::toNativeSeparators( current_file ) ) );
 }
 
 void MainWindow::onClipboardDataChanged()

@@ -107,6 +107,9 @@ class MainWindow : public QMainWindow
     void copy();
     void find();
     void clearLog();
+    void copyFullPath();
+    void openContainingFolder();
+    void openInEditor();
     void openClipboard();
     void highlighters();
     void options();
@@ -220,6 +223,9 @@ class MainWindow : public QMainWindow
     QAction *selectAllAction;
     QAction *findAction;
     QAction *clearLogAction;
+    QAction *copyPathToClipboardAction;
+    QAction *openContainingFolderAction;
+    QAction *openInEditorAction;
     QAction *openClipboardAction;
     QAction *overviewVisibleAction;
     QAction *lineNumbersVisibleInMainAction;

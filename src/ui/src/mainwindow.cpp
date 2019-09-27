@@ -222,7 +222,7 @@ void MainWindow::reloadSession()
 
         assert( crawler_widget );
 
-        mainTabWidget_.addTab( crawler_widget, strippedName( file_name ) );
+        mainTabWidget_.addCrawler( crawler_widget, file_name );
     }
 
     if ( current_file_index >= 0 )
@@ -810,15 +810,15 @@ void MainWindow::handleMatchCaseChanged( bool matchCase )
 
 void MainWindow::closeTab( int index )
 {
-    auto widget = dynamic_cast<CrawlerWidget*>(
+    auto widget = qobject_cast<CrawlerWidget*>(
             mainTabWidget_.widget( index ) );
 
     assert( widget );
 
     widget->stopLoading();
-    mainTabWidget_.removeTab( index );
+    mainTabWidget_.removeCrawler( index );
     session_.close( widget );
-    delete widget;
+    widget->deleteLater();
 }
 
 void MainWindow::currentTabChanged( int index )
@@ -1033,8 +1033,8 @@ bool MainWindow::loadFile( const QString& fileName )
         // tab during loading. (maybe FIXME)
         //mainTabWidget_.setEnabled( false );
 
-        int index = mainTabWidget_.addTab(
-                crawler_widget, strippedName( fileName ) );
+        int index = mainTabWidget_.addCrawler(
+                crawler_widget, fileName );
 
         // Setting the new tab, the user will see a blank page for the duration
         // of the loading, with no way to switch to another tab
@@ -1066,7 +1066,7 @@ QString MainWindow::strippedName( const QString& fullFileName ) const
 // Return the currently active CrawlerWidget, or NULL if none
 CrawlerWidget* MainWindow::currentCrawlerWidget() const
 {
-    auto current = dynamic_cast<CrawlerWidget*>(
+    auto current = qobject_cast<CrawlerWidget*>(
             mainTabWidget_.currentWidget() );
 
     return current;

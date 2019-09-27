@@ -22,6 +22,11 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMenu>
+#include <QFileInfo>
+#include <QDir>
+#include <QApplication>
+#include <QClipboard>
+#include <QDesktopServices>
 
 #include "crawlerwidget.h"
 
@@ -63,40 +68,27 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
              &TabbedCrawlerWidget::showContextMenu );
 }
 
-// I know hiding non-virtual functions from the base class is bad form
-// and I do it here out of pure laziness: I don't want to encapsulate
-// QTabBar with all signals and all just to implement this very simple logic.
-// Maybe one day that should be done better...
-
-int TabbedCrawlerWidget::addTab( QWidget* page, const QString& label )
+void TabbedCrawlerWidget::addTabBarItem(int index, const QString &file_name)
 {
-    int index = QTabWidget::addTab( page, label );
+    const auto tab_label = QFileInfo( file_name ).fileName();
 
-    if ( auto crawler = dynamic_cast<CrawlerWidget*>( page ) ) {
-        // Mmmmhhhh... new Qt5 signal syntax create tight coupling between
-        // us and the sender, baaaaad....
-
-        // Listen for a changing data status:
-        connect( crawler, &CrawlerWidget::dataStatusChanged,
-                 [this, index]( DataStatus status ) { setTabDataStatus( index, status ); } );
-    }
+    setTabText( index, tab_label );
+    setTabToolTip( index, QDir::toNativeSeparators( file_name ) );
 
     // Display the icon
-    QLabel* icon_label = new QLabel();
+    auto icon_label = std::make_unique<QLabel>();
     icon_label->setPixmap( olddata_icon_.pixmap( 11, 12 ) );
     icon_label->setAlignment( Qt::AlignCenter );
-    myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label );
+    myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label.release() );
 
     LOG( logDEBUG ) << "addTab, count = " << count();
     LOG( logDEBUG ) << "width = " << olddata_icon_.pixmap( 11, 12 ).devicePixelRatio();
 
     if ( count() > 1 )
         myTabBar_.show();
-
-    return index;
 }
 
-void TabbedCrawlerWidget::removeTab( int index )
+void TabbedCrawlerWidget::removeCrawler( int index )
 {
     QTabWidget::removeTab( index );
 
@@ -129,6 +121,9 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
         auto closeLeft = menu.addAction( "Close to the left" );
         auto closeRight = menu.addAction( "Close to the right" );
         auto closeAll = menu.addAction( "Close all" );
+        menu.addSeparator();
+        auto copyFullPath = menu.addAction( "Copy full path" );
+        auto openContainingFolder = menu.addAction( "Open containing folder" );
 
         connect( closeThis, &QAction::triggered, [tab, this] { emit tabCloseRequested( tab ); } );
 
@@ -167,6 +162,15 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
         else if ( tab == count() - 1 ) {
             closeRight->setDisabled( true );
         }
+
+        connect( copyFullPath, &QAction::triggered, [this, tab] {
+           QApplication::clipboard()->setText( tabToolTip( tab ) );
+        } );
+
+        connect( openContainingFolder, &QAction::triggered, [this, tab] {
+           const auto& dir = QFileInfo( tabToolTip( tab ) ).absolutePath();
+           QDesktopServices::openUrl( QUrl( dir ) );
+        } );
 
         menu.exec( myTabBar_.mapToGlobal( point ) );
     }
@@ -213,7 +217,7 @@ void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 {
     LOG( logDEBUG ) << "TabbedCrawlerWidget::setTabDataStatus " << index;
 
-    auto* icon_label = dynamic_cast<QLabel*>( myTabBar_.tabButton( index, QTabBar::RightSide ) );
+    auto* icon_label = qobject_cast<QLabel*>( myTabBar_.tabButton( index, QTabBar::RightSide ) );
 
     if ( icon_label ) {
         const QIcon* icon;

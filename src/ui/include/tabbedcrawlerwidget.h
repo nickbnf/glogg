@@ -35,11 +35,20 @@ class TabbedCrawlerWidget : public QTabWidget
     public:
       TabbedCrawlerWidget();
 
-      // "Overridden" addTab/removeTab that automatically
-      // show/hide the tab bar
-      // The tab is created with the 'old data' icon.
-      int addTab( QWidget* page, const QString& label );
-      void removeTab( int index );
+      template<typename T>
+      int addCrawler( T* crawler, const QString& file_name )
+      {
+          const auto index = QTabWidget::addTab( crawler, QString::null);
+
+          connect( crawler, &T::dataStatusChanged,
+                   [this, index]( DataStatus status ) { setTabDataStatus( index, status ); } );
+
+          addTabBarItem( index, file_name );
+
+          return index;
+      }
+
+      void removeCrawler( int index );
 
       // Set the data status (icon) for the tab number 'index'
       void setTabDataStatus( int index, DataStatus status );
@@ -47,6 +56,9 @@ class TabbedCrawlerWidget : public QTabWidget
     protected:
       void keyPressEvent( QKeyEvent* event ) override;
       void mouseReleaseEvent( QMouseEvent *event) override;
+
+    private:
+      void addTabBarItem( int index, const QString& file_name);
 
     private slots:
       void showContextMenu(const QPoint &);

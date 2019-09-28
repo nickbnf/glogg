@@ -47,6 +47,7 @@
 #include <chrono>
 
 #include <QApplication>
+#include <QCompleter>
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
@@ -54,7 +55,7 @@
 #include <QLineEdit>
 #include <QListView>
 #include <QStandardItemModel>
-#include <Qt>
+#include <QStringListModel>
 
 #include "crawlerwidget.h"
 
@@ -74,8 +75,8 @@ class CrawlerWidgetContext : public ViewContextInterface {
     // Construct from the stored string representation
     explicit CrawlerWidgetContext( const QString& string );
     // Construct from the value passsed
-    CrawlerWidgetContext( QList<int> sizes, bool ignore_case, bool auto_refresh, bool follow_file, bool use_regexp,
-                          QList<LineNumber> markedLines )
+    CrawlerWidgetContext( QList<int> sizes, bool ignore_case, bool auto_refresh, bool follow_file,
+                          bool use_regexp, QList<LineNumber> markedLines )
         : sizes_( sizes )
         , ignore_case_( ignore_case )
         , auto_refresh_( auto_refresh )
@@ -320,11 +321,8 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
 std::shared_ptr<const ViewContextInterface> CrawlerWidget::doGetViewContext() const
 {
     auto context = std::make_shared<const CrawlerWidgetContext>(
-        sizes(),
-        ( !matchCaseButton->isChecked() ),
-        searchRefreshButton->isChecked(),
-        logMainView->isFollowEnabled(),
-        useRegexpButton->isChecked(),
+        sizes(), ( !matchCaseButton->isChecked() ), searchRefreshButton->isChecked(),
+        logMainView->isFollowEnabled(), useRegexpButton->isChecked(),
         logFilteredData_->getMarks() );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
@@ -338,7 +336,7 @@ void CrawlerWidget::startNewSearch()
 {
     // Record the search line in the recent list
     // (reload the list first in case another glogg changed it)
-    auto &searches = SavedSearches::getSynced();
+    auto& searches = SavedSearches::getSynced();
     savedSearches_->addRecent( searchLineEdit->currentText() );
     searches.save();
 
@@ -725,7 +723,8 @@ void CrawlerWidget::setup()
     visibilityModel_ = new QStandardItemModel( this );
 
     QStandardItem* marksAndMatchesItem = new QStandardItem( tr( "Marks and matches" ) );
-    marksAndMatchesItem->setData( QVariant::fromValue( VisibilityFlags::Marks | VisibilityFlags::Matches ) );
+    marksAndMatchesItem->setData(
+        QVariant::fromValue( VisibilityFlags::Marks | VisibilityFlags::Matches ) );
     visibilityModel_->appendRow( marksAndMatchesItem );
 
     QStandardItem* marksItem = new QStandardItem( tr( "Marks" ) );
@@ -733,12 +732,13 @@ void CrawlerWidget::setup()
     visibilityModel_->appendRow( marksItem );
 
     QStandardItem* matchesItem = new QStandardItem( tr( "Matches" ) );
-    matchesItem->setData( QVariant::fromValue<FilteredView::Visibility>( VisibilityFlags::Matches ) );
+    matchesItem->setData(
+        QVariant::fromValue<FilteredView::Visibility>( VisibilityFlags::Matches ) );
     visibilityModel_->appendRow( matchesItem );
 
     auto* visibilityView = new QListView( this );
     visibilityView->setMovement( QListView::Static );
-    //visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
+    // visibilityView->setMinimumWidth( 170 ); // Only needed with custom style-sheet
 
     visibilityBox = new QComboBox();
     visibilityBox->setModel( visibilityModel_ );
@@ -797,9 +797,11 @@ void CrawlerWidget::setup()
 
     // Construct the Search line
     searchLabel = new QLabel( tr( "&Text: " ) );
+    searchLineCompleter = new QCompleter( savedSearches_->recentSearches(), this ) ;
+    searchLineCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     searchLineEdit = new QComboBox;
     searchLineEdit->setEditable( true );
-    searchLineEdit->setCompleter( nullptr );
+    searchLineEdit->setCompleter( searchLineCompleter );
     searchLineEdit->addItems( savedSearches_->recentSearches() );
     searchLineEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     searchLineEdit->setSizeAdjustPolicy( QComboBox::AdjustToMinimumContentsLengthWithIcon );
@@ -825,7 +827,7 @@ void CrawlerWidget::setup()
     searchLineLayout->addWidget( matchCaseButton );
     searchLineLayout->addWidget( useRegexpButton );
 
-    //searchLineLayout->addWidget( searchLabel );
+    // searchLineLayout->addWidget( searchLabel );
     searchLineLayout->addWidget( searchLineEdit );
     searchLineLayout->addWidget( searchButton );
     searchLineLayout->addWidget( stopButton );
@@ -1029,9 +1031,14 @@ void CrawlerWidget::updateSearchCombo()
 {
     const QString text = searchLineEdit->lineEdit()->text();
     searchLineEdit->clear();
-    searchLineEdit->addItems( savedSearches_->recentSearches() );
+
+    auto search_history = savedSearches_->recentSearches();
+
+    searchLineEdit->addItems( search_history );
     // In case we had something that wasn't added to the list (blank...):
     searchLineEdit->lineEdit()->setText( text );
+
+    searchLineCompleter->setModel( new QStringListModel( search_history, searchLineCompleter ) );
 }
 
 // Print the search info message.
@@ -1057,7 +1064,7 @@ void CrawlerWidget::printSearchInfoMessage( LinesCount nbMatches )
 
     searchInfoLine->setPalette( searchInfoLineDefaultPalette );
     searchInfoLine->setText( text );
-    searchInfoLine->setVisible( ! text.isEmpty() );
+    searchInfoLine->setVisible( !text.isEmpty() );
 }
 
 // Change the data status and, if needed, advise upstream.

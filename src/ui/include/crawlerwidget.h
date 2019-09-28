@@ -40,41 +40,42 @@
 #ifndef CRAWLERWIDGET_H
 #define CRAWLERWIDGET_H
 
-#include <QSplitter>
-#include <QComboBox>
-#include <QPushButton>
 #include <QCheckBox>
-#include <QToolButton>
-#include <QVBoxLayout>
+#include <QComboBox>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
+#include <QSplitter>
+#include <QToolButton>
+#include <QVBoxLayout>
 
-#include "logmainview.h"
-#include "filteredview.h"
+#include "data/loadingstatus.h"
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
-#include "viewinterface.h"
-#include "signalmux.h"
+#include "filteredview.h"
+#include "logmainview.h"
 #include "overview.h"
-#include "data/loadingstatus.h"
+#include "signalmux.h"
+#include "viewinterface.h"
 
 class InfoLine;
 class QuickFindPattern;
 class SavedSearches;
 class QStandardItemModel;
+class QCompleter;
 class OverviewWidget;
 
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
 // lines and various buttons.
 class CrawlerWidget : public QSplitter,
-    public QuickFindMuxSelectorInterface, public ViewInterface,
-    public MuxableDocumentInterface
-{
-  Q_OBJECT
+                      public QuickFindMuxSelectorInterface,
+                      public ViewInterface,
+                      public MuxableDocumentInterface {
+    Q_OBJECT
 
   public:
-    CrawlerWidget( QWidget *parent=nullptr );
+    CrawlerWidget( QWidget* parent = nullptr );
 
     // Get the line number of the first line displayed.
     LineNumber getTopLine() const;
@@ -127,16 +128,12 @@ class CrawlerWidget : public QSplitter,
 
   protected:
     // Implementation of the ViewInterface functions
-    void doSetData(
-            std::shared_ptr<LogData> log_data,
-            std::shared_ptr<LogFilteredData> filtered_data ) override;
-    void doSetQuickFindPattern(
-            std::shared_ptr<QuickFindPattern> qfp ) override;
-    void doSetSavedSearches(
-            SavedSearches* saved_searches ) override;
+    void doSetData( std::shared_ptr<LogData> log_data,
+                    std::shared_ptr<LogFilteredData> filtered_data ) override;
+    void doSetQuickFindPattern( std::shared_ptr<QuickFindPattern> qfp ) override;
+    void doSetSavedSearches( SavedSearches* saved_searches ) override;
     void doSetViewContext( const QString& view_context ) override;
-    std::shared_ptr<const ViewContextInterface>
-        doGetViewContext( void ) const override;
+    std::shared_ptr<const ViewContextInterface> doGetViewContext( void ) const override;
 
     // Implementation of the mux selector interface
     // (for dispatching QuickFind to the right widget)
@@ -183,16 +180,16 @@ class CrawlerWidget : public QSplitter,
     // QuickFind is being closed.
     void exitingQuickFind();
     // Called when new data must be displayed in the filtered window.
-    void updateFilteredView(LinesCount nbMatches, int progress, LineNumber initialPosition );
+    void updateFilteredView( LinesCount nbMatches, int progress, LineNumber initialPosition );
     // Called when a new line has been selected in the filtered view,
     // to instruct the main view to jump to the matching line.
-    void jumpToMatchingLine(LineNumber filteredLineNb );
+    void jumpToMatchingLine( LineNumber filteredLineNb );
     // Called when the main view is on a new line number
-    void updateLineNumberHandler(LineNumber line );
+    void updateLineNumberHandler( LineNumber line );
     // Mark a line that has been clicked on the main (top) view.
-    void markLineFromMain(LineNumber line );
+    void markLineFromMain( LineNumber line );
     // Mark a line that has been clicked on the filtered (bottom) view.
-    void markLineFromFiltered(LineNumber line );
+    void markLineFromFiltered( LineNumber line );
 
     void loadingFinishedHandler( LoadingStatus status );
     // Manages the info lines to inform the user the file has changed.
@@ -214,7 +211,7 @@ class CrawlerWidget : public QSplitter,
     void addToSearch( const QString& string );
 
     // Called when a match is hovered on in the filtered view
-    void mouseHoveredOverMatch(LineNumber line );
+    void mouseHoveredOverMatch( LineNumber line );
 
     // Called when there was activity in the views
     void activityDetected();
@@ -235,7 +232,11 @@ class CrawlerWidget : public QSplitter,
             TruncatedAutorefreshing,
         };
 
-        SearchState() { state_ = NoSearch; autoRefreshRequested_ = false; }
+        SearchState()
+        {
+            state_ = NoSearch;
+            autoRefreshRequested_ = false;
+        }
 
         // Reset the state (no search active)
         void resetState();
@@ -251,12 +252,19 @@ class CrawlerWidget : public QSplitter,
         void startSearch();
 
         // Get the state in order to display the proper message
-        State getState() const { return state_; }
+        State getState() const
+        {
+            return state_;
+        }
         // Is auto-refresh allowed
         bool isAutorefreshAllowed() const
-        { return ( state_ == Autorefreshing || state_ == TruncatedAutorefreshing ); }
+        {
+            return ( state_ == Autorefreshing || state_ == TruncatedAutorefreshing );
+        }
         bool isFileTruncated() const
-        { return ( state_ == FileTruncated || state_ == TruncatedAutorefreshing ); }
+        {
+            return ( state_ == FileTruncated || state_ == TruncatedAutorefreshing );
+        }
 
       private:
         State state_;
@@ -268,7 +276,7 @@ class CrawlerWidget : public QSplitter,
     void replaceCurrentSearch( const QString& searchText );
     void updateSearchCombo();
     AbstractLogView* activeView() const;
-    void printSearchInfoMessage(LinesCount nbMatches = 0_lcount );
+    void printSearchInfoMessage( LinesCount nbMatches = 0_lcount );
     void changeDataStatus( DataStatus status );
     void updateEncoding();
     void changeTopViewSize( int32_t delta );
@@ -276,40 +284,41 @@ class CrawlerWidget : public QSplitter,
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;
 
-    LogMainView*    logMainView;
-    QWidget*        bottomWindow;
-    QLabel*         searchLabel;
-    QComboBox*      searchLineEdit;
-    QToolButton*    searchButton;
-    QToolButton*    stopButton;
-    FilteredView*   filteredView;
-    QComboBox*      visibilityBox;
-    InfoLine*       searchInfoLine;
-    QPushButton*    matchCaseButton;
-    QPushButton*    useRegexpButton;
-    QPushButton*    searchRefreshButton;
+    LogMainView* logMainView;
+    QWidget* bottomWindow;
+    QLabel* searchLabel;
+    QComboBox* searchLineEdit;
+    QCompleter* searchLineCompleter;
+    QToolButton* searchButton;
+    QToolButton* stopButton;
+    FilteredView* filteredView;
+    QComboBox* visibilityBox;
+    InfoLine* searchInfoLine;
+    QPushButton* matchCaseButton;
+    QPushButton* useRegexpButton;
+    QPushButton* searchRefreshButton;
     OverviewWidget* overviewWidget_;
 
     // Default palette to be remembered
-    QPalette        searchInfoLineDefaultPalette;
+    QPalette searchInfoLineDefaultPalette;
 
     SavedSearches* savedSearches_;
 
     // Reference to the QuickFind Pattern (not owned)
     std::shared_ptr<QuickFindPattern> quickFindPattern_;
 
-    LogData*        logData_;
+    LogData* logData_;
     LogFilteredData* logFilteredData_;
 
-    qint64          logFileSize_;
+    qint64 logFileSize_;
 
-    QWidget*        qfSavedFocus_;
+    QWidget* qfSavedFocus_;
 
     // Search state (for auto-refresh and truncation)
-    SearchState     searchState_;
+    SearchState searchState_;
 
     // Matches overview
-    Overview        overview_;
+    Overview overview_;
 
     // Model for the visibility selector
     QStandardItemModel* visibilityModel_;
@@ -322,23 +331,23 @@ class CrawlerWidget : public QSplitter,
 
     // Are we loading something?
     // Set to false when we receive a completion message from the LogData
-    bool            loadingInProgress_;
+    bool loadingInProgress_;
 
     // Is it not the first time we are loading something?
-    bool            firstLoadDone_;
+    bool firstLoadDone_;
 
     // Saved marked lines to be restored on first load
     std::vector<LineNumber> savedMarkedLines_;
 
     // Current number of matches
-    LinesCount        nbMatches_;
+    LinesCount nbMatches_;
 
     // the current dataStatus (whether we have new, not seen, data)
-    DataStatus      dataStatus_;
+    DataStatus dataStatus_;
 
     // Current encoding setting;
-    Encoding        encodingSetting_ = Encoding::AUTO;
-    QString         encoding_text_;
+    Encoding encodingSetting_ = Encoding::AUTO;
+    QString encoding_text_;
 };
 
 #endif

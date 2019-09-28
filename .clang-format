@@ -8,9 +8,10 @@ IndentWidth: 4
 BreakBeforeBraces: Linux
 
 # Glogg-specific options
+PointerAlignment: Left
 SpacesInParentheses: true
 SpacesInSquareBrackets: true
-DerivePointerAlignment: true
+# DerivePointerAlignment: true
 AccessModifierOffset: -2
 
 BreakBeforeBraces: Custom

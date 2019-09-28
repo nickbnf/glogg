@@ -98,7 +98,7 @@ class LogFilteredData : public AbstractLogData {
     LinesCount getNbMarks() const;
 
     LineType lineTypeByIndex( LineNumber index ) const;
-    LineType lineTypeByLine( LineNumber index ) const;
+    LineType lineTypeByLine( LineNumber lineNumber ) const;
 
     // Marks interface (delegated to a Marks object)
 

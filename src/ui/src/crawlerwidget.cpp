@@ -725,23 +725,14 @@ void CrawlerWidget::setup()
     visibilityModel_ = new QStandardItemModel( this );
 
     QStandardItem* marksAndMatchesItem = new QStandardItem( tr( "Marks and matches" ) );
-    QPixmap marksAndMatchesPixmap( 16, 10 );
-    marksAndMatchesPixmap.fill( Qt::gray );
-    marksAndMatchesItem->setIcon( QIcon( marksAndMatchesPixmap ) );
     marksAndMatchesItem->setData( QVariant::fromValue( VisibilityFlags::Marks | VisibilityFlags::Matches ) );
     visibilityModel_->appendRow( marksAndMatchesItem );
 
     QStandardItem* marksItem = new QStandardItem( tr( "Marks" ) );
-    QPixmap marksPixmap( 16, 10 );
-    marksPixmap.fill( Qt::blue );
-    marksItem->setIcon( QIcon( marksPixmap ) );
     marksItem->setData( QVariant::fromValue<FilteredView::Visibility>( VisibilityFlags::Marks ) );
     visibilityModel_->appendRow( marksItem );
 
     QStandardItem* matchesItem = new QStandardItem( tr( "Matches" ) );
-    QPixmap matchesPixmap( 16, 10 );
-    matchesPixmap.fill( Qt::red );
-    matchesItem->setIcon( QIcon( matchesPixmap ) );
     matchesItem->setData( QVariant::fromValue<FilteredView::Visibility>( VisibilityFlags::Matches ) );
     visibilityModel_->appendRow( matchesItem );
 

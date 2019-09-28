@@ -1620,7 +1620,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     static const QBrush normalBulletBrush = QBrush( Qt::white );
     static const QBrush matchBulletBrush = QBrush( Qt::red );
     static const QBrush markBrush = QBrush( "dodgerblue" );
-    static const QBrush markedMatchBrush = QBrush( "maroon" );
+    static const QBrush markedMatchBrush = QBrush( "violet" );
 
     static const int SEPARATOR_WIDTH = 1;
     static const qreal BULLET_AREA_WIDTH = 11;

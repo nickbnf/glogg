@@ -205,7 +205,7 @@ LogFilteredData::LineType LogFilteredData::lineTypeByLine( LineNumber lineNumber
     // check the cache
     auto it = std::lower_bound(
         begin( filteredItemsCache_ ), end( filteredItemsCache_ ), lineNumber,
-        [](const FilteredItem& item, LineNumber lineNumber) { return item.lineNumber() < lineNumber; }
+        [](const FilteredItem& item, LineNumber line) { return item.lineNumber() < line; }
     );
     if ( it != end( filteredItemsCache_ ) && it->lineNumber() == lineNumber ) {
         line_type = it->type();

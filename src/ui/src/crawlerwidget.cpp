@@ -442,10 +442,7 @@ void CrawlerWidget::updateLineNumberHandler( LineNumber line )
 void CrawlerWidget::markLineFromMain( LineNumber line )
 {
     if ( line < logData_->getNbLine() ) {
-        if ( logFilteredData_->isLineMarked( line ) )
-            logFilteredData_->deleteMark( line );
-        else
-            logFilteredData_->addMark( line );
+        logFilteredData_->toggleMark( line );
 
         // Recompute the content of both window.
         filteredView->updateData();
@@ -463,10 +460,7 @@ void CrawlerWidget::markLineFromFiltered( LineNumber line )
 {
     if ( line < logFilteredData_->getNbLine() ) {
         const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
-        if ( logFilteredData_->isLineMarked( line_in_file ) )
-            logFilteredData_->deleteMark( line_in_file );
-        else
-            logFilteredData_->addMark( line_in_file );
+        logFilteredData_->toggleMark( line_in_file );
 
         // Recompute the content of both window.
         filteredView->updateData();
@@ -648,8 +642,7 @@ void CrawlerWidget::searchTextChangeHandler( QString )
 void CrawlerWidget::changeFilteredViewVisibility( int index )
 {
     QStandardItem* item = visibilityModel_->item( index );
-    FilteredView::Visibility visibility
-        = static_cast<FilteredView::Visibility>( item->data().toInt() );
+    auto visibility = item->data().value<FilteredView::Visibility>();
 
     filteredView->setVisibility( visibility );
 
@@ -728,27 +721,28 @@ void CrawlerWidget::setup()
     logMainView->useNewFiltering( logFilteredData_ );
 
     // Construct the visibility button
+    using VisibilityFlags = LogFilteredData::VisibilityFlags;
     visibilityModel_ = new QStandardItemModel( this );
 
     QStandardItem* marksAndMatchesItem = new QStandardItem( tr( "Marks and matches" ) );
     QPixmap marksAndMatchesPixmap( 16, 10 );
     marksAndMatchesPixmap.fill( Qt::gray );
     marksAndMatchesItem->setIcon( QIcon( marksAndMatchesPixmap ) );
-    marksAndMatchesItem->setData( QVariant::fromValue( FilteredView::Visibility::MarksAndMatches ) );
+    marksAndMatchesItem->setData( QVariant::fromValue( VisibilityFlags::Marks | VisibilityFlags::Matches ) );
     visibilityModel_->appendRow( marksAndMatchesItem );
 
     QStandardItem* marksItem = new QStandardItem( tr( "Marks" ) );
     QPixmap marksPixmap( 16, 10 );
     marksPixmap.fill( Qt::blue );
     marksItem->setIcon( QIcon( marksPixmap ) );
-    marksItem->setData( QVariant::fromValue( FilteredView::Visibility::MarksOnly ) );
+    marksItem->setData( QVariant::fromValue<FilteredView::Visibility>( VisibilityFlags::Marks ) );
     visibilityModel_->appendRow( marksItem );
 
     QStandardItem* matchesItem = new QStandardItem( tr( "Matches" ) );
     QPixmap matchesPixmap( 16, 10 );
     matchesPixmap.fill( Qt::red );
     matchesItem->setIcon( QIcon( matchesPixmap ) );
-    matchesItem->setData( QVariant::fromValue( FilteredView::Visibility::MatchesOnly ) );
+    matchesItem->setData( QVariant::fromValue<FilteredView::Visibility>( VisibilityFlags::Matches ) );
     visibilityModel_->appendRow( matchesItem );
 
     auto* visibilityView = new QListView( this );

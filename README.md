@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg)
 [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg)
 [ ![Download](https://api.bintray.com/packages/variar/generic/klogg/images/download.svg) ](https://bintray.com/variar/generic/klogg/_latestVersion)
+[ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg)](https://chocolatey.org/packages/klogg)
+
 
 Latest continuous integration builds can be downloaded from releases:
 [windows](https://github.com/variar/klogg/releases/tag/continuous-win) |

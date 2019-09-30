@@ -46,7 +46,7 @@
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif // _WIN32
+#endif // Q_OS_WIN
 
 
 #include <QAction>
@@ -58,18 +58,16 @@
 #include <QClipboard>
 #include <QMessageBox>
 #include <QCloseEvent>
-#include <QDragEnterEvent>
 #include <QMimeData>
 #include <QUrl>
 #include <QWindow>
 #include <QTemporaryFile>
-#include <QDesktopServices>
 
 #include "log.h"
+#include "openfilehelper.h"
 
 #include "mainwindow.h"
 
-#include "sessioninfo.h"
 #include "recentfiles.h"
 #include "crawlerwidget.h"
 #include "highlightersdialog.h"
@@ -652,16 +650,12 @@ void MainWindow::copyFullPath()
 
 void MainWindow::openContainingFolder()
 {
-    const auto& current_file = session_.getFilename( currentCrawlerWidget() );
-    const auto& dir = QFileInfo( current_file ).absolutePath();
-    QDesktopServices::openUrl( QUrl( QDir::toNativeSeparators( dir ) ) );
+    showPathInFileExplorer( session_.getFilename( currentCrawlerWidget() ) );
 }
-
 
 void MainWindow::openInEditor()
 {
-    const auto& current_file = session_.getFilename( currentCrawlerWidget() );
-    QDesktopServices::openUrl( QUrl( QDir::toNativeSeparators( current_file ) ) );
+    openFileInDefaultApplication( session_.getFilename( currentCrawlerWidget() ) );
 }
 
 void MainWindow::onClipboardDataChanged()

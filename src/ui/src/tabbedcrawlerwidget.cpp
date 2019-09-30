@@ -19,18 +19,18 @@
 
 #include "tabbedcrawlerwidget.h"
 
+#include <QApplication>
+#include <QClipboard>
+#include <QDir>
+#include <QFileInfo>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMenu>
-#include <QFileInfo>
-#include <QDir>
-#include <QApplication>
-#include <QClipboard>
-#include <QDesktopServices>
 
 #include "crawlerwidget.h"
 
 #include "log.h"
+#include "openfilehelper.h"
 
 TabbedCrawlerWidget::TabbedCrawlerWidget()
     : QTabWidget()
@@ -68,7 +68,7 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
              &TabbedCrawlerWidget::showContextMenu );
 }
 
-void TabbedCrawlerWidget::addTabBarItem(int index, const QString &file_name)
+void TabbedCrawlerWidget::addTabBarItem( int index, const QString& file_name )
 {
     const auto tab_label = QFileInfo( file_name ).fileName();
 
@@ -163,14 +163,11 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
             closeRight->setDisabled( true );
         }
 
-        connect( copyFullPath, &QAction::triggered, [this, tab] {
-           QApplication::clipboard()->setText( tabToolTip( tab ) );
-        } );
+        connect( copyFullPath, &QAction::triggered,
+                 [this, tab] { QApplication::clipboard()->setText( tabToolTip( tab ) ); } );
 
-        connect( openContainingFolder, &QAction::triggered, [this, tab] {
-           const auto& dir = QFileInfo( tabToolTip( tab ) ).absolutePath();
-           QDesktopServices::openUrl( QUrl( dir ) );
-        } );
+        connect( openContainingFolder, &QAction::triggered,
+                 [this, tab] { showPathInFileExplorer( tabToolTip( tab ) ); } );
 
         menu.exec( myTabBar_.mapToGlobal( point ) );
     }

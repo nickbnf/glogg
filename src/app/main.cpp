@@ -115,6 +115,7 @@ int main( int argc, char* argv[] )
     bool load_session = false;
     bool multi_instance = false;
     bool log_to_file = false;
+    bool follow_file = false;
 
     auto logLevel = logWARNING;
     CLI::App options{ "Klogg -- fast log explorer" };
@@ -135,6 +136,8 @@ int main( int argc, char* argv[] )
                           "do not load the previous session (default when a file is passed)" );
 
         options.add_flag( "-l,--log", log_to_file, "save the log to a file" );
+
+        options.add_flag( "-f,--follow", follow_file, "follow initial opened files" );
 
         options.add_flag_function(
             "-d,--debug",
@@ -255,7 +258,7 @@ int main( int argc, char* argv[] )
     mw.show();
 
     for ( const auto& filename : filenames ) {
-        mw.loadInitialFile( filename );
+        mw.loadInitialFile( filename, follow_file );
     }
 
     mw.startBackgroundTasks();

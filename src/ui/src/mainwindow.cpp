@@ -226,15 +226,19 @@ void MainWindow::reloadSession()
 
     if ( current_file_index >= 0 )
         mainTabWidget_.setCurrentIndex( current_file_index );
+
 }
 
-void MainWindow::loadInitialFile( QString fileName )
+void MainWindow::loadInitialFile( QString fileName, bool followFile )
 {
     LOG(logDEBUG) << "loadInitialFile";
 
     // Is there a file passed as argument?
-    if ( !fileName.isEmpty() )
+    if ( !fileName.isEmpty() ) {
         loadFile( fileName );
+
+        followAction->setChecked(followFile);
+    }
 }
 
 void MainWindow::startBackgroundTasks()

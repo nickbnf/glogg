@@ -302,17 +302,15 @@ class CrawlerWidget : public QSplitter,
     // Default palette to be remembered
     QPalette searchInfoLineDefaultPalette;
 
-    SavedSearches* savedSearches_;
+    SavedSearches* savedSearches_ = nullptr;
 
     // Reference to the QuickFind Pattern (not owned)
     std::shared_ptr<QuickFindPattern> quickFindPattern_;
 
-    LogData* logData_;
-    LogFilteredData* logFilteredData_;
+    LogData* logData_ = nullptr;
+    LogFilteredData* logFilteredData_ = nullptr;
 
-    qint64 logFileSize_;
-
-    QWidget* qfSavedFocus_;
+    QWidget* qfSavedFocus_ = nullptr;
 
     // Search state (for auto-refresh and truncation)
     SearchState searchState_;
@@ -329,12 +327,12 @@ class CrawlerWidget : public QSplitter,
     LineNumber searchStartLine_;
     LineNumber searchEndLine_;
 
-    // Are we loading something?
-    // Set to false when we receive a completion message from the LogData
-    bool loadingInProgress_;
+    // Until we have received confirmation loading is finished, we
+    // should consider we are loading something.
+    bool loadingInProgress_ = true;
 
     // Is it not the first time we are loading something?
-    bool firstLoadDone_;
+    bool firstLoadDone_ = false;
 
     // Saved marked lines to be restored on first load
     std::vector<LineNumber> savedMarkedLines_;
@@ -343,7 +341,7 @@ class CrawlerWidget : public QSplitter,
     LinesCount nbMatches_;
 
     // the current dataStatus (whether we have new, not seen, data)
-    DataStatus dataStatus_;
+    DataStatus dataStatus_ = DataStatus::OLD_DATA;
 
     // Current encoding setting;
     Encoding encodingSetting_ = Encoding::AUTO;

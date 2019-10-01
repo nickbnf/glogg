@@ -137,21 +137,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
 // the data is attached.
 CrawlerWidget::CrawlerWidget( QWidget* parent )
     : QSplitter( parent )
-    , overview_()
 {
-    logData_ = nullptr;
-    logFilteredData_ = nullptr;
-
-    quickFindPattern_ = nullptr;
-    savedSearches_ = nullptr;
-    qfSavedFocus_ = nullptr;
-
-    // Until we have received confirmation loading is finished, we
-    // should consider we are loading something.
-    loadingInProgress_ = true;
-    // and it's the first time
-    firstLoadDone_ = false;
-    dataStatus_ = DataStatus::OLD_DATA;
 }
 
 // The top line is first one on the main display
@@ -797,8 +783,8 @@ void CrawlerWidget::setup()
 
     // Construct the Search line
     searchLabel = new QLabel( tr( "&Text: " ) );
-    searchLineCompleter = new QCompleter( savedSearches_->recentSearches(), this ) ;
-    searchLineCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    searchLineCompleter = new QCompleter( savedSearches_->recentSearches(), this );
+    searchLineCompleter->setCaseSensitivity( Qt::CaseInsensitive );
     searchLineEdit = new QComboBox;
     searchLineEdit->setEditable( true );
     searchLineEdit->setCompleter( searchLineCompleter );

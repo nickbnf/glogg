@@ -182,12 +182,14 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
 
     // Ctrl + tab
     if ( ( mod == Qt::ControlModifier && key == Qt::Key_Tab )
+         || ( mod == Qt::ControlModifier && key == Qt::Key_PageUp )
          || ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier )
               && key == Qt::Key_Right ) ) {
         setCurrentIndex( ( currentIndex() + 1 ) % count() );
     }
     // Ctrl + shift + tab
     else if ( ( mod == ( Qt::ControlModifier | Qt::ShiftModifier ) && key == Qt::Key_Tab )
+              || ( mod == Qt::ControlModifier && key == Qt::Key_PageDown )
               || ( mod == ( Qt::ControlModifier | Qt::AltModifier | Qt::KeypadModifier )
                    && key == Qt::Key_Left ) ) {
         setCurrentIndex( ( currentIndex() - 1 >= 0 ) ? currentIndex() - 1 : count() - 1 );

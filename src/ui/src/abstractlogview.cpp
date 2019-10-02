@@ -576,12 +576,10 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         jumpToStartOfLine();
     else if ( keyEvent->key() == Qt::Key_End && !controlModifier )
         jumpToRightOfScreen();
-    else if ( ( keyEvent->key() == Qt::Key_PageDown && controlModifier )
-              || ( keyEvent->key() == Qt::Key_End && controlModifier ) ) {
+    else if ( keyEvent->key() == Qt::Key_End && controlModifier ) {
         jumpToBottomLine(); // Same as G
     }
-    else if ( ( keyEvent->key() == Qt::Key_PageUp && controlModifier )
-              || ( keyEvent->key() == Qt::Key_Home && controlModifier ) )
+    else if ( keyEvent->key() == Qt::Key_Home && controlModifier )
         selectAndDisplayLine( 0_lnum );
     else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
         emit searchNext(); // duplicate of 'n' action.

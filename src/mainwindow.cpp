@@ -449,10 +449,11 @@ void MainWindow::open()
         defaultDir = fileInfo.path();
     }
 
-    QString fileName = QFileDialog::getOpenFileName(this,
+    QStringList fileNames = QFileDialog::getOpenFileNames(this,
             tr("Open file"), defaultDir, tr("All files (*)"));
-    if (!fileName.isEmpty())
-        loadFile(fileName);
+    for ( const auto& fileName: fileNames ) {
+      loadFile(fileName);
+    }
 }
 
 // Opens a log file from the recent files list

@@ -1,7 +1,7 @@
-version: '19.09.0.{build}'
+version: '19.10.0.{build}'
 skip_tags: true
 
-os: Visual Studio 2017
+os: Visual Studio 2019
 
 platform:
   - x64
@@ -11,8 +11,8 @@ configuration:
   - Release
 
 environment:
-  QTDIR64: C:\Qt\5.12\msvc2017_64
-  QTDIR32: C:\Qt\5.12\msvc2017
+  QTDIR64: C:\Qt\5.12.5\msvc2017_64
+  QTDIR32: C:\Qt\5.12.5\msvc2017
   CMAKE_GENERATOR_NAME: Ninja
   CMAKE_BUILD_TYPE: Release
   GITHUB_TOKEN:
@@ -24,7 +24,7 @@ matrix:
     - platform: x86
 
 install:
-  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-win.zip"
   - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
   - 7z x ninja.zip -o%APPVEYOR_BUILD_FOLDER%\ninja > nul
   - set PATH=%APPVEYOR_BUILD_FOLDER%\ninja;%PATH%
@@ -49,7 +49,7 @@ install:
 before_build:
 - if %platform%==x64 (set QTDIR=%QTDIR64%) else (set QTDIR=%QTDIR32%)
 - '%QTDIR%\bin\qtenv2.bat'
-- call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\Common7\Tools\vsdevcmd" -arch=%platform%
+- call "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\Common7\Tools\vsdevcmd" -arch=%platform%
 - set PATH=%ProgramFiles(x86)%\NSIS;%PATH%
 - set
 - md %APPVEYOR_BUILD_FOLDER%\build

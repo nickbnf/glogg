@@ -119,6 +119,7 @@ Section "MSVC Runtime libraries" vcruntime
     SetOutPath $INSTDIR
     File release\msvcp140.dll
     File release\vcruntime140.dll
+    File release\vcruntime140_1.dll
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut
@@ -164,6 +165,7 @@ Section "Uninstall"
     Delete "$INSTDIR\styles\qwindowsvistastyle.dll"
     Delete "$INSTDIR\msvcp140.dll"
     Delete "$INSTDIR\vcruntime140.dll"
+    Delete "$INSTDIR\vcruntime140_1.dll"
     Delete "$INSTDIR\tbbmalloc.dll"
     Delete "$INSTDIR\tbbmalloc_proxy.dll"
     Delete "$INSTDIR\klogg_tbbmalloc.dll"

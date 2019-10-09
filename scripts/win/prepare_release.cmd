@@ -5,6 +5,7 @@ xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\rel
 
 xcopy "%VCToolsRedistDir%%platform%\Microsoft.VC142.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy "%VCToolsRedistDir%%platform%\Microsoft.VC142.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy "%VCToolsRedistDir%%platform%\Microsoft.VC142.CRT\vcruntime140_1.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc_proxy.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
@@ -30,4 +31,3 @@ xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\chocolatelyInstall.ps1 %APPVEYOR
 
 xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\klogg.nsi %APPVEYOR_BUILD_FOLDER%\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\FileAssociation.nsh %APPVEYOR_BUILD_FOLDER%\ /y
-

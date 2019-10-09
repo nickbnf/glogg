@@ -119,7 +119,11 @@ Section "MSVC Runtime libraries" vcruntime
     SetOutPath $INSTDIR
     File release\msvcp140.dll
     File release\vcruntime140.dll
+    
+!if ${PLATFORM} == "x64"
     File release\vcruntime140_1.dll
+!endif
+    
 SectionEnd
 
 Section "Create Start menu shortcut" shortcut

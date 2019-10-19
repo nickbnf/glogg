@@ -168,10 +168,7 @@ class MainWindow : public QMainWindow
   private:
     void createActions();
     void createMenus();
-    void createContextMenu();
     void createToolBars();
-    void createStatusBar();
-    void createRecentFileToolTipTimer();
     void createTrayIcon();
     void readSettings();
     void writeSettings();
@@ -183,6 +180,7 @@ class MainWindow : public QMainWindow
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
     void updateMenuBarFromDocument( const CrawlerWidget* crawler );
     void updateInfoLine();
+    void showInfoLabels( bool show );
 
     Session session_;
     QString loadingFileName;
@@ -198,8 +196,6 @@ class MainWindow : public QMainWindow
     std::array<QAction*, MaxRecentFiles> recentFileActions;
     std::array<MenuActionToolTipBehavior*, MaxRecentFiles> recentFileActionBehaviors;
 
-    QAction *separatorAction;
-
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *viewMenu;
@@ -212,8 +208,8 @@ class MainWindow : public QMainWindow
     QLabel* sizeField;
     QLabel* dateField;
     QLabel* encodingField;
+    std::vector<QAction*> infoToolbarSeparators;
     QToolBar *toolBar;
-    QCheckBox *followCheckBox;
 
     QAction *openAction;
     QAction *closeAction;

@@ -492,22 +492,41 @@ void MainWindow::createToolBars()
     infoLine = new InfoLine();
     infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     infoLine->setLineWidth( 0 );
+    infoLine->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
+
+    sizeField = new QLabel();
+    sizeField->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
+
+    dateField = new QLabel();
+    dateField->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
+
+    encodingField = new QLabel();
+    dateField->setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
 
     lineNbField = new QLabel( );
-    lineNbField->setText( "Line 0" );
-    lineNbField->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
-    lineNbField->setMinimumSize(
-            lineNbField->fontMetrics().size( 0, "Line 0000000") );
+    lineNbField->setAlignment(  Qt::AlignRight | Qt::AlignVCenter );
+    lineNbField->setContentsMargins( 2, 0, 2, 0 );
 
     toolBar = addToolBar( tr("&Toolbar") );
     toolBar->setIconSize( QSize( 14, 14 ) );
     toolBar->setMovable( false );
+    toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
     toolBar->addAction( followAction );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
+
+    infoToolbarSeparators.push_back( toolBar->addSeparator() );
+    toolBar->addWidget( sizeField );
+    infoToolbarSeparators.push_back( toolBar->addSeparator() );
+    toolBar->addWidget( dateField );
+    infoToolbarSeparators.push_back( toolBar->addSeparator() );
+    toolBar->addWidget( encodingField );
+    infoToolbarSeparators.push_back( toolBar->addSeparator() );
     toolBar->addWidget( lineNbField );
+
+    showInfoLabels( false );
 }
 
 void MainWindow::createTrayIcon()
@@ -776,7 +795,14 @@ void MainWindow::changeFollowMode( bool follow )
 void MainWindow::lineNumberHandler( LineNumber line )
 {
     // The line number received is the internal (starts at 0)
-    lineNbField->setText( tr( "Line %1" ).arg( line.get() + 1 ) );
+    uint64_t fileSize;
+    uint32_t fileNbLine;
+    QDateTime lastModified;
+
+    session_.getFileInfo( currentCrawlerWidget(),
+                          &fileSize, &fileNbLine, &lastModified );
+
+    lineNbField->setText( tr( "Line %1/%2" ).arg( line.get() + 1 ).arg( fileNbLine ) );
 }
 
 void MainWindow::updateLoadingProgress( int progress )
@@ -792,6 +818,8 @@ void MainWindow::updateLoadingProgress( int progress )
         infoLine->setText( current_file +
                 tr( " - Indexing lines... (%1 %)" ).arg( progress ) );
         infoLine->displayGauge( progress );
+
+        showInfoLabels( false );
 
         stopAction->setEnabled( true );
         reloadAction->setEnabled( false );
@@ -811,8 +839,11 @@ void MainWindow::handleLoadingFinished( LoadingStatus status )
         updateInfoLine();
 
         infoLine->hideGauge();
+        showInfoLabels( true );
         stopAction->setEnabled( false );
         reloadAction->setEnabled( true );
+
+        lineNumberHandler( 0_lnum );
 
         // Now everything is ready, we can finally show the file!
         currentCrawlerWidget()->show();
@@ -890,6 +921,7 @@ void MainWindow::currentTabChanged( int index )
 
         infoLine->hideGauge();
         infoLine->clear();
+        showInfoLabels( false );
 
         updateTitleBar( QString() );
 
@@ -1174,19 +1206,32 @@ void MainWindow::updateInfoLine()
 
     session_.getFileInfo( currentCrawlerWidget(),
             &fileSize, &fileNbLine, &lastModified );
+
+    infoLine->setText( current_file );
+    sizeField->setText( readableSize( fileSize ) );
+    encodingField->setText( currentCrawlerWidget()->encodingText() );
+
     if ( lastModified.isValid() ) {
         const QString date =
             defaultLocale.toString( lastModified, QLocale::NarrowFormat );
-        infoLine->setText( tr( "%1 (%2 - %3 lines - modified on %4 - %5)" )
-                .arg(current_file, readableSize(fileSize))
-                .arg(fileNbLine)
-                .arg(date, currentCrawlerWidget()->encodingText()) );
+        dateField->setText( tr( "modified on %1" ).arg( date ) );
+        dateField->show();
     }
     else {
-        infoLine->setText( tr( "%1 (%2 - %3 lines - %4)" )
-                .arg(current_file, readableSize(fileSize))
-                .arg(fileNbLine)
-                .arg(currentCrawlerWidget()->encodingText()) );
+        dateField->hide();
+    }
+}
+
+void MainWindow::showInfoLabels( bool show )
+{
+    for( auto separator : infoToolbarSeparators ) {
+        separator->setVisible( show );
+    }
+    if ( !show ) {
+        sizeField->clear();
+        dateField->clear();
+        encodingField->clear();
+        lineNbField->clear();
     }
 }
 

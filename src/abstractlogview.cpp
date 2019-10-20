@@ -367,6 +367,8 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             copyAction_->setStatusTip( tr("Copy the selection") );
         }
 
+        markAction_->setEnabled(true);
+
         if ( selection_.isPortion() ) {
             findNextAction_->setEnabled( true );
             findPreviousAction_->setEnabled( true );
@@ -1004,6 +1006,23 @@ void AbstractLogView::findPreviousSelected()
     }
 }
 
+void AbstractLogView::markSelected()
+{
+//    if ( selection_.isPortion() ) {
+//        emit changeQuickFind(
+//                selection_.getSelectedText( logData ),
+//                QuickFindMux::Backward );
+//        emit searchNext();
+//    }
+    QList<int> lines = selection_.getLines();
+
+    if(lines.size()){
+        for(int i = 0; i < lines.size(); ++i){
+            emit markLine( lines[i] );
+        }
+    }
+}
+
 // Copy the selection to the clipboard
 void AbstractLogView::copy()
 {
@@ -1353,8 +1372,11 @@ void AbstractLogView::updateGlobalSelection()
 void AbstractLogView::createMenu()
 {
     copyAction_ = new QAction( tr("&Copy"), this );
-    // No text as this action title depends on the type of selection
     connect( copyAction_, SIGNAL(triggered()), this, SLOT(copy()) );
+
+    markAction_ = new QAction( tr("&Mark"), this );
+    // No text as this action title depends on the type of selection
+    connect( markAction_, SIGNAL(triggered()), this, SLOT(markSelected()) );
 
     // For '#' and '*', shortcuts doesn't seem to work but
     // at least it displays them in the menu, we manually handle those keys
@@ -1378,6 +1400,7 @@ void AbstractLogView::createMenu()
             this, SLOT( addToSearch() ) );
 
     popupMenu_ = new QMenu( this );
+    popupMenu_->addAction( markAction_ );
     popupMenu_->addAction( copyAction_ );
     popupMenu_->addSeparator();
     popupMenu_->addAction( findNextAction_ );

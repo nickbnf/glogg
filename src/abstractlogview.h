@@ -282,6 +282,7 @@ class AbstractLogView :
     void findNextSelected();
     void findPreviousSelected();
     void copy();
+    void markSelected();
 
   private:
     // Graphic parameters
@@ -349,6 +350,7 @@ class AbstractLogView :
 
     // Popup menu
     QMenu* popupMenu_;
+    QAction* markAction_;
     QAction* copyAction_;
     QAction* findNextAction_;
     QAction* findPreviousAction_;

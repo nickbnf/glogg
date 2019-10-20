@@ -153,8 +153,12 @@ class CrawlerWidget : public QSplitter,
     void updateLineNumberHandler( int line );
     // Mark a line that has been clicked on the main (top) view.
     void markLineFromMain( qint64 line );
+    // Mark lines from selection clicked on the main (top) view.
+    void markLinesFromMain( QList<int> lines );
     // Mark a line that has been clicked on the filtered (bottom) view.
     void markLineFromFiltered( qint64 line );
+    // Mark lines from selection clicked on the filtered (bottom) view.
+    void markLinesFromFiltered( QList<int> lines );
 
     void loadingFinishedHandler( LoadingStatus status );
     // Manages the info lines to inform the user the file has changed.

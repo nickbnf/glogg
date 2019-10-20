@@ -1011,9 +1011,10 @@ void AbstractLogView::markSelected()
     QList<int> lines = selection_.getLines();
 
     if(lines.size()){
-        for(int i = 0; i < lines.size(); ++i){
-            emit markLine( lines[i] );
-        }
+        emit markLines(lines);
+//        for(int i = 0; i < lines.size(); ++i){
+//            emit markLine( lines[i] );
+//        }
     }
 }
 

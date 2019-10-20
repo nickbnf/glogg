@@ -224,6 +224,8 @@ class AbstractLogView :
     // Sent when the view ask for a line to be marked
     // (click in the left margin).
     void markLine( qint64 line );
+    // Marks selection from pop-up menu
+    void markLines( QList<int> lines );
     // Sent up when the user wants to add the selection to the search
     void addToSearch( const QString& selection );
     // Sent up when the mouse is hovered over a line's margin

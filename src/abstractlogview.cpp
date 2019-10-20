@@ -373,11 +373,13 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             findNextAction_->setEnabled( true );
             findPreviousAction_->setEnabled( true );
             addToSearchAction_->setEnabled( true );
+            addToQuickFindAction_->setEnabled(true);
         }
         else {
             findNextAction_->setEnabled( false );
             findPreviousAction_->setEnabled( false );
             addToSearchAction_->setEnabled( false );
+            addToQuickFindAction_->setEnabled(false);
         }
 
         // "Add to search" only makes sense in regexp mode
@@ -626,6 +628,10 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                         if ( line >= 0 )
                             emit markLine( line );
                         break;
+                    }
+                case 'q':
+                    {
+                        addToQuickFind();
                     }
                 default:
                     keyEvent->ignore();
@@ -987,19 +993,33 @@ void AbstractLogView::addToSearch()
 void AbstractLogView::addToQuickFind()
 {
     if ( selection_.isPortion() ) {
-        qint64 line = selection_.selectedLine();
+        qint64 line = selection_.getLines()[0];
+
         LOG(logDEBUG) << "AbstractLogView::addToQuickFind()";
-        //emit addToQuickFind( selection_.getSelectedText( logData ) );
         QString pattern = quickFindPattern_->getPattern();
-        if(pattern.length()){
-            pattern += "|";
+        QString selectedText = selection_.getSelectedText( logData );
+
+        int pos = pattern.indexOf(selectedText);
+        if(pos != -1){
+            pattern = pattern.remove(QRegularExpression("\\|*" + selectedText));
+            if(pattern.indexOf('|') == 0){
+                pattern = pattern.remove(0, 1);
+            }
+        } else {
+            if(pattern.length()){
+                pattern += "|";
+            }
+
+            pattern += selectedText;
         }
 
-        pattern += selection_.getSelectedText( logData );
 
         emit changeQuickFind(
                 pattern,
                 QuickFindMux::Forward );
+
+        selection_.selectLine(line);
+        displayLine( line );
     }
     else {
         LOG(logERROR) << "AbstractLogView::addToQuickFind called for a wrong type of selection";

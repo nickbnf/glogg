@@ -983,6 +983,29 @@ void AbstractLogView::addToSearch()
     }
 }
 
+// OR the current with the current quick find expression
+void AbstractLogView::addToQuickFind()
+{
+    if ( selection_.isPortion() ) {
+        LOG(logDEBUG) << "AbstractLogView::addToQuickFind()";
+        //emit addToQuickFind( selection_.getSelectedText( logData ) );
+        QString pattern = quickFindPattern_->getPattern();
+        if(pattern.length()){
+            pattern += "|";
+        }
+
+        pattern += selection_.getSelectedText( logData );
+
+        emit changeQuickFind(
+                pattern,
+                QuickFindMux::Forward );
+        emit searchNext();
+    }
+    else {
+        LOG(logERROR) << "AbstractLogView::addToQuickFind called for a wrong type of selection";
+    }
+}
+
 // Find next occurence of the selected text (*)
 void AbstractLogView::findNextSelected()
 {
@@ -1394,6 +1417,10 @@ void AbstractLogView::createMenu()
     connect( addToSearchAction_, SIGNAL( triggered() ),
             this, SLOT( addToSearch() ) );
 
+    addToQuickFindAction_ = new QAction(tr("&Add to quick find"), this);
+    connect( addToQuickFindAction_, SIGNAL( triggered() ),
+            this, SLOT( addToQuickFind() ) );
+
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( markAction_ );
     popupMenu_->addAction( copyAction_ );
@@ -1401,6 +1428,7 @@ void AbstractLogView::createMenu()
     popupMenu_->addAction( findNextAction_ );
     popupMenu_->addAction( findPreviousAction_ );
     popupMenu_->addAction( addToSearchAction_ );
+    popupMenu_->addAction( addToQuickFindAction_ );
 }
 
 void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )

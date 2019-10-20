@@ -1008,12 +1008,6 @@ void AbstractLogView::findPreviousSelected()
 
 void AbstractLogView::markSelected()
 {
-//    if ( selection_.isPortion() ) {
-//        emit changeQuickFind(
-//                selection_.getSelectedText( logData ),
-//                QuickFindMux::Backward );
-//        emit searchNext();
-//    }
     QList<int> lines = selection_.getLines();
 
     if(lines.size()){
@@ -1372,10 +1366,10 @@ void AbstractLogView::updateGlobalSelection()
 void AbstractLogView::createMenu()
 {
     copyAction_ = new QAction( tr("&Copy"), this );
+    // No text as this action title depends on the type of selection
     connect( copyAction_, SIGNAL(triggered()), this, SLOT(copy()) );
 
     markAction_ = new QAction( tr("&Mark"), this );
-    // No text as this action title depends on the type of selection
     connect( markAction_, SIGNAL(triggered()), this, SLOT(markSelected()) );
 
     // For '#' and '*', shortcuts doesn't seem to work but

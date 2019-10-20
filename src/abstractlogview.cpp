@@ -987,6 +987,7 @@ void AbstractLogView::addToSearch()
 void AbstractLogView::addToQuickFind()
 {
     if ( selection_.isPortion() ) {
+        qint64 line = selection_.selectedLine();
         LOG(logDEBUG) << "AbstractLogView::addToQuickFind()";
         //emit addToQuickFind( selection_.getSelectedText( logData ) );
         QString pattern = quickFindPattern_->getPattern();
@@ -999,7 +1000,6 @@ void AbstractLogView::addToQuickFind()
         emit changeQuickFind(
                 pattern,
                 QuickFindMux::Forward );
-        emit searchNext();
     }
     else {
         LOG(logERROR) << "AbstractLogView::addToQuickFind called for a wrong type of selection";
@@ -1035,9 +1035,6 @@ void AbstractLogView::markSelected()
 
     if(lines.size()){
         emit markLines(lines);
-//        for(int i = 0; i < lines.size(); ++i){
-//            emit markLine( lines[i] );
-//        }
     }
 }
 

@@ -840,11 +840,6 @@ void CrawlerWidget::setup()
     connect(filteredView, SIGNAL( addToSearch( const QString& ) ),
             this, SLOT( addToSearch( const QString& ) ) );
 
-    connect(logMainView, SIGNAL( addToQuickFind( const QString& ) ),
-            this, SLOT( addToQuickFind( const QString& ) ) );
-    connect(filteredView, SIGNAL( addToQuickFind( const QString& ) ),
-            this, SLOT( addToQuickFind( const QString& ) ) );
-
     connect(filteredView, SIGNAL( mouseHoveredOverLine( qint64 ) ),
             this, SLOT( mouseHoveredOverMatch( qint64 ) ) );
     connect(filteredView, SIGNAL( mouseLeftHoveringZone() ),

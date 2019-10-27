@@ -97,106 +97,6 @@ int countDigits( quint64 n )
 } // anon namespace
 
 
-LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
-{
-    // LOG(logDEBUG) << "new LineChunk: " << first_col << " " << last_col;
-
-    start_ = first_col;
-    end_   = last_col;
-    type_  = type;
-}
-
-QList<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
-{
-    QList<LineChunk> list;
-
-    if ( ( sel_start < start_ ) && ( sel_end < start_ ) ) {
-        // Selection BEFORE this chunk: no change
-        list << LineChunk( *this );
-    }
-    else if ( sel_start > end_ ) {
-        // Selection AFTER this chunk: no change
-        list << LineChunk( *this );
-    }
-    else /* if ( ( sel_start >= start_ ) && ( sel_end <= end_ ) ) */
-    {
-        // We only want to consider what's inside THIS chunk
-        sel_start = qMax( sel_start, start_ );
-        sel_end   = qMin( sel_end, end_ );
-
-        if ( sel_start > start_ )
-            list << LineChunk( start_, sel_start - 1, type_ );
-        list << LineChunk( sel_start, sel_end, Selected );
-        if ( sel_end < end_ )
-            list << LineChunk( sel_end + 1, end_, type_ );
-    }
-
-    return list;
-}
-
-inline void LineDrawer::addChunk( int first_col, int last_col,
-        QColor fore, QColor back )
-{
-    if ( first_col < 0 )
-        first_col = 0;
-    int length = last_col - first_col + 1;
-    if ( length > 0 ) {
-        list << Chunk ( first_col, length, fore, back );
-    }
-}
-
-inline void LineDrawer::addChunk( const LineChunk& chunk,
-        QColor fore, QColor back )
-{
-    int first_col = chunk.start();
-    int last_col  = chunk.end();
-
-    addChunk( first_col, last_col, fore, back );
-}
-
-inline void LineDrawer::draw( QPainter& painter,
-        int initialXPos, int initialYPos,
-        int line_width, const QString& line,
-        int leftExtraBackgroundPx )
-{
-    QFontMetrics fm = painter.fontMetrics();
-    const int fontHeight = fm.height();
-    const int fontAscent = fm.ascent();
-    // For some reason on Qt 4.8.2 for Win, maxWidth() is wrong but the
-    // following give the right result, not sure why:
-    const int fontWidth = fm.width( QChar('a') );
-
-    int xPos = initialXPos;
-    int yPos = initialYPos;
-
-    foreach ( Chunk chunk, list ) {
-        // Draw each chunk
-        // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
-        QString cutline = line.mid( chunk.start(), chunk.length() );
-        const int chunk_width = cutline.length() * fontWidth;
-        if ( xPos == initialXPos ) {
-            // First chunk, we extend the left background a bit,
-            // it looks prettier.
-            painter.fillRect( xPos - leftExtraBackgroundPx, yPos,
-                    chunk_width + leftExtraBackgroundPx,
-                    fontHeight, chunk.backColor() );
-        }
-        else {
-            // other chunks...
-            painter.fillRect( xPos, yPos, chunk_width,
-                    fontHeight, chunk.backColor() );
-        }
-        painter.setPen( chunk.foreColor() );
-        painter.drawText( xPos, yPos + fontAscent, cutline );
-        xPos += chunk_width;
-    }
-
-    // Draw the empty block at the end of the line
-    int blank_width = line_width - xPos;
-
-    if ( blank_width > 0 )
-        painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
-}
 
 const int DigitsBuffer::timeout_ = 2000;
 
@@ -1480,6 +1380,27 @@ void AbstractLogView::updateScrollBars()
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 }
 
+void AbstractLogView::mergeFilterSelection(const QList<LineChunk>& filterMatchList,
+                                           const QList<LineChunk>& inList,
+                                           QList<LineChunk>& outList)
+{
+    QList<LineChunk> newChunkList_tmp = inList;
+    if(filterMatchList.size()){
+        foreach (LineChunk ch, filterMatchList) {
+
+            outList.clear();
+
+            foreach ( const LineChunk chunk, newChunkList_tmp ) {
+                outList << chunk.selectFiltered(ch);
+            }
+
+            newChunkList_tmp = outList;
+        }
+    } else {
+        outList = inList;
+    }
+}
+
 void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
 {
     // LOG( logDEBUG ) << "devicePixelRatio: " << viewport()->devicePixelRatio();
@@ -1593,17 +1514,20 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
         const QString line = lines[i];
         const QString cutLine = line.mid( firstCol, nbCols );
 
+        QList<LineChunk> filterMatchList;
+        int fullLineIndex = -1;
+
         if ( selection_.isLineSelected( line_index ) ) {
             // Reverse the selected line
             foreColor = palette.color( QPalette::HighlightedText );
             backColor = palette.color( QPalette::Highlight );
             painter.setPen(palette.color(QPalette::Text));
-        }
-        else if ( filterSet->matchLine( logData->getLineString( line_index ),
-                    &foreColor, &backColor ) ) {
-            // Apply a filter to the line
-        }
-        else {
+
+        } else if(filterSet->matchLine( logData->getLineString( line_index ),
+                    firstCol, filterMatchList, fullLineIndex) && fullLineIndex > -1){
+            foreColor = filterMatchList[fullLineIndex].foreground();
+            backColor = filterMatchList[fullLineIndex].background();
+        } else {
             // Use the default colors
             foreColor = palette.color( QPalette::Text );
             backColor = palette.color( QPalette::Base );
@@ -1618,7 +1542,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
         bool isMatch =
             quickFindPattern_->matchLine( line, qfMatchList );
 
-        if ( isSelection || isMatch ) {
+        if ( isSelection || isMatch || filterMatchList.size()) {
             // We use the LineDrawer and its chunks because the
             // line has to be somehow highlighted
             LineDrawer lineDrawer( backColor );
@@ -1629,18 +1553,24 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
             foreach( const QuickFindMatch match, qfMatchList ) {
                 int start = match.startColumn() - firstCol;
                 int end = start + match.length();
+
                 // Ignore matches that are *completely* outside view area
                 if ( ( start < 0 && end < 0 ) || start >= nbCols )
                     continue;
-                if ( start > column )
+
+                if ( start > column ){
                     chunkList << LineChunk( column, start - 1, LineChunk::Normal );
+                }
+
                 column = qMin( start + match.length() - 1, nbCols );
+
                 chunkList << LineChunk( qMax( start, 0 ), column,
                         LineChunk::Highlighted );
                 column++;
             }
-            if ( column <= cutLine.length() - 1 )
+            if ( column <= cutLine.length() - 1 ){
                 chunkList << LineChunk( column, cutLine.length() - 1, LineChunk::Normal );
+            }
 
             // Then we add the selection if needed
             QList<LineChunk> newChunkList;
@@ -1655,7 +1585,10 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
             else
                 newChunkList = chunkList;
 
-            foreach ( const LineChunk chunk, newChunkList ) {
+            QList<LineChunk> allInOneChunkList;
+            mergeFilterSelection(filterMatchList, newChunkList, allInOneChunkList);
+
+            foreach ( const LineChunk chunk, allInOneChunkList ) {
                 // Select the colours
                 QColor fore;
                 QColor back;
@@ -1663,17 +1596,21 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t )
                     case LineChunk::Normal:
                         fore = foreColor;
                         back = backColor;
-                        break;
+                    break;
                     case LineChunk::Highlighted:
                         fore = QColor( "black" );
                         back = QColor( "yellow" );
                         // fore = highlightForeColor;
                         // back = highlightBackColor;
-                        break;
+                    break;
                     case LineChunk::Selected:
                         fore = palette.color( QPalette::HighlightedText ),
-                             back = palette.color( QPalette::Highlight );
-                        break;
+                        back = palette.color( QPalette::Highlight );
+                    break;
+                    case LineChunk::Filtered:
+                        fore = chunk.foreground();
+                        back = chunk.background();
+                    break;
                 }
                 lineDrawer.addChunk ( chunk, fore, back );
             }

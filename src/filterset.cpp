@@ -25,8 +25,6 @@
 #include "log.h"
 #include "filterset.h"
 
-const int FilterSet::FILTERSET_VERSION = 1;
-
 QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
 {
     QRegularExpression::PatternOptions options =
@@ -68,6 +66,26 @@ bool Filter::ignoreCase() const
     return regexp_.patternOptions().testFlag(QRegularExpression::CaseInsensitiveOption);
 }
 
+bool Filter::getEnabled() const
+{
+    return enabled_;
+}
+
+void Filter::setEnabled(bool enabled)
+{
+    enabled_ = enabled;
+}
+
+bool Filter::getFullLine() const
+{
+    return fullLine_;
+}
+
+void Filter::setFullLine(bool fullLine)
+{
+    fullLine_ = fullLine;
+}
+
 void Filter::setIgnoreCase( bool ignoreCase )
 {
     regexp_.setPatternOptions( getPatternOptions( ignoreCase ) );
@@ -93,9 +111,25 @@ void Filter::setBackColor( const QString& backColorName )
     backColorName_ = backColorName;
 }
 
-bool Filter::hasMatch( const QString& string ) const
+bool Filter::hasMatch( const QString& string, QList<QPair<int, int>>& rangeList ) const
 {
-    return regexp_.match( string ).hasMatch();
+    if(false == enabled_){
+        return false;
+    }
+
+    QRegularExpressionMatchIterator matchIterator = regexp_.globalMatch(string);
+
+    while( matchIterator.hasNext() ) {
+        if(false == fullLine_){
+            QRegularExpressionMatch match = matchIterator.next();
+            rangeList << QPair<int, int> ( match.capturedStart(), match.capturedEnd() );
+        } else {
+            rangeList << QPair<int, int> ( 0, string.length() );
+            break;
+        }
+    }
+
+    return false == rangeList.empty();
 }
 
 //
@@ -131,19 +165,33 @@ FilterSet::FilterSet()
     qRegisterMetaTypeStreamOperators<FilterSet::FilterList>( "FilterSet::FilterList" );
 }
 
-bool FilterSet::matchLine( const QString& line,
-        QColor* foreColor, QColor* backColor ) const
+
+
+bool FilterSet::matchLine(const QString& line, int firstCol,
+                           QList<LineChunk> &list, int& fullLineIndex) const
 {
+    fullLineIndex = -1;
+
     for ( QList<Filter>::const_iterator i = filterList.constBegin();
-          i != filterList.constEnd(); i++ ) {
-        if ( i->hasMatch( line ) ) {
-            foreColor->setNamedColor( i->foreColorName() );
-            backColor->setNamedColor( i->backColorName() );
-            return true;
+          i != filterList.constEnd(); i++) {
+
+        QList<QPair<int, int>> rangeList;
+        if ( i->hasMatch( line, rangeList) ) {
+            for(QPair<int, int> range : rangeList){
+                list << LineChunk(range.first - firstCol,
+                                  range.second - firstCol,
+                                  i->foreColorName(),
+                                  i->backColorName());
+            }
+
+
+            if(i->getFullLine()){
+                fullLineIndex = list.size() - 1;
+            }
         }
     }
 
-    return false;
+    return (false == list.empty());
 }
 
 //
@@ -178,9 +226,11 @@ void Filter::saveToStorage( QSettings& settings ) const
     settings.setValue( "ignore_case", regexp_.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) );
     settings.setValue( "fore_colour", foreColorName_ );
     settings.setValue( "back_colour", backColorName_ );
+    settings.setValue( "enabled", enabled_);
+    settings.setValue( "full_line", fullLine_);
 }
 
-void Filter::retrieveFromStorage( QSettings& settings )
+void Filter::retrieveFromStorage( QSettings& settings, const int ver)
 {
     LOG(logDEBUG) << "Filter::retrieveFromStorage";
 
@@ -188,6 +238,11 @@ void Filter::retrieveFromStorage( QSettings& settings )
                        getPatternOptions( settings.value( "ignore_case", false ).toBool() ) );
     foreColorName_ = settings.value( "fore_colour" ).toString();
     backColorName_ = settings.value( "back_colour" ).toString();
+
+    if(ver > FilterSet::LEGACY_FILTERSET_VERSION){
+        enabled_   = settings.value( "enabled" ).toBool();
+        fullLine_  = settings.value( "full_line" ).toBool();
+    }
 }
 
 void FilterSet::saveToStorage( QSettings& settings ) const
@@ -215,12 +270,13 @@ void FilterSet::retrieveFromStorage( QSettings& settings )
 
     if ( settings.contains( "FilterSet/version" ) ) {
         settings.beginGroup( "FilterSet" );
-        if ( settings.value( "version" ) == FILTERSET_VERSION ) {
+        const int ver = settings.value( "version" ).toInt();
+        if ( FILTERSET_VERSION == ver || LEGACY_FILTERSET_VERSION == ver) {
             int size = settings.beginReadArray( "filters" );
             for (int i = 0; i < size; ++i) {
                 settings.setArrayIndex(i);
                 Filter filter;
-                filter.retrieveFromStorage( settings );
+                filter.retrieveFromStorage( settings, ver );
                 filterList.append( filter );
             }
             settings.endArray();

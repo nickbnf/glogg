@@ -33,87 +33,11 @@
 #include "overviewwidget.h"
 #include "quickfindmux.h"
 #include "viewtools.h"
+#include "drawhelpers.h"
 
 class QMenu;
 class QAction;
 class AbstractLogData;
-
-class LineChunk
-{
-  public:
-    enum ChunkType {
-        Normal,
-        Highlighted,
-        Selected,
-    };
-
-    LineChunk( int first_col, int end_col, ChunkType type );
-
-    int start() const { return start_; }
-    int end() const { return end_; }
-    ChunkType type() const { return type_; }
-
-    // Returns 'true' if the selection is part of this chunk
-    // (at least partially), if so, it should be replaced by the list returned
-    QList<LineChunk> select( int selection_start, int selection_end ) const;
-
-  private:
-    int start_;
-    int end_;
-    ChunkType type_;
-};
-
-// Utility class for syntax colouring.
-// It stores the chunks of line to draw
-// each chunk having a different colour
-class LineDrawer
-{
-  public:
-    LineDrawer( const QColor& back_color) :
-        list(), backColor_( back_color ) { };
-
-    // Add a chunk of line using the given colours.
-    // Both first_col and last_col are included
-    // An empty chunk will be ignored.
-    // the first column will be set to 0 if negative
-    // The column are relative to the screen
-    void addChunk( int first_col, int last_col, QColor fore, QColor back );
-    void addChunk( const LineChunk& chunk, QColor fore, QColor back );
-
-    // Draw the current line of text using the given painter,
-    // in the passed block (in pixels)
-    // The line must be cut to fit on the screen.
-    // leftExtraBackgroundPx is the an extra margin to start drawing
-    // the coloured // background, going all the way to the element
-    // left of the line looks better.
-    void draw( QPainter& painter, int xPos, int yPos,
-               int line_width, const QString& line,
-               int leftExtraBackgroundPx );
-
-  private:
-    class Chunk {
-      public:
-        // Create a new chunk
-        Chunk( int start, int length, QColor fore, QColor back )
-            : start_( start ), length_( length ),
-            foreColor_ ( fore ), backColor_ ( back ) { };
-
-        // Accessors
-        int start() const { return start_; }
-        int length() const { return length_; }
-        const QColor& foreColor() const { return foreColor_; }
-        const QColor& backColor() const { return backColor_; }
-
-      private:
-        int start_;
-        int length_;
-        QColor foreColor_;
-        QColor backColor_;
-    };
-    QList<Chunk> list;
-    QColor backColor_;
-};
-
 
 // Utility class representing a buffer for number entered on the keyboard
 // The buffer keep at most 7 digits, and reset itself after a timeout.
@@ -421,6 +345,9 @@ class AbstractLogView :
     // Utils functions
     bool isCharWord( char c );
     void updateGlobalSelection();
+    void mergeFilterSelection(const QList<LineChunk> &filterMatchList,
+                              const QList<LineChunk> &inList,
+                              QList<LineChunk> &outList);
 };
 
 #endif

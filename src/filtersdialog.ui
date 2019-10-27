@@ -163,6 +163,20 @@
              </property>
             </widget>
            </item>
+           <item row="6" column="0">
+            <widget class="QCheckBox" name="enabledCheckBox">
+             <property name="text">
+              <string>Enabled</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0">
+            <widget class="QCheckBox" name="fullLineCheckBox">
+             <property name="text">
+              <string>Full line</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>

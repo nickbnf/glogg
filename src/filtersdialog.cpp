@@ -68,6 +68,10 @@ FiltersDialog::FiltersDialog( QWidget* parent ) : QDialog( parent )
             this, SLOT( updateFilterProperties() ) );
     connect( backColorBox, SIGNAL( activated( int ) ),
             this, SLOT( updateFilterProperties() ) );
+    connect( enabledCheckBox, SIGNAL( clicked( bool ) ),
+            this, SLOT( updateFilterProperties() ) );
+    connect( fullLineCheckBox, SIGNAL( clicked( bool ) ),
+            this, SLOT( updateFilterProperties() ) );
 
     if ( !filterSet->filterList.empty() ) {
         filterListWidget->setCurrentItem( filterListWidget->item( 0 ) );
@@ -192,6 +196,12 @@ void FiltersDialog::updatePropertyFields()
             backColorBox->setEnabled( true );
         }
 
+        enabledCheckBox->setChecked( currentFilter.getEnabled() );
+        enabledCheckBox->setEnabled( true );
+
+        fullLineCheckBox->setChecked( currentFilter.getFullLine() );
+        fullLineCheckBox->setEnabled( true );
+
         // Enable the buttons if needed
         removeFilterButton->setEnabled( true );
         upFilterButton->setEnabled( selectedRow_ > 0 );
@@ -239,6 +249,9 @@ void FiltersDialog::updateFilterProperties()
                 QBrush( QColor( currentFilter.foreColorName() ) ) );
         filterListWidget->currentItem()->setBackground(
                 QBrush( QColor( currentFilter.backColorName() ) ) );
+
+        currentFilter.setEnabled(enabledCheckBox->isChecked());
+        currentFilter.setFullLine(fullLineCheckBox->isChecked());
     }
 }
 

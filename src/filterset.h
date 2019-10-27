@@ -25,18 +25,20 @@
 #include <QMetaType>
 
 #include "persistable.h"
+#include "drawhelpers.h"
 
 // Represents a filter, i.e. a regexp and the colors matching text
 // should be rendered in.
 class Filter
 {
   public:
+
     // Construct an uninitialized Filter (when reading from a config file)
     Filter();
     Filter(const QString& pattern, bool ignoreCase,
             const QString& foreColor, const QString& backColor );
 
-    bool hasMatch( const QString& string ) const;
+    bool hasMatch(const QString& string , QList<QPair<int, int>>& rangeList) const;
 
     // Accessor functions
     QString pattern() const;
@@ -48,6 +50,12 @@ class Filter
     const QString& backColorName() const;
     void setBackColor( const QString& backColorName );
 
+    bool getEnabled() const;
+    void setEnabled(bool enabled);
+
+    bool getFullLine() const;
+    void setFullLine(bool fullLine);
+
     // Operators for serialization
     // (must be kept to migrate filters from <=0.8.2)
     friend QDataStream& operator<<( QDataStream& out, const Filter& object );
@@ -55,27 +63,44 @@ class Filter
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
-    void retrieveFromStorage( QSettings& settings );
+    void retrieveFromStorage(QSettings& settings , const int ver);
 
   private:
     QRegularExpression regexp_;
     QString foreColorName_;
     QString backColorName_;
-    bool enabled_;
+    bool enabled_ = true;
+    bool fullLine_ = true;
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
 class FilterSet : public Persistable
 {
   public:
+    struct MatchingRange
+    {
+        MatchingRange(const QString& fColor,
+                      const QString& bColor,
+                      const QPair<int, int>& r):
+                        range(r)
+        {
+            foreColor.setNamedColor(fColor);
+            backColor.setNamedColor(bColor);
+        }
+
+        QColor foreColor;
+        QColor backColor;
+        QPair<int, int> range;
+    };
+
     // Construct an empty filter set
     FilterSet();
 
     // Returns weither the passed line match a filter of the set,
     // if so, it returns the fore/back colors the line should use.
     // Ownership of the colors is transfered to the caller.
-    bool matchLine( const QString& line,
-            QColor* foreColor, QColor* backColor ) const;
+    bool matchLine(const QString& line, int firstCol,
+            QList<LineChunk> &list , int &fullLineIndex) const;
 
     // Reads/writes the current config in the QSettings object passed
     virtual void saveToStorage( QSettings& settings ) const;
@@ -92,8 +117,9 @@ class FilterSet : public Persistable
     friend QDataStream& operator>>(
             QDataStream& in, FilterSet& object );
 
+    static constexpr int FILTERSET_VERSION = 2;
+    static constexpr int LEGACY_FILTERSET_VERSION = 1;
   private:
-    static const int FILTERSET_VERSION;
 
     FilterList filterList;
 

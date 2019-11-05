@@ -411,6 +411,11 @@ void MainWindow::createActions()
     connect( aboutQtAction, &QAction::triggered,
              [this](auto){ this->aboutQt(); });
 
+    showScratchPadAction = new QAction(tr("Scratchpad"), this);
+    showScratchPadAction->setStatusTip(tr("Show the scratchpad"));
+    connect( showScratchPadAction, &QAction::triggered,
+             [this](auto){ this->showScratchPad(); });
+
     encodingGroup = new QActionGroup( this );
 
     for ( int i = 0; i < static_cast<int>(CrawlerWidget::Encoding::MAX); ++i ) {
@@ -472,6 +477,9 @@ void MainWindow::createMenus()
     toolsMenu->addAction( highlightersAction );
     toolsMenu->addSeparator();
     toolsMenu->addAction( optionsAction );
+
+    toolsMenu->addSeparator();
+    toolsMenu->addAction( showScratchPadAction );
 
     encodingMenu = menuBar()->addMenu( tr("En&coding") );
     encodingMenu->addAction( encodingAction[0] );
@@ -750,6 +758,14 @@ void MainWindow::about()
 void MainWindow::aboutQt()
 {
     QMessageBox::aboutQt(this, tr("About Qt"));
+}
+
+void MainWindow::showScratchPad()
+{
+    auto scratchPad = new ScratchPad();
+    scratchPad->setWindowIcon( mainIcon_ );
+    scratchPad->setWindowTitle( "klogg - scratchpad" );
+    scratchPad->show();
 }
 
 void MainWindow::encodingChanged( QAction* action )

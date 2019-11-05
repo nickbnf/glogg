@@ -52,6 +52,7 @@
 #include "tabbedcrawlerwidget.h"
 #include "quickfindwidget.h"
 #include "quickfindmux.h"
+#include "scratchpad.h"
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
 #include "versionchecker.h"
 #endif
@@ -115,6 +116,7 @@ class MainWindow : public QMainWindow
     void options();
     void about();
     void aboutQt();
+    void showScratchPad();
     void encodingChanged( QAction* action );
 
     // Change the view settings
@@ -231,6 +233,7 @@ class MainWindow : public QMainWindow
     QAction *stopAction;
     QAction *highlightersAction;
     QAction *optionsAction;
+    QAction *showScratchPadAction;
     QAction *aboutAction;
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;

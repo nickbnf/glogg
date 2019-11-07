@@ -34,8 +34,9 @@ ScratchPad::ScratchPad( QWidget* parent )
     this->hide();
     auto textEdit = std::make_unique<QTextEdit>();
     textEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-    textEdit->setMinimumSize(300, 300);
-
+    textEdit->setMinimumSize( 300, 300 );
+    textEdit->setUndoRedoEnabled( true );
+    
     auto toolBar = std::make_unique<QToolBar>();
 
     auto decodeBase64Action = std::make_unique<QAction>( "Decode base 64" );
@@ -64,14 +65,17 @@ void ScratchPad::decodeBase64()
 {
     auto text = textEdit_->toPlainText();
     auto decoded = QByteArray::fromBase64( text.toLatin1() );
-    textEdit_->setText( decoded );
+    auto decodedText = QString::fromUtf8( decoded );
+    if ( !decodedText.isEmpty() ) {
+        textEdit_->setText( decodedText );
+    }
 }
 
 void ScratchPad::formatJson()
 {
     auto text = textEdit_->toPlainText();
     auto formatted = QJsonDocument::fromJson( text.toUtf8() ).toJson( QJsonDocument::Indented );
-    if ( !formatted.isEmpty()) {
+    if ( !formatted.isEmpty() ) {
         textEdit_->setText( formatted );
     }
 }

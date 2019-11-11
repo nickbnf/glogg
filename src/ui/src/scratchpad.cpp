@@ -36,7 +36,7 @@ ScratchPad::ScratchPad( QWidget* parent )
     textEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
     textEdit->setMinimumSize( 300, 300 );
     textEdit->setUndoRedoEnabled( true );
-    
+
     auto toolBar = std::make_unique<QToolBar>();
 
     auto decodeBase64Action = std::make_unique<QAction>( "Decode base 64" );
@@ -49,7 +49,7 @@ ScratchPad::ScratchPad( QWidget* parent )
 
     auto formatXmlAction = std::make_unique<QAction>( "Format xml" );
     connect( formatXmlAction.get(), &QAction::triggered, [this]( auto ) { formatXml(); } );
-    //toolBar->addAction( formatXmlAction.release() );
+    // toolBar->addAction( formatXmlAction.release() );
 
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
@@ -65,7 +65,7 @@ void ScratchPad::decodeBase64()
 {
     auto text = textEdit_->toPlainText();
     auto decoded = QByteArray::fromBase64( text.toLatin1() );
-    auto decodedText = QString::fromUtf8( decoded );
+    auto decodedText = QString::fromStdString({ decoded.begin(), decoded.end() });
     if ( !decodedText.isEmpty() ) {
         textEdit_->setText( decodedText );
     }

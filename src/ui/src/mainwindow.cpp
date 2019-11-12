@@ -811,14 +811,19 @@ void MainWindow::changeFollowMode( bool follow )
 void MainWindow::lineNumberHandler( LineNumber line )
 {
     // The line number received is the internal (starts at 0)
-    uint64_t fileSize;
-    uint32_t fileNbLine;
+    uint64_t fileSize {};
+    uint32_t fileNbLine {};
     QDateTime lastModified;
 
     session_.getFileInfo( currentCrawlerWidget(),
                           &fileSize, &fileNbLine, &lastModified );
 
-    lineNbField->setText( tr( "Line %1/%2" ).arg( line.get() + 1 ).arg( fileNbLine ) );
+    if ( fileNbLine != 0 ) {
+        lineNbField->setText( tr( "Line %1/%2" ).arg( line.get() + 1 ).arg( fileNbLine ) );
+    }
+    else {
+        lineNbField->clear();
+    }
 }
 
 void MainWindow::updateLoadingProgress( int progress )

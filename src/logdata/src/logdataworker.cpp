@@ -363,20 +363,25 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
 
 void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& state ) const
 {
+    if ( !state.encodingGuess ) {
+        state.encodingGuess = EncodingDetector::getInstance().detectEncoding( block );
+        LOG( logINFO ) << "Encoding guess " << state.encodingGuess->name().toStdString();
+    }
+
     if ( !state.fileTextCodec ) {
         state.fileTextCodec = indexing_data_.getForcedEncoding();
+
         if ( !state.fileTextCodec ) {
-            state.fileTextCodec = EncodingDetector::getInstance().detectEncoding( block );
+            state.fileTextCodec = indexing_data_.getEncodingGuess();
+        }
+
+        if ( !state.fileTextCodec ) {
+            state.fileTextCodec = state.encodingGuess;
         }
 
         state.encodingParams = EncodingParameters( state.fileTextCodec );
         LOG( logINFO ) << "Encoding " << state.fileTextCodec->name().toStdString()
                        << ", Char width " << state.encodingParams.lineFeedWidth;
-    }
-
-    if ( !state.encodingGuess ) {
-        state.encodingGuess = EncodingDetector::getInstance().detectEncoding( block );
-        LOG( logINFO ) << "Encoding guess " << state.encodingGuess->name().toStdString();
     }
 }
 
@@ -441,12 +446,14 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
         IndexingState state;
         state.pos = initialPosition.get();
-        state.end = 0ll;
-        state.additional_spaces = 0;
-        state.max_length = 0;
-        state.encodingGuess = nullptr;
-        state.fileTextCodec = nullptr;
         state.file_size = file.size();
+
+        state.fileTextCodec = indexing_data_.getForcedEncoding();
+        if ( !state.fileTextCodec ) {
+            state.fileTextCodec = indexing_data_.getEncodingGuess();
+        }
+
+        state.encodingGuess = indexing_data_.getEncodingGuess();
 
         auto process = setupIndexingProcess( state );
         auto blockSender = std::get<0>( process );

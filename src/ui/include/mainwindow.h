@@ -187,12 +187,21 @@ class MainWindow : public QMainWindow
     Session session_;
     QString loadingFileName;
 
-    // Encoding
-    struct EncodingList {
-        const char* name;
+    std::array<QString, static_cast<size_t>(CrawlerWidget::Encoding::MAX)> encodingNames_ = {
+        "&Auto",
+        "System",
+        "ASCII",
+        "UTF-8",
+        "CP1251",
+        "UTF-16LE",
+        "UTF-16BE",
+        "UTF-32LE",
+        "UTF-32BE",
+        "Big5",
+        "GB18030",
+        "Shift-JIS",
+        "KOI8-R"
     };
-
-    static const EncodingList encoding_list[];
 
     enum { MaxRecentFiles = 5 };
     std::array<QAction*, MaxRecentFiles> recentFileActions;

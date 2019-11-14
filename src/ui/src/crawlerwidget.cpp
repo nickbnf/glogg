@@ -1071,7 +1071,6 @@ void CrawlerWidget::updateEncoding()
     switch ( encodingSetting_ ) {
     case Encoding::AUTO:
         textCodec = logData_->getDetectedEncoding();
-        encoding_text_ = tr( textCodec->name().constData() );
         break;
     case Encoding::UTF8:
         textCodec = QTextCodec::codecForName( "utf-8" );
@@ -1111,10 +1110,15 @@ void CrawlerWidget::updateEncoding()
         break;
     }
 
-    if ( encodingSetting_ != Encoding::AUTO ) {
-        QString displayedAs( "Displayed as %1" );
-        encoding_text_ = tr( displayedAs.arg( textCodec->name().constData() ).toLatin1() );
+    QString encodingPrefix;
+    if ( encodingSetting_ == Encoding::AUTO ) {
+        encodingPrefix = "Detected as %1";
     }
+    if ( encodingSetting_ != Encoding::AUTO ) {
+        encodingPrefix = "Displayed as %1";
+    }
+
+    encoding_text_ = tr( encodingPrefix.arg( textCodec->name().constData() ).toLatin1() );
 
     logData_->setDisplayEncoding( textCodec->name().constData() );
     logMainView->forceRefresh();

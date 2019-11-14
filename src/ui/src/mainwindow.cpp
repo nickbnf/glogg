@@ -250,27 +250,6 @@ void MainWindow::startBackgroundTasks()
 #endif
 }
 
-//
-// Private functions
-//
-
-const MainWindow::EncodingList MainWindow::encoding_list[] = {
-    { "&Auto" },
-    { "Local" },
-    { "ASCII / &ISO-8859-1" },
-    { "&UTF-8" },
-    { "CP1251" },
-    { "UTF-16LE" },
-    { "UTF-16BE" },
-    { "UTF-32LE" },
-    { "UTF-32BE" },
-    { "Big5" },
-    { "GB18030" },
-    { "Shift-JIS" },
-    { "KOI8-R" },
-
-};
-
 // Menu actions
 void MainWindow::createActions()
 {
@@ -418,8 +397,11 @@ void MainWindow::createActions()
 
     encodingGroup = new QActionGroup( this );
 
+    encodingNames_[static_cast<size_t>(CrawlerWidget::Encoding::LOCAL)] =
+        QString( "System (%1)" ).arg( QTextCodec::codecForLocale()->name().constData() );
+
     for ( int i = 0; i < static_cast<int>(CrawlerWidget::Encoding::MAX); ++i ) {
-        encodingAction[i] = new QAction( tr( encoding_list[i].name ), this );
+        encodingAction[i] = new QAction( encodingNames_[i], this );
         encodingAction[i]->setCheckable( true );
         encodingGroup->addAction( encodingAction[i] );
     }

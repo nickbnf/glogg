@@ -160,7 +160,7 @@ void IndexingData::clear()
     hash_ = {};
     indexHash_.reset();
     linePosition_ = LinePositionArray();
-    encodingGuess_ = QTextCodec::codecForLocale();
+    encodingGuess_ = nullptr; //QTextCodec::codecForLocale();
     encodingForced_ = nullptr;
 }
 

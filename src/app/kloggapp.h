@@ -69,7 +69,7 @@ class KloggApp : public SingleApplication {
     void sendFilesToPrimaryInstance( const std::vector<QString>& filenames )
     {
 #ifdef Q_OS_WIN
-        ::AllowSetForegroundWindow( app.primaryPid() );
+        ::AllowSetForegroundWindow( primaryPid() );
 #endif
 
         QTimer::singleShot( 100, [&filenames, this] {

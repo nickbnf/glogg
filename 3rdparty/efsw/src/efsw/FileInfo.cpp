@@ -254,18 +254,6 @@ bool FileInfo::exists()
 	return 0 == res;
 }
 
-FileInfo& FileInfo::operator=( const FileInfo& Other )
-{
-	this->Filepath			= Other.Filepath;
-	this->Size				= Other.Size;
-	this->ModificationTime	= Other.ModificationTime;
-	this->GroupId			= Other.GroupId;
-	this->OwnerId			= Other.OwnerId;
-	this->Permissions		= Other.Permissions;
-	this->Inode				= Other.Inode;
-	return *this;
-}
-
 bool FileInfo::sameInode( const FileInfo& Other ) const
 {
 	return inodeSupported() && Inode == Other.Inode;

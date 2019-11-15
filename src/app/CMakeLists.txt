@@ -8,9 +8,9 @@ endif()
 set(MAIN_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/messagereceiver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kloggapp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.qrc
-    ${ICON_FILE}
-)
+    ${ICON_FILE})
 
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
 add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})

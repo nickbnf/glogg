@@ -80,7 +80,8 @@
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow() :
+MainWindow::MainWindow( Session& session ) :
+    session_ ( session ),
     mainIcon_(),
     signalMux_(),
     quickFindMux_( session_.getQuickFindPattern() ),
@@ -255,6 +256,12 @@ void MainWindow::createActions()
 {
     const auto& config = Configuration::get();
 
+    newWindowAction = new QAction(tr("&New window"), this);
+    newWindowAction->setShortcut(QKeySequence::New);
+    newWindowAction->setStatusTip(tr("Create new klogg window"));
+    connect(newWindowAction, &QAction::triggered, [=] { emit newWindow(); });
+    newWindowAction->setVisible( config.allowMultipleWindows() );
+
     openAction = new QAction(tr("&Open..."), this);
     openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open) );
     openAction->setIcon( QIcon( ":/images/open14.png" ) );
@@ -284,7 +291,7 @@ void MainWindow::createActions()
     exitAction = new QAction(tr("E&xit"), this);
     exitAction->setShortcut(tr("Ctrl+Q"));
     exitAction->setStatusTip(tr("Exit the application"));
-    connect( exitAction, &QAction::triggered, [this](auto){ this->close(); });
+    connect(exitAction, &QAction::triggered, this, &MainWindow::exitRequested);
 
     copyAction = new QAction(tr("&Copy"), this);
     copyAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Copy ) );
@@ -416,6 +423,7 @@ void MainWindow::createActions()
 void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu( tr("&File") );
+    fileMenu->addAction( newWindowAction);
     fileMenu->addAction( openAction );
     fileMenu->addAction( openClipboardAction );
     fileMenu->addAction( closeAction );
@@ -717,6 +725,8 @@ void MainWindow::options()
 
     const auto& config = Configuration::get();
     plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
+
+    newWindowAction->setVisible( config.allowMultipleWindows() );
 }
 
 // Opens the 'About' dialog box.
@@ -1005,8 +1015,9 @@ void MainWindow::closeEvent( QCloseEvent *event )
           this->hide();
     }
     else {
-        event->accept();
+        closeAll();
         trayIcon_->hide();
+        event->accept();
     }
 }
 
@@ -1070,6 +1081,15 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
         QMainWindow::keyPressEvent( keyEvent );
 }
 
+bool MainWindow::event(QEvent *event)
+{
+    if ( event->type() == QEvent::WindowActivate ) {
+        emit windowActivated();
+    }
+
+    return QMainWindow::event( event );
+}
+
 //
 // Private functions
 //
@@ -1084,10 +1104,11 @@ bool MainWindow::loadFile( const QString& fileName )
     // First check if the file is already open...
     auto* existing_crawler = dynamic_cast<CrawlerWidget*>(
             session_.getViewIfOpen( fileName ) );
-    if ( existing_crawler ) {
-        // ... and switch to it.
-        mainTabWidget_.setCurrentWidget( existing_crawler );
 
+    if ( existing_crawler ) {
+        auto* crawlerWindow = qobject_cast<MainWindow*>( existing_crawler->window() );
+        crawlerWindow->mainTabWidget_.setCurrentWidget( existing_crawler );
+        crawlerWindow->activateWindow();
         return true;
     }
 

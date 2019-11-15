@@ -71,8 +71,8 @@ class MainWindow : public QMainWindow
 
   public:
     // Constructor
-    // The ownership of the session is transferred to us
-    MainWindow();
+    // The ownership of the session is not transferred to us
+    explicit  MainWindow( Session& session );
 
     // Re-install the geometry stored in config file
     // (should be done before 'Widget::show()')
@@ -98,6 +98,8 @@ class MainWindow : public QMainWindow
     void dragEnterEvent( QDragEnterEvent* event ) override;
     void dropEvent( QDropEvent* event ) override;
     void keyPressEvent( QKeyEvent* keyEvent ) override;
+
+    bool event(QEvent *event) override;
 
   private slots:
     void open();
@@ -167,6 +169,10 @@ class MainWindow : public QMainWindow
     // Emitted when the quickfind bar is closed.
     void exitingQuickFind();
 
+    void newWindow();
+    void windowActivated();
+    void exitRequested();
+
   private:
     void createActions();
     void createMenus();
@@ -184,7 +190,7 @@ class MainWindow : public QMainWindow
     void updateInfoLine();
     void showInfoLabels( bool show );
 
-    Session session_;
+    Session& session_;
     QString loadingFileName;
 
     std::array<QString, static_cast<size_t>(CrawlerWidget::Encoding::MAX)> encodingNames_ = {
@@ -222,6 +228,7 @@ class MainWindow : public QMainWindow
     std::vector<QAction*> infoToolbarSeparators;
     QToolBar *toolBar;
 
+    QAction *newWindowAction;
     QAction *openAction;
     QAction *closeAction;
     QAction *closeAllAction;

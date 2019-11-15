@@ -95,6 +95,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 
     if ( settings.contains( "session.loadLast" ) )
         loadLastSession_ = settings.value( "session.loadLast" ).toBool();
+    if ( settings.contains( "session.multipleWindows" ) )
+        allowMultipleWindows_ = settings.value( "session.multipleWindows" ).toBool();
 
     if ( settings.contains( "logging.enableLogging" ) )
         enableLogging_
@@ -169,6 +171,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
     settings.setValue( "session.loadLast", loadLastSession_ );
+    settings.setValue( "session.multipleWindows", allowMultipleWindows_ );
 
     settings.setValue( "logging.enableLogging", enableLogging_ );
     settings.setValue( "logging.verbosity", loggingLevel_ );

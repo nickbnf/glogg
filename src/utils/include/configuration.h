@@ -120,6 +120,14 @@ class Configuration final : public Persistable<Configuration> {
     {
         loadLastSession_ = enabled;
     }
+    bool allowMultipleWindows() const
+    {
+        return allowMultipleWindows_;
+    }
+    void setAllowMultipleWindows( bool enabled )
+    {
+        allowMultipleWindows_ = enabled;
+    }
 
     // perf settings
     bool useParallelSearch() const
@@ -297,6 +305,7 @@ class Configuration final : public Persistable<Configuration> {
     uint32_t pollIntervalMs_ = 2000;
 
     bool loadLastSession_ = true;
+    bool allowMultipleWindows_ = false;
 
     // View settings
     bool overviewVisible_ = true;

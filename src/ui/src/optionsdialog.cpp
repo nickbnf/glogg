@@ -209,6 +209,8 @@ void OptionsDialog::updateDialogFromConfig()
     // Last session
     loadLastSessionCheckBox->setChecked( config.loadLastSession() );
     minimizeToTrayCheckBox->setChecked( config.minimizeToTray() );
+    multipleWindowsCheckBox->setChecked( config.allowMultipleWindows() );
+
     loggingCheckBox->setChecked( config.enableLogging() );
     verbositySpinBox->setValue( config.loggingLevel() );
 
@@ -271,6 +273,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setPollIntervalMs( poll_interval );
 
     config.setLoadLastSession( loadLastSessionCheckBox->isChecked() );
+    config.setAllowMultipleWindows( multipleWindowsCheckBox->isChecked() );
     config.setMinimizeToTray( minimizeToTrayCheckBox->isChecked() );
     config.setEnableLogging( loggingCheckBox->isChecked() );
     config.setLoggingLevel( verbositySpinBox->value() );

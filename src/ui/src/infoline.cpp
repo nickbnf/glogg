@@ -17,23 +17,43 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Copyright (C) 2016 -- 2019 Anton Filimonov and other contributors
+ *
+ * This file is part of klogg.
+ *
+ * klogg is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * klogg is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "log.h"
 
 #include "infoline.h"
-
+#include <QAction>
+#include <QApplication>
+#include <QClipboard>
+#include <QContextMenuEvent>
+#include <QMenu>
 #include <QPainter>
 
-// This file implements InfoLine. It is responsible for decorating the
-// widget and managing the completion gauge.
-
-InfoLine::InfoLine() :
-    QLabel(), origPalette_( palette() ),
-    backgroundColor_( origPalette_.color( QPalette::Button ) ),
-    darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
+InfoLine::InfoLine()
+    : QLabel()
+    , origPalette_( palette() )
+    , backgroundColor_( origPalette_.color( QPalette::Button ) )
+    , darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
 {
     setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
-    setTextInteractionFlags(Qt::TextSelectableByMouse |
-                            Qt::TextSelectableByKeyboard);
+    setTextInteractionFlags( Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard );
 }
 
 void InfoLine::displayGauge( int completion )
@@ -63,9 +83,32 @@ void InfoLine::paintEvent( QPaintEvent* paintEvent )
     {
         QPainter painter( this );
         painter.fillRect( 0, 0, this->width(), this->height(),
-                palette().brush( backgroundRole() ) );
+                          palette().brush( backgroundRole() ) );
     }
 
     // Call the parent's painter
     QLabel::paintEvent( paintEvent );
+}
+
+void InfoLine::contextMenuEvent( QContextMenuEvent* event )
+{
+    QMenu menu( this );
+
+    auto copyAll = menu.addAction( "Copy all" );
+    menu.addSeparator();
+    auto copySelection = menu.addAction( "Copy" );
+    menu.addSeparator();
+    auto selectAll = menu.addAction( "Select all" );
+
+    connect( copyAll, &QAction::triggered,
+             [this]( auto ) { QApplication::clipboard()->setText( this->text() ); } );
+
+    copySelection->setEnabled( this->hasSelectedText() );
+    connect( copySelection, &QAction::triggered,
+             [this]( auto ) { QApplication::clipboard()->setText( this->selectedText() ); } );
+
+    connect( selectAll, &QAction::triggered,
+             [this]( auto ) { setSelection( 0, this->text().length() ); } );
+
+    menu.exec( event->globalPos() );
 }

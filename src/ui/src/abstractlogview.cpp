@@ -1448,7 +1448,9 @@ void AbstractLogView::jumpToBottom()
 
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( new_top_line );
-    update(); // in case the screen hasn't moved
+
+    textAreaCache_.invalid_ = true;
+    update();
 }
 
 // Returns whether the character passed is a 'word' character

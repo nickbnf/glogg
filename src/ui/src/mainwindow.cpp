@@ -310,7 +310,7 @@ void MainWindow::createActions()
     connect( findAction, &QAction::triggered,
              [this](auto){ this->find(); });
 
-    clearLogAction = new QAction(tr("Clear file"), this);
+    clearLogAction = new QAction(tr("Clear file..."), this);
     clearLogAction->setStatusTip(tr("Clear current file"));
     connect( clearLogAction, &QAction::triggered,
              [this](auto){ this->clearLog(); });

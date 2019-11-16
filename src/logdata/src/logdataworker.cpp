@@ -124,6 +124,12 @@ QTextCodec* IndexingData::getEncodingGuess() const
     return encodingGuess_;
 }
 
+void IndexingData::setEncodingGuess( QTextCodec* codec )
+{
+    QMutexLocker locker( &dataMutex_ );
+    encodingGuess_ = codec;
+}
+
 void IndexingData::forceEncoding( QTextCodec* codec )
 {
     QMutexLocker locker( &dataMutex_ );
@@ -407,9 +413,7 @@ auto IndexOperation::setupIndexingProcess( IndexingState& indexingState )
                   guessEncoding( block, indexingState );
 
                   if ( block.isEmpty() ) {
-                      indexing_data_.addAll( block, LineLength( indexingState.max_length ),
-                                             {}, indexingState.encodingGuess );
-
+                      indexing_data_.setEncodingGuess( indexingState.encodingGuess );
                       indexingState.indexingSem.release();
                       return;
                   }
@@ -519,6 +523,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
         LOG( logWARNING ) << "Cannot open file " << fileName_.toStdString();
 
         indexing_data_.clear();
+        indexing_data_.setEncodingGuess( QTextCodec::codecForLocale() );
 
         emit indexingProgressed( 100 );
     }

@@ -88,6 +88,7 @@ class IndexingData {
 
     // Get the guessed encoding for the content.
     QTextCodec* getEncodingGuess() const;
+    void setEncodingGuess( QTextCodec* codec );
 
     QTextCodec* getForcedEncoding() const;
     void forceEncoding( QTextCodec* codec );

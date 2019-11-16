@@ -321,7 +321,7 @@ class AbstractLogView :
   private:
     // Graphic parameters
     static constexpr int OVERVIEW_WIDTH = 27;
-    static constexpr int HOOK_THRESHOLD = 600;
+    static constexpr int HOOK_THRESHOLD = 300;
     static constexpr int PULL_TO_FOLLOW_HOOKED_HEIGHT = 10;
 
     // Width of the bullet zone, including decoration

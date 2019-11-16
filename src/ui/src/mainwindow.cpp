@@ -312,6 +312,7 @@ void MainWindow::createActions()
 
     clearLogAction = new QAction(tr("Clear file..."), this);
     clearLogAction->setStatusTip(tr("Clear current file"));
+    clearLogAction->setShortcuts(QKeySequence::Cut);
     connect( clearLogAction, &QAction::triggered,
              [this](auto){ this->clearLog(); });
 

@@ -68,8 +68,6 @@ class IndexingData {
         : dataMutex_()
         , linePosition_()
         , maxLength_( 0 )
-        , encodingGuess_( QTextCodec::codecForLocale() )
-        , encodingForced_( nullptr )
     {
     }
 

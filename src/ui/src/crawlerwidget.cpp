@@ -1067,48 +1067,52 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 // Determine the right encoding and set the views.
 void CrawlerWidget::updateEncoding()
 {
-    QTextCodec* textCodec = QTextCodec::codecForName( "iso-8859-1" );
-    switch ( encodingSetting_ ) {
-    case Encoding::AUTO:
-        textCodec = logData_->getDetectedEncoding();
-        break;
-    case Encoding::UTF8:
-        textCodec = QTextCodec::codecForName( "utf-8" );
-        break;
-    case Encoding::CP1251:
-        textCodec = QTextCodec::codecForName( "windows-1251" );
-        break;
-    case Encoding::UTF16LE:
-        textCodec = QTextCodec::codecForName( "utf-16le" );
-        break;
-    case Encoding::UTF16BE:
-        textCodec = QTextCodec::codecForName( "utf-16be" );
-        break;
-    case Encoding::UTF32LE:
-        textCodec = QTextCodec::codecForName( "utf-32le" );
-        break;
-    case Encoding::UTF32BE:
-        textCodec = QTextCodec::codecForName( "utf-32be" );
-        break;
-    case Encoding::BIG5:
-        textCodec = QTextCodec::codecForName( "big5" );
-        break;
-    case Encoding::GB18030:
-        textCodec = QTextCodec::codecForName( "gb18030" );
-        break;
-    case Encoding::SHIFT_JIS:
-        textCodec = QTextCodec::codecForName( "shift-jis" );
-        break;
-    case Encoding::KOI8R:
-        textCodec = QTextCodec::codecForName( "koi8-r" );
-        break;
-    case Encoding::LOCAL:
-        textCodec = QTextCodec::codecForLocale();
-        break;
-    case Encoding::ISO_8859_1:
-    default:
-        break;
-    }
+    const QTextCodec* textCodec = [this]() {
+            QTextCodec* codec = nullptr;
+            switch ( encodingSetting_ ) {
+            case Encoding::AUTO:
+                codec = logData_->getDetectedEncoding();
+                break;
+            case Encoding::UTF8:
+                codec = QTextCodec::codecForName( "utf-8" );
+                break;
+            case Encoding::CP1251:
+                codec = QTextCodec::codecForName( "windows-1251" );
+                break;
+            case Encoding::UTF16LE:
+                codec = QTextCodec::codecForName( "utf-16le" );
+                break;
+            case Encoding::UTF16BE:
+                codec = QTextCodec::codecForName( "utf-16be" );
+                break;
+            case Encoding::UTF32LE:
+                codec = QTextCodec::codecForName( "utf-32le" );
+                break;
+            case Encoding::UTF32BE:
+                codec = QTextCodec::codecForName( "utf-32be" );
+                break;
+            case Encoding::BIG5:
+                codec = QTextCodec::codecForName( "big5" );
+                break;
+            case Encoding::GB18030:
+                codec = QTextCodec::codecForName( "gb18030" );
+                break;
+            case Encoding::SHIFT_JIS:
+                codec = QTextCodec::codecForName( "shift-jis" );
+                break;
+            case Encoding::KOI8R:
+                codec = QTextCodec::codecForName( "koi8-r" );
+                break;
+            case Encoding::LOCAL:
+                codec = QTextCodec::codecForLocale();
+                break;
+            case Encoding::ISO_8859_1:
+            default:
+                codec = QTextCodec::codecForName( "iso-8859-1" );
+                break;
+            }
+            return codec ? codec : QTextCodec::codecForLocale();
+        }();
 
     QString encodingPrefix;
     if ( encodingSetting_ == Encoding::AUTO ) {

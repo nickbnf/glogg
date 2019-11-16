@@ -160,7 +160,7 @@ void IndexingData::clear()
     hash_ = {};
     indexHash_.reset();
     linePosition_ = LinePositionArray();
-    encodingGuess_ = nullptr; //QTextCodec::codecForLocale();
+    encodingGuess_ = nullptr;
     encodingForced_ = nullptr;
 }
 
@@ -404,12 +404,15 @@ auto IndexOperation::setupIndexingProcess( IndexingState& indexingState )
 
                   LOG( logDEBUG ) << "Indexing block " << block_beginning;
 
+                  guessEncoding( block, indexingState );
+
                   if ( block.isEmpty() ) {
+                      indexing_data_.addAll( block, LineLength( indexingState.max_length ),
+                                             {}, indexingState.encodingGuess );
+
                       indexingState.indexingSem.release();
                       return;
                   }
-
-                  guessEncoding( block, indexingState );
 
                   auto line_positions = parseDataBlock( block_beginning, block, indexingState );
                   indexing_data_.addAll( block, LineLength( indexingState.max_length ),

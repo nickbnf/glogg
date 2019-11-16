@@ -247,7 +247,7 @@ class AbstractLogView :
     void clearQuickFindNotification();
     // Sent when the view ask for a line to be marked
     // (click in the left margin).
-    void markLine( LineNumber line );
+    void markLines( const std::vector<LineNumber>& lines );
     // Sent up when the user wants to add the selection to the search
     void addToSearch( const QString& selection );
     // Sent up when the mouse is hovered over a line's margin
@@ -313,6 +313,7 @@ class AbstractLogView :
     void findNextSelected();
     void findPreviousSelected();
     void copy();
+    void markSelected();
     void saveToFile();
     void setSearchStart();
     void setSearchEnd();
@@ -388,6 +389,7 @@ class AbstractLogView :
     // Popup menu
     QMenu* popupMenu_;
     QAction* copyAction_;
+    QAction* markAction_;
     QAction* saveToFileAction_;
     QAction* findNextAction_;
     QAction* findPreviousAction_;

@@ -46,6 +46,7 @@ class KloggApp : public SingleApplication {
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );
         qRegisterMetaType<LinesCount>( "LinesCount" );
         qRegisterMetaType<LineNumber>( "LineNumber" );
+        qRegisterMetaType<std::vector<LineNumber>>( "std::vector<LineNumber>" );
         qRegisterMetaType<LineLength>( "LineLength" );
         qRegisterMetaType<Portion>( "Portion" );
         qRegisterMetaType<Selection>( "Selection" );

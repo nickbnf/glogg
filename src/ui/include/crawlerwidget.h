@@ -187,9 +187,9 @@ class CrawlerWidget : public QSplitter,
     // Called when the main view is on a new line number
     void updateLineNumberHandler( LineNumber line );
     // Mark a line that has been clicked on the main (top) view.
-    void markLineFromMain( LineNumber line );
+    void markLinesFromMain( const std::vector<LineNumber>& lines );
     // Mark a line that has been clicked on the filtered (bottom) view.
-    void markLineFromFiltered( LineNumber line );
+    void markLinesFromFiltered( const std::vector<LineNumber>& lines );
 
     void loadingFinishedHandler( LoadingStatus status );
     // Manages the info lines to inform the user the file has changed.

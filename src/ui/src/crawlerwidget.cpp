@@ -423,39 +423,43 @@ void CrawlerWidget::updateLineNumberHandler( LineNumber line )
     emit updateLineNumber( line );
 }
 
-void CrawlerWidget::markLineFromMain( LineNumber line )
+void CrawlerWidget::markLinesFromMain( const std::vector<LineNumber>& lines )
 {
-    if ( line < logData_->getNbLine() ) {
-        logFilteredData_->toggleMark( line );
-
-        // Recompute the content of both window.
-        filteredView->updateData();
-        logMainView->updateData();
-
-        // Update the match overview
-        overview_.updateData( logData_->getNbLine() );
-
-        // Also update the top window for the coloured bullets.
-        update();
+    for (const auto& line : lines) {
+        if ( line < logData_->getNbLine() ) {
+            logFilteredData_->toggleMark( line );
+        }
     }
+
+    // Recompute the content of both window.
+    filteredView->updateData();
+    logMainView->updateData();
+
+    // Update the match overview
+    overview_.updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
 }
 
-void CrawlerWidget::markLineFromFiltered( LineNumber line )
+void CrawlerWidget::markLinesFromFiltered( const std::vector<LineNumber>& lines )
 {
-    if ( line < logFilteredData_->getNbLine() ) {
-        const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
-        logFilteredData_->toggleMark( line_in_file );
-
-        // Recompute the content of both window.
-        filteredView->updateData();
-        logMainView->updateData();
-
-        // Update the match overview
-        overview_.updateData( logData_->getNbLine() );
-
-        // Also update the top window for the coloured bullets.
-        update();
+    for (const auto& line : lines) {
+        if ( line < logData_->getNbLine() ) {
+            const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
+            logFilteredData_->toggleMark( line_in_file );
+        }
     }
+
+    // Recompute the content of both window.
+    filteredView->updateData();
+    logMainView->updateData();
+
+    // Update the match overview
+    overview_.updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
 }
 
 void CrawlerWidget::applyConfiguration()
@@ -864,8 +868,9 @@ void CrawlerWidget::setup()
 
     connect( logMainView, &LogMainView::updateLineNumber, this,
              &CrawlerWidget::updateLineNumberHandler );
-    connect( logMainView, &LogMainView::markLine, this, &CrawlerWidget::markLineFromMain );
-    connect( filteredView, &FilteredView::markLine, this, &CrawlerWidget::markLineFromFiltered );
+
+    connect( logMainView, &LogMainView::markLines, this, &CrawlerWidget::markLinesFromMain );
+    connect( filteredView, &FilteredView::markLines, this, &CrawlerWidget::markLinesFromFiltered );
 
     connect( logMainView, QOverload<const QString&>::of( &LogMainView::addToSearch ), this,
              &CrawlerWidget::addToSearch );

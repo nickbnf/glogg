@@ -476,7 +476,7 @@ void AbstractLogView::mouseReleaseEvent( QMouseEvent* mouseEvent )
             // Invalidate our cache
             textAreaCache_.invalid_ = true;
 
-            emit markLine( *line );
+            emit markLines( {*line} );
         }
     }
     else {
@@ -632,7 +632,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
             case Qt::Key_M: {
                 auto line = selection_.selectedLine();
                 if ( line.has_value() )
-                    emit markLine( *line );
+                    emit markLines( {*line} );
                 break;
             }
             case Qt::Key_G:
@@ -1061,6 +1061,14 @@ void AbstractLogView::copy()
     static QClipboard* clipboard = QApplication::clipboard();
 
     clipboard->setText( selection_.getSelectedText( logData ) );
+}
+
+void AbstractLogView::markSelected()
+{
+    auto lines = selection_.getLines();
+    if ( !lines.empty() ) {
+        emit markLines( lines );
+    }
 }
 
 void AbstractLogView::saveToFile()
@@ -1514,6 +1522,9 @@ void AbstractLogView::createMenu()
     // No text as this action title depends on the type of selection
     connect( copyAction_, &QAction::triggered, [this]( auto ) { this->copy(); } );
 
+    markAction_ = new QAction ( tr( "&Mark" ), this );
+    connect( markAction_, &QAction::triggered, [this]( auto ) { this->markSelected(); } );
+
     saveToFileAction_ = new QAction( tr( "Save to file" ), this );
     connect( saveToFileAction_, &QAction::triggered, [this]( auto ) { this->saveToFile(); } );
 
@@ -1551,6 +1562,8 @@ void AbstractLogView::createMenu()
              [this]( auto ) { this->saveDefaultSplitterSizes(); } );
 
     popupMenu_ = new QMenu( this );
+    popupMenu_->addAction( markAction_ );
+    popupMenu_->addSeparator();
     popupMenu_->addAction( copyAction_ );
     popupMenu_->addAction( saveToFileAction_ );
     popupMenu_->addSeparator();

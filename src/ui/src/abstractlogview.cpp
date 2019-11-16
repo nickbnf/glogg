@@ -630,9 +630,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 findPreviousSelected();
                 break;
             case Qt::Key_M: {
-                auto line = selection_.selectedLine();
-                if ( line.has_value() )
-                    emit markLines( {*line} );
+                markSelected();
                 break;
             }
             case Qt::Key_G:

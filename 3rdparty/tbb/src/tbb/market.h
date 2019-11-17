@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef _TBB_market_H
@@ -182,6 +178,9 @@ private:
     //! Returns next arena that needs more workers, or NULL.
     arena* arena_in_need ( arena* prev_arena );
 
+    //! Recalculates the number of workers requested from RML and updates the allotment.
+    int update_workers_request();
+
     //! Recalculates the number of workers assigned to each arena at and below the specified priority.
     /** The actual number of workers servicing a particular arena may temporarily
         deviate from the calculated value. **/
@@ -237,7 +236,7 @@ private:
 
     arena* arena_in_need ( arena_list_type &arenas, arena *hint );
 
-    static int update_allotment ( arena_list_type& arenas, int total_demand, int max_workers );
+    int update_allotment ( arena_list_type& arenas, int total_demand, int max_workers );
 
     bool is_arena_in_list( arena_list_type &arenas, arena *a );
 
@@ -278,10 +277,13 @@ public:
 
 #if __TBB_ENQUEUE_ENFORCED_CONCURRENCY
     //! Imlpementation of mandatory concurrency enabling
-    bool mandatory_concurrency_enable_impl ( arena *a, bool *enabled = NULL );
+    void enable_mandatory_concurrency_impl ( arena *a );
 
     //! Inform the master that there is an arena with mandatory concurrency
-    bool mandatory_concurrency_enable ( arena *a );
+    void enable_mandatory_concurrency ( arena *a );
+
+    //! Inform the master that the arena is no more interested in mandatory concurrency
+    void disable_mandatory_concurrency_impl(arena* a);
 
     //! Inform the master that the arena is no more interested in mandatory concurrency
     void mandatory_concurrency_disable ( arena *a );

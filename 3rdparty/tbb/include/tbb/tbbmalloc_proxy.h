@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 /*
@@ -31,9 +27,9 @@ or add following parameters to the linker options for the binary which is
 loaded during application startup. It can be either exe-file or dll.
 
 For win32
-klogg_tbbmalloc_proxy.lib /INCLUDE:"___TBB_malloc_proxy"
+tbbmalloc_proxy.lib /INCLUDE:"___TBB_malloc_proxy"
 win64
-klogg_tbbmalloc_proxy.lib /INCLUDE:"__TBB_malloc_proxy"
+tbbmalloc_proxy.lib /INCLUDE:"__TBB_malloc_proxy"
 */
 
 #ifndef __TBB_tbbmalloc_proxy_H
@@ -42,9 +38,9 @@ klogg_tbbmalloc_proxy.lib /INCLUDE:"__TBB_malloc_proxy"
 #if _MSC_VER
 
 #ifdef _DEBUG
-    #pragma comment(lib, "klogg_tbbmalloc_proxy_debug.lib")
+    #pragma comment(lib, "tbbmalloc_proxy_debug.lib")
 #else
-    #pragma comment(lib, "klogg_tbbmalloc_proxy.lib")
+    #pragma comment(lib, "tbbmalloc_proxy.lib")
 #endif
 
 #if defined(_WIN64)
@@ -62,5 +58,8 @@ struct __TBB_malloc_proxy_caller {
 } volatile __TBB_malloc_proxy_helper_object;
 
 #endif // _MSC_VER
+
+/* Public Windows API */
+extern "C" int TBB_malloc_replacement_log(char *** function_replacement_log_ptr);
 
 #endif //__TBB_tbbmalloc_proxy_H

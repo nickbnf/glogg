@@ -1,35 +1,34 @@
-### Intel(R) Threading Building Blocks
-
-[![Stable release](https://img.shields.io/badge/version-2019_U2-green.svg)](https://github.com/01org/tbb/releases/tag/2019_U2)
+# Threading Building Blocks 2019 Update 9
+[![Stable release](https://img.shields.io/badge/version-2019_U9-green.svg)](https://github.com/intel/tbb/releases/tag/2019_U9)
 [![Apache License Version 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
-[![Build Status](https://travis-ci.org/wjakob/tbb.svg?branch=master)](https://travis-ci.org/wjakob/tbb)
-[![Build status](https://ci.appveyor.com/api/projects/status/fvepmk5nxekq27r8?svg=true)](https://ci.appveyor.com/project/wjakob/tbb/branch/master)
 
-This is git repository is currently based on TBB 2019 Update 2 and will be
-updated from time to time to track the most recent release. The only
-modification is the addition of a CMake-based build system.
+Threading Building Blocks (TBB) lets you easily write parallel C++ programs that take
+full advantage of multicore performance, that are portable, composable and have future-proof scalability.
 
-This is convenient for other projects that use CMake and TBB because TBB can be
-easily incorporated into their build process using git submodules and a simple
-``add_subdirectory`` command.
+## Release Information
+Here are the latest [Changes](CHANGES) and [Release Notes](doc/Release_Notes.txt) (contains system requirements and known issues).
 
-Currently, the CMake-based build can create shared and static versions of
-`libtbb`, `libtbbmalloc` and `libtbbmalloc_proxy` for the Intel `i386` and
-`x86_64` architectures on Windows (Visual Studio, MinGW), MacOS (Clang) and
-Linux (GCC & Clang). The `armv7` and `armv8` architectures are supported on
-Linux (GCC & Clang). Other combinations may work but have not been tested.
+Since [2018 U5](https://github.com/intel/tbb/releases/tag/2018_U5) TBB binary packages include [Parallel STL](https://github.com/intel/parallelstl) as a high-level component.
 
-See index.html for general directions and documentation regarding TBB.
+## Documentation
+* TBB [tutorial](https://software.intel.com/en-us/tbb-tutorial)
+* TBB general documentation: [stable](https://software.intel.com/en-us/tbb-documentation)
+and [latest](https://www.threadingbuildingblocks.org/docs/help/index.htm)
 
-See examples/index.html for runnable examples and directions.
+## Support
+Please report issues and suggestions via
+[GitHub issues](https://github.com/intel/tbb/issues) or start a topic on the
+[TBB forum](http://software.intel.com/en-us/forums/intel-threading-building-blocks/).
 
-See http://threadingbuildingblocks.org for full documentation
-and software information.
+## How to Contribute
+To contribute to TBB, please open a GitHub pull request (preferred) or send us a patch by e-mail.
+Threading Building Blocks is licensed under [Apache License, Version 2.0](LICENSE).
+By its terms, contributions submitted to the project are also done under that license.
 
-Note: Intel, Thread Building Blocks, and TBB are either registered trademarks or
-trademarks of Intel Corporation in the United States and/or other countries.
+## Engineering team contacts
+* [E-mail us.](mailto:inteltbbdevelopers@intel.com)
 
-The CMake build contains the following additional/changed files that are not
-part of the regular release: ``build/mingw_cross_toolchain.cmake``,
-``build/version_string.ver.in``, ``.gitignore`` (modified), ``README.md`` (this
-file), and ``Makefile.old`` (renamed from ``Makefile``).
+------------------------------------------------------------------------
+Intel and the Intel logo are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.
+
+\* Other names and brands may be claimed as the property of others.

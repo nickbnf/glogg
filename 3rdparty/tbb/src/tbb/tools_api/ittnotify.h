@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef _ITTNOTIFY_H_
@@ -2709,7 +2705,7 @@ ITT_STUB(ITTAPI, __itt_clock_domain*, clock_domain_create, (__itt_get_clock_info
 
 /**
  * @ingroup clockdomains
- * @brief Recalculate clock domains frequences and clock base timestamps.
+ * @brief Recalculate clock domains frequencies and clock base timestamps.
  */
 void ITTAPI __itt_clock_domain_reset(void);
 
@@ -3719,7 +3715,7 @@ ITT_STUB(ITTAPI, __itt_caller, stack_caller_create, (void))
 /** @endcond */
 
 /**
- * @brief Destroy the inforamtion about stitch point identified by the pointer previously returned by __itt_stack_caller_create()
+ * @brief Destroy the information about stitch point identified by the pointer previously returned by __itt_stack_caller_create()
  */
 void ITTAPI __itt_stack_caller_destroy(__itt_caller id);
 

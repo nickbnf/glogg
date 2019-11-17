@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef _TBB_tbb_misc_H
@@ -43,8 +39,9 @@ namespace internal {
 
 const size_t MByte = 1024*1024;
 
-#if __TBB_WIN8UI_SUPPORT
-// In Win8UI mode, TBB uses a thread creation API that does not allow to specify the stack size.
+#if __TBB_WIN8UI_SUPPORT && (_WIN32_WINNT < 0x0A00)
+// In Win8UI mode (Windows 8 Store* applications), TBB uses a thread creation API
+// that does not allow to specify the stack size.
 // Still, the thread stack size value, either explicit or default, is used by the scheduler.
 // So here we set the default value to match the platform's default of 1MB.
 const size_t ThreadStackSize = 1*MByte;
@@ -65,6 +62,8 @@ inline int AvailableHwConcurrency() {
 }
 #endif /* __TBB_HardwareConcurrency */
 
+//! Returns OS regular memory page size
+size_t DefaultSystemPageSize();
 
 #if _WIN32||_WIN64
 
@@ -82,9 +81,6 @@ void MoveThreadIntoProcessorGroup( void* hThread, int groupIndex );
 
 //! Throws std::runtime_error with what() returning error_code description prefixed with aux_info
 void handle_win_error( int error_code );
-
-//! True if environment variable with given name is set and not 0; otherwise false.
-bool GetBoolEnvironmentVariable( const char * name );
 
 //! Prints TBB version information on stderr
 void PrintVersion();

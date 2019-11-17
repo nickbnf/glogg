@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #include <stdio.h>
@@ -184,7 +180,9 @@ generic_scheduler* governor::init_scheduler( int num_threads, stack_size_type st
             s->attach_arena( market::create_arena( default_num_threads(), 1, 0 ), 0, /*is_master*/true );
             __TBB_ASSERT( s->my_arena_index == 0, "Master thread must occupy the first slot in its arena" );
             s->my_arena_slot->my_scheduler = s;
+#if __TBB_TASK_GROUP_CONTEXT
             s->my_arena->my_default_ctx = s->default_context(); // it also transfers implied ownership
+#endif
             // Mark the scheduler as fully initialized
             assume_scheduler( s );
         }

@@ -71,25 +71,12 @@ Thumbs.db
 /rules.ninja
 *~
 .emacs.desktop
+.tags
 
 # Build system generated files #
 ################################
 CMakeCache.txt
 CMakeFiles/
-
-*.cmake
-libtbb.dylib
-libtbb.so
-libtbb_static.a
-libtbbmalloc.dylib
-libtbbmalloc.so
-libtbbmalloc_proxy.dylib
-libtbbmalloc_proxy.so
-libtbbmalloc_proxy_static.a
-libtbbmalloc_static.a
-tbb.def
-tbbmalloc.def
-version_string.ver
 
 # Other #
 #########
@@ -98,3 +85,4 @@ version_string.ver
 .svn
 crash*
 *.tmp
+/.vs

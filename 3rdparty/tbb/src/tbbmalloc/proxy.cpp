@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #if __linux__ && !__ANDROID__
@@ -41,6 +37,7 @@
 
 #include "proxy.h"
 #include "tbb/tbb_config.h"
+#include "tbb/tbb_environment.h"
 
 #if !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) && !defined(__SUNPRO_CC)
     #if TBB_USE_EXCEPTIONS
@@ -64,7 +61,7 @@
 /*** internal global operator new implementation (Linux, Windows) ***/
 #include <new>
 
-// Synchronization primitives to protect original library pointers and new_handler 
+// Synchronization primitives to protect original library pointers and new_handler
 #include "Synchronize.h"
 
 #if __TBB_MSVC_PART_WORD_INTERLOCKED_INTRINSICS_PRESENT
@@ -409,10 +406,10 @@ void* __TBB_malloc_safer_realloc_##CRTLIB( void *ptr, size_t size )             
     return __TBB_malloc_safer_realloc( ptr, size, &func_ptrs );                                      \
 }                                                                                                    \
                                                                                                      \
-void* __TBB_malloc_safer__aligned_realloc_##CRTLIB( void *ptr, size_t size, size_t aligment )        \
+void* __TBB_malloc_safer__aligned_realloc_##CRTLIB( void *ptr, size_t size, size_t alignment )       \
 {                                                                                                    \
     orig_aligned_ptrs func_ptrs = {orig__aligned_free_##CRTLIB, orig__aligned_msize_##CRTLIB};       \
-    return __TBB_malloc_safer_aligned_realloc( ptr, size, aligment, &func_ptrs );                    \
+    return __TBB_malloc_safer_aligned_realloc( ptr, size, alignment, &func_ptrs );                   \
 }
 
 // Only for ucrtbase: substitution for _o_free
@@ -669,7 +666,7 @@ bool BytecodesAreKnown(const unicode_char_t *dllName)
     if (!module)
         return false;
     for (int i=0; funcName[i]; i++)
-        if (! IsPrologueKnown(module, funcName[i], known_bytecodes)) {
+        if (! IsPrologueKnown(dllName, funcName[i], known_bytecodes, module)) {
             fprintf(stderr, "TBBmalloc: skip allocation functions replacement in " WCHAR_SPEC
                     ": unknown prologue for function " WCHAR_SPEC "\n", dllName, funcName[i]);
             return false;
@@ -738,13 +735,16 @@ void doMallocReplacement()
             ReplaceFunctionWithStore( modules_to_replace[j].name, c_routines_to_replace[i]._func, c_routines_to_replace[i]._fptr, NULL, NULL,  c_routines_to_replace[i]._on_error );
         }
         if ( strcmp(modules_to_replace[j].name, "ucrtbase.dll") == 0 ) {
+            HMODULE ucrtbase_handle = GetModuleHandle("ucrtbase.dll");
+            if (!ucrtbase_handle)
+                continue;
             // If _o_free function is present and patchable, redirect it to tbbmalloc as well
             // This prevents issues with other _o_* functions which might allocate memory with malloc
-            if ( IsPrologueKnown(GetModuleHandle("ucrtbase.dll"), "_o_free", known_bytecodes) ) {
+            if ( IsPrologueKnown("ucrtbase.dll", "_o_free", known_bytecodes, ucrtbase_handle)) {
                 ReplaceFunctionWithStore( "ucrtbase.dll", "_o_free", (FUNCPTR)__TBB_malloc__o_free, known_bytecodes, (FUNCPTR*)&orig__o_free,  FRR_FAIL );
             }
             // Similarly for _free_base
-            if (IsPrologueKnown(GetModuleHandle("ucrtbase.dll"), "_free_base", known_bytecodes)) {
+            if (IsPrologueKnown("ucrtbase.dll", "_free_base", known_bytecodes, ucrtbase_handle)) {
                 ReplaceFunctionWithStore("ucrtbase.dll", "_free_base", (FUNCPTR)__TBB_malloc__free_base, known_bytecodes, (FUNCPTR*)&orig__free_base, FRR_FAIL);
             }
             // ucrtbase.dll does not export operator new/delete, so skip the rest of the loop.
@@ -773,15 +773,10 @@ extern "C" BOOL WINAPI DllMain( HINSTANCE hInst, DWORD callReason, LPVOID reserv
 
     if ( callReason==DLL_PROCESS_ATTACH && reserved && hInst ) {
 #if !__TBB_WIN8UI_SUPPORT
-#if TBBMALLOC_USE_TBB_FOR_ALLOCATOR_ENV_CONTROLLED
-        char pinEnvVariable[50];
-        if( GetEnvironmentVariable("TBBMALLOC_USE_TBB_FOR_ALLOCATOR", pinEnvVariable, 50))
+        if (!tbb::internal::GetBoolEnvironmentVariable("TBB_MALLOC_DISABLE_REPLACEMENT"))
         {
             doMallocReplacement();
         }
-#else
-        doMallocReplacement();
-#endif
 #endif // !__TBB_WIN8UI_SUPPORT
     }
 

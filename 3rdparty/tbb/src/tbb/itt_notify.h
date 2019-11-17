@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005-2018 Intel Corporation
+    Copyright (c) 2005-2019 Intel Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-
-
-
 */
 
 #ifndef _TBB_ITT_NOTIFY
@@ -85,6 +81,9 @@ namespace tbb {
             *SyncObj_Mailbox,
             *SyncObj_TaskReturnList,
             *SyncObj_TaskStream,
+#if __TBB_PREVIEW_CRITICAL_TASKS
+            *SyncObj_CriticalTaskStream,
+#endif
             *SyncObj_ContextsList
             ;
 

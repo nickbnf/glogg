@@ -124,9 +124,6 @@ struct IndexingState {
 
     QTextCodec* encodingGuess = nullptr;
     QTextCodec* fileTextCodec = nullptr;
-
-    QSemaphore indexingSem;
-    QSemaphore blockSem;
 };
 
 using OperationResult = absl::variant<bool, MonitoredFileStatus>;

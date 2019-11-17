@@ -418,7 +418,6 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
     state.encodingGuess = indexing_data_.getEncodingGuess();
 
-    const uint32_t sizeChunk = 1024 * 1024;
     const auto& config = Configuration::get();
     const auto prefetchBufferSize = config.indexReadBufferSizeMb();
 
@@ -438,7 +437,9 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 return false;
             }
 
-            if ( !file.atEnd() ) {
+          const uint32_t sizeChunk = 1024 * 1024;
+
+          if ( !file.atEnd() ) {
                 blockData.first = file.pos();
                 clock::time_point ioT1 = clock::now();
                 blockData.second = file.read( sizeChunk );

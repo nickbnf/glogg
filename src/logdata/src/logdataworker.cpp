@@ -52,6 +52,8 @@
 #include <chrono>
 #include <cmath>
 
+#include <tbb/flow_graph.h>
+
 namespace {
 
 template <class... Fs> struct overload;
@@ -81,7 +83,7 @@ template <class... Fs> auto make_visitor( Fs... fs )
     return overload<Fs...>( fs... );
 }
 
-}
+} // namespace
 
 qint64 IndexingData::getSize() const
 {
@@ -236,7 +238,7 @@ void LogDataWorker::checkFileChanges()
         auto operationRequested = std::make_unique<CheckFileChangesOperation>(
             fileName, indexing_data_, interruptRequest_ );
 
-		return operationRequested->start();
+        return operationRequested->start();
     } );
 
     operationWatcher_.setFuture( operationFuture_ );
@@ -259,24 +261,22 @@ void LogDataWorker::interrupt()
 void LogDataWorker::onOperationFinished()
 {
     const auto variantResult = operationWatcher_.result();
-    absl::visit(
-        make_visitor(
-            [this]( bool result ) {
-                if ( result ) {
-                    LOG( logDEBUG ) << "... finished copy in workerThread.";
-                    emit indexingFinished( LoadingStatus::Successful );
-				}
-                else {
-                    LOG( logINFO ) << "indexing interrupted";
-                    emit indexingFinished( LoadingStatus::Interrupted );
-				}
-			},
-            [this]( MonitoredFileStatus result ) { 
-				LOG( logINFO ) << "checking file finished";
-                emit checkFileChangesFinished( result );
-            }
-        ),
-        variantResult );
+    absl::visit( make_visitor(
+                     [this]( bool result ) {
+                         if ( result ) {
+                             LOG( logDEBUG ) << "... finished copy in workerThread.";
+                             emit indexingFinished( LoadingStatus::Successful );
+                         }
+                         else {
+                             LOG( logINFO ) << "indexing interrupted";
+                             emit indexingFinished( LoadingStatus::Interrupted );
+                         }
+                     },
+                     [this]( MonitoredFileStatus result ) {
+                         LOG( logINFO ) << "checking file finished";
+                         emit checkFileChangesFinished( result );
+                     } ),
+                 variantResult );
 }
 
 //
@@ -391,133 +391,11 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
     }
 }
 
-auto IndexOperation::setupIndexingProcess( IndexingState& indexingState )
-{
-    using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
-    using BlockQueue = moodycamel::BlockingReaderWriterQueue<BlockData>;
-    auto blockQueue = std::make_unique<BlockQueue>();
-    auto threadPool = std::make_unique<QThreadPool>();
-    threadPool->setMaxThreadCount( 1 );
-
-    auto consumerFuture
-        = QtConcurrent::run( threadPool.get(), [queue = blockQueue.get(), &indexingState, this] {
-              for ( ;; ) {
-                  BlockData blockData;
-                  queue->wait_dequeue( blockData );
-
-                  const auto block_beginning = blockData.first;
-                  const auto& block = blockData.second;
-
-                  LOG( logDEBUG ) << "Indexing block " << block_beginning;
-
-                  guessEncoding( block, indexingState );
-
-                  if ( block.isEmpty() ) {
-                      indexing_data_.setEncodingGuess( indexingState.encodingGuess );
-                      indexingState.indexingSem.release();
-                      return;
-                  }
-
-                  auto line_positions = parseDataBlock( block_beginning, block, indexingState );
-                  indexing_data_.addAll( block, LineLength( indexingState.max_length ),
-                                         line_positions, indexingState.encodingGuess );
-
-                  // Update the caller for progress indication
-                  const auto progress = static_cast<int>(
-                      std::floor( ( indexingState.file_size > 0 )
-                                      ? indexingState.pos * 100.f / indexingState.file_size
-                                      : 100 ) );
-                  emit indexingProgressed( progress );
-
-                  indexingState.blockSem.release( block.size() );
-              }
-          } );
-
-    std::function<void( BlockData )> blockSender
-        = [queue = blockQueue.get()]( BlockData block ) { queue->enqueue( std::move( block ) ); };
-
-    return std::make_tuple( std::move( blockSender ), std::move( blockQueue ),
-                            std::move( consumerFuture ), std::move( threadPool ) );
-}
-
 void IndexOperation::doIndex( LineOffset initialPosition )
 {
-    const auto& config = Configuration::get();
-
-    const uint32_t sizeChunk = 1024 * 1024;
-    const auto prefetchBufferSize = config.indexReadBufferSizeMb() * sizeChunk;
-
     QFile file( fileName_ );
 
-    if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
-
-        IndexingState state;
-        state.pos = initialPosition.get();
-        state.file_size = file.size();
-
-        state.fileTextCodec = indexing_data_.getForcedEncoding();
-        if ( !state.fileTextCodec ) {
-            state.fileTextCodec = indexing_data_.getEncodingGuess();
-        }
-
-        state.encodingGuess = indexing_data_.getEncodingGuess();
-
-        auto process = setupIndexingProcess( state );
-        auto blockSender = std::get<0>( process );
-
-        state.blockSem.release( prefetchBufferSize );
-
-        using namespace std::chrono;
-        using clock = high_resolution_clock;
-        clock::time_point t1 = clock::now();
-
-        size_t ioDuration{};
-
-        file.seek( state.pos );
-        while ( !file.atEnd() ) {
-
-            if ( interruptRequest_ )
-                break;
-
-            const auto block_beginning = file.pos();
-
-            clock::time_point ioT1 = clock::now();
-            const auto block = file.read( sizeChunk );
-            clock::time_point ioT2 = clock::now();
-
-            ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 ).count();
-
-            state.blockSem.acquire( block.size() );
-
-            LOG( logDEBUG ) << "Sending block " << block_beginning;
-            blockSender( std::make_pair( block_beginning, block ) );
-        }
-
-        blockSender( std::make_pair( state.file_size, QByteArray{} ) );
-
-        {
-            state.indexingSem.acquire();
-        }
-
-        // Check if there is a non LF terminated line at the end of the file
-        if ( !interruptRequest_ && state.file_size > state.pos ) {
-            LOG( logWARNING ) << "Non LF terminated file, adding a fake end of line";
-
-            FastLinePositionArray line_position;
-            line_position.append( LineOffset( state.file_size + 1 ) );
-            line_position.setFakeFinalLF();
-
-            indexing_data_.addAll( {}, 0_length, line_position, state.encodingGuess );
-        }
-
-        high_resolution_clock::time_point t2 = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
-
-        LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
-        LOG( logINFO ) << "Indexing perf "
-                       << ( 1000.f * state.file_size / duration ) / ( 1024 * 1024 ) << " MiB/s";
-    }
-    else {
+    if ( !( file.isOpen() || file.open( QIODevice::ReadOnly ) ) ) {
         // TODO: Check that the file is seekable?
         // If the file cannot be open, we do as if it was empty
         LOG( logWARNING ) << "Cannot open file " << fileName_.toStdString();
@@ -526,7 +404,115 @@ void IndexOperation::doIndex( LineOffset initialPosition )
         indexing_data_.setEncodingGuess( QTextCodec::codecForLocale() );
 
         emit indexingProgressed( 100 );
+        return;
     }
+
+    IndexingState state;
+    state.pos = initialPosition.get();
+    state.file_size = file.size();
+
+    state.fileTextCodec = indexing_data_.getForcedEncoding();
+    if ( !state.fileTextCodec ) {
+        state.fileTextCodec = indexing_data_.getEncodingGuess();
+    }
+
+    state.encodingGuess = indexing_data_.getEncodingGuess();
+
+    const uint32_t sizeChunk = 1024 * 1024;
+    const auto& config = Configuration::get();
+    const auto prefetchBufferSize = config.indexReadBufferSizeMb();
+
+    using namespace std::chrono;
+    using clock = high_resolution_clock;
+    size_t ioDuration{};
+
+    const auto indexingStartTime = clock::now();
+
+    tbb::flow::graph indexingGraph;
+    using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
+
+    auto blockReader = tbb::flow::source_node<BlockData>(
+        indexingGraph,
+        [this, &file, &ioDuration]( BlockData& blockData ) -> bool {
+            if ( interruptRequest_ ) {
+                return false;
+            }
+
+            if ( !file.atEnd() ) {
+                blockData.first = file.pos();
+                clock::time_point ioT1 = clock::now();
+                blockData.second = file.read( sizeChunk );
+                clock::time_point ioT2 = clock::now();
+
+                ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 ).count();
+
+                LOG( logDEBUG ) << "Sending block " << blockData.first;
+                return true;
+            }
+            else {
+                return false;
+            }
+        },
+        false );
+
+    auto blockPrefetcher = tbb::flow::limiter_node<BlockData>( indexingGraph, prefetchBufferSize );
+    auto blockQueue = tbb::flow::queue_node<BlockData>( indexingGraph );
+
+    auto blockParser = tbb::flow::function_node<BlockData, tbb::flow::continue_msg>(
+        indexingGraph, 1, [this, &state]( const BlockData& blockData ) {
+            const auto& block_beginning = blockData.first;
+            const auto& block = blockData.second;
+
+            LOG( logDEBUG ) << "Indexing block " << block_beginning << " start";
+
+            guessEncoding( block, state );
+
+            if ( !block.isEmpty() ) {
+                auto line_positions = parseDataBlock( block_beginning, block, state );
+                indexing_data_.addAll( block, LineLength( state.max_length ), line_positions,
+                                       state.encodingGuess );
+
+                // Update the caller for progress indication
+                const auto progress = static_cast<int>( std::floor(
+                    ( state.file_size > 0 ) ? state.pos * 100.f / state.file_size : 100 ) );
+                emit indexingProgressed( progress );
+            }
+            else {
+                indexing_data_.setEncodingGuess( state.encodingGuess );
+            }
+
+          LOG( logDEBUG ) << "Indexing block " << block_beginning << " done";
+
+            return tbb::flow::continue_msg{};
+        } );
+
+    tbb::flow::make_edge( blockReader, blockPrefetcher );
+    tbb::flow::make_edge( blockPrefetcher, blockQueue );
+    tbb::flow::make_edge( blockQueue, blockParser );
+    tbb::flow::make_edge( blockParser, blockPrefetcher.decrement );
+
+    file.seek( state.pos );
+    blockReader.activate();
+
+    indexingGraph.wait_for_all();
+
+    // Check if there is a non LF terminated line at the end of the file
+    if ( !interruptRequest_ && state.file_size > state.pos ) {
+        LOG( logWARNING ) << "Non LF terminated file, adding a fake end of line";
+
+        FastLinePositionArray line_position;
+        line_position.append( LineOffset( state.file_size + 1 ) );
+        line_position.setFakeFinalLF();
+
+        indexing_data_.addAll( {}, 0_length, line_position, state.encodingGuess );
+    }
+
+    const auto indexingEndTime = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime ).count();
+
+    LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
+    LOG( logINFO ) << "Indexing perf " << ( 1000.f * state.file_size / duration ) / ( 1024 * 1024 )
+                   << " MiB/s";
 }
 
 // Called in the worker thread's context
@@ -579,7 +565,7 @@ OperationResult CheckFileChangesOperation::start()
 
     if ( realFileSize == 0 || realFileSize < indexedHash.size ) {
         LOG( logINFO ) << "File truncated";
-		return MonitoredFileStatus::Truncated;
+        return MonitoredFileStatus::Truncated;
     }
     else {
         QFile file( fileName_ );
@@ -603,7 +589,8 @@ OperationResult CheckFileChangesOperation::start()
 
             const auto realHash = hash.result();
 
-            LOG( logINFO ) << "indexed hash " << indexedHash.hash.toHex() << ", real file hash " << QString( realHash.toHex() );
+            LOG( logINFO ) << "indexed hash " << indexedHash.hash.toHex() << ", real file hash "
+                           << QString( realHash.toHex() );
 
             if ( !std::equal( indexedHash.hash.begin(), indexedHash.hash.end(), realHash.begin(),
                               realHash.end() ) ) {

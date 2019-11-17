@@ -163,8 +163,6 @@ class IndexOperation : public QObject {
                                           const QByteArray& block, IndexingState& state ) const;
 
     void guessEncoding( const QByteArray& block, IndexingState& state ) const;
-
-    auto setupIndexingProcess( IndexingState& state );
 };
 
 class FullIndexOperation : public IndexOperation {

@@ -514,6 +514,10 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
     LOG( logINFO ) << "Indexing perf " << ( 1000.f * state.file_size / duration ) / ( 1024 * 1024 )
                    << " MiB/s";
+
+    if ( !indexing_data_.getEncodingGuess() ) {
+        indexing_data_.setEncodingGuess( QTextCodec::codecForLocale() );
+    }
 }
 
 // Called in the worker thread's context

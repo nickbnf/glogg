@@ -36,7 +36,6 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QFile>
 #include <QtConcurrent>
 
 #include "log.h"
@@ -46,7 +45,7 @@
 
 #include "configuration.h"
 
-#include <moodycamel/blockingconcurrentqueue.h>
+#include <tbb/flow_graph.h>
 
 #include <chrono>
 #include <cmath>
@@ -109,7 +108,8 @@ SearchResults SearchData::takeCurrentResults() const
 {
     QMutexLocker locker( &dataMutex_ );
 
-    auto results = SearchResults {matches_, std::move( newMatches_ ), maxLength_, nbLinesProcessed_ };
+    auto results
+        = SearchResults{ matches_, std::move( newMatches_ ), maxLength_, nbLinesProcessed_ };
     newMatches_ = {};
     return results;
 }
@@ -138,19 +138,18 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
     if ( !matches.empty() ) {
         lastMatchedLineNumber_ = std::max( lastMatchedLineNumber_, matches.back().lineNumber() );
 
-        const auto insertNewMatches = [&matches](SearchResultArray& oldMatches)
-        {
+        const auto insertNewMatches = [&matches]( SearchResultArray& oldMatches ) {
             const auto insertIt
                 = std::lower_bound( begin( oldMatches ), end( oldMatches ), matches.front() );
             assert( insertIt == end( oldMatches ) || !( *insertIt < matches.back() ) );
 
-            auto insertPos = std::distance( begin( oldMatches ), insertIt);
+            auto insertPos = std::distance( begin( oldMatches ), insertIt );
 
             oldMatches = std::move( oldMatches ).insert( insertPos, matches );
         };
 
-        insertNewMatches(matches_);
-        insertNewMatches(newMatches_);
+        insertNewMatches( matches_ );
+        insertNewMatches( newMatches_ );
     }
 }
 
@@ -289,36 +288,14 @@ SearchOperation::SearchOperation( const LogData& sourceLogData, AtomicFlag& inte
 
 void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
-    const auto& config = Configuration::get();
-
     const auto nbSourceLines = sourceLogData_.getNbLine();
-    LineLength maxLength = 0_length;
-    LinesCount nbMatches = searchData.getNbMatches();
-
-    const auto nbLinesInChunk = LinesCount( config.searchReadBufferSizeLines() );
 
     LOG( logDEBUG ) << "Searching from line " << initialLine << " to " << nbSourceLines;
-
-    if ( initialLine < startLine_ ) {
-        initialLine = startLine_;
-    }
-
-    const auto endLine = qMin( LineNumber( nbSourceLines.get() ), endLine_ );
 
     using namespace std::chrono;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    QSemaphore searchCompleted;
-    QSemaphore blocksDone;
-
-    using SearchBlockQueue = moodycamel::BlockingConcurrentQueue<SearchBlockData>;
-    using ProcessMatchQueue = moodycamel::BlockingConcurrentQueue<PartialSearchResults>;
-
-    SearchBlockQueue searchBlockQueue;
-    ProcessMatchQueue processMatchQueue;
-
-    std::vector<QFuture<void>> matchers;
-
+    const auto& config = Configuration::get();
     const auto matchingThreadsCount = [&config]() {
         if ( !config.useParallelSearch() ) {
             return 1;
@@ -331,87 +308,99 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     LOG( logINFO ) << "Using " << matchingThreadsCount << " matching threads";
 
-    auto localThreadPool = std::make_unique<QThreadPool>();
-    localThreadPool->setMaxThreadCount( matchingThreadsCount + 2 );
+    tbb::flow::graph searchGraph;
 
-    const auto makeMatcher = [this, &searchBlockQueue, &processMatchQueue,
-                              pool = localThreadPool.get()]( size_t index ) {
-        // copy and optimize regex for each thread
-        auto regexp = QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() };
-        regexp.optimize();
-        return QtConcurrent::run( pool, [regexp, index, &searchBlockQueue, &processMatchQueue]() {
-            auto cToken = moodycamel::ConsumerToken{ searchBlockQueue };
-            auto pToken = moodycamel::ProducerToken{ processMatchQueue };
-
-            for ( ;; ) {
-                SearchBlockData blockData;
-                searchBlockQueue.wait_dequeue( cToken, blockData );
-
-                LOG( logDEBUG ) << "Searcher " << index << " " << blockData.chunkStart;
-
-                const auto lastBlock = blockData.lines.empty();
-
-                if ( !lastBlock ) {
-                    blockData.results
-                        = filterLines( regexp, blockData.lines, blockData.chunkStart );
-                }
-
-                LOG( logDEBUG ) << "Searcher " << index << " sending matches "
-                                << blockData.results.matchingLines.size();
-
-                processMatchQueue.enqueue( pToken, std::move( blockData.results ) );
-
-                if ( lastBlock ) {
-                    LOG( logDEBUG ) << "Searcher " << index << " last block";
-                    return;
-                }
-            }
-        } );
-    };
-
-    for ( int i = 0; i < matchingThreadsCount; ++i ) {
-        matchers.emplace_back( makeMatcher( i ) );
+    if ( initialLine < startLine_ ) {
+        initialLine = startLine_;
     }
 
-    auto processMatches = QtConcurrent::run( localThreadPool.get(), [&]() {
-        auto cToken = moodycamel::ConsumerToken{ processMatchQueue };
+    const auto endLine = qMin( LineNumber( nbSourceLines.get() ), endLine_ );
 
-        size_t matchersDone = 0;
+    auto chunkStart = initialLine;
+    const auto nbLinesInChunk = LinesCount( config.searchReadBufferSizeLines() );
+    auto linesSource = tbb::flow::source_node<std::shared_ptr<SearchBlockData>>(
+        searchGraph,
+        [this, endLine, nbLinesInChunk,
+         &chunkStart]( std::shared_ptr<SearchBlockData>& blockData ) {
+            blockData = std::make_shared<SearchBlockData>();
+            if ( interruptRequested_ )
+                return false;
 
-        int reportedPercentage = 0;
-        auto reportedMatches = nbMatches;
-        LinesCount totalProcessedLines = 0_lcount;
+            if ( chunkStart >= endLine ) {
+                return false;
+            }
 
-        const auto totalLines = endLine - initialLine;
+            LOG( logDEBUG ) << "Reading chunk starting at " << chunkStart;
 
-        for ( ;; ) {
-            PartialSearchResults matchResults;
-            processMatchQueue.wait_dequeue( cToken, matchResults );
+            const auto linesInChunk
+                = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
+            auto lines = sourceLogData_.getLines( chunkStart, linesInChunk );
 
-            LOG( logDEBUG ) << "Combining match results from " << matchResults.chunkStart;
+            LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart << ", " << lines.size()
+                            << " lines read.";
 
-            if ( matchResults.processedLines.get() ) {
+            blockData->chunkStart = chunkStart;
+            blockData->lines = std::move( lines );
 
-                maxLength = qMax( maxLength, matchResults.maxLength );
+            LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart << ", " << lines.size()
+                            << " lines read.";
+
+            chunkStart = chunkStart + nbLinesInChunk;
+            return true;
+        },
+        false );
+
+    auto lineBlocksQueue = tbb::flow::buffer_node<std::shared_ptr<SearchBlockData>>( searchGraph );
+    auto blockPrefetcher = tbb::flow::limiter_node<std::shared_ptr<SearchBlockData>>(
+        searchGraph, matchingThreadsCount * 2 );
+
+    using RegexMatcher
+        = tbb::flow::function_node<std::shared_ptr<SearchBlockData>,
+                                   std::shared_ptr<PartialSearchResults>, tbb::flow::rejecting>;
+
+    std::vector<std::pair<QRegularExpression, RegexMatcher>> regexMatchers;
+    for ( auto index = 0; index < matchingThreadsCount; ++index ) {
+        regexMatchers.emplace_back(
+            QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() },
+            RegexMatcher(
+                searchGraph, 1,
+                [&regexMatchers, index]( const std::shared_ptr<SearchBlockData>& blockData ) {
+                    auto results = std::make_shared<PartialSearchResults>(
+                        filterLines( regexMatchers.at( index ).first, blockData->lines,
+                                     blockData->chunkStart ) );
+                    LOG( logDEBUG ) << "Searcher " << index << " block " << blockData->chunkStart
+                                    << " sending matches " << results->matchingLines.size();
+                    return results;
+                } ) );
+        regexMatchers.back().first.optimize();
+    }
+
+    const auto totalLines = endLine - initialLine;
+    LinesCount totalProcessedLines = 0_lcount;
+    LineLength maxLength = 0_length;
+    LinesCount nbMatches = searchData.getNbMatches();
+    auto reportedMatches = nbMatches;
+    int reportedPercentage = 0;
+    auto matchProcessor = tbb::flow::function_node<std::shared_ptr<PartialSearchResults>,
+                                                   tbb::flow::continue_msg, tbb::flow::rejecting>(
+        searchGraph, 1, [&]( const std::shared_ptr<PartialSearchResults>& matchResults ) {
+            if ( matchResults->processedLines.get() ) {
+
+                maxLength = qMax( maxLength, matchResults->maxLength );
                 nbMatches += LinesCount(
-                    static_cast<LinesCount::UnderlyingType>( matchResults.matchingLines.size() ) );
+                    static_cast<LinesCount::UnderlyingType>( matchResults->matchingLines.size() ) );
 
-                const auto processedLines = LinesCount{ matchResults.chunkStart.get()
-                                                        + matchResults.processedLines.get() };
+                const auto processedLines = LinesCount{ matchResults->chunkStart.get()
+                                                        + matchResults->processedLines.get() };
 
-                totalProcessedLines += matchResults.processedLines;
+                totalProcessedLines += matchResults->processedLines;
 
                 // After each block, copy the data to shared data
                 // and update the client
-                searchData.addAll( maxLength, matchResults.matchingLines, processedLines );
+                searchData.addAll( maxLength, matchResults->matchingLines, processedLines );
 
-                LOG( logDEBUG ) << "done Searching chunk starting at " << matchResults.chunkStart
-                                << ", " << matchResults.processedLines << " lines read.";
-
-                blocksDone.release( matchResults.processedLines.get() );
-            }
-            else {
-                matchersDone++;
+                LOG( logDEBUG ) << "done Searching chunk starting at " << matchResults->chunkStart
+                                << ", " << matchResults->processedLines << " lines read.";
             }
 
             const int percentage = static_cast<int>(
@@ -425,46 +414,25 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 reportedMatches = nbMatches;
             }
 
-            if ( matchersDone == matchers.size() ) {
-                searchCompleted.release();
-                return;
-            }
-        }
-    } );
+            return tbb::flow::continue_msg{};
+        } );
 
-    auto pToken = moodycamel::ProducerToken{ searchBlockQueue };
+    auto resultsQueue
+        = tbb::flow::buffer_node<std::shared_ptr<PartialSearchResults>>( searchGraph );
 
-    blocksDone.release( nbLinesInChunk.get() * ( static_cast<uint32_t>( matchers.size() ) + 1 ) );
+    tbb::flow::make_edge( linesSource, blockPrefetcher );
+    tbb::flow::make_edge( blockPrefetcher, lineBlocksQueue );
 
-    for ( auto chunkStart = initialLine; chunkStart < endLine;
-          chunkStart = chunkStart + nbLinesInChunk ) {
-        if ( interruptRequested_ )
-            break;
-
-        LOG( logDEBUG ) << "Reading chunk starting at " << chunkStart;
-
-        const auto linesInChunk
-            = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
-        auto lines = sourceLogData_.getLines( chunkStart, linesInChunk );
-
-        LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart << ", " << lines.size()
-                        << " lines read.";
-
-        blocksDone.acquire( static_cast<uint32_t>( lines.size() ) );
-
-        searchBlockQueue.enqueue( pToken,
-                                  { chunkStart, std::move( lines ), PartialSearchResults{} } );
-
-        LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart << ", " << lines.size()
-                        << " lines read.";
+    for ( auto& regexMatcher : regexMatchers ) {
+        tbb::flow::make_edge( lineBlocksQueue, regexMatcher.second );
+        tbb::flow::make_edge( regexMatcher.second, resultsQueue );
     }
 
-    for ( size_t i = 0; i < matchers.size(); ++i ) {
-        searchBlockQueue.enqueue( pToken,
-                                  { endLine, std::vector<QString>{}, PartialSearchResults{} } );
-    }
+    tbb::flow::make_edge( resultsQueue, matchProcessor );
+    tbb::flow::make_edge( matchProcessor, blockPrefetcher.decrement );
 
-    searchCompleted.acquire();
+    linesSource.activate();
+    searchGraph.wait_for_all();
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>( t2 - t1 ).count();

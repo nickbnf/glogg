@@ -44,8 +44,6 @@
 
 #include <QFileInfo>
 #include <QIODevice>
-#include <QtConcurrent>
-#include <QtPromise>
 
 #include "log.h"
 

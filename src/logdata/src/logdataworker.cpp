@@ -37,10 +37,7 @@
  */
 
 #include <QFile>
-#include <QTextStream>
 #include <QtConcurrent>
-
-#include <moodycamel/readerwriterqueue.h>
 
 #include "log.h"
 

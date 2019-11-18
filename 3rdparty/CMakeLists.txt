@@ -14,7 +14,5 @@ add_subdirectory(tbb)
 mark_as_advanced(FORCE TBB_BUILD_TESTS)
 mark_as_advanced(FORCE TBB_CI_BUILD)
 add_subdirectory(singleapp) #3.0.15
-add_subdirectory(concurrentqueue)
-add_subdirectory(qtpromise)
 add_subdirectory(immer)
 

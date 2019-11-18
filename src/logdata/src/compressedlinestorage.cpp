@@ -166,7 +166,7 @@ LineOffset block_next_pos( const uint8_t* block, BlockOffset& offset, LineOffset
 }
 } // namespace
 
-void CompressedLinePositionStorage::move_from( CompressedLinePositionStorage&& orig )
+void CompressedLinePositionStorage::move_from( CompressedLinePositionStorage&& orig ) noexcept
 {
     nb_lines_ = orig.nb_lines_;
     first_long_line_ = orig.first_long_line_;
@@ -182,7 +182,8 @@ void CompressedLinePositionStorage::move_from( CompressedLinePositionStorage&& o
 }
 
 // Move constructor
-CompressedLinePositionStorage::CompressedLinePositionStorage( CompressedLinePositionStorage&& orig )
+CompressedLinePositionStorage::CompressedLinePositionStorage(
+    CompressedLinePositionStorage&& orig ) noexcept
     : pool32_( std::move( orig.pool32_ ) )
     , pool64_( std::move( orig.pool64_ ) )
 {
@@ -190,8 +191,8 @@ CompressedLinePositionStorage::CompressedLinePositionStorage( CompressedLinePosi
 }
 
 // Move assignement
-CompressedLinePositionStorage& CompressedLinePositionStorage::
-operator=( CompressedLinePositionStorage&& orig )
+CompressedLinePositionStorage&
+CompressedLinePositionStorage::operator=( CompressedLinePositionStorage&& orig ) noexcept
 {
     pool32_ = std::move( orig.pool32_ );
     pool64_ = std::move( orig.pool64_ );
@@ -348,7 +349,7 @@ void CompressedLinePositionStorage::append_list( const std::vector<LineOffset>& 
     // This is not very clever, but caching should make it
     // reasonably fast.
     for ( auto position : positions )
-        append( std::move( position ) );
+        append( position );
 }
 
 // template<int BLOCK_SIZE>

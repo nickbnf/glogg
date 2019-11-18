@@ -73,7 +73,7 @@ PersistentInfo::ConfigFileParameters::ConfigFileParameters()
     }
 }
 
-PersistentInfo::PersistentInfo( ConfigFileParameters config )
+PersistentInfo::PersistentInfo( const ConfigFileParameters& config )
     : appSettings_{ config.appSettingsPath, config.format }
     , sessionSettings_{ config.sessionSettingsPath, config.format }
 {

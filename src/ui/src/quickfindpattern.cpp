@@ -156,7 +156,7 @@ bool QuickFindPattern::matchLine( const QString& line, std::vector<QuickFindMatc
         }
     }
 
-    return ( matches.size() > 0 );
+    return ( !matches.empty() );
 }
 
 QuickFindMatcher QuickFindPattern::getMatcher() const

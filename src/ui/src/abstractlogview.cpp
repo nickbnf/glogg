@@ -61,6 +61,7 @@
 #include <QScrollBar>
 #include <QtConcurrent>
 #include <QtCore>
+#include <utility>
 
 #include "log.h"
 
@@ -158,7 +159,7 @@ std::vector<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
     return list;
 }
 
-inline void LineDrawer::addChunk( int first_col, int last_col, QColor fore, QColor back )
+inline void LineDrawer::addChunk( int first_col, int last_col, const QColor& fore, const QColor& back )
 {
     if ( first_col < 0 )
         first_col = 0;
@@ -168,7 +169,7 @@ inline void LineDrawer::addChunk( int first_col, int last_col, QColor fore, QCol
     }
 }
 
-inline void LineDrawer::addChunk( const LineChunk& chunk, QColor fore, QColor back )
+inline void LineDrawer::addChunk( const LineChunk& chunk, const QColor& fore, const QColor& back )
 {
     int first_col = chunk.start();
     int last_col = chunk.end();
@@ -985,7 +986,7 @@ void AbstractLogView::incrementalSearchStop()
 {
     auto oldSelection = quickFind_->incrementalSearchStop();
     if ( selection_.isEmpty() ) {
-        selection_ = std::move( oldSelection );
+        selection_ = oldSelection ;
     }
 }
 
@@ -1862,7 +1863,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
             // For pretty circles
             painter.setRenderHint( QPainter::Antialiasing );
 
-            QBrush brush = normalBulletBrush;;
+            QBrush brush = normalBulletBrush;
             if ( line_type.testFlag( LineTypeFlags::Match ) )
                 brush = matchBulletBrush;
             painter.setBrush( brush );

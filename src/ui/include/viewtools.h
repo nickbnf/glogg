@@ -28,31 +28,48 @@
 // the mouse wheel or touchpad.
 // It is used for the "follow" line at the end of the file.
 class ElasticHook : public QObject {
-  Q_OBJECT
+    Q_OBJECT
 
   public:
-    ElasticHook( int hook_threshold ) : hook_threshold_( hook_threshold ) {}
+    explicit ElasticHook( int hook_threshold )
+        : hook_threshold_( hook_threshold )
+    {
+    }
 
     // Instruct the elastic to move by the passed pixels
     // (a positive value increase the elastic tension)
     void move( int value );
 
     // Hold the elastic and prevent automatic decrease.
-    void hold() { held_ = true; }
+    void hold()
+    {
+        held_ = true;
+    }
 
     // Release the elastic.
-    void release() { held_ = false; }
+    void release()
+    {
+        held_ = false;
+    }
 
     // Programmatically force the hook hooked or not.
     void hook( bool hooked )
-    { hooked_ = hooked; }
+    {
+        hooked_ = hooked;
+    }
 
     // Return the "length" of the elastic hook.
-    int length() const { return position_; }
-    bool isHooked() const { return hooked_; }
+    int length() const
+    {
+        return position_;
+    }
+    bool isHooked() const
+    {
+        return hooked_;
+    }
 
   protected:
-    void timerEvent( QTimerEvent *event ) override;
+    void timerEvent( QTimerEvent* event ) override;
 
   signals:
     // Sent when the length has changed
@@ -66,7 +83,7 @@ class ElasticHook : public QObject {
     static constexpr int TIMER_PERIOD_MS = 10;
     static constexpr int DECREASE_RATE = 4;
     const int hook_threshold_;
-    bool hooked_  = false;
+    bool hooked_ = false;
     bool held_ = false;
     int position_ = 0;
     int timer_id_ = 0;

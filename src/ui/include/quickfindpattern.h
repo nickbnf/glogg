@@ -73,12 +73,11 @@ class QuickFindMatch {
 
 class QuickFindMatcher {
   public:
-    QuickFindMatcher()
-    {}
+    QuickFindMatcher() = default;
 
-    QuickFindMatcher( bool isActive, QRegularExpression regexp )
+    QuickFindMatcher( bool isActive, const QRegularExpression& regexp )
         : isActive_( isActive )
-        , regexp_{ std::move( regexp ) }
+        , regexp_{ regexp }
     {
     }
 

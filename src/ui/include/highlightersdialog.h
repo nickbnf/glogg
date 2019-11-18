@@ -51,7 +51,7 @@ class HighlightersDialog : public QDialog, public Ui::HighlightersDialog
   Q_OBJECT
 
   public:
-    HighlightersDialog( QWidget* parent = nullptr );
+    explicit HighlightersDialog( QWidget* parent = nullptr );
 
   signals:
     // Is emitted when new settings must be used
@@ -82,7 +82,7 @@ class HighlightersDialog : public QDialog, public Ui::HighlightersDialog
     QColor foreColor_ , backColor_;
 
     static bool showColorPicker(const QColor& in , QColor& out);
-    void updateIcon(QPushButton* button , QColor color);
+    void updateIcon(QPushButton* button , const QColor& color);
 
     void populateHighlighterList();
 };

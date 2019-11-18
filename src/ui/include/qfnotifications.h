@@ -28,7 +28,7 @@
 // and their translation in UI text.
 class QFNotification {
   public:
-    QFNotification( QString message = "" )
+    explicit QFNotification( const QString& message = "" )
         : message_{ message }
     {
     }
@@ -50,7 +50,6 @@ class QFNotification {
     static const QString REACHED_EOF;
     static const QString REACHED_BOF;
     static const QString INTERRUPTED;
-
 
   private:
     QString message_;
@@ -83,7 +82,7 @@ class QFNotificationInterrupted : public QFNotification {
 class QFNotificationProgress : public QFNotification {
   public:
     // Constructor taking the progress (in percent)
-    QFNotificationProgress( int progress_percent = 0 )
+    explicit QFNotificationProgress( int progress_percent = 0 )
         : QFNotification( QObject::tr( "Searching (position %1 %)" ).arg( progress_percent ) )
     {
     }

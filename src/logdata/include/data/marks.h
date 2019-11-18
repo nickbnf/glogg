@@ -42,20 +42,29 @@
 #include <QChar>
 #include <QList>
 
-#include <vector>
 #include "linetypes.h"
+#include <vector>
 
 // Class encapsulating a single mark
 // Contains the line number the mark is identifying.
 class Mark {
   public:
-    Mark( LineNumber line ) : lineNumber_{line} {}
+    Mark( LineNumber line )
+        : lineNumber_{ line }
+    {
+    }
 
     // Accessors
-    LineNumber lineNumber() const { return lineNumber_; }
+    LineNumber lineNumber() const
+    {
+        return lineNumber_;
+    }
 
-    bool operator <( const Mark& other ) const
-    { return lineNumber_ < other.lineNumber_; }
+    bool operator<( const Mark& other ) const
+    {
+        return lineNumber_ < other.lineNumber_;
+    }
+
   private:
     LineNumber lineNumber_;
 };
@@ -64,9 +73,6 @@ class Mark {
 // identifying character.
 class Marks {
   public:
-    // Create an empty Marks
-    Marks();
-
     // Add a mark at the given line, optionally identified by the given char
     // If a mark for this char already exist, the previous one is replaced.
     // It will happily add marks anywhere, even at stupid indexes.
@@ -85,20 +91,23 @@ class Marks {
     uint32_t deleteMark( LineNumber line );
     // Toggle presence of the mark on the passed line.
     // Returns true if a mark is added, false if it is removed.
-    bool toggleMark( LineNumber line, QChar mark, uint32_t &index );
+    bool toggleMark( LineNumber line, QChar mark, uint32_t& index );
     // Get the line marked identified by the index (in this list) passed.
     LineNumber getLineMarkedByIndex( int index ) const
-    { return marks_[index].lineNumber(); }
+    {
+        return marks_[ index ].lineNumber();
+    }
     // Return the total number of marks
     unsigned size() const
-    { return static_cast<unsigned>( marks_.size() ); }
+    {
+        return static_cast<unsigned>( marks_.size() );
+    }
     // Completely clear the marks list.
     void clear();
 
     // Iterator
     // Provide a const_iterator for the client to iterate through the marks.
-    class const_iterator
-    {
+    class const_iterator {
       public:
         using iterator_category = std::vector<Mark>::const_iterator::iterator_category;
         using value_type = std::vector<Mark>::const_iterator::value_type;
@@ -107,47 +116,67 @@ class Marks {
         using reference = std::vector<Mark>::const_iterator::reference;
 
         const_iterator( std::vector<Mark>::const_iterator iter )
-        { internal_iter_ = iter; }
+        {
+            internal_iter_ = iter;
+        }
 
         const Mark& operator*() const
-        { return *internal_iter_; }
+        {
+            return *internal_iter_;
+        }
 
         const Mark* operator->() const
-        { return &(*internal_iter_); }
+        {
+            return &( *internal_iter_ );
+        }
 
         bool operator==( const const_iterator& other ) const
-        { return ( internal_iter_ == other.internal_iter_ ); }
+        {
+            return ( internal_iter_ == other.internal_iter_ );
+        }
 
         bool operator!=( const const_iterator& other ) const
-        { return ( internal_iter_ != other.internal_iter_ ); }
+        {
+            return ( internal_iter_ != other.internal_iter_ );
+        }
 
         const_iterator& operator++()
-        { ++internal_iter_ ; return *this; }
+        {
+            ++internal_iter_;
+            return *this;
+        }
         const_iterator& operator--()
-        { --internal_iter_ ; return *this; }
+        {
+            --internal_iter_;
+            return *this;
+        }
 
         const_iterator::difference_type operator-( const const_iterator& other ) const
-        { return ( internal_iter_ - other.internal_iter_ ); }
-
-        const_iterator operator+(const_iterator::difference_type n) const
         {
-            return const_iterator(internal_iter_ + n);
-        }
-        const_iterator& operator+=(const_iterator::difference_type n)
-        {
-            internal_iter_+=n ; return *this;
+            return ( internal_iter_ - other.internal_iter_ );
         }
 
-        const_iterator operator-(const_iterator::difference_type n) const
+        const_iterator operator+( const_iterator::difference_type n ) const
         {
-            return const_iterator(internal_iter_ - n);
+            return const_iterator( internal_iter_ + n );
         }
-        const_iterator& operator-=(const_iterator::difference_type n)
+        const_iterator& operator+=( const_iterator::difference_type n )
         {
-            internal_iter_-=n ; return *this;
+            internal_iter_ += n;
+            return *this;
         }
 
-        bool operator<(const const_iterator& other) const
+        const_iterator operator-( const_iterator::difference_type n ) const
+        {
+            return const_iterator( internal_iter_ - n );
+        }
+        const_iterator& operator-=( const_iterator::difference_type n )
+        {
+            internal_iter_ -= n;
+            return *this;
+        }
+
+        bool operator<( const const_iterator& other ) const
         {
             return internal_iter_ < other.internal_iter_;
         }
@@ -157,9 +186,13 @@ class Marks {
     };
 
     const_iterator begin() const
-    { return const_iterator( marks_.begin() ); }
+    {
+        return const_iterator( marks_.begin() );
+    }
     const_iterator end() const
-    { return const_iterator( marks_.end() ); }
+    {
+        return const_iterator( marks_.end() );
+    }
 
   private:
     // List of marks.

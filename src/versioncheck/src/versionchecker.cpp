@@ -72,7 +72,7 @@ bool isVersionNewer( const QString& current_version, const QString& new_version 
     return next > old;
 }
 
-}; // namespace
+} // namespace
 
 void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 {

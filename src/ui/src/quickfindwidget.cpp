@@ -200,7 +200,7 @@ void QuickFindWidget::closeHandler()
 void QuickFindWidget::notificationTimeout()
 {
     // We close the widget if the user hasn't explicitely requested it.
-    if ( userRequested_ == false )
+    if ( !userRequested_ )
         this->hide();
 }
 

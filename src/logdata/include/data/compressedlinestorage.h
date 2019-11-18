@@ -116,9 +116,9 @@ class CompressedLinePositionStorage {
     CompressedLinePositionStorage& operator=( const CompressedLinePositionStorage& orig ) = delete;
 
     // Move constructor
-    CompressedLinePositionStorage( CompressedLinePositionStorage&& orig );
+    CompressedLinePositionStorage( CompressedLinePositionStorage&& orig ) noexcept ;
     // Move assignement
-    CompressedLinePositionStorage& operator=( CompressedLinePositionStorage&& orig );
+    CompressedLinePositionStorage& operator=( CompressedLinePositionStorage&& orig ) noexcept ;
 
     // Append the passed end-of-line to the storage
     void append( LineOffset pos );
@@ -151,7 +151,7 @@ class CompressedLinePositionStorage {
 
   private:
     // Utility for move ctor/assign
-    void move_from( CompressedLinePositionStorage&& orig );
+    void move_from( CompressedLinePositionStorage&& orig ) noexcept;
 
     // The two indexes
     BlockPool<uint32_t> pool32_;

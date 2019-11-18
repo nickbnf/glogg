@@ -24,23 +24,21 @@
 
 class QTextCodec;
 
-struct EncodingParameters
-{
-    EncodingParameters():lineFeedWidth(1),lineFeedIndex(0){}
-    explicit EncodingParameters(const QTextCodec* codec);
+struct EncodingParameters {
+    EncodingParameters() = default;
+    explicit EncodingParameters( const QTextCodec* codec );
 
-    int lineFeedWidth;
-    int lineFeedIndex;
+    int lineFeedWidth{ 1 };
+    int lineFeedIndex{ 0 };
 
-    bool operator ==(const EncodingParameters& other) const
+    bool operator==( const EncodingParameters& other ) const
     {
-        return  lineFeedWidth == other.lineFeedWidth &&
-                lineFeedIndex == other.lineFeedIndex;
+        return lineFeedWidth == other.lineFeedWidth && lineFeedIndex == other.lineFeedIndex;
     }
 
-    bool operator !=(const EncodingParameters& other) const
+    bool operator!=( const EncodingParameters& other ) const
     {
-        return !operator ==(other);
+        return !operator==( other );
     }
 
     int getBeforeCrOffset() const
@@ -55,21 +53,19 @@ struct EncodingParameters
 };
 
 class EncodingDetector {
-public:
-
+  public:
     static EncodingDetector& getInstance()
     {
         static EncodingDetector instance;
         return instance;
     }
 
-    EncodingDetector(const EncodingDetector&) = delete;
-    EncodingDetector& operator=(const EncodingDetector&) = delete;
-    EncodingDetector(const EncodingDetector&&) = delete;
-    EncodingDetector& operator=(const EncodingDetector&&) = delete;
+    EncodingDetector( const EncodingDetector& ) = delete;
+    EncodingDetector& operator=( const EncodingDetector& ) = delete;
+    EncodingDetector( const EncodingDetector&& ) = delete;
+    EncodingDetector& operator=( const EncodingDetector&& ) = delete;
 
-
-    QTextCodec* detectEncoding(const QByteArray& block) const;
+    QTextCodec* detectEncoding( const QByteArray& block ) const;
 
   private:
     EncodingDetector() = default;

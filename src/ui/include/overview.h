@@ -20,9 +20,9 @@
 #ifndef OVERVIEW_H
 #define OVERVIEW_H
 
+#include "data/linetypes.h"
 #include <QList>
 #include <QVector>
-#include "data/linetypes.h"
 
 class LogFilteredData;
 
@@ -32,22 +32,38 @@ class LogFilteredData;
 // This class is not a UI class, actual display is left to the client.
 //
 // This class is NOT thread-safe.
-class Overview
-{
+class Overview {
   public:
     // A line with a position in pixel and a weight (darkness)
     class WeightedLine {
       public:
         static const int WEIGHT_STEPS = 3;
 
-        WeightedLine() { pos_ = 0; weight_ = 0; }
+        WeightedLine()
+        {
+            pos_ = 0;
+            weight_ = 0;
+        }
         // (Necessary for QVector)
-        WeightedLine( int pos ) { pos_ = pos; weight_ = 0; }
+        explicit WeightedLine( int pos )
+        {
+            pos_ = pos;
+            weight_ = 0;
+        }
 
-        int position() const { return pos_; }
-        int weight() const { return weight_; }
+        int position() const
+        {
+            return pos_;
+        }
+        int weight() const
+        {
+            return weight_;
+        }
 
-        void load() { weight_ = qMin( weight_ + 1, WEIGHT_STEPS - 1 ); }
+        void load()
+        {
+            weight_ = qMin( weight_ + 1, WEIGHT_STEPS - 1 );
+        }
 
       private:
         int pos_;
@@ -61,16 +77,26 @@ class Overview
     // Signal the overview its attached LogFilteredData has been changed and
     // the overview must be updated with the provided total number
     // of line of the file.
-    void updateData(LinesCount totalNbLine );
+    void updateData( LinesCount totalNbLine );
     // Set the visibility flag of this overview.
-    void setVisible( bool visible ) { visible_ = visible; dirty_ = visible; }
+    void setVisible( bool visible )
+    {
+        visible_ = visible;
+        dirty_ = visible;
+    }
 
     // Update the current position in the file (to draw the view line)
     void updateCurrentPosition( LineNumber firstLine, LineNumber lastLine )
-    { topLine_ = firstLine; nbLines_ = LinesCount( lastLine.get() - firstLine.get() ); }
+    {
+        topLine_ = firstLine;
+        nbLines_ = LinesCount( lastLine.get() - firstLine.get() );
+    }
 
     // Returns weither this overview is visible.
-    bool isVisible() { return visible_; }
+    bool isVisible()
+    {
+        return visible_;
+    }
     // Signal the overview the height of the display has changed, triggering
     // an update of its cache.
     void updateView( int height );
@@ -81,7 +107,7 @@ class Overview
     // (pointer returned is valid until next call to update*()
     const std::vector<WeightedLine>* getMarkLines() const;
     // Return a pair of lines (between 0 and 'height') representing the current view.
-    std::pair<int,int> getViewLines() const;
+    std::pair<int, int> getViewLines() const;
 
     // Return the line number corresponding to the passed overview y coordinate.
     LineNumber fileLineFromY( int y ) const;

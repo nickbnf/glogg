@@ -30,8 +30,8 @@ public:
     BlockPoolBase( const BlockPoolBase& ) = delete;
     BlockPoolBase& operator =( const BlockPoolBase& ) = delete;
 
-    BlockPoolBase( BlockPoolBase&& other );
-    BlockPoolBase& operator=( BlockPoolBase&& other );
+    BlockPoolBase( BlockPoolBase&& other ) noexcept ;
+    BlockPoolBase& operator=( BlockPoolBase&& other ) noexcept ;
 
     size_t getElementSize() const;
     size_t getPaddedElementSize() const;

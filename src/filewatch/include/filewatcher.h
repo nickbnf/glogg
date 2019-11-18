@@ -52,6 +52,12 @@ struct EfswFileWatcherDeleter {
 class FileWatcher : public QObject {
     Q_OBJECT
   public:
+    FileWatcher( const FileWatcher& ) = delete;
+    FileWatcher( FileWatcher&& ) = delete;
+
+    FileWatcher& operator=( const FileWatcher& ) = delete;
+    FileWatcher& operator=( FileWatcher&& ) = delete;
+
     static FileWatcher& getFileWatcher();
 
     // Adds the file to the list of file to watch
@@ -77,12 +83,6 @@ class FileWatcher : public QObject {
     // Create an empty object
     FileWatcher();
     ~FileWatcher() override; // for complete EfswFileWatcher
-
-    FileWatcher( const FileWatcher& ) = delete;
-    FileWatcher( FileWatcher&& ) = delete;
-
-    FileWatcher& operator=( const FileWatcher& ) = delete;
-    FileWatcher& operator=( FileWatcher&& ) = delete;
 
     QTimer* checkTimer_;
     QTimer* notificationTimer_;

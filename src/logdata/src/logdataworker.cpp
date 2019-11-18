@@ -434,9 +434,9 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 return false;
             }
 
-          const uint32_t sizeChunk = 1024 * 1024;
+            const uint32_t sizeChunk = 1024 * 1024;
 
-          if ( !file.atEnd() ) {
+            if ( !file.atEnd() ) {
                 blockData.first = file.pos();
                 clock::time_point ioT1 = clock::now();
                 blockData.second = file.read( sizeChunk );
@@ -479,7 +479,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 indexing_data_.setEncodingGuess( state.encodingGuess );
             }
 
-          LOG( logDEBUG ) << "Indexing block " << block_beginning << " done";
+            LOG( logDEBUG ) << "Indexing block " << block_beginning << " done";
 
             return tbb::flow::continue_msg{};
         } );

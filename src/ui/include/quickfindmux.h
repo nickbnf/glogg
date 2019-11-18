@@ -79,7 +79,7 @@ class QuickFindMux : public QObject
     };
 
     // Construct the multiplexer, taking a reference to the pattern
-    QuickFindMux( std::shared_ptr<QuickFindPattern> pattern );
+    explicit QuickFindMux( const std::shared_ptr<QuickFindPattern>& pattern );
 
     // Register a new selector, which will be called and asked
     // who the search have to be forwarded to.

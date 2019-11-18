@@ -46,27 +46,20 @@
 // not done very often anyway.  Oh and we need to iterate through the
 // list, disqualifying a straight heap.
 
-Marks::Marks() : marks_()
-{
-}
-
 uint32_t Marks::addMark( LineNumber line, QChar mark )
 {
     // 'mark' is not used yet
-    Q_UNUSED(mark);
+    Q_UNUSED( mark );
 
     // Look for the index immediately before
-    uint32_t index {0};
-    if ( ! lookupLineNumber( marks_, line, index ) )
-    {
+    uint32_t index{ 0 };
+    if ( !lookupLineNumber( marks_, line, index ) ) {
         // If a mark is not already set for this line
-        LOG(logDEBUG) << "Inserting mark at line " << line
-            << " (index " << index << ")";
-        marks_.emplace( marks_.begin() + index,  line );
+        LOG( logDEBUG ) << "Inserting mark at line " << line << " (index " << index << ")";
+        marks_.emplace( marks_.begin() + index, line );
     }
-    else
-    {
-        LOG(logERROR) << "Trying to add an existing mark at line " << line;
+    else {
+        LOG( logERROR ) << "Trying to add an existing mark at line " << line;
     }
 
     return index;
@@ -75,7 +68,7 @@ uint32_t Marks::addMark( LineNumber line, QChar mark )
 LineNumber Marks::getMark( QChar mark ) const
 {
     // 'mark' is not used yet
-    Q_UNUSED(mark);
+    Q_UNUSED( mark );
 
     return 0_lnum;
 }
@@ -89,38 +82,34 @@ bool Marks::isLineMarked( LineNumber line ) const
 void Marks::deleteMark( QChar mark )
 {
     // 'mark' is not used yet
-    Q_UNUSED(mark);
+    Q_UNUSED( mark );
 }
 
 uint32_t Marks::deleteMark( LineNumber line )
 {
     uint32_t index;
 
-    if ( lookupLineNumber( marks_, line, index ) )
-    {
+    if ( lookupLineNumber( marks_, line, index ) ) {
         marks_.erase( marks_.begin() + index );
     }
 
     return index;
 }
 
-bool Marks::toggleMark( LineNumber line, QChar mark, uint32_t &index )
+bool Marks::toggleMark( LineNumber line, QChar mark, uint32_t& index )
 {
     // 'mark' is not used yet
-    Q_UNUSED(mark);
+    Q_UNUSED( mark );
 
     // Look for the index immediately before
-    if ( lookupLineNumber( marks_, line, index ) )
-    {
+    if ( lookupLineNumber( marks_, line, index ) ) {
         marks_.erase( marks_.begin() + index );
         return false;
     }
-    else
-    {
+    else {
         // If a mark is not already set for this line
-        LOG(logDEBUG) << "Inserting mark at line " << line
-            << " (index " << index << ")";
-        marks_.emplace( marks_.begin() + index,  line );
+        LOG( logDEBUG ) << "Inserting mark at line " << line << " (index " << index << ")";
+        marks_.emplace( marks_.begin() + index, line );
         return true;
     }
 }

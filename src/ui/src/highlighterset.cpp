@@ -38,20 +38,18 @@
 
 // This file implements classes Highlighter and HighlighterSet
 
-#include <QSettings>
 #include <QDataStream>
+#include <QSettings>
 
-#include "log.h"
 #include "highlighterset.h"
+#include "log.h"
 
 const int HighlighterSet::HighlighterSet_VERSION = 2;
 const int HighlighterSet::FilterSet_VERSION = 2;
 
-
 QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
 {
-    QRegularExpression::PatternOptions options =
-            QRegularExpression::UseUnicodePropertiesOption;
+    QRegularExpression::PatternOptions options = QRegularExpression::UseUnicodePropertiesOption;
 
     if ( ignoreCase ) {
         options |= QRegularExpression::CaseInsensitiveOption;
@@ -59,14 +57,14 @@ QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
     return options;
 }
 
-Highlighter::Highlighter(const QString& pattern, bool ignoreCase,
-            const QColor& foreColor, const QColor& backColor ) :
-    regexp_( pattern,  getPatternOptions( ignoreCase ) ),
-    foreColor_( foreColor ),
-    backColor_( backColor )
+Highlighter::Highlighter( const QString& pattern, bool ignoreCase, const QColor& foreColor,
+                          const QColor& backColor )
+    : regexp_( pattern, getPatternOptions( ignoreCase ) )
+    , foreColor_( foreColor )
+    , backColor_( backColor )
 {
-    LOG(logDEBUG) << "New Highlighter, fore: " << foreColor_.name()
-        << " back: " << backColor_.name();
+    LOG( logDEBUG ) << "New Highlighter, fore: " << foreColor_.name()
+                    << " back: " << backColor_.name();
 }
 
 QString Highlighter::pattern() const
@@ -81,7 +79,7 @@ void Highlighter::setPattern( const QString& pattern )
 
 bool Highlighter::ignoreCase() const
 {
-    return regexp_.patternOptions().testFlag(QRegularExpression::CaseInsensitiveOption);
+    return regexp_.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption );
 }
 
 void Highlighter::setIgnoreCase( bool ignoreCase )
@@ -120,7 +118,7 @@ bool Highlighter::hasMatch( const QString& string ) const
 
 QDataStream& operator<<( QDataStream& out, const Highlighter& object )
 {
-    LOG(logDEBUG) << "<<operator from Highlighter";
+    LOG( logDEBUG ) << "<<operator from Highlighter";
     out << object.regexp_;
     out << object.foreColor_;
     out << object.backColor_;
@@ -130,7 +128,7 @@ QDataStream& operator<<( QDataStream& out, const Highlighter& object )
 
 QDataStream& operator>>( QDataStream& in, Highlighter& object )
 {
-    LOG(logDEBUG) << ">>operator from Highlighter";
+    LOG( logDEBUG ) << ">>operator from Highlighter";
     in >> object.regexp_;
     in >> object.foreColor_;
     in >> object.backColor_;
@@ -138,20 +136,18 @@ QDataStream& operator>>( QDataStream& in, Highlighter& object )
     return in;
 }
 
-
 // Default constructor
 HighlighterSet::HighlighterSet()
 {
     qRegisterMetaTypeStreamOperators<Highlighter>( "Highlighter" );
     qRegisterMetaTypeStreamOperators<HighlighterSet>( "HighlighterSet" );
-    qRegisterMetaTypeStreamOperators<HighlighterSet::HighlighterList>( "HighlighterSet::HighlighterList" );
+    qRegisterMetaTypeStreamOperators<HighlighterSet::HighlighterList>(
+        "HighlighterSet::HighlighterList" );
 }
 
-bool HighlighterSet::matchLine( const QString& line,
-        QColor* foreColor, QColor* backColor ) const
+bool HighlighterSet::matchLine( const QString& line, QColor* foreColor, QColor* backColor ) const
 {
-    for ( auto i = highlighterList_.constBegin();
-          i != highlighterList_.constEnd(); ++i ) {
+    for ( auto i = highlighterList_.constBegin(); i != highlighterList_.constEnd(); ++i ) {
         if ( i->hasMatch( line ) ) {
             *foreColor = i->foreColor();
             *backColor = i->backColor();
@@ -168,7 +164,7 @@ bool HighlighterSet::matchLine( const QString& line,
 
 QDataStream& operator<<( QDataStream& out, const HighlighterSet& object )
 {
-    LOG(logDEBUG) << "<<operator from HighlighterSet";
+    LOG( logDEBUG ) << "<<operator from HighlighterSet";
     out << object.highlighterList_;
 
     return out;
@@ -176,7 +172,7 @@ QDataStream& operator<<( QDataStream& out, const HighlighterSet& object )
 
 QDataStream& operator>>( QDataStream& in, HighlighterSet& object )
 {
-    LOG(logDEBUG) << ">>operator from HighlighterSet";
+    LOG( logDEBUG ) << ">>operator from HighlighterSet";
     in >> object.highlighterList_;
 
     return in;
@@ -188,10 +184,11 @@ QDataStream& operator>>( QDataStream& in, HighlighterSet& object )
 
 void Highlighter::saveToStorage( QSettings& settings ) const
 {
-    LOG(logDEBUG) << "Highlighter::saveToStorage";
+    LOG( logDEBUG ) << "Highlighter::saveToStorage";
 
     settings.setValue( "regexp", regexp_.pattern() );
-    settings.setValue( "ignore_case", regexp_.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) );
+    settings.setValue( "ignore_case", regexp_.patternOptions().testFlag(
+                                          QRegularExpression::CaseInsensitiveOption ) );
     // save colors as user friendly strings in config
     settings.setValue( "fore_colour", foreColor_.name() );
     settings.setValue( "back_colour", backColor_.name() );
@@ -199,25 +196,26 @@ void Highlighter::saveToStorage( QSettings& settings ) const
 
 void Highlighter::retrieveFromStorage( QSettings& settings )
 {
-    LOG(logDEBUG) << "Highlighter::retrieveFromStorage";
+    LOG( logDEBUG ) << "Highlighter::retrieveFromStorage";
 
-    regexp_ = QRegularExpression( settings.value( "regexp" ).toString(),
-                       getPatternOptions( settings.value( "ignore_case", false ).toBool() ) );
+    regexp_ = QRegularExpression(
+        settings.value( "regexp" ).toString(),
+        getPatternOptions( settings.value( "ignore_case", false ).toBool() ) );
     foreColor_ = QColor( settings.value( "fore_colour" ).toString() );
     backColor_ = QColor( settings.value( "back_colour" ).toString() );
 }
 
 void HighlighterSet::saveToStorage( QSettings& settings ) const
 {
-    LOG(logDEBUG) << "HighlighterSet::saveToStorage";
+    LOG( logDEBUG ) << "HighlighterSet::saveToStorage";
 
     settings.beginGroup( "HighlighterSet" );
     settings.setValue( "version", HighlighterSet_VERSION );
     settings.remove( "highlighterss" );
     settings.beginWriteArray( "highlighters" );
-    for (int i = 0; i < highlighterList_.size(); ++i) {
-        settings.setArrayIndex(i);
-        highlighterList_[i].saveToStorage( settings );
+    for ( int i = 0; i < highlighterList_.size(); ++i ) {
+        settings.setArrayIndex( i );
+        highlighterList_[ i ].saveToStorage( settings );
     }
     settings.endArray();
     settings.endGroup();
@@ -225,17 +223,17 @@ void HighlighterSet::saveToStorage( QSettings& settings ) const
 
 void HighlighterSet::retrieveFromStorage( QSettings& settings )
 {
-    LOG(logDEBUG) << "HighlighterSet::retrieveFromStorage";
+    LOG( logDEBUG ) << "HighlighterSet::retrieveFromStorage";
 
     highlighterList_.clear();
 
     if ( settings.contains( "FilterSet/version" ) ) {
-        LOG(logINFO) << "HighlighterSet found old filters";
+        LOG( logINFO ) << "HighlighterSet found old filters";
         settings.beginGroup( "FilterSet" );
-         if ( settings.value( "version" ) <= FilterSet_VERSION ) {
+        if ( settings.value( "version" ) <= FilterSet_VERSION ) {
             int size = settings.beginReadArray( "filters" );
-            for (int i = 0; i < size; ++i) {
-                settings.setArrayIndex(i);
+            for ( int i = 0; i < size; ++i ) {
+                settings.setArrayIndex( i );
                 Highlighter highlighter;
                 highlighter.retrieveFromStorage( settings );
                 highlighterList_.append( highlighter );
@@ -243,7 +241,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of filterSet, ignoring it...";
+            LOG( logERROR ) << "Unknown version of filterSet, ignoring it...";
         }
         settings.endGroup();
         settings.remove( "FilterSet" );
@@ -255,8 +253,8 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
         settings.beginGroup( "HighlighterSet" );
         if ( settings.value( "version" ) <= HighlighterSet_VERSION ) {
             int size = settings.beginReadArray( "highlighters" );
-            for (int i = 0; i < size; ++i) {
-                settings.setArrayIndex(i);
+            for ( int i = 0; i < size; ++i ) {
+                settings.setArrayIndex( i );
                 Highlighter highlighter;
                 highlighter.retrieveFromStorage( settings );
                 highlighterList_.append( highlighter );
@@ -264,17 +262,15 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of highlighterSet, ignoring it...";
+            LOG( logERROR ) << "Unknown version of highlighterSet, ignoring it...";
         }
         settings.endGroup();
     }
     else {
-        LOG(logWARNING) << "Trying to import legacy (<=0.8.2) filters...";
-        HighlighterSet tmp_highlighter_set =
-            settings.value( "filterSet" ).value<HighlighterSet>();
+        LOG( logWARNING ) << "Trying to import legacy (<=0.8.2) filters...";
+        HighlighterSet tmp_highlighter_set = settings.value( "filterSet" ).value<HighlighterSet>();
         *this = tmp_highlighter_set;
-        LOG(logWARNING) << "...imported filterSet: "
-            << highlighterList_.count() << " elements";
+        LOG( logWARNING ) << "...imported filterSet: " << highlighterList_.count() << " elements";
         // Remove the old key once migration is done
         settings.remove( "filterSet" );
         // And replace it with the new one

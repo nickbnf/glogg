@@ -135,7 +135,7 @@ class LogData : public AbstractLogData {
     // Attaching a new file (change name + full index)
     class AttachOperation : public LogDataOperation {
       public:
-        AttachOperation( const QString& fileName )
+        explicit AttachOperation( const QString& fileName )
             : LogDataOperation( fileName ) {}
 
       protected:

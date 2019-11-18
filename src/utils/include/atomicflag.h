@@ -59,9 +59,9 @@ class AtomicFlag {
         flag_.storeRelease( 0 );
     }
 
-    inline operator bool() const
+    inline explicit operator bool() const
     {
-        return !!flag_.loadAcquire();
+        return flag_.loadAcquire() != 0;
     }
 
     inline bool operator!() const

@@ -58,12 +58,12 @@ BlockPoolBase::BlockPoolBase( size_t elementSize, size_t alignment )
     blockIndex_.reserve( 10000 );
 }
 
-BlockPoolBase::BlockPoolBase( BlockPoolBase&& other )
+BlockPoolBase::BlockPoolBase( BlockPoolBase&& other ) noexcept
 {
     *this = std::move( other );
 }
 
-BlockPoolBase& BlockPoolBase::operator=( BlockPoolBase&& other )
+BlockPoolBase& BlockPoolBase::operator=( BlockPoolBase&& other ) noexcept
 {
     pool_ = std::move( other.pool_ );
 

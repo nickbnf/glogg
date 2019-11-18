@@ -24,7 +24,7 @@
 
 class PerfCounter {
   public:
-    PerfCounter() {}
+    PerfCounter() = default;
 
     // Count a new event, returns true if it has been counted.
     // If the function returns false, it indicates the current second is elapsed

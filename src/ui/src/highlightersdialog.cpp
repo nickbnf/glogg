@@ -301,7 +301,7 @@ void HighlightersDialog::updateHighlighterProperties()
 // Private functions
 //
 
-void HighlightersDialog::updateIcon (QPushButton* button , QColor color)
+void HighlightersDialog::updateIcon (QPushButton* button , const QColor& color)
 {
     QPixmap CustomPixmap( 20, 10 );
     CustomPixmap.fill( color );
@@ -329,7 +329,7 @@ void HighlightersDialog::populateHighlighterList()
 {
     highlighterListWidget->clear();
     for ( const Highlighter& highlighter : qAsConst(highlighterSet_.highlighterList_) ) {
-        QListWidgetItem* new_item = new QListWidgetItem( highlighter.pattern() );
+        auto* new_item = new QListWidgetItem( highlighter.pattern() );
         // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
         new_item->setForeground( QBrush( highlighter.foreColor() ) );
         new_item->setBackground( QBrush( highlighter.backColor() ) );

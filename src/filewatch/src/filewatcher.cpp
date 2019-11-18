@@ -334,7 +334,7 @@ FileWatcher::FileWatcher()
     connect( checkTimer_, &QTimer::timeout, this, &FileWatcher::checkWatches );
 }
 
-FileWatcher::~FileWatcher() {}
+FileWatcher::~FileWatcher() = default;
 
 FileWatcher& FileWatcher::getFileWatcher()
 {
@@ -363,7 +363,7 @@ void FileWatcher::fileChangedOnDisk( const QString& fileName )
     }
 
     if ( !notificationTimer_->isActive() ) {
-        notificationTimer_->singleShot( 500, this, &FileWatcher::notifyFileChangedOnDisk );
+        QTimer::singleShot( 500, this, &FileWatcher::notifyFileChangedOnDisk );
     }
 }
 

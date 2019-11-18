@@ -163,7 +163,7 @@ void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
         QPixmap( highlight_xpm[5] ), };
 
     // We must be hidden until we have an Overview
-    assert( overview_ != NULL );
+    assert( overview_ != nullptr );
 
     overview_->updateView( height() );
 

@@ -65,7 +65,7 @@ class PersistentInfo {
     };
 
     // Can't be constructed or copied (singleton)
-    PersistentInfo( ConfigFileParameters config = {} );
+    explicit PersistentInfo( const ConfigFileParameters& config = {} );
 
     static PersistentInfo& getInstance();
 

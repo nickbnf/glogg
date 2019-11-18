@@ -89,7 +89,7 @@ class LineChunk
 class LineDrawer
 {
   public:
-    LineDrawer( const QColor& back_color) :
+    explicit LineDrawer( const QColor& back_color) :
         list(), backColor_( back_color ) { }
 
     // Add a chunk of line using the given colours.
@@ -97,8 +97,8 @@ class LineDrawer
     // An empty chunk will be ignored.
     // the first column will be set to 0 if negative
     // The column are relative to the screen
-    void addChunk( int first_col, int last_col, QColor fore, QColor back );
-    void addChunk( const LineChunk& chunk, QColor fore, QColor back );
+    void addChunk( int first_col, int last_col, const QColor& fore, const QColor& back );
+    void addChunk( const LineChunk& chunk, const QColor& fore, const QColor& back );
 
     // Draw the current line of text using the given painter,
     // in the passed block (in pixels)
@@ -182,7 +182,7 @@ class AbstractLogView :
     AbstractLogView( const AbstractLogData* newLogData,
             const QuickFindPattern* const quickFind, QWidget* parent=nullptr );
 
-    virtual ~AbstractLogView();
+    ~AbstractLogView() override;
     // Refresh the widget when the data set has changed.
     void updateData();
     // Instructs the widget to update it's content geometry,

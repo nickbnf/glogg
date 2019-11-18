@@ -46,12 +46,11 @@
 #include "ui_optionsdialog.h"
 
 // Implements the main option dialog box
-class OptionsDialog : public QDialog, public Ui::OptionsDialog
-{
+class OptionsDialog : public QDialog, public Ui::OptionsDialog {
     Q_OBJECT
 
   public:
-    OptionsDialog(QWidget* parent = nullptr);
+    explicit OptionsDialog( QWidget* parent = nullptr );
 
   signals:
     // Is emitted when new settings must be used
@@ -60,7 +59,7 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
   private slots:
     // Clears and updates the font size box with the sizes allowed
     // by the passed font family.
-    void updateFontSize(const QString& fontFamily);
+    void updateFontSize( const QString& fontFamily );
     // Update the content of the global Config() using parameters
     // from the dialog box.
     void updateConfigFromDialog();

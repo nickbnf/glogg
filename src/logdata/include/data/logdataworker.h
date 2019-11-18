@@ -55,8 +55,7 @@
 
 #include "atomicflag.h"
 
-struct IndexedHash
-{
+struct IndexedHash {
     qint64 size = 0;
     QByteArray hash;
 };
@@ -64,13 +63,6 @@ struct IndexedHash
 // This class is a thread-safe set of indexing data.
 class IndexingData {
   public:
-    IndexingData()
-        : dataMutex_()
-        , linePosition_()
-        , maxLength_( 0 )
-    {
-    }
-
     // Get the total indexed size
     qint64 getSize() const;
 
@@ -95,8 +87,8 @@ class IndexingData {
 
     // Atomically add to all the existing
     // indexing data.
-    void addAll( const QByteArray& block, LineLength length, const FastLinePositionArray& linePosition,
-                 QTextCodec* encoding );
+    void addAll( const QByteArray& block, LineLength length,
+                 const FastLinePositionArray& linePosition, QTextCodec* encoding );
 
     // Completely clear the indexing data.
     void clear();
@@ -107,23 +99,24 @@ class IndexingData {
     LinePositionArray linePosition_;
     LineLength maxLength_;
 
-    QCryptographicHash indexHash_ {QCryptographicHash::Md5};
+    QCryptographicHash indexHash_{ QCryptographicHash::Md5 };
     IndexedHash hash_;
 
-    QTextCodec* encodingGuess_;
-    QTextCodec* encodingForced_;
+    QTextCodec* encodingGuess_{};
+    QTextCodec* encodingForced_{};
 };
 
 struct IndexingState {
-    EncodingParameters encodingParams;
-    LineOffset::UnderlyingType pos = {};
-    LineLength::UnderlyingType max_length = {};
-    LineLength::UnderlyingType additional_spaces = {};
-    LineOffset::UnderlyingType end = {};
-    LineOffset::UnderlyingType file_size = {};
 
-    QTextCodec* encodingGuess = nullptr;
-    QTextCodec* fileTextCodec = nullptr;
+    EncodingParameters encodingParams;
+    LineOffset::UnderlyingType pos{};
+    LineLength::UnderlyingType max_length{};
+    LineLength::UnderlyingType additional_spaces{};
+    LineOffset::UnderlyingType end{};
+    LineOffset::UnderlyingType file_size{};
+
+    QTextCodec* encodingGuess{};
+    QTextCodec* fileTextCodec{};
 };
 
 using OperationResult = absl::variant<bool, MonitoredFileStatus>;
@@ -193,7 +186,7 @@ class CheckFileChangesOperation : public IndexOperation {
     Q_OBJECT
   public:
     CheckFileChangesOperation( const QString& fileName, IndexingData& indexingData,
-                           AtomicFlag& interruptRequest )
+                               AtomicFlag& interruptRequest )
         : IndexOperation( fileName, indexingData, interruptRequest )
     {
     }
@@ -220,7 +213,7 @@ class LogDataWorker : public QObject {
     // the end of the file as indexed).
     void indexAdditionalLines();
 
-	void checkFileChanges();
+    void checkFileChanges();
 
     // Interrupts the indexing if one is in progress
     void interrupt();
@@ -233,7 +226,7 @@ class LogDataWorker : public QObject {
     // to copy the new data back.
     void indexingFinished( LoadingStatus status );
 
-	// Sent when check file is finished, signals the client
+    // Sent when check file is finished, signals the client
     // to copy the new data back.
     void checkFileChangesFinished( MonitoredFileStatus status );
 

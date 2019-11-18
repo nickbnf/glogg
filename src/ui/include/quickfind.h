@@ -39,16 +39,16 @@
 #ifndef QUICKFIND_H
 #define QUICKFIND_H
 
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QObject>
 #include <QPoint>
 #include <QTime>
-#include <QFuture>
-#include <QFutureWatcher>
 
+#include "atomicflag.h"
 #include "qfnotifications.h"
 #include "quickfindpattern.h"
 #include "selection.h"
-#include "atomicflag.h"
 
 class QuickFindPattern;
 class AbstractLogData;
@@ -98,7 +98,7 @@ class QuickFind : public QObject {
 
   public:
     // Construct a search
-    QuickFind( const AbstractLogData& logData);
+    explicit QuickFind( const AbstractLogData& logData );
 
     // Set the starting point that will be used by the next search
     void setSearchStartPoint( QPoint startPoint );
@@ -139,7 +139,7 @@ class QuickFind : public QObject {
     void searchDone( bool hasMatch, Portion selection );
 
   private slots:
-    void sendNotification(QFNotification notification);
+    void sendNotification( QFNotification notification );
     void onSearchFutureReady();
 
   private:
@@ -151,10 +151,6 @@ class QuickFind : public QObject {
 
     class LastMatchPosition {
       public:
-        LastMatchPosition()
-            : column_( -1 )
-        {
-        }
         void set( LineNumber line, int column );
         void set( const FilePosition& position );
         void reset()
@@ -171,18 +167,14 @@ class QuickFind : public QObject {
 
       private:
         OptionalLineNumber line_;
-        int column_;
+        int column_{ -1 };
     };
 
     class IncrementalSearchStatus {
       public:
         /* Constructors */
-        IncrementalSearchStatus()
-            : ongoing_( None )
-            , position_()
-            , initialSelection_()
-        {
-        }
+        IncrementalSearchStatus() = default;
+
         IncrementalSearchStatus( QFDirection direction, const FilePosition& position,
                                  const Selection& initial_selection )
             : ongoing_( direction )
@@ -209,7 +201,7 @@ class QuickFind : public QObject {
         }
 
       private:
-        QFDirection ongoing_;
+        QFDirection ongoing_{ None };
         FilePosition position_;
         Selection initialSelection_;
     };

@@ -75,7 +75,7 @@ class VersionChecker : public QObject {
 
   public:
     VersionChecker();
-    ~VersionChecker() = default;
+    ~VersionChecker() override = default;
 
     // Starts an asynchronous check for a newer version if it is needed.
     // A newVersionFound signal is sent if one is found.

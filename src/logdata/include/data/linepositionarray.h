@@ -119,12 +119,12 @@ class LinePosition
     LinePosition& operator =(const LinePosition&) = delete;
 
     // Move assignement
-    LinePosition(LinePosition&& orig)
+    LinePosition(LinePosition&& orig) noexcept
     {
         *this = std::move(orig);
     }
 
-    LinePosition& operator=( LinePosition&& orig )
+    LinePosition& operator=( LinePosition&& orig ) noexcept
     {
       array = std::move( orig.array );
       fakeFinalLF_ = orig.fakeFinalLF_;

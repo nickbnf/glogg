@@ -20,26 +20,28 @@
 #ifndef OVERVIEWWIDGET_H
 #define OVERVIEWWIDGET_H
 
-#include <QWidget>
 #include <QBasicTimer>
+#include <QWidget>
 #include <data/linetypes.h>
 
 class Overview;
 
-class OverviewWidget : public QWidget
-{
-  Q_OBJECT
+class OverviewWidget : public QWidget {
+    Q_OBJECT
 
   public:
-    OverviewWidget( QWidget* parent = nullptr );
+    explicit OverviewWidget( QWidget* parent = nullptr );
 
     // Associate the widget with an Overview object.
-    void setOverview( Overview* overview ) { overview_ = overview; }
+    void setOverview( Overview* overview )
+    {
+        overview_ = overview;
+    }
 
   public slots:
     // Sent when a match at the line passed must be highlighted in
     // the overview
-    void highlightLine(LineNumber line );
+    void highlightLine( LineNumber line );
     void removeHighlight();
 
   protected:

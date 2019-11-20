@@ -52,7 +52,7 @@
 #include "tabbedcrawlerwidget.h"
 #include "quickfindwidget.h"
 #include "quickfindmux.h"
-#include "scratchpad.h"
+#include "tabbedscratchpad.h"
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
 #include "versionchecker.h"
 #endif
@@ -270,6 +270,8 @@ class MainWindow : public QMainWindow
 
     // The main widget
     TabbedCrawlerWidget mainTabWidget_;
+
+    TabbedScratchPad scratchPad_;
 
     // Version checker
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING

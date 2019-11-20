@@ -149,6 +149,9 @@ MainWindow::MainWindow( Session& session ) :
     //mainTabWidget_.setTabShape( QTabWidget::Triangular );
     mainTabWidget_.setTabsClosable( true );
 
+    scratchPad_.setWindowIcon( mainIcon_ );
+    scratchPad_.setWindowTitle( "klogg - scratchpad" );
+
     connect( &mainTabWidget_, &TabbedCrawlerWidget::tabCloseRequested ,
             this, QOverload<int>::of(&MainWindow::closeTab) );
     connect( &mainTabWidget_, &TabbedCrawlerWidget::currentChanged,
@@ -755,10 +758,8 @@ void MainWindow::aboutQt()
 
 void MainWindow::showScratchPad()
 {
-    auto scratchPad = new ScratchPad();
-    scratchPad->setWindowIcon( mainIcon_ );
-    scratchPad->setWindowTitle( "klogg - scratchpad" );
-    scratchPad->show();
+    scratchPad_.show();
+    scratchPad_.activateWindow();
 }
 
 void MainWindow::encodingChanged( QAction* action )

@@ -26,6 +26,8 @@ add_library(ui STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/viewinterface.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/viewtools.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/scratchpad.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/tabbedscratchpad.h
+
 
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/optionsdialog.ui
@@ -54,7 +56,9 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/signalmux.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/tabbedcrawlerwidget.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/viewtools.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/scratchpad.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/scratchpad.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/tabbedscratchpad.cpp
+        )
 
 set_target_properties(ui PROPERTIES AUTOUIC ON)
 set_property(TARGET ui APPEND PROPERTY AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")

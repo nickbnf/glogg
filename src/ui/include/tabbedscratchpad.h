@@ -17,29 +17,31 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRATCHPAD_H
-#define SCRATCHPAD_H
+#ifndef KLOGG_TABBEDSCRATCHPAD_H
+#define KLOGG_TABBEDSCRATCHPAD_H
 
 #include <QWidget>
+#include <QTabWidget>
+#include <QKeyEvent>
 
-class QTextEdit;
-
-class ScratchPad : public QWidget {
-    Q_OBJECT
+class TabbedScratchPad : public QWidget {
+  Q_OBJECT
   public:
-    explicit ScratchPad( QWidget* parent = nullptr );
+    explicit TabbedScratchPad( QWidget* parent = nullptr );
 
-    ~ScratchPad() = default;
-    ScratchPad( const ScratchPad& ) = delete;
-    ScratchPad& operator=( const ScratchPad& ) = delete;
+    ~TabbedScratchPad() = default;
+    TabbedScratchPad( const TabbedScratchPad& ) = delete;
+    TabbedScratchPad& operator=( const TabbedScratchPad& ) = delete;
 
-  private:
-    void decodeBase64();
-    void formatJson();
-    void formatXml();
+  protected:
+    void keyPressEvent( QKeyEvent* event ) override;
 
   private:
-    QTextEdit* textEdit_;
+    void addTab();
+
+  private:
+    QTabWidget* tabWidget_ { nullptr};
+    int tabCounter_{};
 };
 
-#endif // SCRATCHPAD_H
+#endif // KLOGG_TABBEDSCRATCHPAD_H

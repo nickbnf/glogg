@@ -74,7 +74,15 @@ void ScratchPad::decodeBase64()
 void ScratchPad::formatJson()
 {
     auto text = textEdit_->toPlainText();
-    auto formatted = QJsonDocument::fromJson( text.toUtf8() ).toJson( QJsonDocument::Indented );
+    const auto start = text.indexOf('{');
+
+    QJsonParseError parseError;
+    auto json = QJsonDocument::fromJson( text.mid(start).toUtf8(), &parseError );
+    if (json.isNull()) {
+        json = QJsonDocument::fromJson( text.mid(start, parseError.offset).toUtf8(), &parseError );
+    }
+
+    auto formatted = json.toJson( QJsonDocument::Indented );
     if ( !formatted.isEmpty() ) {
         textEdit_->setText( formatted );
     }

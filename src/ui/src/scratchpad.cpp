@@ -23,6 +23,7 @@
 
 #include <QAction>
 #include <QByteArray>
+#include <QDomDocument>
 #include <QJsonDocument>
 #include <QTextEdit>
 #include <QToolBar>
@@ -36,6 +37,7 @@ ScratchPad::ScratchPad( QWidget* parent )
     textEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
     textEdit->setMinimumSize( 300, 300 );
     textEdit->setUndoRedoEnabled( true );
+    textEdit->setAcceptRichText( false );
 
     auto toolBar = std::make_unique<QToolBar>();
 
@@ -49,7 +51,7 @@ ScratchPad::ScratchPad( QWidget* parent )
 
     auto formatXmlAction = std::make_unique<QAction>( "Format xml" );
     connect( formatXmlAction.get(), &QAction::triggered, [this]( auto ) { formatXml(); } );
-    // toolBar->addAction( formatXmlAction.release() );
+    toolBar->addAction( formatXmlAction.release() );
 
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
@@ -65,7 +67,7 @@ void ScratchPad::decodeBase64()
 {
     auto text = textEdit_->toPlainText();
     auto decoded = QByteArray::fromBase64( text.toLatin1() );
-    auto decodedText = QString::fromStdString({ decoded.begin(), decoded.end() });
+    auto decodedText = QString::fromStdString( { decoded.begin(), decoded.end() } );
     if ( !decodedText.isEmpty() ) {
         textEdit_->setText( decodedText );
     }
@@ -74,12 +76,13 @@ void ScratchPad::decodeBase64()
 void ScratchPad::formatJson()
 {
     auto text = textEdit_->toPlainText();
-    const auto start = text.indexOf('{');
+    const auto start = text.indexOf( '{' );
 
     QJsonParseError parseError;
-    auto json = QJsonDocument::fromJson( text.mid(start).toUtf8(), &parseError );
-    if (json.isNull()) {
-        json = QJsonDocument::fromJson( text.mid(start, parseError.offset).toUtf8(), &parseError );
+    auto json = QJsonDocument::fromJson( text.mid( start ).toUtf8(), &parseError );
+    if ( json.isNull() ) {
+        json
+            = QJsonDocument::fromJson( text.mid( start, parseError.offset ).toUtf8(), &parseError );
     }
 
     auto formatted = json.toJson( QJsonDocument::Indented );
@@ -88,4 +91,16 @@ void ScratchPad::formatJson()
     }
 }
 
-void ScratchPad::formatXml() {}
+void ScratchPad::formatXml()
+{
+    auto text = textEdit_->toPlainText();
+    const auto start = text.indexOf( '<' );
+
+    QDomDocument xml;
+    xml.setContent( text.mid( start ).toUtf8() );
+
+    auto formatted = xml.toString( 2 );
+    if ( !formatted.isEmpty() ) {
+        textEdit_->setText( formatted );
+    }
+}

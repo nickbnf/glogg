@@ -109,6 +109,7 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Network.dll
     File release\Qt5Widgets.dll
     File release\Qt5Concurrent.dll
+    File release\Qt5Xml.dll
     SetOutPath $INSTDIR\platforms
     File release\platforms\qwindows.dll
     SetOutPath $INSTDIR\styles
@@ -164,6 +165,7 @@ Section "Uninstall"
     Delete "$INSTDIR\Qt5Gui.dll"
     Delete "$INSTDIR\Qt5Network.dll"
     Delete "$INSTDIR\Qt5Concurrent.dll"
+    Delete "$INSTDIR\Qt5Xml.dll"
     Delete "$INSTDIR\platforms\qwindows.dll"
     Delete "$INSTDIR\platforms\qminimal.dll"
     Delete "$INSTDIR\styles\qwindowsvistastyle.dll"

@@ -15,6 +15,8 @@ xcopy %QTDIR%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %QTDIR%\bin\Qt5Network.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %QTDIR%\bin\Qt5Widgets.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %QTDIR%\bin\Qt5Concurrent.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %QTDIR%\bin\Qt5Xml.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+
 md %APPVEYOR_BUILD_FOLDER%\release\platforms
 xcopy %QTDIR%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\platforms\ /y
 md %APPVEYOR_BUILD_FOLDER%\release\styles

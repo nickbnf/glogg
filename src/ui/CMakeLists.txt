@@ -65,7 +65,7 @@ set_property(TARGET ui APPEND PROPERTY AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOU
 set_property(TARGET ui PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 target_include_directories(ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(ui PUBLIC Qt5::Widgets logdata versioncheck absl::any)
+target_link_libraries(ui PUBLIC Qt5::Widgets Qt5::Xml logdata versioncheck absl::any)
 
 add_dependencies(ui generate_version)
 

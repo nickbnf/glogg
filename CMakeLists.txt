@@ -52,6 +52,7 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
 find_package(Qt5Network REQUIRED)
+find_package(Qt5Xml REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -253,7 +254,7 @@ if(UNIX)
             set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
             set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
             set(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS}
-                                             "libqt5widgets5 (>=5.9.5), libqt5concurrent5 (>=5.9.5), libqt5dbus5 (>=5.9.5)")
+                                             "libqt5widgets5 (>=5.9.5), libqt5concurrent5 (>=5.9.5), libqt5xml5 (>=5.9.5)")
 
         ENDIF()
     endif()

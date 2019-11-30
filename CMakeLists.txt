@@ -207,6 +207,9 @@ if(UNIX)
         set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
         set(CPACK_SYSTEM_NAME "OSX")
         set(CPACK_PACKAGE_ICON "${ICON_FILE}")
+        set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/osx/dmg_background.tif")
+        set(CPACK_DMG_DS_STORE_SETUP_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/packaging/osx/dmg_setup.scpt")
+
     else()
         install(FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/src/app/images/hicolor/16x16/klogg.png

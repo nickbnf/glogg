@@ -61,4 +61,5 @@ endif()
 install(TARGETS
     klogg
     DESTINATION bin
+    BUNDLE DESTINATION .
 )

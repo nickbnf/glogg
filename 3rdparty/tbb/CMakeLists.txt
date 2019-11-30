@@ -350,10 +350,13 @@ if(TBB_BUILD_TBBMALLOC)
         target_compile_options(klogg_tbbmalloc PRIVATE -w)
     endif()
 
-    install(TARGETS klogg_tbbmalloc
-            LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
-            ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
-            RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+    if (NOT APPLE)
+        install(TARGETS klogg_tbbmalloc
+                LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
+                ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
+                RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+    endif()
+    
     if (UNIX AND NOT APPLE)
       target_link_libraries(klogg_tbbmalloc PUBLIC pthread dl)
     endif()
@@ -391,10 +394,13 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
         target_sources(klogg_tbbmalloc_proxy PRIVATE ${ProductVersionResourceFiles})
     endif()
 
-    install(TARGETS klogg_tbbmalloc_proxy
-            LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
-            ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
-            RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+    if (NOT APPLE)
+      install(TARGETS klogg_tbbmalloc_proxy
+              LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
+              ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
+              RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+    endif()
+
     if (UNIX AND NOT APPLE)
       target_link_libraries(klogg_tbbmalloc_proxy PUBLIC pthread dl)
     endif()

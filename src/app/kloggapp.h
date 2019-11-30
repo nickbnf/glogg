@@ -22,6 +22,11 @@
 
 #include <QApplication>
 #include <QDir>
+
+#ifdef Q_OS_MAC
+#include <QFileOpenEvent>
+#endif
+
 #include <stack>
 
 #include "log.h"
@@ -41,7 +46,10 @@ class KloggApp : public SingleApplication {
 
   public:
     KloggApp( int& argc, char* argv[] )
-        : SingleApplication( argc, argv, true, SingleApplication::SecondaryNotification )
+        : SingleApplication( argc, argv, true, 
+            SingleApplication::SecondaryNotification 
+            | SingleApplication::ExcludeAppPath
+            | SingleApplication::ExcludeAppVersion)
     {
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );
         qRegisterMetaType<LinesCount>( "LinesCount" );
@@ -148,6 +156,20 @@ class KloggApp : public SingleApplication {
 
         activeWindows_.top()->loadFileNonInteractive( file );
     }
+
+#ifdef Q_OS_MAC
+    bool event(QEvent* event) override
+    {
+        if ( isPrimary() && event->type() == QEvent::FileOpen ) {
+            QFileOpenEvent* openEvent = static_cast<QFileOpenEvent*>( event );
+            LOG( logINFO ) << "File open request " << openEvent->file();
+            loadFileNonInteractive( openEvent->file() );
+        }
+
+        return SingleApplication::event( event );
+
+    }
+#endif
 
   private:
     void onWindowActivated( MainWindow& window )

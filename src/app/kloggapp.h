@@ -160,10 +160,16 @@ class KloggApp : public SingleApplication {
 #ifdef Q_OS_MAC
     bool event(QEvent* event) override
     {
-        if ( isPrimary() && event->type() == QEvent::FileOpen ) {
+        if ( event->type() == QEvent::FileOpen ) {
             QFileOpenEvent* openEvent = static_cast<QFileOpenEvent*>( event );
             LOG( logINFO ) << "File open request " << openEvent->file();
-            loadFileNonInteractive( openEvent->file() );
+
+            if( isPrimary() ) {
+                loadFileNonInteractive( openEvent->file() );
+            }
+            else {
+                sendFilesToPrimaryInstance( {openEvent->file()} );
+            }
         }
 
         return SingleApplication::event( event );

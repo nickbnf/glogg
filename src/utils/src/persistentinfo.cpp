@@ -97,7 +97,7 @@ void PersistentInfo::PreparePortableSettings( const QString& portableConfigPath 
 void PersistentInfo::PrepareOsSettings()
 {
 #ifdef Q_OS_WIN
-    const auto format = QSetting::IniFormat;
+    const auto format = QSettings::IniFormat;
 #else
     const auto format = QSettings::NativeFormat;
 #endif

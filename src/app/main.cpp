@@ -205,7 +205,7 @@ int main( int argc, char* argv[] )
 
 static void print_version()
 {
-    std::cout << "glogg " GLOGG_VERSION "\n";
+    std::cout << "klogg " GLOGG_VERSION "\n";
 #ifdef GLOGG_COMMIT
     std::cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "(" GLOGG_GIT_VERSION ")\n";
 #endif

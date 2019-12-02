@@ -72,9 +72,9 @@
 #include <cli11/cli11.hpp>
 
 #ifdef KLOGG_PORTABLE
-const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+const bool PersistentInfo::forcePortable = true;
 #else
-const bool PersistentInfo::ConfigFileParameters::forcePortable = false;
+const bool PersistentInfo::forcePortable = false;
 #endif
 
 static void print_version();

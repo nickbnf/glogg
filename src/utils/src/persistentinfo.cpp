@@ -52,53 +52,102 @@
 constexpr uint8_t AppSettingsVersion = 1;
 constexpr uint8_t SessionSettingsVersion = 1;
 
-PersistentInfo::ConfigFileParameters::ConfigFileParameters()
+constexpr const char ApplicationSessionFile[] = "klogg";
+constexpr const char SessionSettingsFile[] = "klogg_session";
+constexpr const char PortableExtension[] = ".conf";
+
+namespace {
+QString MakeSessionSettingsPath( const QString& appConfigPath )
 {
-    QString portableConfigPath = qApp->applicationDirPath() + QDir::separator() + "klogg.conf";
-    if ( forcePortable || QFileInfo::exists( portableConfigPath ) ) {
-        format = QSettings::IniFormat;
-        appSettingsPath = portableConfigPath;
+    return QFileInfo( appConfigPath )
+        .absoluteDir()
+        .filePath( QString( SessionSettingsFile ) + PortableExtension );
+}
+} // namespace
+
+PersistentInfo::PersistentInfo()
+{
+    const auto portableConfigPath = qApp->applicationDirPath() + QDir::separator()
+                                    + ApplicationSessionFile + PortableExtension;
+
+    const auto usePortableConfiguration = forcePortable || QFileInfo::exists( portableConfigPath );
+
+    if ( usePortableConfiguration ) {
+        PreparePortableSettings( portableConfigPath );
     }
     else {
-#ifdef Q_OS_WIN
-        format = QSettings::IniFormat;
-#endif
-        appSettingsPath = QSettings{ format, QSettings::UserScope, "klogg", "klogg" }.fileName();
+        PrepareOsSettings();
     }
 
-    sessionSettingsPath
-        = QFileInfo( appSettingsPath ).absoluteDir().filePath( "klogg_session.conf" );
-    if ( !QFileInfo::exists( sessionSettingsPath ) && QFileInfo::exists( appSettingsPath ) ) {
-        QFile::copy( appSettingsPath, sessionSettingsPath );
-    }
+    UpdateSettings();
 }
 
-PersistentInfo::PersistentInfo( const ConfigFileParameters& config )
-    : appSettings_{ config.appSettingsPath, config.format }
-    , sessionSettings_{ config.sessionSettingsPath, config.format }
+void PersistentInfo::PreparePortableSettings( const QString& portableConfigPath )
 {
-    const auto oldAppSettingsVerson = appSettings_.value( "version", 0 ).toUInt();
-    if ( oldAppSettingsVerson != AppSettingsVersion ) {
-        appSettings_.remove( "geometry" );
-        appSettings_.remove( "versionchecker.nextDeadline" );
-        appSettings_.remove( "OpenFiles" );
-        appSettings_.remove( "RecentFiles" );
-        appSettings_.remove( "SavedSearches" );
+    const auto sessionSettingsPath = MakeSessionSettingsPath( portableConfigPath );
+
+    if ( !QFileInfo::exists( sessionSettingsPath ) && QFileInfo::exists( portableConfigPath ) ) {
+        QFile::copy( portableConfigPath, sessionSettingsPath );
     }
 
-    const auto oldSessionSettinsVersion = sessionSettings_.value( "version", 0 ).toUInt();
+    appSettings_ = std::make_unique<QSettings>( portableConfigPath, QSettings::IniFormat );
+    sessionSettings_ = std::make_unique<QSettings>( sessionSettingsPath, QSettings::IniFormat );
+}
+
+void PersistentInfo::PrepareOsSettings()
+{
+#ifdef Q_OS_WIN
+    const auto format = QSetting::IniFormat;
+#else
+    const auto format = QSettings::NativeFormat;
+#endif
+
+    appSettings_ = std::make_unique<QSettings>(format, QSettings::UserScope, "klogg", ApplicationSessionFile );
+    sessionSettings_ = std::make_unique<QSettings>(format, QSettings::UserScope, "klogg", SessionSettingsFile );
+
+#ifndef Q_OS_MAC
+    const auto sessionSettingsPath = MakeSessionSettingsPath( appSettings_->fileName() );
+
+    if ( sessionSettings_->allKeys().isEmpty() ) {
+        if ( QFile::exists( sessionSettingsPath ) ) {
+            QSettings oldSessionSettings{ sessionSettingsPath, QSettings::IniFormat };
+            for ( const auto& key : oldSessionSettings.allKeys() ) {
+                sessionSettings_->setValue( key, oldSessionSettings.value( key ) );
+            }
+        }
+        else {
+            for ( const auto& key : appSettings_->allKeys() ) {
+                sessionSettings_->setValue( key, appSettings_->value( key ) );
+            }
+        }
+    }
+#endif
+}
+
+void PersistentInfo::UpdateSettings()
+{
+    const auto oldAppSettingsVersion = appSettings_->value( "version", 0 ).toUInt();
+    if ( oldAppSettingsVersion != AppSettingsVersion ) {
+        appSettings_->remove( "geometry" );
+        appSettings_->remove( "versionchecker.nextDeadline" );
+        appSettings_->remove( "OpenFiles" );
+        appSettings_->remove( "RecentFiles" );
+        appSettings_->remove( "SavedSearches" );
+    }
+
+    const auto oldSessionSettinsVersion = sessionSettings_->value( "version", 0 ).toUInt();
     if ( oldSessionSettinsVersion != SessionSettingsVersion ) {
-        sessionSettings_.setValue( "Window/geometry", sessionSettings_.value( "geometry" ) );
-        sessionSettings_.setValue( "VersionChecker/nextDeadline",
-                                   sessionSettings_.value( "versionchecker.nextDeadline" ) );
-        sessionSettings_.remove( "HighlighterSet" );
-        for ( const auto& key : sessionSettings_.childKeys() ) {
-            sessionSettings_.remove( key );
+        sessionSettings_->setValue( "Window/geometry", sessionSettings_->value( "geometry" ) );
+        sessionSettings_->setValue( "VersionChecker/nextDeadline",
+                                    sessionSettings_->value( "versionchecker.nextDeadline" ) );
+        sessionSettings_->remove( "HighlighterSet" );
+        for ( const auto& key : sessionSettings_->childKeys() ) {
+            sessionSettings_->remove( key );
         }
     }
 
-    appSettings_.setValue( "version", AppSettingsVersion );
-    sessionSettings_.setValue( "version", SessionSettingsVersion );
+    appSettings_->setValue( "version", AppSettingsVersion );
+    sessionSettings_->setValue( "version", SessionSettingsVersion );
 }
 
 PersistentInfo& PersistentInfo::getInstance()
@@ -109,10 +158,10 @@ PersistentInfo& PersistentInfo::getInstance()
 
 QSettings& PersistentInfo::getSettings( app_settings )
 {
-    return getInstance().appSettings_;
+    return *getInstance().appSettings_;
 }
 
 QSettings& PersistentInfo::getSettings( session_settings )
 {
-    return getInstance().sessionSettings_;
+    return *getInstance().sessionSettings_;
 }

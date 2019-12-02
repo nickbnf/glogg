@@ -27,7 +27,7 @@
 
 #include <persistentinfo.h>
 
-const bool PersistentInfo::ConfigFileParameters::forcePortable = true;
+const bool PersistentInfo::forcePortable = true;
 
 int main(int argc, char *argv[]) {
     QApplication a( argc, argv );

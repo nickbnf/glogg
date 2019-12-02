@@ -40,36 +40,33 @@
 #define PERSISTENTINFO_H
 
 #include <QSettings>
+#include <memory>
 
 // Singleton class managing the saving of persistent data to permanent storage
 // Clients must implement Persistable
 
-struct app_settings {};
-struct session_settings {};
+struct app_settings {
+};
+struct session_settings {
+};
 
 class PersistentInfo {
   public:
-    static QSettings& getSettings(app_settings);
-    static QSettings& getSettings(session_settings);
+    static QSettings& getSettings( app_settings );
+    static QSettings& getSettings( session_settings );
 
   private:
-    struct ConfigFileParameters {
-        QString appSettingsPath;
-        QString sessionSettingsPath;
+    static const bool forcePortable;
 
-        QSettings::Format format;
-
-        ConfigFileParameters();
-
-        static const bool forcePortable;
-    };
-
-    // Can't be constructed or copied (singleton)
-    explicit PersistentInfo( const ConfigFileParameters& config = {} );
-
+    explicit PersistentInfo();
     static PersistentInfo& getInstance();
 
-    QSettings appSettings_;
-    QSettings sessionSettings_;
+    void PreparePortableSettings( const QString& portableConfigPath );
+    void PrepareOsSettings();
+
+    void UpdateSettings();
+
+    std::unique_ptr<QSettings> appSettings_;
+    std::unique_ptr<QSettings> sessionSettings_;
 };
 #endif

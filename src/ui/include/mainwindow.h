@@ -180,7 +180,7 @@ class MainWindow : public QMainWindow
     void createTrayIcon();
     void readSettings();
     void writeSettings();
-    bool loadFile( const QString& fileName );
+    bool loadFile( const QString& fileName, bool followFile = false );
     void updateTitleBar( const QString& file_name );
     void updateRecentFileActions();
     QString strippedName( const QString& fullFileName ) const;

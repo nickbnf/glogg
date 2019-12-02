@@ -120,6 +120,14 @@ class Configuration final : public Persistable<Configuration> {
     {
         loadLastSession_ = enabled;
     }
+    bool followFileOnLoad() const
+    {
+        return followFileOnLoad_;
+    }
+    void setFollowFileOnLoad( bool enabled )
+    {
+        followFileOnLoad_ = enabled;
+    }
     bool allowMultipleWindows() const
     {
         return allowMultipleWindows_;
@@ -305,6 +313,7 @@ class Configuration final : public Persistable<Configuration> {
     uint32_t pollIntervalMs_ = 2000;
 
     bool loadLastSession_ = true;
+    bool followFileOnLoad_ = false;
     bool allowMultipleWindows_ = false;
 
     // View settings

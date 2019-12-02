@@ -166,6 +166,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="followFileOnLoadCheckBox">
+            <property name="text">
+             <string>Follow file on load</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QCheckBox" name="minimizeToTrayCheckBox">
             <property name="text">
              <string>Minimize to tray</string>

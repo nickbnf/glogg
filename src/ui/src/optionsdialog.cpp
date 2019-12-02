@@ -75,6 +75,10 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     setupPolling();
     setupSearchResultsCache();
     setupLogging();
+
+#ifdef Q_OS_MAC
+    minimizeToTrayCheckBox->setVisible( false );
+#endif
 }
 
 //

@@ -294,9 +294,9 @@ class CrawlerWidget : public QSplitter,
     FilteredView* filteredView;
     QComboBox* visibilityBox;
     InfoLine* searchInfoLine;
-    QPushButton* matchCaseButton;
-    QPushButton* useRegexpButton;
-    QPushButton* searchRefreshButton;
+    QToolButton* matchCaseButton;
+    QToolButton* useRegexpButton;
+    QToolButton* searchRefreshButton;
     OverviewWidget* overviewWidget_;
 
     // Default palette to be remembered

@@ -698,9 +698,14 @@ void CrawlerWidget::setup()
 
     // The views
     bottomWindow = new QWidget;
+    bottomWindow->setContentsMargins( 2, 0, 2, 0 );
+
     overviewWidget_ = new OverviewWidget();
     logMainView = new LogMainView( logData_, quickFindPattern_.get(), &overview_, overviewWidget_ );
+    logMainView->setContentsMargins( 2, 0, 2, 0 );
+
     filteredView = new FilteredView( logFilteredData_, quickFindPattern_.get() );
+    filteredView->setContentsMargins( 2, 0, 2, 0 );
 
     overviewWidget_->setOverview( &overview_ );
     overviewWidget_->setParent( logMainView );
@@ -736,6 +741,8 @@ void CrawlerWidget::setup()
 
     // Select "Marks and matches" by default (same default as the filtered view)
     visibilityBox->setCurrentIndex( 0 );
+    visibilityBox->setContentsMargins( 2, 2, 2, 2 );
+
 
     // TODO: Maybe there is some way to set the popup width to be
     // sized-to-content (as it is when the stylesheet is not overriden) in the
@@ -766,27 +773,31 @@ void CrawlerWidget::setup()
     searchInfoLineSizePolicy.setRetainSizeWhenHidden( false );
     searchInfoLine->setSizePolicy( searchInfoLineSizePolicy );
     searchInfoLineDefaultPalette = searchInfoLine->palette();
+    searchInfoLine->setContentsMargins( 2, 2, 2, 2 );
 
-    matchCaseButton = new QPushButton();
+
+    matchCaseButton = new QToolButton();
     matchCaseButton->setToolTip( "Match case" );
     matchCaseButton->setIcon( QIcon( ":/images/icons8-font-size-16.png" ) );
     matchCaseButton->setCheckable( true );
     matchCaseButton->setFocusPolicy( Qt::NoFocus );
+    matchCaseButton->setContentsMargins( 2, 2, 2, 2 );
 
-    useRegexpButton = new QPushButton();
+    useRegexpButton = new QToolButton();
     useRegexpButton->setToolTip( "Use regex" );
     useRegexpButton->setIcon( QIcon( ":/images/regex.png" ) );
     useRegexpButton->setCheckable( true );
     useRegexpButton->setFocusPolicy( Qt::NoFocus );
+    useRegexpButton->setContentsMargins( 2, 2, 2, 2 );
 
-    searchRefreshButton = new QPushButton();
+    searchRefreshButton = new QToolButton();
     searchRefreshButton->setToolTip( "Auto-refresh" );
     searchRefreshButton->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
     searchRefreshButton->setCheckable( true );
     searchRefreshButton->setFocusPolicy( Qt::NoFocus );
+    searchRefreshButton->setContentsMargins( 2, 2, 2, 2 );
 
     // Construct the Search line
-    searchLabel = new QLabel( tr( "&Text: " ) );
     searchLineCompleter = new QCompleter( savedSearches_->recentSearches(), this );
     searchLineCompleter->setCaseSensitivity( Qt::CaseInsensitive );
     searchLineEdit = new QComboBox;
@@ -796,8 +807,7 @@ void CrawlerWidget::setup()
     searchLineEdit->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     searchLineEdit->setSizeAdjustPolicy( QComboBox::AdjustToMinimumContentsLengthWithIcon );
     searchLineEdit->lineEdit()->setMaxLength( std::numeric_limits<int>::max() / 1024 );
-
-    searchLabel->setBuddy( searchLineEdit );
+    searchLineEdit->setContentsMargins( 2, 2, 2, 2 );
 
     setFocusProxy( searchLineEdit );
 
@@ -805,33 +815,32 @@ void CrawlerWidget::setup()
     searchButton->setIcon( QIcon( ":/images/icons8-search-16.png" ) );
     searchButton->setText( tr( "&Search" ) );
     searchButton->setAutoRaise( true );
+    searchButton->setContentsMargins( 2, 2, 2, 2 );
 
     stopButton = new QToolButton();
     stopButton->setIcon( QIcon( ":/images/stop14.png" ) );
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
     stopButton->setVisible( false );
+    stopButton->setContentsMargins( 2, 2, 2, 2 );
 
     auto* searchLineLayout = new QHBoxLayout;
+    searchLineLayout->setContentsMargins( 2, 2, 2, 2 );
+
     searchLineLayout->addWidget( visibilityBox );
     searchLineLayout->addWidget( matchCaseButton );
     searchLineLayout->addWidget( useRegexpButton );
-
-    // searchLineLayout->addWidget( searchLabel );
     searchLineLayout->addWidget( searchLineEdit );
     searchLineLayout->addWidget( searchButton );
     searchLineLayout->addWidget( stopButton );
     searchLineLayout->addWidget( searchRefreshButton );
     searchLineLayout->addWidget( searchInfoLine );
-    searchLineLayout->setContentsMargins( 6, 0, 6, 0 );
-    stopButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
-    searchButton->setSizePolicy( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
 
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout( searchLineLayout );
     bottomMainLayout->addWidget( filteredView );
-    bottomMainLayout->setContentsMargins( 2, 1, 2, 1 );
+    bottomMainLayout->setContentsMargins( 2, 2, 2, 2 );
     bottomWindow->setLayout( bottomMainLayout );
 
     addWidget( logMainView );

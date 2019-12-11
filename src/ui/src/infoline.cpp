@@ -94,14 +94,9 @@ void InfoLine::contextMenuEvent( QContextMenuEvent* event )
 {
     QMenu menu( this );
 
-    auto copyAll = menu.addAction( "Copy all" );
-    menu.addSeparator();
     auto copySelection = menu.addAction( "Copy" );
     menu.addSeparator();
     auto selectAll = menu.addAction( "Select all" );
-
-    connect( copyAll, &QAction::triggered,
-             [this]( auto ) { QApplication::clipboard()->setText( this->text() ); } );
 
     copySelection->setEnabled( this->hasSelectedText() );
     connect( copySelection, &QAction::triggered,

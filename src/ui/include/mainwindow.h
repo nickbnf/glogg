@@ -47,7 +47,7 @@
 
 #include "session.h"
 #include "crawlerwidget.h"
-#include "infoline.h"
+#include "pathline.h"
 #include "signalmux.h"
 #include "tabbedcrawlerwidget.h"
 #include "quickfindwidget.h"
@@ -220,7 +220,7 @@ class MainWindow : public QMainWindow
     QMenu *encodingMenu;
     QMenu *helpMenu;
 
-    InfoLine *infoLine;
+    PathLine *infoLine;
     QLabel* lineNbField;
     QLabel* sizeField;
     QLabel* dateField;

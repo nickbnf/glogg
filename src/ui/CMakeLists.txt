@@ -5,6 +5,7 @@ add_library(ui STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighterset.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/infoline.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/pathline.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/logmainview.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/mainwindow.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/menuactiontooltipbehavior.h
@@ -38,6 +39,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlightersdialog.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlighterset.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/infoline.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/pathline.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logmainview.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/mainwindow.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/menuactiontooltipbehavior.cpp

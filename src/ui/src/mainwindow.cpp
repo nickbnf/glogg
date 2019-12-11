@@ -463,7 +463,7 @@ void MainWindow::createMenus()
 
 void MainWindow::createToolBars()
 {
-    infoLine = new InfoLine();
+    infoLine = new PathLine();
     infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
     infoLine->setLineWidth( 0 );
     infoLine->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
@@ -1182,6 +1182,7 @@ void MainWindow::updateInfoLine()
     session_.getFileInfo( currentCrawlerWidget(), &fileSize, &fileNbLine, &lastModified );
 
     infoLine->setText( current_file );
+    infoLine->setPath( current_file );
     sizeField->setText( readableSize( fileSize ) );
     encodingField->setText( currentCrawlerWidget()->encodingText() );
 

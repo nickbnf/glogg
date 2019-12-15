@@ -31,10 +31,10 @@
 
 #include <stack>
 
-#include "log.h"
-#include "uuid.h"
-#include "session.h"
 #include "configuration.h"
+#include "log.h"
+#include "session.h"
+#include "uuid.h"
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Appenders/RollingFileAppender.h>
@@ -151,7 +151,7 @@ class KloggApp : public SingleApplication {
             w->show();
         }
 
-        return mainWindows_.back();
+        return mainWindows_.back().second;
     }
 
     MainWindow* newWindow()
@@ -160,7 +160,7 @@ class KloggApp : public SingleApplication {
             session_ = std::make_shared<Session>();
         }
 
-        return newWindow( { session_,  generateIdFromUuid(), mainWindows_.size() } );
+        return newWindow( { session_, generateIdFromUuid(), nextWindowIndex() } );
     }
 
     void loadFileNonInteractive( const QString& file )
@@ -207,9 +207,9 @@ class KloggApp : public SingleApplication {
   private:
     MainWindow* newWindow( WindowSession&& session )
     {
-        mainWindows_.emplace_back( new MainWindow( std::move( session ) ) );
+        mainWindows_.emplace_back( session, new MainWindow( session ) );
 
-        auto window = mainWindows_.back();
+        auto& window = mainWindows_.back().second;
 
         activeWindows_.push( QPointer<MainWindow>( window ) );
 
@@ -217,6 +217,8 @@ class KloggApp : public SingleApplication {
         connect( window, &MainWindow::newWindow, [=]() { newWindow()->show(); } );
         connect( window, &MainWindow::windowActivated,
                  [this, window]() { onWindowActivated( *window ); } );
+        connect( window, &MainWindow::windowClosed,
+                 [this, window]() { onWindowClosed( *window ); } );
         connect( window, &MainWindow::exitRequested, [this] { exitApplication(); } );
 
         return window;
@@ -228,13 +230,25 @@ class KloggApp : public SingleApplication {
         activeWindows_.push( QPointer<MainWindow>( &window ) );
     }
 
+    void onWindowClosed( MainWindow& window )
+    {
+        LOG( logINFO ) << "Window " << &window << " closed";
+        auto w = std::find_if( mainWindows_.begin(), mainWindows_.end(),
+                               [&window]( const auto& p ) { return p.second == &window; } );
+
+        if ( w != mainWindows_.end() ) {
+            mainWindows_.erase( w );
+        }
+    }
+
     void exitApplication()
     {
         LOG( logINFO ) << "exit application";
         session_->setExitRequested( true );
-        mainWindows_.reverse();
-        for ( auto window : mainWindows_ ) {
-            window->close();
+        auto mainWindows = mainWindows_;
+        mainWindows.reverse();
+        for ( auto window : mainWindows ) {
+            window.second->close();
         }
 
         Configuration::getSynced().save();
@@ -254,6 +268,19 @@ class KloggApp : public SingleApplication {
         msgBox.exec();
     }
 
+    size_t nextWindowIndex() const
+    {
+        if (mainWindows_.empty()) {
+            return 0;
+        }
+        else {
+            return 1 + std::accumulate( mainWindows_.begin(), mainWindows_.end(), 0,
+                                    []( size_t current, const auto& next ) {
+                                        return std::max( current, next.first.windowIndex() );
+                                    } );
+        }
+    }
+
   private:
     std::unique_ptr<plog::RollingFileAppender<plog::GloggFormatter>> tempAppender_;
     std::unique_ptr<plog::IAppender> logAppender_;
@@ -262,7 +289,7 @@ class KloggApp : public SingleApplication {
 
     std::shared_ptr<Session> session_;
 
-    std::list<MainWindow*> mainWindows_;
+    std::list<std::pair<WindowSession, MainWindow*>> mainWindows_;
     std::stack<QPointer<MainWindow>> activeWindows_;
 
     VersionChecker versionChecker_;

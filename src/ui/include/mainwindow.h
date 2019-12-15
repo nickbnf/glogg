@@ -160,6 +160,7 @@ class MainWindow : public QMainWindow
 
     void newWindow();
     void windowActivated();
+    void windowClosed();
     void exitRequested();
 
   private:

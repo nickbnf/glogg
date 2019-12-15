@@ -951,6 +951,7 @@ void MainWindow::closeEvent( QCloseEvent* event )
 
         closeAll();
         trayIcon_->hide();
+        emit windowClosed();
 
         event->accept();
     }

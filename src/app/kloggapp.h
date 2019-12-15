@@ -160,7 +160,7 @@ class KloggApp : public SingleApplication {
             session_ = std::make_shared<Session>();
         }
 
-        return newWindow( { session_,  generateIdFromUuid() } );
+        return newWindow( { session_,  generateIdFromUuid(), mainWindows_.size() } );
     }
 
     void loadFileNonInteractive( const QString& file )

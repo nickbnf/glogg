@@ -189,6 +189,8 @@ MainWindow::MainWindow( WindowSession session )
     auto clipboard = QGuiApplication::clipboard();
     connect( clipboard, &QClipboard::dataChanged, this, &MainWindow::onClipboardDataChanged );
     onClipboardDataChanged();
+
+    updateTitleBar("");
 }
 
 void MainWindow::reloadGeometry()
@@ -1102,10 +1104,16 @@ CrawlerWidget* MainWindow::currentCrawlerWidget() const
 void MainWindow::updateTitleBar( const QString& file_name )
 {
     QString shownName = tr( "Untitled" );
-    if ( !file_name.isEmpty() )
+    if ( !file_name.isEmpty() ) {
         shownName = strippedName( file_name );
+    }
 
-    setWindowTitle( tr( "%1 - %2" ).arg( shownName, tr( "klogg" ) )
+    QString indexPart = "";
+    if (session_.windowIndex() > 0) {
+        indexPart = QString(" #%1").arg(session_.windowIndex() + 1);
+    }
+
+    setWindowTitle( tr( "%1 - %2%3" ).arg( shownName, tr( "klogg" ),  indexPart)
 #ifdef GLOGG_COMMIT
                     + " (build " GLOGG_VERSION ")"
 #endif

@@ -140,9 +140,10 @@ class WindowSession {
   public:
     WindowSession() = default;
 
-    WindowSession( std::shared_ptr<Session> appSession, const QString& id )
+    WindowSession( std::shared_ptr<Session> appSession, const QString& id, size_t index )
         : appSession_{ std::move( appSession ) }
         , windowId_{ id }
+        , windowIndex_{ index }
     {
     }
 
@@ -179,6 +180,11 @@ class WindowSession {
         return appSession_->quickFindPattern();
     }
 
+    size_t windowIndex() const
+    {
+        return windowIndex_;
+    }
+
     // Open all the files listed in the stored session
     // (see ::open)
     // returns a vector of pairs (file_name, view) and the index of the
@@ -202,6 +208,7 @@ class WindowSession {
   private:
     std::shared_ptr<Session> appSession_;
     QString windowId_;
+    size_t windowIndex_;
 };
 
 #endif

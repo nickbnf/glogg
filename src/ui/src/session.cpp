@@ -152,10 +152,11 @@ const Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* vie
 std::vector<WindowSession> Session::windowSessions()
 {
     const auto& session = SessionInfo::getSynced();
+    const auto& sessionWindows = session.windows();
 
     std::vector<WindowSession> windows;
-    for ( const auto& windowId : session.windows() ) {
-        windows.emplace_back(shared_from_this(), windowId);
+    for(auto i = 0; i < sessionWindows.size(); ++i ) {
+        windows.emplace_back(shared_from_this(), sessionWindows.at(i), i);
     }
 
     return windows;

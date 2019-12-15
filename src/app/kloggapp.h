@@ -32,6 +32,7 @@
 #include <stack>
 
 #include "log.h"
+#include "uuid.h"
 #include "session.h"
 #include "configuration.h"
 
@@ -159,12 +160,7 @@ class KloggApp : public SingleApplication {
             session_ = std::make_shared<Session>();
         }
 
-        const auto id = QUuid::createUuid().toString()
-            .remove('{')
-            .remove('}')
-            .remove('-');
-
-        return newWindow( { session_,  id } );
+        return newWindow( { session_,  generateIdFromUuid() } );
     }
 
     void loadFileNonInteractive( const QString& file )

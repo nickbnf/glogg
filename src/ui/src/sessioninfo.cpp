@@ -35,11 +35,11 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
     if ( settings.value( "version", 0 ) == SESSION_VERSION ) {
 
         windows_.clear();
-
-        for ( const auto& windowId : settings.childGroups() ) {
+        const auto windowsCount = settings.beginReadArray( "windows" );
+        for ( auto windowIndex = 0; windowIndex < windowsCount; ++windowIndex ) {
+            settings.setArrayIndex( windowIndex );
+            QString windowId = settings.value( "id" ).toString();
             auto window = Window{ windowId };
-
-            settings.beginGroup( windowId );
             window.geometry = settings.value( "geometry" ).toByteArray();
 
             if ( settings.contains( "OpenFiles/version" ) ) {
@@ -62,9 +62,9 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 settings.endGroup();
             }
 
-            settings.endGroup();
             windows_.emplace_back( window );
         }
+        settings.endArray();
     }
     else {
         LOG( logERROR ) << "Unknown version of session, ignoring it...";
@@ -80,16 +80,13 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
     settings.beginGroup( "Window" );
     settings.setValue( "version", SESSION_VERSION );
 
-    for ( const auto& group : settings.childGroups() ) {
-        if ( std::none_of( windows_.begin(), windows_.end(),
-                           [&group]( const auto& w ) { return w.id == group; } ) ) {
-            settings.remove( group );
-        }
-    }
+    settings.remove( "windows" );
+    settings.beginWriteArray("windows");
+    for ( auto windowIndex = 0u; windowIndex<windows_.size(); ++windowIndex ) {
+        const auto& window = windows_.at(windowIndex);
+        settings.setArrayIndex(windowIndex);
 
-    for ( const auto& window : windows_ ) {
-        settings.beginGroup( window.id );
-
+        settings.setValue("id", window.id);
         settings.setValue( "geometry", window.geometry );
 
         settings.beginGroup( "OpenFiles" );
@@ -104,8 +101,8 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
             settings.setValue( "viewContext", open_file->viewContext );
         }
         settings.endArray();
-        settings.endGroup();
-        settings.endGroup();
+        settings.endGroup(); // OpenFiles
     }
-    settings.endGroup();
+    settings.endArray();
+    settings.endGroup(); //Win
 }

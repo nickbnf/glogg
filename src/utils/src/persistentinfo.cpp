@@ -48,7 +48,7 @@
 #include <QUuid>
 
 #include "log.h"
-#include "persistable.h"
+#include "uuid.h"
 
 constexpr uint8_t AppSettingsVersion = 1;
 constexpr uint8_t SessionSettingsVersion = 2;
@@ -152,12 +152,10 @@ void PersistentInfo::UpdateSettings()
     }
     if ( oldSessionSettingsVersion < SessionSettingsVersion ) {
         const auto geometry = sessionSettings_->value( "Window/geometry" );
+        sessionSettings_->remove("Window/geometry");
 
         if ( geometry.isValid() ) {
-            const auto id = QUuid::createUuid().toString()
-                .remove('{')
-                .remove('}')
-                .remove('-');
+            const auto id = generateIdFromUuid();
             sessionSettings_->beginGroup( "OpenFiles" );
             std::vector<std::tuple<QString, uint64_t, QString>> openFiles;
             int size = sessionSettings_->beginReadArray( "openFiles" );
@@ -176,8 +174,9 @@ void PersistentInfo::UpdateSettings()
             sessionSettings_->beginGroup( "Window" );
             sessionSettings_->setValue( "version", 1 );
 
-            sessionSettings_->beginGroup( id );
-
+            sessionSettings_->beginWriteArray("windows");
+            sessionSettings_->setArrayIndex(0);
+            sessionSettings_->setValue( "id", id );
             sessionSettings_->setValue( "geometry", geometry );
 
             sessionSettings_->beginGroup( "OpenFiles" );
@@ -190,9 +189,9 @@ void PersistentInfo::UpdateSettings()
                 sessionSettings_->setValue( "topLine", qint64( std::get<1>( openFiles.at( i ) ) ) );
                 sessionSettings_->setValue( "viewContext", std::get<2>( openFiles.at( i ) ) );
             }
-            sessionSettings_->endArray();
+            sessionSettings_->endArray(); // openfiles
             sessionSettings_->endGroup(); // OpenFiles
-            sessionSettings_->endGroup(); // id
+            sessionSettings_->endArray(); // windows
             sessionSettings_->endGroup(); // Window
         }
     }

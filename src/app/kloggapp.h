@@ -159,7 +159,12 @@ class KloggApp : public SingleApplication {
             session_ = std::make_shared<Session>();
         }
 
-        return newWindow( { session_, QUuid::createUuid().toString( QUuid::Id128 ) } );
+        const auto id = QUuid::createUuid().toString()
+            .remove('{')
+            .remove('}')
+            .remove('-');
+
+        return newWindow( { session_,  id } );
     }
 
     void loadFileNonInteractive( const QString& file )

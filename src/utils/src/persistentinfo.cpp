@@ -154,7 +154,10 @@ void PersistentInfo::UpdateSettings()
         const auto geometry = sessionSettings_->value( "Window/geometry" );
 
         if ( geometry.isValid() ) {
-            const auto id = QUuid::createUuid().toString( QUuid::Id128 );
+            const auto id = QUuid::createUuid().toString()
+                .remove('{')
+                .remove('}')
+                .remove('-');
             sessionSettings_->beginGroup( "OpenFiles" );
             std::vector<std::tuple<QString, uint64_t, QString>> openFiles;
             int size = sessionSettings_->beginReadArray( "openFiles" );

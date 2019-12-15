@@ -79,15 +79,12 @@
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow( Session& session )
-    : session_( session )
+MainWindow::MainWindow( WindowSession session )
+    : session_( std::move( session ) )
     , mainIcon_()
     , signalMux_()
     , quickFindMux_( session_.getQuickFindPattern() )
     , mainTabWidget_()
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    , versionChecker_()
-#endif
 {
     createActions();
     createMenus();
@@ -174,9 +171,7 @@ MainWindow::MainWindow( Session& session )
              SLOT( clearNotification() ) );
 
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    // Version checker notification
-    connect( &versionChecker_, &VersionChecker::newVersionFound, this,
-             &MainWindow::newVersionNotification );
+
 #endif
 
     // Construct the QuickFind bar
@@ -200,7 +195,7 @@ void MainWindow::reloadGeometry()
 {
     QByteArray geometry;
 
-    session_.storedGeometry( &geometry );
+    session_.restoreGeometry( &geometry );
     restoreGeometry( geometry );
 }
 
@@ -230,15 +225,6 @@ void MainWindow::loadInitialFile( QString fileName, bool followFile )
     if ( !fileName.isEmpty() ) {
         loadFile( fileName, followFile );
     }
-}
-
-void MainWindow::startBackgroundTasks()
-{
-    LOG( logDEBUG ) << "startBackgroundTasks";
-
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    versionChecker_.startCheck();
-#endif
 }
 
 // Menu actions
@@ -464,7 +450,7 @@ void MainWindow::createMenus()
 void MainWindow::createToolBars()
 {
     infoLine = new PathLine();
-    infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
+    infoLine->setFrameStyle( QFrame::StyledPanel | QFrame::Sunken );
     infoLine->setLineWidth( 0 );
     infoLine->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
@@ -943,17 +929,6 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     currentCrawlerWidget()->setFocus();
 }
 
-void MainWindow::newVersionNotification( const QString& new_version, const QString& url )
-{
-    LOG( logDEBUG ) << "newVersionNotification( " << new_version << " from " << url << " )";
-
-    QMessageBox msgBox;
-    msgBox.setText( QString( "A new version of klogg (%1) is available for download <p>"
-                             "<a href=\"%2\">%2</a>" )
-                        .arg( new_version, url ) );
-    msgBox.exec();
-}
-
 //
 // Events
 //
@@ -961,16 +936,20 @@ void MainWindow::newVersionNotification( const QString& new_version, const QStri
 // Closes the application
 void MainWindow::closeEvent( QCloseEvent* event )
 {
-    writeSettings();
-
     if ( !isCloseFromTray_ && this->isVisible() && Configuration::get().minimizeToTray() ) {
         event->ignore();
         trayIcon_->show();
         this->hide();
     }
     else {
+        const auto saveSettings = session_.close();
+        if ( saveSettings ) {
+            writeSettings();
+        }
+
         closeAll();
         trayIcon_->hide();
+
         event->accept();
     }
 }
@@ -1222,13 +1201,6 @@ void MainWindow::writeSettings()
         widget_list.emplace_back( view, 0UL, view->context() );
     }
     session_.save( widget_list, saveGeometry() );
-
-    // User settings
-    Configuration::get().save();
-    // User settings
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    VersionCheckerConfig::get().save();
-#endif
 }
 
 // Read settings from permanent storage

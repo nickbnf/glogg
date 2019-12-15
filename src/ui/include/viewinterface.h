@@ -45,23 +45,33 @@ class ViewInterface {
     // Set the log data and filtered data to associate to this view
     // Ownership stay with the caller but is shared
     void setData( std::shared_ptr<LogData> log_data,
-            std::shared_ptr<LogFilteredData> filtered_data )
-    { doSetData( log_data, filtered_data ); }
+                  std::shared_ptr<LogFilteredData> filtered_data )
+    {
+        doSetData( log_data, filtered_data );
+    }
 
     // Set the (shared) quickfind pattern object
     void setQuickFindPattern( std::shared_ptr<QuickFindPattern> qfp )
-    { doSetQuickFindPattern( qfp ); }
+    {
+        doSetQuickFindPattern( qfp );
+    }
 
     // Set the (shared) search history object
     void setSavedSearches( SavedSearches* saved_searches )
-    { doSetSavedSearches( saved_searches ); }
+    {
+        doSetSavedSearches( saved_searches );
+    }
 
     // For save/restore of the context
     void setViewContext( const QString& view_context )
-    { doSetViewContext( view_context ); }
+    {
+        doSetViewContext( view_context );
+    }
     // (returned object ownership is transferred to the caller)
     std::shared_ptr<const ViewContextInterface> context( void ) const
-    { return doGetViewContext(); }
+    {
+        return doGetViewContext();
+    }
 
     // To allow polymorphic destruction
     virtual ~ViewInterface() = default;
@@ -69,14 +79,11 @@ class ViewInterface {
   protected:
     // Virtual functions (using NVI)
     virtual void doSetData( std::shared_ptr<LogData> log_data,
-            std::shared_ptr<LogFilteredData> filtered_data ) = 0;
-    virtual void doSetQuickFindPattern(
-            std::shared_ptr<QuickFindPattern> qfp ) = 0;
-    virtual void doSetSavedSearches(
-            SavedSearches* saved_searches ) = 0;
-    virtual void doSetViewContext(
-            const QString& view_context ) = 0;
-    virtual std::shared_ptr<const ViewContextInterface>
-        doGetViewContext( void ) const = 0;
+                            std::shared_ptr<LogFilteredData> filtered_data )
+        = 0;
+    virtual void doSetQuickFindPattern( std::shared_ptr<QuickFindPattern> qfp ) = 0;
+    virtual void doSetSavedSearches( SavedSearches* saved_searches ) = 0;
+    virtual void doSetViewContext( const QString& view_context ) = 0;
+    virtual std::shared_ptr<const ViewContextInterface> doGetViewContext( void ) const = 0;
 };
 #endif

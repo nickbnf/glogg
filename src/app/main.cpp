@@ -181,23 +181,25 @@ int main( int argc, char* argv[] )
         const auto& config = Configuration::get();
         plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 
-        auto mw = app.newWindow();
-        mw->reloadGeometry();
-
+        MainWindow* mw = nullptr;
         if ( parameters.load_session
              || ( parameters.filenames.empty() && !parameters.new_session
                   && config.loadLastSession() ) ) {
-            mw->reloadSession();
+            mw = app.reloadSession();
         }
-
-        LOG( logDEBUG ) << "MainWindow created.";
-        mw->show();
+        else
+        {
+            mw = app.newWindow();
+            mw->reloadGeometry();
+            LOG( logDEBUG ) << "MainWindow created.";
+            mw->show();
+        }
 
         for ( const auto& filename : parameters.filenames ) {
             mw->loadInitialFile( filename, parameters.follow_file );
         }
 
-        mw->startBackgroundTasks();
+        app.startBackgroundTasks();
     }
 
     return app.exec();

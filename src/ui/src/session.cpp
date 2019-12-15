@@ -21,15 +21,15 @@
 
 #include "log.h"
 
-#include <cassert>
 #include <QFileInfo>
 #include <algorithm>
+#include <cassert>
 
-#include "viewinterface.h"
-#include "savedsearches.h"
-#include "sessioninfo.h"
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
+#include "savedsearches.h"
+#include "sessioninfo.h"
+#include "viewinterface.h"
 
 Session::Session()
 {
@@ -48,8 +48,9 @@ Session::~Session()
 ViewInterface* Session::getViewIfOpen( const QString& file_name ) const
 {
     auto result = std::find_if( openFiles_.begin(), openFiles_.end(),
-            [&](const std::pair<const ViewInterface*, OpenFile>& o)
-            { return ( o.second.fileName == file_name ); } );
+                                [&]( const std::pair<const ViewInterface*, OpenFile>& o ) {
+                                    return ( o.second.fileName == file_name );
+                                } );
 
     if ( result != openFiles_.end() )
         return result->second.view;
@@ -58,7 +59,7 @@ ViewInterface* Session::getViewIfOpen( const QString& file_name ) const
 }
 
 ViewInterface* Session::open( const QString& file_name,
-        const std::function<ViewInterface*()>& view_factory )
+                              const std::function<ViewInterface*()>& view_factory )
 {
     QFileInfo fileInfo( file_name );
     if ( fileInfo.isReadable() ) {
@@ -74,65 +75,6 @@ void Session::close( const ViewInterface* view )
     openFiles_.erase( openFiles_.find( view ) );
 }
 
-void Session::save( const std::vector<
-        std::tuple<const ViewInterface*,
-            uint64_t,
-            std::shared_ptr<const ViewContextInterface>>
-        >& view_list,
-        const QByteArray& geometry )
-{
-    LOG(logDEBUG) << "Session::save";
-
-    std::vector<SessionInfo::OpenFile> session_files;
-    for ( const auto& view: view_list ) {
-        const ViewInterface* view_object;
-        uint64_t top_line;
-        std::shared_ptr<const ViewContextInterface> view_context;
-
-        std::tie( view_object, top_line, view_context ) = view;
-
-        const OpenFile* file = findOpenFileFromView( view_object );
-        assert( file );
-
-        LOG(logDEBUG) << "Saving " << file->fileName.toLocal8Bit().data() << " in session.";
-        session_files.emplace_back( file->fileName, top_line, view_context->toString() );
-    }
-
-    auto& session = SessionInfo::get();
-    session.setOpenFiles( session_files );
-    session.setGeometry( geometry );
-    session.save();
-}
-
-std::vector<std::pair<QString, ViewInterface*>> Session::restore(
-        const std::function<ViewInterface*()>& view_factory,
-        int *current_file_index )
-{
-    const auto& session = SessionInfo::getSynced();
-
-    std::vector<SessionInfo::OpenFile> session_files = session.openFiles();
-    LOG(logDEBUG) << "Session returned " << session_files.size();
-    std::vector<std::pair<QString, ViewInterface*>> result;
-
-    for ( auto file: session_files )
-    {
-        LOG(logDEBUG) << "Create view for " << file.fileName.toLocal8Bit().data();
-        ViewInterface* view = openAlways( file.fileName, view_factory, file.viewContext );
-        result.emplace_back( file.fileName, view );
-    }
-
-    *current_file_index = -1;
-
-    return result;
-}
-
-void Session::storedGeometry( QByteArray* geometry ) const
-{
-    const auto& session = SessionInfo::getSynced();
-
-    *geometry = session.geometry();
-}
-
 QString Session::getFilename( const ViewInterface* view ) const
 {
     const OpenFile* file = findOpenFileFromView( view );
@@ -142,8 +84,8 @@ QString Session::getFilename( const ViewInterface* view ) const
     return file->fileName;
 }
 
-void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
-        uint32_t* fileNbLine, QDateTime* lastModified ) const
+void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize, uint32_t* fileNbLine,
+                           QDateTime* lastModified ) const
 {
     const OpenFile* file = findOpenFileFromView( view );
 
@@ -154,19 +96,17 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize,
     *lastModified = file->logData->getLastModifiedDate();
 }
 
-
 /*
  * Private methods
  */
 
-ViewInterface* Session::openAlways(const QString& file_name,
-        const std::function<ViewInterface*()>& view_factory,
-        const QString& view_context )
+ViewInterface* Session::openAlways( const QString& file_name,
+                                    const std::function<ViewInterface*()>& view_factory,
+                                    const QString& view_context )
 {
     // Create the data objects
-    auto log_data          = std::make_shared<LogData>();
-    auto log_filtered_data =
-        std::shared_ptr<LogFilteredData>( log_data->getNewFilteredData() );
+    auto log_data = std::make_shared<LogData>();
+    auto log_filtered_data = std::shared_ptr<LogFilteredData>( log_data->getNewFilteredData() );
 
     ViewInterface* view = view_factory();
     view->setData( log_data, log_filtered_data );
@@ -177,11 +117,7 @@ ViewInterface* Session::openAlways(const QString& file_name,
         view->setViewContext( view_context );
 
     // Insert in the hash
-    openFiles_.insert( { view,
-            { file_name,
-            log_data,
-            log_filtered_data,
-            view } } );
+    openFiles_.insert( { view, { file_name, log_data, log_filtered_data, view } } );
 
     // Start loading the file
     log_data->attachFile( file_name );
@@ -211,4 +147,86 @@ const Session::OpenFile* Session::findOpenFileFromView( const ViewInterface* vie
     // be attached to a file, we don't handle it!
 
     return file;
+}
+
+std::vector<WindowSession> Session::windowSessions()
+{
+    const auto& session = SessionInfo::getSynced();
+
+    std::vector<WindowSession> windows;
+    for ( const auto& windowId : session.windows() ) {
+        windows.emplace_back(shared_from_this(), windowId);
+    }
+
+    return windows;
+}
+
+void WindowSession::save(
+    const std::vector<std::tuple<const ViewInterface*, uint64_t,
+                                 std::shared_ptr<const ViewContextInterface>>>& view_list,
+    const QByteArray& geometry )
+{
+    LOG( logDEBUG ) << "Session::save";
+
+    std::vector<SessionInfo::OpenFile> session_files;
+    for ( const auto& view : view_list ) {
+        const ViewInterface* view_object;
+        uint64_t top_line;
+        std::shared_ptr<const ViewContextInterface> view_context;
+
+        std::tie( view_object, top_line, view_context ) = view;
+
+        const Session::OpenFile* file = appSession_->findOpenFileFromView( view_object );
+        assert( file );
+
+        LOG( logDEBUG ) << "Saving " << file->fileName.toLocal8Bit().data() << " in session.";
+        session_files.emplace_back( file->fileName, top_line, view_context->toString() );
+    }
+
+    auto& session = SessionInfo::get();
+    session.setOpenFiles( windowId_, session_files );
+    session.setGeometry( windowId_, geometry );
+    session.save();
+}
+
+std::vector<std::pair<QString, ViewInterface*>>
+WindowSession::restore( const std::function<ViewInterface*()>& view_factory,
+                        int* current_file_index )
+{
+    const auto& session = SessionInfo::getSynced();
+
+    std::vector<SessionInfo::OpenFile> session_files = session.openFiles( windowId_ );
+    LOG( logDEBUG ) << "Session returned " << session_files.size();
+    std::vector<std::pair<QString, ViewInterface*>> result;
+
+    for ( auto file : session_files ) {
+        LOG( logDEBUG ) << "Create view for " << file.fileName.toLocal8Bit().data();
+        ViewInterface* view
+            = appSession_->openAlways( file.fileName, view_factory, file.viewContext );
+        result.emplace_back( file.fileName, view );
+    }
+
+    *current_file_index = -1;
+
+    return result;
+}
+
+void WindowSession::restoreGeometry( QByteArray* geometry ) const
+{
+    const auto& session = SessionInfo::getSynced();
+
+    *geometry = session.geometry( windowId_ );
+}
+
+bool WindowSession::close() {
+
+    if (appSession_->exitRequested())
+    {
+        return true;
+    }
+
+    auto& session = SessionInfo::get();
+    auto isRemoved = session.remove(windowId_);
+    session.save();
+    return !isRemoved;
 }

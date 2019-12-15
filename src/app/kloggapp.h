@@ -22,6 +22,8 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QMessageBox>
+#include <QUuid>
 
 #ifdef Q_OS_MAC
 #include <QFileOpenEvent>
@@ -31,6 +33,7 @@
 
 #include "log.h"
 #include "session.h"
+#include "configuration.h"
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Appenders/RollingFileAppender.h>
@@ -39,6 +42,7 @@
 
 #include "mainwindow.h"
 #include "messagereceiver.h"
+#include "versionchecker.h"
 
 class KloggApp : public SingleApplication {
 
@@ -46,10 +50,10 @@ class KloggApp : public SingleApplication {
 
   public:
     KloggApp( int& argc, char* argv[] )
-        : SingleApplication( argc, argv, true, 
-            SingleApplication::SecondaryNotification 
-            | SingleApplication::ExcludeAppPath
-            | SingleApplication::ExcludeAppVersion)
+        : SingleApplication( argc, argv, true,
+                             SingleApplication::SecondaryNotification
+                                 | SingleApplication::ExcludeAppPath
+                                 | SingleApplication::ExcludeAppVersion )
     {
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );
         qRegisterMetaType<LinesCount>( "LinesCount" );
@@ -72,6 +76,12 @@ class KloggApp : public SingleApplication {
 
             QObject::connect( &messageReceiver_, &MessageReceiver::loadFile, this,
                               &KloggApp::loadFileNonInteractive );
+
+            // Version checker notification
+            connect( &versionChecker_, &VersionChecker::newVersionFound,
+                     [this]( const QString& new_version, const QString& url ) {
+                         newVersionNotification( new_version, url );
+                     } );
         }
     }
 
@@ -122,26 +132,34 @@ class KloggApp : public SingleApplication {
         plog::init( log_level, logAppender_.get() ).addAppender( plog::get<1>() );
     }
 
+    MainWindow* reloadSession()
+    {
+        if ( !session_ ) {
+            session_ = std::make_shared<Session>();
+        }
+
+        for ( auto&& windowSession : session_->windowSessions() ) {
+            auto w = newWindow( std::move( windowSession ) );
+            w->reloadGeometry();
+            w->reloadSession();
+            w->show();
+        }
+
+        if ( mainWindows_.empty() ) {
+            auto w = newWindow();
+            w->show();
+        }
+
+        return mainWindows_.back();
+    }
+
     MainWindow* newWindow()
     {
         if ( !session_ ) {
             session_ = std::make_shared<Session>();
         }
 
-        mainWindows_.emplace_back( new MainWindow(*session_) );
-
-        auto window = mainWindows_.back();
-
-        activeWindows_.push( QPointer<MainWindow>( window ) );
-
-        LOG( logINFO ) << "Window " << &window << " created";
-        connect( window, &MainWindow::newWindow, [=]() { newWindow()->show(); } );
-        connect( window, &MainWindow::windowActivated,
-                 [this, window]() { onWindowActivated( *window ); } );
-        connect( window, &MainWindow::exitRequested,
-                 [this] { QTimer::singleShot( 100, this, &QCoreApplication::quit ); } );
-
-        return window;
+        return newWindow( { session_, QUuid::createUuid().toString( QUuid::Id128 ) } );
     }
 
     void loadFileNonInteractive( const QString& file )
@@ -157,31 +175,82 @@ class KloggApp : public SingleApplication {
         activeWindows_.top()->loadFileNonInteractive( file );
     }
 
+    void startBackgroundTasks()
+    {
+        LOG( logDEBUG ) << "startBackgroundTasks";
+
+#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
+        versionChecker_.startCheck();
+#endif
+    }
+
 #ifdef Q_OS_MAC
-    bool event(QEvent* event) override
+    bool event( QEvent* event ) override
     {
         if ( event->type() == QEvent::FileOpen ) {
             QFileOpenEvent* openEvent = static_cast<QFileOpenEvent*>( event );
             LOG( logINFO ) << "File open request " << openEvent->file();
 
-            if( isPrimary() ) {
+            if ( isPrimary() ) {
                 loadFileNonInteractive( openEvent->file() );
             }
             else {
-                sendFilesToPrimaryInstance( {openEvent->file()} );
+                sendFilesToPrimaryInstance( { openEvent->file() } );
             }
         }
 
         return SingleApplication::event( event );
-
     }
 #endif
 
   private:
+    MainWindow* newWindow( WindowSession&& session )
+    {
+        mainWindows_.emplace_back( new MainWindow( std::move( session ) ) );
+
+        auto window = mainWindows_.back();
+
+        activeWindows_.push( QPointer<MainWindow>( window ) );
+
+        LOG( logINFO ) << "Window " << &window << " created";
+        connect( window, &MainWindow::newWindow, [=]() { newWindow()->show(); } );
+        connect( window, &MainWindow::windowActivated,
+                 [this, window]() { onWindowActivated( *window ); } );
+        connect( window, &MainWindow::exitRequested, [this] { exitApplication(); } );
+
+        return window;
+    }
+
     void onWindowActivated( MainWindow& window )
     {
         LOG( logINFO ) << "Window " << &window << " activated";
         activeWindows_.push( QPointer<MainWindow>( &window ) );
+    }
+
+    void exitApplication()
+    {
+        LOG( logINFO ) << "exit application";
+        session_->setExitRequested( true );
+        mainWindows_.reverse();
+        for ( auto window : mainWindows_ ) {
+            window->close();
+        }
+
+        Configuration::getSynced().save();
+        VersionCheckerConfig::getSynced().save();
+
+        QTimer::singleShot( 100, this, &QCoreApplication::quit );
+    }
+
+    void newVersionNotification( const QString& new_version, const QString& url )
+    {
+        LOG( logDEBUG ) << "newVersionNotification( " << new_version << " from " << url << " )";
+
+        QMessageBox msgBox;
+        msgBox.setText( QString( "A new version of klogg (%1) is available for download <p>"
+                                 "<a href=\"%2\">%2</a>" )
+                            .arg( new_version, url ) );
+        msgBox.exec();
     }
 
   private:
@@ -194,6 +263,8 @@ class KloggApp : public SingleApplication {
 
     std::list<MainWindow*> mainWindows_;
     std::stack<QPointer<MainWindow>> activeWindows_;
+
+    VersionChecker versionChecker_;
 };
 
 #endif // KLOGG_KLOGGAPP_H

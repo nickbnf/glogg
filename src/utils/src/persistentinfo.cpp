@@ -45,12 +45,13 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QStringList>
+#include <QUuid>
 
 #include "log.h"
 #include "persistable.h"
 
 constexpr uint8_t AppSettingsVersion = 1;
-constexpr uint8_t SessionSettingsVersion = 1;
+constexpr uint8_t SessionSettingsVersion = 2;
 
 constexpr const char ApplicationSessionFile[] = "klogg";
 constexpr const char SessionSettingsFile[] = "klogg_session";
@@ -102,8 +103,10 @@ void PersistentInfo::PrepareOsSettings()
     const auto format = QSettings::NativeFormat;
 #endif
 
-    appSettings_ = std::make_unique<QSettings>(format, QSettings::UserScope, "klogg", ApplicationSessionFile );
-    sessionSettings_ = std::make_unique<QSettings>(format, QSettings::UserScope, "klogg", SessionSettingsFile );
+    appSettings_ = std::make_unique<QSettings>( format, QSettings::UserScope, "klogg",
+                                                ApplicationSessionFile );
+    sessionSettings_
+        = std::make_unique<QSettings>( format, QSettings::UserScope, "klogg", SessionSettingsFile );
 
 #ifndef Q_OS_MAC
     const auto sessionSettingsPath = MakeSessionSettingsPath( appSettings_->fileName() );
@@ -135,14 +138,59 @@ void PersistentInfo::UpdateSettings()
         appSettings_->remove( "SavedSearches" );
     }
 
-    const auto oldSessionSettinsVersion = sessionSettings_->value( "version", 0 ).toUInt();
-    if ( oldSessionSettinsVersion != SessionSettingsVersion ) {
+    const auto oldSessionSettingsVersion = sessionSettings_->value( "version", 0 ).toUInt();
+    LOG( logINFO ) << "Session settings version" << oldSessionSettingsVersion;
+
+    if ( oldSessionSettingsVersion < 1 ) {
         sessionSettings_->setValue( "Window/geometry", sessionSettings_->value( "geometry" ) );
         sessionSettings_->setValue( "VersionChecker/nextDeadline",
                                     sessionSettings_->value( "versionchecker.nextDeadline" ) );
         sessionSettings_->remove( "HighlighterSet" );
         for ( const auto& key : sessionSettings_->childKeys() ) {
             sessionSettings_->remove( key );
+        }
+    }
+    if ( oldSessionSettingsVersion < SessionSettingsVersion ) {
+        const auto geometry = sessionSettings_->value( "Window/geometry" );
+
+        if ( geometry.isValid() ) {
+            const auto id = QUuid::createUuid().toString( QUuid::Id128 );
+            sessionSettings_->beginGroup( "OpenFiles" );
+            std::vector<std::tuple<QString, uint64_t, QString>> openFiles;
+            int size = sessionSettings_->beginReadArray( "openFiles" );
+            LOG( logINFO ) << "OpenFiles" << size;
+
+            for ( int i = 0; i < size; ++i ) {
+                sessionSettings_->setArrayIndex( i );
+                QString file_name = sessionSettings_->value( "fileName" ).toString();
+                uint64_t top_line = sessionSettings_->value( "topLine" ).toInt();
+                QString view_context = sessionSettings_->value( "viewContext" ).toString();
+                openFiles.emplace_back( file_name, top_line, view_context );
+            }
+            sessionSettings_->endArray();
+            sessionSettings_->endGroup(); // OpenFiles
+
+            sessionSettings_->beginGroup( "Window" );
+            sessionSettings_->setValue( "version", 1 );
+
+            sessionSettings_->beginGroup( id );
+
+            sessionSettings_->setValue( "geometry", geometry );
+
+            sessionSettings_->beginGroup( "OpenFiles" );
+            sessionSettings_->setValue("version", 1);
+            sessionSettings_->beginWriteArray( "openFiles" );
+            for ( unsigned i = 0; i < openFiles.size(); ++i ) {
+                sessionSettings_->setArrayIndex( i );
+
+                sessionSettings_->setValue( "fileName", std::get<0>( openFiles.at( i ) ) );
+                sessionSettings_->setValue( "topLine", qint64( std::get<1>( openFiles.at( i ) ) ) );
+                sessionSettings_->setValue( "viewContext", std::get<2>( openFiles.at( i ) ) );
+            }
+            sessionSettings_->endArray();
+            sessionSettings_->endGroup(); // OpenFiles
+            sessionSettings_->endGroup(); // id
+            sessionSettings_->endGroup(); // Window
         }
     }
 

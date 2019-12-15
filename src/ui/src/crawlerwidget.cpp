@@ -766,7 +766,7 @@ void CrawlerWidget::setup()
 
     // Construct the Search Info line
     searchInfoLine = new InfoLine();
-    searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
+    searchInfoLine->setFrameStyle( QFrame::StyledPanel | QFrame::Sunken );
     searchInfoLine->setLineWidth( 1 );
     searchInfoLine->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
     auto searchInfoLineSizePolicy = searchInfoLine->sizePolicy();

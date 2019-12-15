@@ -23,7 +23,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QContextMenuEvent>
-#include <QMenu>`
+#include <QMenu>
 
 void PathLine::setPath(const QString& path)
 {

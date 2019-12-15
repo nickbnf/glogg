@@ -53,9 +53,6 @@
 #include "quickfindwidget.h"
 #include "quickfindmux.h"
 #include "tabbedscratchpad.h"
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-#include "versionchecker.h"
-#endif
 
 class QAction;
 class QActionGroup;
@@ -70,9 +67,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
   public:
-    // Constructor
-    // The ownership of the session is not transferred to us
-    explicit  MainWindow( Session& session );
+    explicit MainWindow( WindowSession session );
 
     // Re-install the geometry stored in config file
     // (should be done before 'Widget::show()')
@@ -81,9 +76,6 @@ class MainWindow : public QMainWindow
     void reloadSession();
     // Loads the initial file (parameter passed or from config file)
     void loadInitialFile( QString fileName, bool followFile );
-    // Starts the lower priority activities the MW controls such as
-    // version checking etc...
-    void startBackgroundTasks();
 
   public slots:
     // Load a file in a new tab (non-interactive)
@@ -154,9 +146,6 @@ class MainWindow : public QMainWindow
     // and confirm it.
     void changeQFPattern( const QString& newPattern );
 
-    // Notify the user a new version is available
-    void newVersionNotification( const QString& new_version , const QString &url );
-
     void onClipboardDataChanged();
   signals:
     // Is emitted when new settings must be used
@@ -190,7 +179,7 @@ class MainWindow : public QMainWindow
     void updateInfoLine();
     void showInfoLabels( bool show );
 
-    Session& session_;
+    WindowSession session_;
     QString loadingFileName;
 
     std::array<QString, static_cast<size_t>(CrawlerWidget::Encoding::MAX)> encodingNames_ = {
@@ -272,11 +261,6 @@ class MainWindow : public QMainWindow
     TabbedCrawlerWidget mainTabWidget_;
 
     TabbedScratchPad scratchPad_;
-
-    // Version checker
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-    VersionChecker versionChecker_;
-#endif
 
     bool isMaximized_ = false;
     bool isCloseFromTray_ = false;

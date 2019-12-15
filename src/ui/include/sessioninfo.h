@@ -116,8 +116,8 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
                                         [&windowId]( const auto& w ) { return w.id == windowId; } );
             if ( window != windows_.end() ) {
                 windows_.erase( window );
-                return true;
             }
+            return true;
         }
 
         return false;

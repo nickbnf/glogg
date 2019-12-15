@@ -155,8 +155,8 @@ std::vector<WindowSession> Session::windowSessions()
     const auto& sessionWindows = session.windows();
 
     std::vector<WindowSession> windows;
-    for(auto i = 0; i < sessionWindows.size(); ++i ) {
-        windows.emplace_back(shared_from_this(), sessionWindows.at(i), i);
+    for ( auto i = 0; i < sessionWindows.size(); ++i ) {
+        windows.emplace_back( shared_from_this(), sessionWindows.at( i ), i );
     }
 
     return windows;
@@ -219,15 +219,19 @@ void WindowSession::restoreGeometry( QByteArray* geometry ) const
     *geometry = session.geometry( windowId_ );
 }
 
-bool WindowSession::close() {
+bool WindowSession::close()
+{
+    LOG( logINFO ) << "close window session " << windowId_;
 
-    if (appSession_->exitRequested())
-    {
+    if ( appSession_->exitRequested() ) {
         return true;
     }
 
     auto& session = SessionInfo::get();
-    auto isRemoved = session.remove(windowId_);
+    auto isRemoved = session.remove( windowId_ );
     session.save();
+
+    LOG( logINFO ) << "session is removed " << isRemoved;
+
     return !isRemoved;
 }

@@ -71,18 +71,15 @@ class EncodingMenu {
 
         const auto addItemsForMibs = [&](auto& menu, const auto& mibs)
         {
-          bool isMenuVisible = false;
           for ( const auto mib : mibs ) {
               auto codec = QTextCodec::codecForMib( mib );
               if ( codec ) {
-                  isMenuVisible = true;
                   auto action = menu->addAction( QString::fromLatin1( codec->name() ) );
                   action->setData( mib );
                   action->setCheckable( true );
                   action->setActionGroup( actionGroup );
               }
           }
-          menu->setVisible( isMenuVisible );
         };
 
         auto unicodeMenu = encodingsMenu->addMenu( "Unicode" );

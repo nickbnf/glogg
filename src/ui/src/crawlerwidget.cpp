@@ -167,9 +167,9 @@ void CrawlerWidget::selectAll()
     activeView()->selectAll();
 }
 
-CrawlerWidget::Encoding CrawlerWidget::encodingSetting() const
+absl::optional<int> CrawlerWidget::encodingMib() const
 {
-    return encodingSetting_;
+    return encodingMib_;
 }
 
 bool CrawlerWidget::isFollowEnabled() const
@@ -251,9 +251,9 @@ void CrawlerWidget::reload()
     firstLoadDone_ = false;
 }
 
-void CrawlerWidget::setEncoding( Encoding encoding )
+void CrawlerWidget::setEncoding( absl::optional<int> mib )
 {
-    encodingSetting_ = encoding;
+    encodingMib_ = std::move(mib);
     updateEncoding();
 
     update();
@@ -1083,59 +1083,16 @@ void CrawlerWidget::updateEncoding()
 {
     const QTextCodec* textCodec = [this]() {
             QTextCodec* codec = nullptr;
-            switch ( encodingSetting_ ) {
-            case Encoding::AUTO:
+            if (!encodingMib_) {
                 codec = logData_->getDetectedEncoding();
-                break;
-            case Encoding::UTF8:
-                codec = QTextCodec::codecForName( "utf-8" );
-                break;
-            case Encoding::CP1251:
-                codec = QTextCodec::codecForName( "windows-1251" );
-                break;
-            case Encoding::UTF16LE:
-                codec = QTextCodec::codecForName( "utf-16le" );
-                break;
-            case Encoding::UTF16BE:
-                codec = QTextCodec::codecForName( "utf-16be" );
-                break;
-            case Encoding::UTF32LE:
-                codec = QTextCodec::codecForName( "utf-32le" );
-                break;
-            case Encoding::UTF32BE:
-                codec = QTextCodec::codecForName( "utf-32be" );
-                break;
-            case Encoding::BIG5:
-                codec = QTextCodec::codecForName( "big5" );
-                break;
-            case Encoding::GB18030:
-                codec = QTextCodec::codecForName( "gb18030" );
-                break;
-            case Encoding::SHIFT_JIS:
-                codec = QTextCodec::codecForName( "shift-jis" );
-                break;
-            case Encoding::KOI8R:
-                codec = QTextCodec::codecForName( "koi8-r" );
-                break;
-            case Encoding::LOCAL:
-                codec = QTextCodec::codecForLocale();
-                break;
-            case Encoding::ISO_8859_1:
-            default:
-                codec = QTextCodec::codecForName( "iso-8859-1" );
-                break;
+            }
+            else {
+                codec = QTextCodec::codecForMib(*encodingMib_);
             }
             return codec ? codec : QTextCodec::codecForLocale();
         }();
 
-    QString encodingPrefix;
-    if ( encodingSetting_ == Encoding::AUTO ) {
-        encodingPrefix = "Detected as %1";
-    }
-    if ( encodingSetting_ != Encoding::AUTO ) {
-        encodingPrefix = "Displayed as %1";
-    }
-
+    QString encodingPrefix = encodingMib_ ?  "Displayed as %1" :  "Detected as %1";
     encoding_text_ = tr( encodingPrefix.arg( textCodec->name().constData() ).toLatin1() );
 
     logData_->setDisplayEncoding( textCodec->name().constData() );

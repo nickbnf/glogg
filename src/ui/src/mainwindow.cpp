@@ -68,6 +68,7 @@
 #include "mainwindow.h"
 
 #include "crawlerwidget.h"
+#include "encodings.h"
 #include "highlightersdialog.h"
 #include "menuactiontooltipbehavior.h"
 #include "optionsdialog.h"
@@ -190,7 +191,7 @@ MainWindow::MainWindow( WindowSession session )
     connect( clipboard, &QClipboard::dataChanged, this, &MainWindow::onClipboardDataChanged );
     onClipboardDataChanged();
 
-    updateTitleBar("");
+    updateTitleBar( "" );
 }
 
 void MainWindow::reloadGeometry()
@@ -368,19 +369,6 @@ void MainWindow::createActions()
              [this]( auto ) { this->showScratchPad(); } );
 
     encodingGroup = new QActionGroup( this );
-
-    encodingNames_[ static_cast<size_t>( CrawlerWidget::Encoding::LOCAL ) ]
-        = QString( "System (%1)" ).arg( QTextCodec::codecForLocale()->name().constData() );
-
-    for ( int i = 0; i < static_cast<int>( CrawlerWidget::Encoding::MAX ); ++i ) {
-        encodingAction[ i ] = new QAction( encodingNames_[ i ], this );
-        encodingAction[ i ]->setCheckable( true );
-        encodingGroup->addAction( encodingAction[ i ] );
-    }
-
-    encodingAction[ 0 ]->setStatusTip( tr( "Automatically detect the file's encoding" ) );
-    encodingAction[ 0 ]->setChecked( true );
-
     connect( encodingGroup, &QActionGroup::triggered, this, &MainWindow::encodingChanged );
 }
 
@@ -435,13 +423,7 @@ void MainWindow::createMenus()
     toolsMenu->addSeparator();
     toolsMenu->addAction( showScratchPadAction );
 
-    encodingMenu = menuBar()->addMenu( tr( "En&coding" ) );
-    encodingMenu->addAction( encodingAction[ 0 ] );
-    encodingMenu->addSeparator();
-    for ( int i = 1; i < static_cast<int>( CrawlerWidget::Encoding::MAX ); ++i ) {
-        encodingMenu->addAction( encodingAction[ i ] );
-    }
-
+    menuBar()->addMenu( EncodingMenu::generate( encodingGroup ) );
     menuBar()->addSeparator();
 
     helpMenu = menuBar()->addMenu( tr( "&Help" ) );
@@ -717,13 +699,14 @@ void MainWindow::showScratchPad()
 
 void MainWindow::encodingChanged( QAction* action )
 {
-    int i = 0;
-    for ( i = 0; i < static_cast<int>( CrawlerWidget::Encoding::MAX ); ++i )
-        if ( action == encodingAction[ i ] )
-            break;
+    const auto mibData = action->data();
+    absl::optional<int> mib;
+    if ( mibData.isValid() ) {
+        mib = mibData.toInt();
+    }
 
-    LOG( logDEBUG ) << "encodingChanged, encoding " << i;
-    currentCrawlerWidget()->setEncoding( static_cast<CrawlerWidget::Encoding>( i ) );
+    LOG( logDEBUG ) << "encodingChanged, encoding " << mib;
+    currentCrawlerWidget()->setEncoding( mib );
     updateInfoLine();
 }
 
@@ -1110,11 +1093,11 @@ void MainWindow::updateTitleBar( const QString& file_name )
     }
 
     QString indexPart = "";
-    if (session_.windowIndex() > 0) {
-        indexPart = QString(" #%1").arg(session_.windowIndex() + 1);
+    if ( session_.windowIndex() > 0 ) {
+        indexPart = QString( " #%1" ).arg( session_.windowIndex() + 1 );
     }
 
-    setWindowTitle( tr( "%1 - %2%3" ).arg( shownName, tr( "klogg" ),  indexPart)
+    setWindowTitle( tr( "%1 - %2%3" ).arg( shownName, tr( "klogg" ), indexPart )
 #ifdef GLOGG_COMMIT
                     + " (build " GLOGG_VERSION ")"
 #endif
@@ -1147,8 +1130,20 @@ void MainWindow::updateRecentFileActions()
 // (used when the tab is changed)
 void MainWindow::updateMenuBarFromDocument( const CrawlerWidget* crawler )
 {
-    auto encoding = crawler->encodingSetting();
-    encodingAction[ static_cast<int>( encoding ) ]->setChecked( true );
+    const auto encodingMib = crawler->encodingMib();
+
+    auto encodingActions = encodingGroup->actions();
+    auto encodingItem = std::find_if( encodingActions.begin(), encodingActions.end(),
+                                      [&encodingMib]( const auto& action ) {
+                                          return ( !encodingMib && !action->data().isValid() )
+                                                 || ( encodingMib && action->data().isValid()
+                                                      && *encodingMib == action->data().toInt() );
+                                      } );
+
+    if ( encodingItem != encodingActions.end() ) {
+        (*encodingItem)->setChecked( true );
+    }
+
     bool follow = crawler->isFollowEnabled();
     followAction->setChecked( follow );
 }

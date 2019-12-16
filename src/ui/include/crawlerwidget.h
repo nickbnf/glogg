@@ -49,6 +49,8 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
+#include <absl/types/optional.h>
+
 #include "data/loadingstatus.h"
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
@@ -91,31 +93,14 @@ class CrawlerWidget : public QSplitter,
     // is interacting with
     void selectAll();
 
-    enum class Encoding {
-        AUTO = 0,
-        LOCAL,
-        ISO_8859_1,
-        UTF8,
-        CP1251,
-        UTF16LE,
-        UTF16BE,
-        UTF32LE,
-        UTF32BE,
-        BIG5,
-        GB18030,
-        SHIFT_JIS,
-        KOI8R,
-        MAX,
-    };
-
-    Encoding encodingSetting() const;
-
-    // Returns whether follow is enabled in this crawler
-    bool isFollowEnabled() const;
+    absl::optional<int> encodingMib() const;
 
     // Get the text description of the encoding effectively used,
     // suitable to display to the user.
     QString encodingText() const;
+
+    // Returns whether follow is enabled in this crawler
+    bool isFollowEnabled() const;
 
   public slots:
     // Stop the asynchoronous loading of the file if one is in progress
@@ -124,7 +109,7 @@ class CrawlerWidget : public QSplitter,
     // Reload the displayed file
     void reload();
     // Set the encoding
-    void setEncoding( Encoding encoding );
+    void setEncoding( absl::optional<int> mib );
 
   protected:
     // Implementation of the ViewInterface functions
@@ -344,7 +329,7 @@ class CrawlerWidget : public QSplitter,
     DataStatus dataStatus_ = DataStatus::OLD_DATA;
 
     // Current encoding setting;
-    Encoding encodingSetting_ = Encoding::AUTO;
+    absl::optional<int> encodingMib_;
     QString encoding_text_;
 };
 

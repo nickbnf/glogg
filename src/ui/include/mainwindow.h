@@ -183,22 +183,6 @@ class MainWindow : public QMainWindow
     WindowSession session_;
     QString loadingFileName;
 
-    std::array<QString, static_cast<size_t>(CrawlerWidget::Encoding::MAX)> encodingNames_ = {
-        "&Auto",
-        "System",
-        "ASCII",
-        "UTF-8",
-        "CP1251",
-        "UTF-16LE",
-        "UTF-16BE",
-        "UTF-32LE",
-        "UTF-32BE",
-        "Big5",
-        "GB18030",
-        "Shift-JIS",
-        "KOI8-R"
-    };
-
     enum { MaxRecentFiles = 5 };
     std::array<QAction*, MaxRecentFiles> recentFileActions;
     std::array<MenuActionToolTipBehavior*, MaxRecentFiles> recentFileActionBehaviors;
@@ -243,7 +227,6 @@ class MainWindow : public QMainWindow
     QAction *aboutAction;
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
-    std::array<QAction*, static_cast<int>(CrawlerWidget::Encoding::MAX)> encodingAction;
 
     QSystemTrayIcon *trayIcon_;
 

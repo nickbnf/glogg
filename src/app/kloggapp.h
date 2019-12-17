@@ -251,9 +251,6 @@ class KloggApp : public SingleApplication {
             window.second->close();
         }
 
-        Configuration::getSynced().save();
-        VersionCheckerConfig::getSynced().save();
-
         QTimer::singleShot( 100, this, &QCoreApplication::quit );
     }
 
@@ -270,14 +267,15 @@ class KloggApp : public SingleApplication {
 
     size_t nextWindowIndex() const
     {
-        if (mainWindows_.empty()) {
+        if ( mainWindows_.empty() ) {
             return 0;
         }
         else {
-            return 1 + std::accumulate( mainWindows_.begin(), mainWindows_.end(), 0,
-                                    []( size_t current, const auto& next ) {
-                                        return std::max( current, next.first.windowIndex() );
-                                    } );
+            return 1
+                   + std::accumulate( mainWindows_.begin(), mainWindows_.end(), 0,
+                                      []( size_t current, const auto& next ) {
+                                          return std::max( current, next.first.windowIndex() );
+                                      } );
         }
     }
 

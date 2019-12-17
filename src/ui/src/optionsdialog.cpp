@@ -295,6 +295,8 @@ void OptionsDialog::updateConfigFromDialog()
     // version checking
     config.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
+    config.save();
+
     emit optionsChanged();
 }
 

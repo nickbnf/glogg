@@ -792,7 +792,7 @@ void CrawlerWidget::setup()
 
     searchRefreshButton = new QToolButton();
     searchRefreshButton->setToolTip( "Auto-refresh" );
-    searchRefreshButton->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
+    searchRefreshButton->setIcon( QIcon( ":/images/icons8-search-refresh-16.png" ) );
     searchRefreshButton->setCheckable( true );
     searchRefreshButton->setFocusPolicy( Qt::NoFocus );
     searchRefreshButton->setContentsMargins( 2, 2, 2, 2 );

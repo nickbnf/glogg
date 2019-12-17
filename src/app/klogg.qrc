@@ -27,8 +27,12 @@
     <file>images/regex.png</file>
     <file>images/icons8-refresh-16.png</file>
     <file>images/icons8-search-16.png</file>
+    <file>images/icons8-search-refresh-16.png</file>
     <file>images/icons8-font-size-16.png</file>
     <file>images/icons8-document-32.png</file>
     <file>images/icons8-database-backup-16.png</file>
+    <file>images/icons8-restore-page-16.png</file>
+    <file>images/icons8-add-file-16.png</file>
+    <file>images/icons8-create-16.png</file>
 </qresource>
 </RCC>

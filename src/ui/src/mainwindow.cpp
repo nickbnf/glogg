@@ -243,7 +243,7 @@ void MainWindow::createActions()
 
     openAction = new QAction( tr( "&Open..." ), this );
     openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open ) );
-    openAction->setIcon( QIcon( ":/images/open14.png" ) );
+    openAction->setIcon( QIcon( ":/images/icons8-add-file-16.png" ) );
     openAction->setStatusTip( tr( "Open a file" ) );
     connect( openAction, &QAction::triggered, [this]( auto ) { this->open(); } );
 
@@ -329,7 +329,7 @@ void MainWindow::createActions()
              &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr( "&Follow File" ), this );
-    followAction->setIcon( QIcon( ":/images/icons8-database-backup-16.png" ) );
+    followAction->setIcon( QIcon( ":/images/icons8-restore-page-16.png" ) );
 
     followAction->setShortcuts( QList<QKeySequence>()
                                 << QKeySequence( Qt::Key_F ) << QKeySequence( Qt::Key_F10 ) );
@@ -339,7 +339,7 @@ void MainWindow::createActions()
 
     reloadAction = new QAction( tr( "&Reload" ), this );
     reloadAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Refresh ) );
-    reloadAction->setIcon( QIcon( ":/images/reload14.png" ) );
+    reloadAction->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
     signalMux_.connect( reloadAction, SIGNAL( triggered() ), SLOT( reload() ) );
 
     stopAction = new QAction( tr( "&Stop" ), this );
@@ -365,6 +365,7 @@ void MainWindow::createActions()
 
     showScratchPadAction = new QAction( tr( "Scratchpad" ), this );
     showScratchPadAction->setStatusTip( tr( "Show the scratchpad" ) );
+    showScratchPadAction->setIcon( QIcon( ":/images/icons8-create-16.png" ) );
     connect( showScratchPadAction, &QAction::triggered,
              [this]( auto ) { this->showScratchPad(); } );
 
@@ -457,6 +458,7 @@ void MainWindow::createToolBars()
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
+    toolBar->addAction( showScratchPadAction );
     toolBar->addAction( followAction );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );

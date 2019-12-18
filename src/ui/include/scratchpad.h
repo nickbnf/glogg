@@ -22,7 +22,9 @@
 
 #include <QWidget>
 
-class QTextEdit;
+#include <functional>
+
+class QPlainTextEdit;
 
 class ScratchPad : public QWidget {
     Q_OBJECT
@@ -35,11 +37,16 @@ class ScratchPad : public QWidget {
 
   private:
     void decodeBase64();
+    void encodeBase64();
     void formatJson();
     void formatXml();
+    void decodeUrl();
+    void crc32();
+
+    void transformText(const std::function<QString(QString)>& transform);
 
   private:
-    QTextEdit* textEdit_;
+    QPlainTextEdit* textEdit_;
 };
 
 #endif // SCRATCHPAD_H

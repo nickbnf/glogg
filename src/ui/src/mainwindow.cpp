@@ -328,7 +328,7 @@ void MainWindow::createActions()
              &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr( "&Follow File" ), this );
-    followAction->setIcon( QIcon( ":/images/icons8-restore-page-16.png" ) );
+    followAction->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
 
     followAction->setShortcuts( QList<QKeySequence>()
                                 << QKeySequence( Qt::Key_F ) << QKeySequence( Qt::Key_F10 ) );
@@ -338,7 +338,7 @@ void MainWindow::createActions()
 
     reloadAction = new QAction( tr( "&Reload" ), this );
     reloadAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Refresh ) );
-    reloadAction->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
+    reloadAction->setIcon( QIcon( ":/images/icons8-restore-page-16.png" ) );
     signalMux_.connect( reloadAction, SIGNAL( triggered() ), SLOT( reload() ) );
 
     stopAction = new QAction( tr( "&Stop" ), this );
@@ -468,7 +468,6 @@ void MainWindow::createToolBars()
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
-    toolBar->addAction( showScratchPadAction );
     toolBar->addAction( followAction );
     toolBar->addAction( addToFavoritesAction );
     toolBar->addWidget( infoLine );
@@ -482,6 +481,8 @@ void MainWindow::createToolBars()
     toolBar->addWidget( encodingField );
     infoToolbarSeparators.push_back( toolBar->addSeparator() );
     toolBar->addWidget( lineNbField );
+    infoToolbarSeparators.push_back( toolBar->addSeparator() );
+    toolBar->addAction( showScratchPadAction );
 
     showInfoLabels( false );
 }

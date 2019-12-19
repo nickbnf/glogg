@@ -27,9 +27,5 @@
     <file>images/olddata_icon.png</file>
     <file>images/olddata_icon@2x.png</file>
     <file>images/regex.png</file>
-    <file>images/plus.png</file>
-    <file>images/minus.png</file>
-    <file>images/up.png</file>
-    <file>images/down.png</file>
 </qresource>
 </RCC>

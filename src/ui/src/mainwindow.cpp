@@ -1037,7 +1037,11 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
     try {
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
             session_.open( fileName, []() { return new CrawlerWidget(); } ) );
-        assert( crawler_widget );
+
+        if ( !crawler_widget) {
+            LOG( logERROR ) << "Can't create crawler for " << fileName.toStdString();
+            return false;
+        }
 
         // We won't show the widget until the file is fully loaded
         crawler_widget->hide();
@@ -1063,8 +1067,8 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
         if ( followFile || config.followFileOnLoad() ) {
             followAction->setChecked( true );
         }
-    } catch ( FileUnreadableErr ) {
-        LOG( logDEBUG ) << "Can't open file " << fileName.toStdString();
+    } catch (...) {
+        LOG( logERROR ) << "Can't open file " << fileName.toStdString();
         return false;
     }
 

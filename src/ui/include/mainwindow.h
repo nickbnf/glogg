@@ -95,7 +95,7 @@ class MainWindow : public QMainWindow
 
   private slots:
     void open();
-    void openRecentFile( QAction* recentFileAction );
+    void openFileFromAction( QAction* action );
     void closeTab();
     void closeAll();
     void selectAll();
@@ -112,6 +112,7 @@ class MainWindow : public QMainWindow
     void aboutQt();
     void showScratchPad();
     void encodingChanged( QAction* action );
+    void addToFavorites();
 
     // Change the view settings
     void toggleOverviewVisibility( bool isVisible );
@@ -173,6 +174,7 @@ class MainWindow : public QMainWindow
     bool loadFile( const QString& fileName, bool followFile = false );
     void updateTitleBar( const QString& file_name );
     void updateRecentFileActions();
+    void updateFavoritesMenu();
     QString strippedName( const QString& fullFileName ) const;
     CrawlerWidget* currentCrawlerWidget() const;
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
@@ -186,12 +188,13 @@ class MainWindow : public QMainWindow
     enum { MaxRecentFiles = 5 };
     std::array<QAction*, MaxRecentFiles> recentFileActions;
     std::array<MenuActionToolTipBehavior*, MaxRecentFiles> recentFileActionBehaviors;
+    QActionGroup* recentFilesGroup;
 
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *viewMenu;
     QMenu *toolsMenu;
-    QMenu *encodingMenu;
+    QMenu *favoritesMenu;
     QMenu *helpMenu;
 
     PathLine *infoLine;
@@ -227,6 +230,8 @@ class MainWindow : public QMainWindow
     QAction *aboutAction;
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
+    QAction *addToFavoritesAction;
+    QActionGroup *favoritesGroup;
 
     QSystemTrayIcon *trayIcon_;
 

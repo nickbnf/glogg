@@ -29,6 +29,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/scratchpad.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/tabbedscratchpad.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/encodings.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/favoritefiles.h
 
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/optionsdialog.ui
@@ -60,6 +61,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/viewtools.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/scratchpad.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/tabbedscratchpad.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/favoritefiles.cpp
         )
 
 set_target_properties(ui PROPERTIES AUTOUIC ON)

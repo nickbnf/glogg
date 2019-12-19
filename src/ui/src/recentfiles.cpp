@@ -17,8 +17,6 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// This file implements class RecentFiles
-
 #include <QSettings>
 #include <QFile>
 
@@ -27,10 +25,6 @@
 
 const int RecentFiles::RECENTFILES_VERSION = 1;
 const int RecentFiles::MAX_NUMBER_OF_FILES = 10;
-
-RecentFiles::RecentFiles() : recentFiles_()
-{
-}
 
 void RecentFiles::addRecent( const QString& text )
 {
@@ -84,19 +78,18 @@ void RecentFiles::retrieveFromStorage( QSettings& settings )
     recentFiles_.clear();
 
     if ( settings.contains( "RecentFiles/version" ) ) {
-        // Unserialise the "new style" stored history
         settings.beginGroup( "RecentFiles" );
         if ( settings.value( "version" ) == RECENTFILES_VERSION ) {
             int size = settings.beginReadArray( "filesHistory" );
             for (int i = 0; i < size; ++i) {
                 settings.setArrayIndex(i);
-                QString search = settings.value( "name" ).toString();
-                recentFiles_.append( search );
+                QString file = settings.value( "name" ).toString();
+                recentFiles_.append( file );
             }
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of highlighterSet, ignoring it...";
+            LOG(logERROR) << "Unknown version of recent files, ignoring it...";
         }
         settings.endGroup();
     }

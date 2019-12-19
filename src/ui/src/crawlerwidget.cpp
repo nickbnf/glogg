@@ -818,7 +818,7 @@ void CrawlerWidget::setup()
     searchButton->setContentsMargins( 2, 2, 2, 2 );
 
     stopButton = new QToolButton();
-    stopButton->setIcon( QIcon( ":/images/stop14.png" ) );
+    stopButton->setIcon( QIcon( ":/images/icons8-delete-16.png" ) );
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
     stopButton->setVisible( false );

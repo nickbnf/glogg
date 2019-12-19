@@ -29,9 +29,6 @@
 class RecentFiles final : public Persistable<RecentFiles, session_settings>
 {
   public:
-    // Creates an empty set of recent files
-    RecentFiles();
-
     // Adds the passed filename to the list of recently used searches
     void addRecent( const QString& text );
 

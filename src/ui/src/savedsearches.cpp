@@ -86,7 +86,6 @@ void SavedSearches::saveToStorage( QSettings& settings ) const
     LOG(logDEBUG) << "SavedSearches::saveToStorage";
 
     settings.beginGroup( "SavedSearches" );
-    // Remove everything in case the array is shorter than the previous one
     settings.setValue( "version", SAVEDSEARCHES_VERSION );
     settings.remove( "searchHistory" );
     settings.beginWriteArray( "searchHistory" );
@@ -105,7 +104,6 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
     savedSearches_.clear();
 
     if ( settings.contains( "SavedSearches/version" ) ) {
-        // Unserialise the "new style" stored history
         settings.beginGroup( "SavedSearches" );
         if ( settings.value( "version" ) == SAVEDSEARCHES_VERSION ) {
             int size = settings.beginReadArray( "searchHistory" );
@@ -117,7 +115,7 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of highlighterSet, ignoring it...";
+            LOG(logERROR) << "Unknown version of saved searches, ignoring it...";
         }
         settings.endGroup();
     }

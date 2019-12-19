@@ -69,6 +69,7 @@
 
 #include "crawlerwidget.h"
 #include "encodings.h"
+#include "favoritefiles.h"
 #include "highlightersdialog.h"
 #include "menuactiontooltipbehavior.h"
 #include "optionsdialog.h"
@@ -90,7 +91,6 @@ MainWindow::MainWindow( WindowSession session )
     createActions();
     createMenus();
     createToolBars();
-    // createStatusBar();
 
     setAcceptDrops( true );
 
@@ -256,13 +256,12 @@ void MainWindow::createActions()
     closeAllAction->setStatusTip( tr( "Close all documents" ) );
     connect( closeAllAction, &QAction::triggered, [this]( auto ) { this->closeAll(); } );
 
-    // Recent files
+    recentFilesGroup = new QActionGroup( this );
+    connect( recentFilesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
     for ( auto i = 0u; i < recentFileActions.size(); ++i ) {
         recentFileActions[ i ] = new QAction( this );
         recentFileActions[ i ]->setVisible( false );
-        connect(
-            recentFileActions[ i ], &QAction::triggered,
-            [this, action = recentFileActions[ i ]]( auto ) { this->openRecentFile( action ); } );
+        recentFileActions[ i ]->setActionGroup( recentFilesGroup );
     }
 
     exitAction = new QAction( tr( "E&xit" ), this );
@@ -343,7 +342,7 @@ void MainWindow::createActions()
     signalMux_.connect( reloadAction, SIGNAL( triggered() ), SLOT( reload() ) );
 
     stopAction = new QAction( tr( "&Stop" ), this );
-    stopAction->setIcon( QIcon( ":/images/stop14.png" ) );
+    stopAction->setIcon( QIcon( ":/images/icons8-delete-16.png" ) );
     stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL( triggered() ), SLOT( stopLoading() ) );
 
@@ -371,6 +370,15 @@ void MainWindow::createActions()
 
     encodingGroup = new QActionGroup( this );
     connect( encodingGroup, &QActionGroup::triggered, this, &MainWindow::encodingChanged );
+
+    favoritesGroup = new QActionGroup( this );
+    connect( favoritesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
+
+    addToFavoritesAction = new QAction( tr( "Add to favorites" ), this );
+    addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    addToFavoritesAction->setData( true );
+    connect( addToFavoritesAction, &QAction::triggered,
+             [this]( auto ) { this->addToFavorites(); } );
 }
 
 void MainWindow::createMenus()
@@ -427,6 +435,8 @@ void MainWindow::createMenus()
     menuBar()->addMenu( EncodingMenu::generate( encodingGroup ) );
     menuBar()->addSeparator();
 
+    favoritesMenu = menuBar()->addMenu( tr( "Favorites" ) );
+
     helpMenu = menuBar()->addMenu( tr( "&Help" ) );
     helpMenu->addAction( aboutQtAction );
     helpMenu->addAction( aboutAction );
@@ -453,13 +463,14 @@ void MainWindow::createToolBars()
     lineNbField->setContentsMargins( 2, 0, 2, 0 );
 
     toolBar = addToolBar( tr( "&Toolbar" ) );
-    toolBar->setIconSize( QSize( 14, 14 ) );
+    toolBar->setIconSize( QSize( 16, 16 ) );
     toolBar->setMovable( false );
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
     toolBar->addAction( openAction );
     toolBar->addAction( reloadAction );
     toolBar->addAction( showScratchPadAction );
     toolBar->addAction( followAction );
+    toolBar->addAction( addToFavoritesAction );
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
 
@@ -539,10 +550,10 @@ void MainWindow::open()
 }
 
 // Opens a log file from the recent files list
-void MainWindow::openRecentFile( QAction* recentFileAction )
+void MainWindow::openFileFromAction( QAction* action )
 {
-    if ( recentFileAction )
-        loadFile( recentFileAction->data().toString() );
+    if ( action )
+        loadFile( action->data().toString() );
 }
 
 // Close current tab
@@ -849,13 +860,11 @@ void MainWindow::currentTabChanged( int index )
         // New tab is set up with fonts etc...
         emit optionsChanged();
 
-        // Update the menu bar
         updateMenuBarFromDocument( crawler_widget );
-
-        // Update the title bar
         updateTitleBar( session_.getFilename( crawler_widget ) );
 
         editMenu->setEnabled( true );
+        addToFavoritesAction->setEnabled( true );
     }
     else {
         // No tab left
@@ -869,6 +878,7 @@ void MainWindow::currentTabChanged( int index )
         updateTitleBar( QString() );
 
         editMenu->setEnabled( false );
+        addToFavoritesAction->setEnabled( false );
     }
 }
 
@@ -1038,7 +1048,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
             session_.open( fileName, []() { return new CrawlerWidget(); } ) );
 
-        if ( !crawler_widget) {
+        if ( !crawler_widget ) {
             LOG( logERROR ) << "Can't create crawler for " << fileName.toStdString();
             return false;
         }
@@ -1067,7 +1077,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
         if ( followFile || config.followFileOnLoad() ) {
             followAction->setChecked( true );
         }
-    } catch (...) {
+    } catch ( ... ) {
         LOG( logERROR ) << "Can't open file " << fileName.toStdString();
         return false;
     }
@@ -1147,11 +1157,13 @@ void MainWindow::updateMenuBarFromDocument( const CrawlerWidget* crawler )
                                       } );
 
     if ( encodingItem != encodingActions.end() ) {
-        (*encodingItem)->setChecked( true );
+        ( *encodingItem )->setChecked( true );
     }
 
     bool follow = crawler->isFollowEnabled();
     followAction->setChecked( follow );
+
+    updateFavoritesMenu();
 }
 
 // Update the top info line from the session
@@ -1183,6 +1195,57 @@ void MainWindow::updateInfoLine()
     else {
         dateField->hide();
     }
+}
+
+void MainWindow::updateFavoritesMenu()
+{
+    favoritesMenu->clear();
+
+    favoritesMenu->addAction( addToFavoritesAction );
+
+    addToFavoritesAction->setText( tr( "Add to favorites" ) );
+    addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    addToFavoritesAction->setData( true );
+
+    const auto& favorites = FavoriteFiles::getSynced().favorites();
+    auto crawler = currentCrawlerWidget();
+    addToFavoritesAction->setEnabled( crawler != nullptr );
+
+    if ( crawler ) {
+        const auto path = session_.getFilename( crawler );
+        if ( std::any_of( favorites.begin(), favorites.end(),
+                          FavoriteFiles::FullPathComparator( path ) ) ) {
+            addToFavoritesAction->setText( tr( "Remove from favorites" ) );
+            addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-filled-16.png" ) );
+            addToFavoritesAction->setData( false );
+        }
+    }
+
+    favoritesMenu->addSeparator();
+
+    for ( const auto& file : favorites ) {
+        auto action = favoritesMenu->addAction( file.displayName );
+        action->setActionGroup( favoritesGroup );
+        action->setToolTip( file.fullPath );
+        action->setData( file.fullPath );
+    }
+}
+
+void MainWindow::addToFavorites()
+{
+    auto favorites = FavoriteFiles::get();
+    const auto path = session_.getFilename( currentCrawlerWidget() );
+
+    if ( addToFavoritesAction->data().toBool() ) {
+        favorites.add( path );
+    }
+    else {
+        favorites.remove( path );
+    }
+
+    favorites.save();
+
+    updateFavoritesMenu();
 }
 
 void MainWindow::showInfoLabels( bool show )
@@ -1228,6 +1291,9 @@ void MainWindow::readSettings()
     updateRecentFileActions();
 
     HighlighterSet::getSynced();
+
+    FavoriteFiles::getSynced();
+    updateFavoritesMenu();
 }
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )

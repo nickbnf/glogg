@@ -9,6 +9,9 @@ add_executable(klogg_tests
 set(TEST_LIBS ui catch Qt5::Test)
 
 target_link_libraries(klogg_tests ${TEST_LIBS})
+set_target_properties(klogg_tests PROPERTIES AUTOMOC ON)
+
+
 if (${USE_LTO})
 set_property(TARGET klogg_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
@@ -27,6 +30,7 @@ add_executable(klogg_itests
 )
 
 target_link_libraries(klogg_itests ${TEST_LIBS})
+set_target_properties(klogg_itests PROPERTIES AUTOMOC ON)
 
 add_dependencies(klogg_itests file_write_helper)
 if (${USE_LTO})

@@ -113,6 +113,7 @@ class MainWindow : public QMainWindow
     void showScratchPad();
     void encodingChanged( QAction* action );
     void addToFavorites();
+    void removeFromFavorites();
 
     // Change the view settings
     void toggleOverviewVisibility( bool isVisible );
@@ -231,7 +232,10 @@ class MainWindow : public QMainWindow
     QAction *aboutQtAction;
     QActionGroup *encodingGroup;
     QAction *addToFavoritesAction;
+    QAction *addToFavoritesMenuAction;
+    QAction *removeFromFavoritesAction;
     QActionGroup *favoritesGroup;
+    std::vector<MenuActionToolTipBehavior*> favoriteFilesActionBehaviors;
 
     QSystemTrayIcon *trayIcon_;
 

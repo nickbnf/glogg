@@ -54,6 +54,7 @@
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QInputDialog>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
@@ -379,6 +380,15 @@ void MainWindow::createActions()
     addToFavoritesAction->setData( true );
     connect( addToFavoritesAction, &QAction::triggered,
              [this]( auto ) { this->addToFavorites(); } );
+
+    addToFavoritesMenuAction = new QAction( tr( "Add to favorites" ), this );
+    addToFavoritesMenuAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    connect( addToFavoritesMenuAction, &QAction::triggered,
+             [this]( auto ) { this->addToFavorites(); } );
+
+    removeFromFavoritesAction = new QAction( tr( "Remove from favorites..." ), this );
+    connect( removeFromFavoritesAction, &QAction::triggered,
+             [this]( auto ) { this->removeFromFavorites(); } );
 }
 
 void MainWindow::createMenus()
@@ -863,9 +873,9 @@ void MainWindow::currentTabChanged( int index )
 
         updateMenuBarFromDocument( crawler_widget );
         updateTitleBar( session_.getFilename( crawler_widget ) );
+        updateFavoritesMenu();
 
         editMenu->setEnabled( true );
-        addToFavoritesAction->setEnabled( true );
     }
     else {
         // No tab left
@@ -880,6 +890,7 @@ void MainWindow::currentTabChanged( int index )
 
         editMenu->setEnabled( false );
         addToFavoritesAction->setEnabled( false );
+        addToFavoritesMenuAction->setEnabled( false );
     }
 }
 
@@ -1163,8 +1174,6 @@ void MainWindow::updateMenuBarFromDocument( const CrawlerWidget* crawler )
 
     bool follow = crawler->isFollowEnabled();
     followAction->setChecked( follow );
-
-    updateFavoritesMenu();
 }
 
 // Update the top info line from the session
@@ -1201,8 +1210,16 @@ void MainWindow::updateInfoLine()
 void MainWindow::updateFavoritesMenu()
 {
     favoritesMenu->clear();
+    for ( const auto& behavior : favoriteFilesActionBehaviors ) {
+        behavior->deleteLater();
+    }
 
-    favoritesMenu->addAction( addToFavoritesAction );
+    favoriteFilesActionBehaviors.clear();
+
+    favoritesMenu->addAction( addToFavoritesMenuAction );
+    favoritesMenu->addAction( removeFromFavoritesAction );
+
+    addToFavoritesMenuAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
 
     addToFavoritesAction->setText( tr( "Add to favorites" ) );
     addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
@@ -1210,7 +1227,10 @@ void MainWindow::updateFavoritesMenu()
 
     const auto& favorites = FavoriteFiles::getSynced().favorites();
     auto crawler = currentCrawlerWidget();
+
     addToFavoritesAction->setEnabled( crawler != nullptr );
+    addToFavoritesMenuAction->setEnabled( crawler != nullptr );
+    removeFromFavoritesAction->setEnabled( !favorites.empty() );
 
     if ( crawler ) {
         const auto path = session_.getFilename( crawler );
@@ -1219,6 +1239,9 @@ void MainWindow::updateFavoritesMenu()
             addToFavoritesAction->setText( tr( "Remove from favorites" ) );
             addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-filled-16.png" ) );
             addToFavoritesAction->setData( false );
+
+            addToFavoritesMenuAction->setEnabled( false );
+            addToFavoritesMenuAction->setIcon( QIcon( ":/images/icons8-star-filled-16.png" ) );
         }
     }
 
@@ -1229,6 +1252,9 @@ void MainWindow::updateFavoritesMenu()
         action->setActionGroup( favoritesGroup );
         action->setToolTip( file.fullPath );
         action->setData( file.fullPath );
+
+        favoriteFilesActionBehaviors.emplace_back(
+            new MenuActionToolTipBehavior( action, favoritesMenu, this ) );
     }
 }
 
@@ -1247,6 +1273,25 @@ void MainWindow::addToFavorites()
     favorites.save();
 
     updateFavoritesMenu();
+}
+
+void MainWindow::removeFromFavorites()
+{
+    auto favoriteFiles = FavoriteFiles::get();
+    const auto& favorites = favoriteFiles.favorites();
+    QStringList files;
+    std::transform( favorites.begin(), favorites.end(), std::back_inserter( files ),
+                    []( const auto& f ) { return f.fullPath; } );
+
+    bool ok = false;
+    const auto path
+        = QInputDialog::getItem( this, "Remove from favorites",
+                                 "Select item to remove from favorites", files, 0, false, &ok );
+    if ( ok ) {
+        favoriteFiles.remove( path );
+        favoriteFiles.save();
+        updateFavoritesMenu();
+    }
 }
 
 void MainWindow::showInfoLabels( bool show )

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@
 #include "absl/synchronization/internal/kernel_timeout.h"
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
 class Mutex;
 
@@ -65,6 +66,10 @@ class PerThreadSem {
   // REQUIRES: May only be called by ThreadIdentity.
   static void Init(base_internal::ThreadIdentity* identity);
 
+  // Destroy the PerThreadSem associated with "identity".
+  // REQUIRES: May only be called by ThreadIdentity.
+  static void Destroy(base_internal::ThreadIdentity* identity);
+
   // Increments "identity"'s count.
   static inline void Post(base_internal::ThreadIdentity* identity);
 
@@ -77,9 +82,11 @@ class PerThreadSem {
   friend class PerThreadSemTest;
   friend class absl::Mutex;
   friend absl::base_internal::ThreadIdentity* CreateThreadIdentity();
+  friend void ReclaimThreadIdentity(void* v);
 };
 
 }  // namespace synchronization_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 // In some build configurations we pass --detect-odr-violations to the
@@ -104,4 +111,5 @@ bool absl::synchronization_internal::PerThreadSem::Wait(
     absl::synchronization_internal::KernelTimeout t) {
   return AbslInternalPerThreadSemWait(t);
 }
+
 #endif  // ABSL_SYNCHRONIZATION_INTERNAL_PER_THREAD_SEM_H_

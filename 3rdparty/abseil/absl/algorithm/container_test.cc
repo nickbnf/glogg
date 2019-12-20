@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -163,23 +163,29 @@ TEST_F(NonMutatingTest, MismatchWithPredicate) {
 TEST_F(NonMutatingTest, Equal) {
   EXPECT_TRUE(absl::c_equal(vector_, sequence_));
   EXPECT_TRUE(absl::c_equal(sequence_, vector_));
+  EXPECT_TRUE(absl::c_equal(sequence_, array_));
+  EXPECT_TRUE(absl::c_equal(array_, vector_));
 
   // Test that behavior appropriately differs from that of equal().
   std::vector<int> vector_plus = {1, 2, 3};
   vector_plus.push_back(4);
   EXPECT_FALSE(absl::c_equal(vector_plus, sequence_));
   EXPECT_FALSE(absl::c_equal(sequence_, vector_plus));
+  EXPECT_FALSE(absl::c_equal(array_, vector_plus));
 }
 
 TEST_F(NonMutatingTest, EqualWithPredicate) {
   EXPECT_TRUE(absl::c_equal(vector_, sequence_, Equals));
   EXPECT_TRUE(absl::c_equal(sequence_, vector_, Equals));
+  EXPECT_TRUE(absl::c_equal(array_, sequence_, Equals));
+  EXPECT_TRUE(absl::c_equal(vector_, array_, Equals));
 
   // Test that behavior appropriately differs from that of equal().
   std::vector<int> vector_plus = {1, 2, 3};
   vector_plus.push_back(4);
   EXPECT_FALSE(absl::c_equal(vector_plus, sequence_, Equals));
   EXPECT_FALSE(absl::c_equal(sequence_, vector_plus, Equals));
+  EXPECT_FALSE(absl::c_equal(vector_plus, array_, Equals));
 }
 
 TEST_F(NonMutatingTest, IsPermutation) {
@@ -634,6 +640,34 @@ TEST(MutatingTest, Move) {
   EXPECT_THAT(src, Each(IsNull()));
   EXPECT_THAT(dest, ElementsAre(Pointee(1), Pointee(2), Pointee(3), Pointee(4),
                                 Pointee(5)));
+}
+
+TEST(MutatingTest, MoveBackward) {
+  std::vector<std::unique_ptr<int>> actual;
+  actual.emplace_back(absl::make_unique<int>(1));
+  actual.emplace_back(absl::make_unique<int>(2));
+  actual.emplace_back(absl::make_unique<int>(3));
+  actual.emplace_back(absl::make_unique<int>(4));
+  actual.emplace_back(absl::make_unique<int>(5));
+  auto subrange = absl::MakeSpan(actual.data(), 3);
+  absl::c_move_backward(subrange, actual.end());
+  EXPECT_THAT(actual, ElementsAre(IsNull(), IsNull(), Pointee(1), Pointee(2),
+                                  Pointee(3)));
+}
+
+TEST(MutatingTest, MoveWithRvalue) {
+  auto MakeRValueSrc = [] {
+    std::vector<std::unique_ptr<int>> src;
+    src.emplace_back(absl::make_unique<int>(1));
+    src.emplace_back(absl::make_unique<int>(2));
+    src.emplace_back(absl::make_unique<int>(3));
+    return src;
+  };
+
+  std::vector<std::unique_ptr<int>> dest = MakeRValueSrc();
+  absl::c_move(MakeRValueSrc(), std::back_inserter(dest));
+  EXPECT_THAT(dest, ElementsAre(Pointee(1), Pointee(2), Pointee(3), Pointee(1),
+                                Pointee(2), Pointee(3)));
 }
 
 TEST(MutatingTest, SwapRanges) {

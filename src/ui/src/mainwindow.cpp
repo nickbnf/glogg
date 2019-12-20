@@ -935,7 +935,9 @@ void MainWindow::loadFileNonInteractive( const QString& file_name )
     showNormal();
 #endif
 
-    currentCrawlerWidget()->setFocus();
+    if ( auto currentCrawler = currentCrawlerWidget() ) {
+        currentCrawler->setFocus();
+    }
 }
 
 //

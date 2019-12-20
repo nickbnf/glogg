@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-// These routines provide mem versions of standard C std::string routines,
+// These routines provide mem versions of standard C string routines,
 // such as strpbrk.  They function exactly the same as the str versions,
 // so if you wonder what they are, replace the word "mem" by
 // "str" and check out the man page.  I could return void*, as the
@@ -22,14 +22,14 @@
 // since this is by far the most common way these functions are called.
 //
 // The difference between the mem and str versions is the mem version
-// takes a pointer and a length, rather than a '\0'-terminated std::string.
+// takes a pointer and a length, rather than a '\0'-terminated string.
 // The memcase* routines defined here assume the locale is "C"
 // (they use absl::ascii_tolower instead of tolower).
 //
 // These routines are based on the BSD library.
 //
-// Here's a list of routines from std::string.h, and their mem analogues.
-// Functions in lowercase are defined in std::string.h; those in UPPERCASE
+// Here's a list of routines from string.h, and their mem analogues.
+// Functions in lowercase are defined in string.h; those in UPPERCASE
 // are defined here:
 //
 // strlen                  --
@@ -69,6 +69,7 @@
 #include "absl/strings/ascii.h"  // for absl::ascii_tolower
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace strings_internal {
 
 inline char* memcat(char* dest, size_t destlen, const char* src,
@@ -141,6 +142,7 @@ const char* memmatch(const char* phaystack, size_t haylen, const char* pneedle,
                      size_t neelen);
 
 }  // namespace strings_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_STRINGS_INTERNAL_MEMUTIL_H_

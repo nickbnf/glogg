@@ -54,7 +54,7 @@ find_package(Qt5Concurrent REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5Xml REQUIRED)
 
-set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 macro(remove_release_flag flag)
@@ -170,6 +170,8 @@ if (${BUILD_DOC})
         NO_EXPORT_PRODUCT
     )
 endif()
+
+option(USE_LTO "Use link time optimization" ON)
 
 add_subdirectory(3rdparty)
 add_subdirectory(src)

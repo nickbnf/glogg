@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,10 @@
 
 #include <cstddef>
 
+#include "absl/base/config.h"
+
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
 // HaveLeakSanitizer()
 //
@@ -104,6 +107,7 @@ void RegisterLivePointers(const void* ptr, size_t size);
 // `RegisterLivePointers()`, enabling leak checking of those pointers.
 void UnRegisterLivePointers(const void* ptr, size_t size);
 
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_DEBUGGING_LEAK_CHECK_H_

@@ -65,8 +65,12 @@ add_library(ui STATIC
         )
 
 set_target_properties(ui PROPERTIES AUTOUIC ON)
+set_target_properties(ui PROPERTIES AUTOMOC ON)
+
 set_property(TARGET ui APPEND PROPERTY AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
+if (${USE_LTO})
 set_property(TARGET ui PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 target_include_directories(ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(ui PUBLIC Qt5::Widgets Qt5::Xml logdata versioncheck absl::any)

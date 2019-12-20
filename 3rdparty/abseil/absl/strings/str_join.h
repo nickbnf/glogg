@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,18 +18,18 @@
 // -----------------------------------------------------------------------------
 //
 // This header file contains functions for joining a range of elements and
-// returning the result as a std::string. StrJoin operations are specified by passing
-// a range, a separator std::string to use between the elements joined, and an
-// optional Formatter responsible for converting each argument in the range to a
-// std::string. If omitted, a default `AlphaNumFormatter()` is called on the elements
-// to be joined, using the same formatting that `absl::StrCat()` uses. This
-// package defines a number of default formatters, and you can define your own
-// implementations.
+// returning the result as a std::string. StrJoin operations are specified by
+// passing a range, a separator string to use between the elements joined, and
+// an optional Formatter responsible for converting each argument in the range
+// to a string. If omitted, a default `AlphaNumFormatter()` is called on the
+// elements to be joined, using the same formatting that `absl::StrCat()` uses.
+// This package defines a number of default formatters, and you can define your
+// own implementations.
 //
 // Ranges are specified by passing a container with `std::begin()` and
 // `std::end()` iterators, container-specific `begin()` and `end()` iterators, a
 // brace-initialized `std::initializer_list`, or a `std::tuple` of heterogeneous
-// objects. The separator std::string is specified as an `absl::string_view`.
+// objects. The separator string is specified as an `absl::string_view`.
 //
 // Because the default formatter uses the `absl::AlphaNum` class,
 // `absl::StrJoin()`, like `absl::StrCat()`, will work out-of-the-box on
@@ -52,6 +52,7 @@
 #include <iterator>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 #include "absl/base/macros.h"
@@ -59,16 +60,17 @@
 #include "absl/strings/string_view.h"
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
 // -----------------------------------------------------------------------------
 // Concept: Formatter
 // -----------------------------------------------------------------------------
 //
 // A Formatter is a function object that is responsible for formatting its
-// argument as a std::string and appending it to a given output std::string. Formatters
-// may be implemented as function objects, lambdas, or normal functions. You may
-// provide your own Formatter to enable `absl::StrJoin()` to work with arbitrary
-// types.
+// argument as a string and appending it to a given output std::string.
+// Formatters may be implemented as function objects, lambdas, or normal
+// functions. You may provide your own Formatter to enable `absl::StrJoin()` to
+// work with arbitrary types.
 //
 // The following is an example of a custom Formatter that simply uses
 // `std::to_string()` to format an integer as a std::string.
@@ -156,9 +158,9 @@ DereferenceFormatter() {
 // -----------------------------------------------------------------------------
 //
 // Joins a range of elements and returns the result as a std::string.
-// `absl::StrJoin()` takes a range, a separator std::string to use between the
+// `absl::StrJoin()` takes a range, a separator string to use between the
 // elements joined, and an optional Formatter responsible for converting each
-// argument in the range to a std::string.
+// argument in the range to a string.
 //
 // If omitted, the default `AlphaNumFormatter()` is called on the elements to be
 // joined.
@@ -241,25 +243,25 @@ DereferenceFormatter() {
 
 template <typename Iterator, typename Formatter>
 std::string StrJoin(Iterator start, Iterator end, absl::string_view sep,
-               Formatter&& fmt) {
+                    Formatter&& fmt) {
   return strings_internal::JoinAlgorithm(start, end, sep, fmt);
 }
 
 template <typename Range, typename Formatter>
 std::string StrJoin(const Range& range, absl::string_view separator,
-               Formatter&& fmt) {
+                    Formatter&& fmt) {
   return strings_internal::JoinRange(range, separator, fmt);
 }
 
 template <typename T, typename Formatter>
 std::string StrJoin(std::initializer_list<T> il, absl::string_view separator,
-               Formatter&& fmt) {
+                    Formatter&& fmt) {
   return strings_internal::JoinRange(il, separator, fmt);
 }
 
 template <typename... T, typename Formatter>
 std::string StrJoin(const std::tuple<T...>& value, absl::string_view separator,
-               Formatter&& fmt) {
+                    Formatter&& fmt) {
   return strings_internal::JoinAlgorithm(value, separator, fmt);
 }
 
@@ -274,15 +276,18 @@ std::string StrJoin(const Range& range, absl::string_view separator) {
 }
 
 template <typename T>
-std::string StrJoin(std::initializer_list<T> il, absl::string_view separator) {
+std::string StrJoin(std::initializer_list<T> il,
+                    absl::string_view separator) {
   return strings_internal::JoinRange(il, separator);
 }
 
 template <typename... T>
-std::string StrJoin(const std::tuple<T...>& value, absl::string_view separator) {
+std::string StrJoin(const std::tuple<T...>& value,
+                    absl::string_view separator) {
   return strings_internal::JoinAlgorithm(value, separator, AlphaNumFormatter());
 }
 
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_STRINGS_STR_JOIN_H_

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +14,17 @@
 
 #include "absl/types/optional.h"
 
+#include "absl/base/config.h"
+
+// This test is a no-op when absl::optional is an alias for std::optional and
+// when exceptions are not enabled.
+#if !defined(ABSL_USES_STD_OPTIONAL) && defined(ABSL_HAVE_EXCEPTIONS)
+
 #include "gtest/gtest.h"
 #include "absl/base/internal/exception_safety_testing.h"
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
 namespace {
 
@@ -38,12 +45,12 @@ constexpr int kUpdatedInteger = 10;
 template <typename OptionalT>
 bool ValueThrowsBadOptionalAccess(const OptionalT& optional) try {
   return (static_cast<void>(optional.value()), false);
-} catch (absl::bad_optional_access) {
+} catch (const absl::bad_optional_access&) {
   return true;
 }
 
 template <typename OptionalT>
-AssertionResult CheckInvariants(OptionalT* optional_ptr) {
+AssertionResult OptionalInvariants(OptionalT* optional_ptr) {
   // Check the current state post-throw for validity
   auto& optional = *optional_ptr;
 
@@ -123,8 +130,8 @@ TEST(OptionalExceptionSafety, NothrowConstructors) {
 TEST(OptionalExceptionSafety, Emplace) {
   // Test the basic guarantee plus test the result of optional::has_value()
   // is false in all cases
-  auto disengaged_test = MakeExceptionSafetyTester().WithInvariants(
-      CheckInvariants<Optional>, CheckDisengaged<Optional>);
+  auto disengaged_test = MakeExceptionSafetyTester().WithContracts(
+      OptionalInvariants<Optional>, CheckDisengaged<Optional>);
   auto disengaged_test_empty = disengaged_test.WithInitialValue(Optional());
   auto disengaged_test_nonempty =
       disengaged_test.WithInitialValue(Optional(kInitialInteger));
@@ -147,11 +154,11 @@ TEST(OptionalExceptionSafety, EverythingThrowsSwap) {
   // Test the basic guarantee plus test the result of optional::has_value()
   // remains the same
   auto test =
-      MakeExceptionSafetyTester().WithInvariants(CheckInvariants<Optional>);
+      MakeExceptionSafetyTester().WithContracts(OptionalInvariants<Optional>);
   auto disengaged_test_empty = test.WithInitialValue(Optional())
-                                   .WithInvariants(CheckDisengaged<Optional>);
+                                   .WithContracts(CheckDisengaged<Optional>);
   auto engaged_test_nonempty = test.WithInitialValue(Optional(kInitialInteger))
-                                   .WithInvariants(CheckEngaged<Optional>);
+                                   .WithContracts(CheckEngaged<Optional>);
 
   auto swap_empty = [](Optional* optional_ptr) {
     auto empty = Optional();
@@ -192,11 +199,11 @@ TEST(OptionalExceptionSafety, CopyAssign) {
   // Test the basic guarantee plus test the result of optional::has_value()
   // remains the same
   auto test =
-      MakeExceptionSafetyTester().WithInvariants(CheckInvariants<Optional>);
+      MakeExceptionSafetyTester().WithContracts(OptionalInvariants<Optional>);
   auto disengaged_test_empty = test.WithInitialValue(Optional())
-                                   .WithInvariants(CheckDisengaged<Optional>);
+                                   .WithContracts(CheckDisengaged<Optional>);
   auto engaged_test_nonempty = test.WithInitialValue(Optional(kInitialInteger))
-                                   .WithInvariants(CheckEngaged<Optional>);
+                                   .WithContracts(CheckEngaged<Optional>);
 
   auto copyassign_nonempty = [](Optional* optional_ptr) {
     auto nonempty =
@@ -218,11 +225,11 @@ TEST(OptionalExceptionSafety, MoveAssign) {
   // Test the basic guarantee plus test the result of optional::has_value()
   // remains the same
   auto test =
-      MakeExceptionSafetyTester().WithInvariants(CheckInvariants<Optional>);
+      MakeExceptionSafetyTester().WithContracts(OptionalInvariants<Optional>);
   auto disengaged_test_empty = test.WithInitialValue(Optional())
-                                   .WithInvariants(CheckDisengaged<Optional>);
+                                   .WithContracts(CheckDisengaged<Optional>);
   auto engaged_test_nonempty = test.WithInitialValue(Optional(kInitialInteger))
-                                   .WithInvariants(CheckEngaged<Optional>);
+                                   .WithContracts(CheckEngaged<Optional>);
 
   auto moveassign_empty = [](Optional* optional_ptr) {
     auto empty = Optional();
@@ -279,4 +286,7 @@ TEST(OptionalExceptionSafety, NothrowMoveAssign) {
 
 }  // namespace
 
+ABSL_NAMESPACE_END
 }  // namespace absl
+
+#endif  // #if !defined(ABSL_USES_STD_OPTIONAL) && defined(ABSL_HAVE_EXCEPTIONS)

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,6 +36,7 @@ constexpr int32_t kNumThreads = 10;
 constexpr int32_t kIters = 1000;
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
 // This is defined outside of anonymous namespace so that it can be
@@ -54,13 +55,13 @@ namespace {
 
 static constexpr int kArrayLength = 10;
 static uint32_t values[kArrayLength];
+
 static SpinLock static_spinlock(base_internal::kLinkerInitialized);
 static SpinLock static_cooperative_spinlock(
     base_internal::kLinkerInitialized,
     base_internal::SCHEDULE_COOPERATIVE_AND_KERNEL);
 static SpinLock static_noncooperative_spinlock(
     base_internal::kLinkerInitialized, base_internal::SCHEDULE_KERNEL_ONLY);
-
 
 // Simple integer hash function based on the public domain lookup2 hash.
 // http://burtleburtle.net/bob/c/lookup2.c
@@ -155,7 +156,8 @@ TEST(SpinLock, WaitCyclesEncoding) {
 
   // Test corner cases
   int64_t start_time = time_distribution(generator);
-  EXPECT_EQ(0, SpinLockTest::EncodeWaitCycles(start_time, start_time));
+  EXPECT_EQ(kSpinLockSleeper,
+            SpinLockTest::EncodeWaitCycles(start_time, start_time));
   EXPECT_EQ(0, SpinLockTest::DecodeWaitCycles(0));
   EXPECT_EQ(0, SpinLockTest::DecodeWaitCycles(kLockwordReservedMask));
   EXPECT_EQ(kMaxCycles & ~kProfileTimestampMask,
@@ -188,9 +190,11 @@ TEST(SpinLock, WaitCyclesEncoding) {
     SpinLockTest::DecodeWaitCycles(before_max_value);
   EXPECT_GT(expected_max_value_decoded, before_max_value_decoded);
 }
+
 TEST(SpinLockWithThreads, StaticSpinLock) {
   ThreadedTest(&static_spinlock);
 }
+
 TEST(SpinLockWithThreads, StackSpinLock) {
   SpinLock spinlock;
   ThreadedTest(&spinlock);
@@ -263,4 +267,5 @@ TEST(SpinLockWithThreads, DoesNotDeadlock) {
 
 }  // namespace
 }  // namespace base_internal
+ABSL_NAMESPACE_END
 }  // namespace absl

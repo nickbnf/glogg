@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@
 // This code is compiled directly on many platforms, including client
 // platforms like Windows, Mac, and embedded systems.  Before making
 // any changes here, make sure that you're not breaking any platforms.
-//
 
 #ifndef ABSL_BASE_MACROS_H_
 #define ABSL_BASE_MACROS_H_
@@ -32,6 +31,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include "absl/base/attributes.h"
+#include "absl/base/optimization.h"
 #include "absl/base/port.h"
 
 // ABSL_ARRAYSIZE()
@@ -43,12 +44,14 @@
   (sizeof(::absl::macros_internal::ArraySizeHelper(array)))
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace macros_internal {
 // Note: this internal template function declaration is used by ABSL_ARRAYSIZE.
 // The function doesn't need a definition, as we only use its type.
 template <typename T, size_t N>
 auto ArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 }  // namespace macros_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 // kLinkerInitialized
@@ -72,11 +75,13 @@ auto ArraySizeHelper(const T (&array)[N]) -> char (&)[N];
 //       // Invocation
 //       static MyClass my_global(absl::base_internal::kLinkerInitialized);
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 enum LinkerInitialized {
   kLinkerInitialized = 0,
 };
 }  // namespace base_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 // ABSL_FALLTHROUGH_INTENDED
@@ -137,10 +142,15 @@ enum LinkerInitialized {
 // declarations. The macro argument is used as a custom diagnostic message (e.g.
 // suggestion of a better alternative).
 //
-// Example:
+// Examples:
 //
 //   class ABSL_DEPRECATED("Use Bar instead") Foo {...};
-//   ABSL_DEPRECATED("Use Baz instead") void Bar() {...}
+//
+//   ABSL_DEPRECATED("Use Baz() instead") void Bar() {...}
+//
+//   template <typename T>
+//   ABSL_DEPRECATED("Use DoThat() instead")
+//   void DoThis();
 //
 // Every usage of a deprecated entity will trigger a warning when compiled with
 // clang's `-Wdeprecated-declarations` option. This option is turned off by
@@ -171,12 +181,9 @@ enum LinkerInitialized {
 //     ABSL_BAD_CALL_IF(c <= -1 || c > 255,
 //                       "'c' must have the value of an unsigned char or EOF");
 //   #endif // ABSL_BAD_CALL_IF
-
-#if defined(__clang__)
-# if __has_attribute(enable_if)
-#  define ABSL_BAD_CALL_IF(expr, msg) \
-    __attribute__((enable_if(expr, "Bad call trap"), unavailable(msg)))
-# endif
+#if ABSL_HAVE_ATTRIBUTE(enable_if)
+#define ABSL_BAD_CALL_IF(expr, msg) \
+  __attribute__((enable_if(expr, "Bad call trap"), unavailable(msg)))
 #endif
 
 // ABSL_ASSERT()
@@ -192,11 +199,22 @@ enum LinkerInitialized {
 // This macro is inspired by
 // https://akrzemi1.wordpress.com/2017/05/18/asserts-in-constexpr-functions/
 #if defined(NDEBUG)
-#define ABSL_ASSERT(expr) (false ? (void)(expr) : (void)0)
+#define ABSL_ASSERT(expr) \
+  (false ? static_cast<void>(expr) : static_cast<void>(0))
 #else
-#define ABSL_ASSERT(expr)              \
-  (ABSL_PREDICT_TRUE((expr)) ? (void)0 \
+#define ABSL_ASSERT(expr)                           \
+  (ABSL_PREDICT_TRUE((expr)) ? static_cast<void>(0) \
                              : [] { assert(false && #expr); }())  // NOLINT
 #endif
+
+#ifdef ABSL_HAVE_EXCEPTIONS
+#define ABSL_INTERNAL_TRY try
+#define ABSL_INTERNAL_CATCH_ANY catch (...)
+#define ABSL_INTERNAL_RETHROW do { throw; } while (false)
+#else  // ABSL_HAVE_EXCEPTIONS
+#define ABSL_INTERNAL_TRY if (true)
+#define ABSL_INTERNAL_CATCH_ANY else if (false)
+#define ABSL_INTERNAL_RETHROW do {} while (false)
+#endif  // ABSL_HAVE_EXCEPTIONS
 
 #endif  // ABSL_BASE_MACROS_H_

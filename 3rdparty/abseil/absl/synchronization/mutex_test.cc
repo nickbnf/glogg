@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
 
 #include "absl/synchronization/mutex.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/base/attributes.h"
 #include "absl/base/internal/raw_logging.h"
 #include "absl/base/internal/sysinfo.h"
 #include "absl/memory/memory.h"
@@ -54,8 +55,8 @@ CreateDefaultPool() {
 // Hack to schedule a function to run on a thread pool thread after a
 // duration has elapsed.
 static void ScheduleAfter(absl::synchronization_internal::ThreadPool *tp,
-                          const std::function<void()> &func,
-                          absl::Duration after) {
+                          absl::Duration after,
+                          const std::function<void()> &func) {
   tp->Schedule([func, after] {
     absl::SleepFor(after);
     func();
@@ -424,10 +425,10 @@ TEST(Mutex, CondVarWaitSignalsAwait) {
   // Use a struct so the lock annotations apply.
   struct {
     absl::Mutex barrier_mu;
-    bool barrier GUARDED_BY(barrier_mu) = false;
+    bool barrier ABSL_GUARDED_BY(barrier_mu) = false;
 
     absl::Mutex release_mu;
-    bool release GUARDED_BY(release_mu) = false;
+    bool release ABSL_GUARDED_BY(release_mu) = false;
     absl::CondVar released_cv;
   } state;
 
@@ -465,10 +466,10 @@ TEST(Mutex, CondVarWaitWithTimeoutSignalsAwait) {
   // Use a struct so the lock annotations apply.
   struct {
     absl::Mutex barrier_mu;
-    bool barrier GUARDED_BY(barrier_mu) = false;
+    bool barrier ABSL_GUARDED_BY(barrier_mu) = false;
 
     absl::Mutex release_mu;
-    bool release GUARDED_BY(release_mu) = false;
+    bool release ABSL_GUARDED_BY(release_mu) = false;
     absl::CondVar released_cv;
   } state;
 
@@ -609,9 +610,9 @@ TEST_P(CondVarWaitDeadlock, Test) {
   waiter2.reset();  // "join" waiter2
 }
 
-INSTANTIATE_TEST_CASE_P(CondVarWaitDeadlockTest, CondVarWaitDeadlock,
-                        ::testing::Range(0, 8),
-                        ::testing::PrintToStringParamName());
+INSTANTIATE_TEST_SUITE_P(CondVarWaitDeadlockTest, CondVarWaitDeadlock,
+                         ::testing::Range(0, 8),
+                         ::testing::PrintToStringParamName());
 
 // --------------------------------------------------------
 // Test for fix of bug in DequeueAllWakeable()
@@ -769,7 +770,7 @@ static void GetReadLock(ReaderDecrementBugStruct *x) {
 
 // Test for reader counter being decremented incorrectly by waiter
 // with false condition.
-TEST(Mutex, MutexReaderDecrementBug) NO_THREAD_SAFETY_ANALYSIS {
+TEST(Mutex, MutexReaderDecrementBug) ABSL_NO_THREAD_SAFETY_ANALYSIS {
   ReaderDecrementBugStruct x;
   x.cond = false;
   x.waiting_on_cond = false;
@@ -814,7 +815,12 @@ TEST(Mutex, MutexReaderDecrementBug) NO_THREAD_SAFETY_ANALYSIS {
 
 // Test that we correctly handle the situation when a lock is
 // held and then destroyed (w/o unlocking).
-TEST(Mutex, LockedMutexDestructionBug) NO_THREAD_SAFETY_ANALYSIS {
+#ifdef THREAD_SANITIZER
+// TSAN reports errors when locked Mutexes are destroyed.
+TEST(Mutex, DISABLED_LockedMutexDestructionBug) NO_THREAD_SAFETY_ANALYSIS {
+#else
+TEST(Mutex, LockedMutexDestructionBug) ABSL_NO_THREAD_SAFETY_ANALYSIS {
+#endif
   for (int i = 0; i != 10; i++) {
     // Create, lock and destroy 10 locks.
     const int kNumLocks = 10;
@@ -1029,11 +1035,11 @@ TEST(Mutex, DeadlockDetector) {
 class ScopedDisableBazelTestWarnings {
  public:
   ScopedDisableBazelTestWarnings() {
-#ifdef WIN32
+#ifdef _WIN32
     char file[MAX_PATH];
-    if (GetEnvironmentVariable(kVarName, file, sizeof(file)) < sizeof(file)) {
+    if (GetEnvironmentVariableA(kVarName, file, sizeof(file)) < sizeof(file)) {
       warnings_output_file_ = file;
-      SetEnvironmentVariable(kVarName, nullptr);
+      SetEnvironmentVariableA(kVarName, nullptr);
     }
 #else
     const char *file = getenv(kVarName);
@@ -1046,8 +1052,8 @@ class ScopedDisableBazelTestWarnings {
 
   ~ScopedDisableBazelTestWarnings() {
     if (!warnings_output_file_.empty()) {
-#ifdef WIN32
-      SetEnvironmentVariable(kVarName, warnings_output_file_.c_str());
+#ifdef _WIN32
+      SetEnvironmentVariableA(kVarName, warnings_output_file_.c_str());
 #else
       setenv(kVarName, warnings_output_file_.c_str(), 0);
 #endif
@@ -1061,7 +1067,12 @@ class ScopedDisableBazelTestWarnings {
 const char ScopedDisableBazelTestWarnings::kVarName[] =
     "TEST_WARNINGS_OUTPUT_FILE";
 
+#ifdef THREAD_SANITIZER
+// This test intentionally creates deadlocks to test the deadlock detector.
+TEST(Mutex, DISABLED_DeadlockDetectorBazelWarning) {
+#else
 TEST(Mutex, DeadlockDetectorBazelWarning) {
+#endif
   absl::SetMutexDeadlockDetectionMode(absl::OnDeadlockCycle::kReport);
 
   // Cause deadlock detection to detect something, if it's
@@ -1090,7 +1101,7 @@ TEST(Mutex, DeadlockDetectorBazelWarning) {
 // annotation-based static thread-safety analysis is not currently
 // predicate-aware and cannot tell if the two for-loops that acquire and
 // release the locks have the same predicates.
-TEST(Mutex, DeadlockDetectorStessTest) NO_THREAD_SAFETY_ANALYSIS {
+TEST(Mutex, DeadlockDetectorStessTest) ABSL_NO_THREAD_SAFETY_ANALYSIS {
   // Stress test: Here we create a large number of locks and use all of them.
   // If a deadlock detector keeps a full graph of lock acquisition order,
   // it will likely be too slow for this test to pass.
@@ -1108,7 +1119,12 @@ TEST(Mutex, DeadlockDetectorStessTest) NO_THREAD_SAFETY_ANALYSIS {
   }
 }
 
-TEST(Mutex, DeadlockIdBug) NO_THREAD_SAFETY_ANALYSIS {
+#ifdef THREAD_SANITIZER
+// TSAN reports errors when locked Mutexes are destroyed.
+TEST(Mutex, DISABLED_DeadlockIdBug) NO_THREAD_SAFETY_ANALYSIS {
+#else
+TEST(Mutex, DeadlockIdBug) ABSL_NO_THREAD_SAFETY_ANALYSIS {
+#endif
   // Test a scenario where a cached deadlock graph node id in the
   // list of held locks is not invalidated when the corresponding
   // mutex is deleted.
@@ -1150,249 +1166,369 @@ TEST(Mutex, DeadlockIdBug) NO_THREAD_SAFETY_ANALYSIS {
 // and so never expires/passes, and one that will expire/pass in the near
 // future.
 
-// Encapsulate a Mutex-protected bool with its associated Condition/CondVar.
-class Cond {
- public:
-  explicit Cond(bool use_deadline) : use_deadline_(use_deadline), c_(&b_) {}
+static absl::Duration TimeoutTestAllowedSchedulingDelay() {
+  // Note: we use a function here because Microsoft Visual Studio fails to
+  // properly initialize constexpr static absl::Duration variables.
+  return absl::Milliseconds(150);
+}
 
-  void Set(bool v) {
-    absl::MutexLock lock(&mu_);
-    b_ = v;
+// Returns true if `actual_delay` is close enough to `expected_delay` to pass
+// the timeouts/deadlines test.  Otherwise, logs warnings and returns false.
+ABSL_MUST_USE_RESULT
+static bool DelayIsWithinBounds(absl::Duration expected_delay,
+                                absl::Duration actual_delay) {
+  bool pass = true;
+  // Do not allow the observed delay to be less than expected.  This may occur
+  // in practice due to clock skew or when the synchronization primitives use a
+  // different clock than absl::Now(), but these cases should be handled by the
+  // the retry mechanism in each TimeoutTest.
+  if (actual_delay < expected_delay) {
+    ABSL_RAW_LOG(WARNING,
+                 "Actual delay %s was too short, expected %s (difference %s)",
+                 absl::FormatDuration(actual_delay).c_str(),
+                 absl::FormatDuration(expected_delay).c_str(),
+                 absl::FormatDuration(actual_delay - expected_delay).c_str());
+    pass = false;
   }
-
-  bool AwaitWithTimeout(absl::Duration timeout) {
-    absl::MutexLock lock(&mu_);
-    return use_deadline_ ? mu_.AwaitWithDeadline(c_, absl::Now() + timeout)
-                         : mu_.AwaitWithTimeout(c_, timeout);
+  // If the expected delay is <= zero then allow a small error tolerance, since
+  // we do not expect context switches to occur during test execution.
+  // Otherwise, thread scheduling delays may be substantial in rare cases, so
+  // tolerate up to kTimeoutTestAllowedSchedulingDelay of error.
+  absl::Duration tolerance = expected_delay <= absl::ZeroDuration()
+                                 ? absl::Milliseconds(10)
+                                 : TimeoutTestAllowedSchedulingDelay();
+  if (actual_delay > expected_delay + tolerance) {
+    ABSL_RAW_LOG(WARNING,
+                 "Actual delay %s was too long, expected %s (difference %s)",
+                 absl::FormatDuration(actual_delay).c_str(),
+                 absl::FormatDuration(expected_delay).c_str(),
+                 absl::FormatDuration(actual_delay - expected_delay).c_str());
+    pass = false;
   }
+  return pass;
+}
 
-  bool LockWhenWithTimeout(absl::Duration timeout) {
-    bool b = use_deadline_ ? mu_.LockWhenWithDeadline(c_, absl::Now() + timeout)
-                           : mu_.LockWhenWithTimeout(c_, timeout);
-    mu_.Unlock();
-    return b;
-  }
+// Parameters for TimeoutTest, below.
+struct TimeoutTestParam {
+  // The file and line number (used for logging purposes only).
+  const char *from_file;
+  int from_line;
 
-  bool ReaderLockWhenWithTimeout(absl::Duration timeout) {
-    bool b = use_deadline_
-                 ? mu_.ReaderLockWhenWithDeadline(c_, absl::Now() + timeout)
-                 : mu_.ReaderLockWhenWithTimeout(c_, timeout);
-    mu_.ReaderUnlock();
-    return b;
-  }
+  // Should the absolute deadline API based on absl::Time be tested?  If false,
+  // the relative deadline API based on absl::Duration is tested.
+  bool use_absolute_deadline;
 
-  void Await() {
-    absl::MutexLock lock(&mu_);
-    mu_.Await(c_);
-  }
+  // The deadline/timeout used when calling the API being tested
+  // (e.g. Mutex::LockWhenWithDeadline).
+  absl::Duration wait_timeout;
 
-  void Signal(bool v) {
-    absl::MutexLock lock(&mu_);
-    b_ = v;
-    cv_.Signal();
-  }
+  // The delay before the condition will be set true by the test code.  If zero
+  // or negative, the condition is set true immediately (before calling the API
+  // being tested).  Otherwise, if infinite, the condition is never set true.
+  // Otherwise a closure is scheduled for the future that sets the condition
+  // true.
+  absl::Duration satisfy_condition_delay;
 
-  bool WaitWithTimeout(absl::Duration timeout) {
-    absl::MutexLock lock(&mu_);
-    absl::Time deadline = absl::Now() + timeout;
-    if (use_deadline_) {
-      while (!b_ && !cv_.WaitWithDeadline(&mu_, deadline)) {
-      }
-    } else {
-      while (!b_ && !cv_.WaitWithTimeout(&mu_, timeout)) {
-        timeout = deadline - absl::Now();  // recompute timeout
-      }
-    }
-    return b_;
-  }
+  // The expected result of the condition after the call to the API being
+  // tested. Generally `true` means the condition was true when the API returns,
+  // `false` indicates an expected timeout.
+  bool expected_result;
 
-  void Wait() {
-    absl::MutexLock lock(&mu_);
-    while (!b_) cv_.Wait(&mu_);
-  }
-
- private:
-  const bool use_deadline_;
-
-  bool b_;
-  absl::Condition c_;
-  absl::CondVar cv_;
-  absl::Mutex mu_;
+  // The expected delay before the API under test returns.  This is inherently
+  // flaky, so some slop is allowed (see `DelayIsWithinBounds` above), and the
+  // test keeps trying indefinitely until this constraint passes.
+  absl::Duration expected_delay;
 };
 
-class OperationTimer {
- public:
-  OperationTimer() : start_(absl::Now()) {}
-  absl::Duration Get() const { return absl::Now() - start_; }
+// Print a `TimeoutTestParam` to a debug log.
+std::ostream &operator<<(std::ostream &os, const TimeoutTestParam &param) {
+  return os << "from: " << param.from_file << ":" << param.from_line
+            << " use_absolute_deadline: "
+            << (param.use_absolute_deadline ? "true" : "false")
+            << " wait_timeout: " << param.wait_timeout
+            << " satisfy_condition_delay: " << param.satisfy_condition_delay
+            << " expected_result: "
+            << (param.expected_result ? "true" : "false")
+            << " expected_delay: " << param.expected_delay;
+}
 
- private:
-  const absl::Time start_;
-};
+std::string FormatString(const TimeoutTestParam &param) {
+  std::ostringstream os;
+  os << param;
+  return os.str();
+}
 
-static void CheckResults(bool exp_result, bool act_result,
-                         absl::Duration exp_duration,
-                         absl::Duration act_duration) {
-  ABSL_RAW_CHECK(exp_result == act_result, "CheckResults failed");
-  // Allow for some worse-case scheduling delay and clock skew.
-  if ((exp_duration - absl::Milliseconds(40) > act_duration) ||
-      (exp_duration + absl::Milliseconds(150) < act_duration)) {
-    ABSL_RAW_LOG(FATAL, "CheckResults failed: operation took %s, expected %s",
-                 absl::FormatDuration(act_duration).c_str(),
-                 absl::FormatDuration(exp_duration).c_str());
+// Like `thread::Executor::ScheduleAt` except:
+// a) Delays zero or negative are executed immediately in the current thread.
+// b) Infinite delays are never scheduled.
+// c) Calls this test's `ScheduleAt` helper instead of using `pool` directly.
+static void RunAfterDelay(absl::Duration delay,
+                          absl::synchronization_internal::ThreadPool *pool,
+                          const std::function<void()> &callback) {
+  if (delay <= absl::ZeroDuration()) {
+    callback();  // immediate
+  } else if (delay != absl::InfiniteDuration()) {
+    ScheduleAfter(pool, delay, callback);
   }
 }
 
-static void TestAwaitTimeout(Cond *cp, absl::Duration timeout, bool exp_result,
-                             absl::Duration exp_duration) {
-  OperationTimer t;
-  bool act_result = cp->AwaitWithTimeout(timeout);
-  CheckResults(exp_result, act_result, exp_duration, t.Get());
-}
+class TimeoutTest : public ::testing::Test,
+                    public ::testing::WithParamInterface<TimeoutTestParam> {};
 
-static void TestLockWhenTimeout(Cond *cp, absl::Duration timeout,
-                                bool exp_result, absl::Duration exp_duration) {
-  OperationTimer t;
-  bool act_result = cp->LockWhenWithTimeout(timeout);
-  CheckResults(exp_result, act_result, exp_duration, t.Get());
-}
-
-static void TestReaderLockWhenTimeout(Cond *cp, absl::Duration timeout,
-                                      bool exp_result,
-                                      absl::Duration exp_duration) {
-  OperationTimer t;
-  bool act_result = cp->ReaderLockWhenWithTimeout(timeout);
-  CheckResults(exp_result, act_result, exp_duration, t.Get());
-}
-
-static void TestWaitTimeout(Cond *cp, absl::Duration timeout, bool exp_result,
-                            absl::Duration exp_duration) {
-  OperationTimer t;
-  bool act_result = cp->WaitWithTimeout(timeout);
-  CheckResults(exp_result, act_result, exp_duration, t.Get());
-}
-
-// Tests with a negative timeout (deadline in the past), which should
-// immediately return the current state of the condition.
-static void TestNegativeTimeouts(absl::synchronization_internal::ThreadPool *tp,
-                                 Cond *cp) {
+std::vector<TimeoutTestParam> MakeTimeoutTestParamValues() {
+  // The `finite` delay is a finite, relatively short, delay.  We make it larger
+  // than our allowed scheduling delay (slop factor) to avoid confusion when
+  // diagnosing test failures.  The other constants here have clear meanings.
+  const absl::Duration finite = 3 * TimeoutTestAllowedSchedulingDelay();
+  const absl::Duration never = absl::InfiniteDuration();
   const absl::Duration negative = -absl::InfiniteDuration();
   const absl::Duration immediate = absl::ZeroDuration();
 
-  // The condition is already true:
-  cp->Set(true);
-  TestAwaitTimeout(cp, negative, true, immediate);
-  TestLockWhenTimeout(cp, negative, true, immediate);
-  TestReaderLockWhenTimeout(cp, negative, true, immediate);
-  TestWaitTimeout(cp, negative, true, immediate);
+  // Every test case is run twice; once using the absolute deadline API and once
+  // using the relative timeout API.
+  std::vector<TimeoutTestParam> values;
+  for (bool use_absolute_deadline : {false, true}) {
+    // Tests with a negative timeout (deadline in the past), which should
+    // immediately return current state of the condition.
 
-  // The condition becomes true, but the timeout has already expired:
-  const absl::Duration delay = absl::Milliseconds(200);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), 3 * delay);
-  TestAwaitTimeout(cp, negative, false, immediate);
-  TestLockWhenTimeout(cp, negative, false, immediate);
-  TestReaderLockWhenTimeout(cp, negative, false, immediate);
-  cp->Await();  // wait for the scheduled Set() to complete
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Signal, cp, true), delay);
-  TestWaitTimeout(cp, negative, false, immediate);
-  cp->Wait();  // wait for the scheduled Signal() to complete
+    // The condition is already true:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        negative,   // wait_timeout
+        immediate,  // satisfy_condition_delay
+        true,       // expected_result
+        immediate,  // expected_delay
+    });
 
-  // The condition never becomes true:
-  cp->Set(false);
-  TestAwaitTimeout(cp, negative, false, immediate);
-  TestLockWhenTimeout(cp, negative, false, immediate);
-  TestReaderLockWhenTimeout(cp, negative, false, immediate);
-  TestWaitTimeout(cp, negative, false, immediate);
+    // The condition becomes true, but the timeout has already expired:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        negative,  // wait_timeout
+        finite,    // satisfy_condition_delay
+        false,     // expected_result
+        immediate  // expected_delay
+    });
+
+    // The condition never becomes true:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        negative,  // wait_timeout
+        never,     // satisfy_condition_delay
+        false,     // expected_result
+        immediate  // expected_delay
+    });
+
+    // Tests with an infinite timeout (deadline in the infinite future), which
+    // should only return when the condition becomes true.
+
+    // The condition is already true:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        never,      // wait_timeout
+        immediate,  // satisfy_condition_delay
+        true,       // expected_result
+        immediate   // expected_delay
+    });
+
+    // The condition becomes true before the (infinite) expiry:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        never,   // wait_timeout
+        finite,  // satisfy_condition_delay
+        true,    // expected_result
+        finite,  // expected_delay
+    });
+
+    // Tests with a (small) finite timeout (deadline soon), with the condition
+    // becoming true both before and after its expiry.
+
+    // The condition is already true:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        never,      // wait_timeout
+        immediate,  // satisfy_condition_delay
+        true,       // expected_result
+        immediate   // expected_delay
+    });
+
+    // The condition becomes true before the expiry:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        finite * 2,  // wait_timeout
+        finite,      // satisfy_condition_delay
+        true,        // expected_result
+        finite       // expected_delay
+    });
+
+    // The condition becomes true, but the timeout has already expired:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        finite,      // wait_timeout
+        finite * 2,  // satisfy_condition_delay
+        false,       // expected_result
+        finite       // expected_delay
+    });
+
+    // The condition never becomes true:
+    values.push_back(TimeoutTestParam{
+        __FILE__, __LINE__, use_absolute_deadline,
+        finite,  // wait_timeout
+        never,   // satisfy_condition_delay
+        false,   // expected_result
+        finite   // expected_delay
+    });
+  }
+  return values;
 }
 
-// Tests with an infinite timeout (deadline in the infinite future), which
-// should only return when the condition becomes true.
-static void TestInfiniteTimeouts(absl::synchronization_internal::ThreadPool *tp,
-                                 Cond *cp) {
-  const absl::Duration infinite = absl::InfiniteDuration();
-  const absl::Duration immediate = absl::ZeroDuration();
+// Instantiate `TimeoutTest` with `MakeTimeoutTestParamValues()`.
+INSTANTIATE_TEST_SUITE_P(All, TimeoutTest,
+                         testing::ValuesIn(MakeTimeoutTestParamValues()));
 
-  // The condition is already true:
-  cp->Set(true);
-  TestAwaitTimeout(cp, infinite, true, immediate);
-  TestLockWhenTimeout(cp, infinite, true, immediate);
-  TestReaderLockWhenTimeout(cp, infinite, true, immediate);
-  TestWaitTimeout(cp, infinite, true, immediate);
+TEST_P(TimeoutTest, Await) {
+  const TimeoutTestParam params = GetParam();
+  ABSL_RAW_LOG(INFO, "Params: %s", FormatString(params).c_str());
 
-  // The condition becomes true before the (infinite) expiry:
-  const absl::Duration delay = absl::Milliseconds(200);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), delay);
-  TestAwaitTimeout(cp, infinite, true, delay);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), delay);
-  TestLockWhenTimeout(cp, infinite, true, delay);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), delay);
-  TestReaderLockWhenTimeout(cp, infinite, true, delay);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Signal, cp, true), delay);
-  TestWaitTimeout(cp, infinite, true, delay);
+  // Because this test asserts bounds on scheduling delays it is flaky.  To
+  // compensate it loops forever until it passes.  Failures express as test
+  // timeouts, in which case the test log can be used to diagnose the issue.
+  for (int attempt = 1;; ++attempt) {
+    ABSL_RAW_LOG(INFO, "Attempt %d", attempt);
+
+    absl::Mutex mu;
+    bool value = false;  // condition value (under mu)
+
+    std::unique_ptr<absl::synchronization_internal::ThreadPool> pool =
+        CreateDefaultPool();
+    RunAfterDelay(params.satisfy_condition_delay, pool.get(), [&] {
+      absl::MutexLock l(&mu);
+      value = true;
+    });
+
+    absl::MutexLock lock(&mu);
+    absl::Time start_time = absl::Now();
+    absl::Condition cond(&value);
+    bool result =
+        params.use_absolute_deadline
+            ? mu.AwaitWithDeadline(cond, start_time + params.wait_timeout)
+            : mu.AwaitWithTimeout(cond, params.wait_timeout);
+    if (DelayIsWithinBounds(params.expected_delay, absl::Now() - start_time)) {
+      EXPECT_EQ(params.expected_result, result);
+      break;
+    }
+  }
 }
 
-// Tests with a (small) finite timeout (deadline soon), with the condition
-// becoming true both before and after its expiry.
-static void TestFiniteTimeouts(absl::synchronization_internal::ThreadPool *tp,
-                               Cond *cp) {
-  const absl::Duration finite = absl::Milliseconds(400);
-  const absl::Duration immediate = absl::ZeroDuration();
+TEST_P(TimeoutTest, LockWhen) {
+  const TimeoutTestParam params = GetParam();
+  ABSL_RAW_LOG(INFO, "Params: %s", FormatString(params).c_str());
 
-  // The condition is already true:
-  cp->Set(true);
-  TestAwaitTimeout(cp, finite, true, immediate);
-  TestLockWhenTimeout(cp, finite, true, immediate);
-  TestReaderLockWhenTimeout(cp, finite, true, immediate);
-  TestWaitTimeout(cp, finite, true, immediate);
+  // Because this test asserts bounds on scheduling delays it is flaky.  To
+  // compensate it loops forever until it passes.  Failures express as test
+  // timeouts, in which case the test log can be used to diagnose the issue.
+  for (int attempt = 1;; ++attempt) {
+    ABSL_RAW_LOG(INFO, "Attempt %d", attempt);
 
-  // The condition becomes true before the expiry:
-  const absl::Duration delay1 = finite / 2;
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), delay1);
-  TestAwaitTimeout(cp, finite, true, delay1);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), delay1);
-  TestLockWhenTimeout(cp, finite, true, delay1);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), delay1);
-  TestReaderLockWhenTimeout(cp, finite, true, delay1);
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Signal, cp, true), delay1);
-  TestWaitTimeout(cp, finite, true, delay1);
+    absl::Mutex mu;
+    bool value = false;  // condition value (under mu)
 
-  // The condition becomes true, but the timeout has already expired:
-  const absl::Duration delay2 = finite * 2;
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Set, cp, true), 3 * delay2);
-  TestAwaitTimeout(cp, finite, false, finite);
-  TestLockWhenTimeout(cp, finite, false, finite);
-  TestReaderLockWhenTimeout(cp, finite, false, finite);
-  cp->Await();  // wait for the scheduled Set() to complete
-  cp->Set(false);
-  ScheduleAfter(tp, std::bind(&Cond::Signal, cp, true), delay2);
-  TestWaitTimeout(cp, finite, false, finite);
-  cp->Wait();  // wait for the scheduled Signal() to complete
+    std::unique_ptr<absl::synchronization_internal::ThreadPool> pool =
+        CreateDefaultPool();
+    RunAfterDelay(params.satisfy_condition_delay, pool.get(), [&] {
+      absl::MutexLock l(&mu);
+      value = true;
+    });
 
-  // The condition never becomes true:
-  cp->Set(false);
-  TestAwaitTimeout(cp, finite, false, finite);
-  TestLockWhenTimeout(cp, finite, false, finite);
-  TestReaderLockWhenTimeout(cp, finite, false, finite);
-  TestWaitTimeout(cp, finite, false, finite);
+    absl::Time start_time = absl::Now();
+    absl::Condition cond(&value);
+    bool result =
+        params.use_absolute_deadline
+            ? mu.LockWhenWithDeadline(cond, start_time + params.wait_timeout)
+            : mu.LockWhenWithTimeout(cond, params.wait_timeout);
+    mu.Unlock();
+
+    if (DelayIsWithinBounds(params.expected_delay, absl::Now() - start_time)) {
+      EXPECT_EQ(params.expected_result, result);
+      break;
+    }
+  }
 }
 
-TEST(Mutex, Timeouts) {
-  auto tp = CreateDefaultPool();
-  for (bool use_deadline : {false, true}) {
-    Cond cond(use_deadline);
-    TestNegativeTimeouts(tp.get(), &cond);
-    TestInfiniteTimeouts(tp.get(), &cond);
-    TestFiniteTimeouts(tp.get(), &cond);
+TEST_P(TimeoutTest, ReaderLockWhen) {
+  const TimeoutTestParam params = GetParam();
+  ABSL_RAW_LOG(INFO, "Params: %s", FormatString(params).c_str());
+
+  // Because this test asserts bounds on scheduling delays it is flaky.  To
+  // compensate it loops forever until it passes.  Failures express as test
+  // timeouts, in which case the test log can be used to diagnose the issue.
+  for (int attempt = 0;; ++attempt) {
+    ABSL_RAW_LOG(INFO, "Attempt %d", attempt);
+
+    absl::Mutex mu;
+    bool value = false;  // condition value (under mu)
+
+    std::unique_ptr<absl::synchronization_internal::ThreadPool> pool =
+        CreateDefaultPool();
+    RunAfterDelay(params.satisfy_condition_delay, pool.get(), [&] {
+      absl::MutexLock l(&mu);
+      value = true;
+    });
+
+    absl::Time start_time = absl::Now();
+    bool result =
+        params.use_absolute_deadline
+            ? mu.ReaderLockWhenWithDeadline(absl::Condition(&value),
+                                            start_time + params.wait_timeout)
+            : mu.ReaderLockWhenWithTimeout(absl::Condition(&value),
+                                           params.wait_timeout);
+    mu.ReaderUnlock();
+
+    if (DelayIsWithinBounds(params.expected_delay, absl::Now() - start_time)) {
+      EXPECT_EQ(params.expected_result, result);
+      break;
+    }
+  }
+}
+
+TEST_P(TimeoutTest, Wait) {
+  const TimeoutTestParam params = GetParam();
+  ABSL_RAW_LOG(INFO, "Params: %s", FormatString(params).c_str());
+
+  // Because this test asserts bounds on scheduling delays it is flaky.  To
+  // compensate it loops forever until it passes.  Failures express as test
+  // timeouts, in which case the test log can be used to diagnose the issue.
+  for (int attempt = 0;; ++attempt) {
+    ABSL_RAW_LOG(INFO, "Attempt %d", attempt);
+
+    absl::Mutex mu;
+    bool value = false;  // condition value (under mu)
+    absl::CondVar cv;    // signals a change of `value`
+
+    std::unique_ptr<absl::synchronization_internal::ThreadPool> pool =
+        CreateDefaultPool();
+    RunAfterDelay(params.satisfy_condition_delay, pool.get(), [&] {
+      absl::MutexLock l(&mu);
+      value = true;
+      cv.Signal();
+    });
+
+    absl::MutexLock lock(&mu);
+    absl::Time start_time = absl::Now();
+    absl::Duration timeout = params.wait_timeout;
+    absl::Time deadline = start_time + timeout;
+    while (!value) {
+      if (params.use_absolute_deadline ? cv.WaitWithDeadline(&mu, deadline)
+                                       : cv.WaitWithTimeout(&mu, timeout)) {
+        break;  // deadline/timeout exceeded
+      }
+      timeout = deadline - absl::Now();  // recompute
+    }
+    bool result = value;  // note: `mu` is still held
+
+    if (DelayIsWithinBounds(params.expected_delay, absl::Now() - start_time)) {
+      EXPECT_EQ(params.expected_result, result);
+      break;
+    }
   }
 }
 
@@ -1427,9 +1563,9 @@ static std::vector<int> AllThreadCountValues() {
 class MutexVariableThreadCountTest : public ::testing::TestWithParam<int> {};
 
 // Instantiate the above with AllThreadCountOptions().
-INSTANTIATE_TEST_CASE_P(ThreadCounts, MutexVariableThreadCountTest,
-                        ::testing::ValuesIn(AllThreadCountValues()),
-                        ::testing::PrintToStringParamName());
+INSTANTIATE_TEST_SUITE_P(ThreadCounts, MutexVariableThreadCountTest,
+                         ::testing::ValuesIn(AllThreadCountValues()),
+                         ::testing::PrintToStringParamName());
 
 // Reduces iterations by some factor for slow platforms
 // (determined empirically).

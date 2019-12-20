@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,7 @@
 #include "absl/base/internal/spinlock.h"
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
 #if ABSL_THREAD_IDENTITY_MODE != ABSL_THREAD_IDENTITY_MODE_USE_CPP11
@@ -55,7 +56,12 @@ void AllocateThreadIdentityKey(ThreadIdentityReclaimerFunction reclaimer) {
 #ifdef __GNUC__
 __attribute__((visibility("protected")))
 #endif  // __GNUC__
-  ABSL_PER_THREAD_TLS_KEYWORD ThreadIdentity* thread_identity_ptr;
+#if ABSL_PER_THREAD_TLS
+// Prefer __thread to thread_local as benchmarks indicate it is a bit faster.
+ABSL_PER_THREAD_TLS_KEYWORD ThreadIdentity* thread_identity_ptr = nullptr;
+#elif defined(ABSL_HAVE_THREAD_LOCAL)
+thread_local ThreadIdentity* thread_identity_ptr = nullptr;
+#endif  // ABSL_PER_THREAD_TLS
 #endif  // TLS or CPP11
 
 void SetCurrentThreadIdentity(
@@ -68,6 +74,14 @@ void SetCurrentThreadIdentity(
   // NOTE: Not async-safe.  But can be open-coded.
   absl::call_once(init_thread_identity_key_once, AllocateThreadIdentityKey,
                   reclaimer);
+
+#if defined(__EMSCRIPTEN__) || defined(__MINGW32__)
+  // Emscripten and MinGW pthread implementations does not support signals.
+  // See https://kripken.github.io/emscripten-site/docs/porting/pthreads.html
+  // for more information.
+  pthread_setspecific(thread_identity_pthread_key,
+                      reinterpret_cast<void*>(identity));
+#else
   // We must mask signals around the call to setspecific as with current glibc,
   // a concurrent getspecific (needed for GetCurrentThreadIdentityIfPresent())
   // may zero our value.
@@ -81,6 +95,8 @@ void SetCurrentThreadIdentity(
   pthread_setspecific(thread_identity_pthread_key,
                       reinterpret_cast<void*>(identity));
   pthread_sigmask(SIG_SETMASK, &curr_signals, nullptr);
+#endif  // !__EMSCRIPTEN__ && !__MINGW32__
+
 #elif ABSL_THREAD_IDENTITY_MODE == ABSL_THREAD_IDENTITY_MODE_USE_TLS
   // NOTE: Not async-safe.  But can be open-coded.
   absl::call_once(init_thread_identity_key_once, AllocateThreadIdentityKey,
@@ -120,4 +136,5 @@ ThreadIdentity* CurrentThreadIdentityIfPresent() {
 #endif
 
 }  // namespace base_internal
+ABSL_NAMESPACE_END
 }  // namespace absl

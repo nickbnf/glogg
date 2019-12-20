@@ -44,6 +44,7 @@
 #include "mainwindow.h"
 #include "messagereceiver.h"
 #include "versionchecker.h"
+#include "crash_tracer.h"
 
 class KloggApp : public SingleApplication {
 
@@ -56,6 +57,8 @@ class KloggApp : public SingleApplication {
                                  | SingleApplication::ExcludeAppPath
                                  | SingleApplication::ExcludeAppVersion )
     {
+        crashTracer_ = std::make_unique<CrashTracer>(argv[0]);
+
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );
         qRegisterMetaType<LinesCount>( "LinesCount" );
         qRegisterMetaType<LineNumber>( "LineNumber" );
@@ -291,6 +294,8 @@ class KloggApp : public SingleApplication {
     std::stack<QPointer<MainWindow>> activeWindows_;
 
     VersionChecker versionChecker_;
+
+    std::unique_ptr<CrashTracer> crashTracer_;
 };
 
 #endif // KLOGG_KLOGGAPP_H

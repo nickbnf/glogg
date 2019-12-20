@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,9 +36,10 @@
 // This preprocessor token is also defined in raw_io.cc.  If you need to copy
 // this, consider moving both to config.h instead.
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || \
-    defined(__Fuchsia__) || defined(__native_client__)
-#include <unistd.h>
+    defined(__Fuchsia__) || defined(__native_client__) || \
+    defined(__EMSCRIPTEN__) || defined(__ASYLO__)
 
+#include <unistd.h>
 
 #define ABSL_HAVE_POSIX_WRITE 1
 #define ABSL_LOW_LEVEL_WRITE_SUPPORTED 1
@@ -139,7 +140,7 @@ void RawLogVA(absl::LogSeverity severity, const char* file, int line,
 #endif
 
 #ifdef ABSL_MIN_LOG_LEVEL
-  if (static_cast<int>(severity) < ABSL_MIN_LOG_LEVEL &&
+  if (severity < static_cast<absl::LogSeverity>(ABSL_MIN_LOG_LEVEL) &&
       severity < absl::LogSeverity::kFatal) {
     enabled = false;
   }
@@ -181,6 +182,7 @@ void RawLogVA(absl::LogSeverity severity, const char* file, int line,
 }  // namespace
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace raw_logging_internal {
 void SafeWriteToStderr(const char *s, size_t len) {
 #if defined(ABSL_HAVE_SYSCALL_WRITE)
@@ -206,6 +208,15 @@ void RawLog(absl::LogSeverity severity, const char* file, int line,
   va_end(ap);
 }
 
+// Non-formatting version of RawLog().
+//
+// TODO(gfalcon): When string_view no longer depends on base, change this
+// interface to take its message as a string_view instead.
+static void DefaultInternalLog(absl::LogSeverity severity, const char* file,
+                               int line, const std::string& message) {
+  RawLog(severity, file, line, "%s", message.c_str());
+}
+
 bool RawLoggingFullySupported() {
 #ifdef ABSL_LOW_LEVEL_WRITE_SUPPORTED
   return true;
@@ -214,5 +225,13 @@ bool RawLoggingFullySupported() {
 #endif  // !ABSL_LOW_LEVEL_WRITE_SUPPORTED
 }
 
+ABSL_CONST_INIT absl::base_internal::AtomicHook<InternalLogFunction>
+    internal_log_function(DefaultInternalLog);
+
+void RegisterInternalLogFunction(InternalLogFunction func) {
+  internal_log_function.Store(func);
+}
+
 }  // namespace raw_logging_internal
+ABSL_NAMESPACE_END
 }  // namespace absl

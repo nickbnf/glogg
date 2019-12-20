@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,7 @@
   EXPECT_DEATH(expr, ".*")
 #else
 #define ABSL_BASE_INTERNAL_EXPECT_FAIL(expr, exception_t, text) \
-  EXPECT_DEATH(expr, text)
+  EXPECT_DEATH_IF_SUPPORTED(expr, text)
 
 #endif
 

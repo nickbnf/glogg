@@ -27,8 +27,13 @@ add_library(logdata STATIC
 
 )
 
+set_target_properties(logdata PROPERTIES AUTOMOC ON)
+
 target_include_directories(logdata PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(logdata PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/data")
 
 target_link_libraries(logdata PUBLIC Qt5::Core Qt5::Concurrent immer tbb_static named_type absl::optional absl::variant utils filewatch uchardet)
+
+if (${USE_LTO})
 set_property(TARGET logdata PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()

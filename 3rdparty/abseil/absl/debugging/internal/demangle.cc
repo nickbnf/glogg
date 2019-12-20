@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@
 #include <limits>
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace debugging_internal {
 
 typedef struct {
@@ -93,6 +94,8 @@ static const AbbrevPair kOperatorList[] = {
 };
 
 // List of builtin types from Itanium C++ ABI.
+//
+// Invariant: only one- or two-character type abbreviations here.
 static const AbbrevPair kBuiltinTypeList[] = {
     {"v", "void", 0},
     {"w", "wchar_t", 0},
@@ -115,6 +118,16 @@ static const AbbrevPair kBuiltinTypeList[] = {
     {"e", "long double", 0},
     {"g", "__float128", 0},
     {"z", "ellipsis", 0},
+
+    {"De", "decimal128", 0},      // IEEE 754r decimal floating point (128 bits)
+    {"Dd", "decimal64", 0},       // IEEE 754r decimal floating point (64 bits)
+    {"Dc", "decltype(auto)", 0},
+    {"Da", "auto", 0},
+    {"Dn", "std::nullptr_t", 0},  // i.e., decltype(nullptr)
+    {"Df", "decimal32", 0},       // IEEE 754r decimal floating point (32 bits)
+    {"Di", "char32_t", 0},
+    {"Ds", "char16_t", 0},
+    {"Dh", "float16", 0},         // IEEE 754r half-precision float (16 bits)
     {nullptr, nullptr, 0},
 };
 
@@ -340,7 +353,7 @@ static bool ZeroOrMore(ParseFunc parse_func, State *state) {
 }
 
 // Append "str" at "out_cur_idx".  If there is an overflow, out_cur_idx is
-// set to out_end_idx+1.  The output std::string is ensured to
+// set to out_end_idx+1.  The output string is ensured to
 // always terminate with '\0' as long as there is no overflow.
 static void Append(State *state, const char *const str, const int length) {
   for (int i = 0; i < length; ++i) {
@@ -749,8 +762,8 @@ static bool ParseSourceName(State *state) {
 // <local-source-name> ::= L <source-name> [<discriminator>]
 //
 // References:
-//   http://gcc.gnu.org/bugzilla/show_bug.cgi?id=31775
-//   http://gcc.gnu.org/viewcvs?view=rev&revision=124467
+//   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=31775
+//   https://gcc.gnu.org/viewcvs?view=rev&revision=124467
 static bool ParseLocalSourceName(State *state) {
   ComplexityGuard guard(state);
   if (guard.IsTooComplex()) return false;
@@ -840,7 +853,7 @@ static bool ParseNumber(State *state, int *number_out) {
 }
 
 // Floating-point literals are encoded using a fixed-length lowercase
-// hexadecimal std::string.
+// hexadecimal string.
 static bool ParseFloatNumber(State *state) {
   ComplexityGuard guard(state);
   if (guard.IsTooComplex()) return false;
@@ -1208,16 +1221,26 @@ static bool ParseCVQualifiers(State *state) {
   return num_cv_qualifiers > 0;
 }
 
-// <builtin-type> ::= v, etc.
+// <builtin-type> ::= v, etc.  # single-character builtin types
 //                ::= u <source-name>
+//                ::= Dd, etc.  # two-character builtin types
+//
+// Not supported:
+//                ::= DF <number> _ # _FloatN (N bits)
+//
 static bool ParseBuiltinType(State *state) {
   ComplexityGuard guard(state);
   if (guard.IsTooComplex()) return false;
   const AbbrevPair *p;
   for (p = kBuiltinTypeList; p->abbrev != nullptr; ++p) {
-    if (RemainingInput(state)[0] == p->abbrev[0]) {
+    // Guaranteed only 1- or 2-character strings in kBuiltinTypeList.
+    if (p->abbrev[1] == '\0') {
+      if (ParseOneCharToken(state, p->abbrev[0])) {
+        MaybeAppend(state, p->real_name);
+        return true;
+      }
+    } else if (p->abbrev[2] == '\0' && ParseTwoCharToken(state, p->abbrev)) {
       MaybeAppend(state, p->real_name);
-      ++state->parse_state.mangled_idx;
       return true;
     }
   }
@@ -1636,6 +1659,15 @@ static bool ParseExpression(State *state) {
   }
   state->parse_state = copy;
 
+  // Pointer-to-member access expressions.  This parses the same as a binary
+  // operator, but it's implemented separately because "ds" shouldn't be
+  // accepted in other contexts that parse an operator name.
+  if (ParseTwoCharToken(state, "ds") && ParseExpression(state) &&
+      ParseExpression(state)) {
+    return true;
+  }
+  state->parse_state = copy;
+
   // Parameter pack expansion
   if (ParseTwoCharToken(state, "sp") && ParseExpression(state)) {
     return true;
@@ -1859,4 +1891,5 @@ bool Demangle(const char *mangled, char *out, int out_size) {
 }
 
 }  // namespace debugging_internal
+ABSL_NAMESPACE_END
 }  // namespace absl

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,7 +33,10 @@
 #include "absl/debugging/internal/address_is_readable.h"
 #include "absl/debugging/internal/vdso_support.h"  // a no-op on non-elf or non-glibc systems
 #include "absl/debugging/stacktrace.h"
+
 #include "absl/base/internal/raw_logging.h"
+
+using absl::debugging_internal::AddressIsReadable;
 
 #if defined(__linux__) && defined(__i386__)
 // Count "push %reg" instructions in VDSO __kernel_vsyscall(),
@@ -80,7 +83,7 @@ static int CountPushInstructions(const unsigned char *const addr) {
       // "mov reg,reg"
       if (addr[i + 1] == 0xE5) {
         // Found "mov %esp,%ebp".
-        return 0;  
+        return 0;
       }
       ++i;  // Skip register encoding byte.
     } else if (addr[i] == 0x0F &&
@@ -221,7 +224,7 @@ static void **NextStackFrame(void **old_fp, const void *uc) {
           // "double fault" in case we hit the first fault due to e.g. stack
           // corruption.
           void *const reg_esp2 = reg_esp[num_push_instructions - 1];
-          if (absl::debugging_internal::AddressIsReadable(reg_esp2)) {
+          if (AddressIsReadable(reg_esp2)) {
             // Alleged %esp is readable, use it for further unwinding.
             new_fp = reinterpret_cast<void **>(reg_esp2);
           }
@@ -273,7 +276,7 @@ static void **NextStackFrame(void **old_fp, const void *uc) {
     // Note: NextStackFrame<false>() is only called while the program
     //       is already on its last leg, so it's ok to be slow here.
 
-    if (!absl::debugging_internal::AddressIsReadable(new_fp)) {
+    if (!AddressIsReadable(new_fp)) {
       return nullptr;
     }
   }
@@ -327,11 +330,13 @@ static int UnwindImpl(void **result, int *sizes, int max_depth, int skip_count,
 }
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace debugging_internal {
 bool StackTraceWorksForTest() {
   return true;
 }
 }  // namespace debugging_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_DEBUGGING_INTERNAL_STACKTRACE_X86_INL_INC_

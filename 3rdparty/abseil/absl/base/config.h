@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -63,7 +63,35 @@
 #include <TargetConditionals.h>
 #endif
 
+#include "absl/base/options.h"
 #include "absl/base/policy_checks.h"
+
+// -----------------------------------------------------------------------------
+// Abseil namespace annotations
+// -----------------------------------------------------------------------------
+
+// ABSL_NAMESPACE_BEGIN/ABSL_NAMESPACE_END
+//
+// An annotation placed at the beginning/end of each `namespace absl` scope.
+// This is used to inject an inline namespace.
+//
+// The proper way to write Abseil code in the `absl` namespace is:
+//
+// namespace absl {
+// ABSL_NAMESPACE_BEGIN
+//
+// void Foo();  // absl::Foo().
+//
+// ABSL_NAMESPACE_END
+// }  // namespace absl
+//
+// Users of Abseil should not use these macros, because users of Abseil should
+// not write `namespace absl {` in their own code for any reason.  (Abseil does
+// not support forward declarations of its own types, nor does it support
+// user-provided specialization of Abseil templates.  Code that violates these
+// rules may be broken without warning.)
+#define ABSL_NAMESPACE_BEGIN
+#define ABSL_NAMESPACE_END
 
 // -----------------------------------------------------------------------------
 // Compiler Feature Checks
@@ -82,6 +110,12 @@
 #define ABSL_HAVE_BUILTIN(x) __has_builtin(x)
 #else
 #define ABSL_HAVE_BUILTIN(x) 0
+#endif
+
+#if defined(__is_identifier)
+#define ABSL_INTERNAL_HAS_KEYWORD(x) !(__is_identifier(x))
+#else
+#define ABSL_INTERNAL_HAS_KEYWORD(x) 0
 #endif
 
 // ABSL_HAVE_TLS is defined to 1 when __thread should be supported.
@@ -118,18 +152,29 @@
 // Checks whether `std::is_trivially_copy_assignable<T>` is supported.
 
 // Notes: Clang with libc++ supports these features, as does gcc >= 5.1 with
-// either libc++ or libstdc++, and Visual Studio.
+// either libc++ or libstdc++, and Visual Studio (but not NVCC).
 #if defined(ABSL_HAVE_STD_IS_TRIVIALLY_CONSTRUCTIBLE)
 #error ABSL_HAVE_STD_IS_TRIVIALLY_CONSTRUCTIBLE cannot be directly set
 #elif defined(ABSL_HAVE_STD_IS_TRIVIALLY_ASSIGNABLE)
 #error ABSL_HAVE_STD_IS_TRIVIALLY_ASSIGNABLE cannot directly set
 #elif (defined(__clang__) && defined(_LIBCPP_VERSION)) ||        \
     (!defined(__clang__) && defined(__GNUC__) &&                 \
-     (__GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1)) && \
+     (__GNUC__ > 7 || (__GNUC__ == 7 && __GNUC_MINOR__ >= 4)) && \
      (defined(_LIBCPP_VERSION) || defined(__GLIBCXX__))) ||      \
-    defined(_MSC_VER)
+    (defined(_MSC_VER) && !defined(__NVCC__))
 #define ABSL_HAVE_STD_IS_TRIVIALLY_CONSTRUCTIBLE 1
 #define ABSL_HAVE_STD_IS_TRIVIALLY_ASSIGNABLE 1
+#endif
+
+// ABSL_HAVE_SOURCE_LOCATION_CURRENT
+//
+// Indicates whether `absl::SourceLocation::current()` will return useful
+// information in some contexts.
+#ifndef ABSL_HAVE_SOURCE_LOCATION_CURRENT
+#if ABSL_INTERNAL_HAS_KEYWORD(__builtin_LINE) && \
+    ABSL_INTERNAL_HAS_KEYWORD(__builtin_FILE)
+#define ABSL_HAVE_SOURCE_LOCATION_CURRENT 1
+#endif
 #endif
 
 // ABSL_HAVE_THREAD_LOCAL
@@ -139,12 +184,18 @@
 #ifdef ABSL_HAVE_THREAD_LOCAL
 #error ABSL_HAVE_THREAD_LOCAL cannot be directly set
 #elif defined(__APPLE__)
-// Notes: Xcode's clang did not support `thread_local` until version
-// 8, and even then not for all iOS < 9.0. Also, Xcode 9.3 started disallowing
-// `thread_local` for 32-bit iOS simulator targeting iOS 9.x.
-// `__has_feature` is only supported by Clang so it has be inside
+// Notes:
+// * Xcode's clang did not support `thread_local` until version 8, and
+//   even then not for all iOS < 9.0.
+// * Xcode 9.3 started disallowing `thread_local` for 32-bit iOS simulator
+//   targeting iOS 9.x.
+// * Xcode 10 moves the deployment target check for iOS < 9.0 to link time
+//   making __has_feature unreliable there.
+//
+// Otherwise, `__has_feature` is only supported by Clang so it has be inside
 // `defined(__APPLE__)` check.
-#if __has_feature(cxx_thread_local)
+#if __has_feature(cxx_thread_local) && \
+    !(TARGET_OS_IPHONE && __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_9_0)
 #define ABSL_HAVE_THREAD_LOCAL 1
 #endif
 #else  // !defined(__APPLE__)
@@ -175,6 +226,13 @@
 #endif
 #endif  // defined(__ANDROID__) && defined(__clang__)
 
+// Emscripten doesn't yet support `thread_local` or `__thread`.
+// https://github.com/emscripten-core/emscripten/issues/3502
+#if defined(__EMSCRIPTEN__)
+#undef ABSL_HAVE_TLS
+#undef ABSL_HAVE_THREAD_LOCAL
+#endif  // defined(__EMSCRIPTEN__)
+
 // ABSL_HAVE_INTRINSIC_INT128
 //
 // Checks whether the __int128 compiler extension for a 128-bit integral type is
@@ -185,21 +243,19 @@
 // * On Clang:
 //   * Building using Clang for Windows, where the Clang runtime library has
 //     128-bit support only on LP64 architectures, but Windows is LLP64.
-//   * Building for aarch64, where __int128 exists but has exhibits a sporadic
-//     compiler crashing bug.
 // * On Nvidia's nvcc:
 //   * nvcc also defines __GNUC__ and __SIZEOF_INT128__, but not all versions
 //     actually support __int128.
 #ifdef ABSL_HAVE_INTRINSIC_INT128
 #error ABSL_HAVE_INTRINSIC_INT128 cannot be directly set
 #elif defined(__SIZEOF_INT128__)
-#if (defined(__clang__) && !defined(_WIN32) && !defined(__aarch64__)) || \
+#if (defined(__clang__) && !defined(_WIN32)) || \
     (defined(__CUDACC__) && __CUDACC_VER_MAJOR__ >= 9) ||                \
     (defined(__GNUC__) && !defined(__clang__) && !defined(__CUDACC__))
 #define ABSL_HAVE_INTRINSIC_INT128 1
 #elif defined(__CUDACC__)
 // __CUDACC_VER__ is a full version number before CUDA 9, and is defined to a
-// std::string explaining that it has been removed starting with CUDA 9. We use
+// string explaining that it has been removed starting with CUDA 9. We use
 // nested #ifs because there is no short-circuiting in the preprocessor.
 // NOTE: `__CUDACC__` could be undefined while `__CUDACC_VER__` is defined.
 #if __CUDACC_VER__ >= 70000
@@ -249,7 +305,7 @@
 //   Linux and Linux-derived           __linux__
 //   Android                           __ANDROID__ (implies __linux__)
 //   Linux (non-Android)               __linux__ && !__ANDROID__
-//   Darwin (Mac OS X and iOS)         __APPLE__
+//   Darwin (macOS and iOS)            __APPLE__
 //   Akaros (http://akaros.org)        __ros__
 //   Windows                           _WIN32
 //   NaCL                              __native_client__
@@ -268,7 +324,8 @@
 #error ABSL_HAVE_MMAP cannot be directly set
 #elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) ||   \
     defined(__ros__) || defined(__native_client__) || defined(__asmjs__) || \
-    defined(__wasm__) || defined(__Fuchsia__)
+    defined(__wasm__) || defined(__Fuchsia__) || defined(__sun) || \
+    defined(__ASYLO__)
 #define ABSL_HAVE_MMAP 1
 #endif
 
@@ -295,7 +352,7 @@
 
 // ABSL_HAVE_SEMAPHORE_H
 //
-// Checks whether the platform supports the <semaphore.h> header and sem_open(3)
+// Checks whether the platform supports the <semaphore.h> header and sem_init(3)
 // family of functions as standardized in POSIX.1-2001.
 //
 // Note: While Apple provides <semaphore.h> for both iOS and macOS, it is
@@ -322,6 +379,15 @@
 #define ABSL_HAVE_ALARM 1
 #elif defined(_MSC_VER)
 // feature tests for Microsoft's library
+#elif defined(__MINGW32__)
+// mingw32 doesn't provide alarm(2):
+// https://osdn.net/projects/mingw/scm/git/mingw-org-wsl/blobs/5.2-trunk/mingwrt/include/unistd.h
+// mingw-w64 provides a no-op implementation:
+// https://sourceforge.net/p/mingw-w64/mingw-w64/ci/master/tree/mingw-w64-crt/misc/alarm.c
+#elif defined(__EMSCRIPTEN__)
+// emscripten doesn't support signals
+#elif defined(__Fuchsia__)
+// Signals don't exist on fuchsia.
 #elif defined(__native_client__)
 #else
 // other standard libraries
@@ -356,6 +422,27 @@
 #error "absl endian detection needs to be set up for your compiler"
 #endif
 
+// macOS 10.13 and iOS 10.11 don't let you use <any>, <optional>, or <variant>
+// even though the headers exist and are publicly noted to work.  See
+// https://github.com/abseil/abseil-cpp/issues/207 and
+// https://developer.apple.com/documentation/xcode_release_notes/xcode_10_release_notes
+// libc++ spells out the availability requirements in the file
+// llvm-project/libcxx/include/__config via the #define
+// _LIBCPP_AVAILABILITY_BAD_OPTIONAL_ACCESS.
+#if defined(__APPLE__) && defined(_LIBCPP_VERSION) && \
+  ((defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && \
+   __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 101400) || \
+  (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) && \
+   __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ < 120000) || \
+  (defined(__ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__) && \
+   __ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__ < 120000) || \
+  (defined(__ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__) && \
+   __ENVIRONMENT_TV_OS_VERSION_MIN_REQUIRED__ < 50000))
+#define ABSL_INTERNAL_APPLE_CXX17_TYPES_UNAVAILABLE 1
+#else
+#define ABSL_INTERNAL_APPLE_CXX17_TYPES_UNAVAILABLE 0
+#endif
+
 // ABSL_HAVE_STD_ANY
 //
 // Checks whether C++17 std::any is available by checking whether <any> exists.
@@ -364,7 +451,8 @@
 #endif
 
 #ifdef __has_include
-#if __has_include(<any>) && __cplusplus >= 201703L
+#if __has_include(<any>) && __cplusplus >= 201703L && \
+    !ABSL_INTERNAL_APPLE_CXX17_TYPES_UNAVAILABLE
 #define ABSL_HAVE_STD_ANY 1
 #endif
 #endif
@@ -377,7 +465,8 @@
 #endif
 
 #ifdef __has_include
-#if __has_include(<optional>) && __cplusplus >= 201703L
+#if __has_include(<optional>) && __cplusplus >= 201703L && \
+    !ABSL_INTERNAL_APPLE_CXX17_TYPES_UNAVAILABLE
 #define ABSL_HAVE_STD_OPTIONAL 1
 #endif
 #endif
@@ -390,7 +479,8 @@
 #endif
 
 #ifdef __has_include
-#if __has_include(<variant>) && __cplusplus >= 201703L
+#if __has_include(<variant>) && __cplusplus >= 201703L && \
+    !ABSL_INTERNAL_APPLE_CXX17_TYPES_UNAVAILABLE
 #define ABSL_HAVE_STD_VARIANT 1
 #endif
 #endif
@@ -414,14 +504,85 @@
 // <string_view>, <variant> is implemented) or higher. Also, `__cplusplus` is
 // not correctly set by MSVC, so we use `_MSVC_LANG` to check the language
 // version.
-// TODO(zhangxy): fix tests before enabling aliasing for `std::any`,
-// `std::string_view`.
+// TODO(zhangxy): fix tests before enabling aliasing for `std::any`.
 #if defined(_MSC_VER) && _MSC_VER >= 1910 && \
     ((defined(_MSVC_LANG) && _MSVC_LANG > 201402) || __cplusplus > 201402)
 // #define ABSL_HAVE_STD_ANY 1
 #define ABSL_HAVE_STD_OPTIONAL 1
 #define ABSL_HAVE_STD_VARIANT 1
-// #define ABSL_HAVE_STD_STRING_VIEW 1
+#define ABSL_HAVE_STD_STRING_VIEW 1
 #endif
+
+// ABSL_USES_STD_ANY
+//
+// Indicates whether absl::any is an alias for std::any.
+#if !defined(ABSL_OPTION_USE_STD_ANY)
+#error options.h is misconfigured.
+#elif ABSL_OPTION_USE_STD_ANY == 0 || \
+    (ABSL_OPTION_USE_STD_ANY == 2 && !defined(ABSL_HAVE_STD_ANY))
+#undef ABSL_USES_STD_ANY
+#elif ABSL_OPTION_USE_STD_ANY == 1 || \
+    (ABSL_OPTION_USE_STD_ANY == 2 && defined(ABSL_HAVE_STD_ANY))
+#define ABSL_USES_STD_ANY 1
+#else
+#error options.h is misconfigured.
+#endif
+
+// ABSL_USES_STD_OPTIONAL
+//
+// Indicates whether absl::optional is an alias for std::optional.
+#if !defined(ABSL_OPTION_USE_STD_OPTIONAL)
+#error options.h is misconfigured.
+#elif ABSL_OPTION_USE_STD_OPTIONAL == 0 || \
+    (ABSL_OPTION_USE_STD_OPTIONAL == 2 && !defined(ABSL_HAVE_STD_OPTIONAL))
+#undef ABSL_USES_STD_OPTIONAL
+#elif ABSL_OPTION_USE_STD_OPTIONAL == 1 || \
+    (ABSL_OPTION_USE_STD_OPTIONAL == 2 && defined(ABSL_HAVE_STD_OPTIONAL))
+#define ABSL_USES_STD_OPTIONAL 1
+#else
+#error options.h is misconfigured.
+#endif
+
+// ABSL_USES_STD_VARIANT
+//
+// Indicates whether absl::variant is an alias for std::variant.
+#if !defined(ABSL_OPTION_USE_STD_VARIANT)
+#error options.h is misconfigured.
+#elif ABSL_OPTION_USE_STD_VARIANT == 0 || \
+    (ABSL_OPTION_USE_STD_VARIANT == 2 && !defined(ABSL_HAVE_STD_VARIANT))
+#undef ABSL_USES_STD_VARIANT
+#elif ABSL_OPTION_USE_STD_VARIANT == 1 || \
+    (ABSL_OPTION_USE_STD_VARIANT == 2 && defined(ABSL_HAVE_STD_VARIANT))
+#define ABSL_USES_STD_VARIANT 1
+#else
+#error options.h is misconfigured.
+#endif
+
+// ABSL_USES_STD_STRING_VIEW
+//
+// Indicates whether absl::string_view is an alias for std::string_view.
+#if !defined(ABSL_OPTION_USE_STD_STRING_VIEW)
+#error options.h is misconfigured.
+#elif ABSL_OPTION_USE_STD_STRING_VIEW == 0 || \
+    (ABSL_OPTION_USE_STD_STRING_VIEW == 2 &&  \
+     !defined(ABSL_HAVE_STD_STRING_VIEW))
+#undef ABSL_USES_STD_STRING_VIEW
+#elif ABSL_OPTION_USE_STD_STRING_VIEW == 1 || \
+    (ABSL_OPTION_USE_STD_STRING_VIEW == 2 &&  \
+     defined(ABSL_HAVE_STD_STRING_VIEW))
+#define ABSL_USES_STD_STRING_VIEW 1
+#else
+#error options.h is misconfigured.
+#endif
+
+// In debug mode, MSVC 2017's std::variant throws a EXCEPTION_ACCESS_VIOLATION
+// SEH exception from emplace for variant<SomeStruct> when constructing the
+// struct can throw. This defeats some of variant_test and
+// variant_exception_safety_test.
+#if defined(_MSC_VER) && _MSC_VER >= 1700 && defined(_DEBUG)
+#define ABSL_INTERNAL_MSVC_2017_DBG_MODE
+#endif
+
+#undef ABSL_INTERNAL_HAS_KEYWORD
 
 #endif  // ABSL_BASE_CONFIG_H_

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,10 +35,29 @@
 
 using testing::Contains;
 
+#ifdef _WIN32
+#define ABSL_SYMBOLIZE_TEST_NOINLINE __declspec(noinline)
+#else
+#define ABSL_SYMBOLIZE_TEST_NOINLINE ABSL_ATTRIBUTE_NOINLINE
+#endif
+
 // Functions to symbolize. Use C linkage to avoid mangled names.
 extern "C" {
-void nonstatic_func() { ABSL_BLOCK_TAIL_CALL_OPTIMIZATION(); }
-static void static_func() { ABSL_BLOCK_TAIL_CALL_OPTIMIZATION(); }
+ABSL_SYMBOLIZE_TEST_NOINLINE void nonstatic_func() {
+  // The next line makes this a unique function to prevent the compiler from
+  // folding identical functions together.
+  volatile int x = __LINE__;
+  static_cast<void>(x);
+  ABSL_BLOCK_TAIL_CALL_OPTIMIZATION();
+}
+
+ABSL_SYMBOLIZE_TEST_NOINLINE static void static_func() {
+  // The next line makes this a unique function to prevent the compiler from
+  // folding identical functions together.
+  volatile int x = __LINE__;
+  static_cast<void>(x);
+  ABSL_BLOCK_TAIL_CALL_OPTIMIZATION();
+}
 }  // extern "C"
 
 struct Foo {
@@ -46,7 +65,11 @@ struct Foo {
 };
 
 // A C++ method that should have a mangled name.
-void ABSL_ATTRIBUTE_NOINLINE Foo::func(int) {
+ABSL_SYMBOLIZE_TEST_NOINLINE void Foo::func(int) {
+  // The next line makes this a unique function to prevent the compiler from
+  // folding identical functions together.
+  volatile int x = __LINE__;
+  static_cast<void>(x);
   ABSL_BLOCK_TAIL_CALL_OPTIMIZATION();
 }
 
@@ -80,6 +103,7 @@ static ABSL_PER_THREAD_TLS_KEYWORD char
     symbolize_test_thread_big[2 * 1024 * 1024];
 #endif
 
+#if !defined(__EMSCRIPTEN__)
 // Used below to hopefully inhibit some compiler/linker optimizations
 // that may remove kHpageTextPadding, kPadding0, and kPadding1 from
 // the binary.
@@ -89,6 +113,7 @@ static volatile bool volatile_bool = false;
 static constexpr size_t kHpageSize = 1 << 21;
 const char kHpageTextPadding[kHpageSize * 4] ABSL_ATTRIBUTE_SECTION_VARIABLE(
     .text) = "";
+#endif  // !defined(__EMSCRIPTEN__)
 
 static char try_symbolize_buffer[4096];
 
@@ -107,7 +132,8 @@ static const char *TrySymbolizeWithLimit(void *pc, int limit) {
     ABSL_RAW_CHECK(strnlen(heap_buffer.get(), limit) < limit,
                    "absl::Symbolize() did not properly terminate the string");
     strncpy(try_symbolize_buffer, heap_buffer.get(),
-            sizeof(try_symbolize_buffer));
+            sizeof(try_symbolize_buffer) - 1);
+    try_symbolize_buffer[sizeof(try_symbolize_buffer) - 1] = '\0';
   }
 
   return found ? try_symbolize_buffer : nullptr;
@@ -321,7 +347,7 @@ TEST(Symbolize, SymbolizeWithMultipleMaps) {
   }
 }
 
-// Appends std::string(*args->arg) to args->symbol_buf.
+// Appends string(*args->arg) to args->symbol_buf.
 static void DummySymbolDecorator(
     const absl::debugging_internal::SymbolDecoratorArgs *args) {
   std::string *message = static_cast<std::string *>(args->arg);
@@ -392,16 +418,20 @@ TEST(Symbolize, ForEachSection) {
 extern "C" {
 inline void *ABSL_ATTRIBUTE_ALWAYS_INLINE inline_func() {
   void *pc = nullptr;
-#if defined(__i386__) || defined(__x86_64__)
-  __asm__ __volatile__("call 1f; 1: pop %0" : "=r"(pc));
+#if defined(__i386__)
+  __asm__ __volatile__("call 1f;\n 1: pop %[PC]" : [ PC ] "=r"(pc));
+#elif defined(__x86_64__)
+  __asm__ __volatile__("leaq 0(%%rip),%[PC];\n" : [ PC ] "=r"(pc));
 #endif
   return pc;
 }
 
 void *ABSL_ATTRIBUTE_NOINLINE non_inline_func() {
   void *pc = nullptr;
-#if defined(__i386__) || defined(__x86_64__)
-  __asm__ __volatile__("call 1f; 1: pop %0" : "=r"(pc));
+#if defined(__i386__)
+  __asm__ __volatile__("call 1f;\n 1: pop %[PC]" : [ PC ] "=r"(pc));
+#elif defined(__x86_64__)
+  __asm__ __volatile__("leaq 0(%%rip),%[PC];\n" : [ PC ] "=r"(pc));
 #endif
   return pc;
 }
@@ -442,14 +472,14 @@ void ABSL_ATTRIBUTE_NOINLINE TestWithReturnAddress() {
 #endif
 }
 
-#elif defined(_WIN32) && defined(_DEBUG)
+#elif defined(_WIN32)
 
 TEST(Symbolize, Basics) {
   EXPECT_STREQ("nonstatic_func", TrySymbolize((void *)(&nonstatic_func)));
 
   // The name of an internal linkage symbol is not specified; allow either a
   // mangled or an unmangled name here.
-  const char* static_func_symbol = TrySymbolize((void *)(&static_func));
+  const char *static_func_symbol = TrySymbolize((void *)(&static_func));
   ASSERT_TRUE(static_func_symbol != nullptr);
   EXPECT_TRUE(strstr(static_func_symbol, "static_func") != nullptr);
 
@@ -476,7 +506,7 @@ TEST(Symbolize, Truncation) {
 }
 
 TEST(Symbolize, SymbolizeWithDemangling) {
-  const char* result = TrySymbolize((void *)(&Foo::func));
+  const char *result = TrySymbolize((void *)(&Foo::func));
   ASSERT_TRUE(result != nullptr);
   EXPECT_TRUE(strstr(result, "Foo::func") != nullptr) << result;
 }
@@ -493,10 +523,12 @@ TEST(Symbolize, Unimplemented) {
 #endif
 
 int main(int argc, char **argv) {
+#if !defined(__EMSCRIPTEN__)
   // Make sure kHpageTextPadding is linked into the binary.
   if (volatile_bool) {
     ABSL_RAW_LOG(INFO, "%s", kHpageTextPadding);
   }
+#endif  // !defined(__EMSCRIPTEN__)
 
 #if ABSL_PER_THREAD_TLS
   // Touch the per-thread variables.

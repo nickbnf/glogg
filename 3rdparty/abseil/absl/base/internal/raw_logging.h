@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,10 @@
 #ifndef ABSL_BASE_INTERNAL_RAW_LOGGING_H_
 #define ABSL_BASE_INTERNAL_RAW_LOGGING_H_
 
+#include <string>
+
 #include "absl/base/attributes.h"
+#include "absl/base/internal/atomic_hook.h"
 #include "absl/base/log_severity.h"
 #include "absl/base/macros.h"
 #include "absl/base/port.h"
@@ -35,6 +38,7 @@
 //   ABSL_RAW_LOG(ERROR, "Failed foo with %i: %s", status, error);
 // This will print an almost standard log line like this to stderr only:
 //   E0821 211317 file.cc:123] RAW: Failed foo with 22: bad_file
+
 #define ABSL_RAW_LOG(severity, ...)                                            \
   do {                                                                         \
     constexpr const char* absl_raw_logging_internal_basename =                 \
@@ -57,6 +61,30 @@
     }                                                                  \
   } while (0)
 
+// ABSL_INTERNAL_LOG and ABSL_INTERNAL_CHECK work like the RAW variants above,
+// except that if the richer log library is linked into the binary, we dispatch
+// to that instead.  This is potentially useful for internal logging and
+// assertions, where we are using RAW_LOG neither for its async-signal-safety
+// nor for its non-allocating nature, but rather because raw logging has very
+// few other dependencies.
+//
+// The API is a subset of the above: each macro only takes two arguments.  Use
+// StrCat if you need to build a richer message.
+#define ABSL_INTERNAL_LOG(severity, message)                                \
+  do {                                                                      \
+    ::absl::raw_logging_internal::internal_log_function(                    \
+        ABSL_RAW_LOGGING_INTERNAL_##severity, __FILE__, __LINE__, message); \
+  } while (0)
+
+#define ABSL_INTERNAL_CHECK(condition, message)                    \
+  do {                                                             \
+    if (ABSL_PREDICT_FALSE(!(condition))) {                        \
+      std::string death_message = "Check " #condition " failed: "; \
+      death_message += std::string(message);                       \
+      ABSL_INTERNAL_LOG(FATAL, death_message);                     \
+    }                                                              \
+  } while (0)
+
 #define ABSL_RAW_LOGGING_INTERNAL_INFO ::absl::LogSeverity::kInfo
 #define ABSL_RAW_LOGGING_INTERNAL_WARNING ::absl::LogSeverity::kWarning
 #define ABSL_RAW_LOGGING_INTERNAL_ERROR ::absl::LogSeverity::kError
@@ -65,6 +93,7 @@
   ::absl::NormalizeLogSeverity(severity)
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace raw_logging_internal {
 
 // Helper function to implement ABSL_RAW_LOG
@@ -83,7 +112,7 @@ void SafeWriteToStderr(const char *s, size_t len);
 
 // compile-time function to get the "base" filename, that is, the part of
 // a filename after the last "/" or "\" path separator.  The search starts at
-// the end of the std::string; the second parameter is the length of the std::string.
+// the end of the string; the second parameter is the length of the string.
 constexpr const char* Basename(const char* fname, int offset) {
   return offset == 0 || fname[offset - 1] == '/' || fname[offset - 1] == '\\'
              ? fname + offset
@@ -125,13 +154,26 @@ using LogPrefixHook = bool (*)(absl::LogSeverity severity, const char* file,
 //
 // 'file' and 'line' are the file and line number where the ABSL_RAW_LOG macro
 // was located.
-// The null-terminated logged message lives in the buffer between 'buf_start'
+// The NUL-terminated logged message lives in the buffer between 'buf_start'
 // and 'buf_end'.  'prefix_end' points to the first non-prefix character of the
 // buffer (as written by the LogPrefixHook.)
 using AbortHook = void (*)(const char* file, int line, const char* buf_start,
                            const char* prefix_end, const char* buf_end);
 
+// Internal logging function for ABSL_INTERNAL_LOG to dispatch to.
+//
+// TODO(gfalcon): When string_view no longer depends on base, change this
+// interface to take its message as a string_view instead.
+using InternalLogFunction = void (*)(absl::LogSeverity severity,
+                                     const char* file, int line,
+                                     const std::string& message);
+
+extern base_internal::AtomicHook<InternalLogFunction> internal_log_function;
+
+void RegisterInternalLogFunction(InternalLogFunction func);
+
 }  // namespace raw_logging_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_BASE_INTERNAL_RAW_LOGGING_H_

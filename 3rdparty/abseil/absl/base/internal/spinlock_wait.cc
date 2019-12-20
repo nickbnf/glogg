@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // The OS-specific header included below must provide two calls:
-// base::subtle::SpinLockDelay() and base::subtle::SpinLockWake().
+// AbslInternalSpinLockDelay() and AbslInternalSpinLockWake().
 // See spinlock_wait.h for the specs.
 
 #include <atomic>
@@ -23,6 +23,8 @@
 
 #if defined(_WIN32)
 #include "absl/base/internal/spinlock_win32.inc"
+#elif defined(__linux__)
+#include "absl/base/internal/spinlock_linux.inc"
 #elif defined(__akaros__)
 #include "absl/base/internal/spinlock_akaros.inc"
 #else
@@ -30,20 +32,22 @@
 #endif
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace base_internal {
 
 // See spinlock_wait.h for spec.
 uint32_t SpinLockWait(std::atomic<uint32_t> *w, int n,
                       const SpinLockWaitTransition trans[],
                       base_internal::SchedulingMode scheduling_mode) {
-  for (int loop = 0; ; loop++) {
+  int loop = 0;
+  for (;;) {
     uint32_t v = w->load(std::memory_order_acquire);
     int i;
     for (i = 0; i != n && v != trans[i].from; i++) {
     }
     if (i == n) {
-      SpinLockDelay(w, v, loop, scheduling_mode);  // no matching transition
-    } else if (trans[i].to == v ||                 // null transition
+      SpinLockDelay(w, v, ++loop, scheduling_mode);  // no matching transition
+    } else if (trans[i].to == v ||                   // null transition
                w->compare_exchange_strong(v, trans[i].to,
                                           std::memory_order_acquire,
                                           std::memory_order_relaxed)) {
@@ -62,18 +66,16 @@ int SpinLockSuggestedDelayNS(int loop) {
   r = 0x5deece66dLL * r + 0xb;   // numbers from nrand48()
   delay_rand.store(r, std::memory_order_relaxed);
 
-  r <<= 16;   // 48-bit random number now in top 48-bits.
   if (loop < 0 || loop > 32) {   // limit loop to 0..32
     loop = 32;
   }
-  // loop>>3 cannot exceed 4 because loop cannot exceed 32.
-  // Select top 20..24 bits of lower 48 bits,
-  // giving approximately 0ms to 16ms.
-  // Mean is exponential in loop for first 32 iterations, then 8ms.
-  // The futex path multiplies this by 16, since we expect explicit wakeups
-  // almost always on that path.
-  return static_cast<int>(r >> (44 - (loop >> 3)));
+  const int kMinDelay = 128 << 10;  // 128us
+  // Double delay every 8 iterations, up to 16x (2ms).
+  int delay = kMinDelay << (loop / 8);
+  // Randomize in delay..2*delay range, for resulting 128us..4ms range.
+  return delay | ((delay - 1) & static_cast<int>(r));
 }
 
 }  // namespace base_internal
+ABSL_NAMESPACE_END
 }  // namespace absl

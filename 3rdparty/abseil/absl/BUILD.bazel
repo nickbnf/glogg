@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#      https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,25 +14,32 @@
 # limitations under the License.
 #
 
+load(
+    ":compiler_config_setting.bzl",
+    "create_llvm_config",
+)
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])  # Apache 2.0
 
-config_setting(
+create_llvm_config(
     name = "llvm_compiler",
-    values = {
-        "compiler": "llvm",
-    },
     visibility = [":__subpackages__"],
 )
 
-# following configs are based on mapping defined in: https://git.io/v5Ijz
+config_setting(
+    name = "osx",
+    constraint_values = [
+        "@bazel_tools//platforms:osx",
+    ],
+)
+
 config_setting(
     name = "ios",
-    values = {
-        "cpu": "darwin",
-    },
-    visibility = [":__subpackages__"],
+    constraint_values = [
+        "@bazel_tools//platforms:ios",
+    ],
 )
 
 config_setting(

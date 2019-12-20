@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,6 +33,7 @@
 #include "absl/base/internal/per_thread_tls.h"
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
 struct SynchLocksHeld;
 struct SynchWaitParams;
@@ -42,9 +43,9 @@ namespace base_internal {
 class SpinLock;
 struct ThreadIdentity;
 
-// Used by the implementation of base::Mutex and base::CondVar.
+// Used by the implementation of absl::Mutex and absl::CondVar.
 struct PerThreadSynch {
-  // The internal representation of base::Mutex and base::CondVar rely
+  // The internal representation of absl::Mutex and absl::CondVar rely
   // on the alignment of PerThreadSynch. Both store the address of the
   // PerThreadSynch in the high-order bits of their internal state,
   // which means the low kLowZeroBits of the address of PerThreadSynch
@@ -208,7 +209,7 @@ void ClearCurrentThreadIdentity();
 #error ABSL_THREAD_IDENTITY_MODE cannot be direcly set
 #elif defined(ABSL_FORCE_THREAD_IDENTITY_MODE)
 #define ABSL_THREAD_IDENTITY_MODE ABSL_FORCE_THREAD_IDENTITY_MODE
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(__MINGW32__)
 #define ABSL_THREAD_IDENTITY_MODE ABSL_THREAD_IDENTITY_MODE_USE_CPP11
 #elif ABSL_PER_THREAD_TLS && defined(__GOOGLE_GRTE_VERSION__) && \
     (__GOOGLE_GRTE_VERSION__ >= 20140228L)
@@ -224,7 +225,14 @@ void ClearCurrentThreadIdentity();
 #if ABSL_THREAD_IDENTITY_MODE == ABSL_THREAD_IDENTITY_MODE_USE_TLS || \
     ABSL_THREAD_IDENTITY_MODE == ABSL_THREAD_IDENTITY_MODE_USE_CPP11
 
-extern ABSL_PER_THREAD_TLS_KEYWORD ThreadIdentity* thread_identity_ptr;
+#if ABSL_PER_THREAD_TLS
+ABSL_CONST_INIT extern ABSL_PER_THREAD_TLS_KEYWORD ThreadIdentity*
+    thread_identity_ptr;
+#elif defined(ABSL_HAVE_THREAD_LOCAL)
+ABSL_CONST_INIT extern thread_local ThreadIdentity* thread_identity_ptr;
+#else
+#error Thread-local storage not detected on this platform
+#endif
 
 inline ThreadIdentity* CurrentThreadIdentityIfPresent() {
   return thread_identity_ptr;
@@ -236,5 +244,7 @@ inline ThreadIdentity* CurrentThreadIdentityIfPresent() {
 #endif
 
 }  // namespace base_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
+
 #endif  // ABSL_BASE_INTERNAL_THREAD_IDENTITY_H_

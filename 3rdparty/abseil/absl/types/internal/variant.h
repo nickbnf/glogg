@@ -1,10 +1,10 @@
-// Copyright 2017 The Abseil Authors.
+// Copyright 2018 The Abseil Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,10 @@
 #include "absl/types/bad_variant_access.h"
 #include "absl/utility/utility.h"
 
+#if !defined(ABSL_USES_STD_VARIANT)
+
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
 template <class... Types>
 class variant;
@@ -202,7 +205,7 @@ template <class Op, class... Vs>
 using VisitIndicesResultT = typename VisitIndicesResultImpl<Op, Vs...>::type;
 
 template <class ReturnType, class FunctionObject, class EndIndices,
-          std::size_t... BoundIndices>
+          class BoundIndices>
 struct MakeVisitationMatrix;
 
 template <class ReturnType, class FunctionObject, std::size_t... Indices>
@@ -216,7 +219,7 @@ constexpr ReturnType call_with_indices(FunctionObject&& function) {
 
 template <class ReturnType, class FunctionObject, std::size_t... BoundIndices>
 struct MakeVisitationMatrix<ReturnType, FunctionObject, index_sequence<>,
-                            BoundIndices...> {
+                            index_sequence<BoundIndices...>> {
   using ResultType = ReturnType (*)(FunctionObject&&);
   static constexpr ResultType Run() {
     return &call_with_indices<ReturnType, FunctionObject,
@@ -224,24 +227,34 @@ struct MakeVisitationMatrix<ReturnType, FunctionObject, index_sequence<>,
   }
 };
 
+template <typename Is, std::size_t J>
+struct AppendToIndexSequence;
+
+template <typename Is, std::size_t J>
+using AppendToIndexSequenceT = typename AppendToIndexSequence<Is, J>::type;
+
+template <std::size_t... Is, std::size_t J>
+struct AppendToIndexSequence<index_sequence<Is...>, J> {
+  using type = index_sequence<Is..., J>;
+};
+
 template <class ReturnType, class FunctionObject, class EndIndices,
-          class CurrIndices, std::size_t... BoundIndices>
+          class CurrIndices, class BoundIndices>
 struct MakeVisitationMatrixImpl;
 
-template <class ReturnType, class FunctionObject, std::size_t... EndIndices,
-          std::size_t... CurrIndices, std::size_t... BoundIndices>
-struct MakeVisitationMatrixImpl<
-    ReturnType, FunctionObject, index_sequence<EndIndices...>,
-    index_sequence<CurrIndices...>, BoundIndices...> {
+template <class ReturnType, class FunctionObject, class EndIndices,
+          std::size_t... CurrIndices, class BoundIndices>
+struct MakeVisitationMatrixImpl<ReturnType, FunctionObject, EndIndices,
+                                index_sequence<CurrIndices...>, BoundIndices> {
   using ResultType = SimpleArray<
-      typename MakeVisitationMatrix<ReturnType, FunctionObject,
-                                    index_sequence<EndIndices...>>::ResultType,
+      typename MakeVisitationMatrix<ReturnType, FunctionObject, EndIndices,
+                                    index_sequence<>>::ResultType,
       sizeof...(CurrIndices)>;
 
   static constexpr ResultType Run() {
-    return {{MakeVisitationMatrix<ReturnType, FunctionObject,
-                                  index_sequence<EndIndices...>,
-                                  BoundIndices..., CurrIndices>::Run()...}};
+    return {{MakeVisitationMatrix<
+        ReturnType, FunctionObject, EndIndices,
+        AppendToIndexSequenceT<BoundIndices, CurrIndices>>::Run()...}};
   }
 };
 
@@ -249,10 +262,11 @@ template <class ReturnType, class FunctionObject, std::size_t HeadEndIndex,
           std::size_t... TailEndIndices, std::size_t... BoundIndices>
 struct MakeVisitationMatrix<ReturnType, FunctionObject,
                             index_sequence<HeadEndIndex, TailEndIndices...>,
-                            BoundIndices...>
-    : MakeVisitationMatrixImpl<
-          ReturnType, FunctionObject, index_sequence<TailEndIndices...>,
-          absl::make_index_sequence<HeadEndIndex>, BoundIndices...> {};
+                            index_sequence<BoundIndices...>>
+    : MakeVisitationMatrixImpl<ReturnType, FunctionObject,
+                               index_sequence<TailEndIndices...>,
+                               absl::make_index_sequence<HeadEndIndex>,
+                               index_sequence<BoundIndices...>> {};
 
 struct UnreachableSwitchCase {
   template <class Op>
@@ -421,7 +435,8 @@ struct VisitIndicesFallback {
   static VisitIndicesResultT<Op, SizeT...> Run(Op&& op, SizeT... indices) {
     return AccessSimpleArray(
         MakeVisitationMatrix<VisitIndicesResultT<Op, SizeT...>, Op,
-                             index_sequence<(EndIndices + 1)...>>::Run(),
+                             index_sequence<(EndIndices + 1)...>,
+                             index_sequence<>>::Run(),
         (indices + 1)...)(absl::forward<Op>(op));
   }
 };
@@ -579,18 +594,25 @@ struct VariantCoreAccess {
     self.index_ = other.index();
   }
 
+  // Access a variant alternative, assuming the index is correct.
   template <std::size_t I, class Variant>
   static VariantAccessResult<I, Variant> Access(Variant&& self) {
-    if (ABSL_PREDICT_FALSE(self.index_ != I)) {
-      TypedThrowBadVariantAccess<VariantAccessResult<I, Variant>>();
-    }
-
     // This cast instead of invocation of AccessUnion with an rvalue is a
     // workaround for msvc. Without this there is a runtime failure when dealing
     // with rvalues.
     // TODO(calabrese) Reduce test case and find a simpler workaround.
     return static_cast<VariantAccessResult<I, Variant>>(
         variant_internal::AccessUnion(self.state_, SizeT<I>()));
+  }
+
+  // Access a variant alternative, throwing if the index is incorrect.
+  template <std::size_t I, class Variant>
+  static VariantAccessResult<I, Variant> CheckedAccess(Variant&& self) {
+    if (ABSL_PREDICT_FALSE(self.index_ != I)) {
+      TypedThrowBadVariantAccess<VariantAccessResult<I, Variant>>();
+    }
+
+    return Access<I>(absl::forward<Variant>(self));
   }
 
   // The implementation of the move-assignment operation for a variant.
@@ -828,8 +850,8 @@ struct ImaginaryFun<variant<H, T...>, I> : ImaginaryFun<variant<T...>, I + 1> {
   // NOTE: const& and && are used instead of by-value due to lack of guaranteed
   // move elision of C++17. This may have other minor differences, but tests
   // pass.
-  static SizeT<I> Run(const H&);
-  static SizeT<I> Run(H&&);
+  static SizeT<I> Run(const H&, SizeT<I>);
+  static SizeT<I> Run(H&&, SizeT<I>);
 };
 
 // The following metafunctions are used in constructor and assignment
@@ -851,7 +873,8 @@ struct ConversionIsPossibleImpl : std::false_type {};
 
 template <class Variant, class T>
 struct ConversionIsPossibleImpl<
-    Variant, T, void_t<decltype(ImaginaryFun<Variant>::Run(std::declval<T>()))>>
+    Variant, T,
+    void_t<decltype(ImaginaryFun<Variant>::Run(std::declval<T>(), {}))>>
     : std::true_type {};
 
 template <class Variant, class T>
@@ -859,8 +882,9 @@ struct ConversionIsPossible : ConversionIsPossibleImpl<Variant, T>::type {};
 
 template <class Variant, class T>
 struct IndexOfConstructedType<
-    Variant, T, void_t<decltype(ImaginaryFun<Variant>::Run(std::declval<T>()))>>
-    : decltype(ImaginaryFun<Variant>::Run(std::declval<T>())) {};
+    Variant, T,
+    void_t<decltype(ImaginaryFun<Variant>::Run(std::declval<T>(), {}))>>
+    : decltype(ImaginaryFun<Variant>::Run(std::declval<T>(), {})) {};
 
 template <std::size_t... Is>
 struct ContainsVariantNPos
@@ -901,6 +925,11 @@ struct PerformVisitation {
   template <std::size_t... TupIs, std::size_t... Is>
   constexpr ReturnType Run(std::false_type /*has_valueless*/,
                            index_sequence<TupIs...>, SizeT<Is>...) const {
+    static_assert(
+        std::is_same<ReturnType,
+                     absl::result_of_t<Op(VariantAccessResult<
+                                          Is, QualifiedVariants>...)>>::value,
+        "All visitation overloads must have the same return type.");
     return absl::base_internal::Invoke(
         absl::forward<Op>(op),
         VariantCoreAccess::Access<Is>(
@@ -1055,32 +1084,6 @@ struct OverloadSet<> {
   static void Overload(...);
 };
 
-////////////////////////////////
-// Library Fundamentals V2 TS //
-////////////////////////////////
-
-// TODO(calabrese): Consider moving this to absl/meta/type_traits.h
-
-// The following is a rough implementation of parts of the detection idiom.
-// It is used for the comparison operator checks.
-
-template <class Enabler, class To, template <class...> class Op, class... Args>
-struct is_detected_convertible_impl {
-  using type = std::false_type;
-};
-
-template <class To, template <class...> class Op, class... Args>
-struct is_detected_convertible_impl<
-    absl::enable_if_t<std::is_convertible<Op<Args...>, To>::value>, To, Op,
-    Args...> {
-  using type = std::true_type;
-};
-
-// NOTE: This differs from library fundamentals by being lazy.
-template <class To, template <class...> class Op, class... Args>
-struct is_detected_convertible
-    : is_detected_convertible_impl<void, To, Op, Args...>::type {};
-
 template <class T>
 using LessThanResult = decltype(std::declval<T>() < std::declval<T>());
 
@@ -1100,49 +1103,42 @@ using EqualResult = decltype(std::declval<T>() == std::declval<T>());
 template <class T>
 using NotEqualResult = decltype(std::declval<T>() != std::declval<T>());
 
-template <class T>
-using HasLessThan = is_detected_convertible<bool, LessThanResult, T>;
-
-template <class T>
-using HasGreaterThan = is_detected_convertible<bool, GreaterThanResult, T>;
-
-template <class T>
-using HasLessThanOrEqual =
-    is_detected_convertible<bool, LessThanOrEqualResult, T>;
-
-template <class T>
-using HasGreaterThanOrEqual =
-    is_detected_convertible<bool, GreaterThanOrEqualResult, T>;
-
-template <class T>
-using HasEqual = is_detected_convertible<bool, EqualResult, T>;
-
-template <class T>
-using HasNotEqual = is_detected_convertible<bool, NotEqualResult, T>;
+using type_traits_internal::is_detected_convertible;
 
 template <class... T>
-using RequireAllHaveEqualT =
-    absl::enable_if_t<absl::conjunction<HasEqual<T>...>::value, bool>;
+using RequireAllHaveEqualT = absl::enable_if_t<
+    absl::conjunction<is_detected_convertible<bool, EqualResult, T>...>::value,
+    bool>;
 
 template <class... T>
 using RequireAllHaveNotEqualT =
-    absl::enable_if_t<absl::conjunction<HasEqual<T>...>::value, bool>;
+    absl::enable_if_t<absl::conjunction<is_detected_convertible<
+                          bool, NotEqualResult, T>...>::value,
+                      bool>;
 
 template <class... T>
 using RequireAllHaveLessThanT =
-    absl::enable_if_t<absl::conjunction<HasLessThan<T>...>::value, bool>;
+    absl::enable_if_t<absl::conjunction<is_detected_convertible<
+                          bool, LessThanResult, T>...>::value,
+                      bool>;
 
 template <class... T>
 using RequireAllHaveLessThanOrEqualT =
-    absl::enable_if_t<absl::conjunction<HasLessThan<T>...>::value, bool>;
+    absl::enable_if_t<absl::conjunction<is_detected_convertible<
+                          bool, LessThanOrEqualResult, T>...>::value,
+                      bool>;
 
 template <class... T>
 using RequireAllHaveGreaterThanOrEqualT =
-    absl::enable_if_t<absl::conjunction<HasLessThan<T>...>::value, bool>;
+    absl::enable_if_t<absl::conjunction<is_detected_convertible<
+                          bool, GreaterThanOrEqualResult, T>...>::value,
+                      bool>;
 
 template <class... T>
 using RequireAllHaveGreaterThanT =
-    absl::enable_if_t<absl::conjunction<HasLessThan<T>...>::value, bool>;
+    absl::enable_if_t<absl::conjunction<is_detected_convertible<
+                          bool, GreaterThanResult, T>...>::value,
+                      bool>;
 
 // Helper template containing implementations details of variant that can't go
 // in the private section. For convenience, this takes the variant type as a
@@ -1253,23 +1249,29 @@ using VariantCopyBase = absl::conditional_t<
 // Base that is dependent on whether or not the move-assign can be trivial.
 template <class... T>
 using VariantMoveAssignBase = absl::conditional_t<
-    absl::disjunction<absl::conjunction<std::is_move_assignable<Union<T...>>,
-                                        std::is_move_constructible<Union<T...>>,
-                                        std::is_destructible<Union<T...>>>,
-                      absl::negation<absl::conjunction<
-                          std::is_move_constructible<T>...,
-                          std::is_move_assignable<T>...>>>::value,
+    absl::disjunction<
+        absl::conjunction<absl::is_move_assignable<Union<T...>>,
+                          std::is_move_constructible<Union<T...>>,
+                          std::is_destructible<Union<T...>>>,
+        absl::negation<absl::conjunction<std::is_move_constructible<T>...,
+                                         // Note: We're not qualifying this with
+                                         // absl:: because it doesn't compile
+                                         // under MSVC.
+                                         is_move_assignable<T>...>>>::value,
     VariantCopyBase<T...>, VariantMoveAssignBaseNontrivial<T...>>;
 
 // Base that is dependent on whether or not the copy-assign can be trivial.
 template <class... T>
 using VariantCopyAssignBase = absl::conditional_t<
-    absl::disjunction<absl::conjunction<std::is_copy_assignable<Union<T...>>,
-                                        std::is_copy_constructible<Union<T...>>,
-                                        std::is_destructible<Union<T...>>>,
-                      absl::negation<absl::conjunction<
-                          std::is_copy_constructible<T>...,
-                          std::is_copy_assignable<T>...>>>::value,
+    absl::disjunction<
+        absl::conjunction<absl::is_copy_assignable<Union<T...>>,
+                          std::is_copy_constructible<Union<T...>>,
+                          std::is_destructible<Union<T...>>>,
+        absl::negation<absl::conjunction<std::is_copy_constructible<T>...,
+                                         // Note: We're not qualifying this with
+                                         // absl:: because it doesn't compile
+                                         // under MSVC.
+                                         is_copy_assignable<T>...>>>::value,
     VariantMoveAssignBase<T...>, VariantCopyAssignBaseNontrivial<T...>>;
 
 template <class... T>
@@ -1561,8 +1563,8 @@ struct SwapSameIndex {
   variant<Types...>* w;
   template <std::size_t I>
   void operator()(SizeT<I>) const {
-    using std::swap;
-    swap(VariantCoreAccess::Access<I>(*v), VariantCoreAccess::Access<I>(*w));
+    type_traits_internal::Swap(VariantCoreAccess::Access<I>(*v),
+                               VariantCoreAccess::Access<I>(*w));
   }
 
   void operator()(SizeT<variant_npos>) const {}
@@ -1617,11 +1619,12 @@ struct VariantHashVisitor {
 template <typename Variant, typename... Ts>
 struct VariantHashBase<Variant,
                        absl::enable_if_t<absl::conjunction<
-                           type_traits_internal::IsHashEnabled<Ts>...>::value>,
+                           type_traits_internal::IsHashable<Ts>...>::value>,
                        Ts...> {
   using argument_type = Variant;
   using result_type = size_t;
   size_t operator()(const Variant& var) const {
+    type_traits_internal::AssertHashEnabled<Ts...>();
     if (var.valueless_by_exception()) {
       return 239799884;
     }
@@ -1636,6 +1639,8 @@ struct VariantHashBase<Variant,
 };
 
 }  // namespace variant_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
+#endif  // !defined(ABSL_USES_STD_VARIANT)
 #endif  // ABSL_TYPES_variant_internal_H_

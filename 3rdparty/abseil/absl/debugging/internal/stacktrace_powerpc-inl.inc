@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +14,8 @@
 //
 // Produce stack trace.  I'm guessing (hoping!) the code is much like
 // for x86.  For apple machines, at least, it seems to be; see
-//    http://developer.apple.com/documentation/mac/runtimehtml/RTArch-59.html
-//    http://www.linux-foundation.org/spec/ELF/ppc64/PPC-elf64abi-1.9.html#STACK
+//    https://developer.apple.com/documentation/mac/runtimehtml/RTArch-59.html
+//    https://www.linux-foundation.org/spec/ELF/ppc64/PPC-elf64abi-1.9.html#STACK
 // Linux has similar code: http://patchwork.ozlabs.org/linuxppc/patch?id=8882
 
 #ifndef ABSL_DEBUGGING_INTERNAL_STACKTRACE_POWERPC_INL_H_
@@ -31,6 +31,8 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "absl/base/attributes.h"
+#include "absl/base/optimization.h"
 #include "absl/base/port.h"
 #include "absl/debugging/stacktrace.h"
 #include "absl/debugging/internal/address_is_readable.h"
@@ -150,8 +152,9 @@ static void **NextStackFrame(void **old_sp, const void *uc) {
 }
 
 // This ensures that absl::GetStackTrace sets up the Link Register properly.
-void StacktracePowerPCDummyFunction() __attribute__((noinline));
-void StacktracePowerPCDummyFunction() { __asm__ volatile(""); }
+ABSL_ATTRIBUTE_NOINLINE static void AbslStacktracePowerPCDummyFunction() {
+  ABSL_BLOCK_TAIL_CALL_OPTIMIZATION();
+}
 
 template <bool IS_STACK_FRAMES, bool IS_WITH_CONTEXT>
 ABSL_ATTRIBUTE_NO_SANITIZE_ADDRESS  // May read random elements from stack.
@@ -159,7 +162,7 @@ ABSL_ATTRIBUTE_NO_SANITIZE_MEMORY   // May read random elements from stack.
 static int UnwindImpl(void** result, int* sizes, int max_depth, int skip_count,
                       const void *ucp, int *min_dropped_frames) {
   void **sp;
-  // Apple OS X uses an old version of gnu as -- both Darwin 7.9.0 (Panther)
+  // Apple macOS uses an old version of gnu as -- both Darwin 7.9.0 (Panther)
   // and Darwin 8.8.1 (Tiger) use as 1.38.  This means we have to use a
   // different asm syntax.  I don't know quite the best way to discriminate
   // systems using the old as from the new one; I've gone with __APPLE__.
@@ -176,7 +179,7 @@ static int UnwindImpl(void** result, int* sizes, int max_depth, int skip_count,
   // want here.  While the compiler will always(?) set up LR for
   // subroutine calls, it may not for leaf functions (such as this one).
   // This routine forces the compiler (at least gcc) to push it anyway.
-  StacktracePowerPCDummyFunction();
+  AbslStacktracePowerPCDummyFunction();
 
   // The LR save area is used by the callee, so the top entry is bogus.
   skip_count++;
@@ -233,11 +236,13 @@ static int UnwindImpl(void** result, int* sizes, int max_depth, int skip_count,
 }
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace debugging_internal {
 bool StackTraceWorksForTest() {
   return true;
 }
 }  // namespace debugging_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_DEBUGGING_INTERNAL_STACKTRACE_POWERPC_INL_H_

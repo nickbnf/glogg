@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,6 +44,7 @@
 // Do not use STL.   This module does not use standard memory allocation.
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 namespace synchronization_internal {
 
 namespace {
@@ -204,8 +205,7 @@ class NodeSet {
   }
 
  private:
-  static const int32_t kEmpty;
-  static const int32_t kDel;
+  enum : int32_t { kEmpty = -1, kDel = -2 };
   Vec<int32_t> table_;
   uint32_t occupied_;     // Count of non-empty slots (includes deleted slots)
 
@@ -254,9 +254,6 @@ class NodeSet {
   NodeSet(const NodeSet&) = delete;
   NodeSet& operator=(const NodeSet&) = delete;
 };
-
-const int32_t NodeSet::kEmpty = -1;
-const int32_t NodeSet::kDel = -2;
 
 // We encode a node index and a node version in GraphId.  The version
 // number is incremented when the GraphId is freed which automatically
@@ -694,6 +691,7 @@ int GraphCycles::GetStackTrace(GraphId id, void*** ptr) {
 }
 
 }  // namespace synchronization_internal
+ABSL_NAMESPACE_END
 }  // namespace absl
 
 #endif  // ABSL_LOW_LEVEL_ALLOC_MISSING

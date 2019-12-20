@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include "absl/types/optional.h"
+
+// This test is a no-op when absl::optional is an alias for std::optional.
+#if !defined(ABSL_USES_STD_OPTIONAL)
 
 #include <string>
 #include <type_traits>
@@ -157,6 +160,16 @@ struct NonMovable {
   NonMovable& operator=(NonMovable&&) = delete;
 };
 
+struct NoDefault {
+  NoDefault() = delete;
+  NoDefault(const NoDefault&) {}
+  NoDefault& operator=(const NoDefault&) { return *this; }
+};
+
+struct ConvertsFromInPlaceT {
+  ConvertsFromInPlaceT(absl::in_place_t) {}  // NOLINT
+};
+
 TEST(optionalTest, DefaultConstructor) {
   absl::optional<int> empty;
   EXPECT_FALSE(empty);
@@ -169,15 +182,7 @@ TEST(optionalTest, DefaultConstructor) {
 TEST(optionalTest, nulloptConstructor) {
   absl::optional<int> empty(absl::nullopt);
   EXPECT_FALSE(empty);
-
-#ifdef ABSL_HAVE_STD_OPTIONAL
   constexpr absl::optional<int> cempty{absl::nullopt};
-#else
-  // Creating a temporary absl::nullopt_t object instead of using absl::nullopt
-  // because absl::nullopt cannot be constexpr and have external linkage at the
-  // same time.
-  constexpr absl::optional<int> cempty{absl::nullopt_t(absl::nullopt_t::init)};
-#endif
   static_assert(!cempty.has_value(), "");
   EXPECT_TRUE((std::is_nothrow_constructible<absl::optional<int>,
                                              absl::nullopt_t>::value));
@@ -219,7 +224,7 @@ TEST(optionalTest, CopyConstructor) {
 
   EXPECT_FALSE(
       absl::is_trivially_copy_constructible<absl::optional<Copyable>>::value);
-#if defined(ABSL_HAVE_STD_OPTIONAL) && defined(__GLIBCXX__)
+#if defined(ABSL_USES_STD_OPTIONAL) && defined(__GLIBCXX__)
   // libstdc++ std::optional implementation (as of 7.2) has a bug: when T is
   // trivially copyable, optional<T> is not trivially copyable (due to one of
   // its base class is unconditionally nontrivial).
@@ -274,7 +279,7 @@ TEST(optionalTest, CopyConstructor) {
     // std::optional when T is volatile-qualified. So skipping this test.
     // Bug report:
     // https://connect.microsoft.com/VisualStudio/feedback/details/3142534
-#if defined(ABSL_HAVE_STD_OPTIONAL) && defined(_MSC_VER) && _MSC_VER >= 1911
+#if defined(ABSL_USES_STD_OPTIONAL) && defined(_MSC_VER) && _MSC_VER >= 1911
 #define ABSL_MSVC_OPTIONAL_VOLATILE_COPY_BUG 1
 #endif
 #ifndef ABSL_MSVC_OPTIONAL_VOLATILE_COPY_BUG
@@ -300,7 +305,7 @@ TEST(optionalTest, MoveConstructor) {
   EXPECT_FALSE(std::is_move_constructible<absl::optional<NonMovable>>::value);
   // test noexcept
   EXPECT_TRUE(std::is_nothrow_move_constructible<absl::optional<int>>::value);
-#ifndef ABSL_HAVE_STD_OPTIONAL
+#ifndef ABSL_USES_STD_OPTIONAL
   EXPECT_EQ(
       absl::default_allocator_is_nothrow::value,
       std::is_nothrow_move_constructible<absl::optional<MoveableThrow>>::value);
@@ -337,16 +342,18 @@ TEST(optionalTest, InPlaceConstructor) {
   static_assert((*opt2).x == ConstexprType::kCtorInitializerList, "");
 #endif
 
-  // TODO(absl-team): uncomment these when std::is_constructible<T, Args&&...>
-  // SFINAE is added to optional::optional(absl::in_place_t, Args&&...).
-  // struct I {
-  //   I(absl::in_place_t);
-  // };
+  EXPECT_FALSE((std::is_constructible<absl::optional<ConvertsFromInPlaceT>,
+                                      absl::in_place_t>::value));
+  EXPECT_FALSE((std::is_constructible<absl::optional<ConvertsFromInPlaceT>,
+                                      const absl::in_place_t&>::value));
+  EXPECT_TRUE(
+      (std::is_constructible<absl::optional<ConvertsFromInPlaceT>,
+                             absl::in_place_t, absl::in_place_t>::value));
 
-  // EXPECT_FALSE((std::is_constructible<absl::optional<I>,
-  // absl::in_place_t>::value));
-  // EXPECT_FALSE((std::is_constructible<absl::optional<I>, const
-  // absl::in_place_t&>::value));
+  EXPECT_FALSE((std::is_constructible<absl::optional<NoDefault>,
+                                      absl::in_place_t>::value));
+  EXPECT_FALSE((std::is_constructible<absl::optional<NoDefault>,
+                                      absl::in_place_t&&>::value));
 }
 
 // template<U=T> optional(U&&);
@@ -607,11 +614,12 @@ TEST(optionalTest, CopyAssignment) {
   opt2_to_empty = empty;
   EXPECT_FALSE(opt2_to_empty);
 
-  EXPECT_FALSE(std::is_copy_assignable<absl::optional<const int>>::value);
-  EXPECT_TRUE(std::is_copy_assignable<absl::optional<Copyable>>::value);
-  EXPECT_FALSE(std::is_copy_assignable<absl::optional<MoveableThrow>>::value);
-  EXPECT_FALSE(std::is_copy_assignable<absl::optional<MoveableNoThrow>>::value);
-  EXPECT_FALSE(std::is_copy_assignable<absl::optional<NonMovable>>::value);
+  EXPECT_FALSE(absl::is_copy_assignable<absl::optional<const int>>::value);
+  EXPECT_TRUE(absl::is_copy_assignable<absl::optional<Copyable>>::value);
+  EXPECT_FALSE(absl::is_copy_assignable<absl::optional<MoveableThrow>>::value);
+  EXPECT_FALSE(
+      absl::is_copy_assignable<absl::optional<MoveableNoThrow>>::value);
+  EXPECT_FALSE(absl::is_copy_assignable<absl::optional<NonMovable>>::value);
 
   EXPECT_TRUE(absl::is_trivially_copy_assignable<int>::value);
   EXPECT_TRUE(absl::is_trivially_copy_assignable<volatile int>::value);
@@ -625,13 +633,13 @@ TEST(optionalTest, CopyAssignment) {
   };
 
   EXPECT_TRUE(absl::is_trivially_copy_assignable<Trivial>::value);
-  EXPECT_FALSE(std::is_copy_assignable<const Trivial>::value);
-  EXPECT_FALSE(std::is_copy_assignable<volatile Trivial>::value);
-  EXPECT_TRUE(std::is_copy_assignable<NonTrivial>::value);
+  EXPECT_FALSE(absl::is_copy_assignable<const Trivial>::value);
+  EXPECT_FALSE(absl::is_copy_assignable<volatile Trivial>::value);
+  EXPECT_TRUE(absl::is_copy_assignable<NonTrivial>::value);
   EXPECT_FALSE(absl::is_trivially_copy_assignable<NonTrivial>::value);
 
   // std::optional doesn't support volatile nontrivial types.
-#ifndef ABSL_HAVE_STD_OPTIONAL
+#ifndef ABSL_USES_STD_OPTIONAL
   {
     StructorListener listener;
     Listenable::listener = &listener;
@@ -650,7 +658,7 @@ TEST(optionalTest, CopyAssignment) {
     EXPECT_EQ(1, listener.destruct);
     EXPECT_EQ(1, listener.volatile_copy_assign);
   }
-#endif  // ABSL_HAVE_STD_OPTIONAL
+#endif  // ABSL_USES_STD_OPTIONAL
 }
 
 TEST(optionalTest, MoveAssignment) {
@@ -674,7 +682,7 @@ TEST(optionalTest, MoveAssignment) {
     EXPECT_EQ(1, listener.move_assign);
   }
   // std::optional doesn't support volatile nontrivial types.
-#ifndef ABSL_HAVE_STD_OPTIONAL
+#ifndef ABSL_USES_STD_OPTIONAL
   {
     StructorListener listener;
     Listenable::listener = &listener;
@@ -694,12 +702,12 @@ TEST(optionalTest, MoveAssignment) {
     EXPECT_EQ(1, listener.destruct);
     EXPECT_EQ(1, listener.volatile_move_assign);
   }
-#endif  // ABSL_HAVE_STD_OPTIONAL
-  EXPECT_FALSE(std::is_move_assignable<absl::optional<const int>>::value);
-  EXPECT_TRUE(std::is_move_assignable<absl::optional<Copyable>>::value);
-  EXPECT_TRUE(std::is_move_assignable<absl::optional<MoveableThrow>>::value);
-  EXPECT_TRUE(std::is_move_assignable<absl::optional<MoveableNoThrow>>::value);
-  EXPECT_FALSE(std::is_move_assignable<absl::optional<NonMovable>>::value);
+#endif  // ABSL_USES_STD_OPTIONAL
+  EXPECT_FALSE(absl::is_move_assignable<absl::optional<const int>>::value);
+  EXPECT_TRUE(absl::is_move_assignable<absl::optional<Copyable>>::value);
+  EXPECT_TRUE(absl::is_move_assignable<absl::optional<MoveableThrow>>::value);
+  EXPECT_TRUE(absl::is_move_assignable<absl::optional<MoveableNoThrow>>::value);
+  EXPECT_FALSE(absl::is_move_assignable<absl::optional<NonMovable>>::value);
 
   EXPECT_FALSE(
       std::is_nothrow_move_assignable<absl::optional<MoveableThrow>>::value);
@@ -936,7 +944,7 @@ TEST(optionalTest, Swap) {
 
 template <int v>
 struct DeletedOpAddr {
-  constexpr static const int value = v;
+  int value = v;
   constexpr DeletedOpAddr() = default;
   constexpr const DeletedOpAddr<v>* operator&() const = delete;  // NOLINT
   DeletedOpAddr<v>* operator&() = delete;                        // NOLINT
@@ -946,9 +954,9 @@ struct DeletedOpAddr {
 // to document the fact that the current implementation of absl::optional<T>
 // expects such usecases to be malformed and not compile.
 TEST(optionalTest, OperatorAddr) {
-  constexpr const int v = -1;
+  constexpr int v = -1;
   {  // constexpr
-    constexpr const absl::optional<DeletedOpAddr<v>> opt(absl::in_place_t{});
+    constexpr absl::optional<DeletedOpAddr<v>> opt(absl::in_place_t{});
     static_assert(opt.has_value(), "");
     // static_assert(opt->value == v, "");
     static_assert((*opt).value == v, "");
@@ -1041,9 +1049,9 @@ TEST(optionalTest, Value) {
   // test exception throw on value()
   absl::optional<int> empty;
 #ifdef ABSL_HAVE_EXCEPTIONS
-  EXPECT_THROW(empty.value(), absl::bad_optional_access);
+  EXPECT_THROW((void)empty.value(), absl::bad_optional_access);
 #else
-  EXPECT_DEATH(empty.value(), "Bad optional access");
+  EXPECT_DEATH((void)empty.value(), "Bad optional access");
 #endif
 
   // test constexpr value()
@@ -1475,8 +1483,8 @@ TEST(optionalTest, MoveAssignRegression) {
 
 TEST(optionalTest, ValueType) {
   EXPECT_TRUE((std::is_same<absl::optional<int>::value_type, int>::value));
-  EXPECT_TRUE(
-      (std::is_same<absl::optional<std::string>::value_type, std::string>::value));
+  EXPECT_TRUE((std::is_same<absl::optional<std::string>::value_type,
+                            std::string>::value));
   EXPECT_FALSE(
       (std::is_same<absl::optional<int>::value_type, absl::nullopt_t>::value));
 }
@@ -1503,18 +1511,19 @@ TEST(optionalTest, Hash) {
 
   static_assert(is_hash_enabled_for<absl::optional<int>>::value, "");
   static_assert(is_hash_enabled_for<absl::optional<Hashable>>::value, "");
+  static_assert(
+      absl::type_traits_internal::IsHashable<absl::optional<int>>::value, "");
+  static_assert(
+      absl::type_traits_internal::IsHashable<absl::optional<Hashable>>::value,
+      "");
+  absl::type_traits_internal::AssertHashEnabled<absl::optional<int>>();
+  absl::type_traits_internal::AssertHashEnabled<absl::optional<Hashable>>();
 
-#if defined(_MSC_VER) || (defined(_LIBCPP_VERSION) && \
-                          _LIBCPP_VERSION < 4000 && _LIBCPP_STD_VER > 11)
-  // For MSVC and libc++ (< 4.0 and c++14), std::hash primary template has a
-  // static_assert to catch any user-defined type that doesn't provide a hash
-  // specialization. So instantiating std::hash<absl::optional<T>> will result
-  // in a hard error which is not SFINAE friendly.
-#define ABSL_STD_HASH_NOT_SFINAE_FRIENDLY 1
-#endif
-
-#ifndef ABSL_STD_HASH_NOT_SFINAE_FRIENDLY
+#if ABSL_META_INTERNAL_STD_HASH_SFINAE_FRIENDLY_
   static_assert(!is_hash_enabled_for<absl::optional<NonHashable>>::value, "");
+  static_assert(!absl::type_traits_internal::IsHashable<
+                    absl::optional<NonHashable>>::value,
+                "");
 #endif
 
   // libstdc++ std::optional is missing remove_const_t, i.e. it's using
@@ -1551,7 +1560,7 @@ TEST(optionalTest, NoExcept) {
   static_assert(
       std::is_nothrow_move_constructible<absl::optional<MoveMeNoThrow>>::value,
       "");
-#ifndef ABSL_HAVE_STD_OPTIONAL
+#ifndef ABSL_USES_STD_OPTIONAL
   static_assert(absl::default_allocator_is_nothrow::value ==
                     std::is_nothrow_move_constructible<
                         absl::optional<MoveMeThrow>>::value,
@@ -1619,7 +1628,34 @@ TEST(optionalTest, AssignmentConstraints) {
   EXPECT_TRUE(
       (std::is_assignable<absl::optional<AnyLike>&, const AnyLike&>::value));
   EXPECT_TRUE(std::is_move_assignable<absl::optional<AnyLike>>::value);
-  EXPECT_TRUE(std::is_copy_assignable<absl::optional<AnyLike>>::value);
+  EXPECT_TRUE(absl::is_copy_assignable<absl::optional<AnyLike>>::value);
 }
 
+#if !defined(__EMSCRIPTEN__)
+struct NestedClassBug {
+  struct Inner {
+    bool dummy = false;
+  };
+  absl::optional<Inner> value;
+};
+
+TEST(optionalTest, InPlaceTSFINAEBug) {
+  NestedClassBug b;
+  ((void)b);
+  using Inner = NestedClassBug::Inner;
+
+  EXPECT_TRUE((std::is_default_constructible<Inner>::value));
+  EXPECT_TRUE((std::is_constructible<Inner>::value));
+  EXPECT_TRUE(
+      (std::is_constructible<absl::optional<Inner>, absl::in_place_t>::value));
+
+  absl::optional<Inner> o(absl::in_place);
+  EXPECT_TRUE(o.has_value());
+  o.emplace();
+  EXPECT_TRUE(o.has_value());
+}
+#endif  // !defined(__EMSCRIPTEN__)
+
 }  // namespace
+
+#endif  // #if !defined(ABSL_USES_STD_OPTIONAL)

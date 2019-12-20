@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//      https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file contains std::string processing functions related to
+// This file contains string processing functions related to
 // numeric values.
 
 #include "absl/strings/numbers.h"
 
 #include <algorithm>
 #include <cassert>
-#include <cfloat>          // for DBL_DIG and FLT_DIG
-#include <cmath>           // for HUGE_VAL
+#include <cfloat>  // for DBL_DIG and FLT_DIG
+#include <cmath>   // for HUGE_VAL
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -30,120 +30,82 @@
 #include <memory>
 #include <utility>
 
+#include "absl/base/internal/bits.h"
 #include "absl/base/internal/raw_logging.h"
 #include "absl/strings/ascii.h"
-#include "absl/strings/internal/bits.h"
+#include "absl/strings/charconv.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/internal/memutil.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
 namespace absl {
+ABSL_NAMESPACE_BEGIN
 
-bool SimpleAtof(absl::string_view str, float* value) {
-  *value = 0.0;
-  if (str.empty()) return false;
-  char buf[32];
-  std::unique_ptr<char[]> bigbuf;
-  char* ptr = buf;
-  if (str.size() > sizeof(buf) - 1) {
-    bigbuf.reset(new char[str.size() + 1]);
-    ptr = bigbuf.get();
+bool SimpleAtof(absl::string_view str, float* out) {
+  *out = 0.0;
+  str = StripAsciiWhitespace(str);
+  if (!str.empty() && str[0] == '+') {
+    str.remove_prefix(1);
   }
-  memcpy(ptr, str.data(), str.size());
-  ptr[str.size()] = '\0';
-
-  char* endptr;
-  *value = strtof(ptr, &endptr);
-  if (endptr != ptr) {
-    while (absl::ascii_isspace(*endptr)) ++endptr;
+  auto result = absl::from_chars(str.data(), str.data() + str.size(), *out);
+  if (result.ec == std::errc::invalid_argument) {
+    return false;
   }
-  // Ignore range errors from strtod/strtof.
-  // The values it returns on underflow and
-  // overflow are the right fallback in a
-  // robust setting.
-  return *ptr != '\0' && *endptr == '\0';
+  if (result.ptr != str.data() + str.size()) {
+    // not all non-whitespace characters consumed
+    return false;
+  }
+  // from_chars() with DR 3081's current wording will return max() on
+  // overflow.  SimpleAtof returns infinity instead.
+  if (result.ec == std::errc::result_out_of_range) {
+    if (*out > 1.0) {
+      *out = std::numeric_limits<float>::infinity();
+    } else if (*out < -1.0) {
+      *out = -std::numeric_limits<float>::infinity();
+    }
+  }
+  return true;
 }
 
-bool SimpleAtod(absl::string_view str, double* value) {
-  *value = 0.0;
-  if (str.empty()) return false;
-  char buf[32];
-  std::unique_ptr<char[]> bigbuf;
-  char* ptr = buf;
-  if (str.size() > sizeof(buf) - 1) {
-    bigbuf.reset(new char[str.size() + 1]);
-    ptr = bigbuf.get();
+bool SimpleAtod(absl::string_view str, double* out) {
+  *out = 0.0;
+  str = StripAsciiWhitespace(str);
+  if (!str.empty() && str[0] == '+') {
+    str.remove_prefix(1);
   }
-  memcpy(ptr, str.data(), str.size());
-  ptr[str.size()] = '\0';
-
-  char* endptr;
-  *value = strtod(ptr, &endptr);
-  if (endptr != ptr) {
-    while (absl::ascii_isspace(*endptr)) ++endptr;
+  auto result = absl::from_chars(str.data(), str.data() + str.size(), *out);
+  if (result.ec == std::errc::invalid_argument) {
+    return false;
   }
-  // Ignore range errors from strtod.  The values it
-  // returns on underflow and overflow are the right
-  // fallback in a robust setting.
-  return *ptr != '\0' && *endptr == '\0';
+  if (result.ptr != str.data() + str.size()) {
+    // not all non-whitespace characters consumed
+    return false;
+  }
+  // from_chars() with DR 3081's current wording will return max() on
+  // overflow.  SimpleAtod returns infinity instead.
+  if (result.ec == std::errc::result_out_of_range) {
+    if (*out > 1.0) {
+      *out = std::numeric_limits<double>::infinity();
+    } else if (*out < -1.0) {
+      *out = -std::numeric_limits<double>::infinity();
+    }
+  }
+  return true;
 }
 
-namespace {
-
-// TODO(rogeeff): replace with the real released thing once we figure out what
-// it is.
-inline bool CaseEqual(absl::string_view piece1, absl::string_view piece2) {
-  return (piece1.size() == piece2.size() &&
-          0 == strings_internal::memcasecmp(piece1.data(), piece2.data(),
-                                            piece1.size()));
-}
-
-// Writes a two-character representation of 'i' to 'buf'. 'i' must be in the
-// range 0 <= i < 100, and buf must have space for two characters. Example:
-//   char buf[2];
-//   PutTwoDigits(42, buf);
-//   // buf[0] == '4'
-//   // buf[1] == '2'
-inline void PutTwoDigits(size_t i, char* buf) {
-  static const char two_ASCII_digits[100][2] = {
-    {'0', '0'}, {'0', '1'}, {'0', '2'}, {'0', '3'}, {'0', '4'},
-    {'0', '5'}, {'0', '6'}, {'0', '7'}, {'0', '8'}, {'0', '9'},
-    {'1', '0'}, {'1', '1'}, {'1', '2'}, {'1', '3'}, {'1', '4'},
-    {'1', '5'}, {'1', '6'}, {'1', '7'}, {'1', '8'}, {'1', '9'},
-    {'2', '0'}, {'2', '1'}, {'2', '2'}, {'2', '3'}, {'2', '4'},
-    {'2', '5'}, {'2', '6'}, {'2', '7'}, {'2', '8'}, {'2', '9'},
-    {'3', '0'}, {'3', '1'}, {'3', '2'}, {'3', '3'}, {'3', '4'},
-    {'3', '5'}, {'3', '6'}, {'3', '7'}, {'3', '8'}, {'3', '9'},
-    {'4', '0'}, {'4', '1'}, {'4', '2'}, {'4', '3'}, {'4', '4'},
-    {'4', '5'}, {'4', '6'}, {'4', '7'}, {'4', '8'}, {'4', '9'},
-    {'5', '0'}, {'5', '1'}, {'5', '2'}, {'5', '3'}, {'5', '4'},
-    {'5', '5'}, {'5', '6'}, {'5', '7'}, {'5', '8'}, {'5', '9'},
-    {'6', '0'}, {'6', '1'}, {'6', '2'}, {'6', '3'}, {'6', '4'},
-    {'6', '5'}, {'6', '6'}, {'6', '7'}, {'6', '8'}, {'6', '9'},
-    {'7', '0'}, {'7', '1'}, {'7', '2'}, {'7', '3'}, {'7', '4'},
-    {'7', '5'}, {'7', '6'}, {'7', '7'}, {'7', '8'}, {'7', '9'},
-    {'8', '0'}, {'8', '1'}, {'8', '2'}, {'8', '3'}, {'8', '4'},
-    {'8', '5'}, {'8', '6'}, {'8', '7'}, {'8', '8'}, {'8', '9'},
-    {'9', '0'}, {'9', '1'}, {'9', '2'}, {'9', '3'}, {'9', '4'},
-    {'9', '5'}, {'9', '6'}, {'9', '7'}, {'9', '8'}, {'9', '9'}
-  };
-  assert(i < 100);
-  memcpy(buf, two_ASCII_digits[i], 2);
-}
-
-}  // namespace
-
-bool SimpleAtob(absl::string_view str, bool* value) {
-  ABSL_RAW_CHECK(value != nullptr, "Output pointer must not be nullptr.");
-  if (CaseEqual(str, "true") || CaseEqual(str, "t") ||
-      CaseEqual(str, "yes") || CaseEqual(str, "y") ||
-      CaseEqual(str, "1")) {
-    *value = true;
+bool SimpleAtob(absl::string_view str, bool* out) {
+  ABSL_RAW_CHECK(out != nullptr, "Output pointer must not be nullptr.");
+  if (EqualsIgnoreCase(str, "true") || EqualsIgnoreCase(str, "t") ||
+      EqualsIgnoreCase(str, "yes") || EqualsIgnoreCase(str, "y") ||
+      EqualsIgnoreCase(str, "1")) {
+    *out = true;
     return true;
   }
-  if (CaseEqual(str, "false") || CaseEqual(str, "f") ||
-      CaseEqual(str, "no") || CaseEqual(str, "n") ||
-      CaseEqual(str, "0")) {
-    *value = false;
+  if (EqualsIgnoreCase(str, "false") || EqualsIgnoreCase(str, "f") ||
+      EqualsIgnoreCase(str, "no") || EqualsIgnoreCase(str, "n") ||
+      EqualsIgnoreCase(str, "0")) {
+    *out = false;
     return true;
   }
   return false;
@@ -157,8 +119,8 @@ bool SimpleAtob(absl::string_view str, bool* value) {
 // their output to the beginning of the buffer.  The caller is responsible
 // for ensuring that the buffer has enough space to hold the output.
 //
-// Returns a pointer to the end of the std::string (i.e. the null character
-// terminating the std::string).
+// Returns a pointer to the end of the string (i.e. the null character
+// terminating the string).
 // ----------------------------------------------------------------------
 
 namespace {
@@ -340,7 +302,7 @@ static std::pair<uint64_t, uint64_t> Mul32(std::pair<uint64_t, uint64_t> num,
   uint64_t bits128_up = (bits96_127 >> 32) + (bits64_127 < bits64_95);
   if (bits128_up == 0) return {bits64_127, bits0_63};
 
-  int shift = 64 - strings_internal::CountLeadingZeros64(bits128_up);
+  int shift = 64 - base_internal::CountLeadingZeros64(bits128_up);
   uint64_t lo = (bits0_63 >> shift) + (bits64_127 << (64 - shift));
   uint64_t hi = (bits64_127 >> shift) + (bits128_up << (64 - shift));
   return {hi, lo};
@@ -371,7 +333,7 @@ static std::pair<uint64_t, uint64_t> PowFive(uint64_t num, int expfive) {
       5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5,
       5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5};
   result = Mul32(result, powers_of_five[expfive & 15]);
-  int shift = strings_internal::CountLeadingZeros64(result.first);
+  int shift = base_internal::CountLeadingZeros64(result.first);
   if (shift != 0) {
     result.first = (result.first << shift) + (result.second >> (64 - shift));
     result.second = (result.second << shift);
@@ -498,13 +460,13 @@ static ExpDigits SplitToSix(const double value) {
 
   int two_digits = dddddd / 10000;
   dddddd -= two_digits * 10000;
-  PutTwoDigits(two_digits, &exp_dig.digits[0]);
+  numbers_internal::PutTwoDigits(two_digits, &exp_dig.digits[0]);
 
   two_digits = dddddd / 100;
   dddddd -= two_digits * 100;
-  PutTwoDigits(two_digits, &exp_dig.digits[2]);
+  numbers_internal::PutTwoDigits(two_digits, &exp_dig.digits[2]);
 
-  PutTwoDigits(dddddd, &exp_dig.digits[4]);
+  numbers_internal::PutTwoDigits(dddddd, &exp_dig.digits[4]);
   return exp_dig;
 }
 
@@ -888,6 +850,47 @@ inline bool safe_uint_internal(absl::string_view text, IntType* value_p,
 }  // anonymous namespace
 
 namespace numbers_internal {
+
+// Digit conversion.
+ABSL_CONST_INIT const char kHexChar[] = "0123456789abcdef";
+
+ABSL_CONST_INIT const char kHexTable[513] =
+    "000102030405060708090a0b0c0d0e0f"
+    "101112131415161718191a1b1c1d1e1f"
+    "202122232425262728292a2b2c2d2e2f"
+    "303132333435363738393a3b3c3d3e3f"
+    "404142434445464748494a4b4c4d4e4f"
+    "505152535455565758595a5b5c5d5e5f"
+    "606162636465666768696a6b6c6d6e6f"
+    "707172737475767778797a7b7c7d7e7f"
+    "808182838485868788898a8b8c8d8e8f"
+    "909192939495969798999a9b9c9d9e9f"
+    "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
+    "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+    "c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
+    "d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+    "e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
+    "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff";
+
+ABSL_CONST_INIT const char two_ASCII_digits[100][2] = {
+    {'0', '0'}, {'0', '1'}, {'0', '2'}, {'0', '3'}, {'0', '4'}, {'0', '5'},
+    {'0', '6'}, {'0', '7'}, {'0', '8'}, {'0', '9'}, {'1', '0'}, {'1', '1'},
+    {'1', '2'}, {'1', '3'}, {'1', '4'}, {'1', '5'}, {'1', '6'}, {'1', '7'},
+    {'1', '8'}, {'1', '9'}, {'2', '0'}, {'2', '1'}, {'2', '2'}, {'2', '3'},
+    {'2', '4'}, {'2', '5'}, {'2', '6'}, {'2', '7'}, {'2', '8'}, {'2', '9'},
+    {'3', '0'}, {'3', '1'}, {'3', '2'}, {'3', '3'}, {'3', '4'}, {'3', '5'},
+    {'3', '6'}, {'3', '7'}, {'3', '8'}, {'3', '9'}, {'4', '0'}, {'4', '1'},
+    {'4', '2'}, {'4', '3'}, {'4', '4'}, {'4', '5'}, {'4', '6'}, {'4', '7'},
+    {'4', '8'}, {'4', '9'}, {'5', '0'}, {'5', '1'}, {'5', '2'}, {'5', '3'},
+    {'5', '4'}, {'5', '5'}, {'5', '6'}, {'5', '7'}, {'5', '8'}, {'5', '9'},
+    {'6', '0'}, {'6', '1'}, {'6', '2'}, {'6', '3'}, {'6', '4'}, {'6', '5'},
+    {'6', '6'}, {'6', '7'}, {'6', '8'}, {'6', '9'}, {'7', '0'}, {'7', '1'},
+    {'7', '2'}, {'7', '3'}, {'7', '4'}, {'7', '5'}, {'7', '6'}, {'7', '7'},
+    {'7', '8'}, {'7', '9'}, {'8', '0'}, {'8', '1'}, {'8', '2'}, {'8', '3'},
+    {'8', '4'}, {'8', '5'}, {'8', '6'}, {'8', '7'}, {'8', '8'}, {'8', '9'},
+    {'9', '0'}, {'9', '1'}, {'9', '2'}, {'9', '3'}, {'9', '4'}, {'9', '5'},
+    {'9', '6'}, {'9', '7'}, {'9', '8'}, {'9', '9'}};
+
 bool safe_strto32_base(absl::string_view text, int32_t* value, int base) {
   return safe_int_internal<int32_t>(text, value, base);
 }
@@ -903,6 +906,11 @@ bool safe_strtou32_base(absl::string_view text, uint32_t* value, int base) {
 bool safe_strtou64_base(absl::string_view text, uint64_t* value, int base) {
   return safe_uint_internal<uint64_t>(text, value, base);
 }
-}  // namespace numbers_internal
 
+bool safe_strtou128_base(absl::string_view text, uint128* value, int base) {
+  return safe_uint_internal<absl::uint128>(text, value, base);
+}
+
+}  // namespace numbers_internal
+ABSL_NAMESPACE_END
 }  // namespace absl

@@ -16,10 +16,15 @@ add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
 add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})
 
 set_target_properties(klogg PROPERTIES AUTORCC ON)
+set_target_properties(klogg PROPERTIES AUTOMOC ON)
 set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
+set_target_properties(klogg_portable PROPERTIES AUTOMOC ON)
 
+
+if (${USE_LTO})
 set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 set_property(TARGET klogg_portable PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 set(MAIN_LIBS ui cli11 singleapp)
 if (NOT APPLE)

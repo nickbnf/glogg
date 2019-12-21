@@ -105,6 +105,7 @@ class MainWindow : public QMainWindow {
     void openContainingFolder();
     void openInEditor();
     void openClipboard();
+    void openUrl();
     void highlighters();
     void options();
     void about();
@@ -203,6 +204,7 @@ class MainWindow : public QMainWindow {
     QLabel* dateField;
     QLabel* encodingField;
     std::vector<QAction*> infoToolbarSeparators;
+
     QToolBar* toolBar;
 
     QAction* newWindowAction;
@@ -218,6 +220,7 @@ class MainWindow : public QMainWindow {
     QAction* openContainingFolderAction;
     QAction* openInEditorAction;
     QAction* openClipboardAction;
+    QAction *openUrlAction;
     QAction* overviewVisibleAction;
     QAction* lineNumbersVisibleInMainAction;
     QAction* lineNumbersVisibleInFilteredAction;
@@ -252,6 +255,8 @@ class MainWindow : public QMainWindow {
     TabbedCrawlerWidget mainTabWidget_;
 
     TabbedScratchPad scratchPad_;
+
+    QNetworkAccessManager networkAccessManager_;
 
     bool isMaximized_ = false;
     bool isCloseFromTray_ = false;

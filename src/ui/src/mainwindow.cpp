@@ -40,6 +40,7 @@
 // managing the menus, the toolbar, and the CrawlerWidget. It also
 // load/save the settings on opening/closing of the app
 
+#include <QNetworkReply>
 #include <cassert>
 #include <iostream>
 
@@ -333,6 +334,10 @@ void MainWindow::createActions()
     openClipboardAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Paste ) );
     connect( openClipboardAction, &QAction::triggered, [this]( auto ) { this->openClipboard(); } );
 
+    openUrlAction = new QAction( tr( "Open from URL..." ), this );
+    openUrlAction->setStatusTip( tr( "Open URL as log file" ) );
+    connect( openUrlAction, &QAction::triggered, [this]( auto ) { this->openUrl(); } );
+
     overviewVisibleAction = new QAction( tr( "Matches &overview" ), this );
     overviewVisibleAction->setCheckable( true );
     overviewVisibleAction->setChecked( config.isOverviewVisible() );
@@ -422,6 +427,7 @@ void MainWindow::createMenus()
     fileMenu->addAction( newWindowAction );
     fileMenu->addAction( openAction );
     fileMenu->addAction( openClipboardAction );
+    fileMenu->addAction( openUrlAction );
     fileMenu->addAction( closeAction );
     fileMenu->addAction( closeAllAction );
     fileMenu->addSeparator();
@@ -725,6 +731,16 @@ void MainWindow::openClipboard()
         tempFile->flush();
 
         loadFile( tempFile->fileName() );
+    }
+}
+
+void MainWindow::openUrl()
+{
+    bool ok;
+    QString url = QInputDialog::getText( this, tr( "Open URL as log file" ), tr( "URL:" ),
+                                         QLineEdit::Normal, "", &ok );
+    if ( ok && !url.isEmpty() ) {
+        openRemoteFile( url );
     }
 }
 

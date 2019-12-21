@@ -53,6 +53,7 @@
 #include <QFileDialog>
 #include <QFontMetrics>
 #include <QGestureEvent>
+#include <QInputDialog>
 #include <QMenu>
 #include <QPaintEvent>
 #include <QPainter>
@@ -159,7 +160,8 @@ std::vector<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
     return list;
 }
 
-inline void LineDrawer::addChunk( int first_col, int last_col, const QColor& fore, const QColor& back )
+inline void LineDrawer::addChunk( int first_col, int last_col, const QColor& fore,
+                                  const QColor& back )
 {
     if ( first_col < 0 )
         first_col = 0;
@@ -477,7 +479,7 @@ void AbstractLogView::mouseReleaseEvent( QMouseEvent* mouseEvent )
             // Invalidate our cache
             textAreaCache_.invalid_ = true;
 
-            emit markLines( {*line} );
+            emit markLines( { *line } );
         }
     }
     else {
@@ -554,6 +556,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 
     const auto controlModifier = keyEvent->modifiers().testFlag( Qt::ControlModifier );
     const auto shiftModifier = keyEvent->modifiers().testFlag( Qt::ShiftModifier );
+    const auto altModifier = keyEvent->modifiers().testFlag( Qt::AltModifier );
     const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
     const auto jumpToBottomLine = [this]() {
@@ -589,72 +592,42 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( keyEvent->key() == Qt::Key_Space && noModifier )
         emit exitView();
     else {
-        const auto text = keyEvent->text();
-
-        if ( keyEvent->modifiers() == Qt::NoModifier && text.count() == 1 ) {
-            const auto character = text.at( 0 ).toLatin1();
-            if ( ( ( character > '0' ) && ( character <= '9' ) )
-                 || ( !digitsBuffer_.isEmpty() && character == '0' ) ) {
-                // Adds the digit to the timed buffer
-                digitsBuffer_.add( character );
-            }
+        switch ( keyEvent->key() ) {
+        case Qt::Key_J:
+            moveSelectionDown();
+            break;
+        case Qt::Key_K:
+            moveSelectionUp();
+            break;
+        case Qt::Key_H:
+            horizontalScrollBar()->triggerAction( QScrollBar::SliderSingleStepSub );
+            break;
+        case Qt::Key_L:
+            horizontalScrollBar()->triggerAction( QScrollBar::SliderSingleStepAdd );
+            break;
+        case Qt::Key_0:
+        case Qt::Key_AsciiCircum:
+            jumpToStartOfLine();
+            break;
+        case Qt::Key_Dollar:
+            jumpToEndOfLine();
+            break;
+        case Qt::Key_Asterisk:
+        case Qt::Key_Period:
+            // Use the selected 'word' and search forward
+            findNextSelected();
+            break;
+        case Qt::Key_Slash:
+        case Qt::Key_Comma:
+            // Use the selected 'word' and search backward
+            findPreviousSelected();
+            break;
+        case Qt::Key_M: {
+            markSelected();
+            break;
         }
-        else {
-            switch ( keyEvent->key() ) {
-            case Qt::Key_J:
-                moveSelectionDown();
-                break;
-            case Qt::Key_K:
-                moveSelectionUp();
-                break;
-            case Qt::Key_H:
-                horizontalScrollBar()->triggerAction( QScrollBar::SliderSingleStepSub );
-                break;
-            case Qt::Key_L:
-                horizontalScrollBar()->triggerAction( QScrollBar::SliderSingleStepAdd );
-                break;
-            case Qt::Key_0:
-            case Qt::Key_AsciiCircum:
-                jumpToStartOfLine();
-                break;
-            case Qt::Key_Dollar:
-                jumpToEndOfLine();
-                break;
-            case Qt::Key_Asterisk:
-            case Qt::Key_Period:
-                // Use the selected 'word' and search forward
-                findNextSelected();
-                break;
-            case Qt::Key_Slash:
-            case Qt::Key_Comma:
-                // Use the selected 'word' and search backward
-                findPreviousSelected();
-                break;
-            case Qt::Key_M: {
-                markSelected();
-                break;
-            }
-            case Qt::Key_G:
-                if ( controlModifier ) {
-                    if ( shiftModifier ) {
-                        emit searchPrevious();
-                    }
-                    else {
-                        emit searchNext();
-                    }
-                    break;
-                }
-                if ( shiftModifier ) {
-                    jumpToBottomLine();
-                }
-                else {
-                    LineNumber::UnderlyingType newLine = qMax( 0, digitsBuffer_.content() - 1 );
-                    if ( newLine >= logData->getNbLine().get() )
-                        newLine = logData->getNbLine().get() - 1;
-                    selectAndDisplayLine( LineNumber( newLine ) );
-                }
-                break;
-            case Qt::Key_N:
+        case Qt::Key_G:
+            if ( controlModifier ) {
                 if ( shiftModifier ) {
                     emit searchPrevious();
                 }
@@ -662,7 +635,50 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                     emit searchNext();
                 }
                 break;
-            default:
+            }
+            if ( shiftModifier ) {
+                jumpToBottomLine();
+            }
+            else {
+                bool isLineSelected = true;
+                LineNumber::UnderlyingType newLine = 0;
+                if ( altModifier ) {
+                    newLine = QInputDialog::getInt( this, "Jump to line", "Line", 1, 1,
+                                                    logData->getNbLine().get(), 1,
+                                                    &isLineSelected );
+                    newLine -= 1;
+                }
+                else {
+                    newLine = qMax( 0, digitsBuffer_.content() - 1 );
+                }
+
+                if ( newLine >= logData->getNbLine().get() )
+                    newLine = logData->getNbLine().get() - 1;
+                if ( isLineSelected ) {
+                    selectAndDisplayLine( LineNumber( newLine ) );
+                }
+            }
+            break;
+        case Qt::Key_N:
+            if ( shiftModifier ) {
+                emit searchPrevious();
+            }
+            else {
+                emit searchNext();
+            }
+            break;
+        default:
+            const auto text = keyEvent->text();
+
+            if ( keyEvent->modifiers() == Qt::NoModifier && text.count() == 1 ) {
+                const auto character = text.at( 0 ).toLatin1();
+                if ( ( ( character > '0' ) && ( character <= '9' ) )
+                     || ( !digitsBuffer_.isEmpty() && character == '0' ) ) {
+                    // Adds the digit to the timed buffer
+                    digitsBuffer_.add( character );
+                }
+            }
+            else {
                 keyEvent->ignore();
             }
         }
@@ -940,7 +956,7 @@ void AbstractLogView::searchUsingFunction(
     void ( QuickFind::*search_function )( Selection, QuickFindMatcher ) )
 {
     disableFollow();
-    (quickFind_->*search_function )( selection_, quickFindPattern_->getMatcher());
+    ( quickFind_->*search_function )( selection_, quickFindPattern_->getMatcher() );
 }
 
 void AbstractLogView::setQuickFindResult( bool hasMatch, Portion portion )
@@ -986,7 +1002,7 @@ void AbstractLogView::incrementalSearchStop()
 {
     auto oldSelection = quickFind_->incrementalSearchStop();
     if ( selection_.isEmpty() ) {
-        selection_ = oldSelection ;
+        selection_ = oldSelection;
     }
 }
 
@@ -1521,7 +1537,7 @@ void AbstractLogView::createMenu()
     // No text as this action title depends on the type of selection
     connect( copyAction_, &QAction::triggered, [this]( auto ) { this->copy(); } );
 
-    markAction_ = new QAction ( tr( "&Mark" ), this );
+    markAction_ = new QAction( tr( "&Mark" ), this );
     connect( markAction_, &QAction::triggered, [this]( auto ) { this->markSelected(); } );
 
     saveToFileAction_ = new QAction( tr( "Save to file" ), this );
@@ -1704,14 +1720,14 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
 
     const auto searchStartIndex = lineIndex( searchStart_ );
     const auto searchEndIndex = [this] {
-            auto index = lineIndex( searchEnd_ );
-            if (searchEnd_ + 1_lcount != displayLineNumber(index)) {
-                // in filtered view lineIndex for "past the end" returns last line
-                // it should not be marked as excluded
-                index = index + 1_lcount;
-            }
+        auto index = lineIndex( searchEnd_ );
+        if ( searchEnd_ + 1_lcount != displayLineNumber( index ) ) {
+            // in filtered view lineIndex for "past the end" returns last line
+            // it should not be marked as excluded
+            index = index + 1_lcount;
+        }
 
-            return index;
+        return index;
     }();
 
     // Then draw each line
@@ -1856,7 +1872,8 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
                 QPointF( 1, middleYLine + 2 ),
             };
 
-            painter.setBrush( line_type.testFlag( LineTypeFlags::Match ) ? markedMatchBrush : markBrush );
+            painter.setBrush( line_type.testFlag( LineTypeFlags::Match ) ? markedMatchBrush
+                                                                         : markBrush );
             painter.drawPolygon( points, 7 );
         }
         else {

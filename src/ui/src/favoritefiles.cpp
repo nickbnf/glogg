@@ -17,6 +17,8 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cmath>
+
 #include <QDir>
 #include <QFileInfo>
 #include <QSettings>
@@ -26,14 +28,36 @@
 
 namespace {
 constexpr const int FavoriteFilesVersion = 1;
+constexpr const int MaxPathLength = 32;
+
+
+const QString ELLIPSIS( "..." );
+
+QString limitString( const QString& aString, int maxLength )
+{
+    if ( aString.length() <= maxLength )
+        return aString;
+
+    float spacePerPart = ( maxLength - ELLIPSIS.length() ) / 2.0;
+    auto beforeEllipsis = aString.left( std::ceil( spacePerPart ) );
+    const auto leftSeparator = beforeEllipsis.lastIndexOf(QDir::separator());
+
+    auto afterEllipsis = aString.right( std::floor( spacePerPart ) );
+    const auto rightSeparator = afterEllipsis.indexOf(QDir::separator());
+
+    return aString.left(leftSeparator + 1) + ELLIPSIS + aString.right(rightSeparator - 1);
+}
+
 }
 
 FavoriteFiles::File::File( const QString& path )
     : fullPath( path )
 {
-    auto file = QFileInfo( path );
-    auto dir = QFileInfo( file.path() );
-    displayName = QString( "%1%2%3" ).arg( dir.fileName(), QDir::separator(), file.fileName() );
+    const auto fileInfo = QFileInfo(path);
+
+    auto fileName = fileInfo.fileName();
+    auto nativePath = QDir::toNativeSeparators(fileInfo.path());
+    displayName = QString("%1%2%3").arg(limitString(nativePath, MaxPathLength), QDir::separator(), fileName);
 }
 
 struct DisplayNameComparator {

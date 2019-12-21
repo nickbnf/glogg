@@ -58,7 +58,6 @@ class QAction;
 class QActionGroup;
 class Session;
 class RecentFiles;
-class MenuActionToolTipBehavior;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
@@ -188,7 +187,6 @@ class MainWindow : public QMainWindow
 
     enum { MaxRecentFiles = 5 };
     std::array<QAction*, MaxRecentFiles> recentFileActions;
-    std::array<MenuActionToolTipBehavior*, MaxRecentFiles> recentFileActionBehaviors;
     QActionGroup* recentFilesGroup;
 
     QMenu *fileMenu;
@@ -235,7 +233,6 @@ class MainWindow : public QMainWindow
     QAction *addToFavoritesMenuAction;
     QAction *removeFromFavoritesAction;
     QActionGroup *favoritesGroup;
-    std::vector<MenuActionToolTipBehavior*> favoriteFilesActionBehaviors;
 
     QSystemTrayIcon *trayIcon_;
 

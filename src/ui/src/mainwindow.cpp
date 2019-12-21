@@ -43,6 +43,8 @@
 #include <cassert>
 #include <iostream>
 
+#include <cmath>
+
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -72,7 +74,6 @@
 #include "encodings.h"
 #include "favoritefiles.h"
 #include "highlightersdialog.h"
-#include "menuactiontooltipbehavior.h"
 #include "optionsdialog.h"
 #include "recentfiles.h"
 #include "tabbedcrawlerwidget.h"
@@ -81,6 +82,10 @@
 
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
+
+namespace {
+
+} // namespace
 
 MainWindow::MainWindow( WindowSession session )
     : session_( std::move( session ) )
@@ -394,6 +399,7 @@ void MainWindow::createActions()
 void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu( tr( "&File" ) );
+    fileMenu->setToolTipsVisible( true );
     fileMenu->addAction( newWindowAction );
     fileMenu->addAction( openAction );
     fileMenu->addAction( openClipboardAction );
@@ -401,11 +407,8 @@ void MainWindow::createMenus()
     fileMenu->addAction( closeAllAction );
     fileMenu->addSeparator();
 
-    assert( recentFileActions.size() == recentFileActionBehaviors.size() );
     for ( auto i = 0u; i < recentFileActions.size(); ++i ) {
         fileMenu->addAction( recentFileActions[ i ] );
-        recentFileActionBehaviors[ i ]
-            = new MenuActionToolTipBehavior( recentFileActions[ i ], fileMenu, this );
     }
 
     fileMenu->addSeparator();
@@ -446,6 +449,7 @@ void MainWindow::createMenus()
     menuBar()->addSeparator();
 
     favoritesMenu = menuBar()->addMenu( tr( "Favorites" ) );
+    favoritesMenu->setToolTipsVisible( true );
 
     helpMenu = menuBar()->addMenu( tr( "&Help" ) );
     helpMenu->addAction( aboutQtAction );
@@ -1212,11 +1216,6 @@ void MainWindow::updateInfoLine()
 void MainWindow::updateFavoritesMenu()
 {
     favoritesMenu->clear();
-    for ( const auto& behavior : favoriteFilesActionBehaviors ) {
-        behavior->deleteLater();
-    }
-
-    favoriteFilesActionBehaviors.clear();
 
     favoritesMenu->addAction( addToFavoritesMenuAction );
     favoritesMenu->addAction( removeFromFavoritesAction );
@@ -1251,12 +1250,10 @@ void MainWindow::updateFavoritesMenu()
 
     for ( const auto& file : favorites ) {
         auto action = favoritesMenu->addAction( file.displayName );
+
         action->setActionGroup( favoritesGroup );
         action->setToolTip( file.fullPath );
         action->setData( file.fullPath );
-
-        favoriteFilesActionBehaviors.emplace_back(
-            new MenuActionToolTipBehavior( action, favoritesMenu, this ) );
     }
 }
 
@@ -1285,10 +1282,17 @@ void MainWindow::removeFromFavorites()
     std::transform( favorites.begin(), favorites.end(), std::back_inserter( files ),
                     []( const auto& f ) { return f.fullPath; } );
 
+    const auto currentPath = session_.getFilename( currentCrawlerWidget() );
+    const auto currentItem = std::find(files.begin(), files.end(), currentPath);
+    auto currentIndex = 0;
+    if (currentItem != files.end()) {
+        currentIndex = std::distance(files.begin(), currentItem);
+    }
+
     bool ok = false;
     const auto path
         = QInputDialog::getItem( this, "Remove from favorites",
-                                 "Select item to remove from favorites", files, 0, false, &ok );
+                                 "Select item to remove from favorites", files, currentIndex, false, &ok );
     if ( ok ) {
         favoriteFiles.remove( path );
         favoriteFiles.save();

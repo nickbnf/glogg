@@ -85,6 +85,11 @@ static QString readableSize( qint64 size );
 
 namespace {
 
+void signalCrawlerToFollowFile( CrawlerWidget* crawler_widget )
+{
+    QMetaObject::invokeMethod( crawler_widget, "followSet", Q_ARG( bool, true ) );
+}
+
 } // namespace
 
 MainWindow::MainWindow( WindowSession session )
@@ -210,20 +215,32 @@ void MainWindow::reloadGeometry()
 
 void MainWindow::reloadSession()
 {
+    const auto followFileOnLoad = Configuration::get().followFileOnLoad();
+
     int current_file_index = -1;
+    const auto openedFiles
+        = session_.restore( [] { return new CrawlerWidget(); }, &current_file_index );
 
-    for ( const auto& open_file :
-          session_.restore( []() { return new CrawlerWidget(); }, &current_file_index ) ) {
+    for ( const auto& open_file : openedFiles ) {
         QString file_name = { open_file.first };
-        auto* crawler_widget = dynamic_cast<CrawlerWidget*>( open_file.second );
+        auto* crawler_widget = static_cast<CrawlerWidget*>( open_file.second );
 
-        assert( crawler_widget );
+        if ( crawler_widget ) {
+            mainTabWidget_.addCrawler( crawler_widget, file_name );
 
-        mainTabWidget_.addCrawler( crawler_widget, file_name );
+            if ( followFileOnLoad ) {
+                signalCrawlerToFollowFile( crawler_widget );
+            }
+        }
     }
 
-    if ( current_file_index >= 0 )
+    if ( current_file_index >= 0 ) {
         mainTabWidget_.setCurrentIndex( current_file_index );
+
+        if (followFileOnLoad) {
+            followAction->setChecked( true );
+        }
+    }
 }
 
 void MainWindow::loadInitialFile( QString fileName, bool followFile )
@@ -868,7 +885,7 @@ void MainWindow::currentTabChanged( int index )
     LOG( logDEBUG ) << "currentTabChanged";
 
     if ( index >= 0 ) {
-        auto* crawler_widget = dynamic_cast<CrawlerWidget*>( mainTabWidget_.widget( index ) );
+        auto* crawler_widget = static_cast<CrawlerWidget*>( mainTabWidget_.widget( index ) );
         signalMux_.setCurrentDocument( crawler_widget );
         quickFindMux_.registerSelector( crawler_widget );
 
@@ -1050,7 +1067,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
     LOG( logDEBUG ) << "loadFile ( " << fileName.toStdString() << " )";
 
     // First check if the file is already open...
-    auto* existing_crawler = dynamic_cast<CrawlerWidget*>( session_.getViewIfOpen( fileName ) );
+    auto* existing_crawler = static_cast<CrawlerWidget*>( session_.getViewIfOpen( fileName ) );
 
     if ( existing_crawler ) {
         auto* crawlerWindow = qobject_cast<MainWindow*>( existing_crawler->window() );
@@ -1063,7 +1080,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
     loadingFileName = fileName;
 
     try {
-        CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
+        CrawlerWidget* crawler_widget = static_cast<CrawlerWidget*>(
             session_.open( fileName, []() { return new CrawlerWidget(); } ) );
 
         if ( !crawler_widget ) {
@@ -1093,6 +1110,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
 
         const auto& config = Configuration::get();
         if ( followFile || config.followFileOnLoad() ) {
+            signalCrawlerToFollowFile( crawler_widget );
             followAction->setChecked( true );
         }
     } catch ( ... ) {
@@ -1283,16 +1301,16 @@ void MainWindow::removeFromFavorites()
                     []( const auto& f ) { return f.fullPath; } );
 
     const auto currentPath = session_.getFilename( currentCrawlerWidget() );
-    const auto currentItem = std::find(files.begin(), files.end(), currentPath);
+    const auto currentItem = std::find( files.begin(), files.end(), currentPath );
     auto currentIndex = 0;
-    if (currentItem != files.end()) {
-        currentIndex = std::distance(files.begin(), currentItem);
+    if ( currentItem != files.end() ) {
+        currentIndex = std::distance( files.begin(), currentItem );
     }
 
     bool ok = false;
-    const auto path
-        = QInputDialog::getItem( this, "Remove from favorites",
-                                 "Select item to remove from favorites", files, currentIndex, false, &ok );
+    const auto path = QInputDialog::getItem( this, "Remove from favorites",
+                                             "Select item to remove from favorites", files,
+                                             currentIndex, false, &ok );
     if ( ok ) {
         favoriteFiles.remove( path );
         favoriteFiles.save();
@@ -1322,7 +1340,7 @@ void MainWindow::writeSettings()
         std::tuple<const ViewInterface*, uint64_t, std::shared_ptr<const ViewContextInterface>>>
         widget_list;
     for ( int i = 0; i < mainTabWidget_.count(); ++i ) {
-        auto view = dynamic_cast<const ViewInterface*>( mainTabWidget_.widget( i ) );
+        auto view = qobject_cast<const CrawlerWidget*>( mainTabWidget_.widget( i ) );
         widget_list.emplace_back( view, 0UL, view->context() );
     }
     session_.save( widget_list, saveGeometry() );

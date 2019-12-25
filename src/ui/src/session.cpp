@@ -201,13 +201,13 @@ WindowSession::restore( const std::function<ViewInterface*()>& view_factory,
     std::vector<std::pair<QString, ViewInterface*>> result;
 
     for ( auto file : session_files ) {
-        LOG( logDEBUG ) << "Create view for " << file.fileName.toLocal8Bit().data();
+        LOG( logDEBUG ) << "Create view for " << file.fileName;
         ViewInterface* view
             = appSession_->openAlways( file.fileName, view_factory, file.viewContext );
         result.emplace_back( file.fileName, view );
     }
 
-    *current_file_index = -1;
+    *current_file_index = result.size() - 1;
 
     return result;
 }

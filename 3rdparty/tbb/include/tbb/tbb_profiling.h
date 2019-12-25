@@ -22,7 +22,7 @@
 
 namespace tbb {
     namespace internal {
-
+#ifndef Q_MOC_RUN
         // include list of index names
         #define TBB_STRING_RESOURCE(index_name,str) index_name,
         enum string_index {
@@ -30,7 +30,7 @@ namespace tbb {
            NUM_STRINGS
         };
         #undef TBB_STRING_RESOURCE
-
+#endif
         enum itt_relation
         {
         __itt_relation_is_unknown = 0,

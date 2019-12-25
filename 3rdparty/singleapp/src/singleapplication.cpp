@@ -20,11 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <QtCore/QTime>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QThread>
 #include <QtCore/QDateTime>
 #include <QtCore/QByteArray>
 #include <QtCore/QSharedMemory>
+
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 10, 0 )
+#include <QtCore/QRandomGenerator>
+#endif
 
 #include "singleapplication.h"
 #include "singleapplication_p.h"
@@ -40,6 +44,13 @@ SingleApplication::SingleApplication( int &argc, char *argv[], bool allowSeconda
     : app_t( argc, argv ), d_ptr( new SingleApplicationPrivate( this ) )
 {
     Q_D(SingleApplication);
+
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // On Android and iOS since the library is not supported fallback to
+    // standard QApplication behaviour by simply returning at this point.
+    qWarning() << "SingleApplication is not supported on Android and iOS systems.";
+    return;
+#endif
 
     // Store the current mode of the program
     d->options = options;
@@ -75,7 +86,7 @@ SingleApplication::SingleApplication( int &argc, char *argv[], bool allowSeconda
     }
 
     InstancesInfo* inst = static_cast<InstancesInfo*>( d->memory->data() );
-    QTime time;
+    QElapsedTimer time;
     time.start();
 
     // Make sure the shared memory block is initialised and in consistent state
@@ -91,9 +102,14 @@ SingleApplication::SingleApplication( int &argc, char *argv[], bool allowSeconda
 
         d->memory->unlock();
 
+#if QT_VERSION < QT_VERSION_CHECK( 5, 10, 0 )
         // Random sleep here limits the probability of a collision between two racing apps
         qsrand( QDateTime::currentMSecsSinceEpoch() % std::numeric_limits<uint>::max() );
-        QThread::sleep( 8 + static_cast <unsigned long>( static_cast <float>( qrand() ) / RAND_MAX * 10 ) );
+        unsigned long randomSleep = static_cast <unsigned long>( static_cast <float>( qrand() ) / RAND_MAX * 10 );
+#else
+        unsigned long randomSleep = static_cast <unsigned long>( QRandomGenerator::global()->generateDouble() * 10 );
+#endif
+        QThread::sleep( 8 + randomSleep );
     }
 
     if( inst->primary == false) {

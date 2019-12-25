@@ -33,11 +33,8 @@
 #include <cstddef>
 
 #include <QtCore/QDir>
-#include <QtCore/QProcess>
 #include <QtCore/QByteArray>
-#include <QtCore/QSemaphore>
 #include <QtCore/QDataStream>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QCryptographicHash>
 #include <QtNetwork/QLocalServer>
 #include <QtNetwork/QLocalSocket>
@@ -45,13 +42,19 @@
 #include "singleapplication.h"
 #include "singleapplication_p.h"
 
+#ifdef Q_OS_UNIX
+    #include <unistd.h>
+    #include <sys/types.h>
+    #include <pwd.h>
+#endif
+
 #ifdef Q_OS_WIN
     #include <windows.h>
     #include <lmcons.h>
 #endif
 
-SingleApplicationPrivate::SingleApplicationPrivate( SingleApplication *ptr )
-    : q_ptr( ptr )
+SingleApplicationPrivate::SingleApplicationPrivate( SingleApplication *q_ptr )
+    : q_ptr( q_ptr )
 {
     server = nullptr;
     socket = nullptr;
@@ -109,22 +112,20 @@ void SingleApplicationPrivate::genBlockServerName()
         if( GetUserNameW( username, &usernameLength ) ) {
             appData.addData( QString::fromWCharArray(username).toUtf8() );
         } else {
-            appData.addData( QStandardPaths::standardLocations( QStandardPaths::HomeLocation ).join("").toUtf8() );
+            appData.addData( qgetenv("USERNAME") );
         }
 #endif
 #ifdef Q_OS_UNIX
-        QProcess process;
-        process.start( "whoami" );
-        if( process.waitForFinished( 100 ) &&
-            process.exitCode() == QProcess::NormalExit) {
-            appData.addData( process.readLine() );
-        } else {
-            appData.addData(
-                QDir(
-                    QStandardPaths::standardLocations( QStandardPaths::HomeLocation ).first()
-                ).absolutePath().toUtf8()
-            );
+        QByteArray username;
+        uid_t uid = geteuid();
+        struct passwd *pw = getpwuid(uid);
+        if( pw ) {
+            username = pw->pw_name;
         }
+        if( username.isEmpty() ) {
+            username = qgetenv("USER");
+        }
+        appData.addData(username);
 #endif
     }
 

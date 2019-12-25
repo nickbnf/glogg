@@ -28,36 +28,62 @@
 
 namespace {
 constexpr const int FavoriteFilesVersion = 1;
-constexpr const int MaxPathLength = 32;
+constexpr const int MaxPathLength = 64;
 
-
-const QString ELLIPSIS( "..." );
-
-QString limitString( const QString& aString, int maxLength )
+// inspired by http://chadkuehn.com/shrink-file-paths-with-an-ellipsis-in-c/
+QString shrinkPath(QString fullPath, int limit, QString delimiter = "…")
 {
-    if ( aString.length() <= maxLength )
-        return aString;
+    if ( fullPath.isEmpty() )
+    {
+        return fullPath;
+    }
 
-    float spacePerPart = ( maxLength - ELLIPSIS.length() ) / 2.0;
-    auto beforeEllipsis = aString.left( std::ceil( spacePerPart ) );
-    const auto leftSeparator = beforeEllipsis.lastIndexOf(QDir::separator());
+    const auto fileInfo = QFileInfo(fullPath);
+    const auto fileName = fileInfo.fileName();
+    const auto absolutePath = fileInfo.absolutePath();
 
-    auto afterEllipsis = aString.right( std::floor( spacePerPart ) );
-    const auto rightSeparator = afterEllipsis.indexOf(QDir::separator());
+    const auto idealMinLength = fileName.length() + delimiter.length();
 
-    return aString.left(leftSeparator + 1) + ELLIPSIS + aString.right(rightSeparator - 1);
+    const auto slash = (fullPath.indexOf("/") > -1 ? "/" : "\\");
+
+    //less than the minimum amt
+    if (limit < ((2 * delimiter.length()) + 1))
+    {
+        return "";
+    }
+
+    //fullpath
+    if (limit >= fullPath.length())
+    {
+        return fullPath;
+    }
+
+    //file name condensing
+    if (limit < idealMinLength)
+    {
+        return delimiter + fileName.mid(0, (limit - (2 * delimiter.length()))) + delimiter;
+    }
+
+    //whole name only, no folder structure shown
+    if (limit == idealMinLength)
+    {
+        return delimiter + fileName;
+    }
+
+    return absolutePath.mid(0, (limit - (idealMinLength + 1))) + delimiter + slash + fileName;
 }
 
-}
+} // namespace
 
 FavoriteFiles::File::File( const QString& path )
     : fullPath( path )
+    , fullPathNative( QDir::toNativeSeparators( path ) )
 {
-    const auto fileInfo = QFileInfo(path);
+    const auto fileInfo = QFileInfo( path );
 
     auto fileName = fileInfo.fileName();
-    auto nativePath = QDir::toNativeSeparators(fileInfo.path());
-    displayName = QString("%1%2%3").arg(limitString(nativePath, MaxPathLength), QDir::separator(), fileName);
+    auto nativePath = QDir::toNativeSeparators( fileInfo.path() );
+    displayName = shrinkPath(fullPathNative, MaxPathLength);
 }
 
 struct DisplayNameComparator {

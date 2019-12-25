@@ -237,7 +237,7 @@ void MainWindow::reloadSession()
     if ( current_file_index >= 0 ) {
         mainTabWidget_.setCurrentIndex( current_file_index );
 
-        if (followFileOnLoad) {
+        if ( followFileOnLoad ) {
             followAction->setChecked( true );
         }
     }
@@ -1270,7 +1270,7 @@ void MainWindow::updateFavoritesMenu()
         auto action = favoritesMenu->addAction( file.displayName );
 
         action->setActionGroup( favoritesGroup );
-        action->setToolTip( file.fullPath );
+        action->setToolTip( file.fullPathNative );
         action->setData( file.fullPath );
     }
 }
@@ -1298,23 +1298,30 @@ void MainWindow::removeFromFavorites()
     const auto& favorites = favoriteFiles.favorites();
     QStringList files;
     std::transform( favorites.begin(), favorites.end(), std::back_inserter( files ),
-                    []( const auto& f ) { return f.fullPath; } );
+                    []( const auto& f ) { return f.fullPathNative; } );
 
     const auto currentPath = session_.getFilename( currentCrawlerWidget() );
-    const auto currentItem = std::find( files.begin(), files.end(), currentPath );
+    const auto currentItem = std::find_if( favorites.begin(), favorites.end(),
+                                        FavoriteFiles::FullPathComparator( currentPath ) );
     auto currentIndex = 0;
-    if ( currentItem != files.end() ) {
-        currentIndex = std::distance( files.begin(), currentItem );
+    if ( currentItem != favorites.end() ) {
+        currentIndex = std::distance( favorites.begin(), currentItem );
     }
 
     bool ok = false;
-    const auto path = QInputDialog::getItem( this, "Remove from favorites",
-                                             "Select item to remove from favorites", files,
-                                             currentIndex, false, &ok );
+    const auto pathToRemove = QInputDialog::getItem( this, "Remove from favorites",
+                                                     "Select item to remove from favorites", files,
+                                                     currentIndex, false, &ok );
     if ( ok ) {
-        favoriteFiles.remove( path );
-        favoriteFiles.save();
-        updateFavoritesMenu();
+        const auto selectedFile
+            = std::find_if( favorites.begin(), favorites.end(),
+                         FavoriteFiles::FullPathNativeComparator( pathToRemove ) );
+
+        if ( selectedFile != favorites.end() ) {
+            favoriteFiles.remove( selectedFile->fullPath );
+            favoriteFiles.save();
+            updateFavoritesMenu();
+        }
     }
 }
 

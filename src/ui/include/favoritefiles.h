@@ -33,6 +33,7 @@ class FavoriteFiles final : public Persistable<FavoriteFiles, session_settings>
         explicit File(const QString& path);
 
         QString fullPath;
+        QString fullPathNative;
         QString displayName;
     };
 
@@ -48,6 +49,20 @@ class FavoriteFiles final : public Persistable<FavoriteFiles, session_settings>
         }
 
         QString fullPath;
+    };
+
+    struct FullPathNativeComparator {
+        FullPathNativeComparator( const QString& path )
+            : fullPathNative( path )
+        {
+        }
+
+        bool operator()( const File& f ) const
+        {
+            return f.fullPathNative == fullPathNative;
+        }
+
+        QString fullPathNative;
     };
 
     void add( const QString& path );

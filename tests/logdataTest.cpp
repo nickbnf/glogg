@@ -51,7 +51,7 @@ namespace {
     protected:
         void run() override
         {
-            QString writeHelper = QCoreApplication::applicationDirPath() + QDir::separator() + QLatin1Literal("file_write_helper");
+            QString writeHelper = QCoreApplication::applicationDirPath() + QDir::separator() + QLatin1String("file_write_helper");
             QStringList arguments;
             arguments << file_->fileName() << QString::number(numberOfLines_) << QString::number(static_cast<uint8_t>(flag_));
 
@@ -96,7 +96,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
             SIGNAL( fileChanged( MonitoredFileStatus ) ) );
 
     // Generate a small file
-    QFile file { tempDir.path() + QDir::separator() + QLatin1Literal("testlog.txt") };
+    QFile file { tempDir.path() + QDir::separator() + QLatin1String("testlog.txt") };
     if ( file.open( QIODevice::ReadWrite | QIODevice::Truncate ) ) {
         writeDataToFile( file );
     }

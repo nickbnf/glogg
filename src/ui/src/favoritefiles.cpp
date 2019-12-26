@@ -31,46 +31,39 @@ constexpr const int FavoriteFilesVersion = 1;
 constexpr const int MaxPathLength = 64;
 
 // inspired by http://chadkuehn.com/shrink-file-paths-with-an-ellipsis-in-c/
-QString shrinkPath(QString fullPath, int limit, QString delimiter = "…")
+QString shrinkPath( QString fullPath, int limit, QString delimiter = "…" )
 {
-    if ( fullPath.isEmpty() )
-    {
+    if ( fullPath.isEmpty() ) {
         return fullPath;
     }
 
-    const auto fileInfo = QFileInfo(fullPath);
+    const auto fileInfo = QFileInfo( fullPath );
     const auto fileName = fileInfo.fileName();
-    const auto absolutePath = fileInfo.absolutePath();
+    const auto absoluteNativePath = QDir::toNativeSeparators( fileInfo.absolutePath() );
 
     const auto idealMinLength = fileName.length() + delimiter.length();
 
-    const auto slash = (fullPath.indexOf("/") > -1 ? "/" : "\\");
-
-    //less than the minimum amt
-    if (limit < ((2 * delimiter.length()) + 1))
-    {
+    // less than the minimum amt
+    if ( limit < ( ( 2 * delimiter.length() ) + 1 ) ) {
         return "";
     }
 
-    //fullpath
-    if (limit >= fullPath.length())
-    {
-        return fullPath;
+    // fullpath
+    if ( limit >= fullPath.length() ) {
+        return QDir::toNativeSeparators( fullPath );
     }
 
-    //file name condensing
-    if (limit < idealMinLength)
-    {
-        return delimiter + fileName.mid(0, (limit - (2 * delimiter.length()))) + delimiter;
+    // file name condensing
+    if ( limit < idealMinLength ) {
+        return delimiter + fileName.mid( 0, ( limit - ( 2 * delimiter.length() ) ) ) + delimiter;
     }
 
-    //whole name only, no folder structure shown
-    if (limit == idealMinLength)
-    {
+    // whole name only, no folder structure shown
+    if ( limit == idealMinLength ) {
         return delimiter + fileName;
     }
 
-    return absolutePath.mid(0, (limit - (idealMinLength + 1))) + delimiter + slash + fileName;
+    return absoluteNativePath.mid( 0, ( limit - ( idealMinLength + 1 ) ) ) + delimiter + QDir::separator() + fileName;
 }
 
 } // namespace
@@ -80,10 +73,7 @@ FavoriteFiles::File::File( const QString& path )
     , fullPathNative( QDir::toNativeSeparators( path ) )
 {
     const auto fileInfo = QFileInfo( path );
-
-    auto fileName = fileInfo.fileName();
-    auto nativePath = QDir::toNativeSeparators( fileInfo.path() );
-    displayName = shrinkPath(fullPathNative, MaxPathLength);
+    displayName = shrinkPath( fullPath, MaxPathLength );
 }
 
 struct DisplayNameComparator {

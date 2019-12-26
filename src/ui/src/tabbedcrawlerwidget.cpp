@@ -23,6 +23,7 @@
 #include <QClipboard>
 #include <QDir>
 #include <QFileInfo>
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMenu>
@@ -72,8 +73,9 @@ void TabbedCrawlerWidget::addTabBarItem( int index, const QString& file_name )
 {
     const auto tab_label = QFileInfo( file_name ).fileName();
 
-    setTabText( index, tab_label );
-    setTabToolTip( index, QDir::toNativeSeparators( file_name ) );
+    myTabBar_.setTabText( index, tab_label );
+    myTabBar_.setTabToolTip( index, QDir::toNativeSeparators( file_name ) );
+    myTabBar_.setTabData( index, tab_label );
 
     // Display the icon
     auto icon_label = std::make_unique<QLabel>();
@@ -124,6 +126,9 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
         menu.addSeparator();
         auto copyFullPath = menu.addAction( "Copy full path" );
         auto openContainingFolder = menu.addAction( "Open containing folder" );
+        menu.addSeparator();
+        auto renameTab = menu.addAction( "Rename tab" );
+        auto resetTabName = menu.addAction( "Reset tab name" );
 
         connect( closeThis, &QAction::triggered, [tab, this] { emit tabCloseRequested( tab ); } );
 
@@ -168,6 +173,24 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
 
         connect( openContainingFolder, &QAction::triggered,
                  [this, tab] { showPathInFileExplorer( tabToolTip( tab ) ); } );
+
+        connect( renameTab, &QAction::triggered, [this, tab] {
+            bool isNameEntered = false;
+            auto newName = QInputDialog::getText( this, "Rename tab", "Tab name", QLineEdit::Normal,
+                                                  myTabBar_.tabText( tab ), &isNameEntered );
+            if ( isNameEntered ) {
+                if ( newName.isEmpty() ) {
+                    myTabBar_.setTabText( tab, myTabBar_.tabData( tab ).toString() );
+                }
+                else {
+                    myTabBar_.setTabText( tab, std::move( newName ) );
+                }
+            }
+        } );
+
+        connect( resetTabName, &QAction::triggered, [this, tab] {
+            myTabBar_.setTabText( tab, myTabBar_.tabData( tab ).toString() );
+        } );
 
         menu.exec( myTabBar_.mapToGlobal( point ) );
     }

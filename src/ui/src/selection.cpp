@@ -160,18 +160,27 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
 
         for ( const auto& line : list ) {
             text.append( line );
-            while ( text.endsWith( QChar::CarriageReturn ) || text.endsWith( QChar::LineFeed ) ) {
-                text.chop( 1 );
+
+            const auto chopIt
+                = std::find_if( line.rbegin(), line.rend(), []( const auto& character ) {
+                      return character != QChar::CarriageReturn && character != QChar::LineFeed;
+                  } );
+
+            if ( chopIt != line.rend() ) {
+                text.chop( std::distance( line.rbegin(), chopIt ) );
             }
 
-#if defined(Q_OS_WIN) || defined (Q_OS_MAC)
+#if defined( Q_OS_WIN )
             text.append( QChar::CarriageReturn );
-#endif // (Q_OS_WIN) || (Q_OS_MAC)
-
-#ifndef Q_OS_MAC
+#endif // (Q_OS_WIN)
             text.append( QChar::LineFeed );
-#endif // !Q_OS_MAC
         }
+
+#if defined( Q_OS_WIN )
+        text.chop( 2 );
+#else
+        text.chop( 1 );
+#endif // Q_OS_WIN
     }
 
     return text;

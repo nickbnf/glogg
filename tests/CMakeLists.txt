@@ -26,6 +26,7 @@ target_link_libraries(file_write_helper ${TEST_LIBS})
 add_executable(klogg_itests
     logdataTest.cpp
     logfiltereddataTest.cpp
+    carwlerwidgettest.cpp
     qtests_main.cpp
 )
 

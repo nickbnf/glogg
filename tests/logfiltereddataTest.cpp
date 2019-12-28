@@ -52,7 +52,10 @@ bool generateDataFiles(QTemporaryFile& file) {
 void runSearch( LogFilteredData* filtered_data,  const QString& regexp,
                 SafeQSignalSpy& searchProgressSpy ) {
 
-    filtered_data->runSearch( QRegularExpression( regexp ) );
+    QTimer::singleShot(50, [&]()
+    {
+      filtered_data->runSearch( QRegularExpression( regexp ) );
+    });
 
     int progress = 0;
     do

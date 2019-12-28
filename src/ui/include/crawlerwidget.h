@@ -111,6 +111,9 @@ class CrawlerWidget : public QSplitter,
     // Set the encoding
     void setEncoding( absl::optional<int> mib );
 
+  public:
+    template <class T> struct access_by;
+
   protected:
     // Implementation of the ViewInterface functions
     void doSetData( std::shared_ptr<LogData> log_data,

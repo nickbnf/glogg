@@ -88,6 +88,11 @@ class Session : public std::enable_shared_from_this<Session> {
         return quickFindPattern_;
     }
 
+    SavedSearches& savedSearches() const
+    {
+        return *savedSearches_;
+    }
+
     std::vector<WindowSession> windowSessions();
 
     bool exitRequested() const

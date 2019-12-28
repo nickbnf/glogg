@@ -92,22 +92,9 @@ int main( int argc, char* argv[] )
 
     QThreadPool::globalInstance()->reserveThread();
 
-    QThread* testThread = new QThread;
     TestRunner* runner = new TestRunner(argc, argv);
 
-    runner->moveToThread(testThread);
+    runner->process();
+    return runner->result();
 
-    QObject::connect(testThread, &QThread::started, runner, &TestRunner::process);
-
-
-    QObject::connect(runner, &TestRunner::finished, runner, &TestRunner::deleteLater);
-
-    QObject::connect(runner, &TestRunner::finished, testThread, &QThread::quit);
-    QObject::connect(testThread, &QThread::finished, testThread, &QThread::deleteLater);
-
-    QObject::connect(runner, &TestRunner::finished, &a, &QApplication::exit);
-
-    testThread->start();
-
-    return a.exec();
 }

@@ -289,7 +289,7 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
 {
     attached_file_->detachReader();
 
-    LOG( logINFO ) << "File " << indexingFileName_ << " status " << static_cast<int>(status);
+    LOG( logINFO ) << "File " << indexingFileName_ << " status " << static_cast<int>( status );
 
     std::function<std::shared_ptr<LogDataOperation>()> newOperation;
     if ( fileChangedOnDisk_ != MonitoredFileStatus::Truncated ) {
@@ -317,7 +317,7 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
         enqueueOperation( newOperation() );
     }
 
-	currentOperation_ = std::move( nextOperation_ );
+    currentOperation_ = std::move( nextOperation_ );
     nextOperation_.reset();
 
     if ( currentOperation_ ) {
@@ -443,9 +443,15 @@ std::vector<QString> LogData::doGetLines( LineNumber first_line, LinesCount numb
 
     for ( LineNumber line = first_line; ( line <= last_line ); ++line ) {
         end = indexing_data_.getPosForLine( line ).get() - first_byte;
-        list.emplace_back( decoder->toUnicode(
-            buffer.data() + beginning, static_cast<LineLength::UnderlyingType>(
-                                           end - beginning - encodingParams.lineFeedWidth ) ) );
+        auto lineData = decoder->toUnicode( buffer.data() + beginning,
+                                            static_cast<LineLength::UnderlyingType>(
+                                                end - beginning - encodingParams.lineFeedWidth ) );
+
+        if ( lineData.endsWith( QChar::CarriageReturn ) ) {
+            lineData.chop( 1 );
+        }
+
+        list.emplace_back( std::move( lineData ) );
         beginning = end;
     }
 

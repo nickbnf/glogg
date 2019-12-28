@@ -643,9 +643,9 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 bool isLineSelected = true;
                 LineNumber::UnderlyingType newLine = 0;
                 if ( altModifier ) {
-                    newLine = QInputDialog::getInt( this, "Jump to line", "Line", 1, 1,
-                                                    logData->getNbLine().get(), 1,
-                                                    &isLineSelected );
+                    newLine
+                        = QInputDialog::getInt( this, "Jump to line", "Line", 1, 1,
+                                                logData->getNbLine().get(), 1, &isLineSelected );
                     newLine -= 1;
                 }
                 else {
@@ -1133,7 +1133,12 @@ void AbstractLogView::saveToFile()
     auto writeLines = [this, &saveFile, &progressDialog, codec]( const auto& offset ) {
         auto lines = logData->getLines( offset.first, offset.second );
         for ( auto& l : lines ) {
+            
+#if !defined( Q_OS_WIN )
+            l.append( QChar::CarriageReturn );
+#endif
             l.append( QChar::LineFeed );
+
             const auto encodedLine = codec->fromUnicode( l );
             const auto written = saveFile.write( encodedLine );
             if ( written != encodedLine.size() ) {

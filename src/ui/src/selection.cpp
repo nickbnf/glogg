@@ -25,6 +25,7 @@
 
 #include "selection.h"
 #include "data/abstractlogdata.h"
+#include "log.h"
 
 Selection::Selection()
 {
@@ -159,28 +160,15 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
             []( const auto value, const auto& line ) { return value + line.size(); } ) );
 
         for ( const auto& line : list ) {
-            text.append( line );
-
-            const auto chopIt
-                = std::find_if( line.rbegin(), line.rend(), []( const auto& character ) {
-                      return character != QChar::CarriageReturn && character != QChar::LineFeed;
-                  } );
-
-            if ( chopIt != line.rend() ) {
-                text.chop( std::distance( line.rbegin(), chopIt ) );
+            if ( !text.isEmpty() ) {
+#if defined( Q_OS_WIN )
+                text.append( QChar::CarriageReturn );
+#endif
+                text.append( QChar::LineFeed );
             }
 
-#if defined( Q_OS_WIN )
-            text.append( QChar::CarriageReturn );
-#endif // (Q_OS_WIN)
-            text.append( QChar::LineFeed );
+            text.append( line );
         }
-
-#if defined( Q_OS_WIN )
-        text.chop( 2 );
-#else
-        text.chop( 1 );
-#endif // Q_OS_WIN
     }
 
     return text;

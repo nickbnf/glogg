@@ -64,6 +64,8 @@
 #include <QtCore>
 #include <utility>
 
+#include <tbb/flow_graph.h>
+
 #include "log.h"
 
 #include "configuration.h"
@@ -1104,17 +1106,6 @@ void AbstractLogView::saveToFile()
     QProgressDialog progressDialog;
     progressDialog.setLabelText( QString( "Saving content to %1" ).arg( filename ) );
 
-    QFutureWatcher<void> futureWatcher;
-    QObject::connect( &futureWatcher, &QFutureWatcher<void>::finished, &progressDialog,
-                      &QProgressDialog::reset );
-    QObject::connect( &futureWatcher, &QFutureWatcher<void>::progressRangeChanged, &progressDialog,
-                      &QProgressDialog::setRange );
-    QObject::connect( &futureWatcher, &QFutureWatcher<void>::progressValueChanged, &progressDialog,
-                      &QProgressDialog::setValue );
-
-    QObject::connect( &progressDialog, &QProgressDialog::canceled, &futureWatcher,
-                      &QFutureWatcher<void>::cancel );
-
     std::vector<std::pair<LineNumber, LinesCount>> offsets;
     auto lineOffset = 0_lnum;
     const auto chunkSize = 5000_lcount;
@@ -1130,37 +1121,64 @@ void AbstractLogView::saveToFile()
         codec = QTextCodec::codecForName( "utf-8" );
     }
 
-    auto writeLines = [this, &saveFile, &progressDialog, codec]( const auto& offset ) {
-        auto lines = logData->getLines( offset.first, offset.second );
-        for ( auto& l : lines ) {
-            
-#if !defined( Q_OS_WIN )
-            l.append( QChar::CarriageReturn );
-#endif
-            l.append( QChar::LineFeed );
+    AtomicFlag interruptRequest;
 
-            const auto encodedLine = codec->fromUnicode( l );
-            const auto written = saveFile.write( encodedLine );
-            if ( written != encodedLine.size() ) {
-                LOG( logERROR ) << "Saving file write failed";
-                QMetaObject::invokeMethod( &progressDialog, SLOT( cancel() ),
-                                           Qt::QueuedConnection );
+    progressDialog.setRange( 0, offsets.size() );
+    connect( &progressDialog, &QProgressDialog::canceled,
+             [&interruptRequest]() { interruptRequest.set(); } );
+
+    tbb::flow::graph saveFileGraph;
+    auto lineReader = tbb::flow::source_node<std::vector<QString>>(
+        saveFileGraph,
+        [this, &offsets, &interruptRequest, &progressDialog,
+         offsetIndex = 0u]( std::vector<QString>& lines ) mutable -> bool {
+            if ( !interruptRequest && offsetIndex < offsets.size() ) {
+                const auto& offset = offsets.at( offsetIndex );
+                lines = logData->getLines( offset.first, offset.second );
+                for ( auto& l : lines ) {
+#if !defined( Q_OS_WIN )
+                    l.append( QChar::CarriageReturn );
+#endif
+                    l.append( QChar::LineFeed );
+                }
+
+                offsetIndex++;
+                progressDialog.setValue( offsetIndex );
+                return true;
+            }
+            else {
+                progressDialog.finished( offsetIndex );
                 return false;
             }
-        }
-        return true;
-    };
+        },
+        false );
 
-    const auto maxThreadCount = QThreadPool::globalInstance()->maxThreadCount();
-    QThreadPool::globalInstance()->setMaxThreadCount( 1 );
-    futureWatcher.setFuture( QtConcurrent::map( offsets, writeLines ) );
+    auto lineWriter = tbb::flow::function_node<std::vector<QString>, tbb::flow::continue_msg>(
+        saveFileGraph, 1,
+        [&interruptRequest, &codec, &saveFile]( const std::vector<QString>& lines ) {
+            for ( const auto& l : lines ) {
+
+                const auto encodedLine = codec->fromUnicode( l );
+                const auto written = saveFile.write( encodedLine );
+
+                if ( written != encodedLine.size() ) {
+                    LOG( logERROR ) << "Saving file write failed";
+                    interruptRequest.set();
+                    return tbb::flow::continue_msg{};
+                }
+            }
+            return tbb::flow::continue_msg{};
+        } );
+
+    tbb::flow::make_edge( lineReader, lineWriter );
+
+    lineReader.activate();
 
     progressDialog.exec();
-    futureWatcher.waitForFinished();
 
-    QThreadPool::globalInstance()->setMaxThreadCount( maxThreadCount );
+    saveFileGraph.wait_for_all();
 
-    if ( futureWatcher.isFinished() ) {
+    if ( !interruptRequest ) {
         saveFile.commit();
     }
     else {

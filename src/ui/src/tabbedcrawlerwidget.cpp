@@ -32,6 +32,7 @@
 
 #include "log.h"
 #include "openfilehelper.h"
+#include "tabnamemapping.h"
 
 TabbedCrawlerWidget::TabbedCrawlerWidget()
     : QTabWidget()
@@ -72,10 +73,11 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
 void TabbedCrawlerWidget::addTabBarItem( int index, const QString& file_name )
 {
     const auto tab_label = QFileInfo( file_name ).fileName();
+    const auto tabName = TabNameMapping::getSynced().tabName( file_name );
 
-    myTabBar_.setTabText( index, tab_label );
+    myTabBar_.setTabText( index, tabName.isEmpty() ? tab_label : tabName );
     myTabBar_.setTabToolTip( index, QDir::toNativeSeparators( file_name ) );
-    myTabBar_.setTabData( index, tab_label );
+    myTabBar_.setTabData( index, file_name );
 
     // Display the icon
     auto icon_label = std::make_unique<QLabel>();
@@ -179,8 +181,11 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
             auto newName = QInputDialog::getText( this, "Rename tab", "Tab name", QLineEdit::Normal,
                                                   myTabBar_.tabText( tab ), &isNameEntered );
             if ( isNameEntered ) {
+                const auto tabPath = myTabBar_.tabData( tab ).toString();
+                TabNameMapping::getSynced().setTabName( tabPath, newName ).save();
+
                 if ( newName.isEmpty() ) {
-                    myTabBar_.setTabText( tab, myTabBar_.tabData( tab ).toString() );
+                    myTabBar_.setTabText( tab, QFileInfo( tabPath ).fileName() );
                 }
                 else {
                     myTabBar_.setTabText( tab, std::move( newName ) );
@@ -189,7 +194,9 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
         } );
 
         connect( resetTabName, &QAction::triggered, [this, tab] {
-            myTabBar_.setTabText( tab, myTabBar_.tabData( tab ).toString() );
+            const auto tabPath = myTabBar_.tabData( tab ).toString();
+            TabNameMapping::getSynced().setTabName( tabPath, "" ).save();
+            myTabBar_.setTabText( tab, QFileInfo( tabPath ).fileName() );
         } );
 
         menu.exec( myTabBar_.mapToGlobal( point ) );

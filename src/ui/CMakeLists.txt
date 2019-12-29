@@ -31,6 +31,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/tabbedscratchpad.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/encodings.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/favoritefiles.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/tabnamemapping.h
 
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighteredit.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.ui
@@ -65,7 +66,8 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/scratchpad.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/tabbedscratchpad.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/favoritefiles.cpp
-        )
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/tabnamemapping.cpp
+)
 
 set_target_properties(ui PROPERTIES AUTOUIC ON)
 set_target_properties(ui PROPERTIES AUTOMOC ON)

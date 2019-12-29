@@ -1,7 +1,9 @@
-| CI | Windows | Linux  | Mac |
-| ------------- |------------- | ------------- | ------------- |
-| Build status | [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) |
-| Artifacts | [continuous-win](https://github.com/variar/klogg/releases/tag/continuous-win) | [continuous-linux](https://github.com/variar/klogg/releases/tag/continuous-linux) | [continuous-osx](https://github.com/variar/klogg/releases/tag/continuous-osx) | 
+
+Klogg is a multi-platform GUI application that helps browse and search
+through long and complex log files. It is designed with programmers and
+system administrators in mind and can be seen as a graphical, interactive
+combination of grep, less and tail. 
+
 
 ### Current release
 
@@ -10,10 +12,10 @@
 [ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg?style=flat)](https://chocolatey.org/packages/klogg)
 
 
-Klogg is a multi-platform GUI application that helps browse and search
-through long and complex log files. It is designed with programmers and
-system administrators in mind and can be seen as a graphical, interactive
-combination of grep, less and tail. 
+| CI | Windows | Linux  | Mac |
+| ------------- |------------- | ------------- | ------------- |
+| Build status | [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) |
+| Artifacts | [continuous-win](https://github.com/variar/klogg/releases/tag/continuous-win) | [continuous-linux](https://github.com/variar/klogg/releases/tag/continuous-linux) | [continuous-osx](https://github.com/variar/klogg/releases/tag/continuous-osx) | 
 
 ## Table of Contents
 

@@ -22,6 +22,7 @@ combination of grep, less and tail.
 1. [Getting Started](#getting-started)
     1. [Dependencies](#dependencies)
     1. [Building](#building)
+    1. [Runnung tests](#running-tests)
 1. [How to Get Help](#how-to-get-help)
 1. [Contributing](#contributing)
 1. [License](#license)
@@ -206,7 +207,7 @@ cmake --build .
  
 Binaries are placed into `build/output`.
  
-### Tests
+## Running tests
 Tests are built by default. To turn them off pass `-DBUILD_TESTS:BOOL=OFF` to cmake.
 Tests use catch2 (bundled with klogg sources) and require Qt5Test module. Tests can be run using ctest tool provider by CMake:
 ```

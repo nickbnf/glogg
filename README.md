@@ -200,7 +200,7 @@ Configure and build klogg:
 cd <path_to_klogg_repository_clone>
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=False -DQt5_DIR=/usr/local/Cellar/qt/5.14.0/lib/cmake/Qt5 ..
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=False -DQt5_DIR=/usr/local/Cellar/qt/5.14.0/lib/cmake/Qt5 ..
 cmake --build .
 ```
  

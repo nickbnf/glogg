@@ -43,12 +43,12 @@
 
 #include <QDialog>
 
+#include "highlighteredit.h"
 #include "highlighterset.h"
 #include "ui_highlightersdialog.h"
 
-class HighlightersDialog : public QDialog, public Ui::HighlightersDialog
-{
-  Q_OBJECT
+class HighlightersDialog : public QDialog, public Ui::HighlightersDialog {
+    Q_OBJECT
 
   public:
     explicit HighlightersDialog( QWidget* parent = nullptr );
@@ -58,33 +58,34 @@ class HighlightersDialog : public QDialog, public Ui::HighlightersDialog
     void optionsChanged();
 
   private slots:
-    void on_addHighlighterButton_clicked();
-    void on_removeHighlighterButton_clicked();
-    void on_buttonBox_clicked( QAbstractButton* button );
-    void on_upHighlighterButton_clicked();
-    void on_downHighlighterButton_clicked();
-    void on_foreColorButton_clicked();
-    void on_backColorButton_clicked();
+    void addHighlighter();
+    void removeHighlighter();
+
+    void moveHighlighterUp();
+    void moveHighlighterDown();
+
+    void resolveDialog( QAbstractButton* button );
+
     // Update the property (pattern, color...) fields from the
     // selected Highlighter.
     void updatePropertyFields();
+
     // Update the selected Highlighter from the values in the property fields.
     void updateHighlighterProperties();
 
   private:
+    void populateHighlighterList();
+    void setCurrentRow( int row );
+
+  private:
+    HighlighterEdit* highlighterEdit_;
+
     // Temporary HighlighterSet modified by the dialog
     // it is copied from the one in Config()
     HighlighterSet highlighterSet_;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;
-
-    QColor foreColor_ , backColor_;
-
-    static bool showColorPicker(const QColor& in , QColor& out);
-    void updateIcon(QPushButton* button , const QColor& color);
-
-    void populateHighlighterList();
 };
 
 #endif

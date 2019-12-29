@@ -1,4 +1,4 @@
-find_package(Qt5Test REQUIRED)
+find_package(Qt5 COMPONENTS Test REQUIRED)
 
 # Add test cpp file
 add_executable(klogg_tests

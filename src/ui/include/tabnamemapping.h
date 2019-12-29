@@ -1,0 +1,8 @@
+//
+// Created by omni on 29.12.2019.
+//
+
+#ifndef KLOGG_TABNAMEMAPPING_H
+#define KLOGG_TABNAMEMAPPING_H
+
+#endif // KLOGG_TABNAMEMAPPING_H

@@ -253,7 +253,7 @@ void CrawlerWidget::reload()
 
 void CrawlerWidget::setEncoding( absl::optional<int> mib )
 {
-    encodingMib_ = std::move(mib);
+    encodingMib_ = std::move( mib );
     updateEncoding();
 
     update();
@@ -425,7 +425,7 @@ void CrawlerWidget::updateLineNumberHandler( LineNumber line )
 
 void CrawlerWidget::markLinesFromMain( const std::vector<LineNumber>& lines )
 {
-    for (const auto& line : lines) {
+    for ( const auto& line : lines ) {
         if ( line < logData_->getNbLine() ) {
             logFilteredData_->toggleMark( line );
         }
@@ -444,7 +444,7 @@ void CrawlerWidget::markLinesFromMain( const std::vector<LineNumber>& lines )
 
 void CrawlerWidget::markLinesFromFiltered( const std::vector<LineNumber>& lines )
 {
-    for (const auto& line : lines) {
+    for ( const auto& line : lines ) {
         if ( line < logData_->getNbLine() ) {
             const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
             logFilteredData_->toggleMark( line_in_file );
@@ -493,6 +493,10 @@ void CrawlerWidget::applyConfiguration()
     updateSearchCombo();
 
     FileWatcher::getFileWatcher().updateConfiguration();
+
+    if ( isFollowEnabled() ) {
+        changeDataStatus( DataStatus::OLD_DATA );
+    }
 }
 
 void CrawlerWidget::enteringQuickFind()
@@ -743,7 +747,6 @@ void CrawlerWidget::setup()
     visibilityBox->setCurrentIndex( 0 );
     visibilityBox->setContentsMargins( 2, 2, 2, 2 );
 
-
     // TODO: Maybe there is some way to set the popup width to be
     // sized-to-content (as it is when the stylesheet is not overriden) in the
     // stylesheet as opposed to setting a hard min-width on the view above.
@@ -774,7 +777,6 @@ void CrawlerWidget::setup()
     searchInfoLine->setSizePolicy( searchInfoLineSizePolicy );
     searchInfoLineDefaultPalette = searchInfoLine->palette();
     searchInfoLine->setContentsMargins( 2, 2, 2, 2 );
-
 
     matchCaseButton = new QToolButton();
     matchCaseButton->setToolTip( "Match case" );
@@ -1070,6 +1072,7 @@ void CrawlerWidget::printSearchInfoMessage( LinesCount nbMatches )
 // Change the data status and, if needed, advise upstream.
 void CrawlerWidget::changeDataStatus( DataStatus status )
 {
+    LOG( logINFO ) << "New data status " << static_cast<int>( status );
     if ( ( status != dataStatus_ )
          && ( !( dataStatus_ == DataStatus::NEW_FILTERED_DATA
                  && status == DataStatus::NEW_DATA ) ) ) {
@@ -1082,17 +1085,17 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 void CrawlerWidget::updateEncoding()
 {
     const QTextCodec* textCodec = [this]() {
-            QTextCodec* codec = nullptr;
-            if (!encodingMib_) {
-                codec = logData_->getDetectedEncoding();
-            }
-            else {
-                codec = QTextCodec::codecForMib(*encodingMib_);
-            }
-            return codec ? codec : QTextCodec::codecForLocale();
-        }();
+        QTextCodec* codec = nullptr;
+        if ( !encodingMib_ ) {
+            codec = logData_->getDetectedEncoding();
+        }
+        else {
+            codec = QTextCodec::codecForMib( *encodingMib_ );
+        }
+        return codec ? codec : QTextCodec::codecForLocale();
+    }();
 
-    QString encodingPrefix = encodingMib_ ?  "Displayed as %1" :  "Detected as %1";
+    QString encodingPrefix = encodingMib_ ? "Displayed as %1" : "Detected as %1";
     encoding_text_ = tr( encodingPrefix.arg( textCodec->name().constData() ).toLatin1() );
 
     logData_->setDisplayEncoding( textCodec->name().constData() );

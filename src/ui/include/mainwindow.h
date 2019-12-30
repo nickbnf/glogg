@@ -39,19 +39,20 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <memory>
 #include <QMainWindow>
 #include <QSystemTrayIcon>
+#include <memory>
 
 #include <array>
 
-#include "session.h"
 #include "crawlerwidget.h"
+#include "downloader.h"
 #include "pathline.h"
+#include "quickfindmux.h"
+#include "quickfindwidget.h"
+#include "session.h"
 #include "signalmux.h"
 #include "tabbedcrawlerwidget.h"
-#include "quickfindwidget.h"
-#include "quickfindmux.h"
 #include "tabbedscratchpad.h"
 
 class QAction;
@@ -61,8 +62,7 @@ class RecentFiles;
 
 // Main window of the application, creates menus, toolbar and
 // the CrawlerWidget
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
   public:
@@ -90,7 +90,7 @@ class MainWindow : public QMainWindow
     void dropEvent( QDropEvent* event ) override;
     void keyPressEvent( QKeyEvent* keyEvent ) override;
 
-    bool event(QEvent *event) override;
+    bool event( QEvent* event ) override;
 
   private slots:
     void open();
@@ -124,7 +124,7 @@ class MainWindow : public QMainWindow
 
     // Update the line number displayed in the status bar.
     // Must be passed as the internal (starts at 0) line number.
-    void lineNumberHandler(LineNumber line );
+    void lineNumberHandler( LineNumber line );
 
     // Instructs the widget to update the loading progress gauge
     void updateLoadingProgress( int progress );
@@ -172,6 +172,7 @@ class MainWindow : public QMainWindow
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName, bool followFile = false );
+    void openRemoteFile( const QUrl& url );
     void updateTitleBar( const QString& file_name );
     void updateRecentFileActions();
     void updateFavoritesMenu();
@@ -189,52 +190,52 @@ class MainWindow : public QMainWindow
     std::array<QAction*, MaxRecentFiles> recentFileActions;
     QActionGroup* recentFilesGroup;
 
-    QMenu *fileMenu;
-    QMenu *editMenu;
-    QMenu *viewMenu;
-    QMenu *toolsMenu;
-    QMenu *favoritesMenu;
-    QMenu *helpMenu;
+    QMenu* fileMenu;
+    QMenu* editMenu;
+    QMenu* viewMenu;
+    QMenu* toolsMenu;
+    QMenu* favoritesMenu;
+    QMenu* helpMenu;
 
-    PathLine *infoLine;
+    PathLine* infoLine;
     QLabel* lineNbField;
     QLabel* sizeField;
     QLabel* dateField;
     QLabel* encodingField;
     std::vector<QAction*> infoToolbarSeparators;
-    QToolBar *toolBar;
+    QToolBar* toolBar;
 
-    QAction *newWindowAction;
-    QAction *openAction;
-    QAction *closeAction;
-    QAction *closeAllAction;
-    QAction *exitAction;
-    QAction *copyAction;
-    QAction *selectAllAction;
-    QAction *findAction;
-    QAction *clearLogAction;
-    QAction *copyPathToClipboardAction;
-    QAction *openContainingFolderAction;
-    QAction *openInEditorAction;
-    QAction *openClipboardAction;
-    QAction *overviewVisibleAction;
-    QAction *lineNumbersVisibleInMainAction;
-    QAction *lineNumbersVisibleInFilteredAction;
-    QAction *followAction;
-    QAction *reloadAction;
-    QAction *stopAction;
-    QAction *highlightersAction;
-    QAction *optionsAction;
-    QAction *showScratchPadAction;
-    QAction *aboutAction;
-    QAction *aboutQtAction;
-    QActionGroup *encodingGroup;
-    QAction *addToFavoritesAction;
-    QAction *addToFavoritesMenuAction;
-    QAction *removeFromFavoritesAction;
-    QActionGroup *favoritesGroup;
+    QAction* newWindowAction;
+    QAction* openAction;
+    QAction* closeAction;
+    QAction* closeAllAction;
+    QAction* exitAction;
+    QAction* copyAction;
+    QAction* selectAllAction;
+    QAction* findAction;
+    QAction* clearLogAction;
+    QAction* copyPathToClipboardAction;
+    QAction* openContainingFolderAction;
+    QAction* openInEditorAction;
+    QAction* openClipboardAction;
+    QAction* overviewVisibleAction;
+    QAction* lineNumbersVisibleInMainAction;
+    QAction* lineNumbersVisibleInFilteredAction;
+    QAction* followAction;
+    QAction* reloadAction;
+    QAction* stopAction;
+    QAction* highlightersAction;
+    QAction* optionsAction;
+    QAction* showScratchPadAction;
+    QAction* aboutAction;
+    QAction* aboutQtAction;
+    QActionGroup* encodingGroup;
+    QAction* addToFavoritesAction;
+    QAction* addToFavoritesMenuAction;
+    QAction* removeFromFavoritesAction;
+    QActionGroup* favoritesGroup;
 
-    QSystemTrayIcon *trayIcon_;
+    QSystemTrayIcon* trayIcon_;
 
     QIcon mainIcon_;
 

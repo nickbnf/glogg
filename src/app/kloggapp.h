@@ -23,6 +23,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QMessageBox>
+#include <QNetworkProxyFactory>
 #include <QUuid>
 
 #ifdef Q_OS_MAC
@@ -58,6 +59,8 @@ class KloggApp : public SingleApplication {
                                  | SingleApplication::ExcludeAppVersion )
     {
         crashTracer_ = std::make_unique<CrashTracer>(argv[0]);
+
+        QNetworkProxyFactory::setUseSystemConfiguration( true );
 
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );
         qRegisterMetaType<LinesCount>( "LinesCount" );

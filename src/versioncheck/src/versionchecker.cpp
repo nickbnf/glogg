@@ -42,8 +42,6 @@
 
 #include "version.h"
 
-#include <QNetworkProxyFactory>
-
 const char* VersionChecker::VERSION_URL
     = "https://raw.githubusercontent.com/variar/klogg/master/latest.json";
 
@@ -93,7 +91,6 @@ VersionChecker::VersionChecker()
     : QObject()
     , manager_( new QNetworkAccessManager( this ) )
 {
-    QNetworkProxyFactory::setUseSystemConfiguration( true );
     manager_->setRedirectPolicy( QNetworkRequest::NoLessSafeRedirectPolicy );
 }
 

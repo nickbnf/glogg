@@ -60,11 +60,13 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QProgressDialog>
 #include <QTemporaryFile>
 #include <QToolBar>
 #include <QUrl>
 #include <QWindow>
 
+#include "downloader.h"
 #include "log.h"
 #include "openfilehelper.h"
 
@@ -575,10 +577,48 @@ void MainWindow::open()
         defaultDir = fileInfo.path();
     }
 
-    QStringList fileNames = QFileDialog::getOpenFileNames( this, tr( "Open file" ), defaultDir,
-                                                           tr( "All files (*)" ) );
-    for ( int i = 0; i < fileNames.size(); i++ )
-        loadFile( fileNames[ i ] );
+    const auto selectedFiles = QFileDialog::getOpenFileUrls( this, tr( "Open file" ), defaultDir,
+                                                             tr( "All files (*)" ) );
+
+    std::vector<QUrl> localFiles;
+    std::vector<QUrl> remoteFiles;
+
+    std::partition_copy( selectedFiles.cbegin(), selectedFiles.cend(),
+                         std::back_inserter( localFiles ), std::back_inserter( remoteFiles ),
+                         []( const QUrl& url ) { return url.isLocalFile(); } );
+
+    for ( const auto& localFile : localFiles ) {
+        loadFile( localFile.toLocalFile() );
+    }
+
+    for ( const auto& remoteFile : remoteFiles ) {
+        openRemoteFile( remoteFile );
+    }
+}
+
+void MainWindow::openRemoteFile( const QUrl& url )
+{
+    Downloader downloader;
+
+    QProgressDialog progressDialog;
+    progressDialog.setLabelText( QString( "Downloading %1" ).arg( url.toString() ) );
+
+    connect( &downloader, &Downloader::downloadProgress,
+             [&progressDialog]( qint64 bytesReceived, qint64 bytesTotal ) {
+                 progressDialog.setRange( 0, bytesTotal );
+                 progressDialog.setValue( bytesReceived );
+             } );
+
+    connect( &downloader, &Downloader::finished,
+             [&progressDialog]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
+
+    auto tempFile = new QTemporaryFile( QDir::temp().filePath( "klogg_download" ), this );
+    if ( tempFile->open() ) {
+        downloader.download( url, tempFile );
+        if ( !progressDialog.exec() ) {
+            loadFile( tempFile->fileName() );
+        }
+    }
 }
 
 // Opens a log file from the recent files list
@@ -1302,7 +1342,7 @@ void MainWindow::removeFromFavorites()
 
     const auto currentPath = session_.getFilename( currentCrawlerWidget() );
     const auto currentItem = std::find_if( favorites.begin(), favorites.end(),
-                                        FavoriteFiles::FullPathComparator( currentPath ) );
+                                           FavoriteFiles::FullPathComparator( currentPath ) );
     auto currentIndex = 0;
     if ( currentItem != favorites.end() ) {
         currentIndex = std::distance( favorites.begin(), currentItem );
@@ -1315,7 +1355,7 @@ void MainWindow::removeFromFavorites()
     if ( ok ) {
         const auto selectedFile
             = std::find_if( favorites.begin(), favorites.end(),
-                         FavoriteFiles::FullPathNativeComparator( pathToRemove ) );
+                            FavoriteFiles::FullPathNativeComparator( pathToRemove ) );
 
         if ( selectedFile != favorites.end() ) {
             favoriteFiles.remove( selectedFile->fullPath );

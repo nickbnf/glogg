@@ -128,22 +128,21 @@ void HighlightersDialog::removeHighlighter()
     LOG( logDEBUG ) << "removeHighlighter() index " << index;
 
     if ( index >= 0 ) {
-        highlighterSet_.highlighterList_.removeAt( index );
-        highlighterListWidget->setCurrentRow( -1 );
-        delete highlighterListWidget->takeItem( index );
+        setCurrentRow( -1 );
+        QTimer::singleShot( 0, [this, index] {
+            highlighterSet_.highlighterList_.removeAt( index );
+            delete highlighterListWidget->takeItem( index );
 
-        // Select the new item at the same index
-        highlighterListWidget->setCurrentRow( index );
-
-        int count = highlighterListWidget->count();
-        if ( index < count ) {
-            // Select the new item at the same index
-            setCurrentRow( index );
-        }
-        else {
-            // or the previous index if it is at the end
-            setCurrentRow( count - 1 );
-        }
+            int count = highlighterListWidget->count();
+            if ( index < count ) {
+                // Select the new item at the same index
+                setCurrentRow( index );
+            }
+            else {
+                // or the previous index if it is at the end
+                setCurrentRow( count - 1 );
+            }
+        } );
     }
 }
 
@@ -155,10 +154,12 @@ void HighlightersDialog::moveHighlighterUp()
     if ( index > 0 ) {
         highlighterSet_.highlighterList_.move( index, index - 1 );
 
-        QListWidgetItem* item = highlighterListWidget->takeItem( index );
-        highlighterListWidget->insertItem( index - 1, item );
+        QTimer::singleShot( 0, [this, index] {
+            QListWidgetItem* item = highlighterListWidget->takeItem( index );
+            highlighterListWidget->insertItem( index - 1, item );
 
-        setCurrentRow( index - 1 );
+            setCurrentRow( index - 1 );
+        } );
     }
 }
 
@@ -170,10 +171,12 @@ void HighlightersDialog::moveHighlighterDown()
     if ( ( index >= 0 ) && ( index < ( highlighterListWidget->count() - 1 ) ) ) {
         highlighterSet_.highlighterList_.move( index, index + 1 );
 
-        QListWidgetItem* item = highlighterListWidget->takeItem( index );
-        highlighterListWidget->insertItem( index + 1, item );
+        QTimer::singleShot( 0, [this, index] {
+            QListWidgetItem* item = highlighterListWidget->takeItem( index );
+            highlighterListWidget->insertItem( index + 1, item );
 
-        setCurrentRow( index + 1 );
+            setCurrentRow( index + 1 );
+        } );
     }
 }
 

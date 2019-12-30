@@ -22,6 +22,9 @@ xcopy %QTDIR%\plugins\platforms\qwindows.dll %APPVEYOR_BUILD_FOLDER%\release\pla
 md %APPVEYOR_BUILD_FOLDER%\release\styles
 xcopy %QTDIR%\plugins\styles\qwindowsvistastyle.dll %APPVEYOR_BUILD_FOLDER%\release\styles /y
 
+xcopy %SSL_DIR%\libcrypto-1_1%SSL_ARCH%.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %SSL_DIR%\libssl-1_1%SSL_ARCH%.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+
 xcopy %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\build\readme.html  %APPVEYOR_BUILD_FOLDER%\release\ /y

@@ -583,8 +583,8 @@ void MainWindow::open()
         defaultDir = fileInfo.path();
     }
 
-    const auto selectedFiles = QFileDialog::getOpenFileUrls( this, tr( "Open file" ), defaultDir,
-                                                             tr( "All files (*)" ) );
+    const auto selectedFiles = QFileDialog::getOpenFileUrls(
+        this, tr( "Open file" ), QUrl::fromLocalFile( defaultDir ), tr( "All files (*)" ) );
 
     std::vector<QUrl> localFiles;
     std::vector<QUrl> remoteFiles;
@@ -618,7 +618,8 @@ void MainWindow::openRemoteFile( const QUrl& url )
     connect( &downloader, &Downloader::finished,
              [&progressDialog]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
 
-    auto tempFile = new QTemporaryFile( QDir::temp().filePath( "klogg_download_" + url.fileName() ), this );
+    auto tempFile
+        = new QTemporaryFile( QDir::temp().filePath( "klogg_download_" + url.fileName() ), this );
     if ( tempFile->open() ) {
         downloader.download( url, tempFile );
         if ( !progressDialog.exec() ) {

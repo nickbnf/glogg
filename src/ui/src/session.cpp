@@ -212,10 +212,18 @@ WindowSession::restore( const std::function<ViewInterface*()>& view_factory,
     return result;
 }
 
+WindowSession::WindowSession( std::shared_ptr<Session> appSession, const QString& id, size_t index )
+    : appSession_{ std::move( appSession ) }
+    , windowId_{ id }
+    , windowIndex_{ index }
+{
+    LOG( logINFO ) << "created session for " << id;
+    SessionInfo::get().add( id );
+}
+
 void WindowSession::restoreGeometry( QByteArray* geometry ) const
 {
     const auto& session = SessionInfo::getSynced();
-
     *geometry = session.geometry( windowId_ );
 }
 

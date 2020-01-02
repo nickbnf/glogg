@@ -31,6 +31,7 @@
 #include <QDateTime>
 
 #include "quickfindpattern.h"
+#include "log.h"
 
 class ViewInterface;
 class ViewContextInterface;
@@ -143,14 +144,7 @@ using SaveFileInfo
 
 class WindowSession {
   public:
-    WindowSession() = default;
-
-    WindowSession( std::shared_ptr<Session> appSession, const QString& id, size_t index )
-        : appSession_{ std::move( appSession ) }
-        , windowId_{ id }
-        , windowIndex_{ index }
-    {
-    }
+    WindowSession( std::shared_ptr<Session> appSession, const QString& id, size_t index);
 
     ViewInterface* getViewIfOpen( const QString& file_name ) const
     {

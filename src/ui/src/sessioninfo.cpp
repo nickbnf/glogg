@@ -33,7 +33,6 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
     settings.beginGroup( "Window" );
 
     if ( settings.value( "version", 0 ) == SESSION_VERSION ) {
-
         windows_.clear();
         const auto windowsCount = settings.beginReadArray( "windows" );
         for ( auto windowIndex = 0; windowIndex < windowsCount; ++windowIndex ) {
@@ -62,6 +61,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 settings.endGroup();
             }
 
+            LOG(logINFO) << "Reloaded window session info for " << windowId;
             windows_.emplace_back( window );
         }
         settings.endArray();

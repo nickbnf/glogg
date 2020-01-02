@@ -79,34 +79,12 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
         std::vector<OpenFile> openFiles;
     };
 
-    QStringList windows() const
+    void add( const QString& windowId )
     {
-        QStringList ids;
-        std::transform( windows_.begin(), windows_.end(), std::back_inserter( ids ),
-                        []( const auto& w ) { return w.id; } );
-
-        return ids;
-    }
-
-    QByteArray geometry( const QString& windowId ) const
-    {
-        return findWindow( windowId ).geometry;
-    }
-
-    void setGeometry( const QString& windowId, const QByteArray& geometry )
-    {
-        findWindow( windowId ).geometry = geometry;
-    }
-
-    // List of the loaded files
-    std::vector<OpenFile> openFiles( const QString& windowId ) const
-    {
-        return findWindow( windowId ).openFiles;
-    }
-
-    void setOpenFiles( const QString& windowId, const std::vector<OpenFile>& loaded_files )
-    {
-        findWindow( windowId ).openFiles = loaded_files;
+        if ( findWindow( windowId ) == nullptr ) {
+            windows_.emplace_back( Window{ windowId } );
+            LOG( logINFO ) << "Created window session info for " << windowId;
+        }
     }
 
     bool remove( const QString& windowId )
@@ -123,22 +101,51 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
         return false;
     }
 
+    QStringList windows() const
+    {
+        QStringList ids;
+        std::transform( windows_.begin(), windows_.end(), std::back_inserter( ids ),
+                        []( const auto& w ) { return w.id; } );
+
+        return ids;
+    }
+
+    QByteArray geometry( const QString& windowId ) const
+    {
+        return findWindow( windowId )->geometry;
+    }
+
+    void setGeometry( const QString& windowId, const QByteArray& geometry )
+    {
+        findWindow( windowId )->geometry = geometry;
+    }
+
+    // List of the loaded files
+    std::vector<OpenFile> openFiles( const QString& windowId ) const
+    {
+        return findWindow( windowId )->openFiles;
+    }
+
+    void setOpenFiles( const QString& windowId, const std::vector<OpenFile>& loaded_files )
+    {
+        findWindow( windowId )->openFiles = loaded_files;
+    }
+
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
 
   private:
-    Window& findWindow( const QString& windowId ) const
+    Window* findWindow( const QString& windowId ) const
     {
         auto window = std::find_if( windows_.begin(), windows_.end(),
                                     [&windowId]( const auto& w ) { return w.id == windowId; } );
 
         if ( window == windows_.end() ) {
-            windows_.emplace_back( Window{ windowId } );
-            return windows_.back();
+            return nullptr;
         }
         else {
-            return *window;
+            return &*window;
         }
     }
 

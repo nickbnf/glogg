@@ -319,9 +319,15 @@ bool KArchive::addLocalFile(const QString &fileName, const QString &destName)
         if (symLinkTarget.isEmpty()) { // Mac or Windows
             symLinkTarget = fileInfo.symLinkTarget();
         }
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 10, 0 )
         return writeSymLink(destName, symLinkTarget, fileInfo.owner(),
                             fileInfo.group(), fi.st_mode, fileInfo.lastRead(), fileInfo.lastModified(),
                             fileInfo.birthTime());
+#else
+        return writeSymLink(destName, symLinkTarget, fileInfo.owner(),
+                            fileInfo.group(), fi.st_mode, fileInfo.lastRead(), fileInfo.lastModified(),
+                            fileInfo.created());
+#endif
     }/*end if*/
 
     qint64 size = fileInfo.size();

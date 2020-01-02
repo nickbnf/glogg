@@ -53,7 +53,7 @@
 #include <QtCore/QProcess>
 #include <QtGui/QDesktopServices>
 
-#include "log.h"
+
 
 inline void showPathInFileExplorer( const QString& file_path )
 {
@@ -87,3 +87,4 @@ inline void openFileInDefaultApplication( const QString& file_path )
     const QFileInfo file_info( file_path );
     QDesktopServices::openUrl( QUrl::fromLocalFile( file_info.canonicalFilePath() ) );
 }
+

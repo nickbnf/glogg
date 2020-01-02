@@ -41,6 +41,8 @@
 
 #include <QMainWindow>
 #include <QSystemTrayIcon>
+#include <QTemporaryDir>
+
 #include <memory>
 
 #include <array>
@@ -173,6 +175,7 @@ class MainWindow : public QMainWindow {
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName, bool followFile = false );
+    bool extractAndLoadFile( const QString& fileName );
     void openRemoteFile( const QUrl& url );
     void updateTitleBar( const QString& file_name );
     void updateRecentFileActions();
@@ -220,7 +223,7 @@ class MainWindow : public QMainWindow {
     QAction* openContainingFolderAction;
     QAction* openInEditorAction;
     QAction* openClipboardAction;
-    QAction *openUrlAction;
+    QAction* openUrlAction;
     QAction* overviewVisibleAction;
     QAction* lineNumbersVisibleInMainAction;
     QAction* lineNumbersVisibleInFilteredAction;
@@ -256,7 +259,7 @@ class MainWindow : public QMainWindow {
 
     TabbedScratchPad scratchPad_;
 
-    QNetworkAccessManager networkAccessManager_;
+    QTemporaryDir tempDir_;
 
     bool isMaximized_ = false;
     bool isCloseFromTray_ = false;

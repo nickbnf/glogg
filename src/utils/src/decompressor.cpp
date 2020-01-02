@@ -51,7 +51,7 @@ Archive archiveType( const QString& archiveFilePath )
     }
 
     if ( extension == "gz" || extension == "bz2" || extension == "xz" ) {
-        const auto completeSuffix = info.completeSuffix();
+        const auto completeSuffix = info.completeSuffix().toLower();
         if ( completeSuffix.contains( ".tar." ) ) {
             return Archive::Tar;
         }

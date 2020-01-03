@@ -18,6 +18,7 @@
  */
 
 #include <QFileInfo>
+#include <QMimeDatabase>
 #include <QtConcurrent>
 
 #include "log.h"
@@ -34,7 +35,7 @@ namespace {
 
 enum class Archive { None, Zip7, Tar, Zip, Gz, Bz2, Xz };
 
-Archive archiveType( const QString& archiveFilePath )
+Archive archiveTypeByExtension( const QString& archiveFilePath )
 {
     const auto info = QFileInfo( archiveFilePath );
     const auto extension = info.suffix().toLower();
@@ -50,7 +51,7 @@ Archive archiveType( const QString& archiveFilePath )
         return Archive::Tar;
     }
 
-    if ( extension == "gz" || extension == "bz2" || extension == "xz" ) {
+    if ( extension == "gz" || extension == "bz2" || extension == "xz" || extension == "lzma" ) {
         const auto completeSuffix = info.completeSuffix().toLower();
         if ( completeSuffix.contains( ".tar." ) ) {
             return Archive::Tar;
@@ -61,12 +62,60 @@ Archive archiveType( const QString& archiveFilePath )
         else if ( extension == "bz2" ) {
             return Archive::Bz2;
         }
-        else if ( extension == "xz" ) {
+        else if ( extension == "xz" || extension == "lzma" ) {
             return Archive::Xz;
         }
     }
 
     return Archive::None;
+}
+
+Archive archiveType( const QString& archiveFilePath )
+{
+    QMimeDatabase mimeDb;
+    const auto mime = mimeDb.mimeTypeForFile( archiveFilePath );
+
+    if ( mime.inherits( "application/x-7z-compressed" ) ) {
+        return Archive::Zip7;
+    }
+
+    if ( mime.inherits( "application/zip" ) ) {
+        return Archive::Zip;
+    }
+
+    if ( mime.inherits( "application/x-tar" ) ) {
+        return Archive::Tar;
+    }
+
+    auto mimeArchiveType = Archive::None;
+
+    if ( mime.inherits( "application/x-gzip" ) ) {
+        mimeArchiveType = Archive::Gz;
+    }
+    else if ( mime.inherits( "application/x-bzip" ) ) {
+        mimeArchiveType = Archive::Bz2;
+    }
+    else if ( mime.inherits( "application/x-lzma" ) || mime.inherits( "application/x-xz" ) ) {
+        mimeArchiveType = Archive::Xz;
+    }
+
+    if ( mimeArchiveType == Archive::None ) {
+        return archiveTypeByExtension( archiveFilePath );
+    }
+
+    const auto info = QFileInfo( archiveFilePath );
+    const auto extension = info.suffix().toLower();
+    const auto completeSuffix = info.completeSuffix().toLower();
+    if ( completeSuffix.contains( ".tar.", Qt::CaseInsensitive )
+         || extension.endsWith( "tgz", Qt::CaseInsensitive )
+         || extension.endsWith( "tbz", Qt::CaseInsensitive )
+         || extension.endsWith( "tbz2", Qt::CaseInsensitive )
+         || extension.endsWith( "txz", Qt::CaseInsensitive ) ) {
+
+        return Archive::Tar;
+    }
+
+    return mimeArchiveType;
 }
 
 std::shared_ptr<KArchive> makeExtractor( Archive archiveType, const QString& archiveFilePath )

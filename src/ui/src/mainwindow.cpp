@@ -475,7 +475,7 @@ void MainWindow::createMenus()
     menuBar()->addMenu( EncodingMenu::generate( encodingGroup ) );
     menuBar()->addSeparator();
 
-    favoritesMenu = menuBar()->addMenu( tr( "Favorites" ) );
+    favoritesMenu = menuBar()->addMenu( tr( "F&avorites" ) );
     favoritesMenu->setToolTipsVisible( true );
 
     helpMenu = menuBar()->addMenu( tr( "&Help" ) );

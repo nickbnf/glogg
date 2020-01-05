@@ -39,7 +39,7 @@ class EncodingMenu {
 
         std::vector<int> unicodeMibs = { 106, 1013, 1014, 1018, 1019 };
 
-        QMenu* encodingsMenu = new QMenu( "Encoding" );
+        QMenu* encodingsMenu = new QMenu( "E&ncoding" );
 
         auto autoEncoding = encodingsMenu->addAction( "Auto" );
         autoEncoding->setStatusTip( "Automatically detect the file's encoding" );

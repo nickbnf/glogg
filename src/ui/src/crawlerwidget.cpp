@@ -206,11 +206,16 @@ void CrawlerWidget::doSendAllStateSignals()
 
 void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 {
+    keyEvent->accept();
     const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
     if ( keyEvent->key() == Qt::Key_V && noModifier )
         visibilityBox->setCurrentIndex( ( visibilityBox->currentIndex() + 1 )
                                         % visibilityBox->count() );
+    else if ( keyEvent->modifiers().testFlag( Qt::ShiftModifier )
+              && keyEvent->key() == Qt::Key_F ) {
+        searchLineEdit->setFocus( Qt::ShortcutFocusReason );
+    }
     else {
         switch ( keyEvent->key() ) {
         case Qt::Key_Plus:
@@ -220,6 +225,7 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
             changeTopViewSize( -1 );
             break;
         default:
+            keyEvent->ignore();
             QSplitter::keyPressEvent( keyEvent );
             break;
         }
@@ -815,7 +821,7 @@ void CrawlerWidget::setup()
 
     searchButton = new QToolButton();
     searchButton->setIcon( QIcon( ":/images/icons8-search-16.png" ) );
-    searchButton->setText( tr( "&Search" ) );
+    searchButton->setText( tr( "Search" ) );
     searchButton->setAutoRaise( true );
     searchButton->setContentsMargins( 2, 2, 2, 2 );
 

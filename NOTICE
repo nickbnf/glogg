@@ -298,3 +298,152 @@ under the terms of Boost Software License
 // FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
+===
+This product includes software developed by Jean-loup Gailly and Mark Adler
+zlib (http://www.zlib.net)  with modifications by Kitware (CMake support, name mangling) 
+and by Anton Filimonov (name mangling for static linking with KArchive)
+licensed under the terms of zlib license
+
+// 'zlib' general purpose compression library
+// version 1.2.3, July 18th, 2005
+// 
+// Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler
+// 
+// This software is provided 'as-is', without any express or implied
+// warranty.  In no event will the authors be held liable for any damages
+// arising from the use of this software.
+// 
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+// 
+// 1. The origin of this software must not be misrepresented; you must not
+//    claim that you wrote the original software. If you use this software
+//    in a product, an acknowledgment in the product documentation would be
+//    appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//    misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+// 
+// Jean-loup Gailly        Mark Adler
+// jloup@gzip.org          madler@alumni.caltech.edu
+
+===
+This product includes software developed by Julian R Seward
+libbzip2 (https://www.sourceware.org/bzip2/)
+licensed under the terms of bzip2 license
+
+// This program, "bzip2", the associated library "libbzip2", and all
+// documentation, are copyright (C) 1996-2007 Julian R Seward.  All
+// rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 
+// 2. The origin of this software must not be misrepresented; you must 
+//    not claim that you wrote the original software.  If you use this 
+//    software in a product, an acknowledgment in the product 
+//    documentation would be appreciated but is not required.
+// 
+// 3. Altered source versions must be plainly marked as such, and must
+//    not be misrepresented as being the original software.
+// 
+// 4. The name of the author may not be used to endorse or promote 
+//    products derived from this software without specific prior written 
+//    permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+// GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
+// Julian Seward, jseward@bzip.org
+// bzip2/libbzip2 version 1.0.5 of 10 December 2007
+
+===
+This product includes includes code from XZ Utils <https://tukaani.org/xz/>
+liblzma that is in the public domain.
+
+//XZ Utils Licensing
+//==================
+//
+//    Different licenses apply to different files in this package. Here
+//    is a rough summary of which licenses apply to which parts of this
+//    package (but check the individual files to be sure!):
+//
+//      - liblzma is in the public domain.
+//
+//      - xz, xzdec, and lzmadec command line tools are in the public
+//        domain unless GNU getopt_long had to be compiled and linked
+//        in from the lib directory. The getopt_long code is under
+//        GNU LGPLv2.1+.
+//
+//      - The scripts to grep, diff, and view compressed files have been
+//        adapted from gzip. These scripts and their documentation are
+//        under GNU GPLv2+.
+//
+//      - All the documentation in the doc directory and most of the
+//        XZ Utils specific documentation files in other directories
+//        are in the public domain.
+//
+//      - Translated messages are in the public domain.
+//
+//      - The build system contains public domain files, and files that
+//        are under GNU GPLv2+ or GNU GPLv3+. None of these files end up
+//        in the binaries being built.
+//
+//      - Test files and test code in the tests directory, and debugging
+//        utilities in the debug directory are in the public domain.
+//
+//      - The extra directory may contain public domain files, and files
+//        that are under various free software licenses.
+//
+//    You can do whatever you want with the files that have been put into
+//    the public domain. If you find public domain legally problematic,
+//    take the previous sentence as a license grant. If you still find
+//    the lack of copyright legally problematic, you have too many
+//    lawyers.
+//
+//    As usual, this software is provided "as is", without any warranty.
+//
+//    If you copy significant amounts of public domain code from XZ Utils
+//    into your project, acknowledging this somewhere in your software is
+//    polite (especially if it is proprietary, non-free software), but
+//    naturally it is not legally required. Here is an example of a good
+//    notice to put into "about box" or into documentation:
+//
+//        This software includes code from XZ Utils <https://tukaani.org/xz/>.
+//
+//    The following license texts are included in the following files:
+//      - COPYING.LGPLv2.1: GNU Lesser General Public License version 2.1
+//      - COPYING.GPLv2: GNU General Public License version 2
+//      - COPYING.GPLv3: GNU General Public License version 3
+//
+//    Note that the toolchain (compiler, linker etc.) may add some code
+//    pieces that are copyrighted. Thus, it is possible that e.g. liblzma
+//    binary wouldn't actually be in the public domain in its entirety
+//    even though it contains no copyrighted code from the XZ Utils source
+//    package.
+//
+//    If you have questions, don't hesitate to ask the author(s) for more
+//    information.
+
+===
+This product includes software developed as part of KDE Frameworks (https://kde.org/products/frameworks/)
+karchive (https://github.com/KDE/karchive) licensed under the terms of
+GNU General Public License, version 2 or later
+GNU Lesser General Public License, version 2.1 or later
+
+ 

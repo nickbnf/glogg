@@ -32,8 +32,9 @@ endif()
 
 set(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE)
 set(COPYING_FILE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
-set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.rst)
-set(README_HTML ${CMAKE_BINARY_DIR}/readme.html)
+set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+set(DOCUMENTATION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/DOCUMENTATION.rst)
+set(DOCUMENTATION_HTML ${CMAKE_BINARY_DIR}/documentation.html)
 
 include(prepare_version)
 
@@ -148,8 +149,7 @@ add_custom_target(installation SOURCES
 )
 
 add_custom_target(docs SOURCES
-    ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.rst
+    ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE} ${DOCUMENTATION_FILE}
 )
 
 add_custom_target(stuff SOURCES
@@ -161,8 +161,8 @@ if (${BUILD_DOC})
     include(pandocology)
     add_document(
         TARGET html_readme
-        OUTPUT_FILE readme.html
-        SOURCES doc/documentation.rst
+        OUTPUT_FILE documentation.html
+        SOURCES ${DOCUMENTATION_FILE}
         PANDOC_DIRECTIVES -f rst
         NO_EXPORT_PRODUCT
     )
@@ -229,13 +229,17 @@ if(UNIX)
             ${COPYING_FILE} ${NOTICE_FILE}
             DESTINATION share/doc/klogg)
 
+        install(FILES
+                ${README_FILE}
+                DESTINATION share/doc/klogg)
+
         if(${BUILD_DOC})
             install(FILES
-                ${README_HTML}
+                ${DOCUMENTATION_HTML}
                 DESTINATION share/doc/klogg)
         else()
             install(FILES
-                ${README_FILE}
+                ${DOCUMENTATION_FILE}
                 DESTINATION share/doc/klogg)
         endif()
 

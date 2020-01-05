@@ -101,7 +101,7 @@ for how to setup Klogg on your local machine for development and testing purpose
 ## How to Get Help
 
 First, please refer to the
-[documentation](https://github.com/variar/klogg/blob/master/doc/documentation.rst)
+[documentation](DOCUMENTATION.rst)
 page.
 
 You can open issues using [klogg issues page](https://github.com/variar/klogg/issues)

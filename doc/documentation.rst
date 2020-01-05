@@ -262,6 +262,7 @@ m             put a mark on current selected line
 v             switch filtered view visibilty mode
               (Marks and Matches -> Marks -> Matches)
 F5            reload current file
+Shift+F       Set focus to search string edit box
 ============  =================================================================
 
 

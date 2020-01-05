@@ -41,7 +41,7 @@ void Downloader::download( const QUrl& url, QFile* outputFile )
 
     connect( currentDownload_, &QNetworkReply::readyRead, this, &Downloader::downloadReadyRead );
 
-    LOG( logINFO ) << "Downloading " << url.toEncoded().constData();
+    LOG( logINFO ) << "Downloading " << url.toEncoded();
 }
 
 void Downloader::downloadFinished()

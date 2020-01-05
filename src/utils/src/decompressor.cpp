@@ -53,7 +53,7 @@ Archive archiveTypeByExtension( const QString& archiveFilePath )
 
     if ( extension == "gz" || extension == "bz2" || extension == "xz" || extension == "lzma" ) {
         const auto completeSuffix = info.completeSuffix().toLower();
-        if ( completeSuffix.contains( ".tar." ) ) {
+        if ( completeSuffix.contains( "tar." ) ) {
             return Archive::Tar;
         }
         else if ( extension == "gz" ) {
@@ -106,7 +106,7 @@ Archive archiveType( const QString& archiveFilePath )
     const auto info = QFileInfo( archiveFilePath );
     const auto extension = info.suffix().toLower();
     const auto completeSuffix = info.completeSuffix().toLower();
-    if ( completeSuffix.contains( ".tar.", Qt::CaseInsensitive )
+    if ( completeSuffix.contains( "tar.", Qt::CaseInsensitive )
          || extension.endsWith( "tgz", Qt::CaseInsensitive )
          || extension.endsWith( "tbz", Qt::CaseInsensitive )
          || extension.endsWith( "tbz2", Qt::CaseInsensitive )
@@ -196,20 +196,28 @@ bool Decompressor::decompress( const QString& archiveFilePath, QFile* outputFile
         return false;
     }
 
-    if ( !decompressor->open( QIODevice::ReadOnly ) ) {
-        LOG( logWARNING ) << "Cannot open " << archiveFilePath.constData();
-        return false;
-    }
+    future_ = QtConcurrent::run( [input = std::move( decompressor ), archiveFilePath, outputFile] {
+        if ( !input->open( QIODevice::ReadOnly ) ) {
+            LOG( logWARNING ) << "Cannot open " << archiveFilePath;
+            return false;
+        }
 
-    future_ = QtConcurrent::run( [input = std::move( decompressor ), outputFile] {
+        bool success = true;
         while ( !input->atEnd() ) {
             QByteArray data = input->read( 1024 * 1024 );
-            outputFile->write( data );
+            if ( data.size() > 0 ) {
+                const auto writtenBytes = outputFile->write( data );
+                if ( writtenBytes < 0 ) {
+                    LOG( logERROR ) << "Error decompressing " << archiveFilePath;
+                    success = false;
+                    break;
+                }
+            }
         }
         input->close();
         outputFile->close();
 
-        return true;
+        return success;
     } );
 
     watcher_.setFuture( future_ );
@@ -221,17 +229,18 @@ bool Decompressor::extract( const QString& archiveFilePath, const QString& desti
 {
     auto archive = makeExtractor( archiveType( archiveFilePath ), archiveFilePath );
     if ( !archive ) {
-        LOG( logWARNING ) << "Unsupported archive " << archiveFilePath.constData();
+        LOG( logWARNING ) << "Unsupported archive " << archiveFilePath;
         return false;
     }
 
     // Open the archive
-    if ( !archive->open( QIODevice::ReadOnly ) ) {
-        LOG( logWARNING ) << "Cannot open " << archiveFilePath.constData();
-        return false;
-    }
 
-    future_ = QtConcurrent::run( [ar = std::move( archive ), destination] {
+    future_ = QtConcurrent::run( [ar = std::move( archive ), archiveFilePath, destination] {
+        if ( !ar->open( QIODevice::ReadOnly ) ) {
+            LOG( logWARNING ) << "Cannot open " << archiveFilePath;
+            return false;
+        }
+
         const KArchiveDirectory* root = ar->directory();
         const auto recursive = true;
         const auto result = root->copyTo( destination, recursive );

@@ -1121,11 +1121,11 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
 {
     const auto& config = Configuration::get();
 
-    if (!config.extractArchives()) {
+    if ( !config.extractArchives() ) {
         return false;
     }
 
-    if (!config.extractArchivesAlways()) {
+    if ( !config.extractArchivesAlways() ) {
         const auto userChoice
             = QMessageBox::question( this, "klogg", "Extract archive to temp folder?" );
         if ( userChoice == QMessageBox::No ) {
@@ -1139,6 +1139,7 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
 
     QProgressDialog progressDialog;
     progressDialog.setLabelText( QString( "Extracting %1" ).arg( fileName ) );
+    progressDialog.setRange( 0, 0 );
 
     connect( &decompressor, &Decompressor::finished,
              [&progressDialog]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
@@ -1150,6 +1151,10 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
         if ( tempFile->open() && decompressor.decompress( fileName, tempFile )
              && !progressDialog.exec() ) {
             return this->loadFile( tempFile->fileName() );
+        }
+        else {
+            QMessageBox::warning( this, "klogg",
+                                  QString( "Failed to decompress %1" ).arg( fileName ) );
         }
     }
     else if ( decompressAction == DecompressAction::Extract ) {
@@ -1165,6 +1170,10 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
             }
 
             return true;
+        }
+        else {
+            QMessageBox::warning( this, "klogg",
+                                  QString( "Failed to extract %1" ).arg( fileName ) );
         }
     }
 

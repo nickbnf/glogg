@@ -31,9 +31,6 @@ install:
   - 7z x ninja.zip -o%APPVEYOR_BUILD_FOLDER%\ninja > nul
   - set PATH=%APPVEYOR_BUILD_FOLDER%\ninja;%PATH%
   - ninja --version
-  - cinst pandoc
-  - set PATH=%ProgramFiles(x86)%\Pandoc;%PATH%
-  - pandoc -v
   - ps: >-
       if($env:platform -eq 'x64') {
           $githubApi = 'https://api.github.com/repos/variar/klogg'
@@ -57,7 +54,7 @@ before_build:
 - set PATH=%ProgramFiles(x86)%\NSIS;%PATH%
 - md %APPVEYOR_BUILD_FOLDER%\build
 - cd %APPVEYOR_BUILD_FOLDER%\build
-- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% -DBUILD_DOC=True %APPVEYOR_BUILD_FOLDER%
+- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %APPVEYOR_BUILD_FOLDER%
 
 build_script:
   - cmake --build . --config %configuration%

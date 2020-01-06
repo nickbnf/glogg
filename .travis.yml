@@ -27,7 +27,6 @@ matrix:
             - qt59base
             - ninja-build
             - rpm
-            - pandoc
 
     - os: osx
       compiler: clang
@@ -44,14 +43,13 @@ matrix:
           packages:
             - cmake
             - ninja
-            - pandoc
             - qt
           update: true
 
 env:
     global:
         - KLOGG_VERSION_EVAL='KLOGG_VERSION=20.1.0.$TRAVIS_BUILD_NUMBER'
-        - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-G Ninja -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=True"'
+        - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-G Ninja -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release"'
 
 before_install:
  - '[ "$TRAVIS_OS_NAME" != linux ] || eval "${MATRIX_EVAL}"'

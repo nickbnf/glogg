@@ -4,12 +4,17 @@ xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_portable.exe %APPVEYOR_BUILD_FO
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\build\generated\documentation.html %APPVEYOR_BUILD_FOLDER%\release\ /y
 
+xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc_proxy.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
+
+xcopy %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %APPVEYOR_BUILD_FOLDER%\DOCUMENTATION.md %APPVEYOR_BUILD_FOLDER%\release\ /y
+
 xcopy "%VCToolsRedistDir%%platform%\Microsoft.VC142.CRT\msvcp140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy "%VCToolsRedistDir%%platform%\Microsoft.VC142.CRT\vcruntime140.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy "%VCToolsRedistDir%%platform%\Microsoft.VC142.CRT\vcruntime140_1.dll" %APPVEYOR_BUILD_FOLDER%\release\ /y
-
-xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
-xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc_proxy.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 
 xcopy %QTDIR%\bin\Qt5Core.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %QTDIR%\bin\Qt5Gui.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
@@ -26,12 +31,9 @@ xcopy %QTDIR%\plugins\styles\qwindowsvistastyle.dll %APPVEYOR_BUILD_FOLDER%\rele
 xcopy %SSL_DIR%\libcrypto-1_1%SSL_ARCH%.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %SSL_DIR%\libssl-1_1%SSL_ARCH%.dll %APPVEYOR_BUILD_FOLDER%\release\ /y
 
-xcopy %APPVEYOR_BUILD_FOLDER%\COPYING %APPVEYOR_BUILD_FOLDER%\release\ /y
-xcopy %APPVEYOR_BUILD_FOLDER%\NOTICE %APPVEYOR_BUILD_FOLDER%\release\ /y
-xcopy %APPVEYOR_BUILD_FOLDER%\build\readme.html  %APPVEYOR_BUILD_FOLDER%\release\ /y
-
 md %APPVEYOR_BUILD_FOLDER%\chocolately
 md %APPVEYOR_BUILD_FOLDER%\chocolately\tools
+
 xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\klogg.nuspec %APPVEYOR_BUILD_FOLDER%\chocolately /y
 xcopy %APPVEYOR_BUILD_FOLDER%\packaging\windows\chocolatelyInstall.ps1 %APPVEYOR_BUILD_FOLDER%\chocolately\tools\ /y
 

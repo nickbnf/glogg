@@ -57,13 +57,16 @@
 #include "configuration.h"
 
 // mask a LineType according to Visibility
-static AbstractLogData::LineType& operator&=( AbstractLogData::LineType& type, LogFilteredData::Visibility visibility )
+static AbstractLogData::LineType& operator&=( AbstractLogData::LineType& type,
+                                              LogFilteredData::Visibility visibility )
 {
     // since VisibilityFlags are defined in terms of LineTypeFlags, we can just cast
-    return type &= static_cast<AbstractLogData::LineType>( static_cast<LogFilteredData::Visibility::Int>( visibility ) );
+    return type &= static_cast<AbstractLogData::LineType>(
+               static_cast<LogFilteredData::Visibility::Int>( visibility ) );
 }
 
-static AbstractLogData::LineType operator&( AbstractLogData::LineType type, LogFilteredData::Visibility visibility )
+static AbstractLogData::LineType operator&( AbstractLogData::LineType type,
+                                            LogFilteredData::Visibility visibility )
 {
     return type &= visibility;
 }
@@ -88,8 +91,8 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     visibility_ = VisibilityFlags::Marks | VisibilityFlags::Matches;
 
     // Forward the update signal
-    connect( &workerThread_, &LogFilteredDataWorker::searchProgressed,
-             this, &LogFilteredData::handleSearchProgressed );
+    connect( &workerThread_, &LogFilteredDataWorker::searchProgressed, this,
+             &LogFilteredData::handleSearchProgressed );
 }
 
 void LogFilteredData::runSearch( const QRegularExpression& regExp )
@@ -205,8 +208,7 @@ LogFilteredData::LineType LogFilteredData::lineTypeByLine( LineNumber lineNumber
     // check the cache
     auto it = std::lower_bound(
         begin( filteredItemsCache_ ), end( filteredItemsCache_ ), lineNumber,
-        [](const FilteredItem& item, LineNumber line) { return item.lineNumber() < line; }
-    );
+        []( const FilteredItem& item, LineNumber line ) { return item.lineNumber() < line; } );
     if ( it != end( filteredItemsCache_ ) && it->lineNumber() == lineNumber ) {
         line_type = it->type();
     }
@@ -228,14 +230,16 @@ void LogFilteredData::toggleMark( LineNumber line, QChar mark )
         uint32_t index;
         if ( marks_.toggleMark( line, mark, index ) ) {
             updateCacheWithMark( index, line );
-        } else {
+        }
+        else {
             updateMaxLengthMarks( line );
             removeFromFilteredItemsCache(
                 index, { static_cast<LineNumber>( line ), LineTypeFlags::Mark } );
         }
     }
     else {
-        LOG( logERROR ) << "LogFilteredData::toggleMark trying to toggle a mark outside of the file.";
+        LOG( logERROR )
+            << "LogFilteredData::toggleMark trying to toggle a mark outside of the file.";
     }
 }
 
@@ -254,7 +258,7 @@ void LogFilteredData::updateCacheWithMark( uint32_t index, LineNumber line )
 {
     maxLengthMarks_ = qMax( maxLengthMarks_, sourceLogData_->getLineLength( line ) );
     LineType type = LineTypeFlags::Mark;
-    if ( ! visibility_.testFlag( VisibilityFlags::Matches ) && isLineMatched( line ) ) {
+    if ( !visibility_.testFlag( VisibilityFlags::Matches ) && isLineMatched( line ) ) {
         type |= LineTypeFlags::Match;
     }
     insertIntoFilteredItemsCache( index, { line, type } );
@@ -312,8 +316,7 @@ void LogFilteredData::deleteMark( LineNumber line )
     uint32_t index = marks_.deleteMark( line );
 
     updateMaxLengthMarks( line );
-    removeFromFilteredItemsCache(
-        index, { static_cast<LineNumber>( line ), LineTypeFlags::Mark } );
+    removeFromFilteredItemsCache( index, { static_cast<LineNumber>( line ), LineTypeFlags::Mark } );
 }
 
 void LogFilteredData::updateMaxLengthMarks( LineNumber removed_line )
@@ -371,7 +374,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 
     const auto searchResults = workerThread_.getSearchResults();
 
-    matching_lines_ = std::move(searchResults.allMatches);
+    matching_lines_ = std::move( searchResults.allMatches );
     maxLength_ = searchResults.maxLength;
     nbLinesProcessed_ = searchResults.processedLines;
 
@@ -426,12 +429,14 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
     if ( lineNum.get() >= filteredItemsCache_.size() ) {
-        LOG( logERROR ) << "Index too big in LogFilteredData: " << lineNum << " cache size "
-                        << filteredItemsCache_.size();
+        if ( !filteredItemsCache_.empty() ) {
+            LOG( logERROR ) << "Index too big in LogFilteredData: " << lineNum << " cache size "
+                            << filteredItemsCache_.size();
+        }
         return maxValue<LineNumber>();
     }
 
-    return filteredItemsCache_[ lineNum.get() ].lineNumber();
+    return filteredItemsCache_.at( lineNum.get() ).lineNumber();
 }
 
 LineNumber LogFilteredData::findFilteredLine( LineNumber lineNum ) const
@@ -613,7 +618,8 @@ void LogFilteredData::insertNewMatches( const SearchResultArray& new_matches )
         if ( filteredIt == end( filteredItemsCache_ )
              || filteredIt->lineNumber() > item.lineNumber() ) {
             if ( item.type() & visibility_ ) {
-                if ( ! visibility_.testFlag( VisibilityFlags::Marks ) && isLineMarked( line.lineNumber() ) ) {
+                if ( !visibility_.testFlag( VisibilityFlags::Marks )
+                     && isLineMarked( line.lineNumber() ) ) {
                     item.add( LineTypeFlags::Mark );
                 }
                 filteredIt = filteredItemsCache_.insert( filteredIt, item );
@@ -648,7 +654,7 @@ void LogFilteredData::removeFromFilteredItemsCache( size_t remove_index, Filtere
         // FIXME: collapse them?
     }
 
-    if ( ! ( found.first->remove( item.type() ) & visibility_ ) ) {
+    if ( !( found.first->remove( item.type() ) & visibility_ ) ) {
         filteredItemsCache_.erase( found.first );
     }
 }
@@ -663,8 +669,8 @@ void LogFilteredData::removeAllFromFilteredItemsCache( LineType type )
     using std::begin;
     using std::end;
 
-    auto erase_begin
-        = std::remove_if( begin( filteredItemsCache_ ), end( filteredItemsCache_ ),
-                          [type, this]( FilteredItem& item ) { return ! ( item.remove( type ) & visibility_ ); } );
+    auto erase_begin = std::remove_if(
+        begin( filteredItemsCache_ ), end( filteredItemsCache_ ),
+        [type, this]( FilteredItem& item ) { return !( item.remove( type ) & visibility_ ); } );
     filteredItemsCache_.erase( erase_begin, end( filteredItemsCache_ ) );
 }

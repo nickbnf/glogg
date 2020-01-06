@@ -212,8 +212,8 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
     if ( keyEvent->key() == Qt::Key_V && noModifier )
         visibilityBox->setCurrentIndex( ( visibilityBox->currentIndex() + 1 )
                                         % visibilityBox->count() );
-    else if ( keyEvent->modifiers().testFlag( Qt::ShiftModifier )
-              && keyEvent->key() == Qt::Key_F ) {
+    else if ( keyEvent->modifiers().testFlag( Qt::ControlModifier )
+              && keyEvent->key() == Qt::Key_S ) {
         searchLineEdit->setFocus( Qt::ShortcutFocusReason );
     }
     else {

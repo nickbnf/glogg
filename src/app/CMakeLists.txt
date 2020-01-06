@@ -5,11 +5,21 @@ elseif (WIN32)
     set(OS_BUNDLE WIN32)
 endif()
 
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/documentation.qrc.in
+        ${DOCUMENTATION_RESOURCE}
+        @ONLY)
+
+add_custom_command (OUTPUT ${DOCUMENTATION_HTML}
+        COMMAND $<TARGET_FILE:maddy> ${DOCUMENTATION_FILE} ${DOCUMENTATION_HTML}
+        DEPENDS maddy ${DOCUMENTATION_FILE})
+
 set(MAIN_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/messagereceiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kloggapp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/klogg.qrc
+    ${DOCUMENTATION_RESOURCE}
     ${ICON_FILE})
 
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
@@ -19,7 +29,6 @@ set_target_properties(klogg PROPERTIES AUTORCC ON)
 set_target_properties(klogg PROPERTIES AUTOMOC ON)
 set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
 set_target_properties(klogg_portable PROPERTIES AUTOMOC ON)
-
 
 if (${USE_LTO})
 set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
@@ -52,6 +61,7 @@ elseif (APPLE)
 
     set_source_files_properties(${README_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
     set_source_files_properties(${DOCUMENTATION_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
+    set_source_files_properties(${DOCUMENTATION_HTML} PROPERTIES MACOSX_PACKAGE_LOCATION SharedSupport)
 
     set(MACOSX_BUNDLE_BUNDLE_DISPLAY_NAME ${PROJECT_DESCRIPTION})
     set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})

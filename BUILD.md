@@ -16,7 +16,6 @@ These instructions will get you a copy of the project up and running on your loc
     - QtNetwork
     - QtXml
     - QtTest
-* pandoc to build documentation (optional)
 * nsis to build windows installer (optional)
 
 All other dependencies are provided in 3rdparty directory.

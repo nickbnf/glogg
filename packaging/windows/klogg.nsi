@@ -73,7 +73,7 @@ Section "klogg" klogg
     File COPYING
     File NOTICE
     File README.md
-    File DOCUMENTATION.rst
+    File DOCUMENTATION.md
     File release\documentation.html
 
     ; Create the 'sendto' link
@@ -165,7 +165,7 @@ Section "Uninstall"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\NOTICE"
     Delete "$INSTDIR\readme.html"
-    Delete "$INSTDIR\documentation.rst"
+    Delete "$INSTDIR\documentation.md"
     Delete "$INSTDIR\documentation.html"
     Delete "$INSTDIR\libstdc++-6.dll"
     Delete "$INSTDIR\libgcc_s_seh-1.dll"

@@ -19,4 +19,5 @@ add_subdirectory(cmzlib)
 add_subdirectory(cmbzip2)
 add_subdirectory(cmliblzma)
 add_subdirectory(karchive)
+add_subdirectory(maddy)
 

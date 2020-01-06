@@ -63,6 +63,7 @@
 #include <QMimeData>
 #include <QProgressDialog>
 #include <QTemporaryFile>
+#include <QTextBrowser>
 #include <QToolBar>
 #include <QUrl>
 #include <QWindow>
@@ -386,6 +387,11 @@ void MainWindow::createActions()
     optionsAction->setStatusTip( tr( "Show the Options box" ) );
     connect( optionsAction, &QAction::triggered, [this]( auto ) { this->options(); } );
 
+    showDocumentationAction = new QAction( tr( "&Documentation..." ), this );
+    showDocumentationAction->setStatusTip( tr( "Show documentation" ) );
+    connect( showDocumentationAction, &QAction::triggered,
+             [this]( auto ) { this->documentation(); } );
+
     aboutAction = new QAction( tr( "&About" ), this );
     aboutAction->setStatusTip( tr( "Show the About box" ) );
     connect( aboutAction, &QAction::triggered, [this]( auto ) { this->about(); } );
@@ -479,6 +485,8 @@ void MainWindow::createMenus()
     favoritesMenu->setToolTipsVisible( true );
 
     helpMenu = menuBar()->addMenu( tr( "&Help" ) );
+    helpMenu->addAction( showDocumentationAction );
+    helpMenu->addSeparator();
     helpMenu->addAction( aboutQtAction );
     helpMenu->addAction( aboutAction );
 }
@@ -769,7 +777,6 @@ void MainWindow::options()
     newWindowAction->setVisible( config.allowMultipleWindows() );
 }
 
-// Opens the 'About' dialog box.
 void MainWindow::about()
 {
     QMessageBox::about(
@@ -788,10 +795,28 @@ void MainWindow::about()
             "or later).</p>" ) );
 }
 
-// Opens the 'About Qt' dialog box.
 void MainWindow::aboutQt()
 {
     QMessageBox::aboutQt( this, tr( "About Qt" ) );
+}
+
+void MainWindow::documentation()
+{
+    QFile data( ":/documentation.html" );
+    if ( data.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+        const auto text = QString::fromUtf8( data.readAll() );
+        QTextBrowser* tb = new QTextBrowser();
+        tb->setOpenExternalLinks( true );
+        tb->setHtml( text );
+        tb->setWindowFlags( Qt::Window );
+        tb->setAttribute( Qt::WA_DeleteOnClose );
+        tb->setWindowTitle( "klogg documentation" );
+        tb->resize( this->width() / 2, this->height() );
+        tb->show();
+    }
+    else {
+        LOG( logERROR ) << "Can't open documentation resource";
+    }
 }
 
 void MainWindow::showScratchPad()

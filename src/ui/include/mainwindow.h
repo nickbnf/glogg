@@ -112,6 +112,7 @@ class MainWindow : public QMainWindow {
     void options();
     void about();
     void aboutQt();
+    void documentation();
     void showScratchPad();
     void encodingChanged( QAction* action );
     void addToFavorites();
@@ -233,6 +234,7 @@ class MainWindow : public QMainWindow {
     QAction* highlightersAction;
     QAction* optionsAction;
     QAction* showScratchPadAction;
+    QAction* showDocumentationAction;
     QAction* aboutAction;
     QAction* aboutQtAction;
     QActionGroup* encodingGroup;

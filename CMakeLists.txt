@@ -33,8 +33,8 @@ endif()
 set(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE)
 set(COPYING_FILE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
 set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-set(DOCUMENTATION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/DOCUMENTATION.rst)
-set(DOCUMENTATION_HTML ${CMAKE_BINARY_DIR}/documentation.html)
+set(DOCUMENTATION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/DOCUMENTATION.md)
+set(DOCUMENTATION_HTML ${CMAKE_BINARY_DIR}/generated/documentation.html)
 
 include(prepare_version)
 
@@ -156,17 +156,7 @@ add_custom_target(stuff SOURCES
    .clang-format
 )
 
-option(BUILD_DOC "Build documentation" ON)
-if (${BUILD_DOC})
-    include(pandocology)
-    add_document(
-        TARGET html_readme
-        OUTPUT_FILE documentation.html
-        SOURCES ${DOCUMENTATION_FILE}
-        PANDOC_DIRECTIVES -f rst
-        NO_EXPORT_PRODUCT
-    )
-endif()
+set(DOCUMENTATION_RESOURCE ${CMAKE_BINARY_DIR}/generated/documentation.qrc)
 
 option(USE_LTO "Use link time optimization" ON)
 
@@ -233,15 +223,10 @@ if(UNIX)
                 ${README_FILE}
                 DESTINATION share/doc/klogg)
 
-        if(${BUILD_DOC})
-            install(FILES
-                ${DOCUMENTATION_HTML}
-                DESTINATION share/doc/klogg)
-        else()
-            install(FILES
-                ${DOCUMENTATION_FILE}
-                DESTINATION share/doc/klogg)
-        endif()
+        install(FILES
+            ${DOCUMENTATION_HTML}
+            ${DOCUMENTATION_FILE}
+            DESTINATION share/doc/klogg)
 
         install(FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop

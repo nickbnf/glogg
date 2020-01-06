@@ -36,6 +36,7 @@
 #include "log.h"
 #include "session.h"
 #include "uuid.h"
+#include "klogg_version.h"
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Appenders/RollingFileAppender.h>
@@ -106,7 +107,7 @@ class KloggApp : public SingleApplication {
             }
 
             QVariantMap data;
-            data.insert( "version", GLOGG_VERSION );
+            data.insert( "version", kloggVersion() );
             data.insert( "files", QVariant{ filesToOpen } );
 
             auto json = QJsonDocument::fromVariant( data );

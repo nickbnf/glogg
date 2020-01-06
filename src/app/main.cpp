@@ -44,7 +44,6 @@
 
 #include <memory>
 
-#include <iomanip>
 #include <iostream>
 
 #ifdef Q_OS_WIN
@@ -55,17 +54,13 @@
 #include "kloggapp.h"
 
 #include "configuration.h"
-#include "data/loadingstatus.h"
-#include "highlighterset.h"
 #include "mainwindow.h"
 #include "persistentinfo.h"
 #include "recentfiles.h"
 #include "savedsearches.h"
-#include "session.h"
-#include "sessioninfo.h"
 #include "versionchecker.h"
 
-#include "version.h"
+#include "klogg_version.h"
 
 #include <QtCore/QJsonDocument>
 
@@ -187,8 +182,7 @@ int main( int argc, char* argv[] )
                   && config.loadLastSession() ) ) {
             mw = app.reloadSession();
         }
-        else
-        {
+        else {
             mw = app.newWindow();
             mw->reloadGeometry();
             LOG( logDEBUG ) << "MainWindow created.";
@@ -207,10 +201,10 @@ int main( int argc, char* argv[] )
 
 static void print_version()
 {
-    std::cout << "klogg " GLOGG_VERSION "\n";
-#ifdef GLOGG_COMMIT
-    std::cout << "Built " GLOGG_DATE " from " GLOGG_COMMIT "(" GLOGG_GIT_VERSION ")\n";
-#endif
+    std::cout << "klogg " << kloggVersion().data() << "\n";
+    std::cout << "Built " << kloggBuildDate().data() << " from "
+              << kloggCommit().data() << "(" << kloggGitVersion().data() << ")\n";
+
     std::cout << "Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
     std::cout << "This is free software.  You may redistribute copies of it under the terms of\n";
     std::cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";

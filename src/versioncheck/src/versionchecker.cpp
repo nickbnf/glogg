@@ -40,7 +40,7 @@
 #include "configuration.h"
 #include "log.h"
 
-#include "version.h"
+#include "klogg_version.h"
 
 const char* VersionChecker::VERSION_URL
     = "https://raw.githubusercontent.com/variar/klogg/master/latest.json";
@@ -125,7 +125,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
     LOG( logDEBUG ) << "VersionChecker::downloadFinished()";
 
     if ( reply->error() == QNetworkReply::NoError ) {
-        const auto currentVersion = QString( GLOGG_VERSION );
+        const auto currentVersion = kloggVersion();
 
         const auto rawReply = reply->readAll();
         LOG( logDEBUG ) << "Version reply: " << QString::fromUtf8( rawReply );

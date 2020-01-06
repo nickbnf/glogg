@@ -20,6 +20,8 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+#include <QLatin1String>
+
 #include <absl/types/optional.h>
 #include <plog/Log.h>
 
@@ -81,6 +83,11 @@ inline void EnableLogging( bool isEnabled, uint8_t logLevel )
 template <typename T> Record& operator<<( Record& r, const absl::optional<T>& t )
 {
     return t ? r << *t : r << "<empty>";
+}
+
+inline Record& operator<<( Record& r, const QLatin1String s )
+{
+    return r << s.data();
 }
 
 } // namespace plog

@@ -26,7 +26,7 @@
 #include <QtCore/QVariant>
 
 #include "log.h"
-#include "version.h"
+#include "klogg_version.h"
 
 /*
  * Class receiving messages from another instance of klogg.
@@ -54,7 +54,7 @@ class MessageReceiver final : public QObject {
         Q_UNUSED( instanceId );
 
         QVariantMap data = json.toVariant().toMap();
-        if ( data[ "version" ].toString() != GLOGG_VERSION ) {
+        if ( data[ "version" ].toString() != kloggVersion() ) {
             return;
         }
 

@@ -83,7 +83,7 @@
 #include "recentfiles.h"
 #include "tabbedcrawlerwidget.h"
 
-#include "version.h"
+#include "klogg_version.h"
 
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
@@ -781,18 +781,18 @@ void MainWindow::about()
 {
     QMessageBox::about(
         this, tr( "About klogg" ),
-        tr( "<h2>klogg " GLOGG_VERSION "</h2>"
+        QString(
+            "<h2>klogg %1</h2>"
             "<p>A fast, advanced log explorer.</p>"
-#ifdef GLOGG_COMMIT
-            "<p>Built " GLOGG_DATE " from " GLOGG_COMMIT "</p>"
-#endif
+            "<p>Built %2 from %3</p>"
             "<p><a href=\"https://github.com/variar/klogg\">https://github.com/variar/klogg</a></p>"
             "<p>This is fork of glogg</p>"
             "<p><a href=\"http://glogg.bonnefon.org/\">http://glogg.bonnefon.org/</a></p>"
             "<p>Using icons form <a href=\"https://icons8.com\">icons8.com</a> project</p>"
             "<p>Copyright &copy; 2019 Nicolas Bonnefon, Anton Filimonov and other contributors</p>"
             "<p>You may modify and redistribute the program under the terms of the GPL (version 3 "
-            "or later).</p>" ) );
+            "or later).</p>" )
+            .arg( kloggVersion(), kloggBuildDate(), kloggCommit() ) );
 }
 
 void MainWindow::aboutQt()
@@ -1302,11 +1302,8 @@ void MainWindow::updateTitleBar( const QString& file_name )
         indexPart = QString( " #%1" ).arg( session_.windowIndex() + 1 );
     }
 
-    setWindowTitle( tr( "%1 - %2%3" ).arg( shownName, tr( "klogg" ), indexPart )
-#ifdef GLOGG_COMMIT
-                    + " (build " GLOGG_VERSION ")"
-#endif
-    );
+    setWindowTitle( tr( "%1 - %2%3" ).arg( shownName, tr( "klogg" ), indexPart ) + " (build "
+                    + kloggVersion() + ")" );
 }
 
 // Updates the actions for the recent files.

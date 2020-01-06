@@ -28,15 +28,15 @@ message("Git commit: ${GIT_DESCRIBE}")
 
 STRING(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 
-FILE(WRITE  generated/version.h  "#ifndef VERSION_H\n")
-FILE(APPEND generated/version.h "#define VERSION_H\n\n")
+FILE(WRITE  generated/version.h  "#ifndef GENERATED_KLOGG_VERSION_H\n")
+FILE(APPEND generated/version.h "#define GENERATED_KLOGG_VERSION_H\n\n")
 
-FILE(APPEND generated/version.h "#define GLOGG_DATE \"${BUILD_DATE}\"\n\n")
-FILE(APPEND generated/version.h "#define GLOGG_GIT_VERSION \"${GIT_DESCRIBE}\"\n\n")
-FILE(APPEND generated/version.h "#define GLOGG_COMMIT \"${GIT_COMMIT_HASH}\"\n\n")
-FILE(APPEND generated/version.h "#define GLOGG_VERSION \"${BUILD_VERSION}\"\n\n")
+FILE(APPEND generated/version.h "#define KLOGG_DATE \"${BUILD_DATE}\"\n\n")
+FILE(APPEND generated/version.h "#define KLOGG_GIT_VERSION \"${GIT_DESCRIBE}\"\n\n")
+FILE(APPEND generated/version.h "#define KLOGG_COMMIT \"${GIT_COMMIT_HASH}\"\n\n")
+FILE(APPEND generated/version.h "#define KLOGG_VERSION \"${BUILD_VERSION}\"\n\n")
 
-FILE(APPEND generated/version.h "#endif // VERSION_H\n")
+FILE(APPEND generated/version.h "#endif // GENERATED_KLOGG_VERSION_H\n")
 
 
 

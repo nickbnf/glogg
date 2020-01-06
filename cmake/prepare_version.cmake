@@ -54,7 +54,7 @@ generate_product_version(
 )
 
 add_custom_target (generate_version ALL
-    COMMAND ${CMAKE_COMMAND} -DBUILD_VERSION=${PROJECT_VERSION}.${PROJECT_VERSION_TWEAK} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_version_h.cmake
+    COMMAND ${CMAKE_COMMAND} -DBUILD_VERSION=${PROJECT_VERSION}.${PROJECT_VERSION_TWEAK} -P ${CMAKE_SOURCE_DIR}/cmake/generate_version_h.cmake
     DEPENDS ${ProductVersionResourceFiles}
     SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_version_h.cmake
             ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version_info.h.in

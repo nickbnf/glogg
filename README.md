@@ -8,7 +8,7 @@ system administrators in mind and can be seen as a graphical, interactive
 combination of grep, less, and tail.
 
 Please refer to the
-[documentation](DOCUMENTATION.rst)
+[documentation](DOCUMENTATION.md)
 page for how to use Klogg.
 
 ### Current release
@@ -101,7 +101,7 @@ for how to setup Klogg on your local machine for development and testing purpose
 ## How to Get Help
 
 First, please refer to the
-[documentation](DOCUMENTATION.rst)
+[documentation](DOCUMENTATION.md)
 page.
 
 You can open issues using [klogg issues page](https://github.com/variar/klogg/issues)

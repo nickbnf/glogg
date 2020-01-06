@@ -8,7 +8,7 @@ system administrators in mind and can be seen as a graphical, interactive
 combination of grep, less, and tail.
 
 Please refer to the
-[documentation](https://github.com/variar/klogg/blob/master/doc/documentation.rst)
+[documentation](DOCUMENTATION.rst)
 page for how to use Klogg.
 
 ### Current release

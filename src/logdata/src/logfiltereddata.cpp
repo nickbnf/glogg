@@ -461,28 +461,34 @@ QString LogFilteredData::doGetExpandedLineString( LineNumber lineNum ) const
 // Implementation of the virtual function.
 std::vector<QString> LogFilteredData::doGetLines( LineNumber first_line, LinesCount number ) const
 {
-    std::vector<QString> list;
-    list.reserve( number.get() );
-
-    for ( auto i = first_line; i < first_line + number; ++i ) {
-        list.emplace_back( doGetLineString( i ) );
-    }
-
-    return list;
+    return doGetLines( first_line, number,
+                       [this]( const auto& line ) { return doGetLineString( line ); } );
 }
 
 // Implementation of the virtual function.
 std::vector<QString> LogFilteredData::doGetExpandedLines( LineNumber first_line,
                                                           LinesCount number ) const
 {
-    std::vector<QString> list;
-    list.reserve( number.get() );
+    return doGetLines( first_line, number,
+                       [this]( const auto& line ) { return doGetExpandedLineString( line ); } );
+}
 
-    for ( auto i = first_line; i < first_line + number; ++i ) {
-        list.emplace_back( doGetExpandedLineString( i ) );
-    }
+std::vector<QString>
+LogFilteredData::doGetLines( LineNumber first_line, LinesCount number,
+                             const std::function<QString( LineNumber )>& lineGetter ) const
+{
+    std::vector<QString> lines;
+    lines.reserve( number.get() );
 
-    return list;
+    std::vector<LineNumber::UnderlyingType> lineNumbers;
+    lineNumbers.resize( number.get() );
+    std::iota( lineNumbers.begin(), lineNumbers.end(), first_line.get() );
+
+    std::transform(
+        lineNumbers.begin(), lineNumbers.end(), std::back_inserter( lines ),
+        [&lineGetter]( const auto& line ) { return lineGetter( LineNumber( line ) ); } );
+
+    return lines;
 }
 
 // Implementation of the virtual function.

@@ -1459,15 +1459,20 @@ void AbstractLogView::jumpToEndOfLine()
 // Make the end of the lines on the screen visible
 void AbstractLogView::jumpToRightOfScreen()
 {
-    // Search the longest line on screen
-    auto max_length = 0_length;
-
     const auto nbVisibleLines = getNbVisibleLines();
-    for ( auto i = firstLine; i <= ( firstLine + nbVisibleLines ); ++i ) {
-        const auto length = logData->getLineLength( i );
-        max_length = qMax( length, max_length );
-    }
 
+    std::vector<LineNumber::UnderlyingType> visibleLinesNumbers;
+    visibleLinesNumbers.resize( nbVisibleLines.get() );
+    std::iota( visibleLinesNumbers.begin(), visibleLinesNumbers.end(), firstLine.get() );
+
+    std::vector<LineLength> lineLengths;
+    lineLengths.reserve( visibleLinesNumbers.size() );
+
+    std::transform(
+        visibleLinesNumbers.begin(), visibleLinesNumbers.end(), std::back_inserter( lineLengths ),
+        [this]( const auto& line ) { return logData->getLineLength( LineNumber( line ) ); } );
+
+    const auto max_length = *std::max_element( lineLengths.begin(), lineLengths.end() );
     horizontalScrollBar()->setValue( max_length.get() - getNbVisibleCols() );
 }
 
@@ -1906,7 +1911,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
 
         // Draw the line number
         if ( lineNumbersVisible_ ) {
-            static constexpr QLatin1String lineNumberFormat( "%1", 2 );
+            static const QString lineNumberFormat( "%1" );
             const QString& lineNumberStr = lineNumberFormat.arg(
                 displayLineNumber( line_index ).get(), nbDigitsInLineNumber );
             painter.setPen( palette.color( QPalette::Text ) );

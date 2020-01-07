@@ -42,7 +42,7 @@ Klogg started as a fork of [glogg](https://github.com/nickbnf/glogg) - the fast,
 Since then it has evolved from fixing small annoying bugs to rewriting core components to
 make it faster and smarter that predecessor.
 
-I use klogg every day and development is primarily focused on feature my colleagues and I need
+Development of klogg is driven by features my colleagues and I need
 to stay productive as well as feature requests from users on Github and in glogg mailing list.
 
 Latest news about klogg development can be found at https://klogg.filimonov.dev.

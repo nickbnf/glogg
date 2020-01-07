@@ -117,9 +117,6 @@ endif()
 
 if (WIN32)
     add_definitions(-DNOMINMAX)
-
-    add_definitions(-DGLOGG_SUPPORTS_POLLING)
-
 endif()
 
 option(PERF "Build for performance test" OFF)

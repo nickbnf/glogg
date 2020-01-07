@@ -322,7 +322,7 @@ class Configuration final : public Persistable<Configuration> {
     bool quickfindIncremental_ = true;
 
     bool nativeFileWatchEnabled_ = true;
-#ifdef GLOGG_SUPPORTS_POLLING
+#ifdef Q_OS_WIN
     bool pollingEnabled_ = true;
 #else
     bool pollingEnabled_ = false;

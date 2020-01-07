@@ -188,10 +188,6 @@ MainWindow::MainWindow( WindowSession session )
     connect( &quickFindMux_, SIGNAL( clearNotification() ), &quickFindWidget_,
              SLOT( clearNotification() ) );
 
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
-
-#endif
-
     // Construct the QuickFind bar
     quickFindWidget_.hide();
 

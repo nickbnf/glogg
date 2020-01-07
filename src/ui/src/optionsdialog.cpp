@@ -79,9 +79,7 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     setupLogging();
     setupArchives();
 
-#ifdef Q_OS_MAC
-    minimizeToTrayCheckBox->setVisible( false );
-#endif
+
 }
 
 //
@@ -91,12 +89,12 @@ OptionsDialog::OptionsDialog( QWidget* parent )
 // Setups the tabs depending on the configuration
 void OptionsDialog::setupTabs()
 {
-#ifndef GLOGG_SUPPORTS_VERSION_CHECKING
-    versionCheckingBox->setVisible( false );
-#endif
-
 #ifndef Q_OS_WIN
     keepFileClosedCheckBox->setVisible( false );
+#endif
+
+#ifdef Q_OS_MAC
+    minimizeToTrayCheckBox->setVisible( false );
 #endif
 }
 

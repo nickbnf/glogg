@@ -186,10 +186,7 @@ class KloggApp : public SingleApplication {
     void startBackgroundTasks()
     {
         LOG( logDEBUG ) << "startBackgroundTasks";
-
-#ifdef GLOGG_SUPPORTS_VERSION_CHECKING
         versionChecker_.startCheck();
-#endif
     }
 
 #ifdef Q_OS_MAC

@@ -119,7 +119,6 @@ if (WIN32)
     add_definitions(-DNOMINMAX)
 
     add_definitions(-DGLOGG_SUPPORTS_POLLING)
-    add_definitions(-DGLOGG_SUPPORTS_VERSION_CHECKING)
 
 endif()
 

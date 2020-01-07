@@ -111,8 +111,8 @@ class HighlighterSet final : public Persistable<HighlighterSet>
             QDataStream& in, HighlighterSet& object );
 
   private:
-    static const int HighlighterSet_VERSION;
-    static const int FilterSet_VERSION;
+    static constexpr int HighlighterSet_VERSION = 2;
+    static constexpr int FilterSet_VERSION = 2;
 
     HighlighterList highlighterList_;
 

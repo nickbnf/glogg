@@ -1542,7 +1542,7 @@ void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
 // Returns the size in human readable format
 static QString readableSize( qint64 size )
 {
-    static const QString sizeStrs[]
+    static const std::array<QString, 5> sizeStrs
         = { QObject::tr( "B" ), QObject::tr( "KiB" ), QObject::tr( "MiB" ), QObject::tr( "GiB" ),
             QObject::tr( "TiB" ) };
 
@@ -1550,9 +1550,7 @@ static QString readableSize( qint64 size )
     unsigned int i;
     double humanSize = size;
 
-    for ( i = 0;
-          i + 1 < ( sizeof( sizeStrs ) / sizeof( QString ) ) && ( humanSize / 1024.0 ) >= 1024.0;
-          i++ )
+    for ( i = 0; i + 1 < sizeStrs.size() && ( humanSize / 1024.0 ) >= 1024.0; i++ )
         humanSize /= 1024.0;
 
     if ( humanSize >= 1024.0 ) {

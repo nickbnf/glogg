@@ -223,13 +223,6 @@ inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPo
         painter.fillRect( xPos, yPos, blank_width, fontHeight, backColor_ );
 }
 
-const int DigitsBuffer::timeout_ = 2000;
-
-DigitsBuffer::DigitsBuffer()
-    : QObject()
-{
-}
-
 void DigitsBuffer::reset()
 {
     LOG( logDEBUG ) << "DigitsBuffer::reset()";
@@ -1673,10 +1666,10 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     static const QBrush markBrush = QBrush( "dodgerblue" );
     static const QBrush markedMatchBrush = QBrush( "violet" );
 
-    static const int SEPARATOR_WIDTH = 1;
-    static const qreal BULLET_AREA_WIDTH = 11;
-    static const int CONTENT_MARGIN_WIDTH = 1;
-    static const int LINE_NUMBER_PADDING = 3;
+    static constexpr int SEPARATOR_WIDTH = 1;
+    static constexpr qreal BULLET_AREA_WIDTH = 11;
+    static constexpr int CONTENT_MARGIN_WIDTH = 1;
+    static constexpr int LINE_NUMBER_PADDING = 3;
 
     // First check the lines to be drawn are within range (might not be the case if
     // the file has just changed)
@@ -1913,7 +1906,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
 
         // Draw the line number
         if ( lineNumbersVisible_ ) {
-            static const QString lineNumberFormat( "%1" );
+            static constexpr QLatin1String lineNumberFormat( "%1", 2 );
             const QString& lineNumberStr = lineNumberFormat.arg(
                 displayLineNumber( line_index ).get(), nbDigitsInLineNumber );
             painter.setPen( palette.color( QPalette::Text ) );

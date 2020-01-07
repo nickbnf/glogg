@@ -81,7 +81,7 @@ class AbstractLogData : public QObject {
     void detachReader() const;
 
     // Length of a tab stop
-    static const int tabStop = 8;
+    static constexpr int tabStop = 8;
 
     static inline LineLength getUntabifiedLength( const QString& line ) {
         int total_spaces = 0;

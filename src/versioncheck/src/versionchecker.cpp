@@ -42,20 +42,20 @@
 
 #include "klogg_version.h"
 
-const char* VersionChecker::VERSION_URL
-    = "https://raw.githubusercontent.com/variar/klogg/master/latest.json";
-
-const uint64_t VersionChecker::CHECK_INTERVAL_S = 3600 * 24 * 7; /* 7 days */
+namespace {
 
 #if defined( Q_OS_WIN )
-static constexpr QLatin1String OsSuffix = QLatin1String("-win", 4);
+static constexpr QLatin1String OsSuffix = QLatin1String( "-win", 4 );
 #elif defined( Q_OS_OSX )
-static constexpr QLatin1String OsSuffix = QLatin1String("-osx", 4);
+static constexpr QLatin1String OsSuffix = QLatin1String( "-osx", 4 );
 #else
-static constexpr QLatin1String OsSuffix = QLatin1String("-linux", 6);
+static constexpr QLatin1String OsSuffix = QLatin1String( "-linux", 6 );
 #endif
 
-namespace {
+static constexpr QLatin1String VERSION_URL
+    = QLatin1String( "https://raw.githubusercontent.com/variar/klogg/master/latest.json", 65 );
+static constexpr uint64_t CHECK_INTERVAL_S = 3600 * 24 * 7; /* 7 days */
+
 bool isVersionNewer( const QString& current_version, const QString& new_version )
 {
     const auto parseVersion = []( const QString& version_string ) {

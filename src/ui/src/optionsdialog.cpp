@@ -42,8 +42,8 @@
 
 #include "log.h"
 
-static const uint32_t POLL_INTERVAL_MIN = 10;
-static const uint32_t POLL_INTERVAL_MAX = 3600000;
+static constexpr uint32_t POLL_INTERVAL_MIN = 10;
+static constexpr uint32_t POLL_INTERVAL_MAX = 3600000;
 
 // Constructor
 OptionsDialog::OptionsDialog( QWidget* parent )

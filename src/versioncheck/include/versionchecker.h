@@ -50,7 +50,6 @@
 // data for the version checker
 class VersionCheckerConfig final : public Persistable<VersionCheckerConfig, session_settings> {
   public:
-
     std::time_t nextDeadline() const
     {
         return next_deadline_;
@@ -91,9 +90,6 @@ class VersionChecker : public QObject {
     void downloadFinished( QNetworkReply* );
 
   private:
-    static const char* VERSION_URL;
-    static const uint64_t CHECK_INTERVAL_S;
-
     QNetworkAccessManager* manager_ = nullptr;
 };
 

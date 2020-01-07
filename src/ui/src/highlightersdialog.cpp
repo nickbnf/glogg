@@ -47,8 +47,8 @@
 #include <utility>
 
 namespace {
-static const char* DEFAULT_PATTERN = "New Highlighter";
-static const bool DEFAULT_IGNORE_CASE = false;
+static constexpr QLatin1String DEFAULT_PATTERN = QLatin1String("New Highlighter", 15);
+static constexpr bool DEFAULT_IGNORE_CASE = false;
 
 static const QColor DEFAULT_FORE_COLOUR( "#000000" );
 static const QColor DEFAULT_BACK_COLOUR( "#FFFFFF" );

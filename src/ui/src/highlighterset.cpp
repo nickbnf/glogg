@@ -44,9 +44,6 @@
 #include "highlighterset.h"
 #include "log.h"
 
-const int HighlighterSet::HighlighterSet_VERSION = 2;
-const int HighlighterSet::FilterSet_VERSION = 2;
-
 QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
 {
     QRegularExpression::PatternOptions options = QRegularExpression::UseUnicodePropertiesOption;

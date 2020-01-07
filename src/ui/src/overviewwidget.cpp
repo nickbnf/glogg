@@ -30,11 +30,6 @@
 
 #include "overview.h"
 
-// Graphic parameters
-const int OverviewWidget::LINE_MARGIN = 4;
-const int OverviewWidget::STEP_DURATION_MS = 30;
-const int OverviewWidget::INITIAL_TTL_VALUE = 5;
-
 #define HIGHLIGHT_XPM_WIDTH 27
 #define HIGHLIGHT_XPM_HEIGHT 9
 

@@ -142,8 +142,6 @@ class DigitsBuffer : public QObject
   Q_OBJECT
 
   public:
-    DigitsBuffer();
-
     // Reset the buffer.
     void reset();
     // Add a single digit to the buffer (discarded if it's not a digit),
@@ -159,7 +157,7 @@ class DigitsBuffer : public QObject
 
   private:
     // Duration of the timeout in milliseconds.
-    static const int timeout_;
+    static constexpr int timeout_ = 2000;
 
     QString digits_;
 

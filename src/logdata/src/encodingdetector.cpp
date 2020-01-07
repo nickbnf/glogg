@@ -54,7 +54,7 @@ private:
 
 EncodingParameters::EncodingParameters(const QTextCodec* codec)
 {
-    static const QChar lineFeed(QChar::LineFeed);
+    static constexpr QChar lineFeed(QChar::LineFeed);
     QTextCodec::ConverterState convertState(QTextCodec::IgnoreHeader);
     QByteArray encodedLineFeed = codec->fromUnicode(&lineFeed, 1, &convertState);
 

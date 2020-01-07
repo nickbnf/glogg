@@ -23,9 +23,6 @@
 #include "log.h"
 #include "recentfiles.h"
 
-const int RecentFiles::RECENTFILES_VERSION = 1;
-const int RecentFiles::MAX_NUMBER_OF_FILES = 10;
-
 void RecentFiles::addRecent( const QString& text )
 {
     // First prune non existent files

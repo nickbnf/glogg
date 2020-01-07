@@ -37,7 +37,7 @@ class Overview {
     // A line with a position in pixel and a weight (darkness)
     class WeightedLine {
       public:
-        static const int WEIGHT_STEPS = 3;
+        static constexpr int WEIGHT_STEPS = 3;
 
         WeightedLine()
         {

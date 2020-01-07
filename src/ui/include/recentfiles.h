@@ -40,8 +40,8 @@ class RecentFiles final : public Persistable<RecentFiles, session_settings>
     void retrieveFromStorage( QSettings& settings );
 
   private:
-    static const int RECENTFILES_VERSION;
-    static const int MAX_NUMBER_OF_FILES;
+    static constexpr int RECENTFILES_VERSION = 1;
+    static constexpr int MAX_NUMBER_OF_FILES = 10;
 
     QStringList recentFiles_;
 };

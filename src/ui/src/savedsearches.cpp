@@ -25,9 +25,6 @@
 #include "log.h"
 #include "savedsearches.h"
 
-const int SavedSearches::SAVEDSEARCHES_VERSION = 1;
-const int SavedSearches::maxNumberOfRecentSearches = 50;
-
 SavedSearches::SavedSearches()
     : savedSearches_()
 {

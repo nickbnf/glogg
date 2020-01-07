@@ -56,9 +56,9 @@ class OverviewWidget : public QWidget {
 
   private:
     // Constants
-    static const int LINE_MARGIN;
-    static const int STEP_DURATION_MS;
-    static const int INITIAL_TTL_VALUE;
+    static constexpr int LINE_MARGIN = 4;
+    static constexpr int STEP_DURATION_MS = 30;
+    static constexpr int INITIAL_TTL_VALUE = 5;
 
     Overview* overview_;
 

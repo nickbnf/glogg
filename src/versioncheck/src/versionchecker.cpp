@@ -48,11 +48,11 @@ const char* VersionChecker::VERSION_URL
 const uint64_t VersionChecker::CHECK_INTERVAL_S = 3600 * 24 * 7; /* 7 days */
 
 #if defined( Q_OS_WIN )
-#define OS_SUFFIX "-win"
+static constexpr QLatin1String OsSuffix = QLatin1String("-win", 4);
 #elif defined( Q_OS_OSX )
-#define OS_SUFFIX "-osx"
+static constexpr QLatin1String OsSuffix = QLatin1String("-osx", 4);
 #else
-#define OS_SUFFIX "-linux"
+static constexpr QLatin1String OsSuffix = QLatin1String("-linux", 6);
 #endif
 
 namespace {
@@ -146,7 +146,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
         }
         else {
             latestVersion = latestVersionMap.value( "ci" ).toString();
-            url = latestVersionMap.value( "ci_url" ).toString();
+            url = latestVersionMap.value( "ci_url" ).toString() + OsSuffix;
         }
 
         LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "

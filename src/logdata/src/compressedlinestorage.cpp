@@ -43,7 +43,7 @@
 #include "compressedlinestorage.h"
 #include "configuration.h"
 
-#define BLOCK_SIZE 256
+static constexpr size_t IndexBlockSize = 256;
 
 CompressedLinePositionStorage::BlockOffset operator"" _boffset( unsigned long long int value )
 {
@@ -200,7 +200,6 @@ CompressedLinePositionStorage::operator=( CompressedLinePositionStorage&& orig )
     return *this;
 }
 
-// template<int BLOCK_SIZE>
 void CompressedLinePositionStorage::append( LineOffset pos )
 {
     // Lines must be stored in order
@@ -222,11 +221,11 @@ void CompressedLinePositionStorage::append( LineOffset pos )
     if ( !block_offset_.get() ) {
         // We need to start a new block
         if ( !store_in_big ) {
-            block_index_ = pool32_.get_block( BLOCK_SIZE, static_cast<uint32_t>( pos.get() ),
+            block_index_ = pool32_.get_block( IndexBlockSize, static_cast<uint32_t>( pos.get() ),
                                               &block_offset_.get() );
         }
         else {
-            long_block_index_ = pool64_.get_block( BLOCK_SIZE, pos.get(), &block_offset_.get() );
+            long_block_index_ = pool64_.get_block( IndexBlockSize, pos.get(), &block_offset_.get() );
         }
     }
     else {
@@ -269,7 +268,7 @@ void CompressedLinePositionStorage::append( LineOffset pos )
     };
 
     if ( !store_in_big ) {
-        if ( nb_lines_.get() % BLOCK_SIZE == 0 ) {
+        if ( nb_lines_.get() % IndexBlockSize == 0 ) {
             // We have finished the block
 
             // Let's reduce its size to what is actually used
@@ -277,7 +276,7 @@ void CompressedLinePositionStorage::append( LineOffset pos )
         }
     }
     else {
-        if ( ( nb_lines_.get() - first_long_line_.get() ) % BLOCK_SIZE == 0 ) {
+        if ( ( nb_lines_.get() - first_long_line_.get() ) % IndexBlockSize == 0 ) {
             // We have finished the block
 
             // Let's reduce its size to what is actually used
@@ -286,7 +285,6 @@ void CompressedLinePositionStorage::append( LineOffset pos )
     }
 }
 
-// template<int BLOCK_SIZE>
 LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
 {
     const auto& config = Configuration::get();
@@ -297,10 +295,10 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
     LineOffset position;
 
     if ( index < first_long_line_ ) {
-        block = pool32_[ index.get() / BLOCK_SIZE ];
+        block = pool32_[ index.get() / IndexBlockSize ];
 
         if ( config.useLineEndingCache() && ( index.get() == last_read.index.get() + 1 )
-             && ( index.get() % BLOCK_SIZE != 0 ) ) {
+             && ( index.get() % IndexBlockSize != 0 ) ) {
             position = last_read.position;
             offset = last_read.offset;
 
@@ -309,7 +307,7 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
         else {
             position = block_initial_pos<uint32_t>( block, offset );
 
-            for ( uint32_t i = 0; i < index.get() % BLOCK_SIZE; i++ ) {
+            for ( uint32_t i = 0; i < index.get() % IndexBlockSize; i++ ) {
                 // Go through all the lines in the block till the one we want
                 position = block_next_pos<uint32_t>( block, offset, position );
             }
@@ -317,10 +315,10 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
     }
     else {
         const auto index_in_64 = index - first_long_line_;
-        block = pool64_[ index_in_64.get() / BLOCK_SIZE ];
+        block = pool64_[ index_in_64.get() / IndexBlockSize ];
 
         if ( config.useLineEndingCache() && ( index.get() == last_read.index.get() + 1 )
-             && ( index_in_64.get() % BLOCK_SIZE != 0 ) ) {
+             && ( index_in_64.get() % IndexBlockSize != 0 ) ) {
             position = last_read.position;
             offset = last_read.offset;
 
@@ -329,7 +327,7 @@ LineOffset CompressedLinePositionStorage::at( LineNumber index ) const
         else {
             position = block_initial_pos<uint64_t>( block, offset );
 
-            for ( uint32_t i = 0; i < index_in_64.get() % BLOCK_SIZE; i++ ) {
+            for ( uint32_t i = 0; i < index_in_64.get() % IndexBlockSize; i++ ) {
                 // Go through all the lines in the block till the one we want
                 position = block_next_pos<uint64_t>( block, offset, position );
             }
@@ -352,7 +350,6 @@ void CompressedLinePositionStorage::append_list( const std::vector<LineOffset>& 
         append( position );
 }
 
-// template<int BLOCK_SIZE>
 void CompressedLinePositionStorage::pop_back()
 {
     // Removing the last entered data, there are two cases
@@ -368,13 +365,13 @@ void CompressedLinePositionStorage::pop_back()
 
         if ( first_long_line_ == maxValue<LineNumber>() ) {
             // If we try to pop_back() twice, we're dead!
-            assert( ( nb_lines_.get() - 1 ) % BLOCK_SIZE == 0 );
+            assert( ( nb_lines_.get() - 1 ) % IndexBlockSize == 0 );
 
             block_index_ = pool32_.free_last_block();
         }
         else {
             // If we try to pop_back() twice, we're dead!
-            assert( ( nb_lines_.get() - first_long_line_.get() - 1 ) % BLOCK_SIZE == 0 );
+            assert( ( nb_lines_.get() - first_long_line_.get() - 1 ) % IndexBlockSize == 0 );
 
             long_block_index_ = pool64_.free_last_block();
         }

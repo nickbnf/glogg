@@ -62,7 +62,7 @@
  * Those end of lines are stored separately in the table32 and the table64
  * respectively.
  *
- * The EOL list is then divided in blocks of BLOCK_SIZE (128) lines.
+ * The EOL list is then divided in blocks of IndexBlockSize (256) lines.
  * A block index vector (per table) contains pointers to each block.
  *
  * Each block is then defined as such:
@@ -100,7 +100,6 @@
 #ifndef COMPRESSEDLINESTORAGE_H
 #define COMPRESSEDLINESTORAGE_H
 
-// template<int BLOCK_SIZE = 128>
 class CompressedLinePositionStorage {
   public:
     // Default constructor

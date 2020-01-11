@@ -357,7 +357,7 @@ void MainWindow::createActions()
              &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr( "&Follow File" ), this );
-    followAction->setIcon( QIcon( ":/images/icons8-refresh-16.png" ) );
+    followAction->setIcon( QIcon( ":/images/icons8-fast-forward-16.png" ) );
 
     followAction->setShortcuts( QList<QKeySequence>()
                                 << QKeySequence( Qt::Key_F ) << QKeySequence( Qt::Key_F10 ) );

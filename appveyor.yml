@@ -11,8 +11,8 @@ configuration:
   - Release
 
 environment:
-  QTDIR64: C:\Qt\5.12.5\msvc2017_64
-  QTDIR32: C:\Qt\5.12.5\msvc2017
+  QTDIR64: C:\Qt\5.14\msvc2017_64
+  QTDIR32: C:\Qt\5.14\msvc2017
   SSL_DIR_64: C:\OpenSSL-v111-Win64\bin
   SSL_DIR_32: C:\OpenSSL-v111-Win32\bin
   CMAKE_GENERATOR_NAME: Ninja

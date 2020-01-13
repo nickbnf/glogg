@@ -36,7 +36,8 @@ Session::Session()
     // Get the global search history (it remains the property
     // of the Persistent)
     savedSearches_ = &SavedSearches::getSynced();
-
+    SessionInfo::getSynced();
+    
     quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
 

@@ -22,16 +22,19 @@
 #include <memory>
 
 #include <QAction>
+#include <QApplication>
+#include <QClipboard>
 #include <QByteArray>
 #include <QDomDocument>
 #include <QJsonDocument>
 #include <QPlainTextEdit>
+#include <QStatusBar>
 #include <QToolBar>
-#include <QVBoxLayout>
 #include <QUrl>
+#include <QVBoxLayout>
 
 namespace {
-const quint32 crc32_tab[ 256 ] = {
+constexpr quint32 crc32_tab[ 256 ] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
     0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
     0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
@@ -66,6 +69,8 @@ const quint32 crc32_tab[ 256 ] = {
     0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+constexpr int StatusTimeout = 2000;
+
 QByteArray calculateCrc32( QByteArray text )
 {
     quint32 crc32 = 0xffffffff;
@@ -76,7 +81,7 @@ QByteArray calculateCrc32( QByteArray text )
     return QByteArray::number( crc32, 16 ).rightJustified( 8, '0', false );
 }
 
-}
+} // namespace
 
 ScratchPad::ScratchPad( QWidget* parent )
     : QWidget( parent )
@@ -127,11 +132,16 @@ ScratchPad::ScratchPad( QWidget* parent )
 
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
+    auto statusBar = std::make_unique<QStatusBar>();
+
     auto layout = std::make_unique<QVBoxLayout>();
     layout->addWidget( toolBar.release() );
     layout->addWidget( textEdit.get() );
+    layout->addWidget( statusBar.get() );
 
     textEdit_ = textEdit.release();
+    statusBar_ = statusBar.release();
+
     this->setLayout( layout.release() );
 }
 
@@ -148,54 +158,59 @@ void ScratchPad::transformText( const std::function<QString( QString )>& transfo
 
     if ( !transformedText.isEmpty() ) {
         cursor.insertText( transformedText );
-        textEdit_->setTextCursor(cursor);
+        textEdit_->setTextCursor( cursor );
+
+        QApplication::clipboard()->setText( transformedText );
+
+        statusBar_->showMessage( "Copied to clipboard", StatusTimeout );
+    }
+    else {
+        statusBar_->showMessage( "Empty transformation", StatusTimeout );
     }
 }
 
 void ScratchPad::decodeUrl()
 {
-    transformText( []( QString text ) {
-        return QUrl::fromPercentEncoding(text.toUtf8());
-    } );
+    transformText( []( QString text ) { return QUrl::fromPercentEncoding( text.toUtf8() ); } );
 }
 
 void ScratchPad::decodeBase64()
 {
     transformText( []( QString text ) {
-      auto decoded = QByteArray::fromBase64( text.toUtf8() );
-      return QString::fromStdString( { decoded.begin(), decoded.end() } );
+        auto decoded = QByteArray::fromBase64( text.toUtf8() );
+        return QString::fromStdString( { decoded.begin(), decoded.end() } );
     } );
 }
 
 void ScratchPad::encodeBase64()
 {
     transformText( []( QString text ) {
-      auto encoded = text.toUtf8().toBase64();
-      return QString::fromLatin1(encoded);
+        auto encoded = text.toUtf8().toBase64();
+        return QString::fromLatin1( encoded );
     } );
 }
 
 void ScratchPad::decodeHex()
 {
     transformText( []( QString text ) {
-      auto decoded = QByteArray::fromHex( text.toUtf8() );
-      return QString::fromStdString( { decoded.begin(), decoded.end() } );
+        auto decoded = QByteArray::fromHex( text.toUtf8() );
+        return QString::fromStdString( { decoded.begin(), decoded.end() } );
     } );
 }
 
 void ScratchPad::encodeHex()
 {
     transformText( []( QString text ) {
-      auto encoded = text.toUtf8().toHex();
-      return QString::fromLatin1(encoded);
+        auto encoded = text.toUtf8().toHex();
+        return QString::fromLatin1( encoded );
     } );
 }
 
 void ScratchPad::crc32()
 {
     transformText( []( QString text ) {
-      auto decoded = calculateCrc32( text.toUtf8() );
-      return QString::fromLatin1(decoded).prepend("0x");
+        auto decoded = calculateCrc32( text.toUtf8() );
+        return QString::fromLatin1( decoded ).prepend( "0x" );
     } );
 }
 

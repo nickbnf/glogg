@@ -25,6 +25,7 @@
 #include <functional>
 
 class QPlainTextEdit;
+class QStatusBar;
 
 class ScratchPad : public QWidget {
     Q_OBJECT
@@ -47,14 +48,13 @@ class ScratchPad : public QWidget {
 
     void decodeUrl();
 
-
-
     void crc32();
 
     void transformText(const std::function<QString(QString)>& transform);
 
   private:
     QPlainTextEdit* textEdit_;
+    QStatusBar* statusBar_;
 };
 
 #endif // SCRATCHPAD_H

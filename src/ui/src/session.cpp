@@ -219,7 +219,9 @@ WindowSession::WindowSession( std::shared_ptr<Session> appSession, const QString
     , windowIndex_{ index }
 {
     LOG( logINFO ) << "created session for " << id;
-    SessionInfo::get().add( id );
+    auto sessionInfo = SessionInfo::get();
+    sessionInfo.add( id );
+    sessionInfo.save();
 }
 
 void WindowSession::restoreGeometry( QByteArray* geometry ) const

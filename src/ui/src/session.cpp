@@ -185,7 +185,7 @@ void WindowSession::save(
         session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
-    auto& session = SessionInfo::get();
+    auto& session = SessionInfo::getSynced();
     session.setOpenFiles( windowId_, session_files );
     session.setGeometry( windowId_, geometry );
     session.save();
@@ -219,7 +219,7 @@ WindowSession::WindowSession( std::shared_ptr<Session> appSession, const QString
     , windowIndex_{ index }
 {
     LOG( logINFO ) << "created session for " << id;
-    auto sessionInfo = SessionInfo::get();
+    auto sessionInfo = SessionInfo::getSynced();
     sessionInfo.add( id );
     sessionInfo.save();
 }
@@ -238,7 +238,7 @@ bool WindowSession::close()
         return true;
     }
 
-    auto& session = SessionInfo::get();
+    auto& session = SessionInfo::getSynced();
     auto isRemoved = session.remove( windowId_ );
     session.save();
 

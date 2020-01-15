@@ -142,6 +142,7 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
                                     [&windowId]( const auto& w ) { return w.id == windowId; } );
 
         if ( window == windows_.end() ) {
+            LOG(logINFO) << "Can't find window " << windowId;
             return nullptr;
         }
         else {

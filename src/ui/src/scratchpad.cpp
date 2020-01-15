@@ -89,9 +89,27 @@ ScratchPad::ScratchPad( QWidget* parent )
 
     auto toolBar = std::make_unique<QToolBar>();
 
-    auto decodeBase64Action = std::make_unique<QAction>( "Decode base64" );
+    auto decodeBase64Action = std::make_unique<QAction>( "From base64" );
     connect( decodeBase64Action.get(), &QAction::triggered, [this]( auto ) { decodeBase64(); } );
     toolBar->addAction( decodeBase64Action.release() );
+
+    auto encodeBase64Action = std::make_unique<QAction>( "To base64" );
+    connect( encodeBase64Action.get(), &QAction::triggered, [this]( auto ) { encodeBase64(); } );
+    toolBar->addAction( encodeBase64Action.release() );
+
+    auto decodeHexAction = std::make_unique<QAction>( "From hex" );
+    connect( decodeHexAction.get(), &QAction::triggered, [this]( auto ) { decodeHex(); } );
+    toolBar->addAction( decodeHexAction.release() );
+
+    auto encodeHexAction = std::make_unique<QAction>( "To hex" );
+    connect( encodeHexAction.get(), &QAction::triggered, [this]( auto ) { encodeHex(); } );
+    toolBar->addAction( encodeHexAction.release() );
+
+    auto decodeUrlAction = std::make_unique<QAction>( "Decode url" );
+    connect( decodeUrlAction.get(), &QAction::triggered, [this]( auto ) { decodeUrl(); } );
+    toolBar->addAction( decodeUrlAction.release() );
+
+    toolBar->addSeparator();
 
     auto formatJsonAction = std::make_unique<QAction>( "Format json" );
     connect( formatJsonAction.get(), &QAction::triggered, [this]( auto ) { formatJson(); } );
@@ -101,17 +119,11 @@ ScratchPad::ScratchPad( QWidget* parent )
     connect( formatXmlAction.get(), &QAction::triggered, [this]( auto ) { formatXml(); } );
     toolBar->addAction( formatXmlAction.release() );
 
-    auto decodeUrlAction = std::make_unique<QAction>( "Decode url" );
-    connect( decodeUrlAction.get(), &QAction::triggered, [this]( auto ) { decodeUrl(); } );
-    toolBar->addAction( decodeUrlAction.release() );
+    toolBar->addSeparator();
 
     auto crc32Action = std::make_unique<QAction>( "CRC32" );
     connect( crc32Action.get(), &QAction::triggered, [this]( auto ) { crc32(); } );
     toolBar->addAction( crc32Action.release() );
-
-    auto encodeBase64Action = std::make_unique<QAction>( "Encode base64" );
-    connect( encodeBase64Action.get(), &QAction::triggered, [this]( auto ) { encodeBase64(); } );
-    toolBar->addAction( encodeBase64Action.release() );
 
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
@@ -159,6 +171,22 @@ void ScratchPad::encodeBase64()
 {
     transformText( []( QString text ) {
       auto encoded = text.toUtf8().toBase64();
+      return QString::fromLatin1(encoded);
+    } );
+}
+
+void ScratchPad::decodeHex()
+{
+    transformText( []( QString text ) {
+      auto decoded = QByteArray::fromHex( text.toUtf8() );
+      return QString::fromStdString( { decoded.begin(), decoded.end() } );
+    } );
+}
+
+void ScratchPad::encodeHex()
+{
+    transformText( []( QString text ) {
+      auto encoded = text.toUtf8().toHex();
       return QString::fromLatin1(encoded);
     } );
 }

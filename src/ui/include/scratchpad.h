@@ -38,9 +38,17 @@ class ScratchPad : public QWidget {
   private:
     void decodeBase64();
     void encodeBase64();
+
+    void decodeHex();
+    void encodeHex();
+
     void formatJson();
     void formatXml();
+
     void decodeUrl();
+
+
+
     void crc32();
 
     void transformText(const std::function<QString(QString)>& transform);

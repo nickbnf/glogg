@@ -20,7 +20,11 @@
 #include "tabbedscratchpad.h"
 #include "scratchpad.h"
 
+#include <QLabel>
+#include <QTabBar>
+#include <QToolButton>
 #include <QVBoxLayout>
+
 #include <memory>
 
 TabbedScratchPad::TabbedScratchPad( QWidget* parent )
@@ -33,10 +37,32 @@ TabbedScratchPad::TabbedScratchPad( QWidget* parent )
 
     tabWidget_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
     tabWidget_->setTabsClosable( true );
-    tabWidget_->setMovable( true );
 
     connect( tabWidget_, &QTabWidget::tabCloseRequested,
              [this]( const auto index ) { tabWidget_->removeTab( index ); } );
+
+    auto addTabButton = std::make_unique<QToolButton>();
+    addTabButton->setText( "+" );
+    addTabButton->setAutoRaise( true );
+
+    connect( addTabButton.get(), &QToolButton::clicked, [this]( auto ) { addTab(); } );
+
+    tabWidget_->addTab( new QLabel( "You can add tabs by pressing <b>\"+\"</b> or Ctrl+N" ),
+                        QString() );
+    tabWidget_->setTabEnabled( 0, false );
+
+    auto deleteTabButton = [this]( QTabBar::ButtonPosition position ) {
+        auto button = tabWidget_->tabBar()->tabButton( 0, position );
+        if ( button ) {
+            button->deleteLater();
+        }
+        tabWidget_->tabBar()->setTabButton( 0, position, nullptr );
+    };
+
+    deleteTabButton( QTabBar::LeftSide );
+    deleteTabButton( QTabBar::RightSide );
+
+    tabWidget_->tabBar()->setTabButton( 0, QTabBar::LeftSide, addTabButton.release() );
 
     addTab();
 

@@ -53,7 +53,7 @@
 #include <QtCore/QProcess>
 #include <QtGui/QDesktopServices>
 
-
+#include "log.h"
 
 inline void showPathInFileExplorer( const QString& file_path )
 {

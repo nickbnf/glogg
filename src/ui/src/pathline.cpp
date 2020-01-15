@@ -25,7 +25,9 @@
 #include <QContextMenuEvent>
 #include <QMenu>
 
-void PathLine::setPath(const QString& path)
+#include "openfilehelper.h"
+
+void PathLine::setPath( const QString& path )
 {
     path_ = path;
 }
@@ -35,6 +37,7 @@ void PathLine::contextMenuEvent( QContextMenuEvent* event )
     QMenu menu( this );
 
     auto copyPath = menu.addAction( "Copy full path" );
+    auto openContainingFolder = menu.addAction( "Open containing folder" );
     menu.addSeparator();
     auto copySelection = menu.addAction( "Copy" );
     menu.addSeparator();
@@ -42,6 +45,9 @@ void PathLine::contextMenuEvent( QContextMenuEvent* event )
 
     connect( copyPath, &QAction::triggered,
              [this]( auto ) { QApplication::clipboard()->setText( this->path_ ); } );
+
+    connect( openContainingFolder, &QAction::triggered,
+             [this]( auto ) { showPathInFileExplorer( this->path_ ); } );
 
     copySelection->setEnabled( this->hasSelectedText() );
     connect( copySelection, &QAction::triggered,

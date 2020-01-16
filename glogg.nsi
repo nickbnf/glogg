@@ -100,6 +100,7 @@ Section "Qt5 Runtime libraries" qtlibs
     File release\Qt5Network.dll
     File release\Qt5Widgets.dll
     File release\libwinpthread-1.dll
+    File release\libstdc++-6.dll
 !if ${PLATFORM} == "x86"
     File release\libgcc_s_dw2-1.dll
 !else
@@ -136,7 +137,6 @@ Section "Uninstall"
     Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\mingwm10.dll"
-    Delete "$INSTDIR\libgcc_s_dw2-1.dll"
     Delete "$INSTDIR\QtCore4.dll"
     Delete "$INSTDIR\QtGui4.dll"
     Delete "$INSTDIR\QtNetwork4.dll"
@@ -147,6 +147,7 @@ Section "Uninstall"
     Delete "$INSTDIR\libwinpthread-1.dll"
     Delete "$INSTDIR\libgcc_s_dw2-1.dll"
     Delete "$INSTDIR\libgcc_s_seh-1.dll"
+    Delete "$INSTDIR\libstdc++-6.dll"
     Delete "$INSTDIR\platforms\qwindows.dll"
     RMDir "$INSTDIR"
 

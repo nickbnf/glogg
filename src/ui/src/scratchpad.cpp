@@ -23,10 +23,14 @@
 
 #include <QAction>
 #include <QApplication>
-#include <QClipboard>
 #include <QByteArray>
+#include <QClipboard>
+#include <QDateTime>
 #include <QDomDocument>
+#include <QFormLayout>
+#include <QHBoxLayout>
 #include <QJsonDocument>
+#include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QStatusBar>
 #include <QToolBar>
@@ -69,16 +73,34 @@ constexpr quint32 crc32_tab[ 256 ] = {
     0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-constexpr int StatusTimeout = 2000;
-
-QByteArray calculateCrc32( QByteArray text )
+quint32 calculateCrc32( QByteArray text )
 {
     quint32 crc32 = 0xffffffff;
     for ( auto i = 0; i < text.size(); ++i ) {
         crc32 = ( crc32 >> 8 ) ^ crc32_tab[ ( crc32 ^ text[ i ] ) & 0xff ];
     }
     crc32 ^= 0xffffffff;
-    return QByteArray::number( crc32, 16 ).rightJustified( 8, '0', false );
+    return crc32;
+}
+
+template <typename T> QString formatHex( T value )
+{
+    return QString::fromLatin1( QByteArray::number( value, 16 ).rightJustified( 8, '0', false ) );
+}
+
+template <typename T> QString formatDec( T value )
+{
+    return QString::fromLatin1( QByteArray::number( value, 10 ) );
+}
+
+constexpr int StatusTimeout = 2000;
+
+constexpr uint64_t FileTimeTicks = 10000000;
+constexpr uint64_t SecondsToEpoch = 11644473600LL;
+
+uint64_t windowsTickToUnixSeconds( uint64_t windowsTicks )
+{
+    return ( windowsTicks / FileTimeTicks - SecondsToEpoch );
 }
 
 } // namespace
@@ -124,28 +146,61 @@ ScratchPad::ScratchPad( QWidget* parent )
     connect( formatXmlAction.get(), &QAction::triggered, [this]( auto ) { formatXml(); } );
     toolBar->addAction( formatXmlAction.release() );
 
-    toolBar->addSeparator();
-
-    auto crc32Action = std::make_unique<QAction>( "CRC32" );
-    connect( crc32Action.get(), &QAction::triggered, [this]( auto ) { crc32(); } );
-    toolBar->addAction( crc32Action.release() );
-
     toolBar->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
     auto statusBar = std::make_unique<QStatusBar>();
 
-    auto layout = std::make_unique<QVBoxLayout>();
-    layout->addWidget( toolBar.release() );
-    layout->addWidget( textEdit.get() );
-    layout->addWidget( statusBar.get() );
+    auto transLayout = std::make_unique<QFormLayout>();
+
+    auto addBoxToLayout
+        = [&transLayout, this]( const QString& label, QLineEdit** widget, auto changeFunction ) {
+              auto box = std::make_unique<QLineEdit>();
+              box->setReadOnly( true );
+              *widget = box.get();
+              transLayout->addRow( label, box.release() );
+
+              connect( this, &ScratchPad::updateTransformation, this, changeFunction );
+          };
+
+    addBoxToLayout( "CRC32 hex", &crc32HexBox_, &ScratchPad::crc32Hex );
+    addBoxToLayout( "CRC32 dec", &crc32DecBox_, &ScratchPad::crc32Dec );
+    addBoxToLayout( "Unix time", &unixTimeBox_, &ScratchPad::unixTime );
+    addBoxToLayout( "File time", &fileTimeBox_, &ScratchPad::fileTime );
+    addBoxToLayout( "Dec->Hex", &decToHexBox_, &ScratchPad::decToHex );
+    addBoxToLayout( "Hex->Dec", &hexToDecBox_, &ScratchPad::hexToDec );
+
+    auto hLayout = std::make_unique<QHBoxLayout>();
+    hLayout->addWidget( textEdit.get(), 3 );
+    hLayout->addLayout( transLayout.release(), 2 );
+
+    auto vLayout = std::make_unique<QVBoxLayout>();
+    vLayout->addWidget( toolBar.release() );
+    vLayout->addLayout( hLayout.release() );
+    vLayout->addWidget( statusBar.get() );
 
     textEdit_ = textEdit.release();
     statusBar_ = statusBar.release();
 
-    this->setLayout( layout.release() );
+    this->setLayout( vLayout.release() );
+
+    connect( textEdit_, &QPlainTextEdit::textChanged, this, &ScratchPad::updateTransformation );
+    connect( textEdit_, &QPlainTextEdit::selectionChanged, this,
+             &ScratchPad::updateTransformation );
 }
 
-void ScratchPad::transformText( const std::function<QString( QString )>& transform )
+QString ScratchPad::transformText( const std::function<QString( QString )>& transform )
+{
+    auto cursor = textEdit_->textCursor();
+    auto text = cursor.selectedText();
+    if ( text.isEmpty() ) {
+        cursor.select( QTextCursor::Document );
+        text = cursor.selectedText();
+    }
+
+    return transform( text );
+}
+
+void ScratchPad::transformTextInPlace( const std::function<QString( QString )>& transform )
 {
     auto cursor = textEdit_->textCursor();
     auto text = cursor.selectedText();
@@ -171,12 +226,13 @@ void ScratchPad::transformText( const std::function<QString( QString )>& transfo
 
 void ScratchPad::decodeUrl()
 {
-    transformText( []( QString text ) { return QUrl::fromPercentEncoding( text.toUtf8() ); } );
+    transformTextInPlace(
+        []( QString text ) { return QUrl::fromPercentEncoding( text.toUtf8() ); } );
 }
 
 void ScratchPad::decodeBase64()
 {
-    transformText( []( QString text ) {
+    transformTextInPlace( []( QString text ) {
         auto decoded = QByteArray::fromBase64( text.toUtf8() );
         return QString::fromStdString( { decoded.begin(), decoded.end() } );
     } );
@@ -184,7 +240,7 @@ void ScratchPad::decodeBase64()
 
 void ScratchPad::encodeBase64()
 {
-    transformText( []( QString text ) {
+    transformTextInPlace( []( QString text ) {
         auto encoded = text.toUtf8().toBase64();
         return QString::fromLatin1( encoded );
     } );
@@ -192,7 +248,7 @@ void ScratchPad::encodeBase64()
 
 void ScratchPad::decodeHex()
 {
-    transformText( []( QString text ) {
+    transformTextInPlace( []( QString text ) {
         auto decoded = QByteArray::fromHex( text.toUtf8() );
         return QString::fromStdString( { decoded.begin(), decoded.end() } );
     } );
@@ -200,23 +256,93 @@ void ScratchPad::decodeHex()
 
 void ScratchPad::encodeHex()
 {
-    transformText( []( QString text ) {
+    transformTextInPlace( []( QString text ) {
         auto encoded = text.toUtf8().toHex();
         return QString::fromLatin1( encoded );
     } );
 }
 
-void ScratchPad::crc32()
+void ScratchPad::crc32Hex()
 {
-    transformText( []( QString text ) {
-        auto decoded = calculateCrc32( text.toUtf8() );
-        return QString::fromLatin1( decoded ).prepend( "0x" );
-    } );
+    crc32HexBox_->setText( transformText( []( QString text ) {
+        const auto decoded = calculateCrc32( text.toUtf8() );
+        return formatHex( decoded ).prepend( "0x" );
+    } ) );
+}
+
+void ScratchPad::crc32Dec()
+{
+    crc32DecBox_->setText( transformText( []( QString text ) {
+        const auto decoded = calculateCrc32( text.toUtf8() );
+        return formatDec( decoded );
+    } ) );
+}
+
+void ScratchPad::unixTime()
+{
+    unixTimeBox_->setText( transformText( []( QString text ) {
+        bool isOk = false;
+        const auto unixTime = text.toUtf8().toLongLong( &isOk );
+        if ( isOk ) {
+            QDateTime dateTime;
+            dateTime.setTimeSpec( Qt::UTC );
+            dateTime.setSecsSinceEpoch( unixTime );
+            return dateTime.toString( Qt::ISODate );
+        }
+        else {
+            return QString{};
+        }
+    } ) );
+}
+
+void ScratchPad::fileTime()
+{
+    fileTimeBox_->setText( transformText( []( QString text ) {
+        bool isOk = false;
+        const auto time = text.toUtf8().toLongLong( &isOk );
+        if ( isOk ) {
+            QDateTime dateTime;
+            dateTime.setTimeSpec( Qt::UTC );
+            dateTime.setSecsSinceEpoch( windowsTickToUnixSeconds( time ) );
+            return dateTime.toString( Qt::ISODate );
+        }
+        else {
+            return QString{};
+        }
+    } ) );
+}
+
+void ScratchPad::decToHex()
+{
+    decToHexBox_->setText( transformText( []( QString text ) {
+        bool isOk = false;
+        const auto value = text.toUtf8().toLongLong( &isOk );
+        if ( isOk ) {
+            return formatHex( value );
+        }
+        else {
+            return QString{};
+        }
+    } ) );
+}
+
+void ScratchPad::hexToDec()
+{
+    hexToDecBox_->setText( transformText( []( QString text ) {
+        bool isOk = false;
+        const auto value = text.toUtf8().toLongLong( &isOk, 16 );
+        if ( isOk ) {
+            return formatDec( value );
+        }
+        else {
+            return QString{};
+        }
+    } ) );
 }
 
 void ScratchPad::formatJson()
 {
-    transformText( []( QString text ) {
+    transformTextInPlace( []( QString text ) {
         const auto start = text.indexOf( '{' );
 
         QJsonParseError parseError;
@@ -232,7 +358,7 @@ void ScratchPad::formatJson()
 
 void ScratchPad::formatXml()
 {
-    transformText( []( QString text ) {
+    transformTextInPlace( []( QString text ) {
         const auto start = text.indexOf( '<' );
 
         QDomDocument xml;

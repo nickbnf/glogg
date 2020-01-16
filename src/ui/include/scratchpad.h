@@ -26,6 +26,7 @@
 
 class QPlainTextEdit;
 class QStatusBar;
+class QLineEdit;
 
 class ScratchPad : public QWidget {
     Q_OBJECT
@@ -35,6 +36,17 @@ class ScratchPad : public QWidget {
     ~ScratchPad() = default;
     ScratchPad( const ScratchPad& ) = delete;
     ScratchPad& operator=( const ScratchPad& ) = delete;
+
+  signals:
+    void updateTransformation();
+
+  private slots:
+    void crc32Hex();
+    void crc32Dec();
+    void unixTime();
+    void fileTime();
+    void decToHex();
+    void hexToDec();
 
   private:
     void decodeBase64();
@@ -48,13 +60,20 @@ class ScratchPad : public QWidget {
 
     void decodeUrl();
 
-    void crc32();
+    QString transformText(const std::function<QString(QString)>& transform);
 
-    void transformText(const std::function<QString(QString)>& transform);
+    void transformTextInPlace(const std::function<QString(QString)>& transform);
 
   private:
     QPlainTextEdit* textEdit_;
     QStatusBar* statusBar_;
+
+    QLineEdit* crc32HexBox_;
+    QLineEdit* crc32DecBox_;
+    QLineEdit* unixTimeBox_;
+    QLineEdit* fileTimeBox_;
+    QLineEdit* decToHexBox_;
+    QLineEdit* hexToDecBox_;
 };
 
 #endif // SCRATCHPAD_H

@@ -7,8 +7,8 @@ platform:
 
 environment:
   matrix:
-  - QTDIR32: C:\Qt\5.12.4\mingw73_32
-    QTDIR64: C:\Qt\5.12.4\mingw73_64
+  - QTDIR32: C:\Qt\5.12.5\mingw73_32
+    QTDIR64: C:\Qt\5.12.5\mingw73_64
     BOOST_ROOT: C:\Libraries\boost_1_69_0
     MINGW_32: C:\Qt\Tools\mingw730_32
     MINGW_64: C:\Qt\Tools\mingw730_64

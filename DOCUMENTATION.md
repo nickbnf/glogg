@@ -246,7 +246,7 @@ The main commands are:
 |v               |switch filtered view visibilty mode                               |
 |                |(Marks and Matches -&gt; Marks -&gt; Matches)                     |
 |F5              |reload current file                                               |
-|Shift+F         |Set focus to search string edit box                               |
+|Ctrl+S          |Set focus to search string edit box                               |
 
 ## Command line options
 

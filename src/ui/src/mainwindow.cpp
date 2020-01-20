@@ -1121,6 +1121,18 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
         keyEvent->ignore();
     }
 
+    if ( ( keyEvent->modifiers().testFlag( Qt::ControlModifier )
+           && keyEvent->key() == Qt::Key_S )                        // Ctrl+S
+         || ( keyEvent->modifiers().testFlag( Qt::ControlModifier ) // Ctrl+Shift+F
+              && keyEvent->modifiers().testFlag( Qt::ShiftModifier )
+              && keyEvent->key() == Qt::Key_F ) ) {
+        keyEvent->accept();
+        const auto crawler = currentCrawlerWidget();
+        if ( crawler ) {
+            crawler->focusSearchEdit();
+        }
+    }
+
     if ( !keyEvent->isAccepted() )
         QMainWindow::keyPressEvent( keyEvent );
 }
@@ -1174,8 +1186,9 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
             return this->loadFile( tempFile->fileName() );
         }
         else {
-            QMessageBox::warning( this, "klogg",
-                                  QString( "Failed to decompress %1" ).arg( fileName ) );
+            QMessageBox::warning(
+                this, "klogg",
+                QString( "Failed to decompress %1" ).arg( QDir::toNativeSeparators( fileName ) ) );
         }
     }
     else if ( decompressAction == DecompressAction::Extract ) {
@@ -1193,8 +1206,9 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
             return true;
         }
         else {
-            QMessageBox::warning( this, "klogg",
-                                  QString( "Failed to extract %1" ).arg( fileName ) );
+            QMessageBox::warning(
+                this, "klogg",
+                QString( "Failed to extract %1" ).arg( QDir::toNativeSeparators( fileName ) ) );
         }
     }
 

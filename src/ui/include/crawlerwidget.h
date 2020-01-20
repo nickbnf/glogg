@@ -111,6 +111,8 @@ class CrawlerWidget : public QSplitter,
     // Set the encoding
     void setEncoding( absl::optional<int> mib );
 
+    void focusSearchEdit();
+
   public:
     template <class T> struct access_by;
 

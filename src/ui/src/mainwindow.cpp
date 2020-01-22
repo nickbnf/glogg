@@ -66,6 +66,7 @@
 #include <QTextBrowser>
 #include <QToolBar>
 #include <QUrl>
+#include <QUrlQuery>
 #include <QWindow>
 
 #include "downloader.h"
@@ -396,6 +397,10 @@ void MainWindow::createActions()
     aboutQtAction->setStatusTip( tr( "Show the Qt library's About box" ) );
     connect( aboutQtAction, &QAction::triggered, [this]( auto ) { this->aboutQt(); } );
 
+    reportIssueAction = new QAction( tr( "Report issue..." ), this );
+    reportIssueAction->setStatusTip( tr( "Report an issue on GitHub" ) );
+    connect( reportIssueAction, &QAction::triggered, [this]( auto ) { this->reportIssue(); } );
+
     showScratchPadAction = new QAction( tr( "Scratchpad" ), this );
     showScratchPadAction->setStatusTip( tr( "Show the scratchpad" ) );
     showScratchPadAction->setIcon( QIcon( ":/images/icons8-create-16.png" ) );
@@ -482,6 +487,8 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu( tr( "&Help" ) );
     helpMenu->addAction( showDocumentationAction );
+    helpMenu->addSeparator();
+    helpMenu->addAction( reportIssueAction );
     helpMenu->addSeparator();
     helpMenu->addAction( aboutQtAction );
     helpMenu->addAction( aboutAction );
@@ -1557,6 +1564,42 @@ void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
 
     quickFindMux_.setDirection( direction );
     quickFindWidget_.userActivate();
+}
+
+void MainWindow::reportIssue() const
+{
+    const QString version = kloggVersion();
+    const QString buildDate = kloggBuildDate();
+    const QString commit = kloggCommit();
+
+    const QString os = QSysInfo::prettyProductName();
+    const QString kernelType = QSysInfo::kernelType();
+    const QString kernelVersion = QSysInfo::kernelVersion();
+    const QString arch = QSysInfo::currentCpuArchitecture();
+    const QString built_for = QSysInfo::buildAbi();
+
+    const QString body =
+            QString("Details for the issue\n"
+                    "--------------------\n\n"
+                    "#### What did you do?\n\n\n"
+                    "#### What did you expect to see?\n\n\n"
+                    "#### What did you see instead?\n\n\n"
+                    "Useful extra information\n"
+                    "-------------------------\n"
+                    "> Klogg version %1 (built on %2 from commit %3) [built for %4]\n"
+                    "> running on %5 (%6/%7) [%8]\n"
+                    "> and Qt %9")
+                    .arg(version, buildDate, commit, built_for,
+                         os, kernelType, kernelVersion, arch,
+                         QT_VERSION_STR);
+
+    QUrlQuery query;
+    query.addQueryItem("labels", "type: bug");
+    query.addQueryItem("body", body);
+
+    QUrl url("https://github.com/variar/klogg/issues/new");
+    url.setQuery(query);
+    QDesktopServices::openUrl(url);
 }
 
 // Returns the size in human readable format

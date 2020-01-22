@@ -117,6 +117,7 @@ class MainWindow : public QMainWindow {
     void encodingChanged( QAction* action );
     void addToFavorites();
     void removeFromFavorites();
+    void reportIssue() const;
 
     // Change the view settings
     void toggleOverviewVisibility( bool isVisible );
@@ -237,6 +238,7 @@ class MainWindow : public QMainWindow {
     QAction* showDocumentationAction;
     QAction* aboutAction;
     QAction* aboutQtAction;
+    QAction* reportIssueAction;
     QActionGroup* encodingGroup;
     QAction* addToFavoritesAction;
     QAction* addToFavoritesMenuAction;

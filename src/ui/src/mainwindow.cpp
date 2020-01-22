@@ -674,9 +674,8 @@ void MainWindow::selectAll()
 void MainWindow::copy()
 {
     static QClipboard* clipboard = QApplication::clipboard();
-    CrawlerWidget* current = currentCrawlerWidget();
 
-    if ( current ) {
+    if ( auto current = currentCrawlerWidget() ) {
         clipboard->setText( current->getSelectedText() );
 
         // Put it in the global selection as well (X11 only)
@@ -830,8 +829,10 @@ void MainWindow::encodingChanged( QAction* action )
     }
 
     LOG( logDEBUG ) << "encodingChanged, encoding " << mib;
-    currentCrawlerWidget()->setEncoding( mib );
-    updateInfoLine();
+    if ( auto crawler = currentCrawlerWidget() ) {
+        crawler->setEncoding( mib );
+        updateInfoLine();
+    }
 }
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )
@@ -1126,9 +1127,9 @@ void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
          || ( keyEvent->modifiers().testFlag( Qt::ControlModifier ) // Ctrl+Shift+F
               && keyEvent->modifiers().testFlag( Qt::ShiftModifier )
               && keyEvent->key() == Qt::Key_F ) ) {
-        keyEvent->accept();
-        const auto crawler = currentCrawlerWidget();
-        if ( crawler ) {
+
+        if ( auto crawler = currentCrawlerWidget() ) {
+            keyEvent->accept();
             crawler->focusSearchEdit();
         }
     }
@@ -1437,19 +1438,21 @@ void MainWindow::updateFavoritesMenu()
 
 void MainWindow::addToFavorites()
 {
-    auto favorites = FavoriteFiles::get();
-    const auto path = session_.getFilename( currentCrawlerWidget() );
+    if ( const auto crawler = currentCrawlerWidget() ) {
+        auto favorites = FavoriteFiles::get();
+        const auto path = session_.getFilename( crawler );
 
-    if ( addToFavoritesAction->data().toBool() ) {
-        favorites.add( path );
+        if ( addToFavoritesAction->data().toBool() ) {
+            favorites.add( path );
+        }
+        else {
+            favorites.remove( path );
+        }
+
+        favorites.save();
+
+        updateFavoritesMenu();
     }
-    else {
-        favorites.remove( path );
-    }
-
-    favorites.save();
-
-    updateFavoritesMenu();
 }
 
 void MainWindow::removeFromFavorites()
@@ -1460,12 +1463,15 @@ void MainWindow::removeFromFavorites()
     std::transform( favorites.begin(), favorites.end(), std::back_inserter( files ),
                     []( const auto& f ) { return f.fullPathNative; } );
 
-    const auto currentPath = session_.getFilename( currentCrawlerWidget() );
-    const auto currentItem = std::find_if( favorites.begin(), favorites.end(),
-                                           FavoriteFiles::FullPathComparator( currentPath ) );
     auto currentIndex = 0;
-    if ( currentItem != favorites.end() ) {
-        currentIndex = std::distance( favorites.begin(), currentItem );
+
+    if (const auto crawler = currentCrawlerWidget()) {
+        const auto currentPath = session_.getFilename( crawler );
+        const auto currentItem = std::find_if( favorites.begin(), favorites.end(),
+                                               FavoriteFiles::FullPathComparator( currentPath ) );
+        if ( currentItem != favorites.end() ) {
+            currentIndex = std::distance( favorites.begin(), currentItem );
+        }
     }
 
     bool ok = false;

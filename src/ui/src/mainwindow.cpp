@@ -749,8 +749,11 @@ void MainWindow::openClipboard()
 void MainWindow::openUrl()
 {
     bool ok;
+    const auto urlInClipboard = QUrl::fromUserInput( QApplication::clipboard()->text() );
+    const auto selectedUrl = urlInClipboard.isValid() ? urlInClipboard.toString() : QString{};
+
     QString url = QInputDialog::getText( this, tr( "Open URL as log file" ), tr( "URL:" ),
-                                         QLineEdit::Normal, "", &ok );
+                                         QLineEdit::Normal, selectedUrl, &ok );
     if ( ok && !url.isEmpty() ) {
         openRemoteFile( url );
     }
@@ -1472,7 +1475,7 @@ void MainWindow::removeFromFavorites()
 
     auto currentIndex = 0;
 
-    if (const auto crawler = currentCrawlerWidget()) {
+    if ( const auto crawler = currentCrawlerWidget() ) {
         const auto currentPath = session_.getFilename( crawler );
         const auto currentItem = std::find_if( favorites.begin(), favorites.end(),
                                                FavoriteFiles::FullPathComparator( currentPath ) );
@@ -1578,28 +1581,26 @@ void MainWindow::reportIssue() const
     const QString arch = QSysInfo::currentCpuArchitecture();
     const QString built_for = QSysInfo::buildAbi();
 
-    const QString body =
-            QString("Details for the issue\n"
-                    "--------------------\n\n"
-                    "#### What did you do?\n\n\n"
-                    "#### What did you expect to see?\n\n\n"
-                    "#### What did you see instead?\n\n\n"
-                    "Useful extra information\n"
-                    "-------------------------\n"
-                    "> Klogg version %1 (built on %2 from commit %3) [built for %4]\n"
-                    "> running on %5 (%6/%7) [%8]\n"
-                    "> and Qt %9")
-                    .arg(version, buildDate, commit, built_for,
-                         os, kernelType, kernelVersion, arch,
-                         QT_VERSION_STR);
+    const QString body = QString( "Details for the issue\n"
+                                  "--------------------\n\n"
+                                  "#### What did you do?\n\n\n"
+                                  "#### What did you expect to see?\n\n\n"
+                                  "#### What did you see instead?\n\n\n"
+                                  "Useful extra information\n"
+                                  "-------------------------\n"
+                                  "> Klogg version %1 (built on %2 from commit %3) [built for %4]\n"
+                                  "> running on %5 (%6/%7) [%8]\n"
+                                  "> and Qt %9" )
+                             .arg( version, buildDate, commit, built_for, os, kernelType,
+                                   kernelVersion, arch, QT_VERSION_STR );
 
     QUrlQuery query;
-    query.addQueryItem("labels", "type: bug");
-    query.addQueryItem("body", body);
+    query.addQueryItem( "labels", "type: bug" );
+    query.addQueryItem( "body", body );
 
-    QUrl url("https://github.com/variar/klogg/issues/new");
-    url.setQuery(query);
-    QDesktopServices::openUrl(url);
+    QUrl url( "https://github.com/variar/klogg/issues/new" );
+    url.setQuery( query );
+    QDesktopServices::openUrl( url );
 }
 
 // Returns the size in human readable format

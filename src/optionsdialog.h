@@ -59,12 +59,16 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog
     void setupIncremental();
     void setupPolling();
 
+    QStringList getLanguagesList();
+    void setupLanguagesList();
+
     int getRegexpIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;
 
     void updateDialogFromConfig();
 
     QValidator* polling_interval_validator_;
+    QStringList locales_;
 };
 
 #endif

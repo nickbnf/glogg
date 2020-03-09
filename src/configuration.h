@@ -41,6 +41,11 @@ class Configuration : public Persistable {
     QFont mainFont() const;
     void setMainFont( QFont newFont );
 
+    QString languageLocale() const
+    {return languageLocale_;}
+    void setLanguageLocale(QString locale)
+    {languageLocale_ = locale;}
+
     // Accesses the regexp types
     SearchRegexpType mainRegexpType() const
     { return mainRegexpType_; }
@@ -106,6 +111,7 @@ class Configuration : public Persistable {
     bool pollingEnabled_;
     uint32_t pollIntervalMs_;
     bool loadLastSession_;
+    QString languageLocale_;
 
     // View settings
     bool overviewVisible_;

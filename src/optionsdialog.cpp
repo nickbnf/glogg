@@ -51,6 +51,9 @@ OptionsDialog::OptionsDialog( QWidget* parent ) : QDialog(parent)
     connect(pollingCheckBox, SIGNAL( toggled( bool ) ),
             this, SLOT( onPollingChanged() ) );
 
+    locales_ = getLanguagesList();
+    setupLanguagesList();
+
     updateDialogFromConfig();
 
     setupIncremental();
@@ -109,6 +112,37 @@ void OptionsDialog::setupIncremental()
 void OptionsDialog::setupPolling()
 {
     pollIntervalLineEdit->setEnabled( pollingCheckBox->isChecked() );
+}
+
+QStringList OptionsDialog::getLanguagesList()
+{
+    QString m_langPath = QApplication::applicationDirPath();
+    m_langPath.append("/translations");
+    QDir dir(m_langPath);
+    QStringList fileNames = dir.entryList(QStringList("glogg_*.qm"));
+
+    QStringList locales;
+    for (int i = 0; i < fileNames.size(); ++i)
+    {
+        // get locale extracted by filename
+        QString locale;
+        locale = fileNames[i];
+        locale.truncate(locale.lastIndexOf('.'));
+        locale.remove(0, locale.indexOf('_') + 1);
+        locales << locale;
+    }
+    locales << "en_US";     //The "C" locale is identical in behavior to English/UnitedStates.
+    return locales;
+}
+
+void OptionsDialog::setupLanguagesList()
+{
+    QStringList langNames;
+    for (int i = 0; i < locales_.size(); ++i)
+        langNames << QLocale(locales_[i]).nativeLanguageName();
+    //        langNames << QLocale::languageToString(QLocale(locales_[i]).language());
+
+    selectLanguagesComboBox->addItems(langNames);
 }
 
 // Convert a regexp type to its index in the list
@@ -176,6 +210,9 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Last session
     loadLastSessionCheckBox->setChecked( config->loadLastSession() );
+
+    // Language
+    selectLanguagesComboBox->setCurrentIndex(locales_.indexOf( config->languageLocale() ));
 }
 
 //
@@ -224,6 +261,9 @@ void OptionsDialog::updateConfigFromDialog()
     config->setPollIntervalMs( poll_interval );
 
     config->setLoadLastSession( loadLastSessionCheckBox->isChecked() );
+
+    config->setLanguageLocale( locales_[selectLanguagesComboBox->currentIndex()] );
+
     emit optionsChanged();
 }
 

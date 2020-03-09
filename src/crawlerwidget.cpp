@@ -693,8 +693,8 @@ void CrawlerWidget::setup()
     searchInfoLine->setLineWidth( 1 );
     searchInfoLineDefaultPalette = searchInfoLine->palette();
 
-    ignoreCaseCheck = new QCheckBox( "Ignore &case" );
-    searchRefreshCheck = new QCheckBox( "Auto-&refresh" );
+    ignoreCaseCheck = new QCheckBox(tr("Ignore &case"));
+    searchRefreshCheck = new QCheckBox(tr("Auto-&refresh"));
 
     // Construct the Search line
     searchLabel = new QLabel(tr("&Text: "));

@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <QMainWindow>
+#include <QTranslator>
 
 #include "session.h"
 #include "crawlerwidget.h"
@@ -126,6 +127,9 @@ class MainWindow : public QMainWindow
     // Notify the user a new version is available
     void newVersionNotification( const QString& new_version );
 
+    // Update UI language
+    void updateLanguage();
+
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
@@ -154,11 +158,16 @@ class MainWindow : public QMainWindow
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
     void updateMenuBarFromDocument( const CrawlerWidget* crawler );
     void updateInfoLine();
+    void loadLanguage(QString locale);
 
     std::unique_ptr<Session> session_;
     std::shared_ptr<ExternalCommunicator> externalCommunicator_;
     std::shared_ptr<RecentFiles> recentFiles_;
     QString loadingFileName;
+
+    QTranslator translator_;
+    QTranslator translatorQt_;
+    QString lastLanguageLocale_;
 
     // Encoding
     struct EncodingList {

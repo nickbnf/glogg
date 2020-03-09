@@ -67,7 +67,15 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     ,versionChecker_()
 #endif
 {
+    readSettings();
+
+    //setup language
+    lastLanguageLocale_ = "";
+    updateLanguage();
+
     createActions();
+    updateRecentFileActions();
+
     createMenus();
     createToolBars();
     // createStatusBar();
@@ -86,7 +94,7 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
 
     setWindowIcon( mainIcon_ );
 
-    readSettings();
+
 
     // Connect the signals to the mux (they will be forwarded to the
     // "current" crawlerwidget
@@ -527,8 +535,10 @@ void MainWindow::options()
 {
     OptionsDialog dialog(this);
     signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
+    connect(&dialog, SIGNAL( optionsChanged() ),this, SLOT( updateLanguage() ));
     dialog.exec();
     signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
+    disconnect(&dialog,SIGNAL( optionsChanged() ),this, SLOT( updateLanguage() ));
 }
 
 // Opens the 'About' dialog box.
@@ -967,6 +977,34 @@ void MainWindow::updateInfoLine()
     }
 }
 
+void MainWindow::loadLanguage(QString locale)
+{
+    // remove the old translator
+    qApp->removeTranslator(&translator_);
+    qApp->removeTranslator(&translatorQt_);
+
+    // load the new translator
+    QString path = QApplication::applicationDirPath();
+    path.append("/translations/");
+
+    if(translatorQt_.load(QLocale(locale),"qt","_",path,".qm"))
+        qApp->installTranslator(&translatorQt_);
+    if(translator_.load(QLocale(locale),"glogg","_",path,".qm"))
+        qApp->installTranslator(&translator_);
+}
+
+void MainWindow::updateLanguage()
+{
+    std::shared_ptr<Configuration> config =
+        Persistent<Configuration>( "settings" );
+    QString locale = config->languageLocale();
+    if(lastLanguageLocale_ == locale)
+        return;
+
+    lastLanguageLocale_ = locale;
+    loadLanguage(locale);
+}
+
 // Write settings to permanent storage
 void MainWindow::writeSettings()
 {
@@ -1002,7 +1040,6 @@ void MainWindow::readSettings()
 
     // History of recent files
     GetPersistentInfo().retrieve( QString( "recentFiles" ) );
-    updateRecentFileActions();
 
     // GetPersistentInfo().retrieve( QString( "settings" ) );
     GetPersistentInfo().retrieve( QString( "filterSet" ) );

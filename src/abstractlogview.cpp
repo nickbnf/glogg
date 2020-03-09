@@ -360,10 +360,10 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
     {
         // Prepare the popup depending on selection type
         if ( selection_.isSingleLine() ) {
-            copyAction_->setText( "&Copy this line" );
+            copyAction_->setText( tr("&Copy this line") );
         }
         else {
-            copyAction_->setText( "&Copy" );
+            copyAction_->setText( tr("&Copy") );
             copyAction_->setStatusTip( tr("Copy the selection") );
         }
 

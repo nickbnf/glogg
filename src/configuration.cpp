@@ -29,6 +29,8 @@ Configuration::Configuration()
     mainFont_ = QFont("monaco", 10);
     mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
+    languageLocale_ = "en_US";
+
     mainRegexpType_               = ExtendedRegexp;
     quickfindRegexpType_          = FixedString;
     quickfindIncremental_         = true;
@@ -95,6 +97,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "session.loadLast" ) )
         loadLastSession_ = settings.value( "session.loadLast" ).toBool();
 
+    if ( settings.contains( "appearance.language" ) )
+        languageLocale_ = settings.value( "appearance.language" ).toString();
+
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
@@ -130,6 +135,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "polling.enabled", pollingEnabled_ );
     settings.setValue( "polling.intervalMs", pollIntervalMs_ );
     settings.setValue( "session.loadLast", loadLastSession_);
+    settings.setValue( "appearance.language", languageLocale_);
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );

@@ -318,3 +318,6 @@ else {
 perf {
     QMAKE_CXXFLAGS += -DGLOGG_PERF_MEASURE_FPS
 }
+
+TRANSLATIONS    +=  translations/glogg_zh_CN.ts
+

@@ -101,11 +101,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         followFileOnLoad_ = settings.value( "session.followOnLoad" ).toBool();
 
     if ( settings.contains( "logging.enableLogging" ) )
-        enableLogging_
-            = settings.value( "logging.enableLogging" ).toBool();
+        enableLogging_ = settings.value( "logging.enableLogging" ).toBool();
     if ( settings.contains( "logging.verbosity" ) )
-        loggingLevel_
-            = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toUInt() );
+        loggingLevel_ = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toUInt() );
 
     if ( settings.contains( "versionchecker.enabled" ) )
         enableVersionChecking_ = settings.value( "versionchecker.enabled" ).toBool();
@@ -134,6 +132,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "perf.useLineEndingCache" ) )
         useLineEndingCache_ = settings.value( "perf.useLineEndingCache" ).toBool();
 
+    if ( settings.contains( "net.verifySslPeers" ) )
+        verifySslPeers_ = settings.value( "net.verifySslPeers" ).toBool();
+
     // View settings
     if ( settings.contains( "view.overviewVisible" ) )
         overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
@@ -143,8 +144,7 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         lineNumbersVisibleInFiltered_
             = settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
     if ( settings.contains( "view.minimizeToTray" ) )
-        minimizeToTray_
-            = settings.value( "view.minimizeToTray" ).toBool();
+        minimizeToTray_ = settings.value( "view.minimizeToTray" ).toBool();
 
     // Some sanity check (mainly for people upgrading)
     if ( quickfindIncremental_ )
@@ -198,6 +198,8 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "perf.searchThreadPoolSize", searchThreadPoolSize_ );
     settings.setValue( "perf.keepFileClosed", keepFileClosed_ );
     settings.setValue( "perf.useLineEndingCache", useLineEndingCache_ );
+
+    settings.setValue( "net.verifySslPeers", verifySslPeers_ );
 
     settings.setValue( "view.overviewVisible", overviewVisible_ );
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );

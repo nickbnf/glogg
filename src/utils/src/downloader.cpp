@@ -18,6 +18,7 @@
  */
 
 #include "downloader.h"
+#include "configuration.h"
 #include "log.h"
 
 #include <QNetworkReply>
@@ -28,14 +29,27 @@ Downloader::Downloader( QObject* parent )
     manager_.setRedirectPolicy( QNetworkRequest::NoLessSafeRedirectPolicy );
 }
 
+QString Downloader::lastError() const
+{
+    return lastError_;
+}
+
 void Downloader::download( const QUrl& url, QFile* outputFile )
 {
     output_ = outputFile;
 
     QNetworkRequest request( url );
+
+    if ( !Configuration::get().verifySslPeers() ) {
+        auto sslConfiguration = QSslConfiguration::defaultConfiguration();
+        sslConfiguration.setPeerVerifyMode( QSslSocket::VerifyNone );
+        request.setSslConfiguration( sslConfiguration );
+    }
+
     currentDownload_ = manager_.get( request );
 
-    connect( currentDownload_, &QNetworkReply::downloadProgress, this, &Downloader::downloadProgress );
+    connect( currentDownload_, &QNetworkReply::downloadProgress, this,
+             &Downloader::downloadProgress );
 
     connect( currentDownload_, &QNetworkReply::finished, this, &Downloader::downloadFinished );
 
@@ -52,6 +66,7 @@ void Downloader::downloadFinished()
     if ( currentDownload_->error() ) {
         // download failed
         LOG( logERROR ) << "Download failed: " << currentDownload_->errorString();
+        lastError_ = currentDownload_->errorString();
         output_->remove();
         emit finished( false );
     }

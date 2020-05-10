@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>515</width>
-    <height>682</height>
+    <width>482</width>
+    <height>619</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -289,6 +289,25 @@
            <widget class="QCheckBox" name="extractArchivesAlwaysCheckBox">
             <property name="text">
              <string>Extract archives without confirmation</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="downloadGroupBox">
+         <property name="title">
+          <string>File download</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_11">
+          <item>
+           <widget class="QCheckBox" name="verifySslCheckBox">
+            <property name="text">
+             <string>Verify certificates for https connections</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

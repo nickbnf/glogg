@@ -637,6 +637,12 @@ void MainWindow::openRemoteFile( const QUrl& url )
         if ( !progressDialog.exec() ) {
             loadFile( tempFile->fileName() );
         }
+        else {
+            QMessageBox::critical( this, "Klogg - File download", downloader.lastError() );
+        }
+    }
+    else {
+        QMessageBox::critical( this, "Klogg - File download", "Failed to create temp file" );
     }
 }
 
@@ -752,7 +758,7 @@ void MainWindow::openUrl()
     const auto urlInClipboard = QUrl::fromUserInput( QApplication::clipboard()->text() );
     const auto selectedUrl = urlInClipboard.isValid() ? urlInClipboard.toString() : QString{};
 
-    QString url = QInputDialog::getText( this, tr( "Open URL as log file" ), tr( "URL:" ),
+    QString url = QInputDialog::getText( this, tr( "Open URL as log file" ), tr( "URL to download:" ),
                                          QLineEdit::Normal, selectedUrl, &ok );
     if ( ok && !url.isEmpty() ) {
         openRemoteFile( url );

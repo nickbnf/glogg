@@ -296,7 +296,7 @@ class Configuration final : public Persistable<Configuration> {
     {
         return extractArchives_;
     }
-    void setExtractArchives(bool extract)
+    void setExtractArchives( bool extract )
     {
         extractArchives_ = extract;
     }
@@ -305,9 +305,18 @@ class Configuration final : public Persistable<Configuration> {
     {
         return extractArchivesAlways_;
     }
-    void setExtractArchivesAlways(bool extract)
+    void setExtractArchivesAlways( bool extract )
     {
         extractArchivesAlways_ = extract;
+    }
+
+    bool verifySslPeers() const
+    {
+        return verifySslPeers_;
+    }
+    void setVerifySslPeers( bool verify )
+    {
+        verifySslPeers_ = verify;
     }
 
     // Reads/writes the current config in the QSettings object passed
@@ -363,6 +372,8 @@ class Configuration final : public Persistable<Configuration> {
 
     bool extractArchives_ = true;
     bool extractArchivesAlways_ = false;
+
+    bool verifySslPeers_ = true;
 };
 
 #endif

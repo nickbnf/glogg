@@ -20,8 +20,8 @@
 #ifndef KLOGG_DOWNLOADER_H
 #define KLOGG_DOWNLOADER_H
 
-#include <QNetworkAccessManager>
 #include <QFile>
+#include <QNetworkAccessManager>
 
 class Downloader : public QObject {
     Q_OBJECT
@@ -29,6 +29,8 @@ class Downloader : public QObject {
     explicit Downloader( QObject* parent = nullptr );
 
     void download( const QUrl& url, QFile* outputFile );
+
+    QString lastError() const;
 
   signals:
     void downloadProgress( qint64 bytesReceived, qint64 bytesTotal );
@@ -41,6 +43,8 @@ class Downloader : public QObject {
   private:
     QNetworkAccessManager manager_;
     QNetworkReply* currentDownload_ = nullptr;
+
+    QString lastError_;
 
     QFile* output_;
 };

@@ -69,7 +69,8 @@ OptionsDialog::OptionsDialog( QWidget* parent )
              [this]( auto ) { this->setupSearchResultsCache(); } );
     connect( loggingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupLogging(); } );
 
-    connect( extractArchivesCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupArchives(); } );
+    connect( extractArchivesCheckBox, &QCheckBox::toggled,
+             [this]( auto ) { this->setupArchives(); } );
 
     updateDialogFromConfig();
 
@@ -78,8 +79,6 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     setupSearchResultsCache();
     setupLogging();
     setupArchives();
-
-
 }
 
 //
@@ -239,6 +238,9 @@ void OptionsDialog::updateDialogFromConfig()
 
     // version checking
     checkForNewVersionCheckBox->setChecked( config.versionCheckingEnabled() );
+
+    // downloads
+    verifySslCheckBox->setChecked( config.verifySslPeers() );
 }
 
 //
@@ -293,8 +295,8 @@ void OptionsDialog::updateConfigFromDialog()
     config.setEnableLogging( loggingCheckBox->isChecked() );
     config.setLoggingLevel( verbositySpinBox->value() );
 
-    config.setExtractArchives( extractArchivesCheckBox->isChecked());
-    config.setExtractArchivesAlways( extractArchivesAlwaysCheckBox->isChecked());
+    config.setExtractArchives( extractArchivesCheckBox->isChecked() );
+    config.setExtractArchivesAlways( extractArchivesAlwaysCheckBox->isChecked() );
 
     config.setUseParallelSearch( parallelSearchCheckBox->isChecked() );
     config.setUseSearchResultsCache( searchResultsCacheCheckBox->isChecked() );
@@ -306,6 +308,8 @@ void OptionsDialog::updateConfigFromDialog()
 
     // version checking
     config.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
+
+    config.setVerifySslPeers( verifySslCheckBox->isChecked() );
 
     config.save();
 

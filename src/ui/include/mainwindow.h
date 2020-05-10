@@ -188,6 +188,7 @@ class MainWindow : public QMainWindow {
     void updateMenuBarFromDocument( const CrawlerWidget* crawler );
     void updateInfoLine();
     void showInfoLabels( bool show );
+    void logScreenInfo(QScreen* screen);
 
     WindowSession session_;
     QString loadingFileName;
@@ -267,6 +268,8 @@ class MainWindow : public QMainWindow {
 
     bool isMaximized_ = false;
     bool isCloseFromTray_ = false;
+
+    std::once_flag screenChangesConnect_;
 };
 
 #endif

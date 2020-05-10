@@ -62,6 +62,7 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QProgressDialog>
+#include <QScreen>
 #include <QTemporaryFile>
 #include <QTextBrowser>
 #include <QToolBar>
@@ -758,8 +759,9 @@ void MainWindow::openUrl()
     const auto urlInClipboard = QUrl::fromUserInput( QApplication::clipboard()->text() );
     const auto selectedUrl = urlInClipboard.isValid() ? urlInClipboard.toString() : QString{};
 
-    QString url = QInputDialog::getText( this, tr( "Open URL as log file" ), tr( "URL to download:" ),
-                                         QLineEdit::Normal, selectedUrl, &ok );
+    QString url
+        = QInputDialog::getText( this, tr( "Open URL as log file" ), tr( "URL to download:" ),
+                                 QLineEdit::Normal, selectedUrl, &ok );
     if ( ok && !url.isEmpty() ) {
         openRemoteFile( url );
     }
@@ -1158,6 +1160,15 @@ bool MainWindow::event( QEvent* event )
 {
     if ( event->type() == QEvent::WindowActivate ) {
         emit windowActivated();
+    }
+    else if ( event->type() == QEvent::Show ) {
+        if ( this->windowHandle() ) {
+            std::call_once( screenChangesConnect_, [this]() {
+                logScreenInfo( this->windowHandle()->screen() );
+                connect( this->windowHandle(), &QWindow::screenChanged,
+                         [this]( QScreen* screen ) { logScreenInfo( screen ); } );
+            } );
+        }
     }
 
     return QMainWindow::event( event );
@@ -1573,6 +1584,20 @@ void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
 
     quickFindMux_.setDirection( direction );
     quickFindWidget_.userActivate();
+}
+
+void MainWindow::logScreenInfo( QScreen* screen )
+{
+    LOG( logINFO ) << "screen changed for " << session_.windowIndex();
+    if ( screen == nullptr ) {
+        return;
+    }
+
+    LOG( logINFO ) << "screen name " << screen->name();
+    LOG( logINFO ) << "screen size " << screen->size().width() << "x" << screen->size().height();
+    LOG( logINFO ) << "screen ratio " << screen->devicePixelRatio();
+    LOG( logINFO ) << "screen logical dpi " << screen->logicalDotsPerInch();
+    LOG( logINFO ) << "screen physical dpi " << screen->physicalDotsPerInch();
 }
 
 void MainWindow::reportIssue() const

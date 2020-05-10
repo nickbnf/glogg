@@ -98,7 +98,7 @@ endif()
 foreach (flag
     -Wall -Wextra -Wcast-qual -Wcast-align -Wshadow
     -Wstrict-aliasing=1 -Wswitch-enum -Wdeclaration-after-statement
-    -Wstrict-prototypes -Wundef)
+    -Wstrict-prototypes -Wundef -Wno-implicit-fallthrough)
   # Because https://gcc.gnu.org/wiki/FAQ#wnowarning
   string(REGEX REPLACE "\\-Wno\\-(.+)" "-W\\1" flag_to_test "${flag}")
   string(REGEX REPLACE "[^a-zA-Z0-9]+" "_" test_name "CFLAG_${flag_to_test}")

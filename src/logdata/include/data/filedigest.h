@@ -24,13 +24,12 @@
 
 class DigestInternalState;
 
-class FileDigest
-{
+class FileDigest {
   public:
     FileDigest();
     ~FileDigest();
 
-    void addData(const char *data, size_t length);
+    void addData( const char* data, size_t length );
     uint64_t digest() const;
 
     void reset();

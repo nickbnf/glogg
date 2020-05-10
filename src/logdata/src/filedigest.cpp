@@ -18,49 +18,50 @@
  */
 
 #include "filedigest.h"
-#include "xxhash.h"
+#include "xxh3.h"
 
-class DigestInternalState
-{
+class DigestInternalState {
   public:
     DigestInternalState()
     {
-        m_state = XXH64_createState();
+        m_state = XXH3_createState();
         reset();
     }
 
     ~DigestInternalState()
     {
-        XXH64_freeState(m_state);
+        XXH3_freeState( m_state );
     }
 
-    void addData(const char *data, size_t length)
+    void addData( const char* data, size_t length )
     {
-        XXH64_update(m_state, reinterpret_cast<const void*>(data), length);
+        XXH3_update( m_state, reinterpret_cast<const xxh_u8*>( data ), length, XXH3_acc_64bits );
     }
 
     void reset()
     {
-        XXH64_reset(m_state, 0);
+        XXH3_64bits_reset( m_state );
     }
 
     uint64_t digest() const
     {
-        return XXH64_digest(m_state);
+        return XXH3_64bits_digest( m_state );
     }
 
   private:
-    XXH64_state_t* m_state;
+    XXH3_state_t* m_state;
 };
 
-FileDigest::FileDigest() : m_state(std::make_unique<DigestInternalState>())
-{}
+FileDigest::FileDigest()
+    : m_state( std::make_unique<DigestInternalState>() )
+{
+}
 
 FileDigest::~FileDigest() = default;
 
-void FileDigest::addData(const char *data, size_t length)
+void FileDigest::addData( const char* data, size_t length )
 {
-    m_state->addData(data, length);
+    m_state->addData( data, length );
 }
 
 uint64_t FileDigest::digest() const

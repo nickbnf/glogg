@@ -572,7 +572,7 @@ OperationResult CheckFileChangesOperation::start()
     else {
         QFile file( fileName_ );
 
-        constexpr int blockSize = 5*1024*1024;
+        constexpr int blockSize = 5 * 1024 * 1024;
         QByteArray buffer{ blockSize, 0 };
 
         FileDigest fileDigest;
@@ -580,7 +580,8 @@ OperationResult CheckFileChangesOperation::start()
             auto readSize = 0ll;
             auto totalSize = 0ll;
             do {
-                const auto bytesToRead = std::min( static_cast<qint64>(buffer.size()), indexedHash.size - totalSize );
+                const auto bytesToRead = std::min( static_cast<qint64>( buffer.size() ),
+                                                   indexedHash.size - totalSize );
                 readSize = file.read( buffer.data(), bytesToRead );
 
                 if ( readSize > 0 ) {

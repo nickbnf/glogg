@@ -44,7 +44,7 @@
 #include <QTemporaryDir>
 
 #include <memory>
-
+#include <mutex>
 #include <array>
 
 #include "crawlerwidget.h"

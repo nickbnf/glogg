@@ -81,8 +81,11 @@ void setApplicationAttributes()
     // We support high-dpi (aka Retina) displays
     QCoreApplication::setAttribute( Qt::AA_UseHighDpiPixmaps );
     QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus );
+
 #ifdef Q_OS_WIN
     QCoreApplication::setAttribute( Qt::AA_DisableWindowContextHelpButton );
+    // fractional scaling
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 #endif
 }
 

@@ -21,3 +21,8 @@ add_subdirectory(cmliblzma)
 add_subdirectory(karchive)
 add_subdirectory(maddy)
 
+set(XXHASH_BUILD_ENABLE_INLINE_API OFF) #optional
+set(XXHASH_BUILD_XXHSUM OFF) #optional
+add_subdirectory(xxhash/cmake_unofficial)
+
+

@@ -150,8 +150,8 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
-    indexHash_.addData( block );
-    hash_.hash = indexHash_.result();
+    indexHash_.addData( block.data(), block.size() );
+    hash_.digest = indexHash_.digest();
     hash_.size += block.size();
 
     encodingGuess_ = encoding;
@@ -559,7 +559,7 @@ OperationResult PartialIndexOperation::start()
 
 OperationResult CheckFileChangesOperation::start()
 {
-    LOG( logDEBUG ) << "CheckFileChangesOperation::start(), file " << fileName_.toStdString();
+    LOG( logINFO ) << "CheckFileChangesOperation::start(), file " << fileName_.toStdString();
 
     QFileInfo info( fileName_ );
     const auto indexedHash = indexing_data_.getHash();
@@ -572,30 +572,30 @@ OperationResult CheckFileChangesOperation::start()
     else {
         QFile file( fileName_ );
 
-        QByteArray buffer{ static_cast<int>( indexedHash.size ), 0 };
-        QCryptographicHash hash{ QCryptographicHash::Md5 };
+        constexpr int blockSize = 5*1024*1024;
+        QByteArray buffer{ blockSize, 0 };
 
+        FileDigest fileDigest;
         if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
             auto readSize = 0ll;
             auto totalSize = 0ll;
             do {
-
-                readSize = file.read( buffer.data(), buffer.size() );
+                const auto bytesToRead = std::min( static_cast<qint64>(buffer.size()), indexedHash.size - totalSize );
+                readSize = file.read( buffer.data(), bytesToRead );
 
                 if ( readSize > 0 ) {
-                    hash.addData( buffer.data(), readSize );
+                    fileDigest.addData( buffer.data(), readSize );
                     totalSize += readSize;
                 }
 
             } while ( readSize > 0 && totalSize < indexedHash.size );
 
-            const auto realHash = hash.result();
+            const auto realHashDigest = fileDigest.digest();
 
-            LOG( logINFO ) << "indexed hash " << indexedHash.hash.toHex() << ", real file hash "
-                           << QString( realHash.toHex() );
+            LOG( logINFO ) << "indexed hash " << indexedHash.digest << ", real file hash "
+                           << realHashDigest;
 
-            if ( !std::equal( indexedHash.hash.begin(), indexedHash.hash.end(), realHash.begin(),
-                              realHash.end() ) ) {
+            if ( realHashDigest != indexedHash.digest ) {
                 LOG( logINFO ) << "File changed in indexed range";
                 return MonitoredFileStatus::Truncated;
             }

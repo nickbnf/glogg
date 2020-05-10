@@ -55,9 +55,11 @@
 
 #include "atomicflag.h"
 
+#include "filedigest.h"
+
 struct IndexedHash {
     qint64 size = 0;
-    QByteArray hash;
+    quint64 digest = 0;
 };
 
 // This class is a thread-safe set of indexing data.
@@ -99,7 +101,7 @@ class IndexingData {
     LinePositionArray linePosition_;
     LineLength maxLength_;
 
-    QCryptographicHash indexHash_{ QCryptographicHash::Md5 };
+    FileDigest indexHash_;
     IndexedHash hash_;
 
     QTextCodec* encodingGuess_{};

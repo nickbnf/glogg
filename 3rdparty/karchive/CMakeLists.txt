@@ -21,7 +21,7 @@ set(karchive_SRCS
     src/kxzfilter.cpp
 )
 
-add_library(klogg_karchive ${karchive_SRCS} ${karchive_OPTIONAL_SRCS})
+add_library(klogg_karchive STATIC ${karchive_SRCS} ${karchive_OPTIONAL_SRCS})
 
 set_target_properties(klogg_karchive PROPERTIES AUTOMOC ON)
 

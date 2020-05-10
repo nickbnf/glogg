@@ -215,7 +215,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
     const auto indexedHash = indexing_data_.getHash();
 
     LOG( logINFO ) << "current indexed fileSize=" << indexedHash.size;
-    LOG( logINFO ) << "current indexed hash=" << QString( indexedHash.hash.toHex() );
+    LOG( logINFO ) << "current indexed hash=" << indexedHash.digest;
     LOG( logINFO ) << "info file_->size()=" << info.size();
 
     LOG( logINFO ) << "attached_file_->size()=" << attached_file_->size();

@@ -73,7 +73,9 @@ void InfoLine::displayGauge( int completion )
 
 void InfoLine::hideGauge()
 {
-    setPalette( *origPalette_ );
+    if ( origPalette_ ) {
+        setPalette( *origPalette_ );
+    }
     origPalette_.reset();
 }
 

@@ -41,14 +41,13 @@
 
 #include <QLabel>
 #include <QPalette>
+#include <absl/types/optional.h>
 
 // Information line with integrated completion gauge
 // used for the file name and the search results.
-class InfoLine : public QLabel
-{
-  Q_OBJECT
+class InfoLine : public QLabel {
+    Q_OBJECT
   public:
-    // Default constructor
     InfoLine();
 
     // Display the gauge in the background with the passed value (0-100)
@@ -58,16 +57,12 @@ class InfoLine : public QLabel
     void hideGauge();
 
   protected:
-    void paintEvent(QPaintEvent* paintEvent) override;
-    void contextMenuEvent(QContextMenuEvent *event) override;
+    void paintEvent( QPaintEvent* paintEvent ) override;
+    void contextMenuEvent( QContextMenuEvent* event ) override;
 
   private:
     // The original palette of the QLabel
-    QPalette origPalette_;
-    // Color of the background
-    const QColor backgroundColor_;
-    // Color of the darkened background (left part of the gauge)
-    const QColor darkBackgroundColor_;
+    absl::optional<QPalette> origPalette_;
 };
 
 #endif

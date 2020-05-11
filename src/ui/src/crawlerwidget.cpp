@@ -788,21 +788,21 @@ void CrawlerWidget::setup()
 
     matchCaseButton = new QToolButton();
     matchCaseButton->setToolTip( "Match case" );
-    matchCaseButton->setIcon( QIcon( ":/images/icons8-font-size-16.png" ) );
+    matchCaseButton->setIcon( iconLoader_.load( "icons8-font-size" ) );
     matchCaseButton->setCheckable( true );
     matchCaseButton->setFocusPolicy( Qt::NoFocus );
     matchCaseButton->setContentsMargins( 2, 2, 2, 2 );
 
     useRegexpButton = new QToolButton();
     useRegexpButton->setToolTip( "Use regex" );
-    useRegexpButton->setIcon( QIcon( ":/images/regex.png" ) );
+    useRegexpButton->setIcon( iconLoader_.load( "regex" ) );
     useRegexpButton->setCheckable( true );
     useRegexpButton->setFocusPolicy( Qt::NoFocus );
     useRegexpButton->setContentsMargins( 2, 2, 2, 2 );
 
     searchRefreshButton = new QToolButton();
     searchRefreshButton->setToolTip( "Auto-refresh" );
-    searchRefreshButton->setIcon( QIcon( ":/images/icons8-search-refresh-16.png" ) );
+    searchRefreshButton->setIcon( iconLoader_.load( "icons8-search-refresh" ) );
     searchRefreshButton->setCheckable( true );
     searchRefreshButton->setFocusPolicy( Qt::NoFocus );
     searchRefreshButton->setContentsMargins( 2, 2, 2, 2 );
@@ -822,13 +822,13 @@ void CrawlerWidget::setup()
     setFocusProxy( searchLineEdit );
 
     searchButton = new QToolButton();
-    searchButton->setIcon( QIcon( ":/images/icons8-search-16.png" ) );
+    searchButton->setIcon( iconLoader_.load( "icons8-search" ) );
     searchButton->setText( tr( "Search" ) );
     searchButton->setAutoRaise( true );
     searchButton->setContentsMargins( 2, 2, 2, 2 );
 
     stopButton = new QToolButton();
-    stopButton->setIcon( QIcon( ":/images/icons8-delete-16.png" ) );
+    stopButton->setIcon( iconLoader_.load( "icons8-delete" ) );
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
     stopButton->setVisible( false );

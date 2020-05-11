@@ -47,10 +47,6 @@
 #include <QPainter>
 
 InfoLine::InfoLine()
-    : QLabel()
-    , origPalette_( palette() )
-    , backgroundColor_( origPalette_.color( QPalette::Button ) )
-    , darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
 {
     setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
     setTextInteractionFlags( Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard );
@@ -58,22 +54,27 @@ InfoLine::InfoLine()
 
 void InfoLine::displayGauge( int completion )
 {
+    if ( !origPalette_ ) {
+        origPalette_ = palette();
+    }
+
     int changeoverX = width() * completion / 100;
 
     // Create a gradient for the progress bar
     QLinearGradient linearGrad( changeoverX - 1, 0, changeoverX + 1, 0 );
-    linearGrad.setColorAt( 0, darkBackgroundColor_ );
-    linearGrad.setColorAt( 1, backgroundColor_ );
+    linearGrad.setColorAt( 0, origPalette_->color( QPalette::Highlight ) );
+    linearGrad.setColorAt( 1, origPalette_->color( QPalette::Background ) );
 
     // Apply the gradient to the current palette (background)
-    QPalette newPalette = origPalette_;
+    QPalette newPalette = *origPalette_;
     newPalette.setBrush( backgroundRole(), QBrush( linearGrad ) );
     setPalette( newPalette );
 }
 
 void InfoLine::hideGauge()
 {
-    setPalette( origPalette_ );
+    setPalette( *origPalette_ );
+    origPalette_.reset();
 }
 
 // Custom painter: draw the background then call QLabel's painter

@@ -56,6 +56,7 @@
 #include "signalmux.h"
 #include "tabbedcrawlerwidget.h"
 #include "tabbedscratchpad.h"
+#include "iconloader.h"
 
 class QAction;
 class QActionGroup;
@@ -249,6 +250,8 @@ class MainWindow : public QMainWindow {
     QSystemTrayIcon* trayIcon_;
 
     QIcon mainIcon_;
+
+    IconLoader iconLoader_;
 
     // Multiplex signals to any of the CrawlerWidgets
     SignalMux signalMux_;

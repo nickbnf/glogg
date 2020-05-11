@@ -1715,21 +1715,20 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
         lineNumberAreaStartX = contentStartPosX;
 
         painter.setPen( palette.color( QPalette::Text ) );
-        /* Not sure if it looks good...
-        painter.drawLine( contentStartPosX + lineNumberAreaWidth,
-                          0,
-                          contentStartPosX + lineNumberAreaWidth,
-                          viewport()->height() );
-        */
         painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0,
-                          lineNumberAreaWidth + SEPARATOR_WIDTH, paintDeviceHeight, Qt::lightGray );
+                          lineNumberAreaWidth + SEPARATOR_WIDTH, paintDeviceHeight,
+                          palette.color( QPalette::AlternateBase ) );
+
+        painter.drawLine( contentStartPosX + lineNumberAreaWidth - SEPARATOR_WIDTH, 0,
+                          contentStartPosX + lineNumberAreaWidth - SEPARATOR_WIDTH,
+                          paintDeviceHeight );
 
         // Update for drawing the actual text
         contentStartPosX += lineNumberAreaWidth;
     }
     else {
         painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0, SEPARATOR_WIDTH + 1,
-                          paintDeviceHeight, Qt::lightGray );
+                          paintDeviceHeight, palette.color( QPalette::AlternateBase ) );
         // contentStartPosX += SEPARATOR_WIDTH;
     }
 

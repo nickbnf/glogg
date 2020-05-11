@@ -270,7 +270,7 @@ void MainWindow::createActions()
 
     openAction = new QAction( tr( "&Open..." ), this );
     openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open ) );
-    openAction->setIcon( QIcon( ":/images/icons8-add-file-16.png" ) );
+    openAction->setIcon( iconLoader_.load( "icons8-add-file" ) );
     openAction->setStatusTip( tr( "Open a file" ) );
     connect( openAction, &QAction::triggered, [this]( auto ) { this->open(); } );
 
@@ -359,7 +359,7 @@ void MainWindow::createActions()
              &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr( "&Follow File" ), this );
-    followAction->setIcon( QIcon( ":/images/icons8-fast-forward-16.png" ) );
+    followAction->setIcon( iconLoader_.load( "icons8-fast-forward" ) );
 
     followAction->setShortcuts( QList<QKeySequence>()
                                 << QKeySequence( Qt::Key_F ) << QKeySequence( Qt::Key_F10 ) );
@@ -369,11 +369,11 @@ void MainWindow::createActions()
 
     reloadAction = new QAction( tr( "&Reload" ), this );
     reloadAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Refresh ) );
-    reloadAction->setIcon( QIcon( ":/images/icons8-restore-page-16.png" ) );
+    reloadAction->setIcon( iconLoader_.load( "icons8-restore-page" ) );
     signalMux_.connect( reloadAction, SIGNAL( triggered() ), SLOT( reload() ) );
 
     stopAction = new QAction( tr( "&Stop" ), this );
-    stopAction->setIcon( QIcon( ":/images/icons8-delete-16.png" ) );
+    stopAction->setIcon( iconLoader_.load( "icons8-delete" ) );
     stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL( triggered() ), SLOT( stopLoading() ) );
 
@@ -404,7 +404,7 @@ void MainWindow::createActions()
 
     showScratchPadAction = new QAction( tr( "Scratchpad" ), this );
     showScratchPadAction->setStatusTip( tr( "Show the scratchpad" ) );
-    showScratchPadAction->setIcon( QIcon( ":/images/icons8-create-16.png" ) );
+    showScratchPadAction->setIcon( iconLoader_.load( "icons8-create" ) );
     connect( showScratchPadAction, &QAction::triggered,
              [this]( auto ) { this->showScratchPad(); } );
 
@@ -415,13 +415,13 @@ void MainWindow::createActions()
     connect( favoritesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
 
     addToFavoritesAction = new QAction( tr( "Add to favorites" ), this );
-    addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star" ) );
     addToFavoritesAction->setData( true );
     connect( addToFavoritesAction, &QAction::triggered,
              [this]( auto ) { this->addToFavorites(); } );
 
     addToFavoritesMenuAction = new QAction( tr( "Add to favorites" ), this );
-    addToFavoritesMenuAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    addToFavoritesMenuAction->setIcon( iconLoader_.load( "icons8-star" ) );
     connect( addToFavoritesMenuAction, &QAction::triggered,
              [this]( auto ) { this->addToFavorites(); } );
 
@@ -1426,10 +1426,10 @@ void MainWindow::updateFavoritesMenu()
     favoritesMenu->addAction( addToFavoritesMenuAction );
     favoritesMenu->addAction( removeFromFavoritesAction );
 
-    addToFavoritesMenuAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    addToFavoritesMenuAction->setIcon( iconLoader_.load( "icons8-star" ) );
 
     addToFavoritesAction->setText( tr( "Add to favorites" ) );
-    addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-16.png" ) );
+    addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star" ) );
     addToFavoritesAction->setData( true );
 
     const auto& favorites = FavoriteFiles::getSynced().favorites();
@@ -1444,11 +1444,11 @@ void MainWindow::updateFavoritesMenu()
         if ( std::any_of( favorites.begin(), favorites.end(),
                           FavoriteFiles::FullPathComparator( path ) ) ) {
             addToFavoritesAction->setText( tr( "Remove from favorites" ) );
-            addToFavoritesAction->setIcon( QIcon( ":/images/icons8-star-filled-16.png" ) );
+            addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star-filled" ) );
             addToFavoritesAction->setData( false );
 
             addToFavoritesMenuAction->setEnabled( false );
-            addToFavoritesMenuAction->setIcon( QIcon( ":/images/icons8-star-filled-16.png" ) );
+            addToFavoritesMenuAction->setIcon( iconLoader_.load( "icons8-star-filled" ) );
         }
     }
 

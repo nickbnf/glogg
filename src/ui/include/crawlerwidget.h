@@ -59,6 +59,7 @@
 #include "overview.h"
 #include "signalmux.h"
 #include "viewinterface.h"
+#include "iconloader.h"
 
 class InfoLine;
 class QuickFindPattern;
@@ -336,6 +337,8 @@ class CrawlerWidget : public QSplitter,
     // Current encoding setting;
     absl::optional<int> encodingMib_;
     QString encoding_text_;
+
+    IconLoader iconLoader_;
 };
 
 #endif

@@ -446,10 +446,10 @@ karchive (https://github.com/KDE/karchive) licensed under the terms of
 GNU General Public License, version 2 or later
 GNU Lesser General Public License, version 2.1 or later
 
- ===
- This product includes software developed by Yann Collet
- xxHash Library (https://github.com/Cyan4973/xxHash) licensed
- under the terms of BSD 2-Clause License (https://www.opensource.org/licenses/bsd-license.php)
+===
+This product includes software developed by Yann Collet
+xxHash Library (https://github.com/Cyan4973/xxHash) licensed
+under the terms of BSD 2-Clause License (https://www.opensource.org/licenses/bsd-license.php)
 
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
@@ -471,3 +471,8 @@ GNU Lesser General Public License, version 2.1 or later
 // ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===
+This product includes software developed as part of SV GUI Library (https://code.soundsoftware.ac.uk/projects/svgui)
+IconLoader (https://code.soundsoftware.ac.uk/projects/svgui/embedded/classIconLoader.html)
+licensed under the terms of GNU General Public License, version 2 or later

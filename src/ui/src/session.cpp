@@ -37,7 +37,7 @@ Session::Session()
     // of the Persistent)
     savedSearches_ = &SavedSearches::getSynced();
     SessionInfo::getSynced();
-    
+
     quickFindPattern_ = std::make_shared<QuickFindPattern>();
 }
 
@@ -96,10 +96,6 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize, uint32
     *fileNbLine = file->logData->getNbLine().get();
     *lastModified = file->logData->getLastModifiedDate();
 }
-
-/*
- * Private methods
- */
 
 ViewInterface* Session::openAlways( const QString& file_name,
                                     const std::function<ViewInterface*()>& view_factory,
@@ -206,6 +202,7 @@ WindowSession::restore( const std::function<ViewInterface*()>& view_factory,
         ViewInterface* view
             = appSession_->openAlways( file.fileName, view_factory, file.viewContext );
         result.emplace_back( file.fileName, view );
+        openedFiles_.emplace_back( file.fileName );
     }
 
     *current_file_index = result.size() - 1;

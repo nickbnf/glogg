@@ -28,60 +28,7 @@
 
 namespace {
 constexpr const int FavoriteFilesVersion = 1;
-constexpr const int MaxPathLength = 64;
-
-// inspired by http://chadkuehn.com/shrink-file-paths-with-an-ellipsis-in-c/
-QString shrinkPath( QString fullPath, int limit, QString delimiter = "…" )
-{
-    if ( fullPath.isEmpty() ) {
-        return fullPath;
-    }
-
-    const auto fileInfo = QFileInfo( fullPath );
-    const auto fileName = fileInfo.fileName();
-    const auto absoluteNativePath = QDir::toNativeSeparators( fileInfo.absolutePath() );
-
-    const auto idealMinLength = fileName.length() + delimiter.length();
-
-    // less than the minimum amt
-    if ( limit < ( ( 2 * delimiter.length() ) + 1 ) ) {
-        return "";
-    }
-
-    // fullpath
-    if ( limit >= fullPath.length() ) {
-        return QDir::toNativeSeparators( fullPath );
-    }
-
-    // file name condensing
-    if ( limit < idealMinLength ) {
-        return delimiter + fileName.mid( 0, ( limit - ( 2 * delimiter.length() ) ) ) + delimiter;
-    }
-
-    // whole name only, no folder structure shown
-    if ( limit == idealMinLength ) {
-        return delimiter + fileName;
-    }
-
-    return absoluteNativePath.mid( 0, ( limit - ( idealMinLength + 1 ) ) ) + delimiter + QDir::separator() + fileName;
 }
-
-} // namespace
-
-FavoriteFiles::File::File( const QString& path )
-    : fullPath( path )
-    , fullPathNative( QDir::toNativeSeparators( path ) )
-{
-    const auto fileInfo = QFileInfo( path );
-    displayName = shrinkPath( fullPath, MaxPathLength );
-}
-
-struct DisplayNameComparator {
-    bool operator()( const FavoriteFiles::File& lhs, const FavoriteFiles::File& rhs )
-    {
-        return lhs.displayName < rhs.displayName;
-    }
-};
 
 void FavoriteFiles::add( const QString& path )
 {
@@ -89,7 +36,7 @@ void FavoriteFiles::add( const QString& path )
         return;
     }
 
-    auto newFile = FavoriteFiles::File( path );
+    auto newFile = DisplayFilePath( path );
 
     auto lowerBound
         = std::lower_bound( files_.begin(), files_.end(), newFile, DisplayNameComparator{} );
@@ -103,7 +50,7 @@ void FavoriteFiles::remove( const QString& path )
     files_.erase( existingFile );
 }
 
-std::vector<FavoriteFiles::File> FavoriteFiles::favorites() const
+std::vector<DisplayFilePath> FavoriteFiles::favorites() const
 {
     return files_;
 }
@@ -118,7 +65,7 @@ void FavoriteFiles::saveToStorage( QSettings& settings ) const
     settings.beginWriteArray( "favorites" );
     for ( auto i = 0u; i < files_.size(); ++i ) {
         settings.setArrayIndex( i );
-        settings.setValue( "name", files_.at( i ).fullPath );
+        settings.setValue( "name", files_.at( i ).fullPath() );
     }
     settings.endArray();
     settings.endGroup();

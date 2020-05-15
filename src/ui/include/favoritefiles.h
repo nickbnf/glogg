@@ -24,58 +24,24 @@
 #include <vector>
 
 #include "persistable.h"
+#include "displayfilepath.h"
 
 // Manage the list of recently opened files
 class FavoriteFiles final : public Persistable<FavoriteFiles, session_settings>
 {
   public:
-    struct File {
-        explicit File(const QString& path);
-
-        QString fullPath;
-        QString fullPathNative;
-        QString displayName;
-    };
-
-    struct FullPathComparator {
-        FullPathComparator( const QString& path )
-            : fullPath( path )
-        {
-        }
-
-        bool operator()( const File& f ) const
-        {
-            return f.fullPath == fullPath;
-        }
-
-        QString fullPath;
-    };
-
-    struct FullPathNativeComparator {
-        FullPathNativeComparator( const QString& path )
-            : fullPathNative( path )
-        {
-        }
-
-        bool operator()( const File& f ) const
-        {
-            return f.fullPathNative == fullPathNative;
-        }
-
-        QString fullPathNative;
-    };
 
     void add( const QString& path );
     void remove( const QString& path );
 
-    std::vector<File> favorites() const;
+    std::vector<DisplayFilePath> favorites() const;
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
 
   private:
-    std::vector<File> files_;
+    std::vector<DisplayFilePath> files_;
 };
 
 #endif // KLOGG_FAVORITEFILES_H

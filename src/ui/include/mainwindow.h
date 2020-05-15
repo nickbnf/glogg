@@ -183,6 +183,7 @@ class MainWindow : public QMainWindow {
     void updateTitleBar( const QString& file_name );
     void updateRecentFileActions();
     void updateFavoritesMenu();
+    void updateOpenedFilesMenu();
     QString strippedName( const QString& fullFileName ) const;
     CrawlerWidget* currentCrawlerWidget() const;
     void displayQuickFindBar( QuickFindMux::QFDirection direction );
@@ -203,6 +204,7 @@ class MainWindow : public QMainWindow {
     QMenu* viewMenu;
     QMenu* toolsMenu;
     QMenu* favoritesMenu;
+    QMenu* openedFilesMenu;
     QMenu* helpMenu;
 
     PathLine* infoLine;
@@ -246,6 +248,7 @@ class MainWindow : public QMainWindow {
     QAction* addToFavoritesMenuAction;
     QAction* removeFromFavoritesAction;
     QActionGroup* favoritesGroup;
+    QActionGroup* openedFilesGroup;
 
     QSystemTrayIcon* trayIcon_;
 

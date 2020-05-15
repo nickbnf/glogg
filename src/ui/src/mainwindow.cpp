@@ -245,6 +245,8 @@ void MainWindow::reloadSession()
             followAction->setChecked( true );
         }
     }
+
+    updateOpenedFilesMenu();
 }
 
 void MainWindow::loadInitialFile( QString fileName, bool followFile )
@@ -414,6 +416,9 @@ void MainWindow::createActions()
     favoritesGroup = new QActionGroup( this );
     connect( favoritesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
 
+    openedFilesGroup = new QActionGroup( this );
+    connect( openedFilesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
+
     addToFavoritesAction = new QAction( tr( "Add to favorites" ), this );
     addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star" ) );
     addToFavoritesAction->setData( true );
@@ -463,6 +468,8 @@ void MainWindow::createMenus()
     editMenu->setEnabled( false );
 
     viewMenu = menuBar()->addMenu( tr( "&View" ) );
+    openedFilesMenu = viewMenu->addMenu( "Opened files" );
+    viewMenu->addSeparator();
     viewMenu->addAction( overviewVisibleAction );
     viewMenu->addSeparator();
     viewMenu->addAction( lineNumbersVisibleInMainAction );
@@ -975,6 +982,9 @@ void MainWindow::closeTab( int index )
     widget->stopLoading();
     mainTabWidget_.removeCrawler( index );
     session_.close( widget );
+
+    updateOpenedFilesMenu();
+
     widget->deleteLater();
 }
 
@@ -1295,6 +1305,8 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
             recentFiles.save();
             updateRecentFileActions();
 
+            updateOpenedFilesMenu();
+
             const auto& config = Configuration::get();
             if ( followFile || config.followFileOnLoad() ) {
                 signalCrawlerToFollowFile( crawler_widget );
@@ -1419,6 +1431,24 @@ void MainWindow::updateInfoLine()
     }
 }
 
+void MainWindow::updateOpenedFilesMenu()
+{
+    openedFilesMenu->clear();
+
+    const auto& files = session_.openedFiles();
+
+    openedFilesMenu->setEnabled( !files.empty() );
+
+    for ( const auto& file : files ) {
+        const auto displayFile = DisplayFilePath{ file };
+        auto action = openedFilesMenu->addAction( displayFile.displayName() );
+
+        action->setActionGroup( openedFilesGroup );
+        action->setToolTip( displayFile.nativeFullPath() );
+        action->setData( displayFile.fullPath() );
+    }
+}
+
 void MainWindow::updateFavoritesMenu()
 {
     favoritesMenu->clear();
@@ -1441,8 +1471,7 @@ void MainWindow::updateFavoritesMenu()
 
     if ( crawler ) {
         const auto path = session_.getFilename( crawler );
-        if ( std::any_of( favorites.begin(), favorites.end(),
-                          FavoriteFiles::FullPathComparator( path ) ) ) {
+        if ( std::any_of( favorites.begin(), favorites.end(), FullPathComparator( path ) ) ) {
             addToFavoritesAction->setText( tr( "Remove from favorites" ) );
             addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star-filled" ) );
             addToFavoritesAction->setData( false );
@@ -1455,11 +1484,11 @@ void MainWindow::updateFavoritesMenu()
     favoritesMenu->addSeparator();
 
     for ( const auto& file : favorites ) {
-        auto action = favoritesMenu->addAction( file.displayName );
+        auto action = favoritesMenu->addAction( file.displayName() );
 
         action->setActionGroup( favoritesGroup );
-        action->setToolTip( file.fullPathNative );
-        action->setData( file.fullPath );
+        action->setToolTip( file.nativeFullPath() );
+        action->setData( file.fullPath() );
     }
 }
 
@@ -1488,14 +1517,14 @@ void MainWindow::removeFromFavorites()
     const auto& favorites = favoriteFiles.favorites();
     QStringList files;
     std::transform( favorites.begin(), favorites.end(), std::back_inserter( files ),
-                    []( const auto& f ) { return f.fullPathNative; } );
+                    []( const auto& f ) { return f.nativeFullPath(); } );
 
     auto currentIndex = 0;
 
     if ( const auto crawler = currentCrawlerWidget() ) {
         const auto currentPath = session_.getFilename( crawler );
-        const auto currentItem = std::find_if( favorites.begin(), favorites.end(),
-                                               FavoriteFiles::FullPathComparator( currentPath ) );
+        const auto currentItem
+            = std::find_if( favorites.begin(), favorites.end(), FullPathComparator( currentPath ) );
         if ( currentItem != favorites.end() ) {
             currentIndex = std::distance( favorites.begin(), currentItem );
         }
@@ -1506,12 +1535,11 @@ void MainWindow::removeFromFavorites()
                                                      "Select item to remove from favorites", files,
                                                      currentIndex, false, &ok );
     if ( ok ) {
-        const auto selectedFile
-            = std::find_if( favorites.begin(), favorites.end(),
-                            FavoriteFiles::FullPathNativeComparator( pathToRemove ) );
+        const auto selectedFile = std::find_if( favorites.begin(), favorites.end(),
+                                                FullPathNativeComparator( pathToRemove ) );
 
         if ( selectedFile != favorites.end() ) {
-            favoriteFiles.remove( selectedFile->fullPath );
+            favoriteFiles.remove( selectedFile->fullPath() );
             favoriteFiles.save();
             updateFavoritesMenu();
         }

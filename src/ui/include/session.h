@@ -30,8 +30,8 @@
 #include <QByteArray>
 #include <QDateTime>
 
-#include "quickfindpattern.h"
 #include "log.h"
+#include "quickfindpattern.h"
 
 class ViewInterface;
 class ViewContextInterface;
@@ -144,7 +144,7 @@ using SaveFileInfo
 
 class WindowSession {
   public:
-    WindowSession( std::shared_ptr<Session> appSession, const QString& id, size_t index);
+    WindowSession( std::shared_ptr<Session> appSession, const QString& id, size_t index );
 
     ViewInterface* getViewIfOpen( const QString& file_name ) const
     {
@@ -154,11 +154,17 @@ class WindowSession {
     ViewInterface* open( const QString& file_name,
                          const std::function<ViewInterface*()>& view_factory )
     {
+        openedFiles_.push_back( file_name );
         return appSession_->open( file_name, view_factory );
     }
 
     void close( const ViewInterface* view )
     {
+        auto it = std::find( openedFiles_.begin(), openedFiles_.end(), getFilename( view ) );
+        if (it != openedFiles_.end()) {
+            openedFiles_.erase(it);
+        }
+
         appSession_->close( view );
     }
 
@@ -171,6 +177,11 @@ class WindowSession {
                       QDateTime* lastModified ) const
     {
         return appSession_->getFileInfo( view, fileSize, fileNbLine, lastModified );
+    }
+
+    std::vector<QString> openedFiles() const
+    {
+        return openedFiles_;
     }
 
     // Get a (non-const) reference to the QuickFind pattern.
@@ -208,6 +219,8 @@ class WindowSession {
     std::shared_ptr<Session> appSession_;
     QString windowId_;
     size_t windowIndex_;
+
+    std::vector<QString> openedFiles_;
 };
 
 #endif

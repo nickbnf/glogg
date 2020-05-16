@@ -64,7 +64,7 @@ constexpr StrongType maxValue()
 using OptionalLineNumber = absl::optional<LineNumber>;
 
 template <typename T, typename Parameter, template<typename> class... Skills>
-plog::util::nstringstream& operator<<( plog::util::nstringstream& os, fluent::NamedType<T, Parameter, Skills...> const& object )
+plog::util::nostringstream& operator<<( plog::util::nostringstream& os, fluent::NamedType<T, Parameter, Skills...> const& object )
 {
     os << object.get();
     return os;

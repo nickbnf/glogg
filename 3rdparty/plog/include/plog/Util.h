@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 #include <sstream>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -20,6 +21,12 @@
 #   include <sys/timeb.h>
 #   include <io.h>
 #   include <share.h>
+#elif defined(__rtems__)
+#   include <unistd.h>
+#   include <rtems.h>
+#   if PLOG_ENABLE_WCHAR_INPUT
+#       include <iconv.h>
+#   endif
 #else
 #   include <unistd.h>
 #   include <sys/syscall.h>
@@ -43,11 +50,13 @@ namespace plog
     {
 #ifdef _WIN32
         typedef std::wstring nstring;
-        typedef std::wstringstream nstringstream;
+        typedef std::wostringstream nostringstream;
+        typedef std::wistringstream nistringstream;
         typedef wchar_t nchar;
 #else
         typedef std::string nstring;
-        typedef std::stringstream nstringstream;
+        typedef std::ostringstream nostringstream;
+        typedef std::istringstream nistringstream;
         typedef char nchar;
 #endif
 
@@ -61,6 +70,19 @@ namespace plog
             ::localtime_s(t, time);
 #else
             ::localtime_r(time, t);
+#endif
+        }
+
+        inline void gmtime_s(struct tm* t, const time_t* time)
+        {
+#if defined(_WIN32) && defined(__BORLANDC__)
+            ::gmtime_s(time, t);
+#elif defined(_WIN32) && defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+            *t = *::gmtime(time);
+#elif defined(_WIN32)
+            ::gmtime_s(t, time);
+#else
+            ::gmtime_r(time, t);
 #endif
         }
 
@@ -92,14 +114,80 @@ namespace plog
         {
 #ifdef _WIN32
             return GetCurrentThreadId();
-#elif defined(__unix__)
+#elif defined(__linux__)
             return static_cast<unsigned int>(::syscall(__NR_gettid));
+#elif defined(__FreeBSD__)
+            long tid;
+            syscall(SYS_thr_self, &tid);
+            return static_cast<unsigned int>(tid);
+#elif defined(__rtems__)
+            return rtems_task_self();
 #elif defined(__APPLE__)
             uint64_t tid64;
             pthread_threadid_np(NULL, &tid64);
             return static_cast<unsigned int>(tid64);
 #endif
         }
+
+#ifdef _WIN32
+    inline int vasprintf(char** strp, const char* format, va_list ap)
+    {
+        int len = _vscprintf(format, ap);
+        if (len < 0)
+        {
+            return -1;
+        }
+
+        char* str = static_cast<char*>(malloc(len + 1));
+        if (!str)
+        {
+            return -1;
+        }
+
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+        int retval = _vsnprintf(str, len + 1, format, ap);
+#else
+        int retval = _vsnprintf_s(str, len + 1, len, format, ap);
+#endif        
+        if (retval < 0)
+        {
+            free(str);
+            return -1;
+        }
+
+        *strp = str;
+        return retval;
+    }
+
+    inline int vaswprintf(wchar_t** strp, const wchar_t* format, va_list ap)
+    {
+        int len = _vscwprintf(format, ap);
+        if (len < 0)
+        {
+            return -1;
+        }
+
+        wchar_t* str = static_cast<wchar_t*>(malloc((len + 1) * sizeof(wchar_t)));
+        if (!str)
+        {
+            return -1;
+        }
+
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+        int retval = _vsnwprintf(str, len + 1, format, ap);
+#else
+        int retval = _vsnwprintf_s(str, len + 1, len, format, ap);
+#endif         
+        if (retval < 0)
+        {
+            free(str);
+            return -1;
+        }
+
+        *strp = str;
+        return retval;
+    }
+#endif
 
 #if PLOG_ENABLE_WCHAR_INPUT && !defined(_WIN32)
         inline std::string toNarrow(const wchar_t* wstr)
@@ -312,6 +400,11 @@ namespace plog
             {
 #ifdef _WIN32
                 InitializeCriticalSection(&m_sync);
+#elif defined(__rtems__)
+                rtems_semaphore_create(0, 1,
+                            RTEMS_PRIORITY |
+                            RTEMS_BINARY_SEMAPHORE |
+                            RTEMS_INHERIT_PRIORITY, 1, &m_sync);
 #else
                 ::pthread_mutex_init(&m_sync, 0);
 #endif
@@ -321,6 +414,8 @@ namespace plog
             {
 #ifdef _WIN32
                 DeleteCriticalSection(&m_sync);
+#elif defined(__rtems__)
+                rtems_semaphore_delete(m_sync);
 #else
                 ::pthread_mutex_destroy(&m_sync);
 #endif
@@ -333,6 +428,8 @@ namespace plog
             {
 #ifdef _WIN32
                 EnterCriticalSection(&m_sync);
+#elif defined(__rtems__)
+                rtems_semaphore_obtain(m_sync, RTEMS_WAIT, RTEMS_NO_TIMEOUT);
 #else
                 ::pthread_mutex_lock(&m_sync);
 #endif
@@ -342,6 +439,8 @@ namespace plog
             {
 #ifdef _WIN32
                 LeaveCriticalSection(&m_sync);
+#elif defined(__rtems__)
+                rtems_semaphore_release(m_sync);
 #else
                 ::pthread_mutex_unlock(&m_sync);
 #endif

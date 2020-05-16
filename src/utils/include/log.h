@@ -48,7 +48,7 @@ class GloggFormatter {
         tm t;
         util::localtime_s( &t, &record.getTime().time );
 
-        util::nstringstream ss;
+        util::nostringstream ss;
         ss << std::setfill( PLOG_NSTR( '0' ) ) << std::setw( 2 ) << t.tm_hour << PLOG_NSTR( ":" )
            << std::setfill( PLOG_NSTR( '0' ) ) << std::setw( 2 ) << t.tm_min << PLOG_NSTR( ":" )
            << std::setfill( PLOG_NSTR( '0' ) ) << std::setw( 2 ) << t.tm_sec << PLOG_NSTR( "." )

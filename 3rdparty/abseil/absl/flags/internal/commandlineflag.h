@@ -16,29 +16,41 @@
 #ifndef ABSL_FLAGS_INTERNAL_COMMANDLINEFLAG_H_
 #define ABSL_FLAGS_INTERNAL_COMMANDLINEFLAG_H_
 
-#include <memory>
+#include <stddef.h>
+#include <stdint.h>
 
+#include <memory>
+#include <string>
+#include <typeinfo>
+
+#include "absl/base/config.h"
 #include "absl/base/macros.h"
+#include "absl/flags/config.h"
 #include "absl/flags/marshalling.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace flags_internal {
 
-// Type-specific operations, eg., parsing, copying, etc. are provided
-// by function specific to that type with a signature matching FlagOpFn.
-enum FlagOp {
-  kDelete,
-  kClone,
-  kCopy,
-  kCopyConstruct,
-  kSizeof,
-  kParse,
-  kUnparse
-};
-using FlagOpFn = void* (*)(FlagOp, const void*, void*);
-using FlagMarshallingOpFn = void* (*)(FlagOp, const void*, void*, void*);
+// An alias for flag static type id. Values of type identify the flag value type
+// simialarly to typeid(T), but without relying on RTTI being available. In most
+// cases this id is enough to uniquely identify the flag's value type. In a few
+// cases we'll have to resort to using actual RTTI implementation if it is
+// available.
+using FlagStaticTypeId = void* (*)();
+
+// Address of this function template is used in current implementation as a flag
+// static type id.
+template <typename T>
+void* FlagStaticTypeIdGen() {
+#if defined(ABSL_FLAGS_INTERNAL_HAS_RTTI)
+  return const_cast<std::type_info*>(&typeid(T));
+#else
+  return nullptr;
+#endif
+}
 
 // Options that control SetCommandLineOptionWithMode.
 enum FlagSettingMode {
@@ -61,87 +73,6 @@ enum ValueSource {
   kProgrammaticChange,
 };
 
-extern const char kStrippedFlagHelp[];
-
-// The per-type function
-template <typename T>
-void* FlagOps(FlagOp op, const void* v1, void* v2) {
-  switch (op) {
-    case kDelete:
-      delete static_cast<const T*>(v1);
-      return nullptr;
-    case kClone:
-      return new T(*static_cast<const T*>(v1));
-    case kCopy:
-      *static_cast<T*>(v2) = *static_cast<const T*>(v1);
-      return nullptr;
-    case kCopyConstruct:
-      new (v2) T(*static_cast<const T*>(v1));
-      return nullptr;
-    case kSizeof:
-      return reinterpret_cast<void*>(sizeof(T));
-    default:
-      return nullptr;
-  }
-}
-
-template <typename T>
-void* FlagMarshallingOps(FlagOp op, const void* v1, void* v2, void* v3) {
-  switch (op) {
-    case kParse: {
-      // initialize the temporary instance of type T based on current value in
-      // destination (which is going to be flag's default value).
-      T temp(*static_cast<T*>(v2));
-      if (!absl::ParseFlag<T>(*static_cast<const absl::string_view*>(v1), &temp,
-                              static_cast<std::string*>(v3))) {
-        return nullptr;
-      }
-      *static_cast<T*>(v2) = std::move(temp);
-      return v2;
-    }
-    case kUnparse:
-      *static_cast<std::string*>(v2) =
-          absl::UnparseFlag<T>(*static_cast<const T*>(v1));
-      return nullptr;
-    default:
-      return nullptr;
-  }
-}
-
-// Functions that invoke flag-type-specific operations.
-inline void Delete(FlagOpFn op, const void* obj) {
-  op(flags_internal::kDelete, obj, nullptr);
-}
-
-inline void* Clone(FlagOpFn op, const void* obj) {
-  return op(flags_internal::kClone, obj, nullptr);
-}
-
-inline void Copy(FlagOpFn op, const void* src, void* dst) {
-  op(flags_internal::kCopy, src, dst);
-}
-
-inline void CopyConstruct(FlagOpFn op, const void* src, void* dst) {
-  op(flags_internal::kCopyConstruct, src, dst);
-}
-
-inline bool Parse(FlagMarshallingOpFn op, absl::string_view text, void* dst,
-                  std::string* error) {
-  return op(flags_internal::kParse, &text, dst, error) != nullptr;
-}
-
-inline std::string Unparse(FlagMarshallingOpFn op, const void* val) {
-  std::string result;
-  op(flags_internal::kUnparse, val, &result, nullptr);
-  return result;
-}
-
-inline size_t Sizeof(FlagOpFn op) {
-  // This sequence of casts reverses the sequence from base::internal::FlagOps()
-  return static_cast<size_t>(reinterpret_cast<intptr_t>(
-      op(flags_internal::kSizeof, nullptr, nullptr)));
-}
-
 // Handle to FlagState objects. Specific flag state objects will restore state
 // of a flag produced this flag state from method CommandLineFlag::SaveState().
 class FlagStateInterface {
@@ -155,25 +86,18 @@ class FlagStateInterface {
 // Holds all information for a flag.
 class CommandLineFlag {
  public:
-  constexpr CommandLineFlag(const char* name, const char* filename)
-      : name_(name), filename_(filename) {}
-
-  // Virtual destructor
-  virtual void Destroy() = 0;
+  constexpr CommandLineFlag() = default;
 
   // Not copyable/assignable.
   CommandLineFlag(const CommandLineFlag&) = delete;
   CommandLineFlag& operator=(const CommandLineFlag&) = delete;
 
   // Non-polymorphic access methods.
-  absl::string_view Name() const { return name_; }
-  absl::string_view Typename() const;
-  std::string Filename() const;
 
   // Return true iff flag has type T.
   template <typename T>
   inline bool IsOfType() const {
-    return TypeId() == &flags_internal::FlagOps<T>;
+    return TypeId() == &flags_internal::FlagStaticTypeIdGen<T>;
   }
 
   // Attempts to retrieve the flag value. Returns value on success,
@@ -190,8 +114,7 @@ class CommandLineFlag {
     //
     //  1. `U.value` has correct size and alignment for a value of type `T`
     //  2. The `U.value` constructor is not invoked since U's constructor does
-    //  not
-    //     do it explicitly.
+    //     not do it explicitly.
     //  3. The `U.value` destructor is invoked since U's destructor does it
     //     explicitly. This makes `U` a kind of RAII wrapper around non default
     //     constructible value of T, which is destructed when we leave the
@@ -213,14 +136,21 @@ class CommandLineFlag {
 
   // Polymorphic access methods
 
-  // Returns help message associated with this flag
+  // Returns name of this flag.
+  virtual absl::string_view Name() const = 0;
+  // Returns name of the file where this flag is defined.
+  virtual std::string Filename() const = 0;
+  // Returns name of the flag's value type for some built-in types or empty
+  // std::string.
+  virtual absl::string_view Typename() const = 0;
+  // Returns help message associated with this flag.
   virtual std::string Help() const = 0;
-  // Returns true iff this object corresponds to retired flag
+  // Returns true iff this object corresponds to retired flag.
   virtual bool IsRetired() const { return false; }
   // Returns true iff this is a handle to an Abseil Flag.
   virtual bool IsAbseilFlag() const { return true; }
   // Returns id of the flag's value type.
-  virtual flags_internal::FlagOpFn TypeId() const = 0;
+  virtual FlagStaticTypeId TypeId() const = 0;
   virtual bool IsModified() const = 0;
   virtual bool IsSpecifiedOnCommandLine() const = 0;
   virtual std::string DefaultValue() const = 0;
@@ -253,32 +183,28 @@ class CommandLineFlag {
  protected:
   ~CommandLineFlag() = default;
 
-  // Constant configuration for a particular flag.
-  const char* const name_;      // Flags name passed to ABSL_FLAG as second arg.
-  const char* const filename_;  // The file name where ABSL_FLAG resides.
-
  private:
   // Copy-construct a new value of the flag's type in a memory referenced by
   // the dst based on the current flag's value.
   virtual void Read(void* dst) const = 0;
 };
 
-// This macro is the "source of truth" for the list of supported flag types we
-// expect to perform lock free operations on. Specifically it generates code,
-// a one argument macro operating on a type, supplied as a macro argument, for
-// each type in the list.
-#define ABSL_FLAGS_INTERNAL_FOR_EACH_LOCK_FREE(A) \
-  A(bool)                                         \
-  A(short)                                        \
-  A(unsigned short)                               \
-  A(int)                                          \
-  A(unsigned int)                                 \
-  A(long)                                         \
-  A(unsigned long)                                \
-  A(long long)                                    \
-  A(unsigned long long)                           \
-  A(double)                                       \
-  A(float)
+// This macro is the "source of truth" for the list of supported flag built-in
+// types.
+#define ABSL_FLAGS_INTERNAL_BUILTIN_TYPES(A) \
+  A(bool)                                    \
+  A(short)                                   \
+  A(unsigned short)                          \
+  A(int)                                     \
+  A(unsigned int)                            \
+  A(long)                                    \
+  A(unsigned long)                           \
+  A(long long)                               \
+  A(unsigned long long)                      \
+  A(double)                                  \
+  A(float)                                   \
+  A(std::string)                             \
+  A(std::vector<std::string>)
 
 }  // namespace flags_internal
 ABSL_NAMESPACE_END

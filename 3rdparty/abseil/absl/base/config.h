@@ -66,6 +66,10 @@
 #include "absl/base/options.h"
 #include "absl/base/policy_checks.h"
 
+// Helper macro to convert a CPP variable to a string literal.
+#define ABSL_INTERNAL_DO_TOKEN_STR(x) #x
+#define ABSL_INTERNAL_TOKEN_STR(x) ABSL_INTERNAL_DO_TOKEN_STR(x)
+
 // -----------------------------------------------------------------------------
 // Abseil namespace annotations
 // -----------------------------------------------------------------------------
@@ -90,8 +94,40 @@
 // not support forward declarations of its own types, nor does it support
 // user-provided specialization of Abseil templates.  Code that violates these
 // rules may be broken without warning.)
+#if !defined(ABSL_OPTION_USE_INLINE_NAMESPACE) || \
+    !defined(ABSL_OPTION_INLINE_NAMESPACE_NAME)
+#error options.h is misconfigured.
+#endif
+
+// Check that ABSL_OPTION_INLINE_NAMESPACE_NAME is neither "head" nor ""
+#if defined(__cplusplus) && ABSL_OPTION_USE_INLINE_NAMESPACE == 1
+
+#define ABSL_INTERNAL_INLINE_NAMESPACE_STR \
+  ABSL_INTERNAL_TOKEN_STR(ABSL_OPTION_INLINE_NAMESPACE_NAME)
+
+static_assert(ABSL_INTERNAL_INLINE_NAMESPACE_STR[0] != '\0',
+              "options.h misconfigured: ABSL_OPTION_INLINE_NAMESPACE_NAME must "
+              "not be empty.");
+static_assert(ABSL_INTERNAL_INLINE_NAMESPACE_STR[0] != 'h' ||
+                  ABSL_INTERNAL_INLINE_NAMESPACE_STR[1] != 'e' ||
+                  ABSL_INTERNAL_INLINE_NAMESPACE_STR[2] != 'a' ||
+                  ABSL_INTERNAL_INLINE_NAMESPACE_STR[3] != 'd' ||
+                  ABSL_INTERNAL_INLINE_NAMESPACE_STR[4] != '\0',
+              "options.h misconfigured: ABSL_OPTION_INLINE_NAMESPACE_NAME must "
+              "be changed to a new, unique identifier name.");
+
+#endif
+
+#if ABSL_OPTION_USE_INLINE_NAMESPACE == 0
 #define ABSL_NAMESPACE_BEGIN
 #define ABSL_NAMESPACE_END
+#elif ABSL_OPTION_USE_INLINE_NAMESPACE == 1
+#define ABSL_NAMESPACE_BEGIN \
+  inline namespace ABSL_OPTION_INLINE_NAMESPACE_NAME {
+#define ABSL_NAMESPACE_END }
+#else
+#error options.h is misconfigured.
+#endif
 
 // -----------------------------------------------------------------------------
 // Compiler Feature Checks
@@ -280,13 +316,19 @@
 #error ABSL_HAVE_EXCEPTIONS cannot be directly set.
 
 #elif defined(__clang__)
-// TODO(calabrese)
-// Switch to using __cpp_exceptions when we no longer support versions < 3.6.
-// For details on this check, see:
-//   http://releases.llvm.org/3.6.0/tools/clang/docs/ReleaseNotes.html#the-exceptions-macro
+
+#if __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 6)
+// Clang >= 3.6
+#if __has_feature(cxx_exceptions)
+#define ABSL_HAVE_EXCEPTIONS 1
+#endif  // __has_feature(cxx_exceptions)
+#else
+// Clang < 3.6
+// http://releases.llvm.org/3.6.0/tools/clang/docs/ReleaseNotes.html#the-exceptions-macro
 #if defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
 #define ABSL_HAVE_EXCEPTIONS 1
 #endif  // defined(__EXCEPTIONS) && __has_feature(cxx_exceptions)
+#endif  // __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 6)
 
 // Handle remaining special cases and default to exceptions being supported.
 #elif !(defined(__GNUC__) && (__GNUC__ < 5) && !defined(__EXCEPTIONS)) &&    \
@@ -583,6 +625,47 @@
 #define ABSL_INTERNAL_MSVC_2017_DBG_MODE
 #endif
 
+// ABSL_INTERNAL_MANGLED_NS
+// ABSL_INTERNAL_MANGLED_BACKREFERENCE
+//
+// Internal macros for building up mangled names in our internal fork of CCTZ.
+// This implementation detail is only needed and provided for the MSVC build.
+//
+// These macros both expand to string literals.  ABSL_INTERNAL_MANGLED_NS is
+// the mangled spelling of the `absl` namespace, and
+// ABSL_INTERNAL_MANGLED_BACKREFERENCE is a back-reference integer representing
+// the proper count to skip past the CCTZ fork namespace names.  (This number
+// is one larger when there is an inline namespace name to skip.)
+#if defined(_MSC_VER)
+#if ABSL_OPTION_USE_INLINE_NAMESPACE == 0
+#define ABSL_INTERNAL_MANGLED_NS "absl"
+#define ABSL_INTERNAL_MANGLED_BACKREFERENCE "5"
+#else
+#define ABSL_INTERNAL_MANGLED_NS \
+  ABSL_INTERNAL_TOKEN_STR(ABSL_OPTION_INLINE_NAMESPACE_NAME) "@absl"
+#define ABSL_INTERNAL_MANGLED_BACKREFERENCE "6"
+#endif
+#endif
+
 #undef ABSL_INTERNAL_HAS_KEYWORD
+
+// ABSL_DLL
+//
+// When building Abseil as a DLL, this macro expands to `__declspec(dllexport)`
+// so we can annotate symbols appropriately as being exported. When used in
+// headers consuming a DLL, this macro expands to `__declspec(dllimport)` so
+// that consumers know the symbol is defined inside the DLL. In all other cases,
+// the macro expands to nothing.
+#if defined(_MSC_VER)
+#if defined(ABSL_BUILD_DLL)
+#define ABSL_DLL __declspec(dllexport)
+#elif defined(ABSL_CONSUME_DLL)
+#define ABSL_DLL __declspec(dllimport)
+#else
+#define ABSL_DLL
+#endif
+#else
+#define ABSL_DLL
+#endif  // defined(_MSC_VER)
 
 #endif  // ABSL_BASE_CONFIG_H_

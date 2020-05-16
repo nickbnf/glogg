@@ -34,6 +34,20 @@ cc_library(
     visibility = [
         "//absl:__subpackages__",
     ],
+    deps = [
+        ":config",
+        ":core_headers",
+    ],
+)
+
+cc_library(
+    name = "errno_saver",
+    hdrs = ["internal/errno_saver.h"],
+    copts = ABSL_DEFAULT_COPTS,
+    linkopts = ABSL_DEFAULT_LINKOPTS,
+    visibility = [
+        "//absl:__subpackages__",
+    ],
     deps = [":config"],
 )
 
@@ -84,6 +98,7 @@ cc_library(
     deps = [
         ":base_internal",
         ":core_headers",
+        ":errno_saver",
     ],
 )
 
@@ -280,6 +295,18 @@ cc_test(
     deps = [
         ":config",
         ":throw_delegate",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "errno_saver_test",
+    size = "small",
+    srcs = ["internal/errno_saver_test.cc"],
+    copts = ABSL_TEST_COPTS,
+    linkopts = ABSL_DEFAULT_LINKOPTS,
+    deps = [
+        ":errno_saver",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -672,6 +699,7 @@ cc_test(
     linkopts = ABSL_DEFAULT_LINKOPTS,
     deps = [
         ":log_severity",
+        "//absl/flags:flag_internal",
         "//absl/flags:marshalling",
         "//absl/strings",
         "@com_google_googletest//:gtest_main",

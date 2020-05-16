@@ -136,7 +136,7 @@ class btree_container {
   iterator erase(const_iterator iter) { return tree_.erase(iterator(iter)); }
   iterator erase(iterator iter) { return tree_.erase(iter); }
   iterator erase(const_iterator first, const_iterator last) {
-    return tree_.erase(iterator(first), iterator(last)).second;
+    return tree_.erase_range(iterator(first), iterator(last)).second;
   }
 
   // Extract routines.
@@ -372,7 +372,7 @@ class btree_map_container : public btree_set_container<Tree> {
   using super_type = btree_set_container<Tree>;
   using params_type = typename Tree::params_type;
 
- protected:
+ private:
   template <class K>
   using key_arg = typename super_type::template key_arg<K>;
 
@@ -390,6 +390,69 @@ class btree_map_container : public btree_set_container<Tree> {
   btree_map_container() {}
 
   // Insertion routines.
+  // Note: the nullptr template arguments and extra `const M&` overloads allow
+  // for supporting bitfield arguments.
+  // Note: when we call `std::forward<M>(obj)` twice, it's safe because
+  // insert_unique/insert_hint_unique are guaranteed to not consume `obj` when
+  // `ret.second` is false.
+  template <class M>
+  std::pair<iterator, bool> insert_or_assign(const key_type &k, const M &obj) {
+    const std::pair<iterator, bool> ret = this->tree_.insert_unique(k, k, obj);
+    if (!ret.second) ret.first->second = obj;
+    return ret;
+  }
+  template <class M, key_type * = nullptr>
+  std::pair<iterator, bool> insert_or_assign(key_type &&k, const M &obj) {
+    const std::pair<iterator, bool> ret =
+        this->tree_.insert_unique(k, std::move(k), obj);
+    if (!ret.second) ret.first->second = obj;
+    return ret;
+  }
+  template <class M, M * = nullptr>
+  std::pair<iterator, bool> insert_or_assign(const key_type &k, M &&obj) {
+    const std::pair<iterator, bool> ret =
+        this->tree_.insert_unique(k, k, std::forward<M>(obj));
+    if (!ret.second) ret.first->second = std::forward<M>(obj);
+    return ret;
+  }
+  template <class M, key_type * = nullptr, M * = nullptr>
+  std::pair<iterator, bool> insert_or_assign(key_type &&k, M &&obj) {
+    const std::pair<iterator, bool> ret =
+        this->tree_.insert_unique(k, std::move(k), std::forward<M>(obj));
+    if (!ret.second) ret.first->second = std::forward<M>(obj);
+    return ret;
+  }
+  template <class M>
+  iterator insert_or_assign(const_iterator position, const key_type &k,
+                            const M &obj) {
+    const std::pair<iterator, bool> ret =
+        this->tree_.insert_hint_unique(iterator(position), k, k, obj);
+    if (!ret.second) ret.first->second = obj;
+    return ret.first;
+  }
+  template <class M, key_type * = nullptr>
+  iterator insert_or_assign(const_iterator position, key_type &&k,
+                            const M &obj) {
+    const std::pair<iterator, bool> ret = this->tree_.insert_hint_unique(
+        iterator(position), k, std::move(k), obj);
+    if (!ret.second) ret.first->second = obj;
+    return ret.first;
+  }
+  template <class M, M * = nullptr>
+  iterator insert_or_assign(const_iterator position, const key_type &k,
+                            M &&obj) {
+    const std::pair<iterator, bool> ret = this->tree_.insert_hint_unique(
+        iterator(position), k, k, std::forward<M>(obj));
+    if (!ret.second) ret.first->second = std::forward<M>(obj);
+    return ret.first;
+  }
+  template <class M, key_type * = nullptr, M * = nullptr>
+  iterator insert_or_assign(const_iterator position, key_type &&k, M &&obj) {
+    const std::pair<iterator, bool> ret = this->tree_.insert_hint_unique(
+        iterator(position), k, std::move(k), std::forward<M>(obj));
+    if (!ret.second) ret.first->second = std::forward<M>(obj);
+    return ret.first;
+  }
   template <typename... Args>
   std::pair<iterator, bool> try_emplace(const key_type &k, Args &&... args) {
     return this->tree_.insert_unique(
@@ -402,7 +465,7 @@ class btree_map_container : public btree_set_container<Tree> {
     // and then using `k` unsequenced. This is safe because the move is into a
     // forwarding reference and insert_unique guarantees that `key` is never
     // referenced after consuming `args`.
-    const key_type& key_ref = k;
+    const key_type &key_ref = k;
     return this->tree_.insert_unique(
         key_ref, std::piecewise_construct, std::forward_as_tuple(std::move(k)),
         std::forward_as_tuple(std::forward<Args>(args)...));
@@ -422,7 +485,7 @@ class btree_map_container : public btree_set_container<Tree> {
     // and then using `k` unsequenced. This is safe because the move is into a
     // forwarding reference and insert_hint_unique guarantees that `key` is
     // never referenced after consuming `args`.
-    const key_type& key_ref = k;
+    const key_type &key_ref = k;
     return this->tree_
         .insert_hint_unique(iterator(hint), key_ref, std::piecewise_construct,
                             std::forward_as_tuple(std::move(k)),

@@ -72,6 +72,8 @@ absl_cc_library(
     strings_internal
   HDRS
     "internal/char_map.h"
+    "internal/escaping.cc"
+    "internal/escaping.h"
     "internal/ostringstream.h"
     "internal/resize_uninitialized.h"
     "internal/utf8.h"
@@ -84,6 +86,7 @@ absl_cc_library(
     absl::config
     absl::core_headers
     absl::endian
+    absl::raw_logging_internal
     absl::type_traits
 )
 
@@ -521,5 +524,60 @@ absl_cc_test(
   DEPS
     absl::pow10_helper
     absl::str_format
+    gmock_main
+)
+
+absl_cc_library(
+  NAME
+    cord
+  HDRS
+    "cord.h"
+  SRCS
+    "cord.cc"
+    "internal/cord_internal.h"
+  COPTS
+    ${ABSL_DEFAULT_COPTS}
+  DEPS
+    absl::strings
+    absl::strings_internal
+    absl::base
+    absl::base_internal
+    absl::core_headers
+    absl::endian
+    absl::fixed_array
+    absl::function_ref
+    absl::inlined_vector
+    absl::raw_logging_internal
+    absl::type_traits
+  PUBLIC
+)
+
+absl_cc_library(
+  NAME
+    cord_test_helpers
+  HDRS
+    "cord_test_helpers.h"
+  COPTS
+    ${ABSL_TEST_COPTS}
+  DEPS
+    absl::cord
+  TESTONLY
+)
+
+absl_cc_test(
+  NAME
+    cord_test
+  SRCS
+    "cord_test.cc"
+  COPTS
+    ${ABSL_TEST_COPTS}
+  DEPS
+    absl::cord
+    absl::strings
+    absl::base
+    absl::config
+    absl::endian
+    absl::raw_logging_internal
+    absl::fixed_array
     gmock_main
 )

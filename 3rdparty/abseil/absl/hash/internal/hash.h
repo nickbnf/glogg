@@ -57,7 +57,7 @@ class PiecewiseCombiner;
 
 // Internal detail: Large buffers are hashed in smaller chunks.  This function
 // returns the size of these chunks.
-constexpr int PiecewiseChunkSize() { return 1024; }
+constexpr size_t PiecewiseChunkSize() { return 1024; }
 
 // HashStateBase
 //
@@ -708,7 +708,8 @@ struct is_hashable
     : std::integral_constant<bool, HashSelect::template Apply<T>::value> {};
 
 // CityHashState
-class CityHashState : public HashStateBase<CityHashState> {
+class ABSL_DLL CityHashState
+    : public HashStateBase<CityHashState> {
   // absl::uint128 is not an alias or a thin wrapper around the intrinsic.
   // We use the intrinsic when available to improve performance.
 #ifdef ABSL_HAVE_INTRINSIC_INT128
@@ -951,7 +952,7 @@ H PiecewiseCombiner::add_buffer(H state, const unsigned char* data,
     // This partial chunk does not fill our existing buffer
     memcpy(buf_ + position_, data, size);
     position_ += size;
-    return std::move(state);
+    return state;
   }
 
   // Complete the buffer and hash it
@@ -970,7 +971,7 @@ H PiecewiseCombiner::add_buffer(H state, const unsigned char* data,
   // Fill the buffer with the remainder
   memcpy(buf_, data, size);
   position_ = size;
-  return std::move(state);
+  return state;
 }
 
 // HashStateBase::PiecewiseCombiner::finalize()

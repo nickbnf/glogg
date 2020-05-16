@@ -1,5 +1,5 @@
 add_subdirectory(cli11) #1.9.0
-add_subdirectory(abseil)
+add_subdirectory(abseil) #20200225.2
 mark_as_advanced(FORCE ABSL_RUN_TESTS)
 mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
 mark_as_advanced(FORCE ABSL_USE_GOOGLETEST_HEAD)

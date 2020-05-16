@@ -15,15 +15,25 @@
 
 #include "absl/flags/flag.h"
 
-#include <algorithm>
+#include <stdint.h>
+
+#include <cmath>
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
+#include "absl/base/attributes.h"
+#include "absl/flags/config.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/internal/commandlineflag.h"
+#include "absl/flags/internal/flag.h"
+#include "absl/flags/internal/registry.h"
 #include "absl/flags/usage_config.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 ABSL_DECLARE_FLAG(int64_t, mistyped_int_flag);
 ABSL_DECLARE_FLAG(std::vector<std::string>, mistyped_string_flag);
@@ -41,18 +51,17 @@ void TestCallback() {}
 
 template <typename T>
 bool TestConstructionFor() {
-  constexpr flags::HelpInitArg help_arg{flags::FlagHelpSrc("literal help"),
-                                        flags::FlagHelpSrcKind::kLiteral};
-  constexpr flags::Flag<T> f1("f1", help_arg, "file",
-                              &flags::FlagMarshallingOps<T>, &TestMakeDflt<T>);
+  constexpr flags::FlagHelpArg help_arg{flags::FlagHelpMsg("literal help"),
+                                        flags::FlagHelpKind::kLiteral};
+  constexpr flags::Flag<T> f1("f1", "file", help_arg, &TestMakeDflt<T>);
   EXPECT_EQ(f1.Name(), "f1");
   EXPECT_EQ(f1.Help(), "literal help");
   EXPECT_EQ(f1.Filename(), "file");
 
   ABSL_CONST_INIT static flags::Flag<T> f2(
-      "f2",
-      {flags::FlagHelpSrc(&TestHelpMsg), flags::FlagHelpSrcKind::kGenFunc},
-      "file", &flags::FlagMarshallingOps<T>, &TestMakeDflt<T>);
+      "f2", "file",
+      {flags::FlagHelpMsg(&TestHelpMsg), flags::FlagHelpKind::kGenFunc},
+      &TestMakeDflt<T>);
   flags::FlagRegistrar<T, false>(&f2).OnUpdate(TestCallback);
 
   EXPECT_EQ(f2.Name(), "f2");
@@ -377,19 +386,20 @@ TEST_F(FlagTest, TestCustomUDT) {
 
 // MSVC produces link error on the type mismatch.
 // Linux does not have build errors and validations work as expected.
-#if 0  // !defined(_WIN32) && GTEST_HAS_DEATH_TEST
+#if !defined(_WIN32) && GTEST_HAS_DEATH_TEST
 
-TEST(Flagtest, TestTypeMismatchValidations) {
-  // For builtin types, GetFlag() only does validation in debug mode.
+using FlagDeathTest = FlagTest;
+
+TEST_F(FlagDeathTest, TestTypeMismatchValidations) {
   EXPECT_DEBUG_DEATH(
-      absl::GetFlag(FLAGS_mistyped_int_flag),
+      static_cast<void>(absl::GetFlag(FLAGS_mistyped_int_flag)),
       "Flag 'mistyped_int_flag' is defined as one type and declared "
       "as another");
-  EXPECT_DEATH(absl::SetFlag(&FLAGS_mistyped_int_flag, 0),
+  EXPECT_DEATH(absl::SetFlag(&FLAGS_mistyped_int_flag, 1),
                "Flag 'mistyped_int_flag' is defined as one type and declared "
                "as another");
 
-  EXPECT_DEATH(absl::GetFlag(FLAGS_mistyped_string_flag),
+  EXPECT_DEATH(static_cast<void>(absl::GetFlag(FLAGS_mistyped_string_flag)),
                "Flag 'mistyped_string_flag' is defined as one type and "
                "declared as another");
   EXPECT_DEATH(
@@ -486,30 +496,11 @@ TEST_F(FlagTest, TestNonDefaultConstructibleType) {
 
 // --------------------------------------------------------------------
 
-struct Wrapper {
-  Wrapper() {}
-
-  // NOLINTNEXTLINE(runtime/explicit)
-  Wrapper(const std::string& val) : val(val) {}
-
-  // NOLINTNEXTLINE(runtime/explicit)
-  template <typename T>
-  Wrapper(T&& t) : val(std::forward<T>(t)) {}
-
-  // NOLINTNEXTLINE(runtime/explicit)
-  operator std::string() const& { return val; }
-
-  std::string val;
-};
-
 }  // namespace
 
 ABSL_RETIRED_FLAG(bool, old_bool_flag, true, "old descr");
 ABSL_RETIRED_FLAG(int, old_int_flag, (int)std::sqrt(10), "old descr");
 ABSL_RETIRED_FLAG(std::string, old_str_flag, "", absl::StrCat("old ", "descr"));
-ABSL_RETIRED_FLAG(Wrapper, old_wrapper_flag, {}, "old wrapper");
-ABSL_RETIRED_FLAG(Wrapper, old_wrapper_no_default_flag, ,
-                  "old wrapper no default");
 
 namespace {
 
@@ -520,10 +511,6 @@ TEST_F(FlagTest, TestRetiredFlagRegistration) {
   EXPECT_TRUE(flags::IsRetiredFlag("old_int_flag", &is_bool));
   EXPECT_FALSE(is_bool);
   EXPECT_TRUE(flags::IsRetiredFlag("old_str_flag", &is_bool));
-  EXPECT_FALSE(is_bool);
-  EXPECT_TRUE(flags::IsRetiredFlag("old_wrapper_flag", &is_bool));
-  EXPECT_FALSE(is_bool);
-  EXPECT_TRUE(flags::IsRetiredFlag("old_wrapper_no_default_flag", &is_bool));
   EXPECT_FALSE(is_bool);
   EXPECT_FALSE(flags::IsRetiredFlag("some_other_flag", &is_bool));
 }

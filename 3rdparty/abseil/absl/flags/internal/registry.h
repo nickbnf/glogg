@@ -20,8 +20,10 @@
 #include <map>
 #include <string>
 
+#include "absl/base/config.h"
 #include "absl/base/macros.h"
 #include "absl/flags/internal/commandlineflag.h"
+#include "absl/strings/string_view.h"
 
 // --------------------------------------------------------------------
 // Global flags registry API.
@@ -77,12 +79,12 @@ bool RegisterCommandLineFlag(CommandLineFlag*);
 //
 
 // Retire flag with name "name" and type indicated by ops.
-bool Retire(const char* name, FlagOpFn ops);
+bool Retire(const char* name, FlagStaticTypeId type_id);
 
 // Registered a retired flag with name 'flag_name' and type 'T'.
 template <typename T>
 inline bool RetiredFlag(const char* flag_name) {
-  return flags_internal::Retire(flag_name, flags_internal::FlagOps<T>);
+  return flags_internal::Retire(flag_name, &FlagStaticTypeIdGen<T>);
 }
 
 // If the flag is retired, returns true and indicates in |*type_is_bool|

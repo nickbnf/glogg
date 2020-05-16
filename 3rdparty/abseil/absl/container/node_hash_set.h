@@ -77,7 +77,7 @@ struct NodeHashSetPolicy;
 //
 //   // Create a node hash set of three strings
 //   absl::node_hash_map<std::string, std::string> ducks =
-//     {"huey", "dewey"}, "louie"};
+//     {"huey", "dewey", "louie"};
 //
 //  // Insert a new element into the node hash map
 //  ducks.insert("donald"};
@@ -111,7 +111,7 @@ class node_hash_set
   // * Initializer List constructor
   //
   //   absl::node_hash_set<std::string> set2 =
-  //       {{"huey"}, {"dewey"}, {"louie"},};
+  //       {{"huey"}, {"dewey"}, {"louie"}};
   //
   // * Copy constructor
   //
@@ -434,6 +434,14 @@ class node_hash_set
   ABSL_DEPRECATED("Call `rehash()` instead.")
   void resize(typename Base::size_type hint) { this->rehash(hint); }
 };
+
+// erase_if(node_hash_set<>, Pred)
+//
+// Erases all elements that satisfy the predicate `pred` from the container `c`.
+template <typename T, typename H, typename E, typename A, typename Predicate>
+void erase_if(node_hash_set<T, H, E, A>& c, Predicate pred) {
+  container_internal::EraseIf(pred, &c);
+}
 
 namespace container_internal {
 

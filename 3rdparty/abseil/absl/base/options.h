@@ -66,7 +66,13 @@
 // NOTE: the defaults within this file all assume that Abseil can select the
 // proper Abseil implementation at compile-time, which will not be sufficient
 // to guarantee ABI stability to package managers.
-//
+
+// Include a standard library header to allow configuration based on the
+// standard library in use.
+#ifdef __cplusplus
+#include <ciso646>
+#endif
+
 // -----------------------------------------------------------------------------
 // Type Compatibility Options
 // -----------------------------------------------------------------------------
@@ -117,14 +123,6 @@
 // compiler flags passed by the end user.  For more info, see
 // https://abseil.io/about/design/dropin-types.
 
-// A value of 2 means to detect the C++ version being used to compile Abseil,
-// and use an alias only if a working std::optional is available.  This option
-// should not be used when your program is not built from source -- for example,
-// if you are distributing Abseil in a binary package manager -- since in mode
-// 2, absl::optional will name a different template class, with a different
-// mangled name and binary layout, depending on the compiler flags passed by the
-// end user.
-//
 // User code should not inspect this macro.  To check in the preprocessor if
 // absl::optional is a typedef of std::optional, use the feature macro
 // ABSL_USES_STD_OPTIONAL.
@@ -158,7 +156,6 @@
 
 #define ABSL_OPTION_USE_STD_STRING_VIEW 2
 
-
 // ABSL_OPTION_USE_STD_VARIANT
 //
 // This option controls whether absl::variant is implemented as an alias to
@@ -184,5 +181,31 @@
 // ABSL_USES_STD_VARIANT.
 
 #define ABSL_OPTION_USE_STD_VARIANT 2
+
+
+// ABSL_OPTION_USE_INLINE_NAMESPACE
+// ABSL_OPTION_INLINE_NAMESPACE_NAME
+//
+// These options controls whether all entities in the absl namespace are
+// contained within an inner inline namespace.  This does not affect the
+// user-visible API of Abseil, but it changes the mangled names of all symbols.
+//
+// This can be useful as a version tag if you are distributing Abseil in
+// precompiled form.  This will prevent a binary library build of Abseil with
+// one inline namespace being used with headers configured with a different
+// inline namespace name.  Binary packagers are reminded that Abseil does not
+// guarantee any ABI stability in Abseil, so any update of Abseil or
+// configuration change in such a binary package should be combined with a
+// new, unique value for the inline namespace name.
+//
+// A value of 0 means not to use inline namespaces.
+//
+// A value of 1 means to use an inline namespace with the given name inside
+// namespace absl.  If this is set, ABSL_OPTION_INLINE_NAMESPACE_NAME must also
+// be changed to a new, unique identifier name.  In particular "head" is not
+// allowed.
+
+#define ABSL_OPTION_USE_INLINE_NAMESPACE 1
+#define ABSL_OPTION_INLINE_NAMESPACE_NAME lts_2020_02_25
 
 #endif  // ABSL_BASE_OPTIONS_H_

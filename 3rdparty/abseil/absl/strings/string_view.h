@@ -28,7 +28,19 @@
 #define ABSL_STRINGS_STRING_VIEW_H_
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstring>
+#include <iosfwd>
+#include <iterator>
+#include <limits>
+#include <string>
+
 #include "absl/base/config.h"
+#include "absl/base/internal/throw_delegate.h"
+#include "absl/base/macros.h"
+#include "absl/base/optimization.h"
+#include "absl/base/port.h"
 
 #ifdef ABSL_USES_STD_STRING_VIEW
 
@@ -48,19 +60,6 @@ ABSL_NAMESPACE_END
 #else  // ABSL_HAVE_BUILTIN(__builtin_memcmp)
 #define ABSL_INTERNAL_STRING_VIEW_MEMCMP memcmp
 #endif  // ABSL_HAVE_BUILTIN(__builtin_memcmp)
-
-#include <cassert>
-#include <cstddef>
-#include <cstring>
-#include <iosfwd>
-#include <iterator>
-#include <limits>
-#include <string>
-
-#include "absl/base/internal/throw_delegate.h"
-#include "absl/base/macros.h"
-#include "absl/base/optimization.h"
-#include "absl/base/port.h"
 
 namespace absl {
 ABSL_NAMESPACE_BEGIN
@@ -122,7 +121,7 @@ ABSL_NAMESPACE_BEGIN
 //
 // You may create a null `string_view` in two ways:
 //
-//   absl::string_view sv();
+//   absl::string_view sv;
 //   absl::string_view sv(nullptr, 0);
 //
 // For the above, `sv.data() == nullptr`, `sv.length() == 0`, and
@@ -283,7 +282,9 @@ class string_view {
   //
   // Returns the ith element of the `string_view` using the array operator.
   // Note that this operator does not perform any bounds checking.
-  constexpr const_reference operator[](size_type i) const { return ptr_[i]; }
+  constexpr const_reference operator[](size_type i) const {
+    return ABSL_ASSERT(i < size()), ptr_[i];
+  }
 
   // string_view::at()
   //
@@ -301,12 +302,16 @@ class string_view {
   // string_view::front()
   //
   // Returns the first element of a `string_view`.
-  constexpr const_reference front() const { return ptr_[0]; }
+  constexpr const_reference front() const {
+    return ABSL_ASSERT(!empty()), ptr_[0];
+  }
 
   // string_view::back()
   //
   // Returns the last element of a `string_view`.
-  constexpr const_reference back() const { return ptr_[size() - 1]; }
+  constexpr const_reference back() const {
+    return ABSL_ASSERT(!empty()), ptr_[size() - 1];
+  }
 
   // string_view::data()
   //
@@ -393,12 +398,11 @@ class string_view {
   // on the respective sizes of the two `string_view`s to determine which is
   // smaller, equal, or greater.
   constexpr int compare(string_view x) const noexcept {
-    return CompareImpl(
-        length_, x.length_,
-        length_ == 0 || x.length_ == 0
-            ? 0
-            : ABSL_INTERNAL_STRING_VIEW_MEMCMP(
-                  ptr_, x.ptr_, length_ < x.length_ ? length_ : x.length_));
+    return CompareImpl(length_, x.length_,
+                       Min(length_, x.length_) == 0
+                           ? 0
+                           : ABSL_INTERNAL_STRING_VIEW_MEMCMP(
+                                 ptr_, x.ptr_, Min(length_, x.length_)));
   }
 
   // Overload of `string_view::compare()` for comparing a substring of the
@@ -536,12 +540,15 @@ class string_view {
 #endif
   }
 
+  static constexpr size_t Min(size_type length_a, size_type length_b) {
+    return length_a < length_b ? length_a : length_b;
+  }
+
   static constexpr int CompareImpl(size_type length_a, size_type length_b,
                                    int compare_result) {
     return compare_result == 0 ? static_cast<int>(length_a > length_b) -
                                      static_cast<int>(length_a < length_b)
-                               : static_cast<int>(compare_result > 0) -
-                                     static_cast<int>(compare_result < 0);
+                               : (compare_result < 0 ? -1 : 1);
   }
 
   const char* ptr_;
@@ -605,7 +612,7 @@ inline string_view ClippedSubstr(string_view s, size_t pos,
 // Creates an `absl::string_view` from a pointer `p` even if it's null-valued.
 // This function should be used where an `absl::string_view` can be created from
 // a possibly-null pointer.
-inline string_view NullSafeStringView(const char* p) {
+constexpr string_view NullSafeStringView(const char* p) {
   return p ? string_view(p) : string_view();
 }
 

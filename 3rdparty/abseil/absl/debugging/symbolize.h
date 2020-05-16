@@ -71,7 +71,7 @@ ABSL_NAMESPACE_BEGIN
 //   // Now you can use the symbolizer
 // }
 void InitializeSymbolizer(const char* argv0);
-
+//
 // Symbolize()
 //
 // Symbolizes a program counter (instruction pointer value) `pc` and, on
@@ -89,7 +89,7 @@ void InitializeSymbolizer(const char* argv0);
 //     if (absl::Symbolize(pc, tmp, sizeof(tmp))) {
 //       symbol = tmp;
 //     }
-//     absl::PrintF("%*p  %s\n", pc, symbol);
+//     absl::PrintF("%p  %s\n", pc, symbol);
 //  }
 bool Symbolize(const void *pc, char *out, int out_size);
 

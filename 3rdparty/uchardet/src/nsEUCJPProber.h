@@ -48,19 +48,19 @@
 #include "JpCntx.h"
 #include "CharDistribution.h"
 
-class nsEUCJPProber final: public nsCharSetProber {
+class nsEUCJPProber: public nsCharSetProber {
 public:
   nsEUCJPProber(PRBool aIsPreferredLanguage)
     :mIsPreferredLanguage(aIsPreferredLanguage)
   {mCodingSM = new nsCodingStateMachine(&EUCJPSMModel);
     Reset();}
-  ~nsEUCJPProber(void) override{delete mCodingSM;}
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
-  const char* GetCharSetName() override {return "EUC-JP";}
-  nsProbingState GetState(void) override {return mState;}
-  void      Reset(void) override;
-  float     GetConfidence(void) override;
-  void      SetOpion() override {}
+  virtual ~nsEUCJPProber(void){delete mCodingSM;}
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
+  const char* GetCharSetName() {return "EUC-JP";}
+  nsProbingState GetState(void) {return mState;}
+  void      Reset(void);
+  float     GetConfidence(void);
+  void      SetOpion() {}
 
 protected:
   nsCodingStateMachine* mCodingSM;

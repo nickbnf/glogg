@@ -1,4 +1,4 @@
-#version 0.0.6
+#version 0.0.7
 add_library(uchardet STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/CharDistribution.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/JpCntx.cpp
@@ -16,6 +16,22 @@ add_library(uchardet STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangThaiModel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangTurkishModel.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangVietnameseModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangCroatianModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangCzechModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangEstonianModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangFinnishModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangIrishModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangItalianModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangLatvianModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangLithuanianModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangMalteseModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangPolishModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangPortugueseModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangRomanianModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangSlovakModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangSloveneModel.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/LangModels/LangSwedishModel.cpp
+
         ${CMAKE_CURRENT_SOURCE_DIR}/src/nsHebrewProber.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/nsCharSetProber.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/nsBig5Prober.cpp
@@ -38,3 +54,9 @@ add_library(uchardet STATIC
 
 target_include_directories(uchardet SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(uchardet SYSTEM PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/uchardet")
+
+if (MSVC)
+    target_compile_definitions(uchardet PRIVATE -D_SCL_SECURE_NO_WARNINGS)
+else ()
+    target_compile_options(uchardet PRIVATE -Wno-non-virtual-dtor -Wno-unused-parameter)
+endif()

@@ -4,7 +4,7 @@ mark_as_advanced(FORCE ABSL_RUN_TESTS)
 mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
 mark_as_advanced(FORCE ABSL_USE_GOOGLETEST_HEAD)
 add_subdirectory(plog) #1.1.5
-add_subdirectory(uchardet)
+add_subdirectory(uchardet) #0.0.7
 add_subdirectory(efsw)
 set(BUILD_TEST_APP OFF CACHE INTERNAL "" FORCE)
 mark_as_advanced(FORCE VERBOSE)

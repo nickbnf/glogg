@@ -42,20 +42,25 @@
 #include "nsCodingStateMachine.h"
 #include "CharDistribution.h"
 
-class nsEUCKRProber final: public nsCharSetProber {
+class nsEUCKRProber: public nsCharSetProber {
 public:
   nsEUCKRProber(PRBool aIsPreferredLanguage)
     :mIsPreferredLanguage(aIsPreferredLanguage)
   {mCodingSM = new nsCodingStateMachine(&EUCKRSMModel);
     Reset();
   }
-  ~nsEUCKRProber(void) override{delete mCodingSM;}
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
-  const char* GetCharSetName() override {return "EUC-KR";}
-  nsProbingState GetState(void) override {return mState;}
-  void      Reset(void) override;
-  float     GetConfidence(void) override;
-  void      SetOpion() override {}
+  virtual ~nsEUCKRProber(void){delete mCodingSM;}
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
+  /* "Unified Hangul Code", also called "CP949" or "Windows-949" is a
+   * superset of EUC-KR. Though not fully ok to return UHC here (a
+   * separate prober would be better), it is acceptable, since many
+   * Korean documents are actually created with this character set.
+   */
+  const char* GetCharSetName() {return "UHC";}
+  nsProbingState GetState(void) {return mState;}
+  void      Reset(void);
+  float     GetConfidence(void);
+  void      SetOpion() {}
 
 protected:
   void      GetDistribution(PRUint32 aCharLen, const char* aStr);

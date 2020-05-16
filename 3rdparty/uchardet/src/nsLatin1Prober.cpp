@@ -116,7 +116,7 @@ void  nsLatin1Prober::Reset(void)
 
 nsProbingState nsLatin1Prober::HandleData(const char* aBuf, PRUint32 aLen)
 {
-  char *newBuf1 = nullptr;
+  char *newBuf1 = 0;
   PRUint32 newLen1 = 0;
 
   if (!FilterWithEnglishLetters(aBuf, aLen, &newBuf1, newLen1)) {

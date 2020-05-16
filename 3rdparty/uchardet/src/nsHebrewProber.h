@@ -42,20 +42,20 @@
 
 // This prober doesn't actually recognize a language or a charset.
 // It is a helper prober for the use of the Hebrew model probers
-class nsHebrewProber final: public nsCharSetProber
+class nsHebrewProber: public nsCharSetProber
 {
 public:
-  nsHebrewProber(void) :mLogicalProb(nullptr), mVisualProb(nullptr) { Reset(); }
+  nsHebrewProber(void) :mLogicalProb(0), mVisualProb(0) { Reset(); }
 
-  ~nsHebrewProber(void) override {}
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
-  const char* GetCharSetName() override;
-  void Reset(void) override;
+  virtual ~nsHebrewProber(void) {}
+  virtual nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
+  virtual const char* GetCharSetName();
+  virtual void Reset(void);
 
-  nsProbingState GetState(void) override;
+  virtual nsProbingState GetState(void);
 
-  float     GetConfidence(void) override { return (float)0.0; }
-  void      SetOpion() override {}
+  virtual float     GetConfidence(void) { return (float)0.0; }
+  virtual void      SetOpion() {}
 
   void SetModelProbers(nsCharSetProber *logicalPrb, nsCharSetProber *visualPrb) 
   { mLogicalProb = logicalPrb; mVisualProb = visualPrb; }

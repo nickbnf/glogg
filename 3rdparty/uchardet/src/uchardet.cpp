@@ -40,10 +40,6 @@
 #include "nscore.h"
 #include "nsUniversalDetector.h"
 
-#ifdef _MSC_VER
-#define strdup(s) _strdup(s)
-#endif
-
 class HandleUniversalDetector : public nsUniversalDetector
 {
 protected:
@@ -52,24 +48,24 @@ protected:
 public:
     HandleUniversalDetector()
     : nsUniversalDetector(NS_FILTER_ALL)
-    , m_charset(nullptr)
+    , m_charset(0)
     {
     }
 
-    ~HandleUniversalDetector() override
+    virtual ~HandleUniversalDetector()
     {
         if (m_charset)
             free(m_charset);
     }
 
-    void Report(const char* charset) override
+    virtual void Report(const char* charset)
     {
         if (m_charset)
             free(m_charset);
         m_charset = strdup(charset);
     }
 
-    void Reset() override
+    virtual void Reset()
     {
         nsUniversalDetector::Reset();
         if (m_charset)
@@ -95,7 +91,11 @@ void uchardet_delete(uchardet_t ud)
 
 int uchardet_handle_data(uchardet_t ud, const char * data, size_t len)
 {
-    nsresult ret = reinterpret_cast<HandleUniversalDetector*>(ud)->HandleData(data, (PRUint32)len);
+    nsresult ret = NS_OK;
+
+    if (len > 0)
+        ret = reinterpret_cast<HandleUniversalDetector*>(ud)->HandleData(data, (PRUint32)len);
+
     return (ret != NS_OK);
 }
 

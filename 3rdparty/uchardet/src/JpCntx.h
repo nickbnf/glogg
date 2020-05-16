@@ -53,8 +53,6 @@ class JapaneseContextAnalysis
 public:
   JapaneseContextAnalysis() {Reset(PR_FALSE);}
 
-  virtual ~JapaneseContextAnalysis() {}
-
   void HandleData(const char* aBuf, PRUint32 aLen);
 
   void HandleOneChar(const char* aStr, PRUint32 aCharLen)
@@ -110,9 +108,9 @@ class SJISContextAnalysis : public JapaneseContextAnalysis
 {
   //SJISContextAnalysis(){};
 protected:
-  PRInt32 GetOrder(const char* str, PRUint32 *charLen) override;
+  PRInt32 GetOrder(const char* str, PRUint32 *charLen);
 
-  PRInt32 GetOrder(const char* str) override
+  PRInt32 GetOrder(const char* str)
   {
     //We only interested in Hiragana, so first byte is '\202'
     if (*str == '\202' && 
@@ -126,8 +124,8 @@ protected:
 class EUCJPContextAnalysis : public JapaneseContextAnalysis
 {
 protected:
-  PRInt32 GetOrder(const char* str, PRUint32 *charLen) override;
-  PRInt32 GetOrder(const char* str) override
+  PRInt32 GetOrder(const char* str, PRUint32 *charLen);
+  PRInt32 GetOrder(const char* str)
     //We only interested in Hiragana, so first byte is '\244'
   {
     if (*str == '\244' &&

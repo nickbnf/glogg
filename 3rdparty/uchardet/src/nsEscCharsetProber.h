@@ -43,16 +43,16 @@
 
 #define NUM_OF_ESC_CHARSETS   4
 
-class nsEscCharSetProber final: public nsCharSetProber {
+class nsEscCharSetProber: public nsCharSetProber {
 public:
   nsEscCharSetProber(PRUint32 aLanguageFilter);
-  ~nsEscCharSetProber(void) override;
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
-  const char* GetCharSetName() override {return mDetectedCharset;}
-  nsProbingState GetState(void) override {return mState;}
-  void      Reset(void) override;
-  float     GetConfidence(void) override{return (float)0.99;}
-  void      SetOpion() override {}
+  virtual ~nsEscCharSetProber(void);
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
+  const char* GetCharSetName() {return mDetectedCharset;}
+  nsProbingState GetState(void) {return mState;}
+  void      Reset(void);
+  float     GetConfidence(void){return (float)0.99;}
+  void      SetOpion() {}
 
 protected:
   void      GetDistribution(PRUint32 aCharLen, const char* aStr);

@@ -43,16 +43,16 @@
 
 #define FREQ_CAT_NUM    4
 
-class nsLatin1Prober final: public nsCharSetProber {
+class nsLatin1Prober: public nsCharSetProber {
 public:
   nsLatin1Prober(void){Reset();}
-  ~nsLatin1Prober(void) override{}
-  nsProbingState HandleData(const char* aBuf, PRUint32 aLen) override;
-  const char* GetCharSetName() override {return "WINDOWS-1252";}
-  nsProbingState GetState(void) override {return mState;}
-  void      Reset(void) override;
-  float     GetConfidence(void) override;
-  void      SetOpion() override {}
+  virtual ~nsLatin1Prober(void){}
+  nsProbingState HandleData(const char* aBuf, PRUint32 aLen);
+  const char* GetCharSetName() {return "WINDOWS-1252";}
+  nsProbingState GetState(void) {return mState;}
+  void      Reset(void);
+  float     GetConfidence(void);
+  void      SetOpion() {}
 
 #ifdef DEBUG_chardet
   virtual void  DumpStatus();

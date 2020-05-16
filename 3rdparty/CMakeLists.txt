@@ -9,7 +9,7 @@ add_subdirectory(efsw)
 set(BUILD_TEST_APP OFF CACHE INTERNAL "" FORCE)
 mark_as_advanced(FORCE VERBOSE)
 add_subdirectory(named_type)
-add_subdirectory(catch)
+add_subdirectory(catch) #v2.12.1
 add_subdirectory(tbb)
 mark_as_advanced(FORCE TBB_BUILD_TESTS)
 mark_as_advanced(FORCE TBB_CI_BUILD)

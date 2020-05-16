@@ -319,6 +319,33 @@ class Configuration final : public Persistable<Configuration> {
         verifySslPeers_ = verify;
     }
 
+    bool forceFontAntialiasing() const
+    {
+        return forceFontAntialiasing_;
+    }
+    void setForceFontAntialiasing( bool force )
+    {
+        forceFontAntialiasing_ = force;
+    }
+
+    bool enableQtHighDpi() const
+    {
+        return enableQtHighDpi_;
+    }
+    void setEnableQtHighDpi( bool enable )
+    {
+        enableQtHighDpi_ = enable;
+    }
+
+    int scaleFactorRounding() const
+    {
+        return scaleFactorRounding_;
+    }
+    void setScaleFactorRounding( int rounding )
+    {
+        scaleFactorRounding_ = rounding;
+    }
+
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
@@ -374,6 +401,11 @@ class Configuration final : public Persistable<Configuration> {
     bool extractArchivesAlways_ = false;
 
     bool verifySslPeers_ = true;
+
+    bool forceFontAntialiasing_ = false;
+    bool enableQtHighDpi_ = true;
+
+    int scaleFactorRounding_ = 1; 
 };
 
 #endif

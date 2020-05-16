@@ -1655,9 +1655,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device, int32_t delta_y 
     // LOG( logDEBUG ) << "font: " << viewport()->font().family().toStdString();
     // LOG( logDEBUG ) << "font painter: " << painter.font().family().toStdString();
 
-    auto painterFont = this->font();
-    painterFont.setStyleStrategy( QFont::PreferAntialias );
-    painter.setFont( painterFont );
+    painter.setFont( this->font() );
     painter.setRenderHints( QPainter::Antialiasing | QPainter::TextAntialiasing );
 
     const int fontHeight = charHeight_;

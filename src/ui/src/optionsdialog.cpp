@@ -204,6 +204,10 @@ void OptionsDialog::updateDialogFromConfig()
     if ( sizeIndex != -1 )
         fontSizeBox->setCurrentIndex( sizeIndex );
 
+    fontSmoothCheckBox->setChecked( config.forceFontAntialiasing() );
+    enableQtHiDpiCheckBox->setChecked( config.enableQtHighDpi() );
+    scaleRoundingComboBox->setCurrentIndex( config.scaleFactorRounding() - 1 );
+
     // Regexp types
     mainSearchBox->setCurrentIndex( getRegexpIndex( config.mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex( getRegexpIndex( config.quickfindRegexpType() ) );
@@ -273,6 +277,9 @@ void OptionsDialog::updateConfigFromDialog()
 
     QFont font = QFont( fontFamilyBox->currentText(), ( fontSizeBox->currentText() ).toInt() );
     config.setMainFont( font );
+    config.setForceFontAntialiasing( fontSmoothCheckBox->isChecked() );
+    config.setEnableQtHighDpi( enableQtHiDpiCheckBox->isChecked() );
+    config.setScaleFactorRounding( scaleRoundingComboBox->currentIndex() + 1 );
 
     config.setMainRegexpType( getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
     config.setQuickfindRegexpType( getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );

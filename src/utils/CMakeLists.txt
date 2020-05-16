@@ -31,4 +31,5 @@ target_link_libraries(utils PUBLIC
         absl::symbolize
         absl::failure_signal_handler
         klogg_karchive
+        whereami
         plog)

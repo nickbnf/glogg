@@ -77,6 +77,15 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( !family.isNull() )
         mainFont_ = QFont( family, size );
 
+    if ( settings.contains( "mainFont.antialiasing" ) )
+        forceFontAntialiasing_ = settings.value( "mainFont.antialiasing" ).toBool();
+
+    if ( settings.contains( "view.qtHiDpi" ) )
+        enableQtHighDpi_ = settings.value( "view.qtHiDpi" ).toBool();
+
+    if ( settings.contains( "view.scaleFactorRounding" ) )
+        scaleFactorRounding_ = settings.value( "view.scaleFactorRounding" ).toUInt();
+
     // Regexp types
     mainRegexpType_ = static_cast<SearchRegexpType>(
         settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
@@ -172,6 +181,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
 
     settings.setValue( "mainFont.family", fi.family() );
     settings.setValue( "mainFont.size", fi.pointSize() );
+    settings.setValue( "mainFont.antialiasing", forceFontAntialiasing_ );
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
@@ -205,6 +215,9 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );
     settings.setValue( "view.minimizeToTray", minimizeToTray_ );
+
+    settings.setValue( "view.qtHiDpi", enableQtHighDpi_ );
+    settings.setValue( "view.scaleFactorRounding", scaleFactorRounding_ );
 
     settings.setValue( "defaultView.searchAutoRefresh", searchAutoRefresh_ );
     settings.setValue( "defaultView.searchIgnoreCase", searchIgnoreCase_ );

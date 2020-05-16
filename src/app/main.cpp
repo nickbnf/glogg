@@ -86,19 +86,36 @@ void setApplicationAttributes()
     // For more info see:
     // - https://bugreports.qt.io/browse/QTBUG-40332
     // - https://bugreports.qt.io/browse/QTBUG-46015
-    qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1));
+    qputenv( "QT_BEARER_POLL_TIMEOUT", QByteArray::number( -1 ) );
 
+    const auto& config = Configuration::getSynced();
 
-    // This attribute must be set before QGuiApplication is constructed:
-    QCoreApplication::setAttribute( Qt::AA_EnableHighDpiScaling );
-    // We support high-dpi (aka Retina) displays
-    QCoreApplication::setAttribute( Qt::AA_UseHighDpiPixmaps );
+    if ( config.enableQtHighDpi() ) {
+        // This attribute must be set before QGuiApplication is constructed:
+        QCoreApplication::setAttribute( Qt::AA_EnableHighDpiScaling );
+        // We support high-dpi (aka Retina) displays
+        QCoreApplication::setAttribute( Qt::AA_UseHighDpiPixmaps );
+
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 14, 0 )
+        QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+            static_cast<Qt::HighDpiScaleFactorRoundingPolicy>( config.scaleFactorRounding() ) );
+#endif
+
+    }
+    else {
+        QCoreApplication::setAttribute( Qt::AA_DisableHighDpiScaling );
+    }
+
     QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus );
+
+    if ( config.enableQtHighDpi() ) {
+    }
+
+    // fractional scaling
 
 #ifdef Q_OS_WIN
     QCoreApplication::setAttribute( Qt::AA_DisableWindowContextHelpButton );
-    // fractional scaling
-    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+
 #endif
 }
 
@@ -218,8 +235,8 @@ int main( int argc, char* argv[] )
 static void print_version()
 {
     std::cout << "klogg " << kloggVersion().data() << "\n";
-    std::cout << "Built " << kloggBuildDate().data() << " from "
-              << kloggCommit().data() << "(" << kloggGitVersion().data() << ")\n";
+    std::cout << "Built " << kloggBuildDate().data() << " from " << kloggCommit().data() << "("
+              << kloggGitVersion().data() << ")\n";
 
     std::cout << "Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
     std::cout << "This is free software.  You may redistribute copies of it under the terms of\n";

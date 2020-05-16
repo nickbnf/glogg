@@ -47,6 +47,8 @@
 #include <QStringList>
 #include <QUuid>
 
+#include <whereami/whereami.h>
+
 #include "log.h"
 #include "uuid.h"
 
@@ -68,8 +70,20 @@ QString MakeSessionSettingsPath( const QString& appConfigPath )
 
 PersistentInfo::PersistentInfo()
 {
-    const auto portableConfigPath = qApp->applicationDirPath() + QDir::separator()
-                                    + ApplicationSessionFile + PortableExtension;
+    QString executablePath;
+
+    int dirnameLength = 0;
+    const auto executablePathLength = wai_getExecutablePath( NULL, 0, &dirnameLength );
+    if ( executablePathLength > 0 ) {
+        auto path = std::vector<char>( executablePathLength, '\0' );
+        wai_getExecutablePath( &path[ 0 ], path.size(), &dirnameLength );
+        executablePath = QString::fromUtf8( path.data(), dirnameLength );
+    }
+
+    const auto portableConfigPath
+        = executablePath + QDir::separator() + ApplicationSessionFile + PortableExtension;
+
+    LOG( logINFO ) << "Portable config path " << portableConfigPath;
 
     const auto usePortableConfiguration = forcePortable || QFileInfo::exists( portableConfigPath );
 
@@ -152,7 +166,7 @@ void PersistentInfo::UpdateSettings()
     }
     if ( oldSessionSettingsVersion < SessionSettingsVersion ) {
         const auto geometry = sessionSettings_->value( "Window/geometry" );
-        sessionSettings_->remove("Window/geometry");
+        sessionSettings_->remove( "Window/geometry" );
 
         if ( geometry.isValid() ) {
             const auto id = generateIdFromUuid();
@@ -174,13 +188,13 @@ void PersistentInfo::UpdateSettings()
             sessionSettings_->beginGroup( "Window" );
             sessionSettings_->setValue( "version", 1 );
 
-            sessionSettings_->beginWriteArray("windows");
-            sessionSettings_->setArrayIndex(0);
+            sessionSettings_->beginWriteArray( "windows" );
+            sessionSettings_->setArrayIndex( 0 );
             sessionSettings_->setValue( "id", id );
             sessionSettings_->setValue( "geometry", geometry );
 
             sessionSettings_->beginGroup( "OpenFiles" );
-            sessionSettings_->setValue("version", 1);
+            sessionSettings_->setValue( "version", 1 );
             sessionSettings_->beginWriteArray( "openFiles" );
             for ( unsigned i = 0; i < openFiles.size(); ++i ) {
                 sessionSettings_->setArrayIndex( i );

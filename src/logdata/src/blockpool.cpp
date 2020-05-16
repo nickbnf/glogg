@@ -176,3 +176,8 @@ void BlockPoolBase::freeLastBlock()
 
     blockIndex_.pop_back();
 }
+
+size_t BlockPoolBase::allocatedSize() const
+{
+    return allocationSize_;
+}

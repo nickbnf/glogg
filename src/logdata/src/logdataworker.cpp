@@ -45,6 +45,7 @@
 #include "logdataworker.h"
 
 #include "configuration.h"
+#include "readablesize.h"
 
 #include <chrono>
 #include <cmath>
@@ -167,6 +168,11 @@ void IndexingData::clear()
     linePosition_ = LinePositionArray();
     encodingGuess_ = nullptr;
     encodingForced_ = nullptr;
+}
+
+size_t IndexingData::allocatedSize() const
+{
+    return linePosition_.allocatedSize();
 }
 
 LogDataWorker::LogDataWorker( IndexingData& indexing_data )
@@ -509,6 +515,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime ).count();
 
     LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
+    LOG( logINFO ) << "Index size " <<  readableSize( indexing_data_.allocatedSize() );
     LOG( logINFO ) << "Indexing perf " << ( 1000.f * state.file_size / duration ) / ( 1024 * 1024 )
                    << " MiB/s";
 

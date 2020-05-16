@@ -115,9 +115,9 @@ class CompressedLinePositionStorage {
     CompressedLinePositionStorage& operator=( const CompressedLinePositionStorage& orig ) = delete;
 
     // Move constructor
-    CompressedLinePositionStorage( CompressedLinePositionStorage&& orig ) noexcept ;
+    CompressedLinePositionStorage( CompressedLinePositionStorage&& orig ) noexcept;
     // Move assignement
-    CompressedLinePositionStorage& operator=( CompressedLinePositionStorage&& orig ) noexcept ;
+    CompressedLinePositionStorage& operator=( CompressedLinePositionStorage&& orig ) noexcept;
 
     // Append the passed end-of-line to the storage
     void append( LineOffset pos );
@@ -131,6 +131,8 @@ class CompressedLinePositionStorage {
     {
         return nb_lines_;
     }
+
+    size_t allocatedSize() const;
 
     // Element at index
     LineOffset at( uint32_t i ) const

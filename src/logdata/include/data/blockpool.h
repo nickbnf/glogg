@@ -41,6 +41,8 @@ public:
 
     uint32_t currentBlock() const;
 
+    size_t allocatedSize() const;
+
 protected:
     BlockPoolBase( size_t elementSize, size_t alignment );
 

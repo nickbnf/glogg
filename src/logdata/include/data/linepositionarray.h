@@ -44,16 +44,15 @@
 #include "compressedlinestorage.h"
 #include "log.h"
 
-class SimpleLinePositionStorage
-{
+class SimpleLinePositionStorage {
   public:
     SimpleLinePositionStorage() = default;
 
-    SimpleLinePositionStorage(const SimpleLinePositionStorage&) = delete;
-    SimpleLinePositionStorage& operator=(const SimpleLinePositionStorage&) = delete;
+    SimpleLinePositionStorage( const SimpleLinePositionStorage& ) = delete;
+    SimpleLinePositionStorage& operator=( const SimpleLinePositionStorage& ) = delete;
 
-    SimpleLinePositionStorage(SimpleLinePositionStorage&&) = default;
-    SimpleLinePositionStorage& operator=(SimpleLinePositionStorage&&) = default;
+    SimpleLinePositionStorage( SimpleLinePositionStorage&& ) = default;
+    SimpleLinePositionStorage& operator=( SimpleLinePositionStorage&& ) = default;
 
     // Append the passed end-of-line to the storage
     void append( LineOffset pos )
@@ -69,7 +68,12 @@ class SimpleLinePositionStorage
     // Size of the array
     LinesCount size() const
     {
-        return LinesCount ( static_cast<LinesCount::UnderlyingType>( storage_.size() ) );
+        return LinesCount( static_cast<LinesCount::UnderlyingType>( storage_.size() ) );
+    }
+
+    size_t allocatedSize() const
+    {
+        return storage_.capacity();
     }
 
     // Element at index
@@ -86,7 +90,7 @@ class SimpleLinePositionStorage
     // Add one list to the other
     void append_list( const SimpleLinePositionStorage& positions )
     {
-        storage_.insert(storage_.end(), positions.storage_.begin(), positions.storage_.end());
+        storage_.insert( storage_.end(), positions.storage_.begin(), positions.storage_.end() );
     }
 
     // Pop the last element of the storage
@@ -95,9 +99,12 @@ class SimpleLinePositionStorage
         storage_.pop_back();
     }
 
-    operator const std::vector<LineOffset>&() const { return storage_; }
+    operator const std::vector<LineOffset>&() const
+    {
+        return storage_;
+    }
 
-private:
+  private:
     std::vector<LineOffset> storage_;
 };
 
@@ -105,30 +112,31 @@ private:
 // in addition to a list of uint64_t (positions within the files)
 // it can keep track of whether the final LF was added (for non-LF terminated
 // files) and remove it when more data are added.
-template <typename Storage>
-class LinePosition
-{
+template <typename Storage> class LinePosition {
   public:
     template <typename> friend class LinePosition;
 
     // Default constructor
-    LinePosition() : fakeFinalLF_{ false } {}
+    LinePosition()
+        : fakeFinalLF_{ false }
+    {
+    }
 
     // Copy constructor (slow: deleted)
     LinePosition( const LinePosition& ) = delete;
-    LinePosition& operator =(const LinePosition&) = delete;
+    LinePosition& operator=( const LinePosition& ) = delete;
 
     // Move assignement
-    LinePosition(LinePosition&& orig) noexcept
+    LinePosition( LinePosition&& orig ) noexcept
     {
-        *this = std::move(orig);
+        *this = std::move( orig );
     }
 
     LinePosition& operator=( LinePosition&& orig ) noexcept
     {
-      array = std::move( orig.array );
-      fakeFinalLF_ = orig.fakeFinalLF_;
-      return *this;
+        array = std::move( orig.array );
+        fakeFinalLF_ = orig.fakeFinalLF_;
+        return *this;
     }
 
     // Add a new line position at the given position
@@ -136,7 +144,7 @@ class LinePosition
     // (this is NOT checked!)
     inline void append( LineOffset pos )
     {
-        LOG(logDEBUG2) << "Next line at " << pos;
+        LOG( logDEBUG2 ) << "Next line at " << pos;
         if ( fakeFinalLF_ )
             array.pop_back();
 
@@ -145,21 +153,33 @@ class LinePosition
     }
     // Size of the array
     inline LinesCount size() const
-    { return array.size(); }
+    {
+        return array.size();
+    }
+
+    size_t allocatedSize() const
+    {
+        return array.allocatedSize();
+    }
+
     // Extract an element
     inline LineOffset at( LineNumber::UnderlyingType i ) const
     {
         const auto pos = array.at( i );
-        LOG(logDEBUG2) << "Line pos at " << i << " is " << pos;
+        LOG( logDEBUG2 ) << "Line pos at " << i << " is " << pos;
         return pos;
     }
     inline LineOffset operator[]( LineNumber::UnderlyingType i ) const
-    { return array.at( i ); }
+    {
+        return array.at( i );
+    }
 
     // Set the presence of a fake final LF
     // Must be used after 'append'-ing a fake LF at the end.
     void setFakeFinalLF( bool finalLF = true )
-    { fakeFinalLF_ = finalLF; }
+    {
+        fakeFinalLF_ = finalLF;
+    }
 
     // Add another list to this one, removing any fake LF on this list.
     // Invariant: all pos in other must be greater than any pos in this
@@ -172,7 +192,7 @@ class LinePosition
 
         // Append the arrays
         this->array.append_list( other.array );
-        //array += other.array;
+        // array += other.array;
 
         // In case the 'other' object has a fake LF
         this->fakeFinalLF_ = other.fakeFinalLF_;

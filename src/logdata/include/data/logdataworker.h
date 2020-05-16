@@ -95,6 +95,8 @@ class IndexingData {
     // Completely clear the indexing data.
     void clear();
 
+    size_t allocatedSize() const;
+
   private:
     mutable QMutex dataMutex_;
 

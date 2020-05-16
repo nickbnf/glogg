@@ -225,7 +225,8 @@ void CompressedLinePositionStorage::append( LineOffset pos )
                                               &block_offset_.get() );
         }
         else {
-            long_block_index_ = pool64_.get_block( IndexBlockSize, pos.get(), &block_offset_.get() );
+            long_block_index_
+                = pool64_.get_block( IndexBlockSize, pos.get(), &block_offset_.get() );
         }
     }
     else {
@@ -383,4 +384,9 @@ void CompressedLinePositionStorage::pop_back()
     current_pos_ = at( nb_lines_.get() - 1 );
 
     cache_.clear();
+}
+
+size_t CompressedLinePositionStorage::allocatedSize() const
+{
+    return pool32_.allocatedSize() + pool64_.allocatedSize();
 }

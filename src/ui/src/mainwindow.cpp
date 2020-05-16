@@ -86,9 +86,7 @@
 #include "tabbedcrawlerwidget.h"
 
 #include "klogg_version.h"
-
-// Returns the size in human readable format
-static QString readableSize( qint64 size );
+#include "readablesize.h"
 
 namespace {
 
@@ -1662,33 +1660,4 @@ void MainWindow::reportIssue() const
     QDesktopServices::openUrl( url );
 }
 
-// Returns the size in human readable format
-static QString readableSize( qint64 size )
-{
-    static const std::array<QString, 5> sizeStrs
-        = { QObject::tr( "B" ), QObject::tr( "KiB" ), QObject::tr( "MiB" ), QObject::tr( "GiB" ),
-            QObject::tr( "TiB" ) };
 
-    QLocale defaultLocale;
-    unsigned int i;
-    double humanSize = size;
-
-    for ( i = 0; i + 1 < sizeStrs.size() && ( humanSize / 1024.0 ) >= 1024.0; i++ )
-        humanSize /= 1024.0;
-
-    if ( humanSize >= 1024.0 ) {
-        humanSize /= 1024.0;
-        i++;
-    }
-
-    QString output;
-    if ( i == 0 )
-        // No decimal part if we display straight bytes.
-        output = defaultLocale.toString( static_cast<int>( humanSize ) );
-    else
-        output = defaultLocale.toString( humanSize, 'f', 1 );
-
-    output += QString( " " ) + sizeStrs[ i ];
-
-    return output;
-}

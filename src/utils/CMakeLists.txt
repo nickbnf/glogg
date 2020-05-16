@@ -5,6 +5,7 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/downloader.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/decompressor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/klogg_version.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/readablesize.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/atomicflag.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/configuration.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/log.h
@@ -16,7 +17,8 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/crash_tracer.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/downloader.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/decompressor.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/klogg_version.h)
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/klogg_version.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/readablesize.h)
 
 set_target_properties(utils PROPERTIES AUTOMOC ON)
 

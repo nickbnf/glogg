@@ -45,6 +45,7 @@
 
 #include "configuration.h"
 
+#include <immer/box.hpp>
 #include <tbb/flow_graph.h>
 
 #include <chrono>
@@ -57,7 +58,6 @@ struct PartialSearchResults {
 
     PartialSearchResults( const PartialSearchResults& ) = delete;
     PartialSearchResults( PartialSearchResults&& ) = default;
-
     PartialSearchResults& operator=( const PartialSearchResults& ) = delete;
     PartialSearchResults& operator=( PartialSearchResults&& ) = default;
 
@@ -70,6 +70,11 @@ struct PartialSearchResults {
 
 struct SearchBlockData {
     SearchBlockData() = default;
+    SearchBlockData( LineNumber start, std::vector<QString> blockLines )
+        : chunkStart( start )
+        , lines( std::move( blockLines ) )
+    {
+    }
 
     SearchBlockData( const SearchBlockData& ) = delete;
     SearchBlockData( SearchBlockData&& ) = default;
@@ -79,7 +84,6 @@ struct SearchBlockData {
 
     LineNumber chunkStart;
     std::vector<QString> lines;
-    PartialSearchResults results;
 };
 
 PartialSearchResults filterLines( const QRegularExpression& regex,
@@ -319,12 +323,14 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::chrono::microseconds fileReadingDuration{ 0 };
 
+    using BlockDataType = immer::box<SearchBlockData>;
+    using PartialResultType = immer::box<PartialSearchResults>;
+
     auto chunkStart = initialLine;
-    auto linesSource = tbb::flow::source_node<std::shared_ptr<SearchBlockData>>(
+    auto linesSource = tbb::flow::source_node<BlockDataType>(
         searchGraph,
         [this, endLine, nbLinesInChunk, &chunkStart,
-         &fileReadingDuration]( std::shared_ptr<SearchBlockData>& blockData ) {
-            blockData = std::make_shared<SearchBlockData>();
+         &fileReadingDuration]( BlockDataType& blockData ) {
             if ( interruptRequested_ )
                 return false;
 
@@ -343,15 +349,15 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart << ", " << lines.size()
                             << " lines read.";
 
-            blockData->chunkStart = chunkStart;
-            blockData->lines = std::move( lines );
+            blockData = BlockDataType{ chunkStart, std::move( lines ) };
 
             const auto lineSourceEndTime = high_resolution_clock::now();
             const auto chunkReadTime
                 = duration_cast<microseconds>( lineSourceEndTime - lineSourceStartTime );
 
-            LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart << ", " << lines.size()
-                            << " lines read in " << chunkReadTime.count() / 1000.f << " ms";
+            LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart << ", "
+                            << blockData->lines.size() << " lines read in "
+                            << chunkReadTime.count() / 1000.f << " ms";
 
             chunkStart = chunkStart + nbLinesInChunk;
 
@@ -361,26 +367,24 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         },
         false );
 
-    auto blockPrefetcher = tbb::flow::limiter_node<std::shared_ptr<SearchBlockData>>(
-        searchGraph, matchingThreadsCount * 3 );
+    auto blockPrefetcher
+        = tbb::flow::limiter_node<BlockDataType>( searchGraph, matchingThreadsCount * 3 );
 
-    auto lineBlocksQueue = tbb::flow::buffer_node<std::shared_ptr<SearchBlockData>>( searchGraph );
+    auto lineBlocksQueue = tbb::flow::buffer_node<BlockDataType>( searchGraph );
 
     using RegexMatcher
-        = tbb::flow::function_node<std::shared_ptr<SearchBlockData>,
-                                   std::shared_ptr<PartialSearchResults>, tbb::flow::rejecting>;
+        = tbb::flow::function_node<BlockDataType, PartialResultType, tbb::flow::rejecting>;
 
     std::vector<std::tuple<QRegularExpression, microseconds, RegexMatcher>> regexMatchers;
     for ( auto index = 0; index < matchingThreadsCount; ++index ) {
         regexMatchers.emplace_back(
             QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() }, microseconds{ 0 },
             RegexMatcher(
-                searchGraph, 1,
-                [&regexMatchers, index]( const std::shared_ptr<SearchBlockData>& blockData ) {
+                searchGraph, 1, [&regexMatchers, index]( const BlockDataType& blockData ) {
                     QRegularExpression& regex = std::get<0>( regexMatchers.at( index ) );
                     const auto matchStartTime = high_resolution_clock::now();
 
-                    auto results = std::make_shared<PartialSearchResults>(
+                    auto results = PartialResultType(
                         filterLines( regex, blockData->lines, blockData->chunkStart ) );
 
                     const auto matchEndTime = high_resolution_clock::now();
@@ -394,8 +398,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         std::get<0>( regexMatchers.back() ).optimize();
     }
 
-    auto resultsQueue
-        = tbb::flow::buffer_node<std::shared_ptr<PartialSearchResults>>( searchGraph );
+    auto resultsQueue = tbb::flow::buffer_node<PartialResultType>( searchGraph );
 
     const auto totalLines = endLine - initialLine;
     LinesCount totalProcessedLines = 0_lcount;
@@ -406,9 +409,9 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::chrono::microseconds matchCombiningDuration{ 0 };
 
-    auto matchProcessor = tbb::flow::function_node<std::shared_ptr<PartialSearchResults>,
-                                                   tbb::flow::continue_msg, tbb::flow::rejecting>(
-        searchGraph, 1, [&]( const std::shared_ptr<PartialSearchResults>& matchResults ) {
+    auto matchProcessor = tbb::flow::function_node<PartialResultType, tbb::flow::continue_msg,
+                                                   tbb::flow::rejecting>(
+        searchGraph, 1, [&]( const PartialResultType& matchResults ) {
             const auto matchProcessorStartTime = high_resolution_clock::now();
 
             if ( matchResults->processedLines.get() ) {
@@ -470,7 +473,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     LOG( logINFO ) << "Results combining took " << matchCombiningDuration.count() / 1000.f << " ms";
 
     for ( const auto& regexMatcher : regexMatchers ) {
-        LOG( logINFO ) << "Matching took " << std::get<1>(regexMatcher).count() / 1000.f << " ms";
+        LOG( logINFO ) << "Matching took " << std::get<1>( regexMatcher ).count() / 1000.f << " ms";
     }
 
     LOG( logINFO ) << "Searching perf "

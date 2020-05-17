@@ -433,31 +433,45 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     tbb::flow::graph indexingGraph;
     using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
 
-    auto blockReader = tbb::flow::source_node<BlockData>(
-        indexingGraph,
-        [this, &file, &ioDuration]( BlockData& blockData ) -> bool {
-            if ( interruptRequest_ ) {
-                return false;
-            }
+    auto blockReaderAsync = tbb::flow::async_node<tbb::flow::continue_msg, BlockData>(
+        indexingGraph, tbb::flow::serial, [this, &file, &ioDuration]( const auto&, auto& gateway ) {
+            gateway.reserve_wait();
+            QtConcurrent::run(
+                [this, &file, &ioDuration]( auto& gateway ) {
+                    const uint32_t sizeChunk = 1024 * 1024;
+                    QByteArray readBuffer( sizeChunk, Qt::Uninitialized );
+                    BlockData blockData;
+                    while ( !file.atEnd() ) {
 
-            const uint32_t sizeChunk = 1024 * 1024;
+                        if ( interruptRequest_ ) {
+                            break;
+                        }
 
-            if ( !file.atEnd() ) {
-                blockData.first = file.pos();
-                clock::time_point ioT1 = clock::now();
-                blockData.second = file.read( sizeChunk );
-                clock::time_point ioT2 = clock::now();
+                        blockData.first = file.pos();
+                        clock::time_point ioT1 = clock::now();
+                        const auto readBytes = file.read( readBuffer.data(), readBuffer.size() );
+                        blockData.second = readBuffer.left( readBytes );
+                        clock::time_point ioT2 = clock::now();
 
-                ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 ).count();
+                        ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 ).count();
 
-                LOG( logDEBUG ) << "Sending block " << blockData.first;
-                return true;
-            }
-            else {
-                return false;
-            }
-        },
-        false );
+                        LOG( logDEBUG ) << "Sending block " << blockData.first << " size "
+                                       << blockData.second.size();
+
+                        while ( !gateway.get().try_put( blockData ) ) {
+                            QThread::msleep( 1 );
+                        }
+                    }
+
+                    auto lastBlock = std::make_pair( -1, QByteArray{} );
+                    while ( !gateway.get().try_put( lastBlock ) ) {
+                        QThread::msleep( 1 );
+                    }
+
+                    gateway.get().release_wait();
+                },
+                std::ref( gateway ) );
+        } );
 
     auto blockPrefetcher = tbb::flow::limiter_node<BlockData>( indexingGraph, prefetchBufferSize );
     auto blockQueue = tbb::flow::queue_node<BlockData>( indexingGraph );
@@ -468,6 +482,10 @@ void IndexOperation::doIndex( LineOffset initialPosition )
             const auto& block = blockData.second;
 
             LOG( logDEBUG ) << "Indexing block " << block_beginning << " start";
+
+            if ( block_beginning < 0 ) {
+                return tbb::flow::continue_msg{};
+            }
 
             guessEncoding( block, state );
 
@@ -490,15 +508,16 @@ void IndexOperation::doIndex( LineOffset initialPosition )
             return tbb::flow::continue_msg{};
         } );
 
-    tbb::flow::make_edge( blockReader, blockPrefetcher );
+    tbb::flow::make_edge( blockReaderAsync, blockPrefetcher );
     tbb::flow::make_edge( blockPrefetcher, blockQueue );
     tbb::flow::make_edge( blockQueue, blockParser );
     tbb::flow::make_edge( blockParser, blockPrefetcher.decrement );
 
     file.seek( state.pos );
-    blockReader.activate();
-
+    QThreadPool::globalInstance()->reserveThread();
+    blockReaderAsync.try_put( tbb::flow::continue_msg{} );
     indexingGraph.wait_for_all();
+    QThreadPool::globalInstance()->releaseThread();
 
     // Check if there is a non LF terminated line at the end of the file
     if ( !interruptRequest_ && state.file_size > state.pos ) {
@@ -515,7 +534,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime ).count();
 
     LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
-    LOG( logINFO ) << "Index size " <<  readableSize( indexing_data_.allocatedSize() );
+    LOG( logINFO ) << "Index size " << readableSize( indexing_data_.allocatedSize() );
     LOG( logINFO ) << "Indexing perf " << ( 1000.f * state.file_size / duration ) / ( 1024 * 1024 )
                    << " MiB/s";
 

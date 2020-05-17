@@ -116,6 +116,11 @@ template <> struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
             LOG( logWARNING ) << "Progress " << progress;
         } while ( progress < 100 );
     }
+
+    void render()
+    {
+        crawler->grab();
+    }
 };
 
 using CrawlerWidgetVisitor = CrawlerWidget::access_by<CrawlerWidgetPrivate>;
@@ -138,6 +143,8 @@ SCENARIO( "Crawler widget search", "[ui]" )
     while ( crawlerVisitor.getLogNbLines().get() != 2 * SL_NB_LINES && loadWaitCycle++ < 50 )
         QTest::qWait( 100 );
 
+    crawlerVisitor.render();
+
     REQUIRE( crawlerVisitor.getLogNbLines().get() == 2 * SL_NB_LINES );
 
     GIVEN( "loaded log data" )
@@ -157,24 +164,29 @@ SCENARIO( "Crawler widget search", "[ui]" )
                     && loadWaitCycle++ < 50 )
                 QTest::qWait( 100 );
 
+
             THEN( "all lines are matched" )
             {
                 REQUIRE( crawlerVisitor.getLogFilteredNbLines().get() == 2 * SL_NB_LINES );
             }
 
-            AND_WHEN( "copy all from main view" ) {
+            AND_WHEN( "copy all from main view" )
+            {
                 crawlerVisitor.selectAllInMainView();
                 auto text = crawlerVisitor.mainViewSelectedText();
-                THEN("text has same number of lines") {
-                    REQUIRE(text.split(QChar::LineFeed).size() == 2 * SL_NB_LINES);
+                THEN( "text has same number of lines" )
+                {
+                    REQUIRE( text.split( QChar::LineFeed ).size() == 2 * SL_NB_LINES );
                 }
             }
 
-            AND_WHEN( "copy all from filtered view" ) {
+            AND_WHEN( "copy all from filtered view" )
+            {
                 crawlerVisitor.selectAllInFilteredView();
                 auto text = crawlerVisitor.filteredViewSelectedText();
-                THEN("text has same number of lines") {
-                    REQUIRE(text.split(QChar::LineFeed).size() == 2 * SL_NB_LINES);
+                THEN( "text has same number of lines" )
+                {
+                    REQUIRE( text.split( QChar::LineFeed ).size() == 2 * SL_NB_LINES );
                 }
             }
         }

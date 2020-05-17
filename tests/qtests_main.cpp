@@ -25,6 +25,7 @@
 #include <QtConcurrent>
 
 #include <configuration.h>
+#include <highlighterset.h>
 #include <data/linetypes.h>
 #include <persistentinfo.h>
 
@@ -82,6 +83,8 @@ int main( int argc, char* argv[] )
     config.setSearchReadBufferSizeLines( 10 );
     config.setIndexReadBufferSizeMb( 1 );
     config.setUseSearchResultsCache( false );
+
+    auto higthlighters = HighlighterSet::getSynced();
 
 #ifdef Q_OS_WIN
     config.setPollingEnabled( true );

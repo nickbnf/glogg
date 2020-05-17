@@ -26,9 +26,13 @@
 #include "persistable.h"
 
 // Manage the list of recently opened files
-class RecentFiles final : public Persistable<RecentFiles, session_settings>
-{
+class RecentFiles final : public Persistable<RecentFiles, session_settings> {
   public:
+    static const char* persistableName()
+    {
+        return "RecentFiles";
+    }
+
     // Adds the passed filename to the list of recently used searches
     void addRecent( const QString& text );
 

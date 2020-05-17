@@ -50,6 +50,10 @@
 // data for the version checker
 class VersionCheckerConfig final : public Persistable<VersionCheckerConfig, session_settings> {
   public:
+    static const char* persistableName()
+    {
+        return "VersionCheckerConfig";
+    }
     std::time_t nextDeadline() const
     {
         return next_deadline_;

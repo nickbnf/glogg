@@ -39,21 +39,20 @@
 #ifndef highlighterSet_H
 #define highlighterSet_H
 
-#include <QRegularExpression>
 #include <QColor>
 #include <QMetaType>
+#include <QRegularExpression>
 
 #include "persistable.h"
 
 // Represents a filter, i.e. a regexp and the colors matching text
 // should be rendered in.
-class Highlighter
-{
+class Highlighter {
   public:
     // Construct an uninitialized Highlighter (when reading from a config file)
     Highlighter() = default;
-    Highlighter(const QString& pattern, bool ignoreCase,
-            const QColor& foreColor, const QColor& backColor );
+    Highlighter( const QString& pattern, bool ignoreCase, const QColor& foreColor,
+                 const QColor& backColor );
 
     bool hasMatch( const QString& string ) const;
 
@@ -83,17 +82,20 @@ class Highlighter
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
-class HighlighterSet final : public Persistable<HighlighterSet>
-{
+class HighlighterSet final : public Persistable<HighlighterSet> {
   public:
+    static const char* persistableName()
+    {
+        return "HighlighterSet";
+    }
+
     // Construct an empty filter set
     HighlighterSet();
 
     // Returns weither the passed line match a filter of the set,
     // if so, it returns the fore/back colors the line should use.
     // Ownership of the colors is transfered to the caller.
-    bool matchLine( const QString& line,
-            QColor* foreColor, QColor* backColor ) const;
+    bool matchLine( const QString& line, QColor* foreColor, QColor* backColor ) const;
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
@@ -105,10 +107,8 @@ class HighlighterSet final : public Persistable<HighlighterSet>
 
     // Operators for serialization
     // (must be kept to migrate filters from <=0.8.2)
-    friend QDataStream& operator<<(
-            QDataStream& out, const HighlighterSet& object );
-    friend QDataStream& operator>>(
-            QDataStream& in, HighlighterSet& object );
+    friend QDataStream& operator<<( QDataStream& out, const HighlighterSet& object );
+    friend QDataStream& operator>>( QDataStream& in, HighlighterSet& object );
 
   private:
     static constexpr int HighlighterSet_VERSION = 2;
@@ -121,8 +121,8 @@ class HighlighterSet final : public Persistable<HighlighterSet>
     friend class HighlightersDialog;
 };
 
-Q_DECLARE_METATYPE(Highlighter)
-Q_DECLARE_METATYPE(HighlighterSet)
-Q_DECLARE_METATYPE(HighlighterSet::HighlighterList)
+Q_DECLARE_METATYPE( Highlighter )
+Q_DECLARE_METATYPE( HighlighterSet )
+Q_DECLARE_METATYPE( HighlighterSet::HighlighterList )
 
 #endif

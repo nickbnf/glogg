@@ -20,17 +20,21 @@
 #ifndef SAVEDSEARCHES_H
 #define SAVEDSEARCHES_H
 
+#include <QMetaType>
 #include <QString>
 #include <QStringList>
-#include <QMetaType>
 
 #include "persistable.h"
 
 // Keeps track of the previously used searches and allows the application
 // to retrieve them.
-class SavedSearches final : public Persistable<SavedSearches, session_settings>
-{
+class SavedSearches final : public Persistable<SavedSearches, session_settings> {
   public:
+    static const char* persistableName()
+    {
+        return "SavedSearches";
+    }
+    
     // Creates an empty set of saved searches
     SavedSearches();
 
@@ -58,6 +62,6 @@ class SavedSearches final : public Persistable<SavedSearches, session_settings>
     QStringList savedSearches_;
 };
 
-Q_DECLARE_METATYPE(SavedSearches)
+Q_DECLARE_METATYPE( SavedSearches )
 
 #endif

@@ -40,6 +40,11 @@ class FavoriteFiles final : public Persistable<FavoriteFiles, session_settings>
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
 
+    static const char* persistableName() 
+    {
+      return "FavoriteFiles";
+    }
+
   private:
     std::vector<DisplayFilePath> files_;
 };

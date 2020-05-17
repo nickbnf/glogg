@@ -55,7 +55,7 @@ private:
     {
         static bool persistableInitialized = false;
         if ( !persistableInitialized && !willBeInitialized ) {
-            LOG( logERROR ) << "Access to not initialized persistable";
+            LOG( logERROR ) << "Access to not initialized persistable " << T::persistableName();
             throw std::logic_error( "Access to not initialized persistable" );
         }
 

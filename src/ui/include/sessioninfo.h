@@ -51,6 +51,11 @@
 // to be persisted and reloaded upon start
 class SessionInfo : public Persistable<SessionInfo, session_settings> {
   public:
+    static const char* persistableName()
+    {
+        return "SessionInfo";
+    }
+
     struct OpenFile {
         OpenFile( const QString& file, uint64_t top, const QString& context )
             : fileName{ file }
@@ -142,7 +147,7 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
                                     [&windowId]( const auto& w ) { return w.id == windowId; } );
 
         if ( window == windows_.end() ) {
-            LOG(logINFO) << "Can't find window " << windowId;
+            LOG( logINFO ) << "Can't find window " << windowId;
             return nullptr;
         }
         else {

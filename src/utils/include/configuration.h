@@ -55,6 +55,10 @@ enum SearchRegexpType {
 // Configuration class containing everything in the "Settings" dialog
 class Configuration final : public Persistable<Configuration> {
   public:
+    static const char* persistableName()
+    {
+        return "Configuration";
+    }
     Configuration();
 
     // Accesses the main font used for display
@@ -405,7 +409,7 @@ class Configuration final : public Persistable<Configuration> {
     bool forceFontAntialiasing_ = false;
     bool enableQtHighDpi_ = true;
 
-    int scaleFactorRounding_ = 1; 
+    int scaleFactorRounding_ = 1;
 };
 
 #endif

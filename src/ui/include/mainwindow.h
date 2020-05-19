@@ -118,6 +118,7 @@ class MainWindow : public QMainWindow {
     void encodingChanged( QAction* action );
     void addToFavorites();
     void removeFromFavorites();
+    void selectOpenedFile();
     void reportIssue() const;
 
     // Change the view settings
@@ -247,8 +248,10 @@ class MainWindow : public QMainWindow {
     QAction* addToFavoritesAction;
     QAction* addToFavoritesMenuAction;
     QAction* removeFromFavoritesAction;
+    QAction* selectOpenFileAction;
     QActionGroup* favoritesGroup;
     QActionGroup* openedFilesGroup;
+
 
     QSystemTrayIcon* trayIcon_;
 

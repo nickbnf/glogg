@@ -431,6 +431,14 @@ void MainWindow::createActions()
     removeFromFavoritesAction = new QAction( tr( "Remove from favorites..." ), this );
     connect( removeFromFavoritesAction, &QAction::triggered,
              [this]( auto ) { this->removeFromFavorites(); } );
+
+    selectOpenFileAction = new QAction( tr( "Switch to opened file..." ), this );
+    connect( selectOpenFileAction, &QAction::triggered,
+             [this]( auto ) { this->selectOpenedFile(); } );
+    selectOpenFileAction->setShortcuts( QList<QKeySequence>()
+                                << QKeySequence( Qt::SHIFT | Qt::CTRL | Qt::Key_O ));      
+
+                      
 }
 
 void MainWindow::createMenus()
@@ -1437,6 +1445,9 @@ void MainWindow::updateOpenedFilesMenu()
 
     openedFilesMenu->setEnabled( !files.empty() );
 
+    openedFilesMenu->addAction(selectOpenFileAction);
+    openedFilesMenu->addSeparator();
+
     for ( const auto& file : files ) {
         const auto displayFile = DisplayFilePath{ file };
         auto action = openedFilesMenu->addAction( displayFile.displayName() );
@@ -1445,6 +1456,8 @@ void MainWindow::updateOpenedFilesMenu()
         action->setToolTip( displayFile.nativeFullPath() );
         action->setData( displayFile.fullPath() );
     }
+
+    selectOpenFileAction->setDisabled( files.empty() );
 }
 
 void MainWindow::updateFavoritesMenu()
@@ -1540,6 +1553,42 @@ void MainWindow::removeFromFavorites()
             favoriteFiles.remove( selectedFile->fullPath() );
             favoriteFiles.save();
             updateFavoritesMenu();
+        }
+    }
+}
+
+void MainWindow::selectOpenedFile()
+{
+    auto openedFilesPaths = session_.openedFiles();
+    std::vector<DisplayFilePath> openedFiles;
+    std::transform( openedFilesPaths.begin(), openedFilesPaths.end(),
+                    std::back_inserter( openedFiles ),
+                    []( const auto& path ) { return DisplayFilePath{ path }; } );
+
+    QStringList filesToShow;
+    std::transform( openedFiles.begin(), openedFiles.end(), std::back_inserter( filesToShow ),
+                    []( const auto& f ) { return f.nativeFullPath(); } );
+
+    auto currentIndex = 0;
+
+    if ( const auto crawler = currentCrawlerWidget() ) {
+        const auto currentPath = session_.getFilename( crawler );
+        const auto currentItem = std::find_if( openedFiles.begin(), openedFiles.end(),
+                                               FullPathComparator( currentPath ) );
+        if ( currentItem != openedFiles.end() ) {
+            currentIndex = std::distance( openedFiles.begin(), currentItem );
+        }
+    }
+
+    bool ok = false;
+    const auto pathToSelect = QInputDialog::getItem( this, "Switch to file", "Select opened file",
+                                                     filesToShow, currentIndex, false, &ok );
+    if ( ok ) {
+        const auto selectedFile = std::find_if( openedFiles.begin(), openedFiles.end(),
+                                                FullPathNativeComparator( pathToSelect ) );
+
+        if ( selectedFile != openedFiles.end() ) {
+            loadFile( selectedFile->fullPath() );
         }
     }
 }
@@ -1659,5 +1708,3 @@ void MainWindow::reportIssue() const
     url.setQuery( query );
     QDesktopServices::openUrl( url );
 }
-
-

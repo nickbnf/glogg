@@ -433,14 +433,16 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     tbb::flow::graph indexingGraph;
     using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
 
-    std::unique_ptr<QThread> blockReaderThread;
+    QThreadPool localThreadPool;
+    localThreadPool.setMaxThreadCount( 1 );
 
     auto blockReaderAsync = tbb::flow::async_node<tbb::flow::continue_msg, BlockData>(
         indexingGraph, tbb::flow::serial,
-        [this, &blockReaderThread, &file, &ioDuration]( const auto&, auto& gateway ) {
+        [this, &localThreadPool, &file, &ioDuration]( const auto&, auto& gateway ) {
             gateway.reserve_wait();
-            blockReaderThread.reset(
-                QThread::create( [this, &file, &ioDuration, gw = std::ref( gateway )] {
+
+            QtConcurrent::run(
+                &localThreadPool, [this, &file, &ioDuration, gw = std::ref( gateway )] {
                     const uint32_t sizeChunk = 1024 * 1024;
                     QByteArray readBuffer( sizeChunk, Qt::Uninitialized );
                     BlockData blockData;
@@ -472,8 +474,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                     }
 
                     gw.get().release_wait();
-                } ) );
-            blockReaderThread->start();
+                } );
         } );
 
     auto blockPrefetcher = tbb::flow::limiter_node<BlockData>( indexingGraph, prefetchBufferSize );
@@ -519,7 +520,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     file.seek( state.pos );
     blockReaderAsync.try_put( tbb::flow::continue_msg{} );
     indexingGraph.wait_for_all();
-    blockReaderThread->wait();
+    localThreadPool.waitForDone();
 
     // Check if there is a non LF terminated line at the end of the file
     if ( !interruptRequest_ && state.file_size > state.pos ) {

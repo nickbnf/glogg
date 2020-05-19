@@ -567,6 +567,10 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         moveSelectionUp();
     else if ( keyEvent->key() == Qt::Key_Down && noModifier )
         moveSelectionDown();
+    else if ( keyEvent->key() == Qt::Key_Up && controlModifier )
+        verticalScrollBar()->triggerAction( QScrollBar::SliderSingleStepSub );
+    else if ( keyEvent->key() == Qt::Key_Down && controlModifier )
+        verticalScrollBar()->triggerAction( QScrollBar::SliderSingleStepAdd );
     else if ( keyEvent->key() == Qt::Key_Left && noModifier )
         horizontalScrollBar()->triggerAction( QScrollBar::SliderPageStepSub );
     else if ( keyEvent->key() == Qt::Key_Right && noModifier )

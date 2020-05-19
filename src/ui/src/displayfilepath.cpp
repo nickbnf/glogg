@@ -21,7 +21,7 @@
 
 #include <QDir>
 
-constexpr const int MaxPathLength = 64;
+constexpr const int MaxPathLength = 128;
 namespace {
 // inspired by http://chadkuehn.com/shrink-file-paths-with-an-ellipsis-in-c/
 QString shrinkPath( QString fullPath, int limit, QString delimiter = "…" )

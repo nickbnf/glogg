@@ -1,0 +1,70 @@
+name: "CI: Build Test"
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        qt_version: [5.14.0]
+        config:
+          - os: ubuntu
+            cc: gcc
+            cxx: g++
+
+          - os: windows
+            cc: cl
+            cxx: cl
+
+          - os: macos
+            cc: clang
+            cxx: clang++
+
+    runs-on: ${{ matrix.config.os }}-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: seanmiddleditch/gha-setup-ninja@master
+    - uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: ${{ runner.os }}-QtCache
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: ${{ matrix.qt_version }}
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Prepare compiler env
+      run: |
+        echo "::set-env name=CC::${{ matrix.config.cc }}"
+        echo "::set-env name=CXX::${{ matrix.config.cxx }}"
+
+    - name: cmake
+      run: |
+        mkdir build
+        cd build
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+
+    - name: cmake build klogg
+      run: |
+        cmake --build build -t klogg
+        cmake --build build -t klogg_portable
+
+    - name: cmake build tests
+      run: |
+        cmake --build build -t file_write_helper
+        cmake --build build -t klogg_tests
+        cmake --build build -t klogg_itests
+
+    - name: cmake test
+      run: |
+        cd build
+        ctest -R klogg_smoke

@@ -18,13 +18,13 @@ message("Git commit: ${GIT_COMMIT_HASH}")
 
 # Get the latest abbreviated commit hash of the working branch
 execute_process(
-  COMMAND git describe
+  COMMAND git describe --always
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_DESCRIBE
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-message("Git commit: ${GIT_DESCRIBE}")
+message("Git describe: ${GIT_DESCRIBE}")
 
 STRING(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 

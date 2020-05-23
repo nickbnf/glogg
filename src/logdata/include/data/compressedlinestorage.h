@@ -147,7 +147,7 @@ class CompressedLinePositionStorage {
     // Pop the last element of the storage
     void pop_back();
 
-    using BlockOffset = fluent::NamedType<uint64_t, struct block_offset, fluent::Incrementable,
+    using BlockOffset = fluent::NamedType<size_t, struct block_offset, fluent::Incrementable,
                                           fluent::Addable, fluent::Comparable>;
 
   private:

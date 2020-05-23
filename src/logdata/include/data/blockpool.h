@@ -71,7 +71,7 @@ public:
     BlockPool() : BlockPoolBase( sizeof( ElementType ), alignof( ElementType ) )
     {}
 
-    uint32_t get_block( size_t block_elements_count, ElementType initial_position, uint64_t* next_offset )
+    uint32_t get_block( size_t block_elements_count, ElementType initial_position, size_t* next_offset )
     {
         auto ptr = getBlock( block_elements_count );
         if ( ptr ) {

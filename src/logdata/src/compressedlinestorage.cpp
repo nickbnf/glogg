@@ -45,11 +45,6 @@
 
 static constexpr size_t IndexBlockSize = 256;
 
-CompressedLinePositionStorage::BlockOffset operator"" _boffset( unsigned long long int value )
-{
-    return CompressedLinePositionStorage::BlockOffset( value );
-}
-
 namespace {
 // Functions to manipulate blocks
 
@@ -217,7 +212,7 @@ void CompressedLinePositionStorage::append( LineOffset pos )
         if ( first_long_line_ == maxValue<LineNumber>() ) {
             // First "big" end of line, we will start a new (64) block
             first_long_line_ = LineNumber( nb_lines_.get() );
-            block_offset_ = 0_boffset;
+            block_offset_ = {};
         }
     }
 
@@ -268,7 +263,7 @@ void CompressedLinePositionStorage::append( LineOffset pos )
         const auto new_size = effective_block_size + blockPool.getPaddedElementSize();
         blockPool.resize_last_block( new_size );
 
-        block_offset_ = 0_boffset;
+        block_offset_ = {};
         previous_block_offset_ = BlockOffset( effective_block_size );
     };
 
@@ -362,7 +357,7 @@ void CompressedLinePositionStorage::pop_back()
         // The last append was a normal entry in an existing block,
         // so we can just revert the pointer
         block_offset_ = previous_block_offset_;
-        previous_block_offset_ = 0_boffset;
+        previous_block_offset_ = {};
     }
     else {
         // A new block has been created for the last entry, we need
@@ -381,7 +376,7 @@ void CompressedLinePositionStorage::pop_back()
             long_block_index_ = pool64_.free_last_block();
         }
 
-        block_offset_ = 0_boffset;
+        block_offset_ = {};
     }
 
     --nb_lines_;

@@ -436,9 +436,7 @@ void MainWindow::createActions()
     connect( selectOpenFileAction, &QAction::triggered,
              [this]( auto ) { this->selectOpenedFile(); } );
     selectOpenFileAction->setShortcuts( QList<QKeySequence>()
-                                << QKeySequence( Qt::SHIFT | Qt::CTRL | Qt::Key_O ));      
-
-                      
+                                        << QKeySequence( Qt::SHIFT | Qt::CTRL | Qt::Key_O ) );
 }
 
 void MainWindow::createMenus()
@@ -638,8 +636,9 @@ void MainWindow::openRemoteFile( const QUrl& url )
 
     connect( &downloader, &Downloader::downloadProgress,
              [&progressDialog]( qint64 bytesReceived, qint64 bytesTotal ) {
-                 progressDialog.setRange( 0, bytesTotal );
-                 progressDialog.setValue( bytesReceived );
+                 const auto progress = calculateProgress( bytesReceived, bytesTotal );
+                 progressDialog.setRange( 0, 100 );
+                 progressDialog.setValue( progress );
              } );
 
     connect( &downloader, &Downloader::finished,
@@ -828,9 +827,9 @@ void MainWindow::aboutQt()
 
 void MainWindow::documentation()
 {
-    QFile data( ":/documentation.html" );
-    if ( data.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
-        const auto text = QString::fromUtf8( data.readAll() );
+    QFile doc( ":/documentation.html" );
+    if ( doc.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+        const auto text = QString::fromUtf8( doc.readAll() );
         QTextBrowser* tb = new QTextBrowser();
         tb->setOpenExternalLinks( true );
         tb->setHtml( text );
@@ -1368,16 +1367,17 @@ void MainWindow::updateRecentFileActions()
 {
     QStringList recent_files = RecentFiles::get().recentFiles();
 
-    for ( int j = 0; j < MaxRecentFiles; ++j ) {
+    for ( auto j = 0; j < MaxRecentFiles; ++j ) {
+        const auto actionIndex = static_cast<size_t>(j);
         if ( j < recent_files.count() ) {
             QString text = tr( "&%1 %2" ).arg( j + 1 ).arg( strippedName( recent_files[ j ] ) );
-            recentFileActions[ j ]->setText( text );
-            recentFileActions[ j ]->setToolTip( recent_files[ j ] );
-            recentFileActions[ j ]->setData( recent_files[ j ] );
-            recentFileActions[ j ]->setVisible( true );
+            recentFileActions[ actionIndex ]->setText( text );
+            recentFileActions[ actionIndex ]->setToolTip( recent_files[ j ] );
+            recentFileActions[ actionIndex ]->setData( recent_files[ j ] );
+            recentFileActions[ actionIndex ]->setVisible( true );
         }
         else {
-            recentFileActions[ j ]->setVisible( false );
+            recentFileActions[ actionIndex ]->setVisible( false );
         }
     }
 
@@ -1445,7 +1445,7 @@ void MainWindow::updateOpenedFilesMenu()
 
     openedFilesMenu->setEnabled( !files.empty() );
 
-    openedFilesMenu->addAction(selectOpenFileAction);
+    openedFilesMenu->addAction( selectOpenFileAction );
     openedFilesMenu->addSeparator();
 
     for ( const auto& file : files ) {
@@ -1537,7 +1537,7 @@ void MainWindow::removeFromFavorites()
         const auto currentItem
             = std::find_if( favorites.begin(), favorites.end(), FullPathComparator( currentPath ) );
         if ( currentItem != favorites.end() ) {
-            currentIndex = std::distance( favorites.begin(), currentItem );
+            currentIndex = static_cast<int>( std::distance( favorites.begin(), currentItem ) );
         }
     }
 
@@ -1576,7 +1576,7 @@ void MainWindow::selectOpenedFile()
         const auto currentItem = std::find_if( openedFiles.begin(), openedFiles.end(),
                                                FullPathComparator( currentPath ) );
         if ( currentItem != openedFiles.end() ) {
-            currentIndex = std::distance( openedFiles.begin(), currentItem );
+            currentIndex = static_cast<int>( std::distance( openedFiles.begin(), currentItem ) );
         }
     }
 

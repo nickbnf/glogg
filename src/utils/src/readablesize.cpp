@@ -41,32 +41,28 @@
 #include <QLocale>
 #include <array>
 
-QString readableSize( qint64 size )
+QString readableSize( uint64_t size )
 {
-    static const std::array<QString, 5> sizeStrs
-        = { QObject::tr( "B" ), QObject::tr( "KiB" ), QObject::tr( "MiB" ), QObject::tr( "GiB" ),
-            QObject::tr( "TiB" ) };
+    static const std::array<std::tuple<uint64_t, uint64_t, QString>, 5> sizeSteps
+        = { std::make_tuple( 0x10000000000ull, 30ull, QObject::tr( "TiB" ) ),
+            std::make_tuple( 0x40000000ull, 20ull, QObject::tr( "GiB" ) ),
+            std::make_tuple( 0x100000ull, 10ull, QObject::tr( "MiB" ) ),
+            std::make_tuple( 0x400ull, 0ull, QObject::tr( "KiB" ) ) };
 
     QLocale defaultLocale;
-    unsigned int i;
-    double humanSize = size;
+    QString outputFormat{ "%1 %2" };
 
-    for ( i = 0; i + 1 < sizeStrs.size() && ( humanSize / 1024.0 ) >= 1024.0; i++ )
-        humanSize /= 1024.0;
+    const auto sizeStep
+        = std::find_if( sizeSteps.cbegin(), sizeSteps.cend(),
+                        [&size]( const auto& step ) { return size >= std::get<0>( step ); } );
 
-    if ( humanSize >= 1024.0 ) {
-        humanSize /= 1024.0;
-        i++;
+    if ( sizeStep != sizeSteps.end() ) {
+        const auto humanSize = static_cast<double>( ( size >> std::get<1>( *sizeStep ) ) ) / 1024.0;
+        return outputFormat.arg( defaultLocale.toString( humanSize, 'f', 2 ),
+                                 std::get<2>( *sizeStep ) );
     }
-
-    QString output;
-    if ( i == 0 )
-        // No decimal part if we display straight bytes.
-        output = defaultLocale.toString( static_cast<int>( humanSize ) );
-    else
-        output = defaultLocale.toString( humanSize, 'f', 1 );
-
-    output += QString( " " ) + sizeStrs[ i ];
-
-    return output;
+    else {
+        return outputFormat.arg( defaultLocale.toString( static_cast<qulonglong>( size ) ),
+                                 QObject::tr( "B" ) );
+    }
 }

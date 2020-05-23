@@ -33,20 +33,20 @@
 #include <stack>
 
 #include "configuration.h"
+#include "klogg_version.h"
 #include "log.h"
 #include "session.h"
 #include "uuid.h"
-#include "klogg_version.h"
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Appenders/RollingFileAppender.h>
 
 #include <singleapp/singleapplication.h>
 
+#include "crash_tracer.h"
 #include "mainwindow.h"
 #include "messagereceiver.h"
 #include "versionchecker.h"
-#include "crash_tracer.h"
 
 class KloggApp : public SingleApplication {
 
@@ -59,7 +59,7 @@ class KloggApp : public SingleApplication {
                                  | SingleApplication::ExcludeAppPath
                                  | SingleApplication::ExcludeAppVersion )
     {
-        crashTracer_ = std::make_unique<CrashTracer>(argv[0]);
+        crashTracer_ = std::make_unique<CrashTracer>( argv[ 0 ] );
 
         QNetworkProxyFactory::setUseSystemConfiguration( true );
 
@@ -96,7 +96,7 @@ class KloggApp : public SingleApplication {
     void sendFilesToPrimaryInstance( const std::vector<QString>& filenames )
     {
 #ifdef Q_OS_WIN
-        ::AllowSetForegroundWindow( primaryPid() );
+        ::AllowSetForegroundWindow( static_cast<DWORD>( primaryPid() ) );
 #endif
 
         QTimer::singleShot( 100, [&filenames, this] {
@@ -275,8 +275,8 @@ class KloggApp : public SingleApplication {
             return 0;
         }
         else {
-            return 1
-                   + std::accumulate( mainWindows_.begin(), mainWindows_.end(), 0,
+            return size_t{ 1 }
+                   + std::accumulate( mainWindows_.begin(), mainWindows_.end(), size_t{},
                                       []( size_t current, const auto& next ) {
                                           return std::max( current, next.first.windowIndex() );
                                       } );

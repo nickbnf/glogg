@@ -25,6 +25,8 @@
 #include <absl/types/optional.h>
 #include <plog/Log.h>
 
+#include <chrono>
+
 #define logINFO plog::info
 #define logWARNING plog::warning
 #define logDEBUG plog::debug
@@ -33,6 +35,11 @@
 #define logDEBUG2 plog::verbose
 #define logDEBUG3 plog::verbose
 #define logDEBUG4 plog::verbose
+
+template <typename T, typename U> int calculateProgress( const T& value, const U& total )
+{
+    return static_cast<int>( 100.f * static_cast<float>( value ) / static_cast<float>( total ) );
+}
 
 namespace plog {
 class GloggFormatter {
@@ -88,6 +95,11 @@ template <typename T> Record& operator<<( Record& r, const absl::optional<T>& t 
 inline Record& operator<<( Record& r, const QLatin1String s )
 {
     return r << s.data();
+}
+
+inline Record& operator<<( Record& r, const std::chrono::milliseconds& duration )
+{
+    return r << static_cast<float>(duration.count()) / 1000.f << " ms";
 }
 
 } // namespace plog

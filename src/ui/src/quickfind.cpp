@@ -61,11 +61,10 @@ void SearchingNotifier::reset()
 void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
 {
     LOG( logDEBUG ) << "Emitting Searching....";
-    qint64 progress;
-    if ( current_line < 0 )
-        progress = ( nb_lines + current_line ) * 100 / nb_lines;
-    else
-        progress = current_line * 100 / nb_lines;
+    const auto progress
+        = static_cast<int>( current_line < 0 ? ( nb_lines + current_line ) * 100 / nb_lines
+                                             : ( current_line * 100 / nb_lines ) );
+
     emit notify( QFNotificationProgress( progress ) );
     startTime_ = QTime::currentTime().addMSecs( -800 );
 }

@@ -36,7 +36,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
         windows_.clear();
         const auto windowsCount = settings.beginReadArray( "windows" );
         for ( auto windowIndex = 0; windowIndex < windowsCount; ++windowIndex ) {
-            settings.setArrayIndex( windowIndex );
+            settings.setArrayIndex( static_cast<int>( windowIndex ) );
             QString windowId = settings.value( "id" ).toString();
             auto window = Window{ windowId };
             window.geometry = settings.value( "geometry" ).toByteArray();
@@ -49,7 +49,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                     for ( int i = 0; i < size; ++i ) {
                         settings.setArrayIndex( i );
                         QString file_name = settings.value( "fileName" ).toString();
-                        uint64_t top_line = settings.value( "topLine" ).toInt();
+                        uint64_t top_line = settings.value( "topLine" ).toULongLong();
                         QString view_context = settings.value( "viewContext" ).toString();
                         window.openFiles.emplace_back( file_name, top_line, view_context );
                     }
@@ -61,7 +61,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 settings.endGroup();
             }
 
-            LOG(logINFO) << "Reloaded window session info for " << windowId;
+            LOG( logINFO ) << "Reloaded window session info for " << windowId;
             windows_.emplace_back( window );
         }
         settings.endArray();
@@ -81,12 +81,12 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
     settings.setValue( "version", SESSION_VERSION );
 
     settings.remove( "windows" );
-    settings.beginWriteArray("windows");
-    for ( auto windowIndex = 0u; windowIndex<windows_.size(); ++windowIndex ) {
-        const auto& window = windows_.at(windowIndex);
-        settings.setArrayIndex(windowIndex);
+    settings.beginWriteArray( "windows" );
+    for ( auto windowIndex = 0u; windowIndex < windows_.size(); ++windowIndex ) {
+        const auto& window = windows_.at( windowIndex );
+        settings.setArrayIndex( static_cast<int>( windowIndex ) );
 
-        settings.setValue("id", window.id);
+        settings.setValue( "id", window.id );
         settings.setValue( "geometry", window.geometry );
 
         settings.beginGroup( "OpenFiles" );
@@ -94,7 +94,7 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
         settings.remove( "openFiles" );
         settings.beginWriteArray( "openFiles" );
         for ( unsigned i = 0; i < window.openFiles.size(); ++i ) {
-            settings.setArrayIndex( i );
+            settings.setArrayIndex( static_cast<int>( i ) );
             const OpenFile* open_file = &( window.openFiles.at( i ) );
             settings.setValue( "fileName", open_file->fileName );
             settings.setValue( "topLine", qint64( open_file->topLine ) );
@@ -104,5 +104,5 @@ void SessionInfo::saveToStorage( QSettings& settings ) const
         settings.endGroup(); // OpenFiles
     }
     settings.endArray();
-    settings.endGroup(); //Win
+    settings.endGroup(); // Win
 }

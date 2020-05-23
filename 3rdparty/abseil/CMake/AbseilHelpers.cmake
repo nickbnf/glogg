@@ -186,7 +186,7 @@ function(absl_cc_library)
     set_property(TARGET ${_NAME} PROPERTY LINKER_LANGUAGE "CXX")
 
     target_include_directories(${_NAME}
-      PUBLIC
+      SYSTEM PUBLIC
         "$<BUILD_INTERFACE:${ABSL_COMMON_INCLUDE_DIRS}>"
         $<INSTALL_INTERFACE:${ABSL_INSTALL_INCLUDEDIR}>
     )
@@ -219,7 +219,7 @@ function(absl_cc_library)
     # Generating header-only library
     add_library(${_NAME} INTERFACE)
     target_include_directories(${_NAME}
-      INTERFACE
+      SYSTEM INTERFACE
         "$<BUILD_INTERFACE:${ABSL_COMMON_INCLUDE_DIRS}>"
         $<INSTALL_INTERFACE:${ABSL_INSTALL_INCLUDEDIR}>
       )
@@ -304,7 +304,7 @@ function(absl_cc_test)
   add_executable(${_NAME} "")
   target_sources(${_NAME} PRIVATE ${ABSL_CC_TEST_SRCS})
   target_include_directories(${_NAME}
-    PUBLIC ${ABSL_COMMON_INCLUDE_DIRS}
+    SYSTEM PUBLIC ${ABSL_COMMON_INCLUDE_DIRS}
     PRIVATE ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
   )
 

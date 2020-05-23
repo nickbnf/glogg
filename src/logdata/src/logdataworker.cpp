@@ -151,7 +151,7 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
-    indexHash_.addData( block.data(), block.size() );
+    indexHash_.addData( block.data(), static_cast<size_t>( block.size() ) );
     hash_.digest = indexHash_.digest();
     hash_.size += block.size();
 
@@ -295,13 +295,14 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
 
     int pos_within_block = 0;
 
-    const auto adjustToCharWidth
-        = [&state]( int pos ) { return pos - state.encodingParams.getBeforeCrOffset(); };
+    const auto adjustToCharWidth = [&state]( auto pos ) {
+        return static_cast<int>( pos ) - state.encodingParams.getBeforeCrOffset();
+    };
 
-    const auto expandTabs = [&]( const char* search_start, int line_size ) {
-        auto tab_search_start = search_start;
-        auto next_tab
-            = reinterpret_cast<const char*>( std::memchr( tab_search_start, '\t', line_size ) );
+    const auto expandTabs = [&]( const char* start_in_line, auto line_size ) {
+        auto tab_search_start = start_in_line;
+        auto next_tab = reinterpret_cast<const char*>(
+            std::memchr( tab_search_start, '\t', static_cast<size_t>( line_size ) ) );
         while ( next_tab != nullptr ) {
             pos_within_block = adjustToCharWidth( next_tab - block.data() );
 
@@ -314,12 +315,12 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
                        % AbstractLogData::tabStop )
                    - 1;
 
-            const auto tab_substring_size = next_tab - tab_search_start;
+            const auto tab_substring_size = static_cast<int>( next_tab - tab_search_start );
             line_size -= tab_substring_size;
             tab_search_start = next_tab + 1;
             if ( line_size > 0 ) {
                 next_tab = reinterpret_cast<const char*>(
-                    std::memchr( tab_search_start, '\t', line_size ) );
+                    std::memchr( tab_search_start, '\t', static_cast<size_t>( line_size ) ) );
             }
             else {
                 next_tab = nullptr;
@@ -337,7 +338,7 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
 
         if ( search_line_size > 0 ) {
             const auto next_line_feed = reinterpret_cast<const char*>(
-                std::memchr( search_start, '\n', search_line_size ) );
+                std::memchr( search_start, '\n', static_cast<size_t>( search_line_size ) ) );
 
             if ( next_line_feed != nullptr ) {
                 expandTabs( search_start, next_line_feed - search_start );
@@ -422,11 +423,11 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     state.encodingGuess = indexing_data_.getEncodingGuess();
 
     const auto& config = Configuration::get();
-    const auto prefetchBufferSize = config.indexReadBufferSizeMb();
+    const auto prefetchBufferSize = static_cast<size_t>( config.indexReadBufferSizeMb() );
 
     using namespace std::chrono;
     using clock = high_resolution_clock;
-    size_t ioDuration{};
+    milliseconds ioDuration{};
 
     const auto indexingStartTime = clock::now();
 
@@ -455,10 +456,10 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                         blockData.first = file.pos();
                         clock::time_point ioT1 = clock::now();
                         const auto readBytes = file.read( readBuffer.data(), readBuffer.size() );
-                        blockData.second = readBuffer.left( readBytes );
+                        blockData.second = readBuffer.left( static_cast<int>( readBytes ) );
                         clock::time_point ioT2 = clock::now();
 
-                        ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 ).count();
+                        ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 );
 
                         LOG( logDEBUG ) << "Sending block " << blockData.first << " size "
                                         << blockData.second.size();
@@ -499,8 +500,9 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                                        state.encodingGuess );
 
                 // Update the caller for progress indication
-                const auto progress = static_cast<int>( std::floor(
-                    ( state.file_size > 0 ) ? state.pos * 100.f / state.file_size : 100 ) );
+                const auto progress = ( state.file_size > 0 )
+                                          ? calculateProgress( state.pos, state.file_size )
+                                          : 100;
                 emit indexingProgressed( progress );
             }
             else {
@@ -534,11 +536,15 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     }
 
     const auto indexingEndTime = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime ).count();
+    const auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime );
 
-    LOG( logINFO ) << "Indexing done, took " << duration << " ms, io " << ioDuration << " ms";
-    LOG( logINFO ) << "Index size " << readableSize( indexing_data_.allocatedSize() );
-    LOG( logINFO ) << "Indexing perf " << ( 1000.f * state.file_size / duration ) / ( 1024 * 1024 )
+    LOG( logINFO ) << "Indexing done, took " << duration << ", io " << ioDuration;
+    LOG( logINFO ) << "Index size "
+                   << readableSize( static_cast<uint64_t>( indexing_data_.allocatedSize() ) );
+    LOG( logINFO ) << "Indexing perf "
+                   << ( 1000.f * static_cast<float>( state.file_size )
+                        / static_cast<float>( duration.count() ) )
+                          / ( 1024 * 1024 )
                    << " MiB/s";
 
     if ( !indexing_data_.getEncodingGuess() ) {
@@ -614,7 +620,7 @@ OperationResult CheckFileChangesOperation::start()
                 readSize = file.read( buffer.data(), bytesToRead );
 
                 if ( readSize > 0 ) {
-                    fileDigest.addData( buffer.data(), readSize );
+                    fileDigest.addData( buffer.data(), static_cast<size_t>( readSize ) );
                     totalSize += readSize;
                 }
 

@@ -44,7 +44,7 @@ TabNameMapping& TabNameMapping::setTabName( const QString& path, const QString& 
                         [&path]( const auto& mapping ) { return mapping.path == path; } );
 
     if ( nameMapping == tabNames_.end() && !name.isEmpty() ) {
-        tabNames_.emplace_back( TabName{path, name} );
+        tabNames_.emplace_back( TabName{ path, name } );
     }
     else if ( nameMapping != tabNames_.end() ) {
         if ( name.isEmpty() ) {
@@ -60,14 +60,14 @@ TabNameMapping& TabNameMapping::setTabName( const QString& path, const QString& 
 
 void TabNameMapping::saveToStorage( QSettings& settings ) const
 {
-    LOG(logDEBUG) << "TabNameMapping::saveToStorage";
+    LOG( logDEBUG ) << "TabNameMapping::saveToStorage";
 
     settings.beginGroup( "TabNameMapping" );
     settings.setValue( "version", TABNAMEMAPPING_VERSION );
     settings.remove( "tabNames" );
     settings.beginWriteArray( "tabNames" );
-    for (auto i = 0u; i < tabNames_.size(); ++i) {
-        settings.setArrayIndex( i );
+    for ( auto i = 0u; i < tabNames_.size(); ++i ) {
+        settings.setArrayIndex( static_cast<int>( i ) );
         settings.setValue( "path", tabNames_.at( i ).path );
         settings.setValue( "name", tabNames_.at( i ).name );
     }
@@ -77,7 +77,7 @@ void TabNameMapping::saveToStorage( QSettings& settings ) const
 
 void TabNameMapping::retrieveFromStorage( QSettings& settings )
 {
-    LOG(logDEBUG) << "TabNameMapping::retrieveFromStorage";
+    LOG( logDEBUG ) << "TabNameMapping::retrieveFromStorage";
 
     tabNames_.clear();
 
@@ -85,17 +85,17 @@ void TabNameMapping::retrieveFromStorage( QSettings& settings )
         settings.beginGroup( "TabNameMapping" );
         if ( settings.value( "version" ) == TABNAMEMAPPING_VERSION ) {
             int size = settings.beginReadArray( "tabNames" );
-            for (auto i = 0; i < size; ++i) {
-                settings.setArrayIndex(i);
+            for ( auto i = 0; i < size; ++i ) {
+                settings.setArrayIndex( static_cast<int>( i ) );
                 QString path = settings.value( "path" ).toString();
                 QString name = settings.value( "name" ).toString();
 
-                tabNames_.emplace_back( TabName{path, name} );
+                tabNames_.emplace_back( TabName{ path, name } );
             }
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of tab names mapping, ignoring it...";
+            LOG( logERROR ) << "Unknown version of tab names mapping, ignoring it...";
         }
         settings.endGroup();
     }

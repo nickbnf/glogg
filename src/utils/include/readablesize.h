@@ -23,6 +23,6 @@
 #include <QString>
 
 // Returns the size in human readable format
-QString readableSize( qint64 size );
+QString readableSize( uint64_t size );
 
 #endif // KLOGG_READABLESIZE_H

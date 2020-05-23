@@ -40,6 +40,11 @@ if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
 endif()
 
+if (MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.14)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /experimental:external /external:W0 ")
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "/external:I ")
+endif()
+
 set(out_dir "${CMAKE_BINARY_DIR}/output")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${out_dir}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${out_dir}")
@@ -47,9 +52,27 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${out_dir}")
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+set(CMAKE_CXX_STANDARD 14)	
+set(CMAKE_CXX_STANDARD_REQUIRED ON)	
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(StandardProjectSettings)
 include(ucm)
 include(prepare_version)
+
+if(MSVC)
+    IF (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")	
+        STRING(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")	
+    ELSE (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")	
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")	
+    ENDIF (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")	
+
+    IF (CMAKE_C_FLAGS MATCHES "/W[0-4]")	
+        STRING(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")	
+    ELSE (CMAKE_C_FLAGS MATCHES "/W[0-4]")	
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")	
+    ENDIF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
+endif(MSVC)
 
 # standard compiler warnings
 # Link this 'library' to use the warnings specified in CompilerWarnings.cmake

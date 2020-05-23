@@ -11,8 +11,8 @@ jobs:
         qt_version: [5.14.0]
         config:
           - os: ubuntu
-            cc: gcc
-            cxx: g++
+            cc: gcc-8
+            cxx: g++-8
 
           - os: windows
             cc: cl

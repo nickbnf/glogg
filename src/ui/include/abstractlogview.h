@@ -44,22 +44,21 @@
 #include <QBasicTimer>
 
 #ifdef GLOGG_PERF_MEASURE_FPS
-#  include "perfcounter.h"
+#include "perfcounter.h"
 #endif
 
-#include "selection.h"
-#include "quickfind.h"
-#include "overviewwidget.h"
-#include "quickfindmux.h"
-#include "viewtools.h"
-#include "data/linetypes.h"
 #include "data/abstractlogdata.h"
+#include "data/linetypes.h"
+#include "overviewwidget.h"
+#include "quickfind.h"
+#include "quickfindmux.h"
+#include "selection.h"
+#include "viewtools.h"
 
 class QMenu;
 class QAction;
 
-class LineChunk
-{
+class LineChunk {
   public:
     enum ChunkType {
         Normal,
@@ -69,9 +68,18 @@ class LineChunk
 
     LineChunk( int first_col, int end_col, ChunkType type );
 
-    int start() const { return start_; }
-    int end() const { return end_; }
-    ChunkType type() const { return type_; }
+    int start() const
+    {
+        return start_;
+    }
+    int end() const
+    {
+        return end_;
+    }
+    ChunkType type() const
+    {
+        return type_;
+    }
 
     // Returns 'true' if the selection is part of this chunk
     // (at least partially), if so, it should be replaced by the list returned
@@ -86,11 +94,13 @@ class LineChunk
 // Utility class for syntax colouring.
 // It stores the chunks of line to draw
 // each chunk having a different colour
-class LineDrawer
-{
+class LineDrawer {
   public:
-    explicit LineDrawer( const QColor& back_color) :
-        list(), backColor_( back_color ) { }
+    explicit LineDrawer( const QColor& back_color )
+        : list()
+        , backColor_( back_color )
+    {
+    }
 
     // Add a chunk of line using the given colours.
     // Both first_col and last_col are included
@@ -106,8 +116,7 @@ class LineDrawer
     // leftExtraBackgroundPx is the an extra margin to start drawing
     // the coloured // background, going all the way to the element
     // left of the line looks better.
-    void draw( QPainter& painter, int xPos, int yPos,
-               int line_width, const QString& line,
+    void draw( QPainter& painter, int xPos, int yPos, int line_width, const QString& line,
                int leftExtraBackgroundPx );
 
   private:
@@ -115,14 +124,28 @@ class LineDrawer
       public:
         // Create a new chunk
         Chunk( int start, int length, QColor fore, QColor back )
-            : start_( start ), length_( length ),
-            foreColor_ ( fore ), backColor_ ( back ) { };
+            : start_( start )
+            , length_( length )
+            , foreColor_( fore )
+            , backColor_( back ){};
 
         // Accessors
-        int start() const { return start_; }
-        int length() const { return length_; }
-        const QColor& foreColor() const { return foreColor_; }
-        const QColor& backColor() const { return backColor_; }
+        int start() const
+        {
+            return start_;
+        }
+        int length() const
+        {
+            return length_;
+        }
+        const QColor& foreColor() const
+        {
+            return foreColor_;
+        }
+        const QColor& backColor() const
+        {
+            return backColor_;
+        }
 
       private:
         int start_;
@@ -134,12 +157,10 @@ class LineDrawer
     QColor backColor_;
 };
 
-
 // Utility class representing a buffer for number entered on the keyboard
 // The buffer keep at most 7 digits, and reset itself after a timeout.
-class DigitsBuffer : public QObject
-{
-  Q_OBJECT
+class DigitsBuffer : public QObject {
+    Q_OBJECT
 
   public:
     // Reset the buffer.
@@ -168,17 +189,15 @@ class Overview;
 
 // Base class representing the log view widget.
 // It can be either the top (full) or bottom (filtered) view.
-class AbstractLogView :
-    public QAbstractScrollArea, public SearchableWidgetInterface
-{
-  Q_OBJECT
+class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInterface {
+    Q_OBJECT
 
   public:
     // Constructor of the widget, the data set is passed.
     // The caller retains ownership of the data set.
     // The pointer to the QFP is used for colouring and QuickFind searches
-    AbstractLogView( const AbstractLogData* newLogData,
-            const QuickFindPattern* const quickFind, QWidget* parent=nullptr );
+    AbstractLogView( const AbstractLogData* newLogData, const QuickFindPattern* const quickFind,
+                     QWidget* parent = nullptr );
 
     ~AbstractLogView() override;
     // Refresh the widget when the data set has changed.
@@ -195,7 +214,10 @@ class AbstractLogView :
     // Instructs the widget to select the whole text.
     void selectAll();
 
-    bool isFollowEnabled() const { return followMode_; }
+    bool isFollowEnabled() const
+    {
+        return followMode_;
+    }
 
   protected:
     void mousePressEvent( QMouseEvent* mouseEvent ) override;
@@ -209,7 +231,7 @@ class AbstractLogView :
     void scrollContentsBy( int dx, int dy ) override;
     void keyPressEvent( QKeyEvent* keyEvent ) override;
     void wheelEvent( QWheelEvent* wheelEvent ) override;
-    bool event( QEvent * e ) override;
+    bool event( QEvent* e ) override;
 
     // Must be implemented to return what LineType the line number is
     // (used for coloured bullets)
@@ -217,11 +239,14 @@ class AbstractLogView :
 
     // Line number to display for line at the given index
     virtual LineNumber displayLineNumber( LineNumber lineNumber ) const;
-    virtual LineNumber lineIndex(LineNumber lineNumber ) const;
+    virtual LineNumber lineIndex( LineNumber lineNumber ) const;
     virtual LineNumber maxDisplayLineNumber() const;
 
     // Get the overview associated with this view, or NULL if there is none
-    Overview* getOverview() const { return overview_; }
+    Overview* getOverview() const
+    {
+        return overview_;
+    }
     // Set the Overview and OverviewWidget
     void setOverview( Overview* overview, OverviewWidget* overview_widget );
 
@@ -231,12 +256,11 @@ class AbstractLogView :
 
   signals:
     // Sent when a new line has been selected by the user.
-    void newSelection(LineNumber line);
+    void newSelection( LineNumber line );
     // Sent up to the MainWindow to enable/disable the follow mode
     void followModeChanged( bool enabled );
     // Sent when the view wants the QuickFind widget pattern to change.
-    void changeQuickFind( const QString& newPattern,
-            QuickFindMux::QFDirection newDirection );
+    void changeQuickFind( const QString& newPattern, QuickFindMux::QFDirection newDirection );
     // Sent up when the current line number is updated
     void updateLineNumber( LineNumber line );
     // Sent up when quickFind wants to show a message to the user.
@@ -269,7 +293,7 @@ class AbstractLogView :
   public slots:
     // Makes the widget select and display the passed line.
     // Scrolling as necessary
-    void selectAndDisplayLine(LineNumber line );
+    void selectAndDisplayLine( LineNumber line );
 
     // Use the current QFP to go and select the next match.
     void searchForward() override;
@@ -303,7 +327,7 @@ class AbstractLogView :
     // To be used if the data might have changed.
     void forceRefresh();
 
-    void setSearchLimits(LineNumber startLine, LineNumber endLine );
+    void setSearchLimits( LineNumber startLine, LineNumber endLine );
 
   private slots:
     void handlePatternUpdated();
@@ -315,7 +339,7 @@ class AbstractLogView :
     void saveToFile();
     void setSearchStart();
     void setSearchEnd();
-    void setQuickFindResult(bool hasMatch, Portion selection);
+    void setQuickFindResult( bool hasMatch, Portion selection );
 
   private:
     // Graphic parameters
@@ -431,7 +455,7 @@ class AbstractLogView :
     OptionalLineNumber convertCoordToLine( int yPos ) const;
     int convertCoordToColumn( int xPos ) const;
     void displayLine( LineNumber line );
-    void moveSelection(int delta );
+    void moveSelection( int delta );
     void moveSelectionUp();
     void moveSelectionDown();
     void jumpToStartOfLine();
@@ -448,12 +472,12 @@ class AbstractLogView :
     void considerMouseHovering( int x_pos, int y_pos );
 
     // Search functions (for n/N)
-    void searchUsingFunction( void (QuickFind::*search_function)(Selection, QuickFindMatcher) );
+    void searchUsingFunction( void ( QuickFind::*search_function )( Selection, QuickFindMatcher ) );
 
     void updateScrollBars();
 
-    void drawTextArea( QPaintDevice* paint_device, int32_t delta_y );
-    QPixmap drawPullToFollowBar( int width, float pixel_ratio );
+    void drawTextArea( QPaintDevice* paint_device );
+    QPixmap drawPullToFollowBar( int width, qreal pixel_ratio );
 
     void disableFollow();
 

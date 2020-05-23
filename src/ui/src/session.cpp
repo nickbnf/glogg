@@ -92,7 +92,7 @@ void Session::getFileInfo( const ViewInterface* view, uint64_t* fileSize, uint32
 
     assert( file );
 
-    *fileSize = file->logData->getFileSize();
+    *fileSize = static_cast<uint64_t>( file->logData->getFileSize() );
     *fileNbLine = file->logData->getNbLine().get();
     *lastModified = file->logData->getLastModifiedDate();
 }
@@ -205,7 +205,7 @@ WindowSession::restore( const std::function<ViewInterface*()>& view_factory,
         openedFiles_.emplace_back( file.fileName );
     }
 
-    *current_file_index = result.size() - 1;
+    *current_file_index = static_cast<int>( result.size() - 1 );
 
     return result;
 }

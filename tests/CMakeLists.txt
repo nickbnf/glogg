@@ -2,7 +2,7 @@ find_package(Qt5 COMPONENTS Test REQUIRED)
 
 # Add test cpp file
 add_executable(klogg_tests
-    linepositionarrayTest.cpp
+    linepositionarray_test.cpp
     tests_main.cpp
 )
 
@@ -24,9 +24,9 @@ add_executable(file_write_helper
 target_link_libraries(file_write_helper ${TEST_LIBS})
 
 add_executable(klogg_itests
-    logdataTest.cpp
-    logfiltereddataTest.cpp
-    carwlerwidgettest.cpp
+    logdata_test.cpp
+    logfiltereddata_test.cpp
+    crawlerwidget_test.cpp
     qtests_main.cpp
 )
 
@@ -48,10 +48,3 @@ add_test(
     NAME klogg_itests
     COMMAND klogg_itests -platform offscreen
 )
-
-if (ENABLE_COVERAGE)
-    SETUP_TARGET_FOR_COVERAGE(
-        NAME glogg_itests_cov
-        EXECUTABLE klogg_tests
-        DEPENDENCIES klogg_itests)
-endif()

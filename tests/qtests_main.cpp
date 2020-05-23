@@ -93,6 +93,8 @@ int main( int argc, char* argv[] )
     config.setPollingEnabled( false );
 #endif
 
+    config.setNativeFileWatchEnabled( true );
+
     QThreadPool::globalInstance()->reserveThread();
 
     TestRunner* runner = new TestRunner(argc, argv);

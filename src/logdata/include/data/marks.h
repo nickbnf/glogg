@@ -93,7 +93,7 @@ class Marks {
     // Returns true if a mark is added, false if it is removed.
     bool toggleMark( LineNumber line, QChar mark, uint32_t& index );
     // Get the line marked identified by the index (in this list) passed.
-    LineNumber getLineMarkedByIndex( int index ) const
+    LineNumber getLineMarkedByIndex( unsigned index ) const
     {
         return marks_[ index ].lineNumber();
     }

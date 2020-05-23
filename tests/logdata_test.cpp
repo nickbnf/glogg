@@ -66,7 +66,7 @@ namespace {
 
     };
 
-#include "logdataTest.moc"
+#include "logdata_test.moc"
 
 #ifdef _WIN32
     void writeDataToFileBackground(QFile& file, int numberOfLines = 200, WriteFileModification flag = WriteFileModification::None) {

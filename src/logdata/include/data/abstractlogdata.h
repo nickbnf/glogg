@@ -48,7 +48,7 @@
 // Base class representing a set of data.
 // It can be either a full set or a filtered set.
 class AbstractLogData : public QObject {
-  Q_OBJECT
+    Q_OBJECT
 
   public:
     // Returns the line passed as a QString
@@ -83,30 +83,32 @@ class AbstractLogData : public QObject {
     // Length of a tab stop
     static constexpr int tabStop = 8;
 
-    static inline LineLength getUntabifiedLength( const QString& line ) {
-        int total_spaces = 0;
+    static inline LineLength getUntabifiedLength( const QString& line )
+    {
+        long total_spaces = 0;
 
-        const auto dataLength = line.length() * 2;
-        auto tab = reinterpret_cast<const char*>( std::memchr( line.utf16(), '\t', dataLength  ) );
+        const auto dataLength = static_cast<size_t>( line.length() * 2 );
+        auto tab = reinterpret_cast<const char*>( std::memchr( line.utf16(), '\t', dataLength ) );
         while ( tab != nullptr ) {
 
-            const auto tabPosition = tab -  reinterpret_cast<const char*>(line.utf16());
+            const auto tabPosition
+                = static_cast<long>( tab - reinterpret_cast<const char*>( line.utf16() ) );
             const auto spaces = tabStop - ( ( tabPosition + total_spaces ) % tabStop );
             total_spaces += spaces - 1;
 
             tab++;
-            tab = reinterpret_cast<const char*>( std::memchr( tab, '\t', dataLength - tabPosition ) );
+            tab = reinterpret_cast<const char*>(
+                std::memchr( tab, '\t', dataLength - static_cast<size_t>( tabPosition ) ) );
         }
 
-        return LineLength( line.length() + total_spaces );
+        return LineLength( line.length() + static_cast<int>( total_spaces ) );
     }
 
     // The "type" of a line, which will appear in the FilteredView
-    enum class LineTypeFlags
-    {
-        Plain = 0,      // 0 can be checked like a proper flag in QFlags
+    enum class LineTypeFlags {
+        Plain = 0, // 0 can be checked like a proper flag in QFlags
         Match = 1 << 0,
-        Mark  = 1 << 1,
+        Mark = 1 << 1,
     };
     Q_DECLARE_FLAGS( LineType, LineTypeFlags )
 
@@ -118,7 +120,8 @@ class AbstractLogData : public QObject {
     // Internal function called to get a set of lines
     virtual std::vector<QString> doGetLines( LineNumber first_line, LinesCount number ) const = 0;
     // Internal function called to get a set of expanded lines
-    virtual std::vector<QString> doGetExpandedLines( LineNumber first_line, LinesCount number ) const = 0;
+    virtual std::vector<QString> doGetExpandedLines( LineNumber first_line,
+                                                     LinesCount number ) const = 0;
     // Internal function called to get the number of lines
     virtual LinesCount doGetNbLine() const = 0;
     // Internal function called to get the maximum length
@@ -132,24 +135,25 @@ class AbstractLogData : public QObject {
     virtual void doAttachReader() const = 0;
     virtual void doDetachReader() const = 0;
 
-    static QString untabify( const QString& line ) {
+    static QString untabify( const QString& line )
+    {
         QString untabified_line;
         int total_spaces = 0;
-        untabified_line.reserve(line.size());
+        untabified_line.reserve( line.size() );
 
         for ( int j = 0; j < line.length(); j++ ) {
-            if ( line[j] == QChar::Tabulation ) {
+            if ( line[ j ] == QChar::Tabulation ) {
                 int spaces = tabStop - ( ( j + total_spaces ) % tabStop );
                 // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
                 QString blanks( spaces, QChar::Space );
                 untabified_line.append( blanks );
                 total_spaces += spaces - 1;
             }
-            else if ( line[j] == QChar::Null ) {
+            else if ( line[ j ] == QChar::Null ) {
                 untabified_line.append( QChar::Space );
             }
             else {
-                untabified_line.append( line[j] );
+                untabified_line.append( line[ j ] );
             }
         }
 

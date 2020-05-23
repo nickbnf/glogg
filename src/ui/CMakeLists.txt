@@ -84,8 +84,6 @@ endif()
 target_include_directories(ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(ui PUBLIC Qt5::Widgets Qt5::Xml logdata versioncheck absl::any)
 
-add_dependencies(ui generate_version)
-
 if (WIN32)
     target_link_libraries(ui PUBLIC user32)
 endif()

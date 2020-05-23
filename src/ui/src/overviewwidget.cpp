@@ -20,8 +20,8 @@
 // This file implements OverviewWidget.  This class is responsable for
 // managing and painting the matches overview widget.
 
-#include <QPainter>
 #include <QMouseEvent>
+#include <QPainter>
 #include <cassert>
 
 #include "log.h"
@@ -33,104 +33,105 @@
 #define HIGHLIGHT_XPM_WIDTH 27
 #define HIGHLIGHT_XPM_HEIGHT 9
 
-#define S(x) #x
-#define SX(x) S(x)
+#define S( x ) #x
+#define SX( x ) S( x )
 
-    // width height colours char/pixel
-    // Colours
-#define HIGHLIGHT_XPM_LEAD_LINE SX(HIGHLIGHT_XPM_WIDTH) " " SX(HIGHLIGHT_XPM_HEIGHT) " 2 1",\
-    "  s mask c none",\
-    "x c #572F80"
+// width height colours char/pixel
+// Colours
+#define HIGHLIGHT_XPM_LEAD_LINE                                                                    \
+    SX( HIGHLIGHT_XPM_WIDTH )                                                                      \
+    " " SX( HIGHLIGHT_XPM_HEIGHT ) " 2 1", "  s mask c none", "x c #572F80"
 
-const char* const highlight_xpm[][14] = {
+const char* const highlight_xpm[][ 14 ] = {
     {
-    HIGHLIGHT_XPM_LEAD_LINE,
-    "                           ",
-    "                           ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "   xx                 xx   ",
-    "   xx                 xx   ",
-    "   xx                 xx   ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "                           ",
-    "                           ",
+        HIGHLIGHT_XPM_LEAD_LINE,
+        "                           ",
+        "                           ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "   xx                 xx   ",
+        "   xx                 xx   ",
+        "   xx                 xx   ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "                           ",
+        "                           ",
     },
     {
-    HIGHLIGHT_XPM_LEAD_LINE,
-    "                           ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxx                 xxx  ",
-    "  xxx                 xxx  ",
-    "  xxx                 xxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "                           ",
+        HIGHLIGHT_XPM_LEAD_LINE,
+        "                           ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxx                 xxx  ",
+        "  xxx                 xxx  ",
+        "  xxx                 xxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "                           ",
     },
     {
-    HIGHLIGHT_XPM_LEAD_LINE,
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxx                 xxxx ",
-    " xxxx                 xxxx ",
-    " xxxx                 xxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
-    " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        HIGHLIGHT_XPM_LEAD_LINE,
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxx                 xxxx ",
+        " xxxx                 xxxx ",
+        " xxxx                 xxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
+        " xxxxxxxxxxxxxxxxxxxxxxxxx ",
     },
     {
-    HIGHLIGHT_XPM_LEAD_LINE,
-    "                           ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxx                 xxx  ",
-    "  xxx                 xxx  ",
-    "  xxx                 xxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "  xxxxxxxxxxxxxxxxxxxxxxx  ",
-    "                           ",
+        HIGHLIGHT_XPM_LEAD_LINE,
+        "                           ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxx                 xxx  ",
+        "  xxx                 xxx  ",
+        "  xxx                 xxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "  xxxxxxxxxxxxxxxxxxxxxxx  ",
+        "                           ",
     },
     {
-    HIGHLIGHT_XPM_LEAD_LINE,
-    "                           ",
-    "                           ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "   xx                 xx   ",
-    "   xx                 xx   ",
-    "   xx                 xx   ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "   xxxxxxxxxxxxxxxxxxxxx   ",
-    "                           ",
-    "                           ",
+        HIGHLIGHT_XPM_LEAD_LINE,
+        "                           ",
+        "                           ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "   xx                 xx   ",
+        "   xx                 xx   ",
+        "   xx                 xx   ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "   xxxxxxxxxxxxxxxxxxxxx   ",
+        "                           ",
+        "                           ",
     },
     {
-    HIGHLIGHT_XPM_LEAD_LINE,
-    "                           ",
-    "                           ",
-    "                           ",
-    "    xxxxxxxxxxxxxxxxxxx    ",
-    "    x                 x    ",
-    "    x                 x    ",
-    "    x                 x    ",
-    "    xxxxxxxxxxxxxxxxxxx    ",
-    "                           ",
-    "                           ",
-    "                           ",
+        HIGHLIGHT_XPM_LEAD_LINE,
+        "                           ",
+        "                           ",
+        "                           ",
+        "    xxxxxxxxxxxxxxxxxxx    ",
+        "    x                 x    ",
+        "    x                 x    ",
+        "    x                 x    ",
+        "    xxxxxxxxxxxxxxxxxxx    ",
+        "                           ",
+        "                           ",
+        "                           ",
     },
 };
 
-OverviewWidget::OverviewWidget( QWidget* parent ) :
-    QWidget( parent ), highlightTimer_()
+OverviewWidget::OverviewWidget( QWidget* parent )
+    : QWidget( parent )
+    , highlightTimer_()
 {
     overview_ = nullptr;
 
@@ -138,7 +139,7 @@ OverviewWidget::OverviewWidget( QWidget* parent ) :
 
     // Highlight
     highlightedLine_ = -1;
-    highlightedTTL_  = 0;
+    highlightedTTL_ = 0;
 
     // We should be hidden by default (e.g. for the FilteredView)
     hide();
@@ -146,16 +147,13 @@ OverviewWidget::OverviewWidget( QWidget* parent ) :
 
 void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
 {
-    static const QColor match_color("red");
-    static const QColor mark_color("dodgerblue");
+    static const QColor match_color( "red" );
+    static const QColor mark_color( "dodgerblue" );
 
     static const QPixmap highlight_pixmap[] = {
-        QPixmap( highlight_xpm[0] ),
-        QPixmap( highlight_xpm[1] ),
-        QPixmap( highlight_xpm[2] ),
-        QPixmap( highlight_xpm[3] ),
-        QPixmap( highlight_xpm[4] ),
-        QPixmap( highlight_xpm[5] ), };
+        QPixmap( highlight_xpm[ 0 ] ), QPixmap( highlight_xpm[ 1 ] ), QPixmap( highlight_xpm[ 2 ] ),
+        QPixmap( highlight_xpm[ 3 ] ), QPixmap( highlight_xpm[ 4 ] ), QPixmap( highlight_xpm[ 5 ] ),
+    };
 
     // We must be hidden until we have an Overview
     assert( overview_ != nullptr );
@@ -168,35 +166,35 @@ void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
         painter.fillRect( painter.viewport(), painter.background() );
 
         // The line separating from the main view
-        painter.setPen( palette().color(QPalette::Text) );
+        painter.setPen( palette().color( QPalette::Text ) );
         painter.drawLine( 0, 0, 0, height() );
 
         // The 'match' lines
         painter.setPen( match_color );
-        const auto matchLines = *(overview_->getMatchLines());
-        for (const auto& line : matchLines ) {
+        const auto matchLines = *( overview_->getMatchLines() );
+        for ( const auto& line : matchLines ) {
             painter.setOpacity( ( 1.0 / Overview::WeightedLine::WEIGHT_STEPS )
-                   * ( line.weight() + 1 ) );
+                                * ( line.weight() + 1 ) );
             // (allow multiple matches to look 'darker' than a single one.)
-            painter.drawLine( 1 + LINE_MARGIN,
-                    line.position(), width() - LINE_MARGIN - 1, line.position() );
+            painter.drawLine( 1 + LINE_MARGIN, line.position(), width() - LINE_MARGIN - 1,
+                              line.position() );
         }
 
         // The 'mark' lines
         painter.setPen( mark_color );
-        const auto markLines = *(overview_->getMarkLines());
-        for (const auto& line : markLines ) {
+        const auto markLines = *( overview_->getMarkLines() );
+        for ( const auto& line : markLines ) {
             painter.setOpacity( ( 1.0 / Overview::WeightedLine::WEIGHT_STEPS )
-                   * ( line.weight() + 1 ) );
+                                * ( line.weight() + 1 ) );
             // (allow multiple matches to look 'darker' than a single one.)
-            painter.drawLine( 1 + LINE_MARGIN,
-                    line.position(), width() - LINE_MARGIN - 1, line.position() );
+            painter.drawLine( 1 + LINE_MARGIN, line.position(), width() - LINE_MARGIN - 1,
+                              line.position() );
         }
 
         // The 'view' lines
         painter.setOpacity( 1 );
-        painter.setPen( palette().color(QPalette::Text) );
-        std::pair<int,int> view_lines = overview_->getViewLines();
+        painter.setPen( palette().color( QPalette::Text ) );
+        std::pair<int, int> view_lines = overview_->getViewLines();
         painter.drawLine( 1, view_lines.first, width(), view_lines.first );
         painter.drawLine( 1, view_lines.second, width(), view_lines.second );
 
@@ -210,10 +208,9 @@ void OverviewWidget::paintEvent( QPaintEvent* /* paintEvent */ )
             painter.drawRect( 2, position - 2, width() - 2 - 2, 4 );
             */
             int position = overview_->yFromFileLine( highlightedLine_ );
-            painter.drawPixmap(
-                   ( width() - HIGHLIGHT_XPM_WIDTH ) / 2,
-                   position - ( HIGHLIGHT_XPM_HEIGHT / 2 ),
-                   highlight_pixmap[ INITIAL_TTL_VALUE - highlightedTTL_ ] );
+            painter.drawPixmap( ( width() - HIGHLIGHT_XPM_WIDTH ) / 2,
+                                position - ( HIGHLIGHT_XPM_HEIGHT / 2 ),
+                                highlight_pixmap[ INITIAL_TTL_VALUE - highlightedTTL_ ] );
         }
     }
 }
@@ -233,7 +230,7 @@ void OverviewWidget::mouseMoveEvent( QMouseEvent* mouseEvent )
 void OverviewWidget::handleMousePress( int position )
 {
     const auto line = overview_->fileLineFromY( position );
-    LOG(logDEBUG) << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
+    LOG( logDEBUG ) << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
     emit lineClicked( line );
 }
 
@@ -241,8 +238,8 @@ void OverviewWidget::highlightLine( LineNumber line )
 {
     highlightTimer_.stop();
 
-    highlightedLine_ = line.get();
-    highlightedTTL_  = INITIAL_TTL_VALUE;
+    highlightedLine_ = static_cast<int>( line.get() );
+    highlightedTTL_ = INITIAL_TTL_VALUE;
 
     update();
     highlightTimer_.start( STEP_DURATION_MS, this );
@@ -259,7 +256,7 @@ void OverviewWidget::removeHighlight()
 void OverviewWidget::timerEvent( QTimerEvent* event )
 {
     if ( event->timerId() == highlightTimer_.timerId() ) {
-        LOG(logDEBUG) << "OverviewWidget::timerEvent";
+        LOG( logDEBUG ) << "OverviewWidget::timerEvent";
         if ( highlightedTTL_ > 0 ) {
             --highlightedTTL_;
             update();

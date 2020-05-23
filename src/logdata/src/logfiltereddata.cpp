@@ -383,7 +383,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
     if ( progress == 100 && config.useSearchResultsCache()
          && nbLinesProcessed_.get() == getExpectedSearchEnd( currentSearchKey_ ).get() ) {
 
-        const auto maxCacheLines = config.searchResultsCacheLines();
+        const auto maxCacheLines = static_cast<size_t>( config.searchResultsCacheLines() );
 
         if ( matching_lines_.size() > maxCacheLines ) {
             LOG( logDEBUG ) << "LogFilteredData: too many matches to place in cache";
@@ -575,7 +575,7 @@ void LogFilteredData::regenerateFilteredItemsCache() const
     }
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>( t2 - t1 ).count();
+    const auto duration = static_cast<float>( duration_cast<microseconds>( t2 - t1 ).count() );
 
     LOG( logINFO ) << "Regenerating cache done, took " << duration / 1000.f << " ms";
 
@@ -590,8 +590,10 @@ void LogFilteredData::insertIntoFilteredItemsCache( size_t insert_index, Filtere
 
     // Search for the corresponding index.
     // We can start the search from insert_index, since lineNumber >= index is always true.
-    auto found = std::lower_bound( next( begin( filteredItemsCache_ ), insert_index ),
-                                   end( filteredItemsCache_ ), item );
+    using diff_type = decltype( filteredItemsCache_ )::iterator::difference_type;
+    auto found = std::lower_bound(
+        next( begin( filteredItemsCache_ ), static_cast<diff_type>( insert_index ) ),
+        end( filteredItemsCache_ ), item );
     if ( found == end( filteredItemsCache_ ) || found->lineNumber() > item.lineNumber() ) {
         if ( item.type() & visibility_ ) {
             filteredItemsCache_.emplace( found, std::move( item ) );
@@ -646,8 +648,10 @@ void LogFilteredData::removeFromFilteredItemsCache( size_t remove_index, Filtere
 
     // Search for the corresponding index.
     // We can start the search from remove_index, since lineNumber >= index is always true.
-    auto found = std::equal_range( next( begin( filteredItemsCache_ ), remove_index ),
-                                   end( filteredItemsCache_ ), item );
+    using diff_type = decltype( filteredItemsCache_ )::iterator::difference_type;
+    auto found = std::equal_range(
+        next( begin( filteredItemsCache_ ), static_cast<diff_type>( remove_index ) ),
+        end( filteredItemsCache_ ), item );
     if ( found.first == found.second ) {
         LOG( logERROR ) << "Attempt to remove line " << item.lineNumber()
                         << " from filteredItemsCache_ failed, since it was not found";

@@ -65,7 +65,7 @@ void block_add_one_byte_relative( uint8_t* block, BlockOffset& offset, uint8_t v
 
 uint8_t block_get_alignment_offset( uint8_t alignment, const uint64_t& offset )
 {
-    return alignment - offset % alignment;
+    return static_cast<uint8_t>( alignment - offset % alignment );
 }
 
 // Add a two bytes relative delta (0-16383) and inc pointer
@@ -116,7 +116,8 @@ template <typename ElementType>
 LineOffset block_initial_pos( const uint8_t* block, BlockOffset& offset )
 {
     offset = BlockOffset( sizeof( ElementType ) );
-    return LineOffset( *( reinterpret_cast<const ElementType*>( block ) ) );
+    return LineOffset( static_cast<LineOffset::UnderlyingType>(
+        *( reinterpret_cast<const ElementType*>( block ) ) ) );
 }
 
 // Give the next position in the block based on the previous
@@ -137,28 +138,30 @@ LineOffset block_next_pos( const uint8_t* block, BlockOffset& offset, LineOffset
 
     if ( byte != 0xFF && ( byte & 0xC0 ) == 0xC0 ) {
         // need to skip aligned bytes;
-        uint8_t alignmentOffset = byte & ( ~0xC0 );
+        const auto alignmentOffset = static_cast<uint8_t>( byte & ( ~0xC0 ) );
         offset += BlockOffset( alignmentOffset );
         byte = *( block + offset.get() );
     }
     ++offset;
 
     if ( ( byte & 0xC0 ) == 0x80 ) {
-        // We need to read the low order byte
-        uint8_t lo_byte = *( block + offset.get() );
-        ++offset;
         // Remove the starting 10b
-        byte &= ~0xC0;
+        const auto hi_byte = static_cast<uint16_t>( byte & ( ~0xC0 ) );
+        // We need to read the low order byte
+        const auto lo_byte = static_cast<uint16_t>( *( block + offset.get() ) );
         // And form the displacement (stored as big endian)
-        pos += LineOffset( ( (uint16_t)byte << 8 ) | (uint16_t)lo_byte );
+        pos += LineOffset( ( hi_byte << 8 ) | lo_byte );
+
+        ++offset;
     }
     else {
         // skip aligned bytes
-        uint8_t alignmentOffset = *( block + offset.get() );
-        offset += BlockOffset( alignmentOffset + 1 );
+        const auto alignmentOffset = *( block + offset.get() );
+        offset += BlockOffset( alignmentOffset + 1u );
 
         // And read the new absolute pos (machine endian)
-        pos = LineOffset( *( reinterpret_cast<const ElementType*>( block + offset.get() ) ) );
+        pos = LineOffset( static_cast<LineOffset::UnderlyingType>(
+            *( reinterpret_cast<const ElementType*>( block + offset.get() ) ) ) );
         offset += BlockOffset( sizeof( ElementType ) );
     }
 
@@ -225,8 +228,8 @@ void CompressedLinePositionStorage::append( LineOffset pos )
                                               &block_offset_.get() );
         }
         else {
-            long_block_index_
-                = pool64_.get_block( IndexBlockSize, pos.get(), &block_offset_.get() );
+            long_block_index_ = pool64_.get_block(
+                IndexBlockSize, static_cast<uint64_t>( pos.get() ), &block_offset_.get() );
         }
     }
     else {
@@ -249,7 +252,8 @@ void CompressedLinePositionStorage::append( LineOffset pos )
                 block_add_absolute<uint32_t>( block, block_offset_,
                                               static_cast<uint32_t>( pos.get() ) );
             else
-                block_add_absolute<uint64_t>( block, block_offset_, pos.get() );
+                block_add_absolute<uint64_t>( block, block_offset_,
+                                              static_cast<uint64_t>( pos.get() ) );
         }
     }
 

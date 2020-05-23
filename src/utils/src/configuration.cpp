@@ -84,7 +84,7 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         enableQtHighDpi_ = settings.value( "view.qtHiDpi" ).toBool();
 
     if ( settings.contains( "view.scaleFactorRounding" ) )
-        scaleFactorRounding_ = settings.value( "view.scaleFactorRounding" ).toUInt();
+        scaleFactorRounding_ = settings.value( "view.scaleFactorRounding" ).toInt();
 
     // Regexp types
     mainRegexpType_ = static_cast<SearchRegexpType>(
@@ -112,7 +112,7 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "logging.enableLogging" ) )
         enableLogging_ = settings.value( "logging.enableLogging" ).toBool();
     if ( settings.contains( "logging.verbosity" ) )
-        loggingLevel_ = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toUInt() );
+        loggingLevel_ = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toInt() );
 
     if ( settings.contains( "versionchecker.enabled" ) )
         enableVersionChecking_ = settings.value( "versionchecker.enabled" ).toBool();
@@ -129,13 +129,13 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "perf.useSearchResultsCache" ) )
         useSearchResultsCache_ = settings.value( "perf.useSearchResultsCache" ).toBool();
     if ( settings.contains( "perf.searchResultsCacheLines" ) )
-        searchResultsCacheLines_ = settings.value( "perf.searchResultsCacheLines" ).toUInt();
+        searchResultsCacheLines_ = settings.value( "perf.searchResultsCacheLines" ).toInt();
     if ( settings.contains( "perf.indexReadBufferSizeMb" ) )
-        indexReadBufferSizeMb_ = settings.value( "perf.indexReadBufferSizeMb" ).toUInt();
+        indexReadBufferSizeMb_ = settings.value( "perf.indexReadBufferSizeMb" ).toInt();
     if ( settings.contains( "perf.searchReadBufferSizeLines" ) )
-        searchReadBufferSizeLines_ = settings.value( "perf.searchReadBufferSizeLines" ).toUInt();
+        searchReadBufferSizeLines_ = settings.value( "perf.searchReadBufferSizeLines" ).toInt();
     if ( settings.contains( "perf.searchThreadPoolSize" ) )
-        searchThreadPoolSize_ = settings.value( "perf.searchThreadPoolSize" ).toUInt();
+        searchThreadPoolSize_ = settings.value( "perf.searchThreadPoolSize" ).toInt();
     if ( settings.contains( "perf.keepFileClosed" ) )
         keepFileClosed_ = settings.value( "perf.keepFileClosed" ).toBool();
     if ( settings.contains( "perf.useLineEndingCache" ) )

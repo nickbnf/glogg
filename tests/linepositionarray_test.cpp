@@ -69,8 +69,8 @@ SCENARIO( "LinePositionArray with small number of lines", "[linepositionarray]")
             std::random_device rd;
             std::mt19937 g(rd());
 
-            auto index = std::vector<int>( offsets.size() );
-            std::generate(index.begin(), index.end(), [n = 0] () mutable { return n++; });
+            auto index = std::vector<uint32_t>( offsets.size() );
+            std::generate(index.begin(), index.end(), [n = 0u] () mutable { return n++; });
 
             THEN( "Corrent offsets returned") {
                 for ( auto i : index ) {
@@ -161,8 +161,8 @@ SCENARIO( "LinePositionArray with full block of lines", "[linepositionarray]") {
 
         WHEN( "Adding lines after fake lf") {
             THEN( "Correct offset is returned" )
-            for ( uint64_t i = 0; i < 1000; ++i ) {
-                uint64_t pos = ( 257LL * 4 ) + i*35LL;
+            for ( uint32_t i = 0; i < 1000; ++i ) {
+                int64_t pos = ( 257LL * 4 ) + i*35LL;
                 line_array.append( LineOffset( pos ) );
                 line_array.setFakeFinalLF();
                 REQUIRE( line_array[256 + i] == LineOffset( pos ) );
@@ -210,8 +210,8 @@ SCENARIO( "LinePositionArray with UINT32_MAX offsets", "[linepositionarray]") {
 
         WHEN( "Adding lines after fake lf") {
             THEN( "Correct offset is returned" )
-            for ( uint64_t i = 0; i < 1000; ++i ) {
-                uint64_t pos = 3LL*UINT32_MAX + 524LL + i*35LL;
+            for ( uint32_t i = 0; i < 1000; ++i ) {
+                int64_t pos = 3LL*UINT32_MAX + 524LL + i*35LL;
                 line_array.append( LineOffset( pos ) );
                 line_array.setFakeFinalLF();
                 REQUIRE( line_array[9 + i] == LineOffset( pos ) );

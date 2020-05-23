@@ -75,8 +75,8 @@ PersistentInfo::PersistentInfo()
     int dirnameLength = 0;
     const auto executablePathLength = wai_getExecutablePath( NULL, 0, &dirnameLength );
     if ( executablePathLength > 0 ) {
-        auto path = std::vector<char>( executablePathLength, '\0' );
-        wai_getExecutablePath( &path[ 0 ], path.size(), &dirnameLength );
+        auto path = std::vector<char>( static_cast<size_t>( executablePathLength ), '\0' );
+        wai_getExecutablePath( &path[ 0 ], executablePathLength, &dirnameLength );
         executablePath = QString::fromUtf8( path.data(), dirnameLength );
     }
 
@@ -178,7 +178,7 @@ void PersistentInfo::UpdateSettings()
             for ( int i = 0; i < size; ++i ) {
                 sessionSettings_->setArrayIndex( i );
                 QString file_name = sessionSettings_->value( "fileName" ).toString();
-                uint64_t top_line = sessionSettings_->value( "topLine" ).toInt();
+                uint64_t top_line = sessionSettings_->value( "topLine" ).toULongLong();
                 QString view_context = sessionSettings_->value( "viewContext" ).toString();
                 openFiles.emplace_back( file_name, top_line, view_context );
             }
@@ -197,7 +197,7 @@ void PersistentInfo::UpdateSettings()
             sessionSettings_->setValue( "version", 1 );
             sessionSettings_->beginWriteArray( "openFiles" );
             for ( unsigned i = 0; i < openFiles.size(); ++i ) {
-                sessionSettings_->setArrayIndex( i );
+                sessionSettings_->setArrayIndex( static_cast<int>( i ) );
 
                 sessionSettings_->setValue( "fileName", std::get<0>( openFiles.at( i ) ) );
                 sessionSettings_->setValue( "topLine", qint64( std::get<1>( openFiles.at( i ) ) ) );

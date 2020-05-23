@@ -33,8 +33,6 @@
 #include <catch.hpp>
 
 static const qint64 SL_NB_LINES = 100LL;
-static const char* sl_format
-    = "LOGDATA \t is a part of glogg, we are going to test it thoroughly, this is line %06d\n";
 
 namespace {
 bool generateDataFiles( QTemporaryFile& file )
@@ -43,7 +41,10 @@ bool generateDataFiles( QTemporaryFile& file )
 
     if ( file.open() ) {
         for ( int i = 0; i < SL_NB_LINES; i++ ) {
-            snprintf( newLine, 89, sl_format, i );
+            snprintf( newLine, 89,
+                      "LOGDATA \t is a part of glogg, we are going to test it thoroughly, this is "
+                      "line %06d\n",
+                      i );
             file.write( newLine, qstrlen( newLine ) );
 #ifdef Q_OS_WIN
             file.write( "\r\n", 2 );
@@ -163,7 +164,6 @@ SCENARIO( "Crawler widget search", "[ui]" )
             while ( crawlerVisitor.getLogFilteredNbLines().get() != 2 * SL_NB_LINES
                     && loadWaitCycle++ < 50 )
                 QTest::qWait( 100 );
-
 
             THEN( "all lines are matched" )
             {

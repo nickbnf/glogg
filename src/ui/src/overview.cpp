@@ -27,12 +27,14 @@
 
 #include "overview.h"
 
-Overview::Overview() : matchLines_(), markLines_()
+Overview::Overview()
+    : matchLines_()
+    , markLines_()
 {
     logFilteredData_ = nullptr;
-    height_          = 0;
-    dirty_           = true;
-    visible_         = false;
+    height_ = 0;
+    dirty_ = true;
+    visible_ = false;
 }
 
 void Overview::setFilteredData( const LogFilteredData* logFilteredData )
@@ -42,7 +44,7 @@ void Overview::setFilteredData( const LogFilteredData* logFilteredData )
 
 void Overview::updateData( LinesCount totalNbLine )
 {
-    LOG(logDEBUG) << "OverviewWidget::updateData " << totalNbLine;
+    LOG( logDEBUG ) << "OverviewWidget::updateData " << totalNbLine;
 
     linesInFile_ = totalNbLine;
     dirty_ = true;
@@ -58,36 +60,39 @@ void Overview::updateView( int height )
     }
 }
 
-const std::vector<Overview::WeightedLine> *Overview::getMatchLines() const
+const std::vector<Overview::WeightedLine>* Overview::getMatchLines() const
 {
     return &matchLines_;
 }
 
-const std::vector<Overview::WeightedLine> *Overview::getMarkLines() const
+const std::vector<Overview::WeightedLine>* Overview::getMarkLines() const
 {
     return &markLines_;
 }
 
-std::pair<int,int> Overview::getViewLines() const
+std::pair<int, int> Overview::getViewLines() const
 {
     int top = 0;
     int bottom = height_ - 1;
 
     if ( linesInFile_.get() > 0 ) {
-        top = (int)((qint64)topLine_.get() * height_ / linesInFile_.get());
-        bottom = (int)((qint64)top + nbLines_.get() * height_ / linesInFile_.get());
+        top = static_cast<int>( static_cast<qint64>( topLine_.get() ) * height_
+                                / static_cast<qint64>( linesInFile_.get() ) );
+
+        bottom = static_cast<int>(
+            ( static_cast<qint64>( top ) + static_cast<qint64>( nbLines_.get() ) * height_ )
+            / static_cast<qint64>( linesInFile_.get() ) );
     }
 
-    return std::pair<int,int>(top, bottom);
+    return std::pair<int, int>( top, bottom );
 }
 
 LineNumber Overview::fileLineFromY( int position ) const
 {
-    const auto line = static_cast<LineNumber::UnderlyingType>(
-                (qint64)position * linesInFile_.get() / height_
-            );
+    const auto line = static_cast<LineNumber::UnderlyingType>( (qint64)position * linesInFile_.get()
+                                                               / height_ );
 
-    return LineNumber(line);
+    return LineNumber( line );
 }
 
 int Overview::yFromFileLine( int file_line ) const
@@ -95,7 +100,7 @@ int Overview::yFromFileLine( int file_line ) const
     int position = 0;
 
     if ( linesInFile_.get() > 0 )
-        position =  (int)((qint64)file_line * height_ / linesInFile_.get());
+        position = (int)( (qint64)file_line * height_ / linesInFile_.get() );
 
     return position;
 }
@@ -103,7 +108,7 @@ int Overview::yFromFileLine( int file_line ) const
 // Update the internal cache
 void Overview::recalculatesLines()
 {
-    LOG(logDEBUG) << "OverviewWidget::recalculatesLines";
+    LOG( logDEBUG ) << "OverviewWidget::recalculatesLines";
 
     if ( logFilteredData_ != nullptr ) {
         matchLines_.clear();
@@ -112,22 +117,22 @@ void Overview::recalculatesLines()
         if ( linesInFile_.get() > 0 ) {
             const auto nbLines = logFilteredData_->getNbLine();
             for ( auto i = 0_lnum; i < nbLines; ++i ) {
-                LogFilteredData::LineType line_type =
-                    logFilteredData_->lineTypeByIndex( i );
+                LogFilteredData::LineType line_type = logFilteredData_->lineTypeByIndex( i );
                 const auto line = logFilteredData_->getMatchingLineNumber( i );
-                const auto position = static_cast<int>( (qint64)(line.get()) * height_ / linesInFile_.get() );
+                const auto position
+                    = static_cast<int>( ( qint64 )( line.get() ) * height_ / linesInFile_.get() );
                 if ( line_type.testFlag( LogFilteredData::LineTypeFlags::Match ) ) {
-                    if ( ( ! matchLines_.empty() ) && matchLines_.back().position() == position ) {
+                    if ( ( !matchLines_.empty() ) && matchLines_.back().position() == position ) {
                         // If the line is already there, we increase its weight
                         matchLines_.back().load();
                     }
                     else {
                         // If not we just add it
-                        matchLines_.emplace_back(  position );
+                        matchLines_.emplace_back( position );
                     }
                 }
                 else {
-                    if ( ( ! markLines_.empty() ) && markLines_.back().position() == position ) {
+                    if ( ( !markLines_.empty() ) && markLines_.back().position() == position ) {
                         // If the line is already there, we increase its weight
                         markLines_.back().load();
                     }
@@ -140,7 +145,7 @@ void Overview::recalculatesLines()
         }
     }
     else
-        LOG(logDEBUG) << "Overview::recalculatesLines: logFilteredData_ == NULL";
+        LOG( logDEBUG ) << "Overview::recalculatesLines: logFilteredData_ == NULL";
 
     dirty_ = false;
 }

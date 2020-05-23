@@ -156,7 +156,7 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
             LinesCount( selectedRange_.endLine.get() - selectedRange_.startLine->get() + 1 ) );
 
         text.reserve( std::accumulate(
-            list.begin(), list.end(), list.size(),
+            list.begin(), list.end(), static_cast<int>( list.size() ),
             []( const auto value, const auto& line ) { return value + line.size(); } ) );
 
         for ( const auto& line : list ) {

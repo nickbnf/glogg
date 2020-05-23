@@ -42,8 +42,8 @@
 
 #include "log.h"
 
-static constexpr uint32_t POLL_INTERVAL_MIN = 10;
-static constexpr uint32_t POLL_INTERVAL_MAX = 3600000;
+static constexpr int POLL_INTERVAL_MIN = 10;
+static constexpr int POLL_INTERVAL_MAX = 3600000;
 
 // Constructor
 OptionsDialog::OptionsDialog( QWidget* parent )
@@ -287,7 +287,7 @@ void OptionsDialog::updateConfigFromDialog()
 
     config.setNativeFileWatchEnabled( nativeFileWatchCheckBox->isChecked() );
     config.setPollingEnabled( pollingCheckBox->isChecked() );
-    uint32_t poll_interval = pollIntervalLineEdit->text().toUInt();
+    auto poll_interval = pollIntervalLineEdit->text().toInt();
     if ( poll_interval < POLL_INTERVAL_MIN )
         poll_interval = POLL_INTERVAL_MIN;
     else if ( poll_interval > POLL_INTERVAL_MAX )
@@ -300,7 +300,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setAllowMultipleWindows( multipleWindowsCheckBox->isChecked() );
     config.setMinimizeToTray( minimizeToTrayCheckBox->isChecked() );
     config.setEnableLogging( loggingCheckBox->isChecked() );
-    config.setLoggingLevel( verbositySpinBox->value() );
+    config.setLoggingLevel( static_cast<uint8_t>( verbositySpinBox->value() ) );
 
     config.setExtractArchives( extractArchivesCheckBox->isChecked() );
     config.setExtractArchivesAlways( extractArchivesAlwaysCheckBox->isChecked() );

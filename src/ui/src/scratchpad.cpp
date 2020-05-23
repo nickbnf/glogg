@@ -77,7 +77,7 @@ quint32 calculateCrc32( QByteArray text )
 {
     quint32 crc32 = 0xffffffff;
     for ( auto i = 0; i < text.size(); ++i ) {
-        crc32 = ( crc32 >> 8 ) ^ crc32_tab[ ( crc32 ^ text[ i ] ) & 0xff ];
+        crc32 = ( crc32 >> 8 ) ^ crc32_tab[ ( crc32 ^ static_cast<quint32>(text[ i ]) ) & 0xffu ];
     }
     crc32 ^= 0xffffffff;
     return crc32;
@@ -95,10 +95,10 @@ template <typename T> QString formatDec( T value )
 
 constexpr int StatusTimeout = 2000;
 
-constexpr uint64_t FileTimeTicks = 10000000;
-constexpr uint64_t SecondsToEpoch = 11644473600LL;
+constexpr qint64 FileTimeTicks = 10000000;
+constexpr qint64 SecondsToEpoch = 11644473600LL;
 
-uint64_t windowsTickToUnixSeconds( uint64_t windowsTicks )
+qint64 windowsTickToUnixSeconds( qint64 windowsTicks )
 {
     return ( windowsTicks / FileTimeTicks - SecondsToEpoch );
 }

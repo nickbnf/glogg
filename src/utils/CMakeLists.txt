@@ -35,3 +35,6 @@ target_link_libraries(utils PUBLIC
         klogg_karchive
         whereami
         plog)
+
+add_dependencies(utils generate_version)
+

@@ -108,11 +108,11 @@ class Configuration final : public Persistable<Configuration> {
     {
         pollingEnabled_ = enabled;
     }
-    uint32_t pollIntervalMs() const
+    int pollIntervalMs() const
     {
         return pollIntervalMs_;
     }
-    void setPollIntervalMs( uint32_t interval )
+    void setPollIntervalMs( int interval )
     {
         pollIntervalMs_ = interval;
     }
@@ -158,35 +158,35 @@ class Configuration final : public Persistable<Configuration> {
     {
         useSearchResultsCache_ = enabled;
     }
-    uint32_t searchResultsCacheLines() const
+    int searchResultsCacheLines() const
     {
         return searchResultsCacheLines_;
     }
-    void setSearchResultsCacheLines( uint32_t lines )
+    void setSearchResultsCacheLines( int lines )
     {
         searchResultsCacheLines_ = lines;
     }
-    uint32_t indexReadBufferSizeMb() const
+    int indexReadBufferSizeMb() const
     {
         return indexReadBufferSizeMb_;
     }
-    void setIndexReadBufferSizeMb( uint32_t bufferSizeMb )
+    void setIndexReadBufferSizeMb( int bufferSizeMb )
     {
         indexReadBufferSizeMb_ = bufferSizeMb;
     }
-    uint32_t searchReadBufferSizeLines() const
+    int searchReadBufferSizeLines() const
     {
         return searchReadBufferSizeLines_;
     }
-    void setSearchReadBufferSizeLines( uint32_t lines )
+    void setSearchReadBufferSizeLines( int lines )
     {
         searchReadBufferSizeLines_ = lines;
     }
-    uint32_t searchThreadPoolSize() const
+    int searchThreadPoolSize() const
     {
         return searchThreadPoolSize_;
     }
-    void setSearchThreadPoolSize( uint32_t threads )
+    void setSearchThreadPoolSize( int threads )
     {
         searchThreadPoolSize_ = threads;
     }
@@ -368,7 +368,7 @@ class Configuration final : public Persistable<Configuration> {
     bool pollingEnabled_ = false;
 #endif
 
-    uint32_t pollIntervalMs_ = 2000;
+    int pollIntervalMs_ = 2000;
 
     bool loadLastSession_ = true;
     bool followFileOnLoad_ = false;
@@ -387,11 +387,11 @@ class Configuration final : public Persistable<Configuration> {
 
     // Performance settings
     bool useSearchResultsCache_ = true;
-    uint32_t searchResultsCacheLines_ = 1000000;
+    int searchResultsCacheLines_ = 1000000;
     bool useParallelSearch_ = true;
-    uint32_t indexReadBufferSizeMb_ = 16;
-    uint32_t searchReadBufferSizeLines_ = 5000;
-    uint32_t searchThreadPoolSize_ = 0;
+    int indexReadBufferSizeMb_ = 16;
+    int searchReadBufferSizeLines_ = 5000;
+    int searchThreadPoolSize_ = 0;
     bool keepFileClosed_ = false;
 
     bool useLineEndingCache_ = true;

@@ -64,7 +64,7 @@ void FavoriteFiles::saveToStorage( QSettings& settings ) const
     settings.remove( "favorites" );
     settings.beginWriteArray( "favorites" );
     for ( auto i = 0u; i < files_.size(); ++i ) {
-        settings.setArrayIndex( i );
+        settings.setArrayIndex( static_cast<int>( i ) );
         settings.setValue( "name", files_.at( i ).fullPath() );
     }
     settings.endArray();
@@ -82,7 +82,7 @@ void FavoriteFiles::retrieveFromStorage( QSettings& settings )
         if ( settings.value( "version" ) == FavoriteFilesVersion ) {
             int size = settings.beginReadArray( "favorites" );
             for ( int i = 0; i < size; ++i ) {
-                settings.setArrayIndex( i );
+                settings.setArrayIndex( static_cast<int>( i ) );
                 QString path = settings.value( "name" ).toString();
                 files_.emplace_back( path );
             }

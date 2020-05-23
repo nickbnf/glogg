@@ -4,21 +4,27 @@ project(klogg
         VERSION 20.5.0
         DESCRIPTION "klogg log viewer"
         LANGUAGES C CXX)
+
 set(PROJECT_HOMEPAGE_URL "https://github.com/variar/klogg")
 
-set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-include(ucm)
-
-set(BUILD_VERSION "" CACHE STRING "build version")
-set(BUILD_NUMBER "" CACHE STRING "build number")
-
 string(TIMESTAMP PRODUCT_CURRENT_YEAR "%Y")
-
 set(COMPANY "Anton Filimonov")
 set(COPYRIGHT "Copyright (c) ${PRODUCT_CURRENT_YEAR} Nicolas Bonnefon, Anton Filimonov and other contributors.")
 set(IDENTIFIER "com.github.variar.klogg")
 set(PROJECT_DESCRIPTION "${PROJECT_NAME} log viewer")
+
+option(BUILD_TESTS "Build tests" ON)
+option(USE_LTO "Use link time optimization" ON)
+
+set(BUILD_VERSION "" CACHE STRING "build version")
+set(BUILD_NUMBER "" CACHE STRING "build number")
+
+set(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE)
+set(COPYING_FILE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
+set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+set(DOCUMENTATION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/DOCUMENTATION.md)
+set(DOCUMENTATION_HTML ${CMAKE_BINARY_DIR}/generated/documentation.html)
+set(DOCUMENTATION_RESOURCE ${CMAKE_BINARY_DIR}/generated/documentation.qrc)
 
 if (WIN32)
     set(ICON_NAME klogg.ico)
@@ -30,150 +36,61 @@ if (NOT ${ICON_NAME} STREQUAL "")
     set(ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Resources/${ICON_NAME})
 endif()
 
-set(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE)
-set(COPYING_FILE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
-set(README_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
-set(DOCUMENTATION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/DOCUMENTATION.md)
-set(DOCUMENTATION_HTML ${CMAKE_BINARY_DIR}/generated/documentation.html)
-
-include(prepare_version)
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
+endif()
 
 set(out_dir "${CMAKE_BINARY_DIR}/output")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${out_dir}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${out_dir}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${out_dir}")
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include(StandardProjectSettings)
+include(ucm)
+include(prepare_version)
 
-find_package(Qt5 COMPONENTS Core Widgets Concurrent Network Xml REQUIRED)
+# standard compiler warnings
+# Link this 'library' to use the warnings specified in CompilerWarnings.cmake
+include(CompilerWarnings)
+add_library(project_warnings INTERFACE)
+set_project_warnings(project_warnings)
 
-set(CMAKE_AUTOMOC OFF)
-set(CMAKE_INCLUDE_CURRENT_DIR OFF)
+# Link this 'library' to set the c++ standard / compile-time options requested
+include(CompilerFlags)
+add_library(project_options INTERFACE)
+set_project_compile_flags(project_options)
 
-macro(remove_release_flag flag)
-    string(REPLACE "${flag}" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-    string(REPLACE "${flag}" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-endmacro()
+# sanitizer options if supported by compiler
+include(Sanitizers)
+enable_sanitizers(project_options)
 
-# warnings and optimization
-if(NOT MSVC)
-    ucm_add_flags(-O2 -g -ffast-math)
-    ucm_add_flags(-Werror -Wall -Wextra)
-    ucm_add_flags(-Wnarrowing)
-    ucm_add_flags(-Wno-shadow)
-    ucm_add_flags(CXX -Wnon-virtual-dtor)
-    remove_release_flag("-O3")
-else()
-    ucm_add_flags(/O2 /fp:fast)
-
-    IF (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-        STRING(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    ELSE (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-    ENDIF (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-
-    IF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
-        STRING(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-    ELSE (CMAKE_C_FLAGS MATCHES "/W[0-4]")
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
-    ENDIF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
-
-    ucm_add_flags(/wd4127)
-
-endif()
-
-if (CMAKE_COMPILER_IS_GNUCC)
-  option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" FALSE)
-
-  if (ENABLE_COVERAGE)
-      include(CodeCoverage)
-      APPEND_COVERAGE_COMPILER_FLAGS()
-      set(COVERAGE_EXCLUDES '${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/*'
-                            '${CMAKE_CURRENT_SOURCE_DIR}/tests/*'
-                            '/usr/*'
-                            '${CMAKE_BINARY_DIR}/*')
-
-  endif()
-
-  option(GPROF "Build for gprof" OFF)
-  if (${GPROF})
-      ucm_add_flags(-pg -g)
-      ucm_add_linker_flags(-pg)
-  endif()
-endif()
-
-if (UNIX)
-    option(PREFER_DBUS_IPC "Prefer dbus IPC if available" ON)
-endif()
-
-if (APPLE)
-    ucm_add_flags(CXX -stdlib=libc++)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
-endif()
-
-if (WIN32)
-    add_definitions(-DNOMINMAX)
-endif()
-
-option(PERF "Build for performance test" OFF)
-if(${PERF})
-    add_definitions(-DGLOGG_PERF_MEASURE_FPS)
-endif()
+# allow for static analysis options
+include(StaticAnalyzers)
 
 ucm_print_flags()
 
-add_custom_target(ci_config SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
-    ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
-    ${CMAKE_CURRENT_SOURCE_DIR}/latest.json
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/prepare_release.cmd
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_klogg_listfile.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_dll_listfile.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linux/make_appimage.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh
-)
-
-add_custom_target(installation SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/packaging/windows/klogg.nsi
-    ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
-)
-
-add_custom_target(docs SOURCES
-    ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE} ${DOCUMENTATION_FILE}
-)
-
-add_custom_target(stuff SOURCES
-   .clang-format
-)
-
-set(DOCUMENTATION_RESOURCE ${CMAKE_BINARY_DIR}/generated/documentation.qrc)
-
-option(USE_LTO "Use link time optimization" ON)
+find_package(Qt5 COMPONENTS Core Widgets Concurrent Network Xml REQUIRED)
+set(CMAKE_AUTOMOC OFF)
+set(CMAKE_INCLUDE_CURRENT_DIR OFF)
 
 add_subdirectory(3rdparty)
 add_subdirectory(src)
 add_subdirectory(website)
 
-option(BUILD_TESTS "Build tests" ON)
+
+enable_testing()
+add_test(
+    NAME klogg_smoke
+    COMMAND klogg -platform offscreen -v
+)
+
 if (${BUILD_TESTS})
-    enable_testing()
-
-    add_test(
-        NAME klogg_smoke
-        COMMAND klogg -platform offscreen -v
-    )
-
     add_subdirectory(tests)
 endif()
 
 # Installation and packaging
-
 if(UNIX)
     include(InstallRequiredSystemLibraries)
 
@@ -248,6 +165,31 @@ if(UNIX)
     INCLUDE(CPack)
 endif()
 
+# for IDE grouping
+add_custom_target(ci_config SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/latest.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/prepare_release.cmd
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_klogg_listfile.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_dll_listfile.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linux/make_appimage.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh
+)
 
+add_custom_target(installation SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/packaging/windows/klogg.nsi
+    ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
+)
+
+add_custom_target(docs SOURCES
+    ${README_FILE} ${COPYING_FILE} ${NOTICE_FILE} ${DOCUMENTATION_FILE}
+)
+
+add_custom_target(stuff SOURCES
+   .clang-format
+)
 
 

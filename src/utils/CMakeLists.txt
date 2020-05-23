@@ -24,6 +24,8 @@ set_target_properties(utils PROPERTIES AUTOMOC ON)
 
 target_include_directories(utils PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(utils PUBLIC
+        project_options
+        project_warnings
         Qt5::Gui
         Qt5::Network
         Qt5::Concurrent

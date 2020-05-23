@@ -13,21 +13,28 @@ jobs:
           - os: ubuntu
             cc: gcc-8
             cxx: g++-8
+            arch: x64
 
           - os: windows
             cc: cl
             cxx: cl
+            arch: x64
+
+          - os: windows
+            cc: cl
+            cxx: cl
+            arch: x86
 
           - os: macos
             cc: clang
             cxx: clang++
+            arch: x64
 
     runs-on: ${{ matrix.config.os }}-latest
 
     steps:
     - uses: actions/checkout@v2
     - uses: seanmiddleditch/gha-setup-ninja@master
-    - uses: ilammy/msvc-dev-cmd@v1
 
     - name: Cache Qt
       id: cache-qt
@@ -41,6 +48,11 @@ jobs:
       with:
         version: ${{ matrix.qt_version }}
         cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Prepare dev cmd
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.config.arch }}
 
     - name: Prepare compiler env
       run: |

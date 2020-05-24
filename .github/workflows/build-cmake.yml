@@ -15,6 +15,11 @@ jobs:
             cxx: g++-8
             arch: x64
 
+          - os: macos
+            cc: clang
+            cxx: clang++
+            arch: x64
+
           - os: windows
             cc: cl
             cxx: cl
@@ -25,29 +30,12 @@ jobs:
             cxx: cl
             arch: x86
 
-          - os: macos
-            cc: clang
-            cxx: clang++
-            arch: x64
 
     runs-on: ${{ matrix.config.os }}-latest
 
     steps:
     - uses: actions/checkout@v2
     - uses: seanmiddleditch/gha-setup-ninja@master
-
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v1
-      with:
-        path: ../Qt
-        key: ${{ runner.os }}-QtCache
-
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v2
-      with:
-        version: ${{ matrix.qt_version }}
-        cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
     - name: Prepare dev cmd
       uses: ilammy/msvc-dev-cmd@v1
@@ -58,6 +46,28 @@ jobs:
       run: |
         echo "::set-env name=CC::${{ matrix.config.cc }}"
         echo "::set-env name=CXX::${{ matrix.config.cxx }}"
+
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-QtCache
+
+    - name: Install Qt x86
+      if: ${{ matrix.config.arch == 'x86' }} 
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: ${{ matrix.qt_version }}
+        arch: win32_msvc2017
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Install Qt x64
+      if: ${{ matrix.config.arch == 'x64' }} 
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: ${{ matrix.qt_version }}
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
     - name: cmake
       run: |

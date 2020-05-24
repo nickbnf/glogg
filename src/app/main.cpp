@@ -100,7 +100,6 @@ void setApplicationAttributes()
         QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
             static_cast<Qt::HighDpiScaleFactorRoundingPolicy>( config.scaleFactorRounding() ) );
 #endif
-
     }
     else {
         QCoreApplication::setAttribute( Qt::AA_DisableHighDpiScaling );
@@ -125,7 +124,7 @@ struct CliParameters {
     bool multi_instance = false;
     bool log_to_file = false;
     bool follow_file = false;
-    decltype( logWARNING ) log_level = logWARNING;
+    int64_t log_level = static_cast<int64_t>( logWARNING );
 
     std::vector<QString> filenames;
 
@@ -135,7 +134,7 @@ struct CliParameters {
     {
         options.add_flag_function(
             "-v,--version",
-            []( size_t ) {
+            []( auto ) {
                 print_version();
                 exit( 0 );
             },
@@ -155,10 +154,7 @@ struct CliParameters {
 
         options.add_flag_function(
             "-d,--debug",
-            [this]( size_t count ) {
-                log_level
-                    = static_cast<std::decay<decltype( log_level )>::type>( logWARNING + count );
-            },
+            [this]( auto count ) { log_level = static_cast<int64_t>( logWARNING ) + count; },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
         std::vector<std::string> raw_filenames;
@@ -194,7 +190,7 @@ int main( int argc, char* argv[] )
         std::cerr << "Exception of unknown type: " << e.what() << std::endl;
     }
 
-    app.initLogger( parameters.log_level, parameters.log_to_file );
+    app.initLogger( static_cast<plog::Severity>( parameters.log_level ), parameters.log_to_file );
 
     LOG( logINFO ) << "Klogg instance " << app.instanceId();
 

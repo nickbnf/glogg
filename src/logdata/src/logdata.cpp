@@ -488,8 +488,8 @@ std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCo
     std::vector<QString> list;
     list.reserve( number.get() );
 
-    qint64 beginning = 0;
-    qint64 end = 0;
+    qint64 beginning{};
+    qint64 end{};
     std::unique_ptr<QTextDecoder> decoder{ codec_->makeDecoder() };
 
     EncodingParameters encodingParams{ codec_ };

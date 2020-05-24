@@ -68,7 +68,7 @@ template <class F0, class... Frest> struct overload<F0, Frest...> : F0, overload
 };
 
 template <class F0> struct overload<F0> : F0 {
-    overload( F0 f0 )
+    explicit overload( F0 f0 )
         : F0( f0 )
     {
     }
@@ -456,6 +456,12 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                         blockData.first = file.pos();
                         clock::time_point ioT1 = clock::now();
                         const auto readBytes = file.read( readBuffer.data(), readBuffer.size() );
+
+                        if ( readBytes < 0 ) {
+                            LOG( logERROR ) << "Reading past the end of file";
+                            break;
+                        }
+
                         blockData.second = readBuffer.left( static_cast<int>( readBytes ) );
                         clock::time_point ioT2 = clock::now();
 

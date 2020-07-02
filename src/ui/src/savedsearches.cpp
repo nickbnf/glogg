@@ -108,7 +108,7 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
 
     if ( settings.contains( "SavedSearches/version" ) ) {
         settings.beginGroup( "SavedSearches" );
-        if ( settings.value( "version" ) == SAVEDSEARCHES_VERSION ) {
+        if ( settings.value( "version" ).toInt() == SAVEDSEARCHES_VERSION ) {
             int size = settings.beginReadArray( "searchHistory" );
             for ( int i = 0; i < size; ++i ) {
                 settings.setArrayIndex( i );

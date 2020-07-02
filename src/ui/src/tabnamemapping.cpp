@@ -83,7 +83,7 @@ void TabNameMapping::retrieveFromStorage( QSettings& settings )
 
     if ( settings.contains( "TabNameMapping/version" ) ) {
         settings.beginGroup( "TabNameMapping" );
-        if ( settings.value( "version" ) == TABNAMEMAPPING_VERSION ) {
+        if ( settings.value( "version" ).toInt() == TABNAMEMAPPING_VERSION ) {
             int size = settings.beginReadArray( "tabNames" );
             for ( auto i = 0; i < size; ++i ) {
                 settings.setArrayIndex( static_cast<int>( i ) );

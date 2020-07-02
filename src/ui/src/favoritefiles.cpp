@@ -79,7 +79,7 @@ void FavoriteFiles::retrieveFromStorage( QSettings& settings )
 
     if ( settings.contains( "FavoriteFiles/version" ) ) {
         settings.beginGroup( "FavoriteFiles" );
-        if ( settings.value( "version" ) == FavoriteFilesVersion ) {
+        if ( settings.value( "version" ).toInt() == FavoriteFilesVersion ) {
             int size = settings.beginReadArray( "favorites" );
             for ( int i = 0; i < size; ++i ) {
                 settings.setArrayIndex( static_cast<int>( i ) );

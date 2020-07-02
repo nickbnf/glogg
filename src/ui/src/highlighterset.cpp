@@ -227,7 +227,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "FilterSet/version" ) ) {
         LOG( logINFO ) << "HighlighterSet found old filters";
         settings.beginGroup( "FilterSet" );
-        if ( settings.value( "version" ) <= FilterSet_VERSION ) {
+        if ( settings.value( "version" ).toInt() <= FilterSet_VERSION ) {
             int size = settings.beginReadArray( "filters" );
             for ( int i = 0; i < size; ++i ) {
                 settings.setArrayIndex( i );
@@ -248,7 +248,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
     }
     else if ( settings.contains( "HighlighterSet/version" ) ) {
         settings.beginGroup( "HighlighterSet" );
-        if ( settings.value( "version" ) <= HighlighterSet_VERSION ) {
+        if ( settings.value( "version" ).toInt() <= HighlighterSet_VERSION ) {
             int size = settings.beginReadArray( "highlighters" );
             for ( int i = 0; i < size; ++i ) {
                 settings.setArrayIndex( i );

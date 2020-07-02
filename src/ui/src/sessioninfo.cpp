@@ -23,8 +23,8 @@
 
 #include "log.h"
 
-const int OPENFILES_VERSION = 1;
-const int SESSION_VERSION = 1;
+constexpr int OPENFILES_VERSION = 1;
+constexpr int SESSION_VERSION = 1;
 
 void SessionInfo::retrieveFromStorage( QSettings& settings )
 {
@@ -32,7 +32,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
 
     settings.beginGroup( "Window" );
 
-    if ( settings.value( "version", 0 ) == SESSION_VERSION ) {
+    if ( settings.value( "version", 0 ).toInt() == SESSION_VERSION ) {
         windows_.clear();
         const auto windowsCount = settings.beginReadArray( "windows" );
         for ( auto windowIndex = 0; windowIndex < windowsCount; ++windowIndex ) {
@@ -43,7 +43,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
 
             if ( settings.contains( "OpenFiles/version" ) ) {
                 settings.beginGroup( "OpenFiles" );
-                if ( settings.value( "version" ) == OPENFILES_VERSION ) {
+                if ( settings.value( "version" ).toInt() == OPENFILES_VERSION ) {
                     int size = settings.beginReadArray( "openFiles" );
                     LOG( logDEBUG ) << "SessionInfo: " << size << " files.";
                     for ( int i = 0; i < size; ++i ) {

@@ -20,6 +20,10 @@
 #ifndef MESSAGERECEIVER_H
 #define MESSAGERECEIVER_H
 
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 12, 0 )
+#include <QtCore/QCborValue>
+#endif
+
 #include <QtCore/QJsonDocument>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -47,13 +51,17 @@ class MessageReceiver final : public QObject {
   public slots:
     void receiveMessage( quint32 instanceId, QByteArray message )
     {
-        auto json = QJsonDocument::fromBinaryData( message );
+      
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 12, 0 )
+        const auto data = QCborValue::fromCbor( message ).toVariant().toMap();
+#else
+        const auto data = QJsonDocument::fromBinaryData( message ).toVariant().toMap();
+#endif
 
-        LOG( logINFO ) << "Message from  " << instanceId << json.toJson().toStdString();
+        LOG( logINFO ) << "Message from  " << instanceId << QJsonDocument::fromVariant(data).toJson();
 
         Q_UNUSED( instanceId );
 
-        QVariantMap data = json.toVariant().toMap();
         if ( data[ "version" ].toString() != kloggVersion() ) {
             return;
         }

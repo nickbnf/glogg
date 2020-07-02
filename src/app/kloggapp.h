@@ -21,6 +21,11 @@
 #define KLOGG_KLOGGAPP_H
 
 #include <QApplication>
+
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 12, 0 )
+#include <QCborValue>
+#endif
+
 #include <QDir>
 #include <QMessageBox>
 #include <QNetworkProxyFactory>
@@ -110,8 +115,13 @@ class KloggApp : public SingleApplication {
             data.insert( "version", kloggVersion() );
             data.insert( "files", QVariant{ filesToOpen } );
 
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 12, 0 )
+            auto cbor = QCborValue::fromVariant( data );
+            this->sendMessage( cbor.toCbor(), 5000 );
+#else
             auto json = QJsonDocument::fromVariant( data );
             this->sendMessage( json.toBinaryData(), 5000 );
+#endif
 
             QTimer::singleShot( 100, this, &SingleApplication::quit );
         } );

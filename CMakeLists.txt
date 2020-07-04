@@ -97,6 +97,7 @@ ucm_print_flags()
 find_package(Qt5 COMPONENTS Core Widgets Concurrent Network Xml REQUIRED)
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
+set(BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(3rdparty)
 add_subdirectory(src)
@@ -169,21 +170,34 @@ if(UNIX)
             DESTINATION share/applications
         )
 
-        # linux
-        IF(CPACK_GENERATOR STREQUAL "RPM")
-            set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
-            set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
-            set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase >= 5.9.5")
-            set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
-        ELSE()
-            set(CPACK_GENERATOR DEB)
-            set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-            set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
-            set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
-            set(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS}
-                                             "libqt5widgets5 (>=5.9.5), libqt5concurrent5 (>=5.9.5), libqt5xml5 (>=5.9.5)")
+        set(CPACK_GENERATOR DEB)
 
-        ENDIF()
+        #deb
+        set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+        set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+        set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://github.com/variar/klogg")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS}
+                                            "libqt5widgets5 (>=5.9.5), libqt5concurrent5 (>=5.9.5), libqt5xml5 (>=5.9.5)")
+
+
+        #RPM
+        set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
+        set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
+        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase >= 5.9.5")
+        set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
+        set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
+        set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION 
+            /usr/share/applications
+            /usr/share/icons
+            /usr/share/icons/hicolor
+            /usr/share/icons/hicolor/16x16
+            /usr/share/icons/hicolor/16x16/apps
+            /usr/share/icons/hicolor/32x32
+            /usr/share/icons/hicolor/32x32/apps
+            /usr/share/icons/hicolor/scalable
+            /usr/share/icons/hicolor/scalable/apps
+        )
+
     endif()
     INCLUDE(CPack)
 endif()

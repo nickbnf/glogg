@@ -352,9 +352,12 @@ if(TBB_BUILD_TBBMALLOC)
 
     if (NOT APPLE)
         install(TARGETS klogg_tbbmalloc
-                LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
-                ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
-                RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+                LIBRARY 
+                DESTINATION ${TBB_INSTALL_LIBRARY_DIR} 
+                PERMISSIONS 
+                  OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                  GROUP_EXECUTE GROUP_READ  
+                  WORLD_READ WORLD_EXECUTE)
     endif()
     
     if (UNIX AND NOT APPLE)
@@ -396,9 +399,12 @@ if(TBB_BUILD_TBBMALLOC_PROXY)
 
     if (NOT APPLE)
       install(TARGETS klogg_tbbmalloc_proxy
-              LIBRARY DESTINATION ${TBB_INSTALL_LIBRARY_DIR}
-              ARCHIVE DESTINATION ${TBB_INSTALL_ARCHIVE_DIR}
-              RUNTIME DESTINATION ${TBB_INSTALL_RUNTIME_DIR})
+              LIBRARY 
+                DESTINATION ${TBB_INSTALL_LIBRARY_DIR} 
+                PERMISSIONS 
+                  OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                  GROUP_EXECUTE GROUP_READ  
+                  WORLD_READ WORLD_EXECUTE)
     endif()
 
     if (UNIX AND NOT APPLE)

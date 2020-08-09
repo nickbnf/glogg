@@ -211,6 +211,7 @@ class AbstractLogView :
     void findNextSelected();
     void findPreviousSelected();
     void copy();
+    void copyWithLineNumbers();
     void markSelected();
 
   private:
@@ -281,6 +282,7 @@ class AbstractLogView :
     QMenu* popupMenu_;
     QAction* markAction_;
     QAction* copyAction_;
+    QAction* copyWithLineNumbersAction_;
     QAction* findNextAction_;
     QAction* findPreviousAction_;
     QAction* addToSearchAction_;

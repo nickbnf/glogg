@@ -161,6 +161,41 @@ QString Selection::getSelectedText( const AbstractLogData* logData ) const
     return text;
 }
 
+QString Selection::getSelectedTextWithLineNumbers(const AbstractLogData *logData, function<QString(int)> getLineNumber) const
+{
+    QString text;
+    QString prefix = "line";
+
+    if ( selectedLine_ >= 0 ) {
+        text = logData->getLineString( selectedLine_ );
+
+        QString lineNumber = getLineNumber(selectedLine_ );
+        text = prefix + lineNumber + ":" +  text;
+    }
+    else if ( selectedPartial_.line >= 0 ) {
+        text = logData->getExpandedLineString( selectedPartial_.line ).
+            mid( selectedPartial_.startColumn, ( selectedPartial_.endColumn -
+                        selectedPartial_.startColumn ) + 1 );
+
+        QString lineNumber = getLineNumber(selectedPartial_.line );
+        text = prefix + lineNumber + ":" +  text;
+    }
+    else if ( selectedRange_.startLine >= 0 ) {
+        QStringList list = logData->getLines( selectedRange_.startLine,
+                selectedRange_.endLine - selectedRange_.startLine + 1 );
+
+        for(int i = 0; i < list.count(); ++i){
+            QString lineNumber = getLineNumber(selectedRange_.startLine + i);
+            list[i] = prefix + lineNumber + ":" +  list[i];
+        }
+
+        text = list.join( "\n" );
+    }
+
+    return text;
+
+}
+
 FilePosition Selection::getNextPosition() const
 {
     qint64 line = 0;

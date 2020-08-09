@@ -261,10 +261,12 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         // Prepare the popup depending on selection type
         if ( selection_.isSingleLine() ) {
             copyAction_->setText( "&Copy this line" );
+            copyWithLineNumbersAction_->setText( "&Copy with line number" );
         }
         else {
             copyAction_->setText( "&Copy" );
             copyAction_->setStatusTip( tr("Copy the selection") );
+            copyWithLineNumbersAction_->setText( "Copy the selection with line numbers" );
         }
 
         markAction_->setEnabled(true);
@@ -963,7 +965,22 @@ void AbstractLogView::copy()
 {
     static QClipboard* clipboard = QApplication::clipboard();
 
-    clipboard->setText( selection_.getSelectedText( logData ) );
+    clipboard->setText( selection_.getSelectedText( logData ));
+}
+
+// Copy the selection to the clipboard
+void AbstractLogView::copyWithLineNumbers()
+{
+    static QClipboard* clipboard = QApplication::clipboard();
+
+    auto ln = [this](int line_index) -> QString {
+        static const QString lineNumberFormat( "%1" );
+        //const QString& lineNumberStr =
+        return lineNumberFormat.arg( displayLineNumber( line_index ),
+                countDigits( maxDisplayLineNumber()) );
+    };
+
+    clipboard->setText( selection_.getSelectedTextWithLineNumbers( logData, ln));
 }
 
 //
@@ -1310,6 +1327,9 @@ void AbstractLogView::createMenu()
     // No text as this action title depends on the type of selection
     connect( copyAction_, SIGNAL(triggered()), this, SLOT(copy()) );
 
+    copyWithLineNumbersAction_ = new QAction( tr("&Copy with line number"), this );
+    connect( copyWithLineNumbersAction_, SIGNAL(triggered()), this, SLOT(copyWithLineNumbers()) );
+
     markAction_ = new QAction( tr("&Mark"), this );
     connect( markAction_, SIGNAL(triggered()), this, SLOT(markSelected()) );
 
@@ -1341,6 +1361,7 @@ void AbstractLogView::createMenu()
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( markAction_ );
     popupMenu_->addAction( copyAction_ );
+    popupMenu_->addAction( copyWithLineNumbersAction_ );
     popupMenu_->addSeparator();
     popupMenu_->addAction( findNextAction_ );
     popupMenu_->addAction( findPreviousAction_ );

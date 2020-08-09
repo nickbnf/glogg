@@ -24,6 +24,9 @@
 #include <QString>
 
 #include "utils.h"
+#include <functional>
+
+using namespace std;
 
 class AbstractLogData;
 
@@ -100,6 +103,9 @@ class Selection
 
     // Returns the text selected from the passed AbstractLogData
     QString getSelectedText( const AbstractLogData* logData ) const;
+
+    // Returns the text with line numbers selected from the passed AbstractLogData
+    QString getSelectedTextWithLineNumbers(const AbstractLogData* logData , function<QString(int)> getLineNumber) const;
 
     // Return the position immediately after the current selection
     // (used for searches).

@@ -102,7 +102,8 @@ class AbstractLogView :
 
     bool isFollowEnabled() const { return followMode_; }
 
-  protected:
+    void gotToLine(QString line);
+protected:
     virtual void mousePressEvent( QMouseEvent* mouseEvent );
     virtual void mouseMoveEvent( QMouseEvent* mouseEvent );
     virtual void mouseReleaseEvent( QMouseEvent* );

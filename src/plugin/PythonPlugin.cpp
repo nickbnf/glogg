@@ -126,6 +126,14 @@ void PythonPlugin::onPopupMenu(AbstractLogView *alv)
     }
 }
 
+void PythonPlugin::onCreateMenu(AbstractLogView *alv)
+{
+    for(auto &o: mHandlers){
+        o.second->onCreateMenu(alv);
+    }
+}
+
+
 //boost::python::api::object PythonPlugin::getTestVerifierType(const string &className)
 //{
 //    return mDerivedVerifierClassContainer.at(className);

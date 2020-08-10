@@ -80,6 +80,20 @@ void PyHandler::onPopupMenu(AbstractLogView* alv)
     PyGILState_Release(gstate);
 }
 
+void PyHandler::onCreateMenu(AbstractLogView* alv)
+{
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
+    if(PyObject_HasAttrString(mObj.ptr(), on_create_menu)){
+
+//        cout << __FUNCTION__ << " call python, index: " << index << "\n";
+        mObj.attr(on_create_menu)();
+    }
+
+    PyGILState_Release(gstate);
+}
+
 bool PyHandler::onTriggerAction(const string& action, const string& data)
 {
     PyGILState_STATE gstate;

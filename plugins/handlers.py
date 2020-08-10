@@ -12,3 +12,6 @@ class glogg(PyHandler):
     def on_popup_menu(self):
         print("on_popup_menu")
 
+    def on_create_menu(self):
+        print("on_create_menu")
+

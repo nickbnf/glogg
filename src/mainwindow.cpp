@@ -176,6 +176,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     central_widget->setLayout( main_layout );
 
     setCentralWidget( central_widget );
+
+    pythonPlugin_.createInstances();
 }
 
 void MainWindow::reloadGeometry()
@@ -223,8 +225,6 @@ void MainWindow::startBackgroundTasks()
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     versionChecker_.startCheck();
 #endif
-
-    pythonPlugin_.createInstances();
 }
 
 //

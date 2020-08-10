@@ -32,6 +32,8 @@ public:
 
     private:
     const char* on_popup_menu = "on_popup_menu";
+    const char* on_create_menu = "on_create_menu";
+
     const char* on_trigger = "on_trigger";
     const char* on_release = "on_release";
 
@@ -50,6 +52,7 @@ public:
     void onRelease() override;
 
     void onPopupMenu(AbstractLogView *alv);
+    void onCreateMenu(AbstractLogView *alv);
 };
 
 

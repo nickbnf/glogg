@@ -50,6 +50,7 @@
 #include "quickfindpattern.h"
 #include "overview.h"
 #include "configuration.h"
+#include <QInputDialog>
 
 namespace {
 int mapPullToFollowLength( int length );
@@ -425,6 +426,35 @@ void AbstractLogView::timerEvent( QTimerEvent* timerEvent )
     QAbstractScrollArea::timerEvent( timerEvent );
 }
 
+void AbstractLogView::gotToLine(QString line)
+{
+    if(line.length() == 0){
+        bool ok;
+        line = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+                                             tr("User name:"), QLineEdit::Normal,
+                                             QDir::home().dirName(), &ok);
+        if (ok && !line.isEmpty()){
+            cout << line.toStdString() << "\n";
+        }else{
+            return;
+        }
+    }
+
+    if(line[0] == '+' || line[0] == '-'){
+        int delta = line.toInt();
+        moveSelection(delta);
+    } else {
+        int newLine = qMax( 0, line.toInt() - 1 );
+
+        if ( newLine >= logData->getNbLine() ){
+            newLine = logData->getNbLine() - 1;
+        }
+        selectAndDisplayLine( newLine );
+    }
+
+
+}
+
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
     LOG(logDEBUG4) << "keyPressEvent received";
@@ -452,6 +482,8 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else if ( (keyEvent->key() == Qt::Key_PageUp && controlModifier)
            || (keyEvent->key() == Qt::Key_Home && controlModifier) )
         selectAndDisplayLine( 0 );
+    else if ( (keyEvent->key() == Qt::Key_L && controlModifier))
+        gotToLine("");
     else if ( keyEvent->key() == Qt::Key_F3 && !shiftModifier )
         searchNext(); // duplicate of 'n' action.
     else if ( keyEvent->key() == Qt::Key_F3 && shiftModifier )
@@ -1372,6 +1404,8 @@ void AbstractLogView::createMenu()
     popupMenu_->addAction( findPreviousAction_ );
     popupMenu_->addAction( addToSearchAction_ );
     popupMenu_->addAction( addToQuickFindAction_ );
+
+    pythonPlugin_->onCreateMenu(this);
 }
 
 void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )

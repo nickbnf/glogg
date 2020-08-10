@@ -28,6 +28,7 @@ public:
     void setActivePlugin(const string& className);
     void onPopupMenu(AbstractLogView* alv);
     //boost::python::object getTestVerifierType(const string& className);
+    void onCreateMenu(AbstractLogView *alv);
 private:
     struct DerivedType
     {

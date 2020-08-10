@@ -430,9 +430,10 @@ void AbstractLogView::gotToLine(QString line)
 {
     if(line.length() == 0){
         bool ok;
-        line = QInputDialog::getText(this, tr("QInputDialog::getText()"),
-                                             tr("User name:"), QLineEdit::Normal,
-                                             QDir::home().dirName(), &ok);
+        QString currentLine = QString::number(selection_.selectedLine() + 1);
+        line = QInputDialog::getText(this, tr("Go to line"),
+                                             tr("Line number (use -+ for relative offset) :"), QLineEdit::Normal,
+                                             currentLine, &ok);
         if (ok && !line.isEmpty()){
             cout << line.toStdString() << "\n";
         }else{

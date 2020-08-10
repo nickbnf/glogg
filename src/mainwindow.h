@@ -20,6 +20,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "PythonPlugin.h"
 #include <memory>
 #include <QMainWindow>
 
@@ -221,6 +222,8 @@ class MainWindow : public QMainWindow
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     VersionChecker versionChecker_;
 #endif
+
+    PythonPlugin pythonPlugin_;
 };
 
 #endif

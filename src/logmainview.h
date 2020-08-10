@@ -28,7 +28,7 @@
 class LogMainView : public AbstractLogView
 {
   public:
-    LogMainView( const LogData* newLogData,
+    LogMainView(PythonPlugin *pp, const LogData* newLogData,
             const QuickFindPattern* const quickFindPattern,
             Overview* overview,
             OverviewWidget* overview_widget,

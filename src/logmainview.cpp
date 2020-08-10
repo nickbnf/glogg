@@ -29,12 +29,12 @@
 
 #include <QKeyEvent>
 
-LogMainView::LogMainView( const LogData* newLogData,
+LogMainView::LogMainView(PythonPlugin* pp, const LogData* newLogData,
         const QuickFindPattern* const quickFindPattern,
         Overview* overview,
         OverviewWidget* overview_widget,
         QWidget* parent)
-    : AbstractLogView( newLogData, quickFindPattern, parent )
+    : AbstractLogView(pp, newLogData, quickFindPattern, parent )
 {
     filteredData_ = NULL;
 

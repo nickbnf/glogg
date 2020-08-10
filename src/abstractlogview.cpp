@@ -24,6 +24,7 @@
 // functions when view specific behaviour is desired, using the template
 // pattern.
 
+#include "PythonPlugin.h"
 #include <iostream>
 #include <cassert>
 
@@ -138,7 +139,7 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
     }
 }
 
-AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
+AbstractLogView::AbstractLogView(PythonPlugin* pp, const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
     QAbstractScrollArea( parent ),
     followElasticHook_( HOOK_THRESHOLD ),
@@ -148,7 +149,8 @@ AbstractLogView::AbstractLogView(const AbstractLogData* newLogData,
     autoScrollTimer_(),
     selection_(),
     quickFindPattern_( quickFindPattern ),
-    quickFind_( newLogData, &selection_, quickFindPattern )
+    quickFind_( newLogData, &selection_, quickFindPattern ),
+    pythonPlugin_(pp)
 {
     logData = newLogData;
 
@@ -287,6 +289,9 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         // "Add to search" only makes sense in regexp mode
         if ( config->mainRegexpType() != ExtendedRegexp )
             addToSearchAction_->setEnabled( false );
+
+
+        pythonPlugin_->onPopupMenu(this);
 
         // Display the popup (blocking)
         popupMenu_->exec( QCursor::pos() );

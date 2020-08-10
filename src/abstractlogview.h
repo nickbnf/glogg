@@ -35,9 +35,11 @@
 #include "viewtools.h"
 #include "drawhelpers.h"
 
+
 class QMenu;
 class QAction;
 class AbstractLogData;
+class PythonPlugin;
 
 // Utility class representing a buffer for number entered on the keyboard
 // The buffer keep at most 7 digits, and reset itself after a timeout.
@@ -78,10 +80,11 @@ class AbstractLogView :
   Q_OBJECT
 
   public:
+    friend class PythonPlugin;
     // Constructor of the widget, the data set is passed.
     // The caller retains ownership of the data set.
     // The pointer to the QFP is used for colouring and QuickFind searches
-    AbstractLogView( const AbstractLogData* newLogData,
+    AbstractLogView(PythonPlugin* pp, const AbstractLogData* newLogData,
             const QuickFindPattern* const quickFind, QWidget* parent=0 );
     ~AbstractLogView();
 
@@ -350,6 +353,8 @@ class AbstractLogView :
     void mergeFilterSelection(const QList<LineChunk> &filterMatchList,
                               const QList<LineChunk> &inList,
                               QList<LineChunk> &outList);
+
+    PythonPlugin* pythonPlugin_ = nullptr;
 };
 
 #endif

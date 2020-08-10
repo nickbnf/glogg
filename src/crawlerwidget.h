@@ -45,6 +45,8 @@ class SavedSearches;
 class QStandardItemModel;
 class OverviewWidget;
 
+class PythonPlugin;
+
 // Implements the central widget of the application.
 // It includes both windows, the search line, the info
 // lines and various buttons.
@@ -55,7 +57,7 @@ class CrawlerWidget : public QSplitter,
   Q_OBJECT
 
   public:
-    CrawlerWidget( QWidget *parent=0 );
+    CrawlerWidget(PythonPlugin* pp,  QWidget *parent=0 );
 
     // Get the line number of the first line displayed.
     int getTopLine() const;
@@ -299,6 +301,8 @@ class CrawlerWidget : public QSplitter,
     // Current encoding setting;
     Encoding        encodingSetting_ = Encoding::ENCODING_AUTO;
     QString         encoding_text_;
+
+    PythonPlugin* pythonPlugin_ = nullptr;
 };
 
 #endif

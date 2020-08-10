@@ -20,6 +20,7 @@
 #ifndef GLOGGAPP_H
 #define GLOGGAPP_H
 
+#include "PythonPlugin.h"
 #include <QApplication>
 
 // Subclass QApplication to add a custom event handler

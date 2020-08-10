@@ -35,6 +35,8 @@
 #include "qtfilewatcher.h"
 #endif
 
+#include <memory>
+
 // Implementation of the 'start' functions for each operation
 
 void LogData::AttachOperation::doStart(

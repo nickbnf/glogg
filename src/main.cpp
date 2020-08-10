@@ -53,6 +53,8 @@ using namespace std;
 
 
 #include "log.h"
+#include "PythonPlugin.h"
+#include "PyHandler.h"
 
 static void print_version();
 
@@ -271,6 +273,10 @@ int main(int argc, char *argv[])
     }
 
     mw.startBackgroundTasks();
+
+    //PythonPlugin pp;
+    //pp.createInstances();
+    //pp["glogg"]->onTrigger(1);
 
     return app.exec();
 }

@@ -191,7 +191,7 @@ void MainWindow::reloadSession()
     int current_file_index = -1;
 
     for ( auto open_file: session_->restore(
-               []() { return new CrawlerWidget(); },
+               [this]() { return new CrawlerWidget(&pythonPlugin_); },
                &current_file_index ) )
     {
         QString file_name = { open_file.first.c_str() };
@@ -223,6 +223,8 @@ void MainWindow::startBackgroundTasks()
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     versionChecker_.startCheck();
 #endif
+
+    pythonPlugin_.createInstances();
 }
 
 //
@@ -839,7 +841,7 @@ bool MainWindow::loadFile( const QString& fileName )
     try {
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
                 session_->open( fileName.toStdString(),
-                    []() { return new CrawlerWidget(); } ) );
+                    [this]() { return new CrawlerWidget(&pythonPlugin_); } ) );
         assert( crawler_widget );
 
         // We won't show the widget until the file is fully loaded

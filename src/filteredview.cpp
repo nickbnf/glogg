@@ -25,9 +25,9 @@
 
 #include "filteredview.h"
 
-FilteredView::FilteredView( LogFilteredData* newLogData,
+FilteredView::FilteredView(PythonPlugin* pp,  LogFilteredData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent )
-    : AbstractLogView( newLogData, quickFindPattern, parent )
+    : AbstractLogView(pp, newLogData, quickFindPattern, parent )
 {
     // We keep a copy of the filtered data for fast lookup of the line type
     logFilteredData_ = newLogData;

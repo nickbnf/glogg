@@ -5,6 +5,15 @@
 # Debug builds: qmake CONFIG+=debug
 # Release builds: qmake
 
+CONFIG += cpp17
+QMAKE_CXXFLAGS += -std=c++17
+QMAKE_CXXFLAGS += "-DHAVE_MAKE_UNIQUE"
+
+LIBS += /usr/lib/x86_64-linux-gnu/libpython3.6m.so
+LIBS += -lboost_python3-py36
+LIBS += -lboost_system
+LIBS += -lboost_filesystem
+
 TARGET = glogg
 TEMPLATE = app
 
@@ -55,9 +64,14 @@ SOURCES += \
     src/viewtools.cpp \
     src/encodingspeculator.cpp \
     src/gloggapp.cpp \
-    src/drawhelpers.cpp
+    src/drawhelpers.cpp \
+    src/plugin/PythonPlugin.cpp \
+    src/plugin/PyHandler.cpp \
+    src/plugin/Handler.cpp
 
 INCLUDEPATH += src/
+INCLUDEPATH += src/plugin
+INCLUDEPATH += /usr/include/python3.6m
 
 HEADERS += \
     src/data/abstractlogdata.h \
@@ -104,7 +118,11 @@ HEADERS += \
     src/viewtools.h \
     src/encodingspeculator.h \
     src/gloggapp.h \
-    src/drawhelpers.h
+    src/drawhelpers.h \
+    src/plugin/PythonPlugin.h \
+    src/plugin/JSonParser.h \
+    src/plugin/PyHandler.h \
+    src/plugin/Handler.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -200,9 +218,9 @@ MOC_DIR = $${OUT_PWD}/.moc/$${DESTDIR}-shared
 UI_DIR = $${OUT_PWD}/.ui/$${DESTDIR}-shared
 
 # Debug symbols even in release build
-QMAKE_CXXFLAGS = -g
+QMAKE_CXXFLAGS += -g
 
-CONFIG += c++11
+#CONFIG += c++11
 
 # Extra compiler arguments
 # QMAKE_CXXFLAGS += -Weffc++
@@ -320,3 +338,9 @@ else {
 perf {
     QMAKE_CXXFLAGS += -DGLOGG_PERF_MEASURE_FPS
 }
+
+DISTFILES += \
+    debug/handlers.py \
+    debug/handlers2.py \
+    plugins/handlers.py \
+    plugins/handlers2.py

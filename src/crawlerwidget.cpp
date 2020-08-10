@@ -83,8 +83,8 @@ class CrawlerWidgetContext : public ViewContextInterface {
 
 // Constructor only does trivial construction. The real work is done once
 // the data is attached.
-CrawlerWidget::CrawlerWidget( QWidget *parent )
-        : QSplitter( parent ), overview_()
+CrawlerWidget::CrawlerWidget(PythonPlugin *pp, QWidget *parent )
+        : QSplitter( parent ), overview_(), pythonPlugin_(pp)
 {
     logData_         = nullptr;
     logFilteredData_ = nullptr;
@@ -671,9 +671,9 @@ void CrawlerWidget::setup()
     bottomWindow = new QWidget;
     overviewWidget_ = new OverviewWidget();
     logMainView     = new LogMainView(
-            logData_, quickFindPattern_.get(), &overview_, overviewWidget_ );
+            pythonPlugin_, logData_, quickFindPattern_.get(), &overview_, overviewWidget_ );
     filteredView    = new FilteredView(
-            logFilteredData_, quickFindPattern_.get() );
+            pythonPlugin_, logFilteredData_, quickFindPattern_.get() );
 
     overviewWidget_->setOverview( &overview_ );
     overviewWidget_->setParent( logMainView );

@@ -151,6 +151,7 @@ class LogDataWorkerThread : public QThread
     void indexAdditionalLines();
     // Interrupts the indexing if one is in progress
     void interrupt();
+    const QString& getFileName() const { return fileName_; }
 
     // Returns a copy of the current indexing data
     void getIndexingData( qint64* indexedSize,

@@ -20,7 +20,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "PythonPlugin.h"
 #include <memory>
 #include <QMainWindow>
 
@@ -52,7 +51,7 @@ class MainWindow : public QMainWindow
   public:
     // Constructor
     // The ownership of the session is transferred to us
-    MainWindow( std::unique_ptr<Session> session,
+    MainWindow(PythonPlugin* pp, std::unique_ptr<Session> session,
             std::shared_ptr<ExternalCommunicator> external_communicator );
 
     // Re-install the geometry stored in config file
@@ -223,7 +222,7 @@ class MainWindow : public QMainWindow
     VersionChecker versionChecker_;
 #endif
 
-    PythonPlugin pythonPlugin_;
+    PythonPlugin* pythonPlugin_ = nullptr;
 };
 
 #endif

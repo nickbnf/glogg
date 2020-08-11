@@ -54,6 +54,7 @@ class CrawlerWidget : public QSplitter,
     public QuickFindMuxSelectorInterface, public ViewInterface,
     public MuxableDocumentInterface
 {
+   friend class PythonPlugin;
   Q_OBJECT
 
   public:

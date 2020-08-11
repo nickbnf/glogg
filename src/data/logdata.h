@@ -38,6 +38,7 @@
 #include "loadingstatus.h"
 
 class LogFilteredData;
+class PythonPlugin;
 
 // Thrown when trying to attach an already attached LogData
 class CantReattachErr {};
@@ -45,11 +46,12 @@ class CantReattachErr {};
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
 class LogData : public AbstractLogData {
+    friend class PythonPlugin;
   Q_OBJECT
 
   public:
     // Creates an empty LogData
-    LogData();
+    LogData(PythonPlugin* pp);
     // Destroy an object
     ~LogData();
 
@@ -80,6 +82,7 @@ class LogData : public AbstractLogData {
 
     // Get the auto-detected encoding for the indexed text.
     EncodingSpeculator::Encoding getDetectedEncoding() const;
+    const QString& getFileName() const { return workerThread_.getFileName(); }
 
   signals:
     // Sent during the 'attach' process to signal progress
@@ -192,6 +195,7 @@ class LogData : public AbstractLogData {
     // When acquiring both, data should be help before locking file.
 
     LogDataWorkerThread workerThread_;
+    PythonPlugin* pythonPlugin_;
 };
 
 Q_DECLARE_METATYPE( LogData::MonitoredFileStatus );

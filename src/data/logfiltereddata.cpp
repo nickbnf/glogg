@@ -39,7 +39,7 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
     currentRegExp_(),
     visibility_(),
     filteredItemsCache_(),
-    workerThread_( nullptr ),
+    workerThread_(nullptr, nullptr ),
     marks_()
 {
     /* Prevent any more searching */
@@ -52,14 +52,15 @@ LogFilteredData::LogFilteredData() : AbstractLogData(),
 }
 
 // Usual constructor: just copy the data, the search is started by runSearch()
-LogFilteredData::LogFilteredData( const LogData* logData )
+LogFilteredData::LogFilteredData(PythonPlugin *pp, const LogData* logData )
     : AbstractLogData(),
     matching_lines_( SearchResultArray() ),
     currentRegExp_(),
     visibility_(),
     filteredItemsCache_(),
-    workerThread_( logData ),
-    marks_()
+    workerThread_(pp, logData ),
+    marks_(),
+    pythonPlugin_(pp)
 {
     // Starts with an empty result list
     maxLength_ = 0;

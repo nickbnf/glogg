@@ -36,6 +36,7 @@ public:
 
     const char* on_trigger = "on_trigger";
     const char* on_release = "on_release";
+    const char* on_search = "on_search";
 
     map<string, int> mPyHandlers = {{on_trigger, -1}};
     boost::python::object mType;
@@ -53,6 +54,8 @@ public:
 
     void onPopupMenu(AbstractLogView *alv);
     void onCreateMenu(AbstractLogView *alv);
+    bool isOnSearcAvailable();
+    SearchResultArray onSearch(const string &fileName, const string &pattern);
 };
 
 

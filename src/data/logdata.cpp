@@ -64,8 +64,8 @@ void LogData::PartialIndexOperation::doStart(
 
 // Constructs an empty log file.
 // It must be displayed without error.
-LogData::LogData() : AbstractLogData(), indexing_data_(),
-    fileMutex_(), workerThread_( &indexing_data_ )
+LogData::LogData(PythonPlugin *pp) : AbstractLogData(), indexing_data_(),
+    fileMutex_(), workerThread_( &indexing_data_ ), pythonPlugin_(pp)
 {
     // Start with an "empty" log
     attached_file_ = nullptr;
@@ -141,7 +141,7 @@ QDateTime LogData::getLastModifiedDate() const
 // Return an initialised LogFilteredData. The search is not started.
 LogFilteredData* LogData::getNewFilteredData() const
 {
-    LogFilteredData* newFilteredData = new LogFilteredData( this );
+    LogFilteredData* newFilteredData = new LogFilteredData(pythonPlugin_, this );
 
     return newFilteredData;
 }

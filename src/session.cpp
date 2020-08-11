@@ -32,7 +32,7 @@
 #include "data/logdata.h"
 #include "data/logfiltereddata.h"
 
-Session::Session()
+Session::Session(PythonPlugin *pp): pythonPlugin_(pp)
 {
     GetPersistentInfo().retrieve( QString( "savedSearches" ) );
 
@@ -176,7 +176,7 @@ ViewInterface* Session::openAlways( const std::string& file_name,
         const char* view_context )
 {
     // Create the data objects
-    auto log_data          = std::make_shared<LogData>();
+    auto log_data          = std::make_shared<LogData>(pythonPlugin_);
     auto log_filtered_data =
         std::shared_ptr<LogFilteredData>( log_data->getNewFilteredData() );
 

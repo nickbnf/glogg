@@ -34,6 +34,7 @@
 
 class LogData;
 class Marks;
+class PythonPlugin;
 
 // A list of matches found in a LogData, it stores all the matching lines,
 // which can be accessed using the AbstractLogData interface, together with
@@ -47,7 +48,7 @@ class LogFilteredData : public AbstractLogData {
     // Creates an empty LogFilteredData
     LogFilteredData();
     // Constructor used by LogData
-    LogFilteredData( const LogData* logData );
+    LogFilteredData(PythonPlugin* pp, const LogData* logData );
 
     ~LogFilteredData();
 
@@ -162,6 +163,8 @@ class LogFilteredData : public AbstractLogData {
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
     void regenerateFilteredItemsCache() const;
+
+    PythonPlugin* pythonPlugin_ = nullptr;
 };
 
 // A class representing a Mark or Match.

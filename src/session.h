@@ -37,6 +37,7 @@ class ViewContextInterface;
 class LogData;
 class LogFilteredData;
 class SavedSearches;
+class PythonPlugin;
 
 // File unreadable error
 class FileUnreadableErr {};
@@ -47,7 +48,7 @@ class FileUnreadableErr {};
 // (SavedSearches, FileHistory, QFPattern...)
 class Session {
   public:
-    Session();
+    Session(PythonPlugin* pp);
     ~Session();
 
     // No copy/assignment please
@@ -123,6 +124,7 @@ class Session {
 
     // Global quickfind pattern
     std::shared_ptr<QuickFindPattern> quickFindPattern_;
+    PythonPlugin* pythonPlugin_;
 };
 
 #endif

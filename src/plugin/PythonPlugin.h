@@ -11,6 +11,7 @@
 #include <string>
 #include <JSonParser.h>
 #include "Handler.h"
+#include "data/search_result.h"
 
 using namespace std;
 
@@ -29,6 +30,8 @@ public:
     void onPopupMenu(AbstractLogView* alv);
     //boost::python::object getTestVerifierType(const string& className);
     void onCreateMenu(AbstractLogView *alv);
+    bool isOnSearcAvailable();
+    SearchResultArray doSearch(const string &fileName, const string &pattern);
 private:
     struct DerivedType
     {

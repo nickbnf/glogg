@@ -26,32 +26,11 @@
 #include <QWaitCondition>
 #include <QRegularExpression>
 #include <QList>
+#include "search_result.h"
 
 class LogData;
+class PythonPlugin;
 
-// Line number are unsigned 32 bits for now.
-typedef uint32_t LineNumber;
-
-// Class encapsulating a single matching line
-// Contains the line number the line was found in and its content.
-class MatchingLine {
-  public:
-    MatchingLine( LineNumber line ) { lineNumber_ = line; };
-
-    // Accessors
-    LineNumber lineNumber() const { return lineNumber_; }
-
-    bool operator <( const MatchingLine& other) const
-    { return lineNumber_ < other.lineNumber_; }
-
-  private:
-    LineNumber lineNumber_;
-};
-
-// This is an array of matching lines.
-// It shall be implemented for random lookup speed, so
-// a fixed "in-place" array (vector) is probably fine.
-typedef std::vector<MatchingLine> SearchResultArray;
 
 // This class is a mutex protected set of search result data.
 // It is thread safe.
@@ -88,7 +67,7 @@ class SearchOperation : public QObject
 {
   Q_OBJECT
   public:
-    SearchOperation(const LogData* sourceLogData,
+    SearchOperation(PythonPlugin* pp, const LogData* sourceLogData,
             const QRegularExpression &regExp, bool* interruptRequest );
 
     virtual ~SearchOperation() { }
@@ -110,23 +89,24 @@ class SearchOperation : public QObject
     bool* interruptRequested_;
     const QRegularExpression regexp_;
     const LogData* sourceLogData_;
+    PythonPlugin* pythonPlugin_;
 };
 
 class FullSearchOperation : public SearchOperation
 {
   public:
-    FullSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
+    FullSearchOperation(PythonPlugin* pp, const LogData* sourceLogData, const QRegularExpression& regExp,
             bool* interruptRequest )
-        : SearchOperation( sourceLogData, regExp, interruptRequest ) {}
+        : SearchOperation(pp, sourceLogData, regExp, interruptRequest ) {}
     virtual void start( SearchData& result );
 };
 
 class UpdateSearchOperation : public SearchOperation
 {
   public:
-    UpdateSearchOperation( const LogData* sourceLogData, const QRegularExpression& regExp,
+    UpdateSearchOperation(PythonPlugin* pp, const LogData* sourceLogData, const QRegularExpression& regExp,
             bool* interruptRequest, qint64 position )
-        : SearchOperation( sourceLogData, regExp, interruptRequest ),
+        : SearchOperation(pp, sourceLogData, regExp, interruptRequest ),
         initialPosition_( position ) {}
     virtual void start( SearchData& result );
 
@@ -144,7 +124,7 @@ class LogFilteredDataWorkerThread : public QThread
   Q_OBJECT
 
   public:
-    LogFilteredDataWorkerThread( const LogData* sourceLogData );
+    LogFilteredDataWorkerThread(PythonPlugin* pp, const LogData* sourceLogData );
     ~LogFilteredDataWorkerThread();
 
     // Start the search with the passed regexp
@@ -172,6 +152,7 @@ class LogFilteredDataWorkerThread : public QThread
 
   private:
     const LogData* sourceLogData_;
+    PythonPlugin* pythonPlugin_;
 
     // Mutex to protect operationRequested_ and friends
     QMutex mutex_;

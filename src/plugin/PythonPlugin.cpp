@@ -133,6 +133,28 @@ void PythonPlugin::onCreateMenu(AbstractLogView *alv)
     }
 }
 
+bool PythonPlugin::isOnSearcAvailable()
+{
+    for(auto &o: mHandlers){
+        if (o.second->isOnSearcAvailable()){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern )
+{
+    for(auto &o: mHandlers){
+        if (o.second->isOnSearcAvailable()){
+            return o.second->onSearch(fileName, pattern);
+        }
+    }
+
+    return {};
+}
+
 
 //boost::python::api::object PythonPlugin::getTestVerifierType(const string &className)
 //{

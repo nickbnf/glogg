@@ -17,6 +17,7 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "PythonPlugin.h"
 #include <QFileInfo>
 
 #include <memory>
@@ -253,8 +254,10 @@ int main(int argc, char *argv[])
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );
 
-    std::unique_ptr<Session> session( new Session() );
-    MainWindow mw( std::move( session ), externalCommunicator );
+    PythonPlugin pythonPlugin;
+    pythonPlugin.createInstances();
+    std::unique_ptr<Session> session( new Session(&pythonPlugin) );
+    MainWindow mw(&pythonPlugin, std::move( session ), externalCommunicator );
 
     // Geometry
     mw.reloadGeometry();

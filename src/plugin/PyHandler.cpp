@@ -10,6 +10,10 @@ BOOST_PYTHON_MODULE(PyHandler)
     class_<std::vector<string> >("StringVec")
         .def(vector_indexing_suite<std::vector<string> >());
 
+    class_<std::vector<MatchingLine> >("SearchResultVec")
+        .def(vector_indexing_suite<std::vector<MatchingLine> >());
+
+
     class_<PyHandlerInitParams>("PyHandlerInitParams");
 
     //
@@ -156,4 +160,65 @@ void PyHandler::onRelease()
     }
 
     PyGILState_Release(gstate);
+}
+
+
+bool PyHandler::isOnSearcAvailable()
+{
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
+    try{
+        if(PyObject_HasAttrString(mObj.ptr(), on_search)){
+            //mObj.attr(on_search)();
+            return true;
+        }
+    } catch (error_already_set& e) {
+        PyErr_PrintEx(0);
+        throw std::logic_error(string("\n[") +
+                               __FUNCTION__ +
+                               string("] !Error during executing Python code\n"));
+    }
+
+    PyGILState_Release(gstate);
+
+    return false;
+}
+
+SearchResultArray PyHandler::onSearch(const string& fileName, const string& pattern )
+{
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
+    try{
+        if(PyObject_HasAttrString(mObj.ptr(), on_search)){
+            vector<string> ss;
+            //py::list ret = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());;
+            boost::python::object o = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());
+            //std::list<int> l = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());
+            list l = extract<boost::python::list>(o);
+            cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
+
+            SearchResultArray ret;
+            for(int i = 0; i < boost::python::len(l); ++i){
+                ret.push_back(MatchingLine(atoi(extract<char*>(l[i]))));
+            }
+
+
+            //FOREACH(const string& s, ss) ret.append(s);
+            //return s;
+
+            return ret;
+        }
+    } catch (error_already_set& e) {
+        PyErr_PrintEx(0);
+        throw std::logic_error(string("\n[") +
+                               __FUNCTION__ +
+                               string("] !Error during executing Python code\n"));
+    }
+
+    PyGILState_Release(gstate);
+
+    return {};
+
 }

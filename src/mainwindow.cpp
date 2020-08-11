@@ -21,6 +21,7 @@
 // managing the menus, the toolbar, and the CrawlerWidget. It also
 // load/save the settings on opening/closing of the app
 
+#include "PythonPlugin.h"
 #include <iostream>
 #include <cassert>
 
@@ -54,7 +55,7 @@
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
 
-MainWindow::MainWindow( std::unique_ptr<Session> session,
+MainWindow::MainWindow(PythonPlugin *pp, std::unique_ptr<Session> session,
         std::shared_ptr<ExternalCommunicator> external_communicator ) :
     session_( std::move( session )  ),
     externalCommunicator_( external_communicator ),
@@ -62,7 +63,8 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     mainIcon_(),
     signalMux_(),
     quickFindMux_( session_->getQuickFindPattern() ),
-    mainTabWidget_()
+    mainTabWidget_(),
+    pythonPlugin_(pp)
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     ,versionChecker_()
 #endif
@@ -176,8 +178,6 @@ MainWindow::MainWindow( std::unique_ptr<Session> session,
     central_widget->setLayout( main_layout );
 
     setCentralWidget( central_widget );
-
-    pythonPlugin_.createInstances();
 }
 
 void MainWindow::reloadGeometry()
@@ -193,7 +193,7 @@ void MainWindow::reloadSession()
     int current_file_index = -1;
 
     for ( auto open_file: session_->restore(
-               [this]() { return new CrawlerWidget(&pythonPlugin_); },
+               [this]() { return new CrawlerWidget(pythonPlugin_); },
                &current_file_index ) )
     {
         QString file_name = { open_file.first.c_str() };
@@ -841,7 +841,7 @@ bool MainWindow::loadFile( const QString& fileName )
     try {
         CrawlerWidget* crawler_widget = dynamic_cast<CrawlerWidget*>(
                 session_->open( fileName.toStdString(),
-                    [this]() { return new CrawlerWidget(&pythonPlugin_); } ) );
+                    [this]() { return new CrawlerWidget(pythonPlugin_); } ) );
         assert( crawler_widget );
 
         // We won't show the widget until the file is fully loaded

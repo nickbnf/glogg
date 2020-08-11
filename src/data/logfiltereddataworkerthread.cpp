@@ -17,12 +17,14 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "PythonPlugin.h"
 #include <QFile>
 
 #include "log.h"
 
 #include "logfiltereddataworkerthread.h"
 #include "logdata.h"
+#include <functional>
 
 // Number of lines in each chunk to read
 const int SearchOperation::nbLinesInChunk = 5000;
@@ -98,9 +100,9 @@ void SearchData::clear()
     matches_.clear();
 }
 
-LogFilteredDataWorkerThread::LogFilteredDataWorkerThread(
+LogFilteredDataWorkerThread::LogFilteredDataWorkerThread(PythonPlugin *pp,
         const LogData* sourceLogData )
-    : QThread(), mutex_(), operationRequestedCond_(), nothingToDoCond_(), searchData_()
+    : QThread(), mutex_(), operationRequestedCond_(), nothingToDoCond_(), searchData_(), pythonPlugin_(pp)
 {
     terminate_          = false;
     interruptRequested_ = false;
@@ -130,7 +132,7 @@ void LogFilteredDataWorkerThread::search( const QRegularExpression& regExp )
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_ = false;
-    operationRequested_ = new FullSearchOperation( sourceLogData_,
+    operationRequested_ = new FullSearchOperation(pythonPlugin_, sourceLogData_,
             regExp, &interruptRequested_ );
     operationRequestedCond_.wakeAll();
 }
@@ -146,7 +148,7 @@ void LogFilteredDataWorkerThread::updateSearch(const QRegularExpression &regExp,
         nothingToDoCond_.wait( &mutex_ );
 
     interruptRequested_ = false;
-    operationRequested_ = new UpdateSearchOperation( sourceLogData_,
+    operationRequested_ = new UpdateSearchOperation(pythonPlugin_, sourceLogData_,
             regExp, &interruptRequested_, position );
     operationRequestedCond_.wakeAll();
 }
@@ -208,9 +210,9 @@ void LogFilteredDataWorkerThread::run()
 // Operations implementation
 //
 
-SearchOperation::SearchOperation( const LogData* sourceLogData,
+SearchOperation::SearchOperation(PythonPlugin* pp, const LogData* sourceLogData,
         const QRegularExpression& regExp, bool* interruptRequest )
-    : regexp_( regExp ), sourceLogData_( sourceLogData )
+    : regexp_( regExp ), sourceLogData_( sourceLogData ), pythonPlugin_(pp)
 {
     interruptRequested_ = interruptRequest;
 }
@@ -224,6 +226,18 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 
     // Ensure no re-alloc will be done
     currentList.reserve( nbLinesInChunk );
+
+    function<bool(const QString& line)> search;
+
+    if(pythonPlugin_->isOnSearcAvailable()){
+        //search = [this](const QString& file, const QString& re){
+        currentList = pythonPlugin_->doSearch(sourceLogData_->getFileName().toStdString(), regexp_.pattern().toStdString());
+        searchData.addAll( maxLength, currentList, 3 );
+        nbMatches = currentList.size();
+        emit searchProgressed( nbMatches, 100, initialLine );
+        return;
+        //};
+    }
 
     LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 

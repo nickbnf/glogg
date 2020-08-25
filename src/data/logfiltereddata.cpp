@@ -21,6 +21,7 @@
 // It stores a pointer to the LogData that created it,
 // so should always be destroyed before the LogData.
 
+#include "PythonPlugin.h"
 #include "log.h"
 
 #include <QString>
@@ -383,7 +384,11 @@ QStringList LogFilteredData::doGetExpandedLines( qint64 first_line, int number )
     QStringList list;
 
     for ( int i = first_line; i < first_line + number; i++ ) {
-        list.append( doGetExpandedLineString( i ) );
+        QString line = doGetExpandedLineString( i );
+        std::string stdlLine = line.toStdString();
+        pythonPlugin_->doGetExpandedLines(stdlLine);
+        line = QString::fromStdString(stdlLine);
+        list.append( line );
     }
 
     return list;

@@ -3,6 +3,8 @@
 #include "PyHandler.h"
 #include "boost/python/suite/indexing/vector_indexing_suite.hpp"
 
+std::mutex PyHandler::pyContextLock;
+
 using namespace boost::python;
 
 BOOST_PYTHON_MODULE(PyHandler)
@@ -50,8 +52,8 @@ PyHandler::PyHandler(PyHandlerInitParams *init)
 
 bool PyHandler::onTrigger(int index)
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
 
     bool ret = false;
     if(mPyHandlers[on_trigger] != 0 &&
@@ -65,15 +67,17 @@ bool PyHandler::onTrigger(int index)
         ret = mObj.attr(on_trigger)(index);
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 
     return ret;
 }
 
 void PyHandler::onPopupMenu(AbstractLogView* alv)
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+    auto ul = std::unique_lock<std::mutex>(pyContextLock);
+
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
 
     if(PyObject_HasAttrString(mObj.ptr(), on_popup_menu)){
 
@@ -81,13 +85,15 @@ void PyHandler::onPopupMenu(AbstractLogView* alv)
         mObj.attr(on_popup_menu)();
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 }
 
 void PyHandler::onCreateMenu(AbstractLogView* alv)
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+    std::unique_lock<std::mutex>(pyContextLock);
+
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
 
     if(PyObject_HasAttrString(mObj.ptr(), on_create_menu)){
 
@@ -95,13 +101,15 @@ void PyHandler::onCreateMenu(AbstractLogView* alv)
         mObj.attr(on_create_menu)();
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 }
 
 bool PyHandler::onTriggerAction(const string& action, const string& data)
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+    std::unique_lock<std::mutex>(pyContextLock);
+
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
 
     bool ret = false;
     if(PyObject_HasAttrString(mObj.ptr(), action.c_str())){
@@ -113,7 +121,7 @@ bool PyHandler::onTriggerAction(const string& action, const string& data)
                                string("] trigger action:[" + action + "] Not found during executing of Python code\n"));
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 
     return ret;
 }
@@ -145,8 +153,8 @@ bool PyHandler::setPyHandlerCallCount(string handler, int count)
 
 void PyHandler::onRelease()
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
 
     try{
         if(PyObject_HasAttrString(mObj.ptr(), on_release)){
@@ -159,14 +167,17 @@ void PyHandler::onRelease()
                                string("] !Error during executing Python code\n"));
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 }
 
 
 bool PyHandler::isOnSearcAvailable()
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+    std::unique_lock<std::mutex>(pyContextLock);
+
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
+
 
     try{
         if(PyObject_HasAttrString(mObj.ptr(), on_search)){
@@ -180,15 +191,17 @@ bool PyHandler::isOnSearcAvailable()
                                string("] !Error during executing Python code\n"));
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 
     return false;
 }
 
 SearchResultArray PyHandler::onSearch(const string& fileName, const string& pattern )
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+    std::unique_lock<std::mutex>(pyContextLock);
+
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
 
     try{
         if(PyObject_HasAttrString(mObj.ptr(), on_search)){
@@ -201,7 +214,11 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
 
             SearchResultArray ret;
             for(int i = 0; i < boost::python::len(l); ++i){
-                ret.push_back(MatchingLine(atoi(extract<char*>(l[i]))));
+                char *data = extract<char*>(l[i]);
+                //cout << __FUNCTION__ << "data " << data << "\n";
+                if(strlen(data) > 0){
+                    ret.push_back(MatchingLine(atoi(data) - 1));
+                }
             }
 
 
@@ -217,8 +234,46 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
                                string("] !Error during executing Python code\n"));
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 
     return {};
 
 }
+
+void PyHandler::doGetExpandedLines(string& line)
+{
+    try{
+        if(PyObject_HasAttrString(mObj.ptr(), on_display_line)){
+            vector<string> ss;
+            //py::list ret = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());;
+            boost::python::object o = mObj.attr(on_display_line)(line.c_str());
+            char *data = extract<char*>(o);
+            line = data;
+            //std::list<int> l = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());
+            //list l = extract<boost::python::list>(o);
+            //cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
+
+//            SearchResultArray ret;
+//            for(int i = 0; i < boost::python::len(l); ++i){
+//                char *data = extract<char*>(l[i]);
+//                //cout << __FUNCTION__ << "data " << data << "\n";
+//                if(strlen(data) > 0){
+//                    ret.push_back(MatchingLine(atoi(data) - 1));
+//                }
+//            }
+
+
+            //FOREACH(const string& s, ss) ret.append(s);
+            //return s;
+
+            //return ret;
+        }
+    } catch (error_already_set& e) {
+        PyErr_PrintEx(0);
+        throw std::logic_error(string("\n[") +
+                               __FUNCTION__ +
+                               string("] !Error during executing Python code\n"));
+    }
+
+}
+

@@ -37,6 +37,7 @@ public:
     const char* on_trigger = "on_trigger";
     const char* on_release = "on_release";
     const char* on_search = "on_search";
+    const char* on_display_line = "on_display_line";
 
     map<string, int> mPyHandlers = {{on_trigger, -1}};
     boost::python::object mType;
@@ -50,12 +51,14 @@ public:
 
     // Handler interface
 public:
+    static std::mutex pyContextLock;
     void onRelease() override;
 
     void onPopupMenu(AbstractLogView *alv);
     void onCreateMenu(AbstractLogView *alv);
     bool isOnSearcAvailable();
     SearchResultArray onSearch(const string &fileName, const string &pattern);
+    void doGetExpandedLines(string &line);
 };
 
 

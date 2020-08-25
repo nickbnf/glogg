@@ -32,6 +32,7 @@ public:
     void onCreateMenu(AbstractLogView *alv);
     bool isOnSearcAvailable();
     SearchResultArray doSearch(const string &fileName, const string &pattern);
+    void doGetExpandedLines(string &line);
 private:
     struct DerivedType
     {

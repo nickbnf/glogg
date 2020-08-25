@@ -24,7 +24,7 @@ PythonPlugin::PythonPlugin()
     try {
         PyImport_AppendInittab((char*)"PyHandler", INIT_MODULE);
         Py_Initialize();
-        PyEval_InitThreads();
+        //PyEval_InitThreads();
 
         boost::filesystem::path workingDir = boost::filesystem::absolute("").normalize();
 
@@ -73,7 +73,7 @@ PythonPlugin::PythonPlugin()
         throw std::logic_error("!Error during loading PythonPlugin\n");
     }
 
-    threadState = PyEval_SaveThread();
+    //threadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::createInstances()
@@ -153,6 +153,16 @@ SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& p
     }
 
     return {};
+}
+
+void PythonPlugin::doGetExpandedLines(string& line)
+{
+    for(auto &o: mHandlers){
+//        if (o.second->isOnSearcAvailable()){
+            return o.second->doGetExpandedLines(line);
+//        }
+    }
+
 }
 
 

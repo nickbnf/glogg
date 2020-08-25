@@ -19,6 +19,7 @@
 
 // This file implements LogData, the content of a log file.
 
+#include "PythonPlugin.h"
 #include <iostream>
 
 #include <cassert>
@@ -402,6 +403,10 @@ QString LogData::doGetLineString( qint64 line ) const
 
     QString string = codec_->toUnicode( attached_file_->read( end_byte - first_byte ) );
 
+    std::string stdlLine = string.toStdString();
+    pythonPlugin_->doGetExpandedLines(stdlLine);
+    string = QString::fromStdString(stdlLine);
+
     fileMutex_.unlock();
 
     return string;
@@ -423,9 +428,14 @@ QString LogData::doGetExpandedLineString( qint64 line ) const
     // LOG(logDEBUG) << "LogData::doGetExpandedLineString first_byte:" << first_byte << " end_byte:" << end_byte;
     QByteArray rawString = attached_file_->read( end_byte - first_byte );
 
+
     fileMutex_.unlock();
 
     QString string = untabify( codec_->toUnicode( rawString ) );
+
+//    std::string stdlLine = string.toStdString();
+//    pythonPlugin_->doGetExpandedLines(stdlLine);
+//    string = QString::fromStdString(stdlLine);
 
     // LOG(logDEBUG) << "doGetExpandedLineString Line is: " << string.toStdString();
 
@@ -469,7 +479,13 @@ QStringList LogData::doGetLines( qint64 first_line, int number ) const
         // LOG(logDEBUG) << "Getting line " << line << " beginning " << beginning << " end " << end;
         QByteArray this_line = blob.mid( beginning, end - beginning );
         // LOG(logDEBUG) << "Line is: " << QString( this_line ).toStdString();
-        list.append( codec_->toUnicode( this_line ) );
+
+        QString l = codec_->toUnicode( this_line );
+//        std::string stdlLine = l.toStdString();
+//        pythonPlugin_->doGetExpandedLines(stdlLine);
+//        l = QString::fromStdString(stdlLine);
+
+        list.append( l );
         beginning = beginningOfNextLine( end );
     }
 
@@ -513,7 +529,13 @@ QStringList LogData::doGetExpandedLines( qint64 first_line, int number ) const
         QByteArray this_line = blob.mid( beginning, end - beginning );
         QString conv_line = codec_->toUnicode( this_line );
         // LOG(logDEBUG) << "Line is: " << conv_line.toStdString();
-        list.append( untabify( conv_line ) );
+        QString l = untabify( conv_line );
+
+        std::string stdlLine = l.toStdString();
+        pythonPlugin_->doGetExpandedLines(stdlLine);
+        l = QString::fromStdString(stdlLine);
+
+        list.append( l );
         beginning = beginningOfNextLine( end );
     }
 

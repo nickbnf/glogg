@@ -153,7 +153,8 @@ else {
     INCLUDEPATH += $$BOOST_PATH
 }
 
-FORMS += src/optionsdialog.ui
+FORMS += src/optionsdialog.ui \
+    src/PyDialog.ui
 FORMS += src/filtersdialog.ui
 
 macx {

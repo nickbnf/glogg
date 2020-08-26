@@ -43,6 +43,7 @@ PythonPlugin::PythonPlugin()
 
         exec_file("handlers.py", main_namespace, main_namespace);
         exec_file("handlers2.py", main_namespace, main_namespace);
+        exec_file("PyDialog.py", main_namespace, main_namespace);
         PyTypeObject* base_class = reinterpret_cast<PyTypeObject*>(BaseClass.ptr());
         //PyTypeObject* verifier_base_class = reinterpret_cast<PyTypeObject*>(VerifierBaseClass.ptr());
 

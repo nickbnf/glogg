@@ -3,6 +3,7 @@
 
 #include <QColor>
 #include <QList>
+#include <QPainter>
 
 class LineChunk
 {

@@ -24,7 +24,7 @@ PythonPlugin::PythonPlugin()
     try {
         PyImport_AppendInittab((char*)"PyHandler", INIT_MODULE);
         Py_Initialize();
-        //PyEval_InitThreads();
+        PyEval_InitThreads();
 
         boost::filesystem::path workingDir = boost::filesystem::absolute("").normalize();
 
@@ -74,15 +74,16 @@ PythonPlugin::PythonPlugin()
         throw std::logic_error("!Error during loading PythonPlugin\n");
     }
 
-    //threadState = PyEval_SaveThread();
+    threadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::createInstances()
 {
     string typeName;
 
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+//    PyGILState_STATE gstate;
+//    gstate = PyGILState_Ensure();
+    PyGIL gil;
 
     PyHandlerInitParams *init = nullptr;
 
@@ -107,7 +108,7 @@ void PythonPlugin::createInstances()
         throw std::logic_error("\n!Error while loading template handler: [" + typeName + "]\n\n");
     }
 
-    PyGILState_Release(gstate);
+//    PyGILState_Release(gstate);
 }
 
 shared_ptr<PyHandler> PythonPlugin::operator [](const string &className)
@@ -122,6 +123,8 @@ void PythonPlugin::setActivePlugin(const string &className)
 
 void PythonPlugin::onPopupMenu(AbstractLogView *alv)
 {
+    PyGIL gil;
+
     for(auto &o: mHandlers){
         o.second->onPopupMenu(alv);
     }
@@ -129,6 +132,8 @@ void PythonPlugin::onPopupMenu(AbstractLogView *alv)
 
 void PythonPlugin::onCreateMenu(AbstractLogView *alv)
 {
+    PyGIL gil;
+
     for(auto &o: mHandlers){
         o.second->onCreateMenu(alv);
     }
@@ -136,6 +141,8 @@ void PythonPlugin::onCreateMenu(AbstractLogView *alv)
 
 bool PythonPlugin::isOnSearcAvailable()
 {
+    PyGIL gil;
+
     for(auto &o: mHandlers){
         if (o.second->isOnSearcAvailable()){
             return true;
@@ -147,6 +154,8 @@ bool PythonPlugin::isOnSearcAvailable()
 
 SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern )
 {
+    PyGIL gil;
+
     for(auto &o: mHandlers){
         if (o.second->isOnSearcAvailable()){
             return o.second->onSearch(fileName, pattern);
@@ -158,6 +167,8 @@ SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& p
 
 void PythonPlugin::doGetExpandedLines(string& line)
 {
+    PyGIL gil;
+
     for(auto &o: mHandlers){
 //        if (o.second->isOnSearcAvailable()){
             return o.second->doGetExpandedLines(line);

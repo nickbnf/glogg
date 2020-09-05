@@ -384,10 +384,31 @@ void CrawlerWidget::markLineFromMain( qint64 line )
 void CrawlerWidget::markLinesFromMain( QList<int> lines )
 {
     for(int i = 0; i < lines.size(); ++i){
+        if (not logFilteredData_->isLineMarked( lines[i] ) )
+//            logFilteredData_->deleteMark( lines[i] );
+//        else
+            logFilteredData_->addMark( lines[i] );
+
+    }
+
+    // Recompute the content of both window.
+    filteredView->updateData();
+    logMainView->updateData();
+
+    // Update the match overview
+    overview_.updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
+}
+
+void CrawlerWidget::unMarkLinesFromMain( QList<int> lines )
+{
+    for(int i = 0; i < lines.size(); ++i){
         if ( logFilteredData_->isLineMarked( lines[i] ) )
             logFilteredData_->deleteMark( lines[i] );
-        else
-            logFilteredData_->addMark( lines[i] );
+//        else
+//            logFilteredData_->addMark( lines[i] );
 
     }
 
@@ -434,9 +455,9 @@ void CrawlerWidget::markLinesFromFiltered( QList<int> lines )
         int line = lines[lines.size() - 1 - i];
         qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
         if ( logFilteredData_->filteredLineTypeByIndex( line )
-                == LogFilteredData::Mark )
-            logFilteredData_->deleteMark( line_in_file );
-        else
+                == LogFilteredData::Match )
+//            logFilteredData_->deleteMark( line_in_file );
+//        else
             logFilteredData_->addMark( line_in_file );
 
     }
@@ -451,6 +472,35 @@ void CrawlerWidget::markLinesFromFiltered( QList<int> lines )
     // Also update the top window for the coloured bullets.
     update();
 }
+
+void CrawlerWidget::unMarkLinesFromFiltered( QList<int> lines )
+{
+    if(0 == lines.size()){
+        return;
+    }
+
+    for(int i = 0; i < lines.size(); ++i){
+        int line = lines[lines.size() - 1 - i];
+        qint64 line_in_file = logFilteredData_->getMatchingLineNumber( line );
+        if ( logFilteredData_->filteredLineTypeByIndex( line )
+                == LogFilteredData::Mark )
+            logFilteredData_->deleteMark( line_in_file );
+//        else
+//            logFilteredData_->addMark( line_in_file );
+
+    }
+
+    // Recompute the content of both window.
+    filteredView->updateData();
+    logMainView->updateData();
+
+    // Update the match overview
+    overview_.updateData( logData_->getNbLine() );
+
+    // Also update the top window for the coloured bullets.
+    update();
+}
+
 
 void CrawlerWidget::applyConfiguration()
 {
@@ -487,6 +537,11 @@ void CrawlerWidget::applyConfiguration()
 
     // Update the SearchLine (history)
     updateSearchCombo();
+}
+
+
+void CrawlerWidget::applyPluginConfiguration()
+{
 }
 
 void CrawlerWidget::enteringQuickFind()
@@ -831,10 +886,14 @@ void CrawlerWidget::setup()
             this, SLOT( markLineFromMain( qint64 ) ) );
     connect(logMainView, SIGNAL( markLines( QList<int> ) ),
             this, SLOT( markLinesFromMain( QList<int> ) ) );
+    connect(logMainView, SIGNAL( unMarkLines( QList<int> ) ),
+            this, SLOT( unMarkLinesFromMain( QList<int> ) ) );
     connect(filteredView, SIGNAL( markLine( qint64 ) ),
             this, SLOT( markLineFromFiltered( qint64 ) ) );
     connect(filteredView, SIGNAL( markLines( QList<int> ) ),
             this, SLOT( markLinesFromFiltered( QList<int> ) ) );
+    connect(filteredView, SIGNAL( unMarkLines( QList<int> ) ),
+            this, SLOT( unMarkLinesFromFiltered( QList<int> ) ) );
     connect(logMainView, SIGNAL( addToSearch( const QString& ) ),
             this, SLOT( addToSearch( const QString& ) ) );
     connect(filteredView, SIGNAL( addToSearch( const QString& ) ),

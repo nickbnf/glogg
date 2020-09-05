@@ -998,6 +998,15 @@ void AbstractLogView::markSelected()
     }
 }
 
+void AbstractLogView::unMarkSelected()
+{
+    QList<int> lines = selection_.getLines();
+
+    if(lines.size()){
+        emit unMarkLines(lines);
+    }
+}
+
 // Copy the selection to the clipboard
 void AbstractLogView::copy()
 {
@@ -1371,6 +1380,9 @@ void AbstractLogView::createMenu()
     markAction_ = new QAction( tr("&Mark"), this );
     connect( markAction_, SIGNAL(triggered()), this, SLOT(markSelected()) );
 
+    unMarkAction_ = new QAction( tr("&UnMark"), this );
+    connect( unMarkAction_, SIGNAL(triggered()), this, SLOT(unMarkSelected()) );
+
     // For '#' and '*', shortcuts doesn't seem to work but
     // at least it displays them in the menu, we manually handle those keys
     // as keys event anyway (in keyPressEvent).
@@ -1398,6 +1410,7 @@ void AbstractLogView::createMenu()
 
     popupMenu_ = new QMenu( this );
     popupMenu_->addAction( markAction_ );
+    popupMenu_->addAction( unMarkAction_ );
     popupMenu_->addAction( copyAction_ );
     popupMenu_->addAction( copyWithLineNumbersAction_ );
     popupMenu_->addSeparator();

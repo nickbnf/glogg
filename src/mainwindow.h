@@ -81,6 +81,7 @@ class MainWindow : public QMainWindow
     void copy();
     void find();
     void filters();
+    void plugins();
     void options();
     void about();
     void aboutQt();
@@ -197,6 +198,7 @@ class MainWindow : public QMainWindow
     QAction *reloadAction;
     QAction *stopAction;
     QAction *filtersAction;
+    QAction *pluginsAction;
     QAction *optionsAction;
     QAction *aboutAction;
     QAction *aboutQtAction;

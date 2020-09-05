@@ -153,7 +153,8 @@ protected:
     // (click in the left margin).
     void markLine( qint64 line );
     // Marks selection from pop-up menu
-    void markLines( QList<int> lines );
+    void markLines( QList<int> lines);
+    void unMarkLines( QList<int> lines);
     // Sent up when the user wants to add the selection to the search
     void addToSearch( const QString& selection );
     // Sent up when the user wants to add the selection to the quick find
@@ -217,6 +218,7 @@ protected:
     void copy();
     void copyWithLineNumbers();
     void markSelected();
+    void unMarkSelected();
 
   private:
     // Graphic parameters
@@ -285,6 +287,7 @@ protected:
     // Popup menu
     QMenu* popupMenu_;
     QAction* markAction_;
+    QAction* unMarkAction_;
     QAction* copyAction_;
     QAction* copyWithLineNumbersAction_;
     QAction* findNextAction_;

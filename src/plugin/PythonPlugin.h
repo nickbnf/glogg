@@ -19,6 +19,18 @@ class PyHandler;
 class AbstractLogView;
 
 
+struct PyGIL {
+  PyGILState_STATE state;
+  PyGIL() {
+    state = PyGILState_Ensure();
+  }
+
+  ~PyGIL() {
+    PyGILState_Release(state);
+  }
+};
+
+
 class PythonPlugin
 {
 public:

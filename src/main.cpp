@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     bool log_to_file = false;
 #endif
 
-    TLogLevel logLevel = logDEBUG4;
+    TLogLevel logLevel = logERROR;
 
     try {
         po::options_description desc("Usage: glogg [options] [files]");

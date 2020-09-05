@@ -51,6 +51,7 @@
 #include "menuactiontooltipbehavior.h"
 #include "tabbedcrawlerwidget.h"
 #include "externalcom.h"
+#include "PluginsDialog.h"
 
 // Returns the size in human readable format
 static QString readableSize( qint64 size );
@@ -336,6 +337,10 @@ void MainWindow::createActions()
     filtersAction->setStatusTip(tr("Show the Filters box"));
     connect( filtersAction, SIGNAL(triggered()), this, SLOT(filters()) );
 
+    pluginsAction = new QAction(tr("&Plugins..."), this);
+    pluginsAction->setStatusTip(tr("Show the Plugins box"));
+    connect( pluginsAction, SIGNAL(triggered()), this, SLOT(plugins()) );
+
     optionsAction = new QAction(tr("&Options..."), this);
     optionsAction->setStatusTip(tr("Show the Options box"));
     connect( optionsAction, SIGNAL(triggered()), this, SLOT(options()) );
@@ -398,6 +403,8 @@ void MainWindow::createMenus()
     toolsMenu->addAction( filtersAction );
     toolsMenu->addSeparator();
     toolsMenu->addAction( optionsAction );
+    toolsMenu->addSeparator();
+    toolsMenu->addAction( pluginsAction );
 
     encodingMenu = menuBar()->addMenu( tr("En&coding") );
     encodingMenu->addAction( encodingAction[0] );
@@ -522,6 +529,17 @@ void MainWindow::filters()
     signalMux_.connect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
     dialog.exec();
     signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
+}
+
+// Opens the 'Plugins' dialog box
+void MainWindow::plugins()
+{
+    PluginsDialog dialog(this);
+    signalMux_.connect(&dialog, SIGNAL( pluginsOptionsChanged() ), SLOT( applyPluginConfiguration() ));
+    dialog.exec();
+    //FiltersDialog dialog(this);
+    //dialog.exec();
+    //signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
 }
 
 // Opens the 'Options' modal dialog box

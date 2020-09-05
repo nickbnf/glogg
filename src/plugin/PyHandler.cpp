@@ -217,7 +217,10 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
                 char *data = extract<char*>(l[i]);
                 //cout << __FUNCTION__ << "data " << data << "\n";
                 if(strlen(data) > 0){
-                    ret.push_back(MatchingLine(atoi(data) - 1));
+                    int index = atoi(data) - 1;
+                    if(index > -1){
+                        ret.push_back(MatchingLine(index));
+                    }
                 }
             }
 

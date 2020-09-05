@@ -67,7 +67,9 @@ SOURCES += \
     src/drawhelpers.cpp \
     src/plugin/PythonPlugin.cpp \
     src/plugin/PyHandler.cpp \
-    src/plugin/Handler.cpp
+    src/plugin/Handler.cpp \
+    src/plugin/PluginsDialog.cpp \
+    src/plugin/pluginset.cpp
 
 INCLUDEPATH += src/
 INCLUDEPATH += src/plugin
@@ -123,7 +125,9 @@ HEADERS += \
     src/plugin/JSonParser.h \
     src/plugin/PyHandler.h \
     src/plugin/Handler.h \
-    src/data/search_result.h
+    src/data/search_result.h \
+    src/plugin/PluginsDialog.h \
+    src/plugin/pluginset.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -154,7 +158,8 @@ else {
 }
 
 FORMS += src/optionsdialog.ui \
-    src/PyDialog.ui
+    src/PyDialog.ui \
+    src/plugin/PluginsDialog.ui
 FORMS += src/filtersdialog.ui
 
 macx {
@@ -345,4 +350,5 @@ DISTFILES += \
     debug/handlers.py \
     debug/handlers2.py \
     plugins/handlers.py \
-    plugins/handlers2.py
+    plugins/handlers2.py \
+    plugins/PyDialog.py

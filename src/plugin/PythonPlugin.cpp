@@ -5,6 +5,8 @@
 //#include "Log.h"
 #include "PyHandler.h"
 #include "abstractlogview.h"
+#include "persistentinfo.h"
+#include "pluginset.h"
 
 using namespace boost::python;
 
@@ -20,6 +22,17 @@ using namespace boost::python;
 PythonPlugin::PythonPlugin()
 {
     using namespace boost::python;
+
+    GetPersistentInfo().retrieve("pluginSet");
+
+    std::shared_ptr<const PluginSet> pluginSet =
+        Persistent<PluginSet>( "pluginSet" );
+
+    isPluginSystemEnabled = pluginSet->isPluginSystemEnabled();
+
+    if(not isPluginSystemEnabled){
+        return;
+    }
 
     try {
         PyImport_AppendInittab((char*)"PyHandler", INIT_MODULE);
@@ -79,37 +92,62 @@ PythonPlugin::PythonPlugin()
 
 void PythonPlugin::createInstances()
 {
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
     string typeName;
 
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
     PyGIL gil;
 
     PyHandlerInitParams *init = nullptr;
 
     try {
         for(auto& t: mDerivedClassContainer){
-            typeName = t.name;
-            boost::python::object obj = t.type(init);
-            Py_INCREF(obj.ptr());
+            createInstance(t.type, t.name);
+//            typeName = t.name;
+//            boost::python::object obj = t.type(init);
 
-            PyHandler* p = extract<PyHandler*>(obj.ptr());
-            p->setPyhonObject(obj);
-            p->setPythonPlugin(this);
+//            PyHandler* p = extract<PyHandler*>(obj.ptr());
+//            p->setPyhonObject(obj);
+//            p->setPythonPlugin(this);
 
-            p->setPyhonType(t.type);
+//            p->setPyhonType(t.type);
 
-            mHandlers.emplace(typeName, create(p));
-            //Handler::addPythonTemplate<PyHandler>(handlers, t.name, p);
+//            mHandlers.emplace(typeName, create(p));
         }
 
     } catch (error_already_set& e) {
         PyErr_PrintEx(0);
         throw std::logic_error("\n!Error while loading template handler: [" + typeName + "]\n\n");
     }
-
-//    PyGILState_Release(gstate);
 }
+
+void PythonPlugin::createInstance(std::optional<boost::python::object> type, const string& typeName)
+{
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
+    PyGIL gil;
+
+    if(not type){
+        type = std::find_if(mDerivedClassContainer.begin(), mDerivedClassContainer.end(), [typeName](const DerivedType& t){ return t.name == typeName; })->type;
+    }
+
+    PyHandlerInitParams *init = nullptr;
+
+    boost::python::object obj = (*type)(init);
+
+    PyHandler* p = extract<PyHandler*>(obj.ptr());
+    p->setPyhonObject(obj);
+    p->setPythonPlugin(this);
+
+    p->setPyhonType(*type);
+
+    mHandlers.emplace(typeName, create(p));
+}
+
 
 shared_ptr<PyHandler> PythonPlugin::operator [](const string &className)
 {
@@ -118,11 +156,19 @@ shared_ptr<PyHandler> PythonPlugin::operator [](const string &className)
 
 void PythonPlugin::setActivePlugin(const string &className)
 {
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
     mActiveHandler = mHandlers.at(className);
 }
 
 void PythonPlugin::onPopupMenu(AbstractLogView *alv)
 {
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -132,6 +178,10 @@ void PythonPlugin::onPopupMenu(AbstractLogView *alv)
 
 void PythonPlugin::onCreateMenu(AbstractLogView *alv)
 {
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -141,6 +191,10 @@ void PythonPlugin::onCreateMenu(AbstractLogView *alv)
 
 bool PythonPlugin::isOnSearcAvailable()
 {
+    if(not isPluginSystemEnabled){
+        return false;
+    }
+
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -154,6 +208,10 @@ bool PythonPlugin::isOnSearcAvailable()
 
 SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern )
 {
+    if(not isPluginSystemEnabled){
+        return {};
+    }
+
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -167,6 +225,10 @@ SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& p
 
 void PythonPlugin::doGetExpandedLines(string& line)
 {
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -175,6 +237,21 @@ void PythonPlugin::doGetExpandedLines(string& line)
 //        }
     }
 
+}
+
+void PythonPlugin::setPluginState(const string &typeName, bool state)
+{
+    if(not isPluginSystemEnabled){
+        return;
+    }
+
+    PyGIL gil;
+
+    if(not state){
+        mHandlers.erase(typeName);
+    }else{
+
+    }
 }
 
 

@@ -40,6 +40,7 @@ using namespace std;
 #include "filterset.h"
 #include "recentfiles.h"
 #include "session.h"
+#include "pluginset.h"
 #include "mainwindow.h"
 #include "savedsearches.h"
 #include "loadingstatus.h"
@@ -234,6 +235,9 @@ int main(int argc, char *argv[])
             std::make_shared<SavedSearches>(), QString( "savedSearches" ) );
     GetPersistentInfo().registerPersistable(
             std::make_shared<RecentFiles>(), QString( "recentFiles" ) );
+    GetPersistentInfo().registerPersistable(
+            std::make_shared<PluginSet>(), QString( "pluginSet" ) );
+
 #ifdef GLOGG_SUPPORTS_VERSION_CHECKING
     GetPersistentInfo().registerPersistable(
             std::make_shared<VersionCheckerConfig>(), QString( "versionChecker" ) );

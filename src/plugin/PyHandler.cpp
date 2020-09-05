@@ -49,6 +49,10 @@ PyHandler::PyHandler(PyHandlerInitParams *init)
     setProperties(*init->prop);
 }
 
+PyHandler::~PyHandler()
+{
+}
+
 
 bool PyHandler::onTrigger(int index)
 {
@@ -57,14 +61,14 @@ bool PyHandler::onTrigger(int index)
 
     bool ret = false;
     if(mPyHandlers[on_trigger] != 0 &&
-            PyObject_HasAttrString(mObj.ptr(), on_trigger)){
+            PyObject_HasAttrString(mObj->ptr(), on_trigger)){
 
         if (mPyHandlers[on_trigger] > 0){
             --mPyHandlers[on_trigger];
         }
 
 //        cout << __FUNCTION__ << " call python, index: " << index << "\n";
-        ret = mObj.attr(on_trigger)(index);
+        ret = mObj->attr(on_trigger)(index);
     }
 
 //    PyGILState_Release(gstate);
@@ -79,10 +83,10 @@ void PyHandler::onPopupMenu(AbstractLogView* alv)
 //    PyGILState_STATE gstate;
 //    gstate = PyGILState_Ensure();
 
-    if(PyObject_HasAttrString(mObj.ptr(), on_popup_menu)){
+    if(PyObject_HasAttrString(mObj->ptr(), on_popup_menu)){
 
 //        cout << __FUNCTION__ << " call python, index: " << index << "\n";
-        mObj.attr(on_popup_menu)();
+        mObj->attr(on_popup_menu)();
     }
 
 //    PyGILState_Release(gstate);
@@ -95,10 +99,10 @@ void PyHandler::onCreateMenu(AbstractLogView* alv)
 //    PyGILState_STATE gstate;
 //    gstate = PyGILState_Ensure();
 
-    if(PyObject_HasAttrString(mObj.ptr(), on_create_menu)){
+    if(PyObject_HasAttrString(mObj->ptr(), on_create_menu)){
 
 //        cout << __FUNCTION__ << " call python, index: " << index << "\n";
-        mObj.attr(on_create_menu)();
+        mObj->attr(on_create_menu)();
     }
 
 //    PyGILState_Release(gstate);
@@ -112,9 +116,9 @@ bool PyHandler::onTriggerAction(const string& action, const string& data)
 //    gstate = PyGILState_Ensure();
 
     bool ret = false;
-    if(PyObject_HasAttrString(mObj.ptr(), action.c_str())){
+    if(PyObject_HasAttrString(mObj->ptr(), action.c_str())){
 
-        ret = mObj.attr(action.c_str())(data);
+        ret = mObj->attr(action.c_str())(data);
     } else{
         throw std::logic_error(string("\n!ERROR! [") +
                                __FUNCTION__ +
@@ -148,7 +152,12 @@ bool PyHandler::setPyHandlerCallCount(string handler, int count)
         return false;
     }
 
-    return true;
+     return true;
+}
+
+void PyHandler::del()
+{
+    mObj = {};
 }
 
 void PyHandler::onRelease()
@@ -157,8 +166,8 @@ void PyHandler::onRelease()
 //    gstate = PyGILState_Ensure();
 
     try{
-        if(PyObject_HasAttrString(mObj.ptr(), on_release)){
-            mObj.attr(on_release)();
+        if(PyObject_HasAttrString(mObj->ptr(), on_release)){
+            mObj->attr(on_release)();
         }
     } catch (error_already_set& e) {
         PyErr_PrintEx(0);
@@ -180,8 +189,8 @@ bool PyHandler::isOnSearcAvailable()
 
 
     try{
-        if(PyObject_HasAttrString(mObj.ptr(), on_search)){
-            //mObj.attr(on_search)();
+        if(PyObject_HasAttrString(mObj->ptr(), on_search)){
+            //mObj->attr(on_search)();
             return true;
         }
     } catch (error_already_set& e) {
@@ -204,11 +213,11 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
 //    gstate = PyGILState_Ensure();
 
     try{
-        if(PyObject_HasAttrString(mObj.ptr(), on_search)){
+        if(PyObject_HasAttrString(mObj->ptr(), on_search)){
             vector<string> ss;
-            //py::list ret = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());;
-            boost::python::object o = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());
-            //std::list<int> l = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());
+            //py::list ret = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());;
+            boost::python::object o = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
+            //std::list<int> l = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
             list l = extract<boost::python::list>(o);
             cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
 
@@ -246,13 +255,13 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
 void PyHandler::doGetExpandedLines(string& line)
 {
     try{
-        if(PyObject_HasAttrString(mObj.ptr(), on_display_line)){
+        if(PyObject_HasAttrString(mObj->ptr(), on_display_line)){
             vector<string> ss;
-            //py::list ret = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());;
-            boost::python::object o = mObj.attr(on_display_line)(line.c_str());
+            //py::list ret = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());;
+            boost::python::object o = mObj->attr(on_display_line)(line.c_str());
             char *data = extract<char*>(o);
             line = data;
-            //std::list<int> l = mObj.attr(on_search)(fileName.c_str(), pattern.c_str());
+            //std::list<int> l = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
             //list l = extract<boost::python::list>(o);
             //cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
 

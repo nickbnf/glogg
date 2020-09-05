@@ -37,6 +37,7 @@ public:
     PythonPlugin();
     //const std::unordered_map<string, PyTypeObject*>& getTypeMap() const;
     void createInstances();
+    void createInstance(std::optional<boost::python::object> type, const string &typeName);
     shared_ptr<PyHandler> operator [](const string& className);
     void setActivePlugin(const string& className);
     void onPopupMenu(AbstractLogView* alv);
@@ -45,7 +46,7 @@ public:
     bool isOnSearcAvailable();
     SearchResultArray doSearch(const string &fileName, const string &pattern);
     void doGetExpandedLines(string &line);
-private:
+
     struct DerivedType
     {
         DerivedType() = default;
@@ -56,10 +57,15 @@ private:
 //        boost::python::object instance;
     };
 
+    const vector<DerivedType>& getTypes() { return mDerivedClassContainer; }
+    void setPluginState(const string& typeName, bool state);
+
+private:
+
     template<typename T>
     static shared_ptr<T> create(T* obj)
     {
-        return shared_ptr<T>(obj, [](Handler* o){});
+        return shared_ptr<T>(obj, [](PyHandler* o){ o->del(); });
     }
 
     vector<DerivedType> mDerivedClassContainer;
@@ -70,6 +76,7 @@ private:
 
     PyThreadState *threadState = nullptr;
 
+    bool isPluginSystemEnabled = false;
 };
 
 #endif // PYTHONPLUGIN_H

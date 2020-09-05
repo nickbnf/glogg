@@ -534,7 +534,7 @@ void MainWindow::filters()
 // Opens the 'Plugins' dialog box
 void MainWindow::plugins()
 {
-    PluginsDialog dialog(this);
+    PluginsDialog dialog(pythonPlugin_, this);
     signalMux_.connect(&dialog, SIGNAL( pluginsOptionsChanged() ), SLOT( applyPluginConfiguration() ));
     dialog.exec();
     //FiltersDialog dialog(this);

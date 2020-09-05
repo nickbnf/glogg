@@ -23,13 +23,16 @@ class PyHandler : public Handler {
 public:
     PyHandler();
     PyHandler(PyHandlerInitParams *init);
-    virtual ~PyHandler() {}
+    virtual ~PyHandler();
 
     void setPythonPlugin(PythonPlugin* pyPlugin) { mpyPlugin = pyPlugin; }
     void setPyhonType(const boost::python::object& type);
     void setPyhonObject(const boost::python::object& obj);
     bool setPyHandlerCallCount(string handler, int count);
 
+    void del();
+
+    optional<boost::python::object> mObj = {};
     private:
     const char* on_popup_menu = "on_popup_menu";
     const char* on_create_menu = "on_create_menu";
@@ -41,7 +44,6 @@ public:
 
     map<string, int> mPyHandlers = {{on_trigger, -1}};
     boost::python::object mType;
-    boost::python::object mObj;
 
     // Handler interface
     bool onTriggerAction(const string &action, const string &data);

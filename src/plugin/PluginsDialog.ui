@@ -33,10 +33,23 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>60</y>
+     <y>130</y>
      <width>351</width>
      <height>301</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="pluginSystemEnabled">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>50</y>
+     <width>181</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Plugin system enabled</string>
    </property>
   </widget>
  </widget>

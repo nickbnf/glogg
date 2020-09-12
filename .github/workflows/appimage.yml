@@ -5,6 +5,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
+
 
 jobs:
   build-appimage:
@@ -15,30 +17,33 @@ jobs:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-ninja@master
 
-      - name: Cache Qt
-        id: cache-qt
-        uses: actions/cache@v1
-        with:
-          path: ../Qt
-          key: QtCache
-
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2
-        with:
-          version: 5.14.0
-          cached: ${{ steps.cache-qt.outputs.cache-hit }}
-
+        run: |
+          sudo add-apt-repository ppa:beineri/opt-qt595-xenial
+          sudo apt-get update
+          sudo apt-get install -y qt59base mesa-common-dev
+        
       - name: Prepare compiler env
         run: |
           echo "::set-env name=CC::gcc-8"
           echo "::set-env name=CXX::g++-8"
 
-      - name: configure
-        run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .
+      - name: Configure
+        run: . /opt/qt59/bin/qt59-env.sh && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/klogg .
 
-      - name: build
-        run: DESTDIR=AppDir ninja install 
+      - name: Build
+        run: ninja klogg
 
+      - name: Install
+        run: |
+          DESTDIR=AppDir ninja install 
+          mkdir AppDir/usr
+          cp -a AppDir/opt/klogg/share AppDir/usr/share
+
+      - name: Bundle Qt
+        run: |
+          cp -a /opt/qt59/plugins AppDir/plugins
+      
       - name: Build AppImage
         uses: AppImageCrafters/build-appimage-action@master
         env:

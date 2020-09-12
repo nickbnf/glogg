@@ -115,6 +115,7 @@ if (${BUILD_TESTS})
 endif()
 
 # Installation and packaging
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 if(UNIX)
     include(InstallRequiredSystemLibraries)
 

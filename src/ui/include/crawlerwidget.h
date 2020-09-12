@@ -192,6 +192,9 @@ class CrawlerWidget : public QSplitter,
     // Called when the checkbox for search auto-refresh is changed
     void searchRefreshChangedHandler( bool isRefreshing );
 
+     // Called when the checkbox for case sensitivity is changed
+    void matchCaseChangedHandler( bool shouldMatchCase );
+
     // Called when the text on the search line is modified
     void searchTextChangeHandler( QString );
 

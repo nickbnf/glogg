@@ -13,7 +13,7 @@ AppDir:
 
   runtime:
     env:
-      APPDIR_LIBRARY_PATH: $APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu:$APPDIR/lib/x86_64-linux-gnu
+      APPDIR_LIBRARY_PATH: $APPDIR/usr/lib:$APPDIR/opt/qt514/bin:$APPDIR/usr/lib/x86_64-linux-gnu:$APPDIR/lib/x86_64-linux-gnu
 
   apt:
     arch: amd64
@@ -23,8 +23,8 @@ AppDir:
       - sourceline: deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
       - sourceline: deb http://archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse
       - sourceline: deb http://archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
-      - sourceline: deb http://archive.neon.kde.org/user/ xenial main
-        key_url: 'https://archive.neon.kde.org/public.key'
+      - sourceline: deb http://ppa.launchpad.net/beineri/opt-qt-5.14.2-xenial/ubuntu xenial main 
+        key_url: 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xc65d51784edc19a871dbdbb710c56d0de9977759'
       
 
     include:

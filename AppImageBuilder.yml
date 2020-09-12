@@ -28,9 +28,7 @@ AppDir:
       
 
     include:
-      - libqt5widgets5
-      - libqt5concurrent5
-      - libqt5xml5
+      - qt514base
 
   files:
     exclude:

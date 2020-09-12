@@ -13,10 +13,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qt5-default cmake
+      - uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ../Qt
+          key: QtCache
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: 5.14.0
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Prepare compiler env
         run: |
@@ -24,15 +34,18 @@ jobs:
           echo "::set-env name=CXX::g++-8"
 
       - name: configure
-        run: cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .
+
       - name: build
-        run: make -j`nproc`  install DESTDIR=AppDir
+        run: DESTDIR=AppDir ninja install 
+
       - name: Build AppImage
         uses: AppImageCrafters/build-appimage-action@master
         env:
           UPDATE_INFO: gh-releases-zsync|AppImageCrafters|klogg|latest|*x86_64.AppImage.zsync
         with:
           recipe: AppImageBuilder.yml
+
       - uses: actions/upload-artifact@v2
         with:
           name: AppImage

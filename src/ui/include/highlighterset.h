@@ -77,33 +77,40 @@ class Highlighter {
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
-class HighlighterSet final : public Persistable<HighlighterSet> {
+class HighlighterSet {
   public:
     static const char* persistableName()
     {
         return "HighlighterSet";
     }
 
+    static HighlighterSet createNewSet( const QString& name );
+
     HighlighterSet() = default;
 
-    explicit HighlighterSet( const QString& name );
-
     QString name() const;
+    QString id() const;
 
     // Returns weither the passed line match a filter of the set,
     // if so, it returns the fore/back colors the line should use.
     // Ownership of the colors is transfered to the caller.
     bool matchLine( const QString& line, QColor* foreColor, QColor* backColor ) const;
 
+    bool isEmpty() const;
+
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
+
+  private:
+    explicit HighlighterSet( const QString& name );
 
   private:
     static constexpr int HighlighterSet_VERSION = 3;
     static constexpr int FilterSet_VERSION = 2;
 
     QString name_;
+    QString id_;
     QList<Highlighter> highlighterList_;
 
     // To simplify this class interface, HighlightersDialog can access our
@@ -121,6 +128,11 @@ class HighlighterSetCollection final : public Persistable<HighlighterSetCollecti
     QList<HighlighterSet> highlighterSets() const;
     void setHighlighterSets( const QList<HighlighterSet>& highlighters );
 
+    HighlighterSet currentSet() const;
+
+    QString currentSetId() const;
+    void setCurrentSet( QString setId );
+
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
@@ -130,6 +142,7 @@ class HighlighterSetCollection final : public Persistable<HighlighterSetCollecti
 
   private:
     QList<HighlighterSet> highlighters_;
+    QString currentSet_;
 
     // To simplify this class interface, HighlightersDialog can access our
     // internal structure directly.

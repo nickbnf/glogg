@@ -340,6 +340,7 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     void setSearchStart();
     void setSearchEnd();
     void setQuickFindResult( bool hasMatch, Portion selection );
+    void setHighlighterSet( QAction* action );
 
   private:
     // Graphic parameters
@@ -420,6 +421,7 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     QAction* setSearchEndAction_;
     QAction* clearSearchLimitAction_;
     QAction* saveDefaultSplitterSizesAction_;
+    QMenu* highlightersMenu_;
 
     // Pointer to the CrawlerWidget's QFP object
     const QuickFindPattern* const quickFindPattern_;

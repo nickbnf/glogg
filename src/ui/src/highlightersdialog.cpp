@@ -103,7 +103,7 @@ void HighlightersDialog::addHighlighterSet()
 {
     LOG( logDEBUG ) << "addHighlighter()";
 
-    highlighterSetCollection_.highlighters_.append( HighlighterSet( DEFAULT_NAME ) );
+    highlighterSetCollection_.highlighters_.append( HighlighterSet::createNewSet( DEFAULT_NAME ) );
 
     // Add and select the newly created highlighter
     highlighterListWidget->addItem( DEFAULT_NAME );
@@ -243,8 +243,7 @@ void HighlightersDialog::updateHighlighterProperties()
 
     // If a row is selected
     if ( selectedRow_ >= 0 ) {
-        HighlighterSet& currentSet
-            = highlighterSetCollection_.highlighters_[ selectedRow_ ];
+        HighlighterSet& currentSet = highlighterSetCollection_.highlighters_[ selectedRow_ ];
         currentSet = highlighterSetEdit_->highlighters();
         // Update the entry in the highlighterList widget
         highlighterListWidget->currentItem()->setText( currentSet.name() );

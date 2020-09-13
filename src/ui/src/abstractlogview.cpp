@@ -47,6 +47,7 @@
 #include <iostream>
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QClipboard>
 #include <QFile>
@@ -385,8 +386,33 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         if ( config.mainRegexpType() != ExtendedRegexp )
             addToSearchAction_->setEnabled( false );
 
+        const auto& highlighterSets = HighlighterSetCollection::get().highlighterSets();
+        const auto currentSetId = HighlighterSetCollection::get().currentSetId();
+
+        auto highlightersActionGroup = new QActionGroup( this );
+        connect( highlightersActionGroup, &QActionGroup::triggered, this,
+                 &AbstractLogView::setHighlighterSet );
+
+        highlightersMenu_->clear();
+
+        auto noneAction = highlightersMenu_->addAction( "None" );
+        noneAction->setActionGroup( highlightersActionGroup );
+        noneAction->setCheckable( true );
+        noneAction->setChecked( currentSetId.isEmpty() );
+
+        highlightersMenu_->addSeparator();
+        for (const auto& highlighter : qAsConst(highlighterSets)) {
+            auto setAction = highlightersMenu_->addAction( highlighter.name() );
+            setAction->setActionGroup( highlightersActionGroup );
+            setAction->setCheckable( true );
+            setAction->setChecked( currentSetId == highlighter.id() );
+            setAction->setData( highlighter.id() );
+        }
+
         // Display the popup (blocking)
         popupMenu_->exec( QCursor::pos() );
+
+        highlightersActionGroup->deleteLater();
     }
 
     emit activity();
@@ -1588,6 +1614,8 @@ void AbstractLogView::createMenu()
              [this]( auto ) { this->saveDefaultSplitterSizes(); } );
 
     popupMenu_ = new QMenu( this );
+    highlightersMenu_ = popupMenu_->addMenu( "Highlighters" );
+    popupMenu_->addSeparator();
     popupMenu_->addAction( markAction_ );
     popupMenu_->addSeparator();
     popupMenu_->addAction( copyAction_ );
@@ -1655,8 +1683,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     const int paintDeviceHeight = paint_device->height() / viewport()->devicePixelRatio();
     const int paintDeviceWidth = paint_device->width() / viewport()->devicePixelRatio();
     const QPalette& palette = viewport()->palette();
-    const auto& highlighterSets = HighlighterSetCollection::get().highlighterSets();
-    const auto& highlighterSet = highlighterSets.isEmpty() ? HighlighterSet{} : highlighterSets.front();
+    const auto& highlighterSet = HighlighterSetCollection::get().currentSet();
     QColor foreColor, backColor;
 
     static const QBrush normalBulletBrush = QBrush( Qt::white );
@@ -1948,6 +1975,17 @@ void AbstractLogView::disableFollow()
 {
     emit followModeChanged( false );
     followElasticHook_.hook( false );
+}
+
+void AbstractLogView::setHighlighterSet( QAction* action )
+{
+    auto setId= action->data().toString();
+    auto& highlighterSets = HighlighterSetCollection::get();
+    highlighterSets.setCurrentSet( setId );
+    highlighterSets.save();
+
+    textAreaCache_.invalid_ = true;
+    update();
 }
 
 namespace {

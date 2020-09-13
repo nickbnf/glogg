@@ -130,8 +130,9 @@ class HighlighterSetCollection final : public Persistable<HighlighterSetCollecti
 
     HighlighterSet currentSet() const;
 
+    bool hasSet( const QString& setId ) const;
     QString currentSetId() const;
-    void setCurrentSet( QString setId );
+    void setCurrentSet( const QString& setId );
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;

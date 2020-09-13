@@ -72,6 +72,9 @@ class HighlightersDialog : public QDialog, public Ui::HighlightersDialog {
     // Update the selected HighlighterSet from the values in the property fields.
     void updateHighlighterProperties();
 
+    void exportHighlighters();
+    void importHighlighters();
+
   private:
     void populateHighlighterList();
     void setCurrentRow( int row );

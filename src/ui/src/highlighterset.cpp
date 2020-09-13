@@ -270,9 +270,15 @@ QString HighlighterSetCollection::currentSetId() const
     return currentSet_;
 }
 
-void HighlighterSetCollection::setCurrentSet( QString current )
+void HighlighterSetCollection::setCurrentSet( const QString& current )
 {
     currentSet_ = current;
+}
+
+bool HighlighterSetCollection::hasSet( const QString& setId ) const
+{
+    return std::any_of( highlighters_.begin(), highlighters_.end(),
+                        [setId]( const auto& s ) { return s.id() == setId; } );
 }
 
 void HighlighterSetCollection::saveToStorage( QSettings& settings ) const

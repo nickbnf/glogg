@@ -42,6 +42,7 @@
 
 #include "highlightersdialog.h"
 
+#include <QFileDialog>
 #include <QTimer>
 #include <utility>
 
@@ -79,6 +80,9 @@ HighlightersDialog::HighlightersDialog( QWidget* parent )
     connect( downHighlighterButton, &QToolButton::clicked, this,
              &HighlightersDialog::moveHighlighterSetDown );
 
+    connect( exportButton, &QPushButton::clicked, this, &HighlightersDialog::exportHighlighters );
+    connect( importButton, &QPushButton::clicked, this, &HighlightersDialog::importHighlighters );
+
     // No highlighter selected by default
     selectedRow_ = -1;
 
@@ -98,6 +102,40 @@ HighlightersDialog::HighlightersDialog( QWidget* parent )
 //
 // Slots
 //
+
+void HighlightersDialog::exportHighlighters()
+{
+    QString file = QFileDialog::getSaveFileName( this, "Export highlighters configuration", "",
+                                                 "Highlighters (*.conf)" );
+
+    if ( file.isEmpty() ) {
+        return;
+    }
+
+    QSettings settings{ file, QSettings::IniFormat };
+    highlighterSetCollection_.saveToStorage( settings );
+}
+
+void HighlightersDialog::importHighlighters()
+{
+    QStringList files = QFileDialog::getOpenFileNames( this, "Select one or more files to open", "",
+                                                       "Highlighters (*.conf)" );
+
+    for ( const auto& file : qAsConst( files ) ) {
+        LOG( logDEBUG ) << "Loading highlighters from " << file;
+        QSettings settings{ file, QSettings::IniFormat };
+        HighlighterSetCollection collection;
+        collection.retrieveFromStorage( settings );
+        for ( const auto& set : qAsConst( collection.highlighters_ ) ) {
+            if ( highlighterSetCollection_.hasSet( set.id() ) ) {
+                continue;
+            }
+
+            highlighterSetCollection_.highlighters_.append( set );
+            highlighterListWidget->addItem( set.name() );
+        }
+    }
+}
 
 void HighlightersDialog::addHighlighterSet()
 {
@@ -119,6 +157,13 @@ void HighlightersDialog::removeHighlighterSet()
     if ( index >= 0 ) {
         setCurrentRow( -1 );
         QTimer::singleShot( 0, [this, index] {
+            {
+                const auto& set = highlighterSetCollection_.highlighters_.at( index );
+                if ( set.id() == highlighterSetCollection_.currentSetId() ) {
+                    highlighterSetCollection_.setCurrentSet( {} );
+                }
+            }
+
             highlighterSetCollection_.highlighters_.removeAt( index );
             delete highlighterListWidget->takeItem( index );
 

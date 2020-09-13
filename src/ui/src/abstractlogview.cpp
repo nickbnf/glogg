@@ -386,8 +386,9 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         if ( config.mainRegexpType() != ExtendedRegexp )
             addToSearchAction_->setEnabled( false );
 
-        const auto& highlighterSets = HighlighterSetCollection::get().highlighterSets();
-        const auto currentSetId = HighlighterSetCollection::get().currentSetId();
+        const auto& highlightersCollection = HighlighterSetCollection::get();
+        const auto& highlighterSets = highlightersCollection.highlighterSets();
+        const auto currentSetId = highlightersCollection.currentSetId();
 
         auto highlightersActionGroup = new QActionGroup( this );
         connect( highlightersActionGroup, &QActionGroup::triggered, this,
@@ -398,10 +399,10 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         auto noneAction = highlightersMenu_->addAction( "None" );
         noneAction->setActionGroup( highlightersActionGroup );
         noneAction->setCheckable( true );
-        noneAction->setChecked( currentSetId.isEmpty() );
+        noneAction->setChecked( !highlightersCollection.hasSet( currentSetId ) );
 
         highlightersMenu_->addSeparator();
-        for (const auto& highlighter : qAsConst(highlighterSets)) {
+        for ( const auto& highlighter : qAsConst( highlighterSets ) ) {
             auto setAction = highlightersMenu_->addAction( highlighter.name() );
             setAction->setActionGroup( highlightersActionGroup );
             setAction->setCheckable( true );
@@ -1979,7 +1980,7 @@ void AbstractLogView::disableFollow()
 
 void AbstractLogView::setHighlighterSet( QAction* action )
 {
-    auto setId= action->data().toString();
+    auto setId = action->data().toString();
     auto& highlighterSets = HighlighterSetCollection::get();
     highlighterSets.setCurrentSet( setId );
     highlighterSets.save();

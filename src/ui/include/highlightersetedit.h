@@ -36,53 +36,57 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FILTERSDIALOG_H
-#define FILTERSDIALOG_H
+#ifndef HIGHLIGHTERSETEDIT_H
+#define HIGHLIGHTERSETEDIT_H
 
 #include <memory>
 
 #include <QDialog>
 
+#include "highlighteredit.h"
 #include "highlighterset.h"
-#include "highlightersetedit.h"
-#include "ui_highlightersdialog.h"
+#include "ui_highlightersetedit.h"
 
-class HighlightersDialog : public QDialog, public Ui::HighlightersDialog {
+class HighlighterSetEdit : public QWidget, public Ui::HighlighterSetEdit {
     Q_OBJECT
 
   public:
-    explicit HighlightersDialog( QWidget* parent = nullptr );
+    explicit HighlighterSetEdit( QWidget* parent = nullptr );
+
+    HighlighterSet highlighters() const;
+    void setHighlighters( HighlighterSet set );
+
+    void reset();
 
   signals:
-    // Is emitted when new settings must be used
-    void optionsChanged();
+    void changed();
 
   private slots:
-    void addHighlighterSet();
-    void removeHighlighterSet();
+    void setName( const QString& name );
 
-    void moveHighlighterSetUp();
-    void moveHighlighterSetDown();
+    void addHighlighter();
+    void removeHighlighter();
 
-    void resolveDialog( QAbstractButton* button );
+    void moveHighlighterUp();
+    void moveHighlighterDown();
 
-    // Update the edit fields from the selected HighlighterSet.
+    // Update the property (pattern, color...) fields from the
+    // selected Highlighter.
     void updatePropertyFields();
 
-    // Update the selected HighlighterSet from the values in the property fields.
+    // Update the selected Highlighter from the values in the property fields.
     void updateHighlighterProperties();
 
   private:
     void populateHighlighterList();
     void setCurrentRow( int row );
-    void updateGroupTitle( const HighlighterSet& set );
 
   private:
-    HighlighterSetEdit* highlighterSetEdit_;
+    HighlighterEdit* highlighterEdit_;
 
-    // Temporary HighlighterSetCollection modified by the dialog
+    // Temporary HighlighterSet modified by the dialog
     // it is copied from the one in Config()
-    HighlighterSetCollection highlighterSetCollection_;
+    HighlighterSet highlighterSet_;
 
     // Index of the row currently selected or -1 if none.
     int selectedRow_;

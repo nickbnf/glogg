@@ -40,78 +40,104 @@
 
 #include "highlighterset.h"
 
-#include "highlightersdialog.h"
+#include "highlightersetedit.h"
 
+#include <QColorDialog>
 #include <QTimer>
 #include <utility>
 
-static constexpr QLatin1String DEFAULT_NAME = QLatin1String( "New Highlighter set", 19 );
+namespace {
+static constexpr QLatin1String DEFAULT_PATTERN = QLatin1String( "New Highlighter", 15 );
+static constexpr bool DEFAULT_IGNORE_CASE = false;
+
+static const QColor DEFAULT_FORE_COLOUR( "#000000" );
+static const QColor DEFAULT_BACK_COLOUR( "#FFFFFF" );
+} // namespace
 
 // Construct the box, including a copy of the global highlighterSet
 // to handle ok/cancel/apply
-HighlightersDialog::HighlightersDialog( QWidget* parent )
-    : QDialog( parent )
+HighlighterSetEdit::HighlighterSetEdit( QWidget* parent )
+    : QWidget( parent )
 {
     setupUi( this );
 
-    highlighterSetEdit_ = new HighlighterSetEdit( this );
-    highlighterSetEdit_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-    highlighterLayout->addWidget( highlighterSetEdit_ );
+    highlighterEdit_ = new HighlighterEdit(
+        Highlighter{ "", DEFAULT_IGNORE_CASE, DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR }, this );
+    highlighterEdit_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+    highlighterLayout->addWidget( highlighterEdit_ );
 
-    // Reload the highlighter list from disk (in case it has been changed
-    // by another glogg instance) and copy it to here.
-    highlighterSetCollection_ = HighlighterSetCollection::getSynced();
-
-    populateHighlighterList();
-
-    // Start with all buttons disabled except 'add'
-    removeHighlighterButton->setEnabled( false );
-    upHighlighterButton->setEnabled( false );
-    downHighlighterButton->setEnabled( false );
+    connect( nameEdit, &QLineEdit::textEdited, this, &HighlighterSetEdit::setName );
 
     connect( addHighlighterButton, &QToolButton::clicked, this,
-             &HighlightersDialog::addHighlighterSet );
+             &HighlighterSetEdit::addHighlighter );
     connect( removeHighlighterButton, &QToolButton::clicked, this,
-             &HighlightersDialog::removeHighlighterSet );
+             &HighlighterSetEdit::removeHighlighter );
 
     connect( upHighlighterButton, &QToolButton::clicked, this,
-             &HighlightersDialog::moveHighlighterSetUp );
+             &HighlighterSetEdit::moveHighlighterUp );
     connect( downHighlighterButton, &QToolButton::clicked, this,
-             &HighlightersDialog::moveHighlighterSetDown );
+             &HighlighterSetEdit::moveHighlighterDown );
 
     // No highlighter selected by default
     selectedRow_ = -1;
 
     connect( highlighterListWidget, &QListWidget::itemSelectionChanged, this,
-             &HighlightersDialog::updatePropertyFields );
+             &HighlighterSetEdit::updatePropertyFields );
 
-    connect( highlighterSetEdit_, &HighlighterSetEdit::changed, this,
-             &HighlightersDialog::updateHighlighterProperties );
-
-    connect( buttonBox, &QDialogButtonBox::clicked, this, &HighlightersDialog::resolveDialog );
-
-    if ( !highlighterSetCollection_.highlighters_.empty() ) {
-        setCurrentRow( 0 );
-    }
+    connect( highlighterEdit_, &HighlighterEdit::changed, this,
+             &HighlighterSetEdit::updateHighlighterProperties );
 }
 
-//
-// Slots
-//
+void HighlighterSetEdit::reset()
+{
+    // Start with all buttons disabled except 'add'
+    removeHighlighterButton->setEnabled( false );
+    upHighlighterButton->setEnabled( false );
+    downHighlighterButton->setEnabled( false );
 
-void HighlightersDialog::addHighlighterSet()
+    highlighterListWidget->clear();
+    highlighterEdit_->reset();
+}
+
+HighlighterSet HighlighterSetEdit::highlighters() const
+{
+    return highlighterSet_;
+}
+
+void HighlighterSetEdit::setHighlighters( HighlighterSet set )
+{
+    highlighterSet_ = std::move( set );
+    populateHighlighterList();
+
+    if ( !highlighterSet_.highlighterList_.empty() ) {
+        setCurrentRow( 0 );
+    }
+
+    nameEdit->setText( highlighterSet_.name() );
+}
+
+void HighlighterSetEdit::setName( const QString& name )
+{
+    highlighterSet_.name_ = name;
+    emit changed();
+}
+
+void HighlighterSetEdit::addHighlighter()
 {
     LOG( logDEBUG ) << "addHighlighter()";
 
-    highlighterSetCollection_.highlighters_.append( HighlighterSet( DEFAULT_NAME ) );
+    highlighterSet_.highlighterList_.append( Highlighter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
+                                                   DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR ) );
 
     // Add and select the newly created highlighter
-    highlighterListWidget->addItem( DEFAULT_NAME );
+    highlighterListWidget->addItem( DEFAULT_PATTERN );
 
     setCurrentRow( highlighterListWidget->count() - 1 );
+
+    emit changed();
 }
 
-void HighlightersDialog::removeHighlighterSet()
+void HighlighterSetEdit::removeHighlighter()
 {
     int index = highlighterListWidget->currentRow();
     LOG( logDEBUG ) << "removeHighlighter() index " << index;
@@ -119,7 +145,7 @@ void HighlightersDialog::removeHighlighterSet()
     if ( index >= 0 ) {
         setCurrentRow( -1 );
         QTimer::singleShot( 0, [this, index] {
-            highlighterSetCollection_.highlighters_.removeAt( index );
+            highlighterSet_.highlighterList_.removeAt( index );
             delete highlighterListWidget->takeItem( index );
 
             int count = highlighterListWidget->count();
@@ -132,16 +158,18 @@ void HighlightersDialog::removeHighlighterSet()
                 setCurrentRow( count - 1 );
             }
         } );
+
+        emit changed();
     }
 }
 
-void HighlightersDialog::moveHighlighterSetUp()
+void HighlighterSetEdit::moveHighlighterUp()
 {
     int index = highlighterListWidget->currentRow();
     LOG( logDEBUG ) << "moveHighlighterUp() index " << index;
 
     if ( index > 0 ) {
-        highlighterSetCollection_.highlighters_.move( index, index - 1 );
+        highlighterSet_.highlighterList_.move( index, index - 1 );
 
         QTimer::singleShot( 0, [this, index] {
             QListWidgetItem* item = highlighterListWidget->takeItem( index );
@@ -149,16 +177,18 @@ void HighlightersDialog::moveHighlighterSetUp()
 
             setCurrentRow( index - 1 );
         } );
+
+        emit changed();
     }
 }
 
-void HighlightersDialog::moveHighlighterSetDown()
+void HighlighterSetEdit::moveHighlighterDown()
 {
     int index = highlighterListWidget->currentRow();
     LOG( logDEBUG ) << "moveHighlighterDown() index " << index;
 
     if ( ( index >= 0 ) && ( index < ( highlighterListWidget->count() - 1 ) ) ) {
-        highlighterSetCollection_.highlighters_.move( index, index + 1 );
+        highlighterSet_.highlighterList_.move( index, index + 1 );
 
         QTimer::singleShot( 0, [this, index] {
             QListWidgetItem* item = highlighterListWidget->takeItem( index );
@@ -166,48 +196,18 @@ void HighlightersDialog::moveHighlighterSetDown()
 
             setCurrentRow( index + 1 );
         } );
+
+        emit changed();
     }
 }
 
-void HighlightersDialog::resolveDialog( QAbstractButton* button )
-{
-    LOG( logDEBUG ) << "resolveDialog()";
-
-    QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
-    if ( role == QDialogButtonBox::RejectRole ) {
-        reject();
-        return;
-    }
-
-    // persist it to disk
-    auto& persistentHighlighterSet = HighlighterSetCollection::get();
-    if ( role == QDialogButtonBox::AcceptRole ) {
-        persistentHighlighterSet = std::move( highlighterSetCollection_ );
-        accept();
-    }
-    else if ( role == QDialogButtonBox::ApplyRole ) {
-        persistentHighlighterSet = highlighterSetCollection_;
-    }
-    else {
-        LOG( logERROR ) << "unhandled role : " << role;
-        return;
-    }
-    persistentHighlighterSet.save();
-    emit optionsChanged();
-}
-
-void HighlightersDialog::setCurrentRow( int row )
+void HighlighterSetEdit::setCurrentRow( int row )
 {
     // ugly hack for mac
     QTimer::singleShot( 0, [this, row]() { highlighterListWidget->setCurrentRow( row ); } );
 }
 
-void HighlightersDialog::updateGroupTitle( const HighlighterSet& set )
-{
-    groupBox->setTitle( QString( "Set %1 properties" ).arg( set.name() ) );
-}
-
-void HighlightersDialog::updatePropertyFields()
+void HighlighterSetEdit::updatePropertyFields()
 {
     if ( highlighterListWidget->selectedItems().count() >= 1 )
         selectedRow_ = highlighterListWidget->row( highlighterListWidget->selectedItems().at( 0 ) );
@@ -217,19 +217,16 @@ void HighlightersDialog::updatePropertyFields()
     LOG( logDEBUG ) << "updatePropertyFields(), row = " << selectedRow_;
 
     if ( selectedRow_ >= 0 ) {
-        const HighlighterSet& currentSet
-            = highlighterSetCollection_.highlighters_.at( selectedRow_ );
-        highlighterSetEdit_->setHighlighters( currentSet );
+        const Highlighter& currentHighlighter = highlighterSet_.highlighterList_.at( selectedRow_ );
+        highlighterEdit_->setHighlighter( currentHighlighter );
 
         // Enable the buttons if needed
         removeHighlighterButton->setEnabled( true );
         upHighlighterButton->setEnabled( selectedRow_ > 0 );
         downHighlighterButton->setEnabled( selectedRow_ < ( highlighterListWidget->count() - 1 ) );
-
-        updateGroupTitle( currentSet );
     }
     else {
-        highlighterSetEdit_->reset();
+        highlighterEdit_->reset();
 
         removeHighlighterButton->setEnabled( false );
         upHighlighterButton->setEnabled( false );
@@ -237,32 +234,35 @@ void HighlightersDialog::updatePropertyFields()
     }
 }
 
-void HighlightersDialog::updateHighlighterProperties()
+void HighlighterSetEdit::updateHighlighterProperties()
 {
     LOG( logDEBUG ) << "updateHighlighterProperties()";
 
     // If a row is selected
     if ( selectedRow_ >= 0 ) {
-        HighlighterSet& currentSet
-            = highlighterSetCollection_.highlighters_[ selectedRow_ ];
-        currentSet = highlighterSetEdit_->highlighters();
+        Highlighter& currentHighlighter = highlighterSet_.highlighterList_[ selectedRow_ ];
+
+        currentHighlighter = highlighterEdit_->highlighter();
+
         // Update the entry in the highlighterList widget
-        highlighterListWidget->currentItem()->setText( currentSet.name() );
-        updateGroupTitle( currentSet );
+        highlighterListWidget->currentItem()->setText( currentHighlighter.pattern() );
+        highlighterListWidget->currentItem()->setForeground(
+            QBrush( currentHighlighter.foreColor() ) );
+        highlighterListWidget->currentItem()->setBackground(
+            QBrush( currentHighlighter.backColor() ) );
+
+        emit changed();
     }
 }
 
-//
-// Private functions
-//
-
-void HighlightersDialog::populateHighlighterList()
+void HighlighterSetEdit::populateHighlighterList()
 {
     highlighterListWidget->clear();
-    for ( const HighlighterSet& highlighterSet :
-          qAsConst( highlighterSetCollection_.highlighters_ ) ) {
-        auto* new_item = new QListWidgetItem( highlighterSet.name() );
+    for ( const Highlighter& highlighter : qAsConst( highlighterSet_.highlighterList_ ) ) {
+        auto* new_item = new QListWidgetItem( highlighter.pattern() );
         // new_item->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
+        new_item->setForeground( QBrush( highlighter.foreColor() ) );
+        new_item->setBackground( QBrush( highlighter.backColor() ) );
         highlighterListWidget->addItem( new_item );
     }
 }

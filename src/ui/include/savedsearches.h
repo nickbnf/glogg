@@ -35,9 +35,6 @@ class SavedSearches final : public Persistable<SavedSearches, session_settings> 
         return "SavedSearches";
     }
     
-    // Creates an empty set of saved searches
-    SavedSearches();
-
     // Adds the passed search to the list of recently used searches
     void addRecent( const QString& text );
 
@@ -45,11 +42,6 @@ class SavedSearches final : public Persistable<SavedSearches, session_settings> 
     QStringList recentSearches() const;
 
     void clear();
-
-    // Operators for serialization
-    // (only for migrating pre 0.8.2 settings, will be removed)
-    friend QDataStream& operator<<( QDataStream& out, const SavedSearches& object );
-    friend QDataStream& operator>>( QDataStream& in, SavedSearches& object );
 
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
@@ -61,7 +53,5 @@ class SavedSearches final : public Persistable<SavedSearches, session_settings> 
 
     QStringList savedSearches_;
 };
-
-Q_DECLARE_METATYPE( SavedSearches )
 
 #endif

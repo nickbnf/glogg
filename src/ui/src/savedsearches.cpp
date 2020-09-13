@@ -25,12 +25,6 @@
 #include "log.h"
 #include "savedsearches.h"
 
-SavedSearches::SavedSearches()
-    : savedSearches_()
-{
-    qRegisterMetaTypeStreamOperators<SavedSearches>( "SavedSearches" );
-}
-
 void SavedSearches::addRecent( const QString& text )
 {
     // We're not interested in blank lines
@@ -56,28 +50,6 @@ QStringList SavedSearches::recentSearches() const
 void SavedSearches::clear()
 {
     savedSearches_.clear();
-}
-
-//
-// Operators for serialization
-//
-
-QDataStream& operator<<( QDataStream& out, const SavedSearches& object )
-{
-    LOG( logDEBUG ) << "<<operator from SavedSearches";
-
-    out << object.savedSearches_;
-
-    return out;
-}
-
-QDataStream& operator>>( QDataStream& in, SavedSearches& object )
-{
-    LOG( logDEBUG ) << ">>operator from SavedSearches";
-
-    in >> object.savedSearches_;
-
-    return in;
 }
 
 //
@@ -121,16 +93,5 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
             LOG( logERROR ) << "Unknown version of saved searches, ignoring it...";
         }
         settings.endGroup();
-    }
-    else {
-        LOG( logWARNING ) << "Trying to import legacy (<=0.8.2) saved searches...";
-        SavedSearches tmp_saved_searches = settings.value( "savedSearches" ).value<SavedSearches>();
-        *this = tmp_saved_searches;
-        LOG( logWARNING ) << "...imported searches: " << savedSearches_.count() << " elements";
-        // Remove the old key once migration is done
-        settings.remove( "savedSearches" );
-        // And replace it with the new one
-        saveToStorage( settings );
-        settings.sync();
     }
 }

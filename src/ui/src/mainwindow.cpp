@@ -1635,7 +1635,7 @@ void MainWindow::readSettings()
     RecentFiles::getSynced();
     updateRecentFileActions();
 
-    HighlighterSet::getSynced();
+    HighlighterSetCollection::getSynced();
 
     FavoriteFiles::getSynced();
     updateFavoritesMenu();

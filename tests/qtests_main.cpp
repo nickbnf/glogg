@@ -84,7 +84,7 @@ int main( int argc, char* argv[] )
     config.setIndexReadBufferSizeMb( 1 );
     config.setUseSearchResultsCache( false );
 
-    auto higthlighters = HighlighterSet::getSynced();
+    auto higthlighters = HighlighterSetCollection::getSynced();
 
 #ifdef Q_OS_WIN
     config.setPollingEnabled( true );

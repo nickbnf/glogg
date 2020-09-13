@@ -4,6 +4,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/filteredview.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighteredit.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersetedit.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighterset.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/infoline.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/pathline.h
@@ -36,6 +37,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/displayfilepath.h
 
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighteredit.ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersetedit.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/optionsdialog.ui
 
@@ -44,6 +46,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/filteredview.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlightersdialog.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlighteredit.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/highlightersetedit.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlighterset.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/infoline.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/pathline.cpp

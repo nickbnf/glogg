@@ -1655,7 +1655,8 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     const int paintDeviceHeight = paint_device->height() / viewport()->devicePixelRatio();
     const int paintDeviceWidth = paint_device->width() / viewport()->devicePixelRatio();
     const QPalette& palette = viewport()->palette();
-    const auto& highlighterSet = HighlighterSet::get();
+    const auto& highlighterSets = HighlighterSetCollection::get().highlighterSets();
+    const auto& highlighterSet = highlighterSets.isEmpty() ? HighlighterSet{} : highlighterSets.front();
     QColor foreColor, backColor;
 
     static const QBrush normalBulletBrush = QBrush( Qt::white );

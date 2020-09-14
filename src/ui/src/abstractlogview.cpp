@@ -1818,7 +1818,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
             LineDrawer lineDrawer( backColor );
 
             // First we create a list of chunks with the highlights
-            std::vector<LineChunk> chunkList;
+            std::vector<LineChunk> qfChunkList;
             int column = 0; // Current column in line space
             for ( const auto& match : qfMatchList ) {
                 int start = match.startColumn() - firstCol;
@@ -1828,35 +1828,37 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
                 if ( ( start < 0 && end < 0 ) || start >= nbCols )
                     continue;
 
-                if ( start > column )
-                    chunkList.emplace_back( column, start - 1, LineChunk::Normal );
+                if ( start > column ) {
+                    qfChunkList.emplace_back( column, start - 1, LineChunk::Normal );
+                }
 
                 column = qMin( start + match.length() - 1, nbCols );
-                chunkList.emplace_back( qMax( start, 0 ), column, LineChunk::Highlighted );
+                qfChunkList.emplace_back( qMax( start, 0 ), column, LineChunk::Highlighted );
 
                 column++;
             }
-            if ( column <= cutLine.length() - 1 )
-                chunkList.emplace_back( column, cutLine.length() - 1, LineChunk::Normal );
+            if ( column <= cutLine.length() - 1 ) {
+                qfChunkList.emplace_back( column, cutLine.length() - 1, LineChunk::Normal );
+            }
 
             // Then we add the selection if needed
-            std::vector<LineChunk> newChunkList;
+            std::vector<LineChunk> fullChunkList;
             if ( isSelection ) {
                 sel_start -= firstCol; // coord in line space
                 sel_end -= firstCol;
 
-                for ( const auto& chunk : chunkList ) {
+                for ( const auto& chunk : qfChunkList ) {
                     auto selection = chunk.select( sel_start, sel_end );
-                    newChunkList.insert( newChunkList.end(),
-                                         std::make_move_iterator( selection.begin() ),
-                                         std::make_move_iterator( selection.end() ) );
+                    fullChunkList.insert( fullChunkList.end(),
+                                          std::make_move_iterator( selection.begin() ),
+                                          std::make_move_iterator( selection.end() ) );
                 }
             }
             else {
-                newChunkList = chunkList;
+                std::swap( qfChunkList, fullChunkList );
             }
 
-            for ( const auto& chunk : newChunkList ) {
+            for ( const auto& chunk : fullChunkList ) {
                 // Select the colours
                 QColor fore;
                 QColor back;

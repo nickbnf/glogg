@@ -203,6 +203,8 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
         LOG( logINFO ) << "HighlighterSet found old filters";
         settings.beginGroup( "FilterSet" );
         if ( settings.value( "version" ).toInt() <= FilterSet_VERSION ) {
+            name_ = settings.value( "name", "Highlighters set" ).toString();
+            id_ = settings.value( "id", generateIdFromUuid() ).toString();
             int size = settings.beginReadArray( "filters" );
             for ( int i = 0; i < size; ++i ) {
                 settings.setArrayIndex( i );

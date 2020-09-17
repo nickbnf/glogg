@@ -54,9 +54,10 @@ QRegularExpression::PatternOptions getPatternOptions( bool ignoreCase )
     return options;
 }
 
-Highlighter::Highlighter( const QString& pattern, bool ignoreCase, const QColor& foreColor,
-                          const QColor& backColor )
+Highlighter::Highlighter( const QString& pattern, bool ignoreCase, bool onlyMatch,
+                          const QColor& foreColor, const QColor& backColor )
     : regexp_( pattern, getPatternOptions( ignoreCase ) )
+    , highlightOnlyMatch_( onlyMatch )
     , foreColor_( foreColor )
     , backColor_( backColor )
 {
@@ -84,6 +85,16 @@ void Highlighter::setIgnoreCase( bool ignoreCase )
     regexp_.setPatternOptions( getPatternOptions( ignoreCase ) );
 }
 
+bool Highlighter::highlightOnlyMatch() const
+{
+    return highlightOnlyMatch_;
+}
+
+void Highlighter::setHighlightOnlyMatch( bool onlyMatch )
+{
+    highlightOnlyMatch_ = onlyMatch;
+}
+
 const QColor& Highlighter::foreColor() const
 {
     return foreColor_;
@@ -104,9 +115,19 @@ void Highlighter::setBackColor( const QColor& backColor )
     backColor_ = backColor;
 }
 
-bool Highlighter::hasMatch( const QString& string ) const
+bool Highlighter::matchLine( const QString& line, std::vector<HighlightedMatch>& matches ) const
 {
-    return regexp_.match( string ).hasMatch();
+    matches.clear();
+
+    QRegularExpressionMatchIterator matchIterator = regexp_.globalMatch( line );
+
+    while ( matchIterator.hasNext() ) {
+        QRegularExpressionMatch match = matchIterator.next();
+        matches.emplace_back( match.capturedStart(), match.capturedLength(), foreColor_,
+                              backColor_ );
+    }
+
+    return ( !matches.empty() );
 }
 
 HighlighterSet HighlighterSet::createNewSet( const QString& name )
@@ -135,17 +156,33 @@ bool HighlighterSet::isEmpty() const
     return highlighterList_.isEmpty();
 }
 
-bool HighlighterSet::matchLine( const QString& line, QColor* foreColor, QColor* backColor ) const
+HighlighterMatchType HighlighterSet::matchLine( const QString& line,
+                                                std::vector<HighlightedMatch>& matches ) const
 {
-    for ( auto i = highlighterList_.constBegin(); i != highlighterList_.constEnd(); ++i ) {
-        if ( i->hasMatch( line ) ) {
-            *foreColor = i->foreColor();
-            *backColor = i->backColor();
-            return true;
+    auto matchType = HighlighterMatchType::NoMatch;
+    for ( auto hl = highlighterList_.rbegin(); hl != highlighterList_.rend(); ++hl ) {
+        std::vector<HighlightedMatch> thisMatches;
+        if ( !hl->matchLine( line, thisMatches ) ) {
+            continue;
+        }
+
+        if ( !hl->highlightOnlyMatch() ) {
+            matchType = HighlighterMatchType::LineMatch;
+
+            matches.clear();
+            matches.emplace_back( 0, line.length(), hl->foreColor(), hl->backColor() );
+        }
+        else {
+            if ( matchType != HighlighterMatchType::LineMatch ) {
+                matchType = HighlighterMatchType::WordMatch;
+            }
+
+            matches.insert( matches.end(), std::make_move_iterator( thisMatches.begin() ),
+                            std::make_move_iterator( thisMatches.end() ) );
         }
     }
-
-    return false;
+    
+    return matchType;
 }
 
 //
@@ -159,6 +196,7 @@ void Highlighter::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexp", regexp_.pattern() );
     settings.setValue( "ignore_case", regexp_.patternOptions().testFlag(
                                           QRegularExpression::CaseInsensitiveOption ) );
+    settings.setValue( "match_only", highlightOnlyMatch_ );
     // save colors as user friendly strings in config
     settings.setValue( "fore_colour", foreColor_.name() );
     settings.setValue( "back_colour", backColor_.name() );
@@ -171,6 +209,7 @@ void Highlighter::retrieveFromStorage( QSettings& settings )
     regexp_ = QRegularExpression(
         settings.value( "regexp" ).toString(),
         getPatternOptions( settings.value( "ignore_case", false ).toBool() ) );
+    highlightOnlyMatch_ = settings.value( "match_only", false ).toBool();
     foreColor_ = QColor( settings.value( "fore_colour" ).toString() );
     backColor_ = QColor( settings.value( "back_colour" ).toString() );
 }

@@ -96,26 +96,29 @@ int countDigits( quint64 n )
 
 } // namespace
 
-LineChunk::LineChunk( int first_col, int last_col, ChunkType type )
+bool LineChunk::isOverlapping( int sel_start, int sel_end ) const
 {
-    // LOG(logDEBUG) << "new LineChunk: " << first_col << " " << last_col;
-
-    start_ = first_col;
-    end_ = last_col;
-    type_ = type;
+    return sel_start <= end_ && ( ( sel_start >= start_ ) || ( sel_end >= start_ ) );
 }
 
-std::vector<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
+bool LineChunk::isOverlapping( const LineChunk& other ) const
 {
-    std::vector<LineChunk> list;
+    return isOverlapping( other.start(), other.end() );
+}
 
-    if ( ( sel_start < start_ ) && ( sel_end < start_ ) ) {
-        // Selection BEFORE this chunk: no change
-        list.emplace_back( *this );
-    }
-    else if ( sel_start > end_ ) {
-        // Selection AFTER this chunk: no change
-        list.emplace_back( *this );
+std::vector<LineChunk> LineChunk::overlap( const LineChunk& other ) const
+{
+    return overlap( other.start(), other.end(), other.foreColor(), other.backColor() );
+}
+
+std::vector<LineChunk> LineChunk::overlap( int sel_start, int sel_end, QColor overlapForeColor,
+                                           QColor overlapBackColor ) const
+{
+    std::vector<LineChunk> overlapped;
+
+    if ( !isOverlapping( sel_start, sel_end ) ) {
+        // Selection BEFORE or AFTER this chunk: no change
+        overlapped.emplace_back( *this );
     }
     else /* if ( ( sel_start >= start_ ) && ( sel_end <= end_ ) ) */
     {
@@ -124,36 +127,36 @@ std::vector<LineChunk> LineChunk::select( int sel_start, int sel_end ) const
         sel_end = qMin( sel_end, end_ );
 
         if ( sel_start > start_ ) {
-            list.emplace_back( start_, sel_start - 1, type_ );
+            overlapped.emplace_back( start_, sel_start - 1, foreColor_, backColor_ );
         }
 
-        list.emplace_back( sel_start, sel_end, Selected );
+        overlapped.emplace_back( sel_start, sel_end, overlapForeColor, overlapBackColor );
 
         if ( sel_end < end_ ) {
-            list.emplace_back( sel_end + 1, end_, type_ );
+            overlapped.emplace_back( sel_end + 1, end_, foreColor_, backColor_ );
         }
     }
 
-    return list;
+    return overlapped;
 }
 
 inline void LineDrawer::addChunk( int first_col, int last_col, const QColor& fore,
                                   const QColor& back )
 {
-    if ( first_col < 0 )
+    if ( first_col < 0 ) {
         first_col = 0;
-    int length = last_col - first_col + 1;
+    }
+
+    const auto length = last_col - first_col + 1;
+
     if ( length > 0 ) {
-        list.emplace_back( first_col, length, fore, back );
+        chunks_.emplace_back( first_col, last_col, fore, back );
     }
 }
 
-inline void LineDrawer::addChunk( const LineChunk& chunk, const QColor& fore, const QColor& back )
+inline void LineDrawer::addChunk( const LineChunk& chunk )
 {
-    int first_col = chunk.start();
-    int last_col = chunk.end();
-
-    addChunk( first_col, last_col, fore, back );
+    addChunk( chunk.start(), chunk.end(), chunk.foreColor(), chunk.backColor() );
 }
 
 inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPos, int line_width,
@@ -171,7 +174,7 @@ inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPo
     int xPos = initialXPos;
     int yPos = initialYPos;
 
-    for ( const Chunk& chunk : list ) {
+    for ( const auto& chunk : chunks_ ) {
         // Draw each chunk
         // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
@@ -1772,113 +1775,101 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     }();
 
     // Then draw each line
-    for ( auto i = 0_lcount; i < nbLines; ++i ) {
-        const auto line_index = firstLine + i;
+    for ( auto currentLine = 0_lcount; currentLine < nbLines; ++currentLine ) {
+        const auto lineNumber = firstLine + currentLine;
 
-        // Position in pixel of the base line of the line to print
-        const int yPos = static_cast<int>( i.get() ) * fontHeight;
-        const int xPos = contentStartPosX + CONTENT_MARGIN_WIDTH;
+        std::vector<HighlightedMatch> highlighterMatches;
 
-        // string to print, cut to fit the length and position of the view
-        const QString line = lines[ i.get() ];
-        const QString cutLine = line.mid( firstCol, nbCols );
-
-        if ( selection_.isLineSelected( line_index ) ) {
+        if ( selection_.isLineSelected( lineNumber ) ) {
             // Reverse the selected line
             foreColor = palette.color( QPalette::HighlightedText );
             backColor = palette.color( QPalette::Highlight );
             painter.setPen( palette.color( QPalette::Text ) );
         }
-        else if ( highlighterSet.matchLine( logData->getLineString( line_index ), &foreColor,
-                                            &backColor ) ) {
-            // Apply a filter to the line
-        }
         else {
-            // Use the default colors
-            if ( line_index < searchStartIndex || line_index >= searchEndIndex ) {
-                foreColor = palette.brush( QPalette::Disabled, QPalette::Text ).color();
+            const auto highlightType = highlighterSet.matchLine(
+                logData->getLineString( lineNumber ), highlighterMatches );
+
+            if ( highlightType == HighlighterMatchType::LineMatch ) {
+                // color applies to whole line
+                foreColor = highlighterMatches.front().foreColor();
+                backColor = highlighterMatches.front().backColor();
             }
             else {
-                foreColor = palette.color( QPalette::Text );
-            }
+                // Use the default colors
+                if ( lineNumber < searchStartIndex || lineNumber >= searchEndIndex ) {
+                    foreColor = palette.brush( QPalette::Disabled, QPalette::Text ).color();
+                }
+                else {
+                    foreColor = palette.color( QPalette::Text );
+                }
 
-            backColor = palette.color( QPalette::Base );
+                backColor = palette.color( QPalette::Base );
+            }
         }
 
-        // Is there something selected in the line?
-        int sel_start, sel_end;
-        bool isSelection = selection_.getPortionForLine( line_index, &sel_start, &sel_end );
-        // Has the line got elements to be highlighted
-        std::vector<QuickFindMatch> qfMatchList;
-        bool isMatch = quickFindPattern_->matchLine( line, qfMatchList );
+        // string to print, cut to fit the length and position of the view
+        const QString line = lines[ currentLine.get() ];
+        const QString cutLine = line.mid( firstCol, nbCols );
 
-        if ( isSelection || isMatch ) {
+        // Position in pixel of the base line of the line to print
+        const int yPos = static_cast<int>( currentLine.get() ) * fontHeight;
+        const int xPos = contentStartPosX + CONTENT_MARGIN_WIDTH;
+
+        // Has the line got elements to be highlighted
+        std::vector<HighlightedMatch> qfMatches;
+        quickFindPattern_->matchLine( line, qfMatches );
+        highlighterMatches.insert( highlighterMatches.end(),
+                                   std::make_move_iterator( qfMatches.begin() ),
+                                   std::make_move_iterator( qfMatches.end() ) );
+
+        // Is there something selected in the line?
+        int selectionStart, selectionEnd;
+        if ( selection_.getPortionForLine( lineNumber, &selectionStart, &selectionEnd ) ) {
+            highlighterMatches.emplace_back( selectionStart, selectionEnd - selectionStart + 1,
+                                             palette.color( QPalette::HighlightedText ),
+                                             palette.color( QPalette::Highlight ) );
+        }
+
+        if ( !highlighterMatches.empty() ) {
             // We use the LineDrawer and its chunks because the
             // line has to be somehow highlighted
             LineDrawer lineDrawer( backColor );
 
-            // First we create a list of chunks with the highlights
-            std::vector<LineChunk> qfChunkList;
-            int column = 0; // Current column in line space
-            for ( const auto& match : qfMatchList ) {
-                int start = match.startColumn() - firstCol;
-                int end = start + match.length();
+            auto foreColors = std::vector<QColor>( static_cast<size_t>( nbCols + 1 ), foreColor );
+            auto backColors = std::vector<QColor>( static_cast<size_t>( nbCols + 1 ), backColor );
+
+            for ( const auto& match : highlighterMatches ) {
+                const auto start = match.startColumn() - firstCol;
+                const auto end = start + match.length();
 
                 // Ignore matches that are *completely* outside view area
                 if ( ( start < 0 && end < 0 ) || start >= nbCols )
                     continue;
 
-                if ( start > column ) {
-                    qfChunkList.emplace_back( column, start - 1, LineChunk::Normal );
-                }
+                const auto firstColumn = static_cast<size_t>( qMax( start, 0 ) );
+                const auto lastColumn
+                    = static_cast<size_t>( qMin( start + match.length(), nbCols ) );
 
-                column = qMin( start + match.length() - 1, nbCols );
-                qfChunkList.emplace_back( qMax( start, 0 ), column, LineChunk::Highlighted );
-
-                column++;
-            }
-            if ( column <= cutLine.length() - 1 ) {
-                qfChunkList.emplace_back( column, cutLine.length() - 1, LineChunk::Normal );
-            }
-
-            // Then we add the selection if needed
-            std::vector<LineChunk> fullChunkList;
-            if ( isSelection ) {
-                sel_start -= firstCol; // coord in line space
-                sel_end -= firstCol;
-
-                for ( const auto& chunk : qfChunkList ) {
-                    auto selection = chunk.select( sel_start, sel_end );
-                    fullChunkList.insert( fullChunkList.end(),
-                                          std::make_move_iterator( selection.begin() ),
-                                          std::make_move_iterator( selection.end() ) );
+                for ( auto column = firstColumn; column < lastColumn; ++column ) {
+                    foreColors[ column ] = match.foreColor();
+                    backColors[ column ] = match.backColor();
                 }
             }
-            else {
-                std::swap( qfChunkList, fullChunkList );
-            }
 
-            for ( const auto& chunk : fullChunkList ) {
-                // Select the colours
-                QColor fore;
-                QColor back;
-                switch ( chunk.type() ) {
-                case LineChunk::Normal:
-                    fore = foreColor;
-                    back = backColor;
-                    break;
-                case LineChunk::Highlighted:
-                    fore = QColor( "black" );
-                    back = QColor( "yellow" );
-                    // fore = highlightForeColor;
-                    // back = highlightBackColor;
-                    break;
-                case LineChunk::Selected:
-                    fore = palette.color( QPalette::HighlightedText );
-                    back = palette.color( QPalette::Highlight );
-                    break;
+            std::vector<LineChunk> highlightChunks;
+            auto lastMatchStart = 0;
+            for ( auto column = 0u; column < foreColors.size() - 1; ++column ) {
+                if ( foreColors[ column ] != foreColors[ column + 1 ]
+                     || backColors[ column ] != backColors[ column + 1 ] ) {
+                    lineDrawer.addChunk( { lastMatchStart, static_cast<int>( column ),
+                                           foreColors[ column ], backColors[ column ] } );
+                    lastMatchStart = static_cast<int>( column + 1 );
                 }
-                lineDrawer.addChunk( chunk, fore, back );
+            }
+            if ( lastMatchStart < nbCols ) {
+                lineDrawer.addChunk(
+                    { lastMatchStart, nbCols, foreColors.back(), backColors.back() } );
             }
 
             lineDrawer.draw( painter, xPos, yPos, viewport()->width(), cutLine,
@@ -1902,7 +1893,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
         const int middleYLine = yPos + ( fontHeight / 2 );
 
         using LineTypeFlags = AbstractLogData::LineTypeFlags;
-        const AbstractLogData::LineType line_type = lineType( line_index );
+        const auto line_type = lineType( lineNumber );
         if ( line_type.testFlag( LineTypeFlags::Mark ) ) {
             // A pretty arrow if the line is marked
             const QPointF points[ 7 ] = {
@@ -1935,7 +1926,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
         if ( lineNumbersVisible_ ) {
             static const QString lineNumberFormat( "%1" );
             const QString& lineNumberStr = lineNumberFormat.arg(
-                displayLineNumber( line_index ).get(), nbDigitsInLineNumber );
+                displayLineNumber( lineNumber ).get(), nbDigitsInLineNumber );
             painter.setPen( palette.color( QPalette::Text ) );
             painter.drawText( lineNumberAreaStartX + LINE_NUMBER_PADDING, yPos + fontAscent,
                               lineNumberStr );

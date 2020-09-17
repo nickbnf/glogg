@@ -43,6 +43,7 @@
 #include <QMetaType>
 #include <QRegularExpression>
 
+#include "highlightedmatch.h"
 #include "persistable.h"
 
 // Represents a filter, i.e. a regexp and the colors matching text
@@ -51,16 +52,20 @@ class Highlighter {
   public:
     // Construct an uninitialized Highlighter (when reading from a config file)
     Highlighter() = default;
-    Highlighter( const QString& pattern, bool ignoreCase, const QColor& foreColor,
+    Highlighter( const QString& pattern, bool ignoreCase, bool onlyMatch, const QColor& foreColor,
                  const QColor& backColor );
 
-    bool hasMatch( const QString& string ) const;
+    bool matchLine( const QString& line, std::vector<HighlightedMatch>& matches ) const;
 
     // Accessor functions
     QString pattern() const;
     void setPattern( const QString& pattern );
     bool ignoreCase() const;
     void setIgnoreCase( bool ignoreCase );
+
+    bool highlightOnlyMatch() const;
+    void setHighlightOnlyMatch( bool onlyMatch );
+
     const QColor& foreColor() const;
     void setForeColor( const QColor& foreColor );
     const QColor& backColor() const;
@@ -72,8 +77,16 @@ class Highlighter {
 
   private:
     QRegularExpression regexp_;
+
+    bool highlightOnlyMatch_ = false;
     QColor foreColor_;
     QColor backColor_;
+};
+
+enum class HighlighterMatchType {
+  NoMatch,
+  WordMatch,
+  LineMatch
 };
 
 // Represents an ordered set of filters to be applied to each line displayed.
@@ -93,8 +106,7 @@ class HighlighterSet {
 
     // Returns weither the passed line match a filter of the set,
     // if so, it returns the fore/back colors the line should use.
-    // Ownership of the colors is transfered to the caller.
-    bool matchLine( const QString& line, QColor* foreColor, QColor* backColor ) const;
+    HighlighterMatchType matchLine( const QString& line, std::vector<HighlightedMatch>& matches ) const;
 
     bool isEmpty() const;
 

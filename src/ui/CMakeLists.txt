@@ -6,6 +6,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighteredit.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersetedit.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighterset.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightedmatch.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/infoline.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/pathline.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/logmainview.h

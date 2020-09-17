@@ -44,32 +44,9 @@
 #include <QRegularExpression>
 #include <QString>
 
+#include "highlightedmatch.h"
+
 class QuickFind;
-
-// Represents a match result for QuickFind
-class QuickFindMatch {
-  public:
-    // Construct a match (must be initialised)
-    QuickFindMatch( int start_column, int length )
-    {
-        startColumn_ = start_column;
-        length_ = length;
-    }
-
-    // Accessor functions
-    int startColumn() const
-    {
-        return startColumn_;
-    }
-    int length() const
-    {
-        return length_;
-    }
-
-  private:
-    int startColumn_;
-    int length_;
-};
 
 class QuickFindMatcher {
   public:
@@ -136,7 +113,7 @@ class QuickFindPattern : public QObject {
     // Returns whether the passed line match the quick find search.
     // If so, it populate the passed list with the list of matches
     // within this particular line.
-    bool matchLine( const QString& line, std::vector<QuickFindMatch>& matches ) const;
+    bool matchLine( const QString& line, std::vector<HighlightedMatch>& matches ) const;
 
     QuickFindMatcher getMatcher() const;
 

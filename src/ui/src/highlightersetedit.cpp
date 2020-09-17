@@ -49,6 +49,7 @@
 namespace {
 static constexpr QLatin1String DEFAULT_PATTERN = QLatin1String( "New Highlighter", 15 );
 static constexpr bool DEFAULT_IGNORE_CASE = false;
+static constexpr bool DEFAULT_ONLY_MATCH = false;
 
 static const QColor DEFAULT_FORE_COLOUR( "#000000" );
 static const QColor DEFAULT_BACK_COLOUR( "#FFFFFF" );
@@ -61,8 +62,10 @@ HighlighterSetEdit::HighlighterSetEdit( QWidget* parent )
 {
     setupUi( this );
 
-    highlighterEdit_ = new HighlighterEdit(
-        Highlighter{ "", DEFAULT_IGNORE_CASE, DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR }, this );
+    highlighterEdit_
+        = new HighlighterEdit( Highlighter{ "", DEFAULT_IGNORE_CASE, DEFAULT_ONLY_MATCH,
+                                            DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR },
+                               this );
     highlighterEdit_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
     highlighterLayout->addWidget( highlighterEdit_ );
 
@@ -127,7 +130,8 @@ void HighlighterSetEdit::addHighlighter()
     LOG( logDEBUG ) << "addHighlighter()";
 
     highlighterSet_.highlighterList_.append( Highlighter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
-                                                   DEFAULT_FORE_COLOUR, DEFAULT_BACK_COLOUR ) );
+                                                          DEFAULT_ONLY_MATCH, DEFAULT_FORE_COLOUR,
+                                                          DEFAULT_BACK_COLOUR ) );
 
     // Add and select the newly created highlighter
     highlighterListWidget->addItem( DEFAULT_PATTERN );

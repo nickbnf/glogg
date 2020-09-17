@@ -34,6 +34,8 @@ HighlighterEdit::HighlighterEdit( Highlighter defaultHighlighter, QWidget* paren
 
     connect( patternEdit, &QLineEdit::textEdited, this, &HighlighterEdit::setPattern );
     connect( ignoreCaseCheckBox, &QCheckBox::toggled, this, &HighlighterEdit::setIgnoreCase );
+    connect( onlyMatchCheckBox, &QCheckBox::toggled, this,
+             &HighlighterEdit::setHighlightOnlyMatch );
 
     connect( foreColorButton, &QPushButton::clicked, this, &HighlighterEdit::changeForeColor );
     connect( backColorButton, &QPushButton::clicked, this, &HighlighterEdit::changeBackColor );
@@ -48,6 +50,7 @@ void HighlighterEdit::reset()
     backColorButton->setEnabled( false );
 
     ignoreCaseCheckBox->setChecked( defaultHighlighter_.ignoreCase() );
+    ignoreCaseCheckBox->setChecked( defaultHighlighter_.highlightOnlyMatch() );
 
     updateIcon( foreColorButton, defaultHighlighter_.foreColor() );
     updateIcon( backColorButton, defaultHighlighter_.backColor() );
@@ -59,11 +62,13 @@ void HighlighterEdit::setHighlighter( Highlighter highlighter )
 
     patternEdit->setText( highlighter_.pattern() );
     ignoreCaseCheckBox->setChecked( highlighter_.ignoreCase() );
+    onlyMatchCheckBox->setChecked( highlighter_.highlightOnlyMatch() );
     updateIcon( foreColorButton, highlighter_.foreColor() );
     updateIcon( backColorButton, highlighter_.backColor() );
 
     patternEdit->setEnabled( true );
     ignoreCaseCheckBox->setEnabled( true );
+    onlyMatchCheckBox->setEnabled( true );
     foreColorButton->setEnabled( true );
     backColorButton->setEnabled( true );
 }
@@ -82,6 +87,12 @@ void HighlighterEdit::setPattern( const QString& pattern )
 void HighlighterEdit::setIgnoreCase( bool ignoreCase )
 {
     highlighter_.setIgnoreCase( ignoreCase );
+    emit changed();
+}
+
+void HighlighterEdit::setHighlightOnlyMatch( bool onlyMatch )
+{
+    highlighter_.setHighlightOnlyMatch( onlyMatch );
     emit changed();
 }
 

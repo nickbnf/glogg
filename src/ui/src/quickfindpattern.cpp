@@ -49,6 +49,9 @@
 
 #include "quickfind.h"
 
+constexpr Qt::GlobalColor QfForeColor = Qt::black;
+constexpr Qt::GlobalColor QfBackColor = Qt::yellow;
+
 bool QuickFindMatcher::isLineMatching( const QString& line, int column ) const
 {
     if ( !isActive_ )
@@ -143,7 +146,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern, bool ignoreC
     changeSearchPattern( pattern );
 }
 
-bool QuickFindPattern::matchLine( const QString& line, std::vector<QuickFindMatch>& matches ) const
+bool QuickFindPattern::matchLine( const QString& line, std::vector<HighlightedMatch>& matches ) const
 {
     matches.clear();
 
@@ -152,7 +155,7 @@ bool QuickFindPattern::matchLine( const QString& line, std::vector<QuickFindMatc
 
         while ( matchIterator.hasNext() ) {
             QRegularExpressionMatch match = matchIterator.next();
-            matches.emplace_back( match.capturedStart(), match.capturedLength() );
+            matches.emplace_back( match.capturedStart(), match.capturedLength(), QfForeColor, QfBackColor );
         }
     }
 

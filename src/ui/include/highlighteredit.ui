@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>399</width>
-    <height>205</height>
+    <width>569</width>
+    <height>252</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,29 +15,56 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Matching Pattern: </string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item>
       <widget class="QLineEdit" name="patternEdit">
        <property name="enabled">
         <bool>false</bool>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ignoreCaseCheckBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Ignore case</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="onlyMatchCheckBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Highlight only match</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>Fore Color: </string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="0" column="1">
       <widget class="QPushButton" name="foreColorButton">
        <property name="enabled">
         <bool>false</bool>
@@ -47,14 +74,14 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
         <string>Back Color: </string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="1" column="1">
       <widget class="QPushButton" name="backColorButton">
        <property name="enabled">
         <bool>false</bool>
@@ -64,20 +91,20 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QCheckBox" name="ignoreCaseCheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Ignore case</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
     </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

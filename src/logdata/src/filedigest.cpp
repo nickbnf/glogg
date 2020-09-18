@@ -18,38 +18,48 @@
  */
 
 #include "filedigest.h"
-#include "xxh3.h"
+#include "xxhash.h"
+#include <QCryptographicHash>
 
 class DigestInternalState {
   public:
     DigestInternalState()
     {
-        m_state = XXH3_createState();
+        m_state = XXH64_createState();
+        cryptoHasher_ = std::make_unique<QCryptographicHash>(QCryptographicHash::Sha256);
         reset();
     }
 
     ~DigestInternalState()
     {
-        XXH3_freeState( m_state );
+        XXH64_freeState( m_state );
     }
 
     void addData( const char* data, size_t length )
     {
-        XXH3_update( m_state, reinterpret_cast<const xxh_u8*>( data ), length, XXH3_acc_64bits );
+        XXH64_update( m_state, reinterpret_cast<const void*>( data ), length );
+        //cryptoHasher_->addData(data, (int)length);
     }
 
     void reset()
     {
-        XXH3_64bits_reset( m_state );
+        XXH64_reset( m_state, 0 );
+        cryptoHasher_->reset();
     }
 
     uint64_t digest() const
     {
-        return XXH3_64bits_digest( m_state );
+        return XXH64_digest( m_state );
+    }
+
+    QByteArray hash() const
+    {
+        return cryptoHasher_->result();
     }
 
   private:
-    XXH3_state_t* m_state;
+    XXH64_state_t* m_state;
+    std::unique_ptr<QCryptographicHash> cryptoHasher_;
 };
 
 FileDigest::FileDigest()
@@ -67,6 +77,11 @@ void FileDigest::addData( const char* data, size_t length )
 uint64_t FileDigest::digest() const
 {
     return m_state->digest();
+}
+
+QByteArray FileDigest::hash() const
+{
+    return m_state->hash();
 }
 
 void FileDigest::reset()

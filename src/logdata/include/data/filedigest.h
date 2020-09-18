@@ -21,6 +21,7 @@
 #define KLOGG_FILEDIGEST_H
 
 #include <memory>
+#include <QByteArray>
 
 class DigestInternalState;
 
@@ -31,6 +32,8 @@ class FileDigest {
 
     void addData( const char* data, size_t length );
     uint64_t digest() const;
+
+    QByteArray hash() const;
 
     void reset();
 

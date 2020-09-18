@@ -151,9 +151,12 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
 
-    indexHash_.addData( block.data(), static_cast<size_t>( block.size() ) );
-    hash_.digest = indexHash_.digest();
-    hash_.size += block.size();
+    if ( !block.isEmpty() ) {
+        indexHash_.addData( block.data(), static_cast<size_t>( block.size() ) );
+        hash_.digest = indexHash_.digest();
+        hash_.hash = indexHash_.hash();
+        hash_.size += block.size();
+    }
 
     encodingGuess_ = encoding;
 }
@@ -530,6 +533,8 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     indexingGraph.wait_for_all();
     localThreadPool.waitForDone();
 
+    LOG( logDEBUG ) << "Indexed up to " << state.pos;
+
     // Check if there is a non LF terminated line at the end of the file
     if ( !interruptRequest_ && state.file_size > state.pos ) {
         LOG( logWARNING ) << "Non LF terminated file, adding a fake end of line";
@@ -616,6 +621,7 @@ OperationResult CheckFileChangesOperation::start()
         constexpr int blockSize = 5 * 1024 * 1024;
         QByteArray buffer{ blockSize, 0 };
 
+        QByteArray totalData;
         FileDigest fileDigest;
         if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
             auto readSize = 0ll;
@@ -634,8 +640,12 @@ OperationResult CheckFileChangesOperation::start()
 
             const auto realHashDigest = fileDigest.digest();
 
-            LOG( logINFO ) << "indexed hash " << indexedHash.digest << ", real file hash "
-                           << realHashDigest;
+            LOG( logINFO ) << "indexed size " << indexedHash.size << ", xxhash "
+                            << indexedHash.digest << ", crypto "
+                            << indexedHash.hash.toHex().toStdString();
+
+            LOG( logINFO ) << "current size " << totalSize << ", xxhash " << realHashDigest
+                            << ", crypto " << fileDigest.hash().toHex().toStdString();
 
             if ( realHashDigest != indexedHash.digest ) {
                 LOG( logINFO ) << "File changed in indexed range";

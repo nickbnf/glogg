@@ -60,6 +60,7 @@
 struct IndexedHash {
     qint64 size = 0;
     quint64 digest = 0;
+    QByteArray hash;
 };
 
 // This class is a thread-safe set of indexing data.

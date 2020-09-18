@@ -96,50 +96,6 @@ int countDigits( quint64 n )
 
 } // namespace
 
-bool LineChunk::isOverlapping( int sel_start, int sel_end ) const
-{
-    return sel_start <= end_ && ( ( sel_start >= start_ ) || ( sel_end >= start_ ) );
-}
-
-bool LineChunk::isOverlapping( const LineChunk& other ) const
-{
-    return isOverlapping( other.start(), other.end() );
-}
-
-std::vector<LineChunk> LineChunk::overlap( const LineChunk& other ) const
-{
-    return overlap( other.start(), other.end(), other.foreColor(), other.backColor() );
-}
-
-std::vector<LineChunk> LineChunk::overlap( int sel_start, int sel_end, QColor overlapForeColor,
-                                           QColor overlapBackColor ) const
-{
-    std::vector<LineChunk> overlapped;
-
-    if ( !isOverlapping( sel_start, sel_end ) ) {
-        // Selection BEFORE or AFTER this chunk: no change
-        overlapped.emplace_back( *this );
-    }
-    else /* if ( ( sel_start >= start_ ) && ( sel_end <= end_ ) ) */
-    {
-        // We only want to consider what's inside THIS chunk
-        sel_start = qMax( sel_start, start_ );
-        sel_end = qMin( sel_end, end_ );
-
-        if ( sel_start > start_ ) {
-            overlapped.emplace_back( start_, sel_start - 1, foreColor_, backColor_ );
-        }
-
-        overlapped.emplace_back( sel_start, sel_end, overlapForeColor, overlapBackColor );
-
-        if ( sel_end < end_ ) {
-            overlapped.emplace_back( sel_end + 1, end_, foreColor_, backColor_ );
-        }
-    }
-
-    return overlapped;
-}
-
 inline void LineDrawer::addChunk( int first_col, int last_col, const QColor& fore,
                                   const QColor& back )
 {

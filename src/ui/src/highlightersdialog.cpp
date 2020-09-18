@@ -59,6 +59,9 @@ HighlightersDialog::HighlightersDialog( QWidget* parent )
     highlighterSetEdit_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
     highlighterLayout->addWidget( highlighterSetEdit_ );
 
+    splitter->setStretchFactor(0, 0);
+    splitter->setStretchFactor(1, 1);
+
     // Reload the highlighter list from disk (in case it has been changed
     // by another glogg instance) and copy it to here.
     highlighterSetCollection_ = HighlighterSetCollection::getSynced();

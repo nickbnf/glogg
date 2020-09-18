@@ -92,14 +92,6 @@ class LineChunk {
         return backColor_;
     }
 
-    
-    bool isOverlapping(int selection_start, int selection_end) const;
-    std::vector<LineChunk> overlap( int selection_start, int selection_end, QColor foreColor,
-                                    QColor backColor ) const;
-
-    bool isOverlapping(const LineChunk& other) const;
-    std::vector<LineChunk> overlap( const LineChunk& other ) const;
-
   private:
     int start_ = {};
     int end_ = {};

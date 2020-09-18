@@ -24,6 +24,6 @@ add_subdirectory(whereami)
 
 set(XXHASH_BUILD_ENABLE_INLINE_API OFF) #optional
 set(XXHASH_BUILD_XXHSUM OFF) #optional
-add_subdirectory(xxhash/cmake_unofficial)
+add_subdirectory(xxhash/cmake_unofficial) #0.8
 
 

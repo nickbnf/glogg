@@ -1126,7 +1126,6 @@ void CrawlerWidget::printSearchInfoMessage( LinesCount nbMatches )
 // Change the data status and, if needed, advise upstream.
 void CrawlerWidget::changeDataStatus( DataStatus status )
 {
-    LOG( logINFO ) << "New data status " << static_cast<int>( status );
     if ( ( status != dataStatus_ )
          && ( !( dataStatus_ == DataStatus::NEW_FILTERED_DATA
                  && status == DataStatus::NEW_DATA ) ) ) {

@@ -21,13 +21,11 @@
 #define KLOGG_SYNCHRONIZATION_H
 
 #include <mutex>
+#include <absl/synchronization/mutex.h>
 
-using Lock = std::mutex;
-struct ScopedLock : std::lock_guard<Lock>
-{
-    ScopedLock(Lock* lock) : lock_guard(*lock)
-    {}
-};
+using Lock = absl::Mutex;
+using ScopedLock = absl::MutexLock;
+using ScopedReaderLock = absl::ReaderMutexLock;
 
 using RecursiveLock = std::recursive_mutex;
 struct ScopedRecursiveLock : std::lock_guard<RecursiveLock>

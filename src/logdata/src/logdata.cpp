@@ -413,7 +413,7 @@ std::vector<QString> LogData::doGetLines( LineNumber first_line, LinesCount numb
         if ( lineData.endsWith( QChar::CarriageReturn ) ) {
             lineData.chop( 1 );
         }
-        return lineData;
+        return std::move( lineData );
     } );
 }
 

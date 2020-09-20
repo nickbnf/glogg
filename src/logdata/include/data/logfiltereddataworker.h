@@ -39,7 +39,6 @@
 #ifndef LOGFILTEREDDATAWORKERTHREAD_H
 #define LOGFILTEREDDATAWORKERTHREAD_H
 
-#include <QMutex>
 #include <QObject>
 #include <QRegularExpression>
 
@@ -50,6 +49,7 @@
 
 #include "atomicflag.h"
 #include "linetypes.h"
+#include "synchronization.h"
 
 class LogData;
 
@@ -117,7 +117,7 @@ class SearchData {
     void clear();
 
   private:
-    mutable QMutex dataMutex_;
+    mutable Lock dataMutex_;
 
     SearchResultArray matches_;
     mutable SearchResultArray newMatches_;
@@ -217,7 +217,7 @@ class LogFilteredDataWorker : public QObject {
     AtomicFlag interruptRequested_;
 
     // Mutex to protect operationRequested_ and friends
-    QMutex mutex_;
+    Lock mutex_;
     QFuture<void> operationFuture_;
     QFutureWatcher<void> operationWatcher_;
 

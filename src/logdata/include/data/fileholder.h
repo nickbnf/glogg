@@ -2,8 +2,9 @@
 #define FILEHOLDER_H
 
 #include <QFile>
-#include <QMutex>
 #include <memory>
+
+#include "synchronization.h"
 
 struct FileId {
     uint64_t fileIndex = 0;
@@ -70,7 +71,7 @@ class FileHolder {
     QFile* getFile();
 
   private:
-    QMutex file_mutex_;
+    RecursiveLock file_mutex_;
 
     QString file_name_;
     std::unique_ptr<QFile> attached_file_;

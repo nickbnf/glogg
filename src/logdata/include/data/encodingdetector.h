@@ -20,9 +20,12 @@
 #ifndef ENCODINGDETECTOR_H
 #define ENCODINGDETECTOR_H
 
-#include <QMutex>
+#include "synchronization.h"
+
+#include <QByteArray>
 
 class QTextCodec;
+
 
 struct EncodingParameters {
     EncodingParameters() = default;
@@ -71,7 +74,7 @@ class EncodingDetector {
     EncodingDetector() = default;
     ~EncodingDetector() = default;
 
-    mutable QMutex mutex_;
+    mutable Lock mutex_;
 };
 
 #endif // ENCODINGDETECTOR_H

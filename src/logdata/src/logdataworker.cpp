@@ -85,60 +85,60 @@ template <class... Fs> auto make_visitor( Fs... fs )
 
 qint64 IndexingData::getSize() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     return hash_.size;
 }
 
 IndexedHash IndexingData::getHash() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     return hash_;
 }
 
 LineLength IndexingData::getMaxLength() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     return maxLength_;
 }
 
 LinesCount IndexingData::getNbLines() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     return LinesCount( linePosition_.size() );
 }
 
 LineOffset IndexingData::getPosForLine( LineNumber line ) const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     return linePosition_.at( line.get() );
 }
 
 QTextCodec* IndexingData::getEncodingGuess() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
     return encodingGuess_;
 }
 
 void IndexingData::setEncodingGuess( QTextCodec* codec )
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
     encodingGuess_ = codec;
 }
 
 void IndexingData::forceEncoding( QTextCodec* codec )
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
     encodingForced_ = codec;
 }
 
 QTextCodec* IndexingData::getForcedEncoding() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
     return encodingForced_;
 }
 
@@ -146,7 +146,7 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
                            const FastLinePositionArray& linePosition, QTextCodec* encoding )
 
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     maxLength_ = qMax( maxLength_, length );
     linePosition_.append_list( linePosition );
@@ -163,7 +163,7 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
 
 void IndexingData::clear()
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     maxLength_ = 0_length;
     hash_ = {};
@@ -188,19 +188,19 @@ LogDataWorker::LogDataWorker( IndexingData& indexing_data )
 LogDataWorker::~LogDataWorker()
 {
     interruptRequest_.set();
-    QMutexLocker locker( &mutex_ );
+    ScopedLock locker( &mutex_ );
     operationFuture_.waitForFinished();
 }
 
 void LogDataWorker::attachFile( const QString& fileName )
 {
-    QMutexLocker locker( &mutex_ ); // to protect fileName_
+    ScopedLock locker( &mutex_ ); // to protect fileName_
     fileName_ = fileName;
 }
 
 void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
 {
-    QMutexLocker locker( &mutex_ );
+    ScopedLock locker( &mutex_ );
     LOG( logDEBUG ) << "FullIndex requested";
 
     operationWatcher_.waitForFinished();
@@ -217,7 +217,7 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
 
 void LogDataWorker::indexAdditionalLines()
 {
-    QMutexLocker locker( &mutex_ );
+    ScopedLock locker( &mutex_ );
     LOG( logDEBUG ) << "AddLines requested";
 
     operationWatcher_.waitForFinished();
@@ -234,7 +234,7 @@ void LogDataWorker::indexAdditionalLines()
 
 void LogDataWorker::checkFileChanges()
 {
-    QMutexLocker locker( &mutex_ );
+    ScopedLock locker( &mutex_ );
     LOG( logDEBUG ) << "Check file changes requested";
 
     operationWatcher_.waitForFinished();

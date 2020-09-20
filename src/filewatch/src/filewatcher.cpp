@@ -21,6 +21,7 @@
 
 #include "configuration.h"
 #include "log.h"
+#include "synchronization.h"
 
 #include <efsw/efsw.hpp>
 #include <vector>
@@ -28,8 +29,6 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
-#include <QMutex>
-#include <QMutexLocker>
 #include <QTimer>
 
 namespace {
@@ -69,13 +68,12 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
   public:
     explicit EfswFileWatcher( FileWatcher* parent )
         : parent_{ parent }
-        , mutex_{ QMutex::Recursive }
     {
     }
 
     void enableWatch( bool enable )
     {
-        QMutexLocker lock( &mutex_ );
+        ScopedRecursiveLock lock( &mutex_ );
 
         if ( nativeWatchEnabled_ == enable ) {
             return;
@@ -99,7 +97,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
     void addFile( const QString& fullFileName )
     {
-        QMutexLocker lock( &mutex_ );
+        ScopedRecursiveLock lock( &mutex_ );
 
         LOG( logDEBUG ) << fullFileName.toStdString();
 
@@ -154,7 +152,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
     void removeFile( const QString& fullFileName )
     {
-        QMutexLocker lock( &mutex_ );
+        ScopedRecursiveLock lock( &mutex_ );
 
         LOG( logDEBUG ) << fullFileName.toStdString();
 
@@ -197,7 +195,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
     void checkWatches()
     {
         const auto collectChangedFiles = [this]() {
-            QMutexLocker lock( &mutex_ );
+            ScopedRecursiveLock lock( &mutex_ );
 
             std::vector<QString> changedFiles;
 
@@ -273,7 +271,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
     QString findChangedFilename( const std::string& directory, const std::string& filename,
                                  const std::string& oldFilename )
     {
-        QMutexLocker lock( &mutex_ );
+        ScopedRecursiveLock lock( &mutex_ );
 
         auto watchedDirectory
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
@@ -318,7 +316,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
     bool nativeWatchEnabled_ = true;
 
-    QMutex mutex_;
+    RecursiveLock mutex_;
 };
 
 void EfswFileWatcherDeleter::operator()( EfswFileWatcher* watcher ) const

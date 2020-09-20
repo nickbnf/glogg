@@ -110,7 +110,7 @@ PartialSearchResults filterLines( const QRegularExpression& regex,
 
 SearchResults SearchData::takeCurrentResults() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     auto results
         = SearchResults{ matches_, std::move( newMatches_ ), maxLength_, nbLinesProcessed_ };
@@ -120,7 +120,7 @@ SearchResults SearchData::takeCurrentResults() const
 
 void SearchData::setAll( LineLength length, SearchResultArray&& matches )
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     maxLength_ = length;
     matches_ = matches;
@@ -132,7 +132,7 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
     using std::begin;
     using std::end;
 
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     maxLength_ = qMax( maxLength_, length );
     nbLinesProcessed_ = qMax( nbLinesProcessed_, lines );
@@ -160,20 +160,20 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
 
 LinesCount SearchData::getNbMatches() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     return LinesCount( static_cast<LinesCount::UnderlyingType>( matches_.size() ) );
 }
 
 LineNumber SearchData::getLastMatchedLineNumber() const
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
     return lastMatchedLineNumber_;
 }
 
 void SearchData::deleteMatch( LineNumber line )
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     auto i = matches_.size();
     while ( i != 0 ) {
@@ -191,7 +191,7 @@ void SearchData::deleteMatch( LineNumber line )
 
 void SearchData::clear()
 {
-    QMutexLocker locker( &dataMutex_ );
+    ScopedLock locker( &dataMutex_ );
 
     maxLength_ = LineLength( 0 );
     nbLinesProcessed_ = LinesCount( 0 );
@@ -212,7 +212,7 @@ LogFilteredDataWorker::LogFilteredDataWorker( const LogData& sourceLogData )
 LogFilteredDataWorker::~LogFilteredDataWorker()
 {
     interruptRequested_.set();
-    QMutexLocker locker( &mutex_ );
+    ScopedLock locker( &mutex_ );
     operationWatcher_.waitForFinished();
 }
 
@@ -227,7 +227,7 @@ void LogFilteredDataWorker::connectSignalsAndRun( SearchOperation* operationRequ
 void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber startLine,
                                     LineNumber endLine )
 {
-    QMutexLocker locker( &mutex_ ); // to protect operationRequested_
+    ScopedLock locker( &mutex_ ); // to protect operationRequested_
 
     LOG( logDEBUG ) << "Search requested";
 
@@ -246,7 +246,7 @@ void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber
 void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, LineNumber startLine,
                                           LineNumber endLine, LineNumber position )
 {
-    QMutexLocker locker( &mutex_ ); // to protect operationRequested_
+    ScopedLock locker( &mutex_ ); // to protect operationRequested_
 
     LOG( logDEBUG ) << "Search update requested";
 

@@ -59,8 +59,7 @@ void openFileByHandle( QFile* file )
 } // namespace
 
 FileHolder::FileHolder( bool keepClosed )
-    : file_mutex_{ QMutex::Recursive }
-    , keep_closed_{ keepClosed }
+    : keep_closed_{ keepClosed }
 {
 }
 
@@ -73,25 +72,25 @@ FileHolder::~FileHolder()
 
 FileId FileHolder::getFileId()
 {
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
     return attached_file_id_;
 }
 
 qint64 FileHolder::size()
 {
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
     return attached_file_ ? attached_file_->size() : 0;
 }
 
 bool FileHolder::isOpen()
 {
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
     return attached_file_ ? attached_file_->openMode() != QIODevice::NotOpen : false;
 }
 
 void FileHolder::open( const QString& fileName )
 {
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
     file_name_ = fileName;
 
     LOG( logDEBUG ) << "open file " << file_name_ << " keep closed " << keep_closed_;
@@ -114,7 +113,7 @@ void FileHolder::unlock()
 
 void FileHolder::attachReader()
 {
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
 
     if ( keep_closed_ && counter_ == 0 ) {
         LOG( logDEBUG ) << "fist reader opened for " << file_name_;
@@ -124,12 +123,11 @@ void FileHolder::attachReader()
     counter_++;
 
     LOG( logDEBUG ) << "has " << counter_ << " readers for " << file_name_;
-
 }
 
 void FileHolder::detachReader()
 {
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
     if ( counter_ > 0 ) {
         counter_--;
     }
@@ -147,7 +145,7 @@ void FileHolder::reOpenFile()
     auto reopened = std::make_unique<QFile>( file_name_ );
     openFileByHandle( reopened.get() );
 
-    QMutexLocker locker( &file_mutex_ );
+    ScopedRecursiveLock locker( &file_mutex_ );
     attached_file_ = std::move( reopened );
     attached_file_id_ = FileId::getFileId( file_name_ );
 }

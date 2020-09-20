@@ -18,7 +18,7 @@
  */
 
 #include "encodingdetector.h"
-#include <QMutexLocker>
+
 #include <QTextCodec>
 
 #include "log.h"
@@ -76,7 +76,7 @@ EncodingParameters::EncodingParameters( const QTextCodec* codec )
 
 QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
 {
-    QMutexLocker lock( &mutex_ );
+    ScopedLock lock( &mutex_ );
 
     UchardetHolder ud;
 

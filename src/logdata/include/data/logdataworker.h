@@ -54,8 +54,8 @@
 #include "loadingstatus.h"
 
 #include "atomicflag.h"
-
 #include "filedigest.h"
+#include "synchronization.h"
 
 struct IndexedHash {
     qint64 size = 0;
@@ -99,7 +99,7 @@ class IndexingData {
     size_t allocatedSize() const;
 
   private:
-    mutable QMutex dataMutex_;
+    mutable Lock dataMutex_;
 
     LinePositionArray linePosition_;
     LineLength maxLength_;
@@ -247,7 +247,7 @@ class LogDataWorker : public QObject {
     AtomicFlag interruptRequest_;
 
     // Mutex to protect operationRequested_ and friends
-    QMutex mutex_;
+    Lock mutex_;
     QString fileName_;
 
     // Pointer to the owner's indexing data (we modify it)

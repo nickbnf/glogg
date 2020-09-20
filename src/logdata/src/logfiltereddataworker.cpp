@@ -333,8 +333,10 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         searchGraph,
         [this, endLine, nbLinesInChunk, &chunkStart,
          &fileReadingDuration]( BlockDataType& blockData ) {
-            if ( interruptRequested_ )
+            if ( interruptRequested_ ) {
+                LOG( logINFO ) << "Block reader interrupted";
                 return false;
+            }
 
             if ( chunkStart >= endLine ) {
                 return false;
@@ -414,6 +416,11 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     auto matchProcessor = tbb::flow::function_node<PartialResultType, tbb::flow::continue_msg,
                                                    tbb::flow::rejecting>(
         searchGraph, 1, [&]( const PartialResultType& matchResults ) {
+            if ( interruptRequested_ ) {
+                LOG( logINFO ) << "Match processor interrupted";
+                return tbb::flow::continue_msg{};
+            }
+
             const auto matchProcessorStartTime = high_resolution_clock::now();
 
             if ( matchResults->processedLines.get() ) {

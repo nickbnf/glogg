@@ -97,7 +97,7 @@ PartialSearchResults filterLines( const QRegularExpression& regex,
         const auto& l = lines.at( i );
         if ( regex.match( l ).hasMatch() ) {
             results.maxLength
-                = qMax( results.maxLength, AbstractLogData::getUntabifiedLength( l ) );
+                = qMax( results.maxLength, getUntabifiedLength( l ) );
             results.matchingLines
                 = std::move( results.matchingLines )
                       .push_back( chunkStart

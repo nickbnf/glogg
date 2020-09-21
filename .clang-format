@@ -24,3 +24,4 @@ AllowAllParametersOfDeclarationOnNextLine: true
 Cpp11BracedListStyle: false
 SpacesInContainerLiterals: true
 BreakConstructorInitializers: BeforeComma
+AlwaysBreakTemplateDeclarations: true

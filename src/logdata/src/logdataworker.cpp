@@ -54,9 +54,11 @@
 
 namespace {
 
-template <class... Fs> struct overload;
+template <class... Fs>
+struct overload;
 
-template <class F0, class... Frest> struct overload<F0, Frest...> : F0, overload<Frest...> {
+template <class F0, class... Frest>
+struct overload<F0, Frest...> : F0, overload<Frest...> {
     overload( F0 f0, Frest... rest )
         : F0( f0 )
         , overload<Frest...>( rest... )
@@ -67,7 +69,8 @@ template <class F0, class... Frest> struct overload<F0, Frest...> : F0, overload
     using overload<Frest...>::operator();
 };
 
-template <class F0> struct overload<F0> : F0 {
+template <class F0>
+struct overload<F0> : F0 {
     explicit overload( F0 f0 )
         : F0( f0 )
     {
@@ -76,7 +79,8 @@ template <class F0> struct overload<F0> : F0 {
     using F0::operator();
 };
 
-template <class... Fs> auto make_visitor( Fs... fs )
+template <class... Fs>
+auto make_visitor( Fs... fs )
 {
     return overload<Fs...>( fs... );
 }
@@ -294,10 +298,10 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
             LOG( logDEBUG1 ) << "Tab at " << pos_within_block;
 
             state.additional_spaces
-                += AbstractLogData::tabStop
+                += TabStop
                    - ( static_cast<int>( ( block_beginning - state.pos ) + pos_within_block
                                          + state.additional_spaces )
-                       % AbstractLogData::tabStop )
+                       % TabStop )
                    - 1;
 
             const auto tab_substring_size = static_cast<int>( next_tab - tab_search_start );

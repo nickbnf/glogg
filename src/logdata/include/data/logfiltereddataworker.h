@@ -110,6 +110,8 @@ class SearchData {
     // 0 if no matches have been found yet
     LineNumber getLastMatchedLineNumber() const;
 
+    LineNumber getLastProcessedLine() const;
+
     // Delete the match for the passed line (if it exist)
     void deleteMatch( LineNumber line );
 

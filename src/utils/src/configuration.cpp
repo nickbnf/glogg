@@ -69,101 +69,97 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 {
     LOG( logDEBUG ) << "Configuration::retrieveFromStorage";
 
+    static const Configuration Default;
+
     // Fonts
-    QString family = settings.value( "mainFont.family" ).toString();
-    int size = settings.value( "mainFont.size" ).toInt();
+    QString family = settings.value( "mainFont.family", Default.mainFont_.family() ).toString();
+    int size = settings.value( "mainFont.size", Default.mainFont_.pointSize() ).toInt();
 
     // If no config read, keep the default
     if ( !family.isNull() )
         mainFont_ = QFont( family, size );
 
-    if ( settings.contains( "mainFont.antialiasing" ) )
-        forceFontAntialiasing_ = settings.value( "mainFont.antialiasing" ).toBool();
+    forceFontAntialiasing_
+        = settings.value( "mainFont.antialiasing", Default.forceFontAntialiasing_ ).toBool();
 
-    if ( settings.contains( "view.qtHiDpi" ) )
-        enableQtHighDpi_ = settings.value( "view.qtHiDpi" ).toBool();
+    enableQtHighDpi_ = settings.value( "view.qtHiDpi", Default.enableQtHighDpi_ ).toBool();
 
-    if ( settings.contains( "view.scaleFactorRounding" ) )
-        scaleFactorRounding_ = settings.value( "view.scaleFactorRounding" ).toInt();
+    scaleFactorRounding_
+        = settings.value( "view.scaleFactorRounding", Default.scaleFactorRounding_ ).toInt();
 
     // Regexp types
     mainRegexpType_ = static_cast<SearchRegexpType>(
-        settings.value( "regexpType.main", mainRegexpType_ ).toInt() );
+        settings.value( "regexpType.main", Default.mainRegexpType_ ).toInt() );
     quickfindRegexpType_ = static_cast<SearchRegexpType>(
-        settings.value( "regexpType.quickfind", quickfindRegexpType_ ).toInt() );
-    if ( settings.contains( "quickfind.incremental" ) )
-        quickfindIncremental_ = settings.value( "quickfind.incremental" ).toBool();
+        settings.value( "regexpType.quickfind", Default.quickfindRegexpType_ ).toInt() );
+    quickfindIncremental_
+        = settings.value( "quickfind.incremental", Default.quickfindIncremental_ ).toBool();
 
     // "Advanced" settings
-    if ( settings.contains( "nativeFileWatch.enabled" ) )
-        nativeFileWatchEnabled_ = settings.value( "nativeFileWatch.enabled" ).toBool();
-    if ( settings.contains( "polling.enabled" ) )
-        pollingEnabled_ = settings.value( "polling.enabled" ).toBool();
-    if ( settings.contains( "polling.intervalMs" ) )
-        pollIntervalMs_ = settings.value( "polling.intervalMs" ).toInt();
+    nativeFileWatchEnabled_
+        = settings.value( "nativeFileWatch.enabled", Default.nativeFileWatchEnabled_ ).toBool();
+    pollingEnabled_ = settings.value( "polling.enabled", Default.pollingEnabled_ ).toBool();
+    pollIntervalMs_ = settings.value( "polling.intervalMs", Default.pollIntervalMs_ ).toInt();
 
-    if ( settings.contains( "session.loadLast" ) )
-        loadLastSession_ = settings.value( "session.loadLast" ).toBool();
-    if ( settings.contains( "session.multipleWindows" ) )
-        allowMultipleWindows_ = settings.value( "session.multipleWindows" ).toBool();
-    if ( settings.contains( "session.followOnLoad" ) )
-        followFileOnLoad_ = settings.value( "session.followOnLoad" ).toBool();
+    loadLastSession_ = settings.value( "session.loadLast", Default.loadLastSession_ ).toBool();
+    allowMultipleWindows_
+        = settings.value( "session.multipleWindows", Default.allowMultipleWindows_ ).toBool();
+    followFileOnLoad_
+        = settings.value( "session.followOnLoad", Default.followFileOnLoad_ ).toBool();
 
-    if ( settings.contains( "logging.enableLogging" ) )
-        enableLogging_ = settings.value( "logging.enableLogging" ).toBool();
-    if ( settings.contains( "logging.verbosity" ) )
-        loggingLevel_ = static_cast<uint8_t>( settings.value( "logging.verbosity" ).toInt() );
+    enableLogging_ = settings.value( "logging.enableLogging", Default.enableLogging_ ).toBool();
+    loggingLevel_ = static_cast<uint8_t>(
+        settings.value( "logging.verbosity", Default.loggingLevel_ ).toInt() );
 
-    if ( settings.contains( "versionchecker.enabled" ) )
-        enableVersionChecking_ = settings.value( "versionchecker.enabled" ).toBool();
+    enableVersionChecking_
+        = settings.value( "versionchecker.enabled", Default.enableVersionChecking_ ).toBool();
 
-    if ( settings.contains( "archives.extract" ) )
-        extractArchives_ = settings.value( "archives.extract" ).toBool();
-
-    if ( settings.contains( "archives.extractAlways" ) )
-        extractArchivesAlways_ = settings.value( "archives.extractAlways" ).toBool();
+    extractArchives_ = settings.value( "archives.extract", Default.extractArchives_ ).toBool();
+    extractArchivesAlways_
+        = settings.value( "archives.extractAlways", Default.extractArchivesAlways_ ).toBool();
 
     // "Perf" settings
-    if ( settings.contains( "perf.useParallelSearch" ) )
-        useParallelSearch_ = settings.value( "perf.useParallelSearch" ).toBool();
-    if ( settings.contains( "perf.useSearchResultsCache" ) )
-        useSearchResultsCache_ = settings.value( "perf.useSearchResultsCache" ).toBool();
-    if ( settings.contains( "perf.searchResultsCacheLines" ) )
-        searchResultsCacheLines_ = settings.value( "perf.searchResultsCacheLines" ).toInt();
-    if ( settings.contains( "perf.indexReadBufferSizeMb" ) )
-        indexReadBufferSizeMb_ = settings.value( "perf.indexReadBufferSizeMb" ).toInt();
-    if ( settings.contains( "perf.searchReadBufferSizeLines" ) )
-        searchReadBufferSizeLines_ = settings.value( "perf.searchReadBufferSizeLines" ).toInt();
-    if ( settings.contains( "perf.searchThreadPoolSize" ) )
-        searchThreadPoolSize_ = settings.value( "perf.searchThreadPoolSize" ).toInt();
-    if ( settings.contains( "perf.keepFileClosed" ) )
-        keepFileClosed_ = settings.value( "perf.keepFileClosed" ).toBool();
-    if ( settings.contains( "perf.useLineEndingCache" ) )
-        useLineEndingCache_ = settings.value( "perf.useLineEndingCache" ).toBool();
+    useParallelSearch_
+        = settings.value( "perf.useParallelSearch", Default.useParallelSearch_ ).toBool();
+    useSearchResultsCache_
+        = settings.value( "perf.useSearchResultsCache", Default.useSearchResultsCache_ ).toBool();
+    searchResultsCacheLines_
+        = settings.value( "perf.searchResultsCacheLines", Default.searchResultsCacheLines_ )
+              .toInt();
+    indexReadBufferSizeMb_
+        = settings.value( "perf.indexReadBufferSizeMb", Default.indexReadBufferSizeMb_ ).toInt();
+    searchReadBufferSizeLines_
+        = settings.value( "perf.searchReadBufferSizeLines", Default.searchReadBufferSizeLines_ )
+              .toInt();
+    searchThreadPoolSize_
+        = settings.value( "perf.searchThreadPoolSize", Default.searchThreadPoolSize_ ).toInt();
+    keepFileClosed_ = settings.value( "perf.keepFileClosed", Default.keepFileClosed_ ).toBool();
+    useLineEndingCache_
+        = settings.value( "perf.useLineEndingCache", Default.useLineEndingCache_ ).toBool();
 
-    if ( settings.contains( "net.verifySslPeers" ) )
-        verifySslPeers_ = settings.value( "net.verifySslPeers" ).toBool();
+    verifySslPeers_ = settings.value( "net.verifySslPeers", Default.verifySslPeers_ ).toBool();
 
     // View settings
-    if ( settings.contains( "view.overviewVisible" ) )
-        overviewVisible_ = settings.value( "view.overviewVisible" ).toBool();
-    if ( settings.contains( "view.lineNumbersVisibleInMain" ) )
-        lineNumbersVisibleInMain_ = settings.value( "view.lineNumbersVisibleInMain" ).toBool();
-    if ( settings.contains( "view.lineNumbersVisibleInFiltered" ) )
-        lineNumbersVisibleInFiltered_
-            = settings.value( "view.lineNumbersVisibleInFiltered" ).toBool();
-    if ( settings.contains( "view.minimizeToTray" ) )
-        minimizeToTray_ = settings.value( "view.minimizeToTray" ).toBool();
+    overviewVisible_ = settings.value( "view.overviewVisible", Default.overviewVisible_ ).toBool();
+    lineNumbersVisibleInMain_
+        = settings.value( "view.lineNumbersVisibleInMain", Default.lineNumbersVisibleInMain_ )
+              .toBool();
+    lineNumbersVisibleInFiltered_
+        = settings
+              .value( "view.lineNumbersVisibleInFiltered", Default.lineNumbersVisibleInFiltered_ )
+              .toBool();
+    minimizeToTray_ = settings.value( "view.minimizeToTray", Default.minimizeToTray_ ).toBool();
 
     // Some sanity check (mainly for people upgrading)
     if ( quickfindIncremental_ )
         quickfindRegexpType_ = FixedString;
 
     // Default crawler settings
-    if ( settings.contains( "defaultView.searchAutoRefresh" ) )
-        searchAutoRefresh_ = settings.value( "defaultView.searchAutoRefresh" ).toBool();
-    if ( settings.contains( "defaultView.searchIgnoreCase" ) )
-        searchIgnoreCase_ = settings.value( "defaultView.searchIgnoreCase" ).toBool();
+    searchAutoRefresh_
+        = settings.value( "defaultView.searchAutoRefresh", Default.searchAutoRefresh_ ).toBool();
+    searchIgnoreCase_
+        = settings.value( "defaultView.searchIgnoreCase", Default.searchIgnoreCase_ ).toBool();
+        
     if ( settings.contains( "defaultView.splitterSizes" ) ) {
         splitterSizes_.clear();
 

@@ -33,13 +33,12 @@ class RecentFiles final : public Persistable<RecentFiles, session_settings> {
         return "RecentFiles";
     }
 
-    // Adds the passed filename to the list of recently used searches
     void addRecent( const QString& text );
+    void removeRecent( const QString& text );
 
     // Returns a list of recent files (latest loaded first)
     QStringList recentFiles() const;
 
-    // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
 

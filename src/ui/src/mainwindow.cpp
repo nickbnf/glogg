@@ -284,7 +284,7 @@ void MainWindow::createActions()
     connect( closeAllAction, &QAction::triggered, [this]( auto ) { this->closeAll(); } );
 
     recentFilesGroup = new QActionGroup( this );
-    connect( recentFilesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
+    connect( recentFilesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromRecent );
     for ( auto i = 0u; i < recentFileActions.size(); ++i ) {
         recentFileActions[ i ] = new QAction( this );
         recentFileActions[ i ]->setVisible( false );
@@ -412,10 +412,10 @@ void MainWindow::createActions()
     connect( encodingGroup, &QActionGroup::triggered, this, &MainWindow::encodingChanged );
 
     favoritesGroup = new QActionGroup( this );
-    connect( favoritesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
+    connect( favoritesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromFavorites );
 
     openedFilesGroup = new QActionGroup( this );
-    connect( openedFilesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromAction );
+    connect( openedFilesGroup, &QActionGroup::triggered, this, &MainWindow::switchToOpenedFile );
 
     addToFavoritesAction = new QAction( tr( "Add to favorites" ), this );
     addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star" ) );
@@ -659,11 +659,57 @@ void MainWindow::openRemoteFile( const QUrl& url )
     }
 }
 
-// Opens a log file from the recent files list
-void MainWindow::openFileFromAction( QAction* action )
+void MainWindow::switchToOpenedFile( QAction* action )
 {
-    if ( action )
-        loadFile( action->data().toString() );
+    if ( !action ) {
+        return;
+    }
+
+    loadFile( action->data().toString() );
+}
+
+void MainWindow::openFileFromRecent( QAction* action )
+{
+    if ( !action ) {
+        return;
+    }
+
+    const auto filename = action->data().toString();
+    if ( QFileInfo{ filename }.isReadable() ) {
+        loadFile( filename );
+    }
+    else {
+        const auto userAction = QMessageBox::question(
+            this, "klogg - remove from recent",
+            QString( "Could not read file %1. Remove it from recent files?" ).arg( filename ),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
+
+        if ( userAction == QMessageBox::Yes ) {
+            removeFromRecent( filename );
+        }
+    }
+}
+
+void MainWindow::openFileFromFavorites( QAction* action )
+{
+    if ( !action ) {
+        return;
+    }
+
+    const auto filename = action->data().toString();
+    if ( QFileInfo{ filename }.isReadable() ) {
+        loadFile( filename );
+    }
+    else {
+        const auto userAction = QMessageBox::question(
+            this, "klogg - remove from favorites",
+            QString( "Could not read file %1. Remove it from favorites?" ).arg( filename ),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
+
+        if ( userAction == QMessageBox::Yes ) {
+            removeFromFavorites( filename );
+        }
+    }
 }
 
 // Close current tab
@@ -1368,7 +1414,7 @@ void MainWindow::updateRecentFileActions()
     QStringList recent_files = RecentFiles::get().recentFiles();
 
     for ( auto j = 0; j < MaxRecentFiles; ++j ) {
-        const auto actionIndex = static_cast<size_t>(j);
+        const auto actionIndex = static_cast<size_t>( j );
         if ( j < recent_files.count() ) {
             QString text = tr( "&%1 %2" ).arg( j + 1 ).arg( strippedName( recent_files[ j ] ) );
             recentFileActions[ actionIndex ]->setText( text );
@@ -1506,7 +1552,7 @@ void MainWindow::updateFavoritesMenu()
 void MainWindow::addToFavorites()
 {
     if ( const auto crawler = currentCrawlerWidget() ) {
-        auto favorites = FavoriteFiles::get();
+        auto& favorites = FavoriteFiles::get();
         const auto path = session_.getFilename( crawler );
 
         if ( addToFavoritesAction->data().toBool() ) {
@@ -1524,7 +1570,7 @@ void MainWindow::addToFavorites()
 
 void MainWindow::removeFromFavorites()
 {
-    auto favoriteFiles = FavoriteFiles::get();
+    const auto& favoriteFiles = FavoriteFiles::get();
     const auto& favorites = favoriteFiles.favorites();
     QStringList files;
     std::transform( favorites.begin(), favorites.end(), std::back_inserter( files ),
@@ -1546,15 +1592,30 @@ void MainWindow::removeFromFavorites()
                                                      "Select item to remove from favorites", files,
                                                      currentIndex, false, &ok );
     if ( ok ) {
-        const auto selectedFile = std::find_if( favorites.begin(), favorites.end(),
-                                                FullPathNativeComparator( pathToRemove ) );
-
-        if ( selectedFile != favorites.end() ) {
-            favoriteFiles.remove( selectedFile->fullPath() );
-            favoriteFiles.save();
-            updateFavoritesMenu();
-        }
+        removeFromFavorites( pathToRemove );
     }
+}
+
+void MainWindow::removeFromFavorites( const QString& pathToRemove )
+{
+    auto& favoriteFiles = FavoriteFiles::get();
+    const auto& favorites = favoriteFiles.favorites();
+    const auto selectedFile = std::find_if( favorites.begin(), favorites.end(),
+                                            FullPathNativeComparator( pathToRemove ) );
+
+    if ( selectedFile != favorites.end() ) {
+        favoriteFiles.remove( selectedFile->fullPath() );
+        favoriteFiles.save();
+        updateFavoritesMenu();
+    }
+}
+
+void MainWindow::removeFromRecent( const QString& pathToRemove )
+{
+    auto& recentFiles = RecentFiles::get();
+    recentFiles.removeRecent( pathToRemove );
+    recentFiles.save();
+    updateRecentFileActions();
 }
 
 void MainWindow::selectOpenedFile()

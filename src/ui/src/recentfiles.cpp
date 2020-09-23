@@ -17,23 +17,29 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QSettings>
 #include <QFile>
+#include <QSettings>
 
 #include "log.h"
 #include "recentfiles.h"
 
-void RecentFiles::addRecent( const QString& text )
+void RecentFiles::removeRecent( const QString& text )
 {
     // First prune non existent files
-    QMutableStringListIterator i(recentFiles_);
+    QMutableStringListIterator i( recentFiles_ );
     while ( i.hasNext() ) {
-        if ( !QFile::exists(i.next()) )
+        if ( !QFile::exists( i.next() ) )
             i.remove();
     }
 
-    // Remove any copy of the about to be added filename
     recentFiles_.removeAll( text );
+}
+
+void RecentFiles::addRecent( const QString& text )
+{
+
+    // Remove any copy of the about to be added filename
+    removeRecent( text );
 
     // Add at the front
     recentFiles_.push_front( text );
@@ -54,13 +60,13 @@ QStringList RecentFiles::recentFiles() const
 
 void RecentFiles::saveToStorage( QSettings& settings ) const
 {
-    LOG(logDEBUG) << "RecentFiles::saveToStorage";
+    LOG( logDEBUG ) << "RecentFiles::saveToStorage";
 
     settings.beginGroup( "RecentFiles" );
     settings.setValue( "version", RECENTFILES_VERSION );
     settings.remove( "filesHistory" );
     settings.beginWriteArray( "filesHistory" );
-    for (int i = 0; i < recentFiles_.size(); ++i) {
+    for ( int i = 0; i < recentFiles_.size(); ++i ) {
         settings.setArrayIndex( i );
         settings.setValue( "name", recentFiles_.at( i ) );
     }
@@ -70,7 +76,7 @@ void RecentFiles::saveToStorage( QSettings& settings ) const
 
 void RecentFiles::retrieveFromStorage( QSettings& settings )
 {
-    LOG(logDEBUG) << "RecentFiles::retrieveFromStorage";
+    LOG( logDEBUG ) << "RecentFiles::retrieveFromStorage";
 
     recentFiles_.clear();
 
@@ -78,15 +84,15 @@ void RecentFiles::retrieveFromStorage( QSettings& settings )
         settings.beginGroup( "RecentFiles" );
         if ( settings.value( "version" ).toInt() == RECENTFILES_VERSION ) {
             int size = settings.beginReadArray( "filesHistory" );
-            for (int i = 0; i < size; ++i) {
-                settings.setArrayIndex(i);
+            for ( int i = 0; i < size; ++i ) {
+                settings.setArrayIndex( i );
                 QString file = settings.value( "name" ).toString();
                 recentFiles_.append( file );
             }
             settings.endArray();
         }
         else {
-            LOG(logERROR) << "Unknown version of recent files, ignoring it...";
+            LOG( logERROR ) << "Unknown version of recent files, ignoring it...";
         }
         settings.endGroup();
     }

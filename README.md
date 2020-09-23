@@ -30,7 +30,7 @@ page for how to use Klogg.
 ## Table of Contents
 
 1. [About the Project](#about-the-project)
-1. [Project Status](#project-status)
+1. [Installation](#installation)
 1. [Building](#building)
 1. [How to Get Help](#how-to-get-help)
 1. [Contributing](#contributing)
@@ -70,7 +70,7 @@ Latest news about klogg development can be found at https://klogg.filimonov.dev.
 
 **[Back to top](#table-of-contents)**
 
-## Project Status
+## Installation
 
 This project uses [Calendar Versioning](https://calver.org/). For a list of available versions, see the [repository tag list](https://github.com/variar/klogg/tags).
 
@@ -89,7 +89,24 @@ Package for Mac can be installed from Homebrew
 
 [ ![homebrew cask](https://img.shields.io/homebrew/cask/v/klogg?style=flat)](https://formulae.brew.sh/cask/klogg)
 
-### CI status
+Linux packages are also available from DEB and RPM repositories. 
+
+For DEB add Bintray GPG key and repository, then install from apt:
+```
+apt-key adv --keyserver hkps://keyserver.ubuntu.com --recv-keys 379CE192D401AB61
+echo deb https://dl.bintray.com/variar/deb stable utils | sudo tee -a /etc/apt/sources.list
+apt-get update
+apt-get install klogg
+```
+
+For RPM:
+```
+curl https://bintray.com/variar/rpm/rpm | sudo tee /etc/yum.repos.d/bintray-variar-rpm.repo
+yum update
+yum install klogg
+```
+
+### CI builds
 
 | | Windows | Linux  | Mac |
 | ------------- |------------- | ------------- | ------------- |

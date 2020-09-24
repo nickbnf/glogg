@@ -107,7 +107,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             = WatchedFile{ fileInfo.fileName().toStdString(),
                            fileInfo.lastModified().toMSecsSinceEpoch(), fileInfo.size() };
 
-        const auto directory = fileInfo.canonicalPath().toStdString();
+        const auto directory = fileInfo.absolutePath().toStdString();
 
         const auto wasEmpty = watchedPaths_.empty();
 

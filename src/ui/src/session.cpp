@@ -62,13 +62,7 @@ ViewInterface* Session::getViewIfOpen( const QString& file_name ) const
 ViewInterface* Session::open( const QString& file_name,
                               const std::function<ViewInterface*()>& view_factory )
 {
-    QFileInfo fileInfo( file_name );
-    if ( fileInfo.isReadable() ) {
-        return openAlways( file_name, view_factory, nullptr );
-    }
-    else {
-        throw FileUnreadableErr();
-    }
+    return openAlways( file_name, view_factory, nullptr );
 }
 
 void Session::close( const ViewInterface* view )

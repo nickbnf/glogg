@@ -307,7 +307,8 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
     // Manually call the handler as it is not called when changing the state programmatically
     searchRefreshChangedHandler( context.autoRefresh() );
 
-    logMainView->followSet( context.followFile() );
+    const auto& config = Configuration::get();
+    logMainView->followSet( context.followFile() && config.anyFileWatchEnabled() );
 
     const auto savedMarks = context.marks();
     std::transform( savedMarks.begin(), savedMarks.end(), std::back_inserter( savedMarkedLines_ ),
@@ -517,6 +518,10 @@ void CrawlerWidget::applyConfiguration()
 
     logMainView->setLineNumbersVisible( config.mainLineNumbersVisible() );
     filteredView->setLineNumbersVisible( config.filteredLineNumbersVisible() );
+
+    const auto isFollowModeAllowed = config.anyFileWatchEnabled();
+    logMainView->allowFollowMode( isFollowModeAllowed );
+    filteredView->allowFollowMode( isFollowModeAllowed );
 
     overview_.setVisible( config.isOverviewVisible() );
     logMainView->refreshOverview();

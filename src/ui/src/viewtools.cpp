@@ -36,16 +36,19 @@ void ElasticHook::move( int value )
 
     position_ = qMin( position_ + ( value - resistance ), MAX_POSITION );
 
-    if ( !held_ && ( std::chrono::duration_cast<std::chrono::milliseconds>
-            ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) )
+    if ( !held_
+         && ( std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::steady_clock::now() - last_update_ )
+                  .count()
+              > TIMER_PERIOD_MS ) )
         decreasePosition();
 
-    if ( ( ! hooked_ ) && position_ >= hook_threshold_ ) {
+    if ( allowHook_ && ( !hooked_ ) && position_ >= hook_threshold_ ) {
         position_ -= hook_threshold_;
         hooked_ = true;
         emit hooked( true );
     }
-    else if ( hooked_ && position_ <= - hook_threshold_ ) {
+    else if ( hooked_ && position_ <= -hook_threshold_ ) {
         position_ += hook_threshold_;
         hooked_ = false;
         emit hooked( false );
@@ -63,8 +66,11 @@ void ElasticHook::move( int value )
 
 void ElasticHook::timerEvent( QTimerEvent* )
 {
-    if ( !held_ && ( std::chrono::duration_cast<std::chrono::milliseconds>
-            ( std::chrono::steady_clock::now() - last_update_ ).count() > TIMER_PERIOD_MS ) ) {
+    if ( !held_
+         && ( std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::steady_clock::now() - last_update_ )
+                  .count()
+              > TIMER_PERIOD_MS ) ) {
         decreasePosition();
         last_update_ = std::chrono::steady_clock::now();
     }
@@ -81,9 +87,9 @@ void ElasticHook::decreasePosition()
         timer_id_ = 0;
     }
     else if ( position_ > 0 )
-        position_ -= DECREASE_RATE + ( position_/PROP_RATIO );
+        position_ -= DECREASE_RATE + ( position_ / PROP_RATIO );
     else if ( position_ < 0 )
-        position_ += DECREASE_RATE - ( position_/PROP_RATIO );
+        position_ += DECREASE_RATE - ( position_ / PROP_RATIO );
 
     LOG( logDEBUG ) << "ElasticHook::timerEvent: new value " << position_;
 

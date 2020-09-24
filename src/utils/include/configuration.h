@@ -94,6 +94,11 @@ class Configuration final : public Persistable<Configuration> {
     }
 
     // "Advanced" settings
+    bool anyFileWatchEnabled() const 
+    {
+        return nativeFileWatchEnabled() || pollingEnabled();
+    }
+
     bool nativeFileWatchEnabled() const
     {
         return nativeFileWatchEnabled_;

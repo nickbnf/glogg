@@ -58,6 +58,15 @@ class ElasticHook : public QObject {
         hooked_ = hooked;
     }
 
+    void allowHook( bool allow )
+    {
+        allowHook_ = allow;
+        if ( !allow ) {
+            hooked_ = false;
+            emit hooked( false );
+        }
+    }
+
     // Return the "length" of the elastic hook.
     int length() const
     {
@@ -85,6 +94,7 @@ class ElasticHook : public QObject {
     const int hook_threshold_;
     bool hooked_ = false;
     bool held_ = false;
+    bool allowHook_ = true;
     int position_ = 0;
     int timer_id_ = 0;
     std::chrono::time_point<std::chrono::steady_clock> last_update_;

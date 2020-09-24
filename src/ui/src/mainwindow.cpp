@@ -366,6 +366,7 @@ void MainWindow::createActions()
                                 << QKeySequence( Qt::Key_F ) << QKeySequence( Qt::Key_F10 ) );
 
     followAction->setCheckable( true );
+    followAction->setEnabled( config.anyFileWatchEnabled() );
     connect( followAction, &QAction::toggled, this, &MainWindow::followSet );
 
     reloadAction = new QAction( tr( "&Reload" ), this );
@@ -852,6 +853,7 @@ void MainWindow::options()
         plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 
         newWindowAction->setVisible( config.allowMultipleWindows() );
+        followAction->setEnabled( config.anyFileWatchEnabled() );
 
         auto style = config.style();
         LOG( logINFO ) << "Setting style to " << style;
@@ -869,7 +871,6 @@ void MainWindow::options()
 
         loadIcons();
         updateFavoritesMenu();
-
     } );
     dialog.exec();
 
@@ -964,6 +965,11 @@ void MainWindow::toggleFilteredLineNumbersVisibility( bool isVisible )
 
 void MainWindow::changeFollowMode( bool follow )
 {
+    auto& config = Configuration::get();
+    if ( follow && !( config.nativeFileWatchEnabled() || config.pollingEnabled() ) ) {
+        LOG( logWARNING ) << "File watch disabled in settings";
+    }
+
     followAction->setChecked( follow );
 }
 
@@ -1387,7 +1393,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
             updateOpenedFilesMenu();
 
             const auto& config = Configuration::get();
-            if ( followFile || config.followFileOnLoad() ) {
+            if ( config.anyFileWatchEnabled() && ( followFile || config.followFileOnLoad() ) ) {
                 signalCrawlerToFollowFile( crawler_widget );
                 followAction->setChecked( true );
             }

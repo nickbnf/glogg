@@ -973,6 +973,11 @@ void AbstractLogView::incrementalSearchStop()
     }
 }
 
+void AbstractLogView::allowFollowMode( bool allow )
+{
+    followElasticHook_.allowHook( allow );
+}
+
 void AbstractLogView::followSet( bool checked )
 {
     followMode_ = checked;

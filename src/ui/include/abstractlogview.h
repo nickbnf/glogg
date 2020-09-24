@@ -194,6 +194,8 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
         return followMode_;
     }
 
+    void allowFollowMode( bool allow );
+
   protected:
     void mousePressEvent( QMouseEvent* mouseEvent ) override;
     void mouseMoveEvent( QMouseEvent* mouseEvent ) override;

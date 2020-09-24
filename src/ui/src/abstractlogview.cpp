@@ -1865,7 +1865,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
         }
 
         // Then draw the bullet
-        painter.setPen( palette.color( QPalette::Text ) );
+        painter.setPen( Qt::black );
         const int circleSize = 3;
         const int arrowHeight = 4;
         const int middleXLine = BULLET_AREA_WIDTH / 2;

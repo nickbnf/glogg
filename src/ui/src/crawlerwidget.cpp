@@ -231,6 +231,18 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
     }
 }
 
+void CrawlerWidget::changeEvent( QEvent* event )
+{
+    if ( event->type() == QEvent::StyleChange ) {
+        QTimer::singleShot( 0, [this] {
+            loadIcons();
+            searchInfoLineDefaultPalette = searchInfoLine->palette();
+        } );
+    }
+
+    QWidget::changeEvent( event );
+}
+
 //
 // Public slots
 //
@@ -530,9 +542,6 @@ void CrawlerWidget::applyConfiguration()
     logMainView->update();
     filteredView->updateDisplaySize();
     filteredView->update();
-
-    loadIcons();
-    searchInfoLineDefaultPalette = searchInfoLine->palette();
 
     // Update the SearchLine (history)
     updateSearchCombo();

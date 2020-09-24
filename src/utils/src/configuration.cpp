@@ -37,11 +37,10 @@
  */
 
 #include <QFontInfo>
-#include <QStyleFactory>
-
-#include "log.h"
 
 #include "configuration.h"
+#include "log.h"
+#include "styles.h"
 
 Configuration::Configuration()
 {
@@ -167,10 +166,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 
     style_ = settings.value( "view.style", Default.style_ ).toString();
 
-    auto availableStyles = QStyleFactory::keys();
-    availableStyles << DarkStyleKey;
-    if ( !availableStyles.contains( style_ ) ) {
-        style_ = availableStyles.front();
+    auto styles = availableStyles();
+    if ( !styles.contains( style_ ) ) {
+        style_ = styles.front();
     }
 
     // Some sanity check (mainly for people upgrading)

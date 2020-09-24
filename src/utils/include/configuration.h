@@ -52,8 +52,6 @@ enum SearchRegexpType {
     FixedString,
 };
 
-static constexpr QLatin1String DarkStyleKey = QLatin1String( "Dark", 4 );
-
 // Configuration class containing everything in the "Settings" dialog
 class Configuration final : public Persistable<Configuration> {
   public:

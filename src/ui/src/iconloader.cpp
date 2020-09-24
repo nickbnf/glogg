@@ -20,6 +20,7 @@
 #include <QWidget>
 
 #include "iconloader.h"
+#include "log.h"
 
 #include <array>
 

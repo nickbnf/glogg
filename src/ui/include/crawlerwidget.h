@@ -136,6 +136,7 @@ class CrawlerWidget : public QSplitter,
     void doSendAllStateSignals() override;
 
     void keyPressEvent( QKeyEvent* keyEvent ) override;
+    void changeEvent( QEvent* event ) override;
 
   signals:
     // Sent to signal the client load has progressed,

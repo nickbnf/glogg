@@ -63,7 +63,6 @@
 #include <QMimeData>
 #include <QProgressDialog>
 #include <QScreen>
-#include <QStyleFactory>
 #include <QTemporaryFile>
 #include <QTextBrowser>
 #include <QToolBar>
@@ -71,23 +70,22 @@
 #include <QUrlQuery>
 #include <QWindow>
 
-#include "downloader.h"
-#include "log.h"
-#include "openfilehelper.h"
-
 #include "mainwindow.h"
 
 #include "crawlerwidget.h"
 #include "decompressor.h"
+#include "downloader.h"
 #include "encodings.h"
 #include "favoritefiles.h"
 #include "highlightersdialog.h"
-#include "optionsdialog.h"
-#include "recentfiles.h"
-#include "tabbedcrawlerwidget.h"
-
 #include "klogg_version.h"
+#include "log.h"
+#include "openfilehelper.h"
+#include "optionsdialog.h"
 #include "readablesize.h"
+#include "recentfiles.h"
+#include "styles.h"
+#include "tabbedcrawlerwidget.h"
 
 namespace {
 
@@ -108,7 +106,6 @@ MainWindow::MainWindow( WindowSession session )
     , tempDir_( QDir::temp().filePath( "klogg_temp_" ) )
 {
     createActions();
-    loadIcons();
     createMenus();
     createToolBars();
 
@@ -571,16 +568,13 @@ void MainWindow::applyStyle()
         QFile styleFile( ":qdarkstyle/style.qss" );
         styleFile.open( QFile::ReadOnly | QFile::Text );
         QTextStream styleSream( &styleFile );
-        QApplication::setStyle( nullptr );
+        QApplication::setStyle( availableStyles().front() );
         qApp->setStyleSheet( styleSream.readAll() );
     }
     else {
         QApplication::setStyle( style );
         qApp->setStyleSheet( "" );
     }
-
-    loadIcons();
-    updateFavoritesMenu();
 }
 
 void MainWindow::createTrayIcon()
@@ -1203,6 +1197,12 @@ void MainWindow::changeEvent( QEvent* event )
                 } );
             }
         }
+    }
+    else if ( event->type() == QEvent::StyleChange ) {
+        QTimer::singleShot( 0, [this] {
+            loadIcons();
+            updateFavoritesMenu();
+        } );
     }
 
     QMainWindow::changeEvent( event );

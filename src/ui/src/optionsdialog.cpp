@@ -36,12 +36,11 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QStyleFactory>
 #include <QtGui>
 
-#include "optionsdialog.h"
-
 #include "log.h"
+#include "optionsdialog.h"
+#include "styles.h"
 
 static constexpr int POLL_INTERVAL_MIN = 10;
 static constexpr int POLL_INTERVAL_MAX = 3600000;
@@ -125,8 +124,7 @@ void OptionsDialog::setupRegexp()
 
 void OptionsDialog::setupStyles()
 {
-    styleComboBox->addItems( QStyleFactory::keys() );
-    styleComboBox->addItem( DarkStyleKey );
+    styleComboBox->addItems( availableStyles() );
 }
 
 // Enable/disable the QuickFind options depending on the state

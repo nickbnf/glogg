@@ -208,6 +208,8 @@ MainWindow::MainWindow( WindowSession session )
     onClipboardDataChanged();
 
     updateTitleBar( "" );
+
+    applyStyle();
 }
 
 void MainWindow::reloadGeometry()
@@ -560,6 +562,27 @@ void MainWindow::createToolBars()
     showInfoLabels( false );
 }
 
+void MainWindow::applyStyle()
+{
+    const auto& config = Configuration::get();
+    auto style = config.style();
+    LOG( logINFO ) << "Setting style to " << style;
+    if ( style == DarkStyleKey ) {
+        QFile styleFile( ":qdarkstyle/style.qss" );
+        styleFile.open( QFile::ReadOnly | QFile::Text );
+        QTextStream styleSream( &styleFile );
+        QApplication::setStyle( nullptr );
+        qApp->setStyleSheet( styleSream.readAll() );
+    }
+    else {
+        QApplication::setStyle( style );
+        qApp->setStyleSheet( "" );
+    }
+
+    loadIcons();
+    updateFavoritesMenu();
+}
+
 void MainWindow::createTrayIcon()
 {
     trayIcon_ = new QSystemTrayIcon( this );
@@ -856,22 +879,7 @@ void MainWindow::options()
         newWindowAction->setVisible( config.allowMultipleWindows() );
         followAction->setEnabled( config.anyFileWatchEnabled() );
 
-        auto style = config.style();
-        LOG( logINFO ) << "Setting style to " << style;
-        if ( style == DarkStyleKey ) {
-            QFile styleFile( ":qdarkstyle/style.qss" );
-            styleFile.open( QFile::ReadOnly | QFile::Text );
-            QTextStream styleSream( &styleFile );
-            QApplication::setStyle( nullptr );
-            qApp->setStyleSheet( styleSream.readAll() );
-        }
-        else {
-            QApplication::setStyle( style );
-            qApp->setStyleSheet( "" );
-        }
-
-        loadIcons();
-        updateFavoritesMenu();
+        applyStyle();
     } );
     dialog.exec();
 

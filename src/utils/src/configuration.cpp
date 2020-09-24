@@ -167,7 +167,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 
     style_ = settings.value( "view.style", Default.style_ ).toString();
 
-    const auto availableStyles = QStyleFactory::keys();
+    auto availableStyles = QStyleFactory::keys();
+    availableStyles << DarkStyleKey;
     if ( !availableStyles.contains( style_ ) ) {
         style_ = availableStyles.front();
     }

@@ -220,7 +220,8 @@ void MainWindow::reloadGeometry()
 
 void MainWindow::reloadSession()
 {
-    const auto followFileOnLoad = Configuration::get().followFileOnLoad();
+    const auto& config = Configuration::get();
+    const auto followFileOnLoad = config.followFileOnLoad() && config.anyFileWatchEnabled();
 
     int current_file_index = -1;
     const auto openedFiles

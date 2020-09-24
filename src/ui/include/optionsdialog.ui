@@ -233,6 +233,18 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="styleBox">
+         <property name="title">
+          <string>Style</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_15">
+          <item>
+           <widget class="QComboBox" name="styleComboBox"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="hidpiGroupBox">
          <property name="title">
           <string>High DPI</string>

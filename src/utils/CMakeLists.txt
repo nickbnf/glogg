@@ -28,6 +28,7 @@ target_link_libraries(utils PUBLIC
         project_options
         project_warnings
         Qt5::Gui
+        Qt5::Widgets
         Qt5::Network
         Qt5::Concurrent
         absl::optional

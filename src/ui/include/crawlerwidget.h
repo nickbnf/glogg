@@ -167,6 +167,7 @@ class CrawlerWidget : public QSplitter,
     void stopSearch();
     // Instructs the widget to reconfigure itself because Config() has changed.
     void applyConfiguration();
+    void loadIcons();
     // QuickFind is being entered, save the focus for incremental qf.
     void enteringQuickFind();
     // QuickFind is being closed.

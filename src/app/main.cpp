@@ -234,7 +234,7 @@ static void print_version()
     std::cout << "Built " << kloggBuildDate().data() << " from " << kloggCommit().data() << "("
               << kloggGitVersion().data() << ")\n";
 
-    std::cout << "Copyright (C) 2019 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
+    std::cout << "Copyright (C) 2020 Nicolas Bonnefon, Anton Filimonov and other contributors\n";
     std::cout << "This is free software.  You may redistribute copies of it under the terms of\n";
     std::cout << "the GNU General Public License <http://www.gnu.org/licenses/gpl.html>.\n";
     std::cout << "There is NO WARRANTY, to the extent permitted by law.\n";

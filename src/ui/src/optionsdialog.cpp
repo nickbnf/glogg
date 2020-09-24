@@ -36,6 +36,7 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QStyleFactory>
 #include <QtGui>
 
 #include "optionsdialog.h"
@@ -54,6 +55,7 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     setupTabs();
     setupFontList();
     setupRegexp();
+    setupStyles();
 
     // Validators
     QValidator* polling_interval_validator_
@@ -104,7 +106,7 @@ void OptionsDialog::setupFontList()
 
     // We only show the fixed fonts
     const auto families = database.families();
-    for ( const QString& str : families ) {
+    for ( const QString& str : qAsConst( families ) ) {
         if ( database.isFixedPitch( str ) )
             fontFamilyBox->addItem( str );
     }
@@ -119,6 +121,12 @@ void OptionsDialog::setupRegexp()
 
     mainSearchBox->addItems( regexpTypes );
     quickFindSearchBox->addItems( regexpTypes );
+}
+
+void OptionsDialog::setupStyles()
+{
+    styleComboBox->addItems( QStyleFactory::keys() );
+    styleComboBox->addItem( DarkStyleKey );
 }
 
 // Enable/disable the QuickFind options depending on the state
@@ -207,6 +215,14 @@ void OptionsDialog::updateDialogFromConfig()
     fontSmoothCheckBox->setChecked( config.forceFontAntialiasing() );
     enableQtHiDpiCheckBox->setChecked( config.enableQtHighDpi() );
     scaleRoundingComboBox->setCurrentIndex( config.scaleFactorRounding() - 1 );
+
+    const auto style = config.style();
+    if ( !styleComboBox->findText( style, Qt::MatchExactly ) ) {
+        styleComboBox->setCurrentIndex( 0 );
+    }
+    else {
+        styleComboBox->setCurrentText( style );
+    }
 
     // Regexp types
     mainSearchBox->setCurrentIndex( getRegexpIndex( config.mainRegexpType() ) );
@@ -317,6 +333,8 @@ void OptionsDialog::updateConfigFromDialog()
     config.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     config.setVerifySslPeers( verifySslCheckBox->isChecked() );
+
+    config.setStyle( styleComboBox->currentText() );
 
     config.save();
 

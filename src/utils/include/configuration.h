@@ -52,6 +52,8 @@ enum SearchRegexpType {
     FixedString,
 };
 
+static constexpr QLatin1String DarkStyleKey = QLatin1String( "Dark", 4 );
+
 // Configuration class containing everything in the "Settings" dialog
 class Configuration final : public Persistable<Configuration> {
   public:
@@ -239,6 +241,10 @@ class Configuration final : public Persistable<Configuration> {
     {
         return minimizeToTray_;
     }
+    QString style() const
+    {
+        return style_;
+    }
     void setMainLineNumbersVisible( bool lineNumbersVisible )
     {
         lineNumbersVisibleInMain_ = lineNumbersVisible;
@@ -250,6 +256,10 @@ class Configuration final : public Persistable<Configuration> {
     void setMinimizeToTray( bool minimizeToTray )
     {
         minimizeToTray_ = minimizeToTray;
+    }
+    void setStyle( const QString& style )
+    {
+        style_ = style;
     }
 
     bool enableLogging() const
@@ -379,6 +389,7 @@ class Configuration final : public Persistable<Configuration> {
     bool lineNumbersVisibleInMain_ = false;
     bool lineNumbersVisibleInFiltered_ = true;
     bool minimizeToTray_ = false;
+    QString style_;
 
     // Default settings for new views
     bool searchAutoRefresh_ = false;

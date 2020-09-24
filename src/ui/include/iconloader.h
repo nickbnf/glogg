@@ -16,21 +16,25 @@
 
 #include <QIcon>
 
-class IconLoader
-{
+class QWidget;
+
+class IconLoader {
   public:
-    IconLoader() { }
-    virtual ~IconLoader() { }
-    QIcon load(QString name);
+    explicit IconLoader( QWidget* widget );
+    QIcon load( QString name );
+
   private:
     bool shouldInvert() const;
-    bool shouldAutoInvert(QString) const;
+    bool shouldAutoInvert( QString ) const;
 
-    QPixmap loadPixmap(QString, int) const;
+    QPixmap loadPixmap( QString, int ) const;
 
-    QPixmap invertPixmap(QPixmap) const;
+    QPixmap invertPixmap( QPixmap ) const;
 
-    QString makeNonScalableFilename(QString, int, bool) const;
+    QString makeNonScalableFilename( QString, int, bool ) const;
+
+  private:
+    QWidget* widget_;
 };
 
 #endif // KLOGG_ICONLOADER_H

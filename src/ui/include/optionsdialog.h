@@ -75,6 +75,7 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog {
     void setupSearchResultsCache();
     void setupLogging();
     void setupArchives();
+    void setupStyles();
 
     int getRegexpIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;

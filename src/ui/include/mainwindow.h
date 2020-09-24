@@ -175,6 +175,7 @@ class MainWindow : public QMainWindow {
 
   private:
     void createActions();
+    void loadIcons();
     void createMenus();
     void createToolBars();
     void createTrayIcon();

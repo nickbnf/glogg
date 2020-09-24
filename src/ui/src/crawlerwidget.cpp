@@ -138,6 +138,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
 // the data is attached.
 CrawlerWidget::CrawlerWidget( QWidget* parent )
     : QSplitter( parent )
+    , iconLoader_{ this }
 {
 }
 
@@ -364,8 +365,8 @@ void CrawlerWidget::clearSearchItems()
 
 void CrawlerWidget::showSearchContextMenu()
 {
-    if(searchLineContextMenu)
-      searchLineContextMenu->exec(QCursor::pos());
+    if ( searchLineContextMenu )
+        searchLineContextMenu->exec( QCursor::pos() );
 }
 
 // When receiving the 'newDataAvailable' signal from LogFilteredData
@@ -525,6 +526,9 @@ void CrawlerWidget::applyConfiguration()
     filteredView->updateDisplaySize();
     filteredView->update();
 
+    loadIcons();
+    searchInfoLineDefaultPalette = searchInfoLine->palette();
+
     // Update the SearchLine (history)
     updateSearchCombo();
 
@@ -662,7 +666,8 @@ void CrawlerWidget::searchRefreshChangedHandler( bool isRefreshing )
 
 void CrawlerWidget::matchCaseChangedHandler( bool shouldMatchCase )
 {
-    searchLineCompleter->setCaseSensitivity( shouldMatchCase ? Qt::CaseSensitive : Qt::CaseInsensitive );
+    searchLineCompleter->setCaseSensitivity( shouldMatchCase ? Qt::CaseSensitive
+                                                             : Qt::CaseInsensitive );
 }
 
 void CrawlerWidget::searchTextChangeHandler( QString )
@@ -821,21 +826,18 @@ void CrawlerWidget::setup()
 
     matchCaseButton = new QToolButton();
     matchCaseButton->setToolTip( "Match case" );
-    matchCaseButton->setIcon( iconLoader_.load( "icons8-font-size" ) );
     matchCaseButton->setCheckable( true );
     matchCaseButton->setFocusPolicy( Qt::NoFocus );
     matchCaseButton->setContentsMargins( 2, 2, 2, 2 );
 
     useRegexpButton = new QToolButton();
     useRegexpButton->setToolTip( "Use regex" );
-    useRegexpButton->setIcon( iconLoader_.load( "regex" ) );
     useRegexpButton->setCheckable( true );
     useRegexpButton->setFocusPolicy( Qt::NoFocus );
     useRegexpButton->setContentsMargins( 2, 2, 2, 2 );
 
     searchRefreshButton = new QToolButton();
     searchRefreshButton->setToolTip( "Auto-refresh" );
-    searchRefreshButton->setIcon( iconLoader_.load( "icons8-search-refresh" ) );
     searchRefreshButton->setCheckable( true );
     searchRefreshButton->setFocusPolicy( Qt::NoFocus );
     searchRefreshButton->setContentsMargins( 2, 2, 2, 2 );
@@ -851,22 +853,20 @@ void CrawlerWidget::setup()
     searchLineEdit->lineEdit()->setMaxLength( std::numeric_limits<int>::max() / 1024 );
     searchLineEdit->setContentsMargins( 2, 2, 2, 2 );
 
-    QAction *clearSearchItemsAction = new QAction( "Clear All Items", this );
+    QAction* clearSearchItemsAction = new QAction( "Clear All Items", this );
     searchLineContextMenu = searchLineEdit->lineEdit()->createStandardContextMenu();
     searchLineContextMenu->addSeparator();
-    searchLineContextMenu->addAction(clearSearchItemsAction);
-    searchLineEdit->setContextMenuPolicy(Qt::CustomContextMenu);
+    searchLineContextMenu->addAction( clearSearchItemsAction );
+    searchLineEdit->setContextMenuPolicy( Qt::CustomContextMenu );
 
     setFocusProxy( searchLineEdit );
 
     searchButton = new QToolButton();
-    searchButton->setIcon( iconLoader_.load( "icons8-search" ) );
     searchButton->setText( tr( "Search" ) );
     searchButton->setAutoRaise( true );
     searchButton->setContentsMargins( 2, 2, 2, 2 );
 
     stopButton = new QToolButton();
-    stopButton->setIcon( iconLoader_.load( "icons8-delete" ) );
     stopButton->setAutoRaise( true );
     stopButton->setEnabled( false );
     stopButton->setVisible( false );
@@ -904,9 +904,10 @@ void CrawlerWidget::setup()
     searchRefreshChangedHandler( searchRefreshButton->isChecked() );
     matchCaseChangedHandler( matchCaseButton->isChecked() );
 
-
     // Default splitter position (usually overridden by the config file)
     setSizes( config.splitterSizes() );
+
+    loadIcons();
 
     // Connect the signals
     connect( searchLineEdit->lineEdit(), &QLineEdit::returnPressed, searchButton,
@@ -914,7 +915,8 @@ void CrawlerWidget::setup()
     connect( searchLineEdit->lineEdit(), &QLineEdit::textEdited, this,
              &CrawlerWidget::searchTextChangeHandler );
 
-    connect( searchLineEdit, &QWidget::customContextMenuRequested, this, &CrawlerWidget::showSearchContextMenu);
+    connect( searchLineEdit, &QWidget::customContextMenuRequested, this,
+             &CrawlerWidget::showSearchContextMenu );
     connect( clearSearchItemsAction, &QAction::triggered, this, &CrawlerWidget::clearSearchItems );
     connect( searchButton, &QToolButton::clicked, this, &CrawlerWidget::startNewSearch );
     connect( stopButton, &QToolButton::clicked, this, &CrawlerWidget::stopSearch );
@@ -983,7 +985,7 @@ void CrawlerWidget::setup()
              &CrawlerWidget::searchRefreshChangedHandler );
 
     connect( matchCaseButton, &QPushButton::toggled, this,
-            &CrawlerWidget::matchCaseChangedHandler );
+             &CrawlerWidget::matchCaseChangedHandler );
 
     // Advise the parent the checkboxes have been changed
     // (for maintaining default config)
@@ -996,6 +998,15 @@ void CrawlerWidget::setup()
              QOverload<>::of( &FilteredView::setFocus ) );
     connect( filteredView, &FilteredView::exitView, logMainView,
              QOverload<>::of( &LogMainView::setFocus ) );
+}
+
+void CrawlerWidget::loadIcons()
+{
+    searchRefreshButton->setIcon( iconLoader_.load( "icons8-search-refresh" ) );
+    useRegexpButton->setIcon( iconLoader_.load( "regex" ) );
+    searchButton->setIcon( iconLoader_.load( "icons8-search" ) );
+    matchCaseButton->setIcon( iconLoader_.load( "icons8-font-size" ) );
+    stopButton->setIcon( iconLoader_.load( "icons8-delete" ) );
 }
 
 // Create a new search using the text passed, replace the currently

@@ -63,6 +63,7 @@
 #include <QMimeData>
 #include <QProgressDialog>
 #include <QScreen>
+#include <QStyleFactory>
 #include <QTemporaryFile>
 #include <QTextBrowser>
 #include <QToolBar>
@@ -100,12 +101,14 @@ void signalCrawlerToFollowFile( CrawlerWidget* crawler_widget )
 MainWindow::MainWindow( WindowSession session )
     : session_( std::move( session ) )
     , mainIcon_()
+    , iconLoader_( this )
     , signalMux_()
     , quickFindMux_( session_.getQuickFindPattern() )
     , mainTabWidget_()
     , tempDir_( QDir::temp().filePath( "klogg_temp_" ) )
 {
     createActions();
+    loadIcons();
     createMenus();
     createToolBars();
 
@@ -270,7 +273,6 @@ void MainWindow::createActions()
 
     openAction = new QAction( tr( "&Open..." ), this );
     openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open ) );
-    openAction->setIcon( iconLoader_.load( "icons8-add-file" ) );
     openAction->setStatusTip( tr( "Open a file" ) );
     connect( openAction, &QAction::triggered, [this]( auto ) { this->open(); } );
 
@@ -359,7 +361,6 @@ void MainWindow::createActions()
              &MainWindow::toggleFilteredLineNumbersVisibility );
 
     followAction = new QAction( tr( "&Follow File" ), this );
-    followAction->setIcon( iconLoader_.load( "icons8-fast-forward" ) );
 
     followAction->setShortcuts( QList<QKeySequence>()
                                 << QKeySequence( Qt::Key_F ) << QKeySequence( Qt::Key_F10 ) );
@@ -369,11 +370,9 @@ void MainWindow::createActions()
 
     reloadAction = new QAction( tr( "&Reload" ), this );
     reloadAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Refresh ) );
-    reloadAction->setIcon( iconLoader_.load( "icons8-restore-page" ) );
     signalMux_.connect( reloadAction, SIGNAL( triggered() ), SLOT( reload() ) );
 
     stopAction = new QAction( tr( "&Stop" ), this );
-    stopAction->setIcon( iconLoader_.load( "icons8-delete" ) );
     stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL( triggered() ), SLOT( stopLoading() ) );
 
@@ -404,7 +403,6 @@ void MainWindow::createActions()
 
     showScratchPadAction = new QAction( tr( "Scratchpad" ), this );
     showScratchPadAction->setStatusTip( tr( "Show the scratchpad" ) );
-    showScratchPadAction->setIcon( iconLoader_.load( "icons8-create" ) );
     connect( showScratchPadAction, &QAction::triggered,
              [this]( auto ) { this->showScratchPad(); } );
 
@@ -418,13 +416,11 @@ void MainWindow::createActions()
     connect( openedFilesGroup, &QActionGroup::triggered, this, &MainWindow::switchToOpenedFile );
 
     addToFavoritesAction = new QAction( tr( "Add to favorites" ), this );
-    addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star" ) );
     addToFavoritesAction->setData( true );
     connect( addToFavoritesAction, &QAction::triggered,
              [this]( auto ) { this->addToFavorites(); } );
 
     addToFavoritesMenuAction = new QAction( tr( "Add to favorites" ), this );
-    addToFavoritesMenuAction->setIcon( iconLoader_.load( "icons8-star" ) );
     connect( addToFavoritesMenuAction, &QAction::triggered,
              [this]( auto ) { this->addToFavorites(); } );
 
@@ -437,6 +433,17 @@ void MainWindow::createActions()
              [this]( auto ) { this->selectOpenedFile(); } );
     selectOpenFileAction->setShortcuts( QList<QKeySequence>()
                                         << QKeySequence( Qt::SHIFT | Qt::CTRL | Qt::Key_O ) );
+}
+
+void MainWindow::loadIcons()
+{
+    openAction->setIcon( iconLoader_.load( "icons8-add-file" ) );
+    stopAction->setIcon( iconLoader_.load( "icons8-delete" ) );
+    reloadAction->setIcon( iconLoader_.load( "icons8-restore-page" ) );
+    followAction->setIcon( iconLoader_.load( "icons8-fast-forward" ) );
+    showScratchPadAction->setIcon( iconLoader_.load( "icons8-create" ) );
+    addToFavoritesAction->setIcon( iconLoader_.load( "icons8-star" ) );
+    addToFavoritesMenuAction->setIcon( iconLoader_.load( "icons8-star" ) );
 }
 
 void MainWindow::createMenus()
@@ -839,13 +846,34 @@ void MainWindow::options()
 {
     OptionsDialog dialog( this );
     signalMux_.connect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
+
+    connect( &dialog, &OptionsDialog::optionsChanged, [this]() {
+        const auto& config = Configuration::get();
+        plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
+
+        newWindowAction->setVisible( config.allowMultipleWindows() );
+
+        auto style = config.style();
+        LOG( logINFO ) << "Setting style to " << style;
+        if ( style == DarkStyleKey ) {
+            QFile styleFile( ":qdarkstyle/style.qss" );
+            styleFile.open( QFile::ReadOnly | QFile::Text );
+            QTextStream styleSream( &styleFile );
+            QApplication::setStyle( nullptr );
+            qApp->setStyleSheet( styleSream.readAll() );
+        }
+        else {
+            QApplication::setStyle( style );
+            qApp->setStyleSheet( "" );
+        }
+
+        loadIcons();
+        updateFavoritesMenu();
+
+    } );
     dialog.exec();
+
     signalMux_.disconnect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
-
-    const auto& config = Configuration::get();
-    plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
-
-    newWindowAction->setVisible( config.allowMultipleWindows() );
 }
 
 void MainWindow::about()
@@ -860,7 +888,7 @@ void MainWindow::about()
             "<p>This is fork of glogg</p>"
             "<p><a href=\"http://glogg.bonnefon.org/\">http://glogg.bonnefon.org/</a></p>"
             "<p>Using icons from <a href=\"https://icons8.com\">icons8.com</a> project</p>"
-            "<p>Copyright &copy; 2019 Nicolas Bonnefon, Anton Filimonov and other contributors</p>"
+            "<p>Copyright &copy; 2020 Nicolas Bonnefon, Anton Filimonov and other contributors</p>"
             "<p>You may modify and redistribute the program under the terms of the GPL (version 3 "
             "or later).</p>" )
             .arg( kloggVersion(), kloggBuildDate(), kloggCommit() ) );

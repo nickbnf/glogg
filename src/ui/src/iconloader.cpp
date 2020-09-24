@@ -16,12 +16,19 @@
 #include <QPainter>
 #include <QPalette>
 #include <QPixmap>
+#include <QStyleOption>
+#include <QWidget>
 
 #include "iconloader.h"
 
 #include <array>
 
 constexpr std::array<int, 8> IconSizes{ 0, 16 };
+
+IconLoader::IconLoader( QWidget* widget )
+    : widget_{ widget }
+{
+}
 
 QIcon IconLoader::load( QString name )
 {
@@ -35,7 +42,9 @@ QIcon IconLoader::load( QString name )
 }
 bool IconLoader::shouldInvert() const
 {
-    QColor bg = QApplication::palette().window().color();
+    QStyleOption style;
+    style.initFrom( widget_ );
+    auto bg = style.palette.window().color();
     bool darkBackground = ( bg.red() + bg.green() + bg.blue() <= 384 );
     return darkBackground;
 }

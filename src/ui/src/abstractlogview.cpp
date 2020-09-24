@@ -1694,7 +1694,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
         painter.setPen( palette.color( QPalette::Text ) );
         painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0,
                           lineNumberAreaWidth + SEPARATOR_WIDTH, paintDeviceHeight,
-                          palette.color( QPalette::AlternateBase ) );
+                          palette.color( QPalette::Disabled, QPalette::Text ) );
 
         painter.drawLine( contentStartPosX + lineNumberAreaWidth - SEPARATOR_WIDTH, 0,
                           contentStartPosX + lineNumberAreaWidth - SEPARATOR_WIDTH,
@@ -1705,7 +1705,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     }
     else {
         painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0, SEPARATOR_WIDTH + 1,
-                          paintDeviceHeight, palette.color( QPalette::AlternateBase ) );
+                          paintDeviceHeight, palette.color( QPalette::Disabled, QPalette::Text ) );
         // contentStartPosX += SEPARATOR_WIDTH;
     }
 

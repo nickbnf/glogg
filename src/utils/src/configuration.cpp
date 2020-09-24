@@ -37,6 +37,7 @@
  */
 
 #include <QFontInfo>
+#include <QStyleFactory>
 
 #include "log.h"
 
@@ -150,6 +151,13 @@ void Configuration::retrieveFromStorage( QSettings& settings )
               .toBool();
     minimizeToTray_ = settings.value( "view.minimizeToTray", Default.minimizeToTray_ ).toBool();
 
+    style_ = settings.value( "view.style", Default.style_ ).toString();
+
+    const auto availableStyles = QStyleFactory::keys();
+    if ( !availableStyles.contains( style_ ) ) {
+        style_ = availableStyles.front();
+    }
+
     // Some sanity check (mainly for people upgrading)
     if ( quickfindIncremental_ )
         quickfindRegexpType_ = FixedString;
@@ -159,7 +167,7 @@ void Configuration::retrieveFromStorage( QSettings& settings )
         = settings.value( "defaultView.searchAutoRefresh", Default.searchAutoRefresh_ ).toBool();
     searchIgnoreCase_
         = settings.value( "defaultView.searchIgnoreCase", Default.searchIgnoreCase_ ).toBool();
-        
+
     if ( settings.contains( "defaultView.splitterSizes" ) ) {
         splitterSizes_.clear();
 
@@ -211,6 +219,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "view.lineNumbersVisibleInMain", lineNumbersVisibleInMain_ );
     settings.setValue( "view.lineNumbersVisibleInFiltered", lineNumbersVisibleInFiltered_ );
     settings.setValue( "view.minimizeToTray", minimizeToTray_ );
+    settings.setValue( "view.style", style_ );
 
     settings.setValue( "view.qtHiDpi", enableQtHighDpi_ );
     settings.setValue( "view.scaleFactorRounding", scaleFactorRounding_ );

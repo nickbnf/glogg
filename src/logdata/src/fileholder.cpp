@@ -143,7 +143,9 @@ void FileHolder::reOpenFile()
     LOG( logDEBUG ) << "reopen " << file_name_;
 
     auto reopened = std::make_unique<QFile>( file_name_ );
-    openFileByHandle( reopened.get() );
+    if ( QFileInfo( file_name_ ).isReadable() ) {
+        openFileByHandle( reopened.get() );
+    }
 
     ScopedRecursiveLock locker( &file_mutex_ );
     attached_file_ = std::move( reopened );

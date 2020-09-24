@@ -99,8 +99,22 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     // "Advanced" settings
     nativeFileWatchEnabled_
         = settings.value( "nativeFileWatch.enabled", Default.nativeFileWatchEnabled_ ).toBool();
+    settings.remove( "nativeFileWatch.enabled" );
+    nativeFileWatchEnabled_
+        = settings.value( "filewatch.useNative", nativeFileWatchEnabled_ ).toBool();
+
     pollingEnabled_ = settings.value( "polling.enabled", Default.pollingEnabled_ ).toBool();
+    settings.remove( "polling.enabled" );
+    pollingEnabled_ = settings.value( "filewatch.usePolling", pollingEnabled_ ).toBool();
+
     pollIntervalMs_ = settings.value( "polling.intervalMs", Default.pollIntervalMs_ ).toInt();
+    settings.remove( "polling.intervalMs" );
+    pollIntervalMs_ = settings.value( "filewatch.pollingIntervalMs", pollIntervalMs_ ).toInt();
+
+    fastModificationDetection_
+        = settings
+              .value( "filewatch.fastModificationDetection", Default.fastModificationDetection_ )
+              .toBool();
 
     loadLastSession_ = settings.value( "session.loadLast", Default.loadLastSession_ ).toBool();
     allowMultipleWindows_
@@ -189,9 +203,10 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
-    settings.setValue( "nativeFileWatch.enabled", nativeFileWatchEnabled_ );
-    settings.setValue( "polling.enabled", pollingEnabled_ );
-    settings.setValue( "polling.intervalMs", pollIntervalMs_ );
+    settings.setValue( "filewatch.useNative", nativeFileWatchEnabled_ );
+    settings.setValue( "filewatch.usePolling", pollingEnabled_ );
+    settings.setValue( "filewatch.pollingIntervalMs", pollIntervalMs_ );
+    settings.setValue( "filewatch.fastModificationDetection", fastModificationDetection_ );
     settings.setValue( "session.loadLast", loadLastSession_ );
     settings.setValue( "session.multipleWindows", allowMultipleWindows_ );
     settings.setValue( "session.followOnLoad", followFileOnLoad_ );

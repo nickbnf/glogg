@@ -94,7 +94,7 @@ class Configuration final : public Persistable<Configuration> {
     }
 
     // "Advanced" settings
-    bool anyFileWatchEnabled() const 
+    bool anyFileWatchEnabled() const
     {
         return nativeFileWatchEnabled() || pollingEnabled();
     }
@@ -123,6 +123,17 @@ class Configuration final : public Persistable<Configuration> {
     {
         pollIntervalMs_ = interval;
     }
+
+    bool fastModificationDetection() const
+    {
+        return fastModificationDetection_;
+    }
+
+    void setFastModificationDetection( bool fastDetection )
+    {
+        fastModificationDetection_ = fastDetection;
+    }
+
     bool loadLastSession() const
     {
         return loadLastSession_;
@@ -384,6 +395,8 @@ class Configuration final : public Persistable<Configuration> {
 #endif
 
     int pollIntervalMs_ = 2000;
+
+    bool fastModificationDetection_ = false;
 
     bool loadLastSession_ = true;
     bool followFileOnLoad_ = false;

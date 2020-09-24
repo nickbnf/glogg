@@ -26,7 +26,7 @@ class DigestInternalState {
     DigestInternalState()
     {
         m_state = XXH64_createState();
-        cryptoHasher_ = std::make_unique<QCryptographicHash>(QCryptographicHash::Sha256);
+        cryptoHasher_ = std::make_unique<QCryptographicHash>( QCryptographicHash::Sha256 );
         reset();
     }
 
@@ -38,7 +38,7 @@ class DigestInternalState {
     void addData( const char* data, size_t length )
     {
         XXH64_update( m_state, reinterpret_cast<const void*>( data ), length );
-        //cryptoHasher_->addData(data, (int)length);
+        // cryptoHasher_->addData(data, (int)length);
     }
 
     void reset()
@@ -69,9 +69,16 @@ FileDigest::FileDigest()
 
 FileDigest::~FileDigest() = default;
 
-void FileDigest::addData( const char* data, size_t length )
+FileDigest& FileDigest::addData( const char* data, size_t length )
 {
     m_state->addData( data, length );
+    return *this;
+}
+
+FileDigest& FileDigest::addData( const QByteArray& data )
+{
+    m_state->addData( data.data(), static_cast<size_t>( data.length() ) );
+    return *this;
 }
 
 uint64_t FileDigest::digest() const

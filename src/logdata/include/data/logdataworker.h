@@ -49,6 +49,8 @@
 
 #include <absl/types/variant.h>
 
+#include <deque>
+
 #include "encodingdetector.h"
 #include "linepositionarray.h"
 #include "loadingstatus.h"
@@ -59,11 +61,22 @@
 
 struct IndexedHash {
     qint64 size = 0;
-    quint64 digest = 0;
+    quint64 fullDigest = 0;
+
+    qint64 headerSize = 0;
+    quint64 headerDigest = 0;
+    std::vector<QByteArray> headerBlocks;
+
+    qint64 tailSize = 0;
+    qint64 tailOffset = 0;
+    quint64 tailDigest = 0;
+    std::deque<std::pair<qint64, QByteArray>> tailBlocks;
+
     QByteArray hash;
 };
 
-template <typename Data, typename LockGuard> class IndexingDataAccessor {
+template <typename Data, typename LockGuard>
+class IndexingDataAccessor {
   public:
     IndexingDataAccessor( Data data )
         : data_( data )
@@ -189,7 +202,7 @@ class IndexingData {
     LinePositionArray linePosition_;
     LineLength maxLength_;
 
-    FileDigest indexHash_;
+    FileDigest hashBuilder_;
     IndexedHash hash_;
 
     QTextCodec* encodingGuess_{};

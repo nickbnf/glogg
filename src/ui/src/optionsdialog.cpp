@@ -232,6 +232,7 @@ void OptionsDialog::updateDialogFromConfig()
 
     // Polling
     nativeFileWatchCheckBox->setChecked( config.nativeFileWatchEnabled() );
+    fastModificationDetectionCheckBox->setChecked( config.fastModificationDetection() );
     pollingCheckBox->setChecked( config.pollingEnabled() );
     pollIntervalLineEdit->setText( QString::number( config.pollIntervalMs() ) );
 
@@ -310,6 +311,7 @@ void OptionsDialog::updateConfigFromDialog()
         poll_interval = POLL_INTERVAL_MAX;
 
     config.setPollIntervalMs( poll_interval );
+    config.setFastModificationDetection( fastModificationDetectionCheckBox->isChecked() );
 
     config.setLoadLastSession( loadLastSessionCheckBox->isChecked() );
     config.setFollowFileOnLoad( followFileOnLoadCheckBox->isChecked() );

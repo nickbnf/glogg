@@ -54,6 +54,8 @@
 
 namespace {
 
+constexpr int IndexingBlockSize = 1 * 1024 * 1024;
+
 template <class... Fs>
 struct overload;
 
@@ -140,9 +142,40 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
     linePosition_.append_list( linePosition );
 
     if ( !block.isEmpty() ) {
-        indexHash_.addData( block.data(), static_cast<size_t>( block.size() ) );
-        hash_.digest = indexHash_.digest();
-        hash_.hash = indexHash_.hash();
+        hashBuilder_.addData( block.data(), static_cast<size_t>( block.size() ) );
+        hash_.fullDigest = hashBuilder_.digest();
+        hash_.hash = hashBuilder_.hash();
+
+        if ( hash_.headerSize < IndexingBlockSize ) {
+            hash_.headerBlocks.push_back( block );
+
+            FileDigest headerDigest;
+            for ( const auto& headerBlock : hash_.headerBlocks ) {
+                headerDigest.addData( headerBlock );
+            }
+            hash_.headerDigest = headerDigest.digest();
+            hash_.headerSize += block.size();
+        }
+
+        hash_.tailBlocks.emplace_back( hash_.size, block );
+        const auto tailSize = std::accumulate( hash_.tailBlocks.begin(), hash_.tailBlocks.end(),
+                                               0ll, []( const auto& acc, const auto& tailBlock ) {
+                                                   return acc + tailBlock.second.size();
+                                               } );
+
+        if ( tailSize > 2 * IndexingBlockSize ) {
+            hash_.tailBlocks.pop_front();
+        }
+
+        FileDigest tailDigest;
+        hash_.tailSize = 0;
+        for ( const auto& tailBlock : hash_.tailBlocks ) {
+            tailDigest.addData( tailBlock.second );
+            hash_.tailSize += tailBlock.second.size();
+        }
+        hash_.tailOffset = hash_.tailBlocks.front().first;
+        hash_.tailDigest = tailDigest.digest();
+
         hash_.size += block.size();
     }
 
@@ -153,7 +186,7 @@ void IndexingData::clear()
 {
     maxLength_ = 0_length;
     hash_ = {};
-    indexHash_.reset();
+    hashBuilder_.reset();
     linePosition_ = LinePositionArray();
     encodingGuess_ = nullptr;
     encodingForced_ = nullptr;
@@ -441,8 +474,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
             QtConcurrent::run(
                 &localThreadPool, [this, &file, &ioDuration, gw = std::ref( gateway )] {
-                    const uint32_t sizeChunk = 1024 * 1024;
-                    QByteArray readBuffer( sizeChunk, Qt::Uninitialized );
+                    QByteArray readBuffer( IndexingBlockSize, Qt::Uninitialized );
                     BlockData blockData;
                     while ( !file.atEnd() ) {
 
@@ -619,17 +651,23 @@ OperationResult CheckFileChangesOperation::start()
     else {
         QFile file( fileName_ );
 
-        constexpr int blockSize = 5 * 1024 * 1024;
-        QByteArray buffer{ blockSize, 0 };
+        QByteArray buffer{ IndexingBlockSize, Qt::Uninitialized };
 
-        QByteArray totalData;
-        FileDigest fileDigest;
-        if ( file.isOpen() || file.open( QIODevice::ReadOnly ) ) {
+        bool isFileModified = false;
+        const auto& config = Configuration::get();
+
+        if ( !file.isOpen() && !file.open( QIODevice::ReadOnly ) ) {
+            LOG( logINFO ) << "File failed to open";
+            return MonitoredFileStatus::Truncated;
+        }
+
+        const auto getDigest = [&file, &buffer]( const qint64 indexedSize ) {
+            FileDigest fileDigest;
             auto readSize = 0ll;
             auto totalSize = 0ll;
             do {
-                const auto bytesToRead = std::min( static_cast<qint64>( buffer.size() ),
-                                                   indexedHash.size - totalSize );
+                const auto bytesToRead
+                    = std::min( static_cast<qint64>( buffer.size() ), indexedSize - totalSize );
                 readSize = file.read( buffer.data(), bytesToRead );
 
                 if ( readSize > 0 ) {
@@ -637,33 +675,51 @@ OperationResult CheckFileChangesOperation::start()
                     totalSize += readSize;
                 }
 
-            } while ( readSize > 0 && totalSize < indexedHash.size );
+            } while ( readSize > 0 && totalSize < indexedSize );
 
-            const auto realHashDigest = fileDigest.digest();
+            return fileDigest.digest();
+        };
+        if ( config.fastModificationDetection() && indexedHash.size > 2 * IndexingBlockSize ) {
+            const auto headerDigest = getDigest( indexedHash.headerSize );
 
-            LOG( logINFO ) << "indexed size " << indexedHash.size << ", xxhash "
-                           << indexedHash.digest << ", crypto "
-                           << indexedHash.hash.toHex().toStdString();
+            LOG( logINFO ) << "indexed header xxhash " << indexedHash.headerDigest;
+            LOG( logINFO ) << "current header xxhash " << headerDigest << ", size "
+                           << indexedHash.headerSize;
 
-            LOG( logINFO ) << "current size " << totalSize << ", xxhash " << realHashDigest
-                           << ", crypto " << fileDigest.hash().toHex().toStdString();
+            isFileModified = headerDigest != indexedHash.headerDigest;
 
-            if ( realHashDigest != indexedHash.digest ) {
-                LOG( logINFO ) << "File changed in indexed range";
-                return MonitoredFileStatus::Truncated;
-            }
-            else if ( realFileSize > indexedHash.size ) {
-                LOG( logINFO ) << "New data on disk";
-                return MonitoredFileStatus::DataAdded;
-            }
-            else {
-                LOG( logINFO ) << "No change in file";
-                return MonitoredFileStatus::Unchanged;
+            if ( !isFileModified ) {
+                file.seek( indexedHash.tailOffset );
+                const auto tailDigest = getDigest( indexedHash.tailSize );
+
+                LOG( logINFO ) << "indexed tail xxhash " << indexedHash.tailDigest;
+                LOG( logINFO ) << "current tail xxhash " << tailDigest << ", size "
+                               << indexedHash.tailSize;
+
+                isFileModified = tailDigest != indexedHash.tailDigest;
             }
         }
         else {
-            LOG( logINFO ) << "File failed to open";
+
+            const auto realHashDigest = getDigest( indexedHash.size );
+
+            LOG( logINFO ) << "indexed xxhash " << indexedHash.fullDigest;
+            LOG( logINFO ) << "current xxhash " << realHashDigest;
+
+            isFileModified = realHashDigest != indexedHash.fullDigest;
+        }
+
+        if ( isFileModified ) {
+            LOG( logINFO ) << "File changed in indexed range";
             return MonitoredFileStatus::Truncated;
+        }
+        else if ( realFileSize > indexedHash.size ) {
+            LOG( logINFO ) << "New data on disk";
+            return MonitoredFileStatus::DataAdded;
+        }
+        else {
+            LOG( logINFO ) << "No change in file";
+            return MonitoredFileStatus::Unchanged;
         }
     }
 }

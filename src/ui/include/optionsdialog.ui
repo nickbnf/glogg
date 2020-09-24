@@ -380,6 +380,13 @@
             </item>
            </layout>
           </item>
+          <item>
+           <widget class="QCheckBox" name="fastModificationDetectionCheckBox">
+            <property name="text">
+             <string>Use fast modification detection</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

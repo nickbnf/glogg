@@ -36,15 +36,15 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "log.h"
-
-#include "highlighterset.h"
-
-#include "highlightersdialog.h"
-
 #include <QFileDialog>
 #include <QTimer>
+
 #include <utility>
+
+#include "highlightersdialog.h"
+#include "highlighterset.h"
+#include "iconloader.h"
+#include "log.h"
 
 static constexpr QLatin1String DEFAULT_NAME = QLatin1String( "New Highlighter set", 19 );
 
@@ -59,8 +59,8 @@ HighlightersDialog::HighlightersDialog( QWidget* parent )
     highlighterSetEdit_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
     highlighterLayout->addWidget( highlighterSetEdit_ );
 
-    splitter->setStretchFactor(0, 0);
-    splitter->setStretchFactor(1, 1);
+    splitter->setStretchFactor( 0, 0 );
+    splitter->setStretchFactor( 1, 1 );
 
     // Reload the highlighter list from disk (in case it has been changed
     // by another glogg instance) and copy it to here.
@@ -100,6 +100,15 @@ HighlightersDialog::HighlightersDialog( QWidget* parent )
     if ( !highlighterSetCollection_.highlighters_.empty() ) {
         setCurrentRow( 0 );
     }
+
+    QTimer::singleShot( 0, [this] {
+        IconLoader iconLoader( this );
+
+        addHighlighterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );
+        removeHighlighterButton->setIcon( iconLoader.load( "icons8-minus-16" ) );
+        upHighlighterButton->setIcon( iconLoader.load( "icons8-up-16" ) );
+        downHighlighterButton->setIcon( iconLoader.load( "icons8-down-arrow-16" ) );
+    } );
 }
 
 //

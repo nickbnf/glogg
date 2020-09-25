@@ -36,15 +36,16 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "log.h"
-
-#include "highlighterset.h"
-
-#include "highlightersetedit.h"
-
 #include <QColorDialog>
 #include <QTimer>
+
 #include <utility>
+
+#include "highlighterset.h"
+#include "highlightersetedit.h"
+
+#include "iconloader.h"
+#include "log.h"
 
 namespace {
 static constexpr QLatin1String DEFAULT_PATTERN = QLatin1String( "New Highlighter", 15 );
@@ -89,6 +90,15 @@ HighlighterSetEdit::HighlighterSetEdit( QWidget* parent )
 
     connect( highlighterEdit_, &HighlighterEdit::changed, this,
              &HighlighterSetEdit::updateHighlighterProperties );
+
+    QTimer::singleShot( 0, [this] {
+        IconLoader iconLoader( this );
+
+        addHighlighterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );
+        removeHighlighterButton->setIcon( iconLoader.load( "icons8-minus-16" ) );
+        upHighlighterButton->setIcon( iconLoader.load( "icons8-up-16" ) );
+        downHighlighterButton->setIcon( iconLoader.load( "icons8-down-arrow-16" ) );
+    } );
 }
 
 void HighlighterSetEdit::reset()

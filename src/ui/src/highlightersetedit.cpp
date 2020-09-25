@@ -158,8 +158,9 @@ void HighlighterSetEdit::removeHighlighter()
 
     if ( index >= 0 ) {
         setCurrentRow( -1 );
+        highlighterSet_.highlighterList_.removeAt( index );
+
         QTimer::singleShot( 0, [this, index] {
-            highlighterSet_.highlighterList_.removeAt( index );
             delete highlighterListWidget->takeItem( index );
 
             int count = highlighterListWidget->count();

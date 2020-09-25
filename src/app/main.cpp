@@ -194,6 +194,10 @@ int main( int argc, char* argv[] )
 
     LOG( logINFO ) << "Klogg instance " << app.instanceId();
 
+    QPluginLoader vistaStyleLoader{ "styles/qwindowsvistastyle.dll" };
+    vistaStyleLoader.load();
+    LOG( logINFO ) << "Loading qwindowsvistastyle: " << vistaStyleLoader.errorString();
+
     if ( !parameters.multi_instance && app.isSecondary() ) {
         LOG( logINFO ) << "Found another klogg, pid " << app.primaryPid();
         app.sendFilesToPrimaryInstance( parameters.filenames );

@@ -195,7 +195,7 @@ LineNumber lookupLineNumber( Iterator begin, Iterator end, LineNumber lineNum )
 constexpr int TabStop = 8;
 
 template <typename LineType>
-QString untabify( const LineType& line )
+QString untabify( const LineType& line, int initialPosition = 0 )
 {
     QString untabified_line;
     int total_spaces = 0;
@@ -203,7 +203,7 @@ QString untabify( const LineType& line )
 
     for ( int position = 0; position < line.length(); ++position ) {
         if ( line[ position ] == QChar::Tabulation ) {
-            int spaces = TabStop - ( ( position + total_spaces ) % TabStop );
+            int spaces = TabStop - ( ( initialPosition + position + total_spaces ) % TabStop );
             // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
             QString blanks( spaces, QChar::Space );
             untabified_line.append( blanks );

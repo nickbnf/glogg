@@ -1779,7 +1779,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 
                             const auto matchPart
                                 = logLine.midRef( match.startColumn(), match.length() );
-                            const auto expandedMatchLength = untabify( matchPart ).length();
+                            const auto expandedMatchLength = untabify( matchPart, expandedPrefixLength ).length();
                             auto lengthDelta = expandedMatchLength - matchPart.length();
 
                             return HighlightedMatch{ match.startColumn() + startDelta,

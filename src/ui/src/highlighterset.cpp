@@ -123,8 +123,16 @@ bool Highlighter::matchLine( const QString& line, std::vector<HighlightedMatch>&
 
     while ( matchIterator.hasNext() ) {
         QRegularExpressionMatch match = matchIterator.next();
-        matches.emplace_back( match.capturedStart(), match.capturedLength(), foreColor_,
-                              backColor_ );
+        if ( regexp_.captureCount() > 0 ) {
+            for ( int i = 1; i <= match.lastCapturedIndex(); ++i ) {
+                matches.emplace_back( match.capturedStart( i ), match.capturedLength( i ),
+                                      foreColor_, backColor_ );
+            }
+        }
+        else {
+            matches.emplace_back( match.capturedStart( 0 ), match.capturedLength( 0 ), foreColor_,
+                                  backColor_ );
+        }
     }
 
     return ( !matches.empty() );
@@ -181,7 +189,7 @@ HighlighterMatchType HighlighterSet::matchLine( const QString& line,
                             std::make_move_iterator( thisMatches.end() ) );
         }
     }
-    
+
     return matchType;
 }
 

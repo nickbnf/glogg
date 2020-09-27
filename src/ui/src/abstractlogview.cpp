@@ -342,7 +342,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         }
 
         // "Add to search" only makes sense in regexp mode
-        if ( config.mainRegexpType() != ExtendedRegexp )
+        if ( config.mainRegexpType() != SearchRegexpType::ExtendedRegexp )
             addToSearchAction_->setEnabled( false );
 
         const auto& highlightersCollection = HighlighterSetCollection::get();

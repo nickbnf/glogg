@@ -85,6 +85,16 @@ void Highlighter::setIgnoreCase( bool ignoreCase )
     regexp_.setPatternOptions( getPatternOptions( ignoreCase ) );
 }
 
+bool Highlighter::useRegex() const
+{
+    return useRegex_;
+}
+
+void Highlighter::setUseRegex( bool useRegex )
+{
+    useRegex_ = useRegex;
+}
+
 bool Highlighter::highlightOnlyMatch() const
 {
     return highlightOnlyMatch_;
@@ -119,7 +129,13 @@ bool Highlighter::matchLine( const QString& line, std::vector<HighlightedMatch>&
 {
     matches.clear();
 
-    QRegularExpressionMatchIterator matchIterator = regexp_.globalMatch( line );
+    auto pattern = regexp_.pattern();
+    if ( !useRegex_ ) {
+        pattern = QRegularExpression::escape( pattern );
+    }
+    auto regexp = QRegularExpression( pattern, regexp_.patternOptions() );
+
+    QRegularExpressionMatchIterator matchIterator = regexp.globalMatch( line );
 
     while ( matchIterator.hasNext() ) {
         QRegularExpressionMatch match = matchIterator.next();
@@ -205,6 +221,7 @@ void Highlighter::saveToStorage( QSettings& settings ) const
     settings.setValue( "ignore_case", regexp_.patternOptions().testFlag(
                                           QRegularExpression::CaseInsensitiveOption ) );
     settings.setValue( "match_only", highlightOnlyMatch_ );
+    settings.setValue( "use_regex", useRegex_ );
     // save colors as user friendly strings in config
     settings.setValue( "fore_colour", foreColor_.name() );
     settings.setValue( "back_colour", backColor_.name() );
@@ -218,6 +235,7 @@ void Highlighter::retrieveFromStorage( QSettings& settings )
         settings.value( "regexp" ).toString(),
         getPatternOptions( settings.value( "ignore_case", false ).toBool() ) );
     highlightOnlyMatch_ = settings.value( "match_only", false ).toBool();
+    useRegex_ = settings.value( "use_regex", true ).toBool();
     foreColor_ = QColor( settings.value( "fore_colour" ).toString() );
     backColor_ = QColor( settings.value( "back_colour" ).toString() );
 }

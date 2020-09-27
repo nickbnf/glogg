@@ -107,7 +107,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
     // Determine the type of regexp depending on the config
     QString searchPattern;
     switch ( Configuration::get().quickfindRegexpType() ) {
-    case Wildcard:
+    case SearchRegexpType::Wildcard:
 #if ( QT_VERSION >= QT_VERSION_CHECK( 5, 12, 0 ) )
         searchPattern = QRegularExpression::wildcardToRegularExpression( pattern );
         searchPattern = searchPattern.mid( 2, searchPattern.size() - 4 );
@@ -117,7 +117,7 @@ void QuickFindPattern::changeSearchPattern( const QString& pattern )
 #endif
 
         break;
-    case FixedString:
+    case SearchRegexpType::FixedString:
         searchPattern = QRegularExpression::escape( pattern );
         break;
     default:

@@ -21,6 +21,7 @@
 
 #include <QCheckBox>
 #include <QColorDialog>
+#include <QComboBox>
 #include <QLineEdit>
 #include <QPushButton>
 
@@ -29,6 +30,10 @@ HighlighterEdit::HighlighterEdit( Highlighter defaultHighlighter, QWidget* paren
     , defaultHighlighter_( std::move( defaultHighlighter ) )
 {
     setupUi( this );
+
+    QStringList regexpTypes;
+    regexpTypes << tr( "Extended Regexp" ) << tr( "Fixed Strings" );
+    patternTypeComboBox->addItems( regexpTypes );
 
     reset();
 
@@ -39,6 +44,8 @@ HighlighterEdit::HighlighterEdit( Highlighter defaultHighlighter, QWidget* paren
 
     connect( foreColorButton, &QPushButton::clicked, this, &HighlighterEdit::changeForeColor );
     connect( backColorButton, &QPushButton::clicked, this, &HighlighterEdit::changeBackColor );
+    connect( patternTypeComboBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this,
+             &HighlighterEdit::setPatternType );
 }
 
 void HighlighterEdit::reset()
@@ -54,6 +61,10 @@ void HighlighterEdit::reset()
 
     updateIcon( foreColorButton, defaultHighlighter_.foreColor() );
     updateIcon( backColorButton, defaultHighlighter_.backColor() );
+
+    if ( defaultHighlighter_.useRegex() ) {
+        patternTypeComboBox->setCurrentIndex( 0 );
+    }
 }
 
 void HighlighterEdit::setHighlighter( Highlighter highlighter )
@@ -71,6 +82,13 @@ void HighlighterEdit::setHighlighter( Highlighter highlighter )
     onlyMatchCheckBox->setEnabled( true );
     foreColorButton->setEnabled( true );
     backColorButton->setEnabled( true );
+
+    if ( highlighter.useRegex() ) {
+        patternTypeComboBox->setCurrentIndex( 0 );
+    }
+    else {
+        patternTypeComboBox->setCurrentIndex( 1 );
+    }
 }
 
 Highlighter HighlighterEdit::highlighter() const
@@ -138,4 +156,10 @@ bool HighlighterEdit::showColorPicker( const QColor& in, QColor& out )
     out = dialog.currentColor();
 
     return ( dialog.result() == QDialog::Accepted );
+}
+
+void HighlighterEdit::setPatternType( int index )
+{
+    highlighter_.setUseRegex( index == 0 );
+    emit changed();
 }

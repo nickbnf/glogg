@@ -132,7 +132,7 @@ void OptionsDialog::setupStyles()
 void OptionsDialog::setupIncremental()
 {
     if ( incrementalCheckBox->isChecked() ) {
-        quickFindSearchBox->setCurrentIndex( getRegexpIndex( FixedString ) );
+        quickFindSearchBox->setCurrentIndex( getRegexpIndex( SearchRegexpType::FixedString ) );
         quickFindSearchBox->setEnabled( false );
     }
     else {
@@ -166,7 +166,7 @@ int OptionsDialog::getRegexpIndex( SearchRegexpType syntax ) const
     int index;
 
     switch ( syntax ) {
-    case FixedString:
+    case SearchRegexpType::FixedString:
         index = 1;
         break;
     default:
@@ -184,10 +184,10 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
 
     switch ( index ) {
     case 1:
-        type = FixedString;
+        type = SearchRegexpType::FixedString;
         break;
     default:
-        type = ExtendedRegexp;
+        type = SearchRegexpType::ExtendedRegexp;
         break;
     }
 

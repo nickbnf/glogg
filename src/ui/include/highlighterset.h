@@ -65,6 +65,8 @@ class Highlighter {
 
     bool highlightOnlyMatch() const;
     void setHighlightOnlyMatch( bool onlyMatch );
+    bool useRegex() const;
+    void setUseRegex( bool useRegex );
 
     const QColor& foreColor() const;
     void setForeColor( const QColor& foreColor );
@@ -78,6 +80,7 @@ class Highlighter {
   private:
     QRegularExpression regexp_;
 
+    bool useRegex_ = true;
     bool highlightOnlyMatch_ = false;
     QColor foreColor_;
     QColor backColor_;

@@ -46,7 +46,7 @@
 #include "persistable.h"
 
 // Type of regexp to use for searches
-enum SearchRegexpType {
+enum class SearchRegexpType {
     ExtendedRegexp,
     Wildcard,
     FixedString,
@@ -381,8 +381,8 @@ class Configuration final : public Persistable<Configuration> {
   private:
     // Configuration settings
     QFont mainFont_ = { "monaco", 10 };
-    SearchRegexpType mainRegexpType_ = ExtendedRegexp;
-    SearchRegexpType quickfindRegexpType_ = FixedString;
+    SearchRegexpType mainRegexpType_ = SearchRegexpType::ExtendedRegexp;
+    SearchRegexpType quickfindRegexpType_ = SearchRegexpType::FixedString;
     bool quickfindIncremental_ = true;
 
     bool nativeFileWatchEnabled_ = true;

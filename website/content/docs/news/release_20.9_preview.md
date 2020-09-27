@@ -22,8 +22,13 @@ Feedback is very welcome.
 
 Major new features:
 
+ - Highlighters reworked:
+  - Several sets of highlighting rules can be configured and chosen using context menu
+  - Highlighters can be configured to colorize only matching part of line
+  - Added an option to match using simple strings
+  - Highlighters configuration can be exported and imported on other machine
+ - An option to choose UI style, including dark theme based on [QDarkStyleSheet](https://github.com/ColinDuquesnoy/QDarkStyleSheet)
  - A menu to switch between opened files
- - Highlighters reworked, now several sets of highlighting rules can be configured and chosen using context menu
  - Some support for dark OS themes
  - Some support for HiDPI displays
 
@@ -31,6 +36,7 @@ Bugixes and minor improvements
 
  - Fixed RPM packaging
  - Fixed bug with case-insensitive search autocomplete
+ - Fixed excessive reloading when follow mode is enabled 
  - Made some shortcut behavior more user-friendly
 
 As usual 3rdparty libraries were updated, some bugs were fixed, and some more were introduced.

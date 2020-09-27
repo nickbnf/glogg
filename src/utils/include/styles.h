@@ -22,17 +22,22 @@
 
 #include <QStyleFactory>
 
-static constexpr QLatin1String DarkStyleKey = QLatin1String( "Dark", 4 );
-static constexpr QLatin1String VistaKey = QLatin1String( "WindowsVista", 12 );
+constexpr QLatin1String DarkStyleKey = QLatin1String( "Dark", 4 );
+constexpr QLatin1String VistaKey = QLatin1String( "WindowsVista", 12 );
+constexpr QLatin1String FusionKey = QLatin1String( "Fusion", 6 );
+constexpr QLatin1String WindowsKey = QLatin1String( "Windows", 7 );
 
 inline QStringList availableStyles()
 {
-
     QStringList styles;
 #ifdef Q_OS_WIN
     styles << VistaKey;
-#endif
+    styles << WindowsKey;
+    styles << FusionKey;
+#else
     styles << QStyleFactory::keys();
+#endif
+
     styles << DarkStyleKey;
 
     return styles;

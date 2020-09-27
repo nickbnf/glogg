@@ -40,11 +40,10 @@
 #include <tbb/tbbmalloc_proxy.h>
 #endif
 
-#include <QFileInfo>
-
+#include <iostream>
 #include <memory>
 
-#include <iostream>
+#include <cli11/cli11.hpp>
 
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
@@ -62,9 +61,8 @@
 
 #include "klogg_version.h"
 
+#include <QFileInfo>
 #include <QtCore/QJsonDocument>
-
-#include <cli11/cli11.hpp>
 
 #ifdef KLOGG_PORTABLE
 const bool PersistentInfo::forcePortable = true;
@@ -193,10 +191,6 @@ int main( int argc, char* argv[] )
     app.initLogger( static_cast<plog::Severity>( parameters.log_level ), parameters.log_to_file );
 
     LOG( logINFO ) << "Klogg instance " << app.instanceId();
-
-    QPluginLoader vistaStyleLoader{ "styles/qwindowsvistastyle.dll" };
-    vistaStyleLoader.load();
-    LOG( logINFO ) << "Loading qwindowsvistastyle: " << vistaStyleLoader.errorString();
 
     if ( !parameters.multi_instance && app.isSecondary() ) {
         LOG( logINFO ) << "Found another klogg, pid " << app.primaryPid();

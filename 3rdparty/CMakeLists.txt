@@ -22,6 +22,13 @@ add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 
+set(SENTRY_TRANSPORT "none" CACHE INTERNAL "" FORCE)
+set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)
+set(SENTRY_BUILD_EXAMPLES ON CACHE INTERNAL "" FORCE)
+set(CRASHPAD_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
+set(CRASHPAD_ENABLE_INSTALL_DEV OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(sentry)
+
 set(XXHASH_BUILD_ENABLE_INLINE_API OFF) #optional
 set(XXHASH_BUILD_XXHSUM OFF) #optional
 add_subdirectory(xxhash/cmake_unofficial) #0.8

@@ -36,7 +36,7 @@ set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 set_property(TARGET klogg_portable PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-set(MAIN_LIBS ui cli11 singleapp)
+set(MAIN_LIBS ui cli11 singleapp sentry)
 if (NOT APPLE)
     if (TBB_BUILD_TBBMALLOC)
         LIST(APPEND MAIN_LIBS klogg_tbbmalloc_proxy)

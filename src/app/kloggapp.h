@@ -64,8 +64,6 @@ class KloggApp : public SingleApplication {
                                  | SingleApplication::ExcludeAppPath
                                  | SingleApplication::ExcludeAppVersion )
     {
-        crashTracer_ = std::make_unique<CrashTracer>( argv[ 0 ] );
-
         QNetworkProxyFactory::setUseSystemConfiguration( true );
 
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );

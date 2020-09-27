@@ -1,0 +1,188 @@
+trigger:
+  - master
+  - release/*
+
+stages:
+  - stage: test
+    displayName: Build & Test
+
+    jobs:
+      - job:
+        displayName: Lint
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+          - script: make style
+            displayName: Lint
+
+      - job:
+        strategy:
+          matrix:
+            Linux (gcc 7, 32-bit):
+              vmImage: "ubuntu-18.04"
+              CC: gcc-7
+              CXX: g++-7
+              TEST_X86: 1
+            Linux (gcc 10):
+              vmImage: "ubuntu-20.04"
+              CC: gcc-10
+              CXX: g++-10
+              # ERROR_ON_WARNINGS: 1
+              # The GCC analyzer 10.0.1 (as on CI) has an internal compiler error
+              # currently, and is not stable enough to activate.
+              # RUN_ANALYZER: gcc
+            Linux (clang 10 + asan + llvm-cov):
+              vmImage: "ubuntu-20.04"
+              CC: clang-10
+              CXX: clang++-10
+              ERROR_ON_WARNINGS: 1
+              RUN_ANALYZER: asan,llvm-cov
+            Linux (clang 10 + kcov):
+              vmImage: "ubuntu-20.04"
+              CC: clang-10
+              CXX: clang++-10
+              ERROR_ON_WARNINGS: 1
+              RUN_ANALYZER: kcov
+            Linux (code-checker + valgrind):
+              vmImage: "ubuntu-20.04"
+              RUN_ANALYZER: code-checker,valgrind
+            macOS (xcode llvm):
+              vmImage: "macOs-latest"
+              ERROR_ON_WARNINGS: 1
+            macOS (clang 10 + asan + llvm-cov):
+              vmImage: "macOs-latest"
+              CC: clang
+              CXX: clang++
+              ERROR_ON_WARNINGS: 1
+              RUN_ANALYZER: asan,llvm-cov
+            Windows (VS2017, 32bit):
+              vmImage: "vs2017-win2016"
+              TEST_X86: 1
+            Windows (latest):
+              vmImage: "windows-latest"
+            # MSYS2MinGW:
+            #   vmImage: "windows-latest"
+            #   CC: clang -fuse-ld=lld
+            #   CXX: clang++ -fuse-ld=lld
+            #   CMAKE_GENERATOR: Ninja
+            #   MSYS_PATH : C:\tools\msys64
+            # The Android emulator is currently only available on macos, see:
+            # https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/android?view=azure-devops#test-on-the-android-emulator
+            Android (API 16, NDK 19):
+              vmImage: "macOs-latest"
+              ANDROID_API: 16
+              ANDROID_NDK: 19.2.5345600
+            Android (API 30 NDK 21):
+              vmImage: "macOs-latest"
+              ANDROID_API: 30
+              ANDROID_NDK: 21.3.6528147
+        pool:
+          vmImage: $(vmImage)
+        steps:
+          - checkout: self
+            fetchDepth: 5
+            submodules: recursive
+          - task: UsePythonVersion@0
+          - script: sudo apt update && sudo apt install libcurl4 libcurl4-openssl-dev kcov g++-10 clang-10 clang-tools llvm valgrind
+            condition: and(eq(variables['Agent.OS'], 'Linux'), not(variables['TEST_X86']))
+            displayName: Installing Linux Dependencies
+          - script: |
+              sudo apt install clang-tidy curl doxygen gcc-multilib python3-dev python3-virtualenv
+              git clone https://github.com/Ericsson/CodeChecker.git --depth 1
+              cd CodeChecker
+              BUILD_LOGGER_64_BIT_ONLY=YES make standalone_package
+              echo "##vso[task.prependpath]$PWD/build/CodeChecker/bin"
+            condition: contains(variables['RUN_ANALYZER'], 'code-checker')
+            displayName: Installing CodeChecker
+          - script: sudo apt update && sudo apt install gcc-multilib g++-multilib
+            condition: and(eq(variables['Agent.OS'], 'Linux'), variables['TEST_X86'])
+            displayName: Installing Linux 32-bit Dependencies
+          - script: echo "##vso[task.prependpath]/usr/local/opt/llvm/bin/"
+            condition: eq(variables['Agent.OS'], 'Darwin')
+            displayName: Expose llvm PATH for Mac
+          # ignoring checksums: choco has 2.72, whereas upstream is 2.73
+          - script: choco install sigcheck --ignore-checksums
+            condition: eq(variables['Agent.OS'], 'Windows_NT')
+            displayName: Installing Windows Dependencies
+          - script: |
+              export ANDROID_IMAGE="system-images;android-$(ANDROID_API);google_apis;x86"
+              echo "Downloading ndk;$(ANDROID_NDK) and $ANDROID_IMAGE"
+              echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --install \
+                "ndk;$(ANDROID_NDK)" "$ANDROID_IMAGE" | \
+                grep -v "\[=" || true # suppress the progress bar, so we get meaningful logs
+            condition: variables['ANDROID_API']
+            displayName: Installing Android SDK Dependencies
+          - script: |
+              bash scripts/start-android.sh
+            condition: variables['ANDROID_API']
+            displayName: Starting Android Simulator
+          # - script: choco install --no-progress msys2
+          #   condition: variables['MSYS_PATH']
+          #   displayName: Install MSYS2
+          # - powershell: |
+          #       echo '##vso[task.prependpath]$(MSYS_PATH)\mingw64\bin'
+          #       echo '##vso[task.prependpath]$(MSYS_PATH)\usr\bin'
+          #   condition: variables['MSYS_PATH']
+          #   displayName: Update path with MSYS2
+          # - script: |
+          #       pacman --noconfirm -S ^
+          #         mingw-w64-x86_64-uasm ^
+          #         mingw-w64-x86_64-clang ^
+          #         mingw-w64-x86_64-lld ^
+          #         mingw-w64-x86_64-ninja ^
+          #         mingw-w64-x86_64-cmake
+          #   condition: variables['MSYS_PATH']
+          #   displayName: Install MSYS2 packages
+          - script: |
+              pip install --upgrade --requirement tests/requirements.txt
+              pytest --capture=no --verbose tests
+            displayName: Test
+          - script: |
+              ls -lah
+              bash <(curl -s https://codecov.io/bash) -s coverage -C $(Build.SourceVersion)
+            condition: contains(variables['RUN_ANALYZER'], 'cov')
+            displayName: "Upload to codecov.io"
+            env:
+              CODECOV_TOKEN: $(CODECOV_TOKEN)
+
+  - stage: package
+    displayName: Create Release Archive
+    dependsOn: test
+    condition: and(succeeded('test'), eq(variables['System.PullRequest.IsFork'], 'False'))
+    jobs:
+      - job:
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - checkout: self
+            fetchDepth: 5
+            submodules: recursive
+          - task: DeleteFiles@1
+            displayName: Remove all files not belonging in source archive
+            inputs:
+              contents: |
+                build
+                .*
+                **/.git*
+                azure*
+                scripts
+                Makefile
+                external/breakpad/src/tools
+                external/breakpad/src/processor
+          - task: ArchiveFiles@2
+            displayName: Create source archive
+            inputs:
+              rootFolderOrFile: $(Build.SourcesDirectory)
+              includeRootFolder: false
+              archiveFile: "$(Build.ArtifactStagingDirectory)/sentry-native-source.zip"
+          - task: PublishBuildArtifacts@1
+            displayName: Publish source archive to Azure
+            inputs:
+              pathtoPublish: "$(Build.ArtifactStagingDirectory)/sentry-native-source.zip"
+          - script: |
+              npx -p "@zeus-ci/cli" zeus job update --build $(Build.BuildId) --job $(System.JobId) --ref $(Build.SourceVersion) --build-label "$(Build.BuildNumber)" --job-label "$(System.JobDisplayName)" --status passed
+              npx -p "@zeus-ci/cli" zeus upload --build $(Build.BuildId) --job $(System.JobId) --type "application/zip" --name "sentry-native.zip" "$(Build.ArtifactStagingDirectory)/sentry-native-source.zip"
+            env:
+              ZEUS_HOOK_BASE: $(ZEUS_HOOK_BASE)

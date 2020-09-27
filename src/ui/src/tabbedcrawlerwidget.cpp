@@ -30,17 +30,23 @@
 
 #include "crawlerwidget.h"
 
+#include "iconloader.h"
 #include "log.h"
 #include "openfilehelper.h"
 #include "tabnamemapping.h"
 
+namespace {
+constexpr QLatin1String PathKey = QLatin1String( "path", 4 );
+constexpr QLatin1String StatusKey = QLatin1String( "status", 6 );
+} // namespace
+
 TabbedCrawlerWidget::TabbedCrawlerWidget()
     : QTabWidget()
-    , olddata_icon_( ":/images/olddata_icon.png" )
     , newdata_icon_( ":/images/newdata_icon.png" )
     , newfiltered_icon_( ":/images/newfiltered_icon.png" )
     , myTabBar_()
 {
+
 #ifdef Q_OS_WIN
     myTabBar_.setStyleSheet( "QTabBar::tab {\
             height: 20px; "
@@ -68,6 +74,27 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
     myTabBar_.setContextMenuPolicy( Qt::CustomContextMenu );
     connect( &myTabBar_, &QWidget::customContextMenuRequested, this,
              &TabbedCrawlerWidget::showContextMenu );
+
+    QTimer::singleShot( 0, [this] { loadIcons(); } );
+}
+
+void TabbedCrawlerWidget::loadIcons()
+{
+    IconLoader iconLoader{ this };
+
+    olddata_icon_ = iconLoader.load( "olddata_icon" );
+    for ( int tab = 0; tab < count(); ++tab ) {
+        updateIcon( tab );
+    }
+}
+
+void TabbedCrawlerWidget::changeEvent( QEvent* event )
+{
+    if ( event->type() == QEvent::StyleChange ) {
+        QTimer::singleShot( 0, [this] { loadIcons(); } );
+    }
+
+    QWidget::changeEvent( event );
 }
 
 void TabbedCrawlerWidget::addTabBarItem( int index, const QString& file_name )
@@ -77,7 +104,12 @@ void TabbedCrawlerWidget::addTabBarItem( int index, const QString& file_name )
 
     myTabBar_.setTabText( index, tabName.isEmpty() ? tab_label : tabName );
     myTabBar_.setTabToolTip( index, QDir::toNativeSeparators( file_name ) );
-    myTabBar_.setTabData( index, file_name );
+
+    QVariantMap tabData;
+    tabData[ PathKey ] = file_name;
+    tabData[ StatusKey ] = static_cast<int>( DataStatus::OLD_DATA );
+
+    myTabBar_.setTabData( index, tabData );
 
     // Display the icon
     auto icon_label = std::make_unique<QLabel>();
@@ -113,6 +145,11 @@ void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent* event )
     }
 
     event->ignore();
+}
+
+QString TabbedCrawlerWidget::tabPathAt( int index ) const
+{
+    return myTabBar_.tabData( index ).toMap()[ PathKey ].toString();
 }
 
 void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
@@ -181,7 +218,7 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
             auto newName = QInputDialog::getText( this, "Rename tab", "Tab name", QLineEdit::Normal,
                                                   myTabBar_.tabText( tab ), &isNameEntered );
             if ( isNameEntered ) {
-                const auto tabPath = myTabBar_.tabData( tab ).toString();
+                const auto tabPath = tabPathAt( tab );
                 TabNameMapping::getSynced().setTabName( tabPath, newName ).save();
 
                 if ( newName.isEmpty() ) {
@@ -194,7 +231,7 @@ void TabbedCrawlerWidget::showContextMenu( const QPoint& point )
         } );
 
         connect( resetTabName, &QAction::triggered, [this, tab] {
-            const auto tabPath = myTabBar_.tabData( tab ).toString();
+            const auto tabPath = tabPathAt( tab );
             TabNameMapping::getSynced().setTabName( tabPath, "" ).save();
             myTabBar_.setTabText( tab, QFileInfo( tabPath ).fileName() );
         } );
@@ -242,15 +279,14 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
     }
 }
 
-void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
+void TabbedCrawlerWidget::updateIcon( int index )
 {
-    LOG( logDEBUG ) << "TabbedCrawlerWidget::setTabDataStatus " << index;
-
+    auto tabData = myTabBar_.tabData( index ).toMap();
     auto* icon_label = qobject_cast<QLabel*>( myTabBar_.tabButton( index, QTabBar::RightSide ) );
 
     if ( icon_label ) {
         const QIcon* icon;
-        switch ( status ) {
+        switch ( static_cast<DataStatus>( tabData[ StatusKey ].toInt() ) ) {
         case DataStatus::OLD_DATA:
             icon = &olddata_icon_;
             break;
@@ -266,4 +302,15 @@ void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 
         icon_label->setPixmap( icon->pixmap( 12, 12 ) );
     }
+}
+
+void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
+{
+    LOG( logDEBUG ) << "TabbedCrawlerWidget::setTabDataStatus " << index;
+
+    auto tabData = myTabBar_.tabData( index ).toMap();
+    tabData[ StatusKey ] = static_cast<int>( status );
+    myTabBar_.setTabData( index, tabData );
+
+    updateIcon( index );
 }

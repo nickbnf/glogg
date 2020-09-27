@@ -20,8 +20,8 @@
 #ifndef TABBEDCRAWLERWIDGET_H
 #define TABBEDCRAWLERWIDGET_H
 
-#include <QTabWidget>
 #include <QTabBar>
+#include <QTabWidget>
 
 #include "data/loadingstatus.h"
 
@@ -29,46 +29,50 @@
 // group of CrawlerWidgets.
 // This is a very slightly customised QTabWidget, with
 // a particular style.
-class TabbedCrawlerWidget : public QTabWidget
-{
-  Q_OBJECT
-    public:
-      TabbedCrawlerWidget();
+class TabbedCrawlerWidget : public QTabWidget {
+    Q_OBJECT
+  public:
+    TabbedCrawlerWidget();
 
-      template<typename T>
-      int addCrawler( T* crawler, const QString& file_name )
-      {
-          const auto index = QTabWidget::addTab( crawler, QString{});
+    template <typename T>
+    int addCrawler( T* crawler, const QString& file_name )
+    {
+        const auto index = QTabWidget::addTab( crawler, QString{} );
 
-          connect( crawler, &T::dataStatusChanged,
-                   [this, index]( DataStatus status ) { setTabDataStatus( index, status ); } );
+        connect( crawler, &T::dataStatusChanged,
+                 [this, index]( DataStatus status ) { setTabDataStatus( index, status ); } );
 
-          addTabBarItem( index, file_name );
+        addTabBarItem( index, file_name );
 
-          return index;
-      }
+        return index;
+    }
 
-      void removeCrawler( int index );
+    void removeCrawler( int index );
 
-      // Set the data status (icon) for the tab number 'index'
-      void setTabDataStatus( int index, DataStatus status );
+    // Set the data status (icon) for the tab number 'index'
+    void setTabDataStatus( int index, DataStatus status );
 
-    protected:
-      void keyPressEvent( QKeyEvent* event ) override;
-      void mouseReleaseEvent( QMouseEvent *event) override;
+  protected:
+    void keyPressEvent( QKeyEvent* event ) override;
+    void mouseReleaseEvent( QMouseEvent* event ) override;
+    void changeEvent( QEvent* event ) override;
 
-    private:
-      void addTabBarItem( int index, const QString& file_name);
+  private:
+    void addTabBarItem( int index, const QString& file_name );
+    QString tabPathAt( int index ) const;
 
-    private slots:
-      void showContextMenu(const QPoint &);
+    void loadIcons();
+    void updateIcon( int index );
 
-    private:
-      const QIcon olddata_icon_;
-      const QIcon newdata_icon_;
-      const QIcon newfiltered_icon_;
+  private slots:
+    void showContextMenu( const QPoint& );
 
-      QTabBar myTabBar_;
+  private:
+    QIcon olddata_icon_;
+    QIcon newdata_icon_;
+    QIcon newfiltered_icon_;
+
+    QTabBar myTabBar_;
 };
 
 #endif

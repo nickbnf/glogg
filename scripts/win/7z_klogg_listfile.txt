@@ -1,4 +1,5 @@
 .\release\klogg_portable.exe
+.\release\klogg_crashpad_handler.exe
 .\release\documentation.html
 .\COPYING
 .\NOTICE

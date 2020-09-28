@@ -351,7 +351,11 @@ if(SENTRY_BACKEND_CRASHPAD)
 	else()
 		# FIXME: required for cmake 3.12 and lower:
 		# - NEW behavior lets normal variable override option
-		cmake_policy(SET CMP0077 NEW)
+		if("${CMAKE_VERSION}" VERSION_LESS "3.13")
+    		message(WARNING "CMake ${CMAKE_VERSION} has no CMP0077 policy: options will erase uncached/untyped normal vars!")
+		else()
+			cmake_policy (SET CMP0077 NEW)
+		endif()
 		if(BUILD_SHARED_LIBS)
 			set(CRASHPAD_ENABLE_INSTALL OFF CACHE BOOL "Enable crashpad installation" FORCE)
 		else()

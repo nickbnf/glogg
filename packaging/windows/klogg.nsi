@@ -67,7 +67,6 @@ Section "klogg" klogg
 
     SetOutPath $INSTDIR
     File release\klogg.exe
-    File release\klogg_crashpad_handler.exe
     File release\klogg_tbbmalloc.dll
     File release\klogg_tbbmalloc_proxy.dll
 
@@ -162,7 +161,6 @@ Section "Uninstall"
     Delete "$INSTDIR\Uninstall.exe"
 
     Delete "$INSTDIR\klogg.exe"
-    Delete "$INSTDIR\klogg_crashpad_handler.exe"
     Delete "$INSTDIR\README.md"
     Delete "$INSTDIR\COPYING"
     Delete "$INSTDIR\NOTICE"

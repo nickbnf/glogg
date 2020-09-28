@@ -172,7 +172,26 @@ struct CliParameters {
     }
 };
 
-int main( int argc, char* argv[] )
+void logSentry( sentry_level_t level, const char* message, va_list args, void* userdata )
+{
+    Q_UNUSED( userdata );
+    plog::Severity severity;
+    switch ( level ) {
+    case SENTRY_LEVEL_WARNING:
+        severity = plog::Severity::warning;
+        break;
+    case SENTRY_LEVEL_ERROR:
+        severity = plog::Severity::error;
+        break;
+    default:
+        severity = plog::Severity::info;
+        break;
+    }
+
+    PLOG( severity ).printf( message, args );
+}
+
+void initializeSentry()
 {
     sentry_options_t* sentryOptions = sentry_options_new();
 
@@ -184,29 +203,51 @@ int main( int argc, char* argv[] )
     sentry_options_set_database_path( sentryOptions, dumpPath.toStdString().c_str() );
 #endif
 
+    sentry_options_set_dsn(
+        sentryOptions,
+        "https://aad3b270e5ba4ec2915eb5caf6e6d929@o453796.ingest.sentry.io/5442855" );
+
+    sentry_options_set_require_user_consent( sentryOptions, false );
     sentry_options_set_auto_session_tracking( sentryOptions, false );
+
+    sentry_options_set_logger( sentryOptions, logSentry, nullptr );
+    sentry_options_set_debug( sentryOptions, 1 );
+
     sentry_options_set_symbolize_stacktraces( sentryOptions, true );
 
     sentry_options_set_environment( sentryOptions, "development" );
+    sentry_options_set_release( sentryOptions, kloggVersion().data() );
+
+    auto transport = sentry_transport_new_default();
+
+    sentry_transport_set_ask_consent_func( transport, []( sentry_envelope_t* envelope, void* ) {
+        size_t size_out = 0;
+        char* s = sentry_envelope_serialize( envelope, &size_out );
+        LOG( logINFO ) << "Envelope: " << s;
+        sentry_free( s );
+
+        const auto userAction = QMessageBox::question(
+            nullptr, "klogg - Oops",
+            QString( "During last run klogg has encountered an unexpected error. "
+                     "Upload debug data to developers?" ),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
+
+        return userAction == QMessageBox::Yes ? 0 : 1;
+    } );
+
+    sentry_options_set_transport( sentryOptions, transport );
+
     sentry_init( sentryOptions );
 
-    {
-        sentry_value_t versionContext = sentry_value_new_object();
-        sentry_value_set_by_key( versionContext, "version",
-                                 sentry_value_new_string( kloggVersion().data() ) );
-        sentry_value_set_by_key( versionContext, "buildDate",
-                                 sentry_value_new_string( kloggBuildDate().data() ) );
-        sentry_value_set_by_key( versionContext, "commit",
-                                 sentry_value_new_string( kloggCommit().data() ) );
+    sentry_set_tag( "commit", kloggCommit().data() );
+    sentry_set_tag( "qt", qVersion() );
+}
 
-        sentry_set_context("version", versionContext);
-    }
-
+int main( int argc, char* argv[] )
+{
     setApplicationAttributes();
 
     KloggApp app( argc, argv );
-
-    // Configuration
 
     CliParameters parameters;
     CLI::App options{ "Klogg -- fast log explorer" };
@@ -219,6 +260,8 @@ int main( int argc, char* argv[] )
     }
 
     app.initLogger( static_cast<plog::Severity>( parameters.log_level ), parameters.log_to_file );
+
+    initializeSentry();
 
     LOG( logINFO ) << "Klogg instance " << app.instanceId();
 

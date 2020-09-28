@@ -1790,6 +1790,7 @@ void MainWindow::reportIssue() const
     const QString kernelVersion = QSysInfo::kernelVersion();
     const QString arch = QSysInfo::currentCpuArchitecture();
     const QString built_for = QSysInfo::buildAbi();
+    
 
     const QString body = QString( "Details for the issue\n"
                                   "--------------------\n\n"
@@ -1802,7 +1803,7 @@ void MainWindow::reportIssue() const
                                   "> running on %5 (%6/%7) [%8]\n"
                                   "> and Qt %9" )
                              .arg( version, buildDate, commit, built_for, os, kernelType,
-                                   kernelVersion, arch, QT_VERSION_STR );
+                                   kernelVersion, arch, qVersion());
 
     QUrlQuery query;
     query.addQueryItem( "labels", "type: bug" );

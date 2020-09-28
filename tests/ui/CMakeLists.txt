@@ -1,10 +1,15 @@
-add_executable(klogg_itests
-    logdata_test.cpp
-    logfiltereddata_test.cpp
-    crawlerwidget_test.cpp
-    mainwindow_test.cpp
-    qtests_main.cpp
+set(UI_TEST_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtests_main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/logdata_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/logfiltereddata_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/crawlerwidget_test.cpp
 )
+
+if(NOT APPLE)
+    LIST(APPEND UI_TEST_SOURCES  ${CMAKE_CURRENT_SOURCE_DIR}/mainwindow_test.cpp)
+endif()
+
+add_executable(klogg_itests ${UI_TEST_SOURCES})
 
 target_link_libraries(klogg_itests ui catch Qt5::Test test_utils)
 set_target_properties(klogg_itests PROPERTIES AUTOMOC ON)

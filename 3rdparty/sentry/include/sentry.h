@@ -535,6 +535,11 @@ struct sentry_transport_s;
 typedef struct sentry_transport_s sentry_transport_t;
 
 /**
+ * Creates a new default transport
+ */
+SENTRY_API sentry_transport_t *sentry_transport_new_default();
+
+/**
  * Creates a new transport with an initial `send_func`.
  */
 SENTRY_API sentry_transport_t *sentry_transport_new(
@@ -575,6 +580,17 @@ SENTRY_API void sentry_transport_set_startup_func(sentry_transport_t *transport,
 SENTRY_API void sentry_transport_set_shutdown_func(
     sentry_transport_t *transport,
     int (*shutdown_func)(uint64_t timeout, void *state));
+
+/**
+ * Sets the transport consent hook.
+ *
+ * This hook will be called before upload data to ask for user consent.
+ * It should return `0` on success in case user confirmed consent,
+ * or `1` if no consent.
+ */
+void
+sentry_transport_set_ask_consent_func(sentry_transport_t *transport,
+    int (*ask_consent_func)(sentry_envelope_t *envelope, void *state));
 
 /**
  * Generic way to free a transport.

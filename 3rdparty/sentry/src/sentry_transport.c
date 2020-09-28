@@ -14,9 +14,15 @@ typedef struct sentry_transport_s {
     int (*shutdown_func)(uint64_t timeout, void *state);
     void (*free_func)(void *state);
     size_t (*dump_func)(sentry_run_t *run, void *state);
+    int (*ask_consent_func)(sentry_envelope_t *envelope, void *state);
     void *state;
     bool running;
 } sentry_transport_t;
+
+sentry_transport_t *sentry_transport_new_default()
+{
+    return sentry__transport_new_default();
+}
 
 sentry_transport_t *
 sentry_transport_new(
@@ -58,6 +64,13 @@ sentry_transport_set_shutdown_func(sentry_transport_t *transport,
 }
 
 void
+sentry_transport_set_ask_consent_func(sentry_transport_t *transport,
+    int (*ask_consent_func)(sentry_envelope_t *envelope, void *state))
+{
+    transport->ask_consent_func = ask_consent_func;
+}
+
+void
 sentry__transport_send_envelope(
     sentry_transport_t *transport, sentry_envelope_t *envelope)
 {
@@ -69,6 +82,16 @@ sentry__transport_send_envelope(
         sentry_envelope_free(envelope);
         return;
     }
+
+    if(transport->ask_consent_func) {
+        int hasConsent = transport->ask_consent_func(envelope, transport->state);
+        if (hasConsent != 0) {
+            SENTRY_TRACE("discarding envelope due to no consent");
+            sentry_envelope_free(envelope);
+            return;
+        }
+    }
+
     SENTRY_TRACE("sending envelope");
     transport->send_envelope_func(envelope, transport->state);
 }

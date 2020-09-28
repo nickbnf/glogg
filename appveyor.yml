@@ -16,7 +16,7 @@ environment:
   SSL_DIR_64: C:\OpenSSL-v111-Win64\bin
   SSL_DIR_32: C:\OpenSSL-v111-Win32\bin
   CMAKE_GENERATOR_NAME: Ninja
-  CMAKE_BUILD_TYPE: Release
+  CMAKE_BUILD_TYPE: RelWithDebInfo
   GITHUB_TOKEN:
       secure: aE8TDUiHJOa/rVs/W0/8shXEhmyuJiIdJMLNviZpAlLXwL3jU3AmP5wU3wHAF2B0
   GITHUB_RELEASE_TAG: continuous-win
@@ -54,29 +54,33 @@ before_build:
 - set PATH=%ProgramFiles(x86)%\NSIS;%PATH%
 - md %APPVEYOR_BUILD_FOLDER%\build
 - cd %APPVEYOR_BUILD_FOLDER%\build
-- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %APPVEYOR_BUILD_FOLDER%
+- cmake  -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DBUILD_NUMBER=%APPVEYOR_BUILD_NUMBER% %APPVEYOR_BUILD_FOLDER%
 
 build_script:
-  - cmake --build . --config %configuration%
+  - cmake --build .
 
 test_script:
   - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
-  - cmd: ctest --build-config %configuration% --verbose
+  - cmd: ctest --verbose
 
 after_test:
 - cd %APPVEYOR_BUILD_FOLDER%
 - scripts\win\prepare_release.cmd
 
-- 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.zip -r @scripts\win\7z_dll_listfile.txt
-- 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.zip @scripts\win\7z_klogg_listfile.txt
+- 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.7z -r @scripts\win\7z_dll_listfile.txt
+- 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.7z @scripts\win\7z_klogg_listfile.txt
+
+- 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-pdb.7z @scripts\win\7z_pdb_listfile.txt
 
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% -DPLATFORM=%PLATFORM%  klogg.nsi
 
 artifacts:
-  - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.zip
+  - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.7z
     name: klogg_portable
   - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-setup.exe
     name: klogg_installer
+  - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-pdb.7z
+    name: klogg_symbols
 
 
 
@@ -108,7 +112,7 @@ deploy:
   description: 'Appveyor build: https://ci.appveyor.com/project/variar/klogg/builds/$(appveyor_build_id)'
   auth_token:
     secure: aE8TDUiHJOa/rVs/W0/8shXEhmyuJiIdJMLNviZpAlLXwL3jU3AmP5wU3wHAF2B0
-  artifact: klogg_portable, klogg_installer
+  artifact: klogg_portable, klogg_installer, klogg_symbols
   prerelease: true
   force_update: true
   on:

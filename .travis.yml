@@ -74,7 +74,8 @@ script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || VERSION=$KLOGG_VERSION ${SCRIPTS_PATH}/make_appimage.sh'
  - cpack --verbose -G "${CPACK_GENERATOR}"
  - '[ "$TRAVIS_OS_NAME" != linux ] || cp klogg-$KLOGG_VERSION-x86_64.AppImage packages/klogg-$KLOGG_VERSION-x86_64.AppImage'
-
+ - cp ./output/klogg.sym packages/klogg.sym
+ 
 after_success:
   - ls -lh packages/*
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh

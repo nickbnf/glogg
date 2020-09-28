@@ -50,6 +50,20 @@ target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 
+if (NOT WIN32)
+    add_custom_command(TARGET klogg POST_BUILD
+        COMMAND ${DUMP_SYMS} $<TARGET_FILE:klogg> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg.sym
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating symbols for $<TARGET_FILE:klogg>"
+    )
+
+    add_custom_command(TARGET klogg_portable POST_BUILD
+        COMMAND ${DUMP_SYMS} $<TARGET_FILE:klogg_portable> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg_portable.sym
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating symbols for $<TARGET_FILE:klogg_portable>"
+    )
+endif()
+
 if (WIN32)
 
     target_sources(klogg PRIVATE ${ProductVersionResourceFiles})

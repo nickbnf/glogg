@@ -74,6 +74,14 @@ if(MSVC)
     ENDIF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
 endif(MSVC)
 
+if (WIN32)
+    set(DUMP_SYMS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/win/dump_syms.exe)
+elseif(APPLE)
+    set(DUMP_SYMS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/mac/dump_syms)
+else()
+    set(DUMP_SYMS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/linux/dump_syms)
+endif()
+
 # standard compiler warnings
 # Link this 'library' to use the warnings specified in CompilerWarnings.cmake
 include(CompilerWarnings)

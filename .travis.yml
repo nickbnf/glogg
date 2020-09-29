@@ -12,7 +12,7 @@ matrix:
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
          - CPACK_GENERATOR="RPM;DEB"
          - UPLOADTOOL_SUFFIX="linux"
-         - SENTRY_CLI_URL_EVAL = "SENTRY_CLI_URL=https://github.com/getsentry/sentry-cli/releases/download/1.58.0/sentry-cli-Linux-x86_64"
+         - SENTRY_CLI_SUFFIX = "sentry-cli-Linux-x86_64"
 
       addons:
         artifacts:
@@ -36,7 +36,7 @@ matrix:
         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/osx"
         - CPACK_GENERATOR="DragNDrop"
         - UPLOADTOOL_SUFFIX="osx"
-        - SENTRY_CLI_URL_EVAL = "SENTRY_CLI_URL=https://github.com/getsentry/sentry-cli/releases/download/1.58.0/sentry-cli-Darwin-x86_64"
+        - SENTRY_CLI_SUFFIX = "sentry-cli-Darwin-x86_64"
       addons:
         artifacts:
           paths:
@@ -51,6 +51,8 @@ matrix:
 env:
     global:
         - UPLOADTOOL_ISPRERELEASE="true"
+        - SENTRY_BASE_URL="https://github.com/getsentry/sentry-cli/releases/download/1.58.0"
+        - SENTRY_CLI_URL_EVAL='SENTRY_CLI_URL=$SENTRY_BASE_URL/$SENTRY_CLI_SUFFIX'
         - KLOGG_VERSION_EVAL='KLOGG_VERSION=20.9.0.$TRAVIS_BUILD_NUMBER'
         - COMMON_CMAKE_OPTS_EVAL='COMMON_CMAKE_OPTS="-G Ninja -DBUILD_NUMBER=$TRAVIS_BUILD_NUMBER -DCMAKE_BUILD_TYPE=RelWithDebInfo"'
 
@@ -71,7 +73,7 @@ before_script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || cmake ${COMMON_CMAKE_OPTS} -DCMAKE_INSTALL_PREFIX=/usr ..'
 
 script:
- - cmake --build . -t ci_build
+ - ninja ci_build
  - ctest --verbose
  - '[ "$TRAVIS_OS_NAME" != osx   ] || ${SCRIPTS_PATH}/prepare_bundle.sh'
  - '[ "$TRAVIS_OS_NAME" != linux ] || VERSION=$KLOGG_VERSION ${SCRIPTS_PATH}/make_appimage.sh'

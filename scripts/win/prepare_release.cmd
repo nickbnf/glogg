@@ -4,6 +4,7 @@ xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_portable.exe %APPVEYOR_BUILD_FO
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_portable.pdb %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg.pdb %APPVEYOR_BUILD_FOLDER%\release\ /y
+xcopy %APPVEYOR_BUILD_FOLDER%\build\output\crashpad_handler.exe %APPVEYOR_BUILD_FOLDER%\release\ /y
 xcopy %APPVEYOR_BUILD_FOLDER%\build\generated\documentation.html %APPVEYOR_BUILD_FOLDER%\release\ /y
 
 xcopy %APPVEYOR_BUILD_FOLDER%\build\output\klogg_tbbmalloc.dll %APPVEYOR_BUILD_FOLDER%\release\ /y

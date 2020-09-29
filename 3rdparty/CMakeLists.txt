@@ -22,7 +22,6 @@ add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 
-set(SENTRY_BACKEND "breakpad" CACHE INTERNAL "" FORCE)
 set(SENTRY_BUILD_EXAMPLES ON CACHE INTERNAL "" FORCE)
 set(CRASHPAD_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
 set(CRASHPAD_ENABLE_INSTALL_DEV OFF CACHE INTERNAL "" FORCE)

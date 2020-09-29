@@ -38,6 +38,7 @@
 #include <stack>
 
 #include "configuration.h"
+#include "crashhandler.h"
 #include "klogg_version.h"
 #include "log.h"
 #include "session.h"
@@ -48,7 +49,6 @@
 
 #include <singleapp/singleapplication.h>
 
-#include "crash_tracer.h"
 #include "mainwindow.h"
 #include "messagereceiver.h"
 #include "versionchecker.h"
@@ -146,6 +146,11 @@ class KloggApp : public SingleApplication {
         }
 
         plog::init( log_level, logAppender_.get() ).addAppender( plog::get<1>() );
+    }
+
+    void initCrashHandler()
+    {
+        crashHandler_ = std::make_unique<CrashHandler>();
     }
 
     MainWindow* reloadSession()
@@ -295,6 +300,8 @@ class KloggApp : public SingleApplication {
     std::unique_ptr<plog::RollingFileAppender<plog::GloggFormatter>> tempAppender_;
     std::unique_ptr<plog::IAppender> logAppender_;
 
+    std::unique_ptr<CrashHandler> crashHandler_;
+    
     MessageReceiver messageReceiver_;
 
     std::shared_ptr<Session> session_;
@@ -303,8 +310,6 @@ class KloggApp : public SingleApplication {
     std::stack<QPointer<MainWindow>> activeWindows_;
 
     VersionChecker versionChecker_;
-
-    std::unique_ptr<CrashTracer> crashTracer_;
 };
 
 #endif // KLOGG_KLOGGAPP_H

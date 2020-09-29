@@ -15,6 +15,8 @@ add_custom_command (OUTPUT ${DOCUMENTATION_HTML}
         DEPENDS maddy ${DOCUMENTATION_FILE})
 
 set(MAIN_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/crashhandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/crashhandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/messagereceiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kloggapp.h

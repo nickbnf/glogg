@@ -103,6 +103,9 @@ include(StaticAnalyzers)
 ucm_print_flags()
 
 find_package(Qt5 COMPONENTS Core Widgets Concurrent Network Xml REQUIRED)
+
+message("Qt version ${Qt5Core_VERSION}")
+
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
 set(BUILD_SHARED_LIBS OFF)

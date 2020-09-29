@@ -107,6 +107,8 @@ set(CMAKE_AUTOMOC OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
 set(BUILD_SHARED_LIBS OFF)
 
+add_custom_target(ci_build)
+
 add_subdirectory(3rdparty)
 add_subdirectory(src)
 add_subdirectory(website)

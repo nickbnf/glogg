@@ -28,6 +28,11 @@ jobs:
           echo "::set-env name=CC::gcc-8"
           echo "::set-env name=CXX::g++-8"
 
+      - name: Install curl
+        if: ${{ matrix.config.os == 'ubuntu' }} 
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
+
       - name: Configure
         run: . /opt/qt59/bin/qt59-env.sh && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/klogg .
 

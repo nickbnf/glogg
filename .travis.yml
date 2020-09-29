@@ -71,7 +71,7 @@ before_script:
  - '[ "$TRAVIS_OS_NAME" != linux ] || cmake ${COMMON_CMAKE_OPTS} -DCMAKE_INSTALL_PREFIX=/usr ..'
 
 script:
- - cmake --build .
+ - cmake --build . -t ci_build
  - ctest --verbose
  - '[ "$TRAVIS_OS_NAME" != osx   ] || ${SCRIPTS_PATH}/prepare_bundle.sh'
  - '[ "$TRAVIS_OS_NAME" != linux ] || VERSION=$KLOGG_VERSION ${SCRIPTS_PATH}/make_appimage.sh'

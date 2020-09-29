@@ -73,6 +73,11 @@ jobs:
         version: ${{ matrix.qt_version }}
         cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
+    - name: Install curl
+      if: ${{ matrix.config.os == 'ubuntu' }} 
+      run: |
+        sudo apt-get install libcurl4-openssl-dev
+
     - name: cmake
       run: |
         mkdir build
@@ -81,14 +86,7 @@ jobs:
 
     - name: cmake build klogg
       run: |
-        cmake --build build -t klogg
-        cmake --build build -t klogg_portable
-
-    - name: cmake build tests
-      run: |
-        cmake --build build -t file_write_helper
-        cmake --build build -t klogg_tests
-        cmake --build build -t klogg_itests
+        cmake --build build -t ci_build
 
     - name: cmake test
       run: |

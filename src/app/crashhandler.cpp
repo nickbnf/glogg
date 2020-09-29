@@ -23,13 +23,17 @@
 
 #include "klogg_version.h"
 #include "log.h"
+#include "openfilehelper.h"
 
 #include <QByteArray>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
+#include <QHBoxLayout>
 #include <QJsonDocument>
 #include <QLabel>
+#include <QPushButton>
+#include <QStandardPaths>
 #include <QTextEdit>
 #include <QVBoxLayout>
 
@@ -37,6 +41,17 @@ namespace {
 
 constexpr const char* DSN
     = "https://aad3b270e5ba4ec2915eb5caf6e6d929@o453796.ingest.sentry.io/5442855";
+
+QString sentryDatabasePath()
+{
+#ifdef KLOGG_PORTABLE
+    auto basePath = QCoreApplication::applicationDirPath();
+#else
+    auto basePath = QStandardPaths::writableLocation( QStandardPaths::AppDataLocation );
+#endif
+
+    return basePath.append( "/klogg_dump" );
+}
 
 void logSentry( sentry_level_t level, const char* message, va_list args, void* userdata )
 {
@@ -121,6 +136,18 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     privacyPolicy->setTextInteractionFlags( Qt::TextBrowserInteraction );
     privacyPolicy->setOpenExternalLinks( true );
 
+    auto exploreButton = std::make_unique<QPushButton>();
+    exploreButton->setText( "Open report directory" );
+    exploreButton->setFlat( true );
+    QObject::connect( exploreButton.get(), &QPushButton::clicked, [] {
+        showPathInFileExplorer( sentryDatabasePath().append( "/last_crash" ) );
+    } );
+
+    auto privacyLayout = std::make_unique<QHBoxLayout>();
+    privacyLayout->addWidget( privacyPolicy.release() );
+    privacyLayout->addStretch();
+    privacyLayout->addWidget( exploreButton.release() );
+
     auto buttonBox = std::make_unique<QDialogButtonBox>();
     buttonBox->addButton( "Send report", QDialogButtonBox::AcceptRole );
     buttonBox->addButton( "Discard report", QDialogButtonBox::RejectRole );
@@ -138,7 +165,7 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     layout->addWidget( crashReportHeader.release() );
     layout->addWidget( report.release() );
     layout->addWidget( sendReportLabel.release() );
-    layout->addWidget( privacyPolicy.release() );
+    layout->addLayout( privacyLayout.release() );
     layout->addWidget( buttonBox.release() );
 
     confirmationDialog->setLayout( layout.release() );
@@ -156,7 +183,7 @@ CrashHandler::CrashHandler()
     sentry_options_set_logger( sentryOptions, logSentry, nullptr );
     sentry_options_set_debug( sentryOptions, 1 );
 
-    const auto dumpPath = QDir::temp().filePath( "klogg_dump" );
+    const auto dumpPath = sentryDatabasePath();
 
 #ifdef Q_OS_WIN
     sentry_options_set_database_pathw( sentryOptions, dumpPath.toStdWString().c_str() );

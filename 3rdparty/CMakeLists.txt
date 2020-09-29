@@ -24,8 +24,6 @@ add_subdirectory(whereami)
 
 if (APPLE)
 set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)
-elseif(WIN32)
-set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)
 else()
 set(SENTRY_BACKEND "breakpad" CACHE INTERNAL "" FORCE)
 endif()

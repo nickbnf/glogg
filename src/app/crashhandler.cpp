@@ -107,6 +107,14 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     sendReportLabel->setText(
         "Klogg may send this report to sentry.io for developers to analyze and fix the issue" );
 
+    auto privacyPolicy = std::make_unique<QLabel>();
+    privacyPolicy->setText(
+        "<a href=\"https://klogg.filimonov.dev/docs/privacy_policy\">Privacy policy</a>" );
+
+    privacyPolicy->setTextFormat(Qt::RichText);
+    privacyPolicy->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    privacyPolicy->setOpenExternalLinks(true);
+
     auto buttonBox = std::make_unique<QDialogButtonBox>();
     buttonBox->addButton( "Send report", QDialogButtonBox::AcceptRole );
     buttonBox->addButton( "Discard report", QDialogButtonBox::RejectRole );
@@ -124,6 +132,7 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     layout->addWidget( crashReportHeader.release() );
     layout->addWidget( report.release() );
     layout->addWidget( sendReportLabel.release() );
+    layout->addWidget( privacyPolicy.release() );
     layout->addWidget( buttonBox.release() );
 
     confirmationDialog->setLayout( layout.release() );

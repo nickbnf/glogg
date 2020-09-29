@@ -73,6 +73,7 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
 {
     size_t size_out = 0;
     char* rawEnvelope = sentry_envelope_serialize( envelope, &size_out );
+    LOG(logINFO) << "raw envelope:" << rawEnvelope;
     auto envelopeString = QByteArray( rawEnvelope );
     sentry_free( rawEnvelope );
 

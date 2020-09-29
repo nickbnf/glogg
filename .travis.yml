@@ -12,6 +12,7 @@ matrix:
          - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/linux"
          - CPACK_GENERATOR="RPM;DEB"
          - UPLOADTOOL_SUFFIX="linux"
+         - SENTRY_CLI_URL_EVAL = "SENTRY_CLI_URL=https://github.com/getsentry/sentry-cli/releases/download/1.58.0/sentry-cli-Linux-x86_64"
 
       addons:
         artifacts:
@@ -35,6 +36,7 @@ matrix:
         - SCRIPTS_PATH_EVAL="SCRIPTS_PATH=${TRAVIS_BUILD_DIR}/scripts/osx"
         - CPACK_GENERATOR="DragNDrop"
         - UPLOADTOOL_SUFFIX="osx"
+        - SENTRY_CLI_URL_EVAL = "SENTRY_CLI_URL=https://github.com/getsentry/sentry-cli/releases/download/1.58.0/sentry-cli-Darwin-x86_64"
       addons:
         artifacts:
           paths:
@@ -81,6 +83,10 @@ after_success:
   - ls -lh packages/*
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
   - bash upload.sh packages/*
+  - eval "${SENTRY_CLI_URL_EVAL}"
+  - wget -c $SENTRY_CLI_URL -O sentry-cli
+  - chmod 755 sentry-cli
+  - ./sentry-cli upload-dif --org anton-filimonov -p klogg packages/klogg.sym
 
 branches:
   except:

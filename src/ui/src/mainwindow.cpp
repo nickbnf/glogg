@@ -402,6 +402,10 @@ void MainWindow::createActions()
     reportIssueAction->setStatusTip( tr( "Report an issue on GitHub" ) );
     connect( reportIssueAction, &QAction::triggered, [this]( auto ) { this->reportIssue(); } );
 
+    generateDumpAction = new QAction( tr( "Generate crash dump" ), this );
+    generateDumpAction->setStatusTip( tr( "Generate diagnostic crash dump" ) );
+    connect( generateDumpAction, &QAction::triggered, [this]( auto ) { this->generateDump(); } );
+
     showScratchPadAction = new QAction( tr( "Scratchpad" ), this );
     showScratchPadAction->setStatusTip( tr( "Show the scratchpad" ) );
     connect( showScratchPadAction, &QAction::triggered,
@@ -509,6 +513,7 @@ void MainWindow::createMenus()
     helpMenu->addAction( showDocumentationAction );
     helpMenu->addSeparator();
     helpMenu->addAction( reportIssueAction );
+    helpMenu->addAction( generateDumpAction );
     helpMenu->addSeparator();
     helpMenu->addAction( aboutQtAction );
     helpMenu->addAction( aboutAction );
@@ -1790,7 +1795,6 @@ void MainWindow::reportIssue() const
     const QString kernelVersion = QSysInfo::kernelVersion();
     const QString arch = QSysInfo::currentCpuArchitecture();
     const QString built_for = QSysInfo::buildAbi();
-    
 
     const QString body = QString( "Details for the issue\n"
                                   "--------------------\n\n"
@@ -1803,7 +1807,7 @@ void MainWindow::reportIssue() const
                                   "> running on %5 (%6/%7) [%8]\n"
                                   "> and Qt %9" )
                              .arg( version, buildDate, commit, built_for, os, kernelType,
-                                   kernelVersion, arch, qVersion());
+                                   kernelVersion, arch, qVersion() );
 
     QUrlQuery query;
     query.addQueryItem( "labels", "type: bug" );
@@ -1812,4 +1816,17 @@ void MainWindow::reportIssue() const
     QUrl url( "https://github.com/variar/klogg/issues/new" );
     url.setQuery( query );
     QDesktopServices::openUrl( url );
+}
+
+void MainWindow::generateDump()
+{
+    const auto userAction = QMessageBox::warning(
+            this, "klogg - generate crash dump",
+            QString( "This will shutdown klogg and generate diagnostic crash dump. Continue?" ),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
+
+        if ( userAction == QMessageBox::Yes ) {
+            int *a = nullptr;
+            *a = 1;
+        }
 }

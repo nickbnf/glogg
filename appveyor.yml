@@ -17,17 +17,21 @@ environment:
   SSL_DIR_32: C:\OpenSSL-v111-Win32\bin
   CMAKE_GENERATOR_NAME: Ninja
   CMAKE_BUILD_TYPE: RelWithDebInfo
+  GITHUB_RELEASE_TAG: continuous-win
   GITHUB_TOKEN:
       secure: aE8TDUiHJOa/rVs/W0/8shXEhmyuJiIdJMLNviZpAlLXwL3jU3AmP5wU3wHAF2B0
-  GITHUB_RELEASE_TAG: continuous-win
+  SENTRY_AUTH_TOKEN:
+      secure: +dgUCowweqxElNRMPof1/XRJTA6wQg/1kqef5f9ODuHJtZvVB9oL9xTKaBWLxkv1jI9gfzDp66ZTci4ylyt/wxnIw1A9cdewzfBYHzPAam8=
+  SENTRY_CLI_URL: https://github.com/getsentry/sentry-cli/releases/download/1.58.0/sentry-cli-Windows-x86_64.exe
+  NINJA_URL: https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-win.zip
 
 matrix:
     allow_failures:
     - platform: x86
 
 install:
-  - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-win.zip"
   - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  - appveyor DownloadFile %SENTRY_CLI_URL% -FileName sentry-cli.exe
   - 7z x ninja.zip -o%APPVEYOR_BUILD_FOLDER%\ninja > nul
   - set PATH=%APPVEYOR_BUILD_FOLDER%\ninja;%PATH%
   - ninja --version
@@ -73,6 +77,7 @@ after_test:
 - 7z a klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-pdb.7z @scripts\win\7z_pdb_listfile.txt
 
 - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% -DPLATFORM=%PLATFORM%  klogg.nsi
+- sentry-cli.exe upload-dif --org anton-filimonov -p klogg release\klogg.pdb release\klogg_portable.pdb
 
 artifacts:
   - path: klogg-%APPVEYOR_BUILD_VERSION%-%PLATFORM%-portable.7z

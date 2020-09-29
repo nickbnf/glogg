@@ -69,28 +69,33 @@ QJsonDocument extractJson( const QByteArray& data, int& lastOffset )
     return envelopeJson;
 }
 
+std::vector<QJsonDocument> extractMessage( const QByteArray& envelopeString )
+{
+    std::vector<QJsonDocument> messages;
+    int position = 0;
+    auto offset = 0;
+    do {
+        messages.push_back( extractJson( envelopeString.mid( position ), offset ) );
+        position += offset;
+    } while ( offset > 0 && position < envelopeString.size() );
+
+    return messages;
+}
+
 int askUserConfirmation( sentry_envelope_t* envelope, void* )
 {
     size_t size_out = 0;
     char* rawEnvelope = sentry_envelope_serialize( envelope, &size_out );
-    LOG(logINFO) << "raw envelope:" << rawEnvelope;
+    LOG( logINFO ) << "raw envelope:" << rawEnvelope;
     auto envelopeString = QByteArray( rawEnvelope );
     sentry_free( rawEnvelope );
 
-    std::vector<QJsonDocument> messages;
-    int offset = 0;
-    do {
-        auto newOffset = 0;
-        messages.push_back( extractJson( envelopeString.mid( offset ), newOffset ) );
-        offset += newOffset;
-    } while ( offset < envelopeString.size() );
-
+    const auto messages = extractMessage( envelopeString );
     QString formattedReport;
     for ( const auto& message : messages ) {
-        formattedReport.append(
-            QString::fromUtf8( message.toJson( QJsonDocument::Indented ) ) );
+        formattedReport.append( QString::fromUtf8( message.toJson( QJsonDocument::Indented ) ) );
     }
-    
+
     LOG( logINFO ) << "Envelope: " << formattedReport;
 
     auto message = std::make_unique<QLabel>();
@@ -112,9 +117,9 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     privacyPolicy->setText(
         "<a href=\"https://klogg.filimonov.dev/docs/privacy_policy\">Privacy policy</a>" );
 
-    privacyPolicy->setTextFormat(Qt::RichText);
-    privacyPolicy->setTextInteractionFlags(Qt::TextBrowserInteraction);
-    privacyPolicy->setOpenExternalLinks(true);
+    privacyPolicy->setTextFormat( Qt::RichText );
+    privacyPolicy->setTextInteractionFlags( Qt::TextBrowserInteraction );
+    privacyPolicy->setOpenExternalLinks( true );
 
     auto buttonBox = std::make_unique<QDialogButtonBox>();
     buttonBox->addButton( "Send report", QDialogButtonBox::AcceptRole );

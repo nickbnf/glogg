@@ -5,6 +5,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,6 +34,7 @@ jobs:
             cc: cl
             cxx: cl
             arch: x86
+            qt_arch: win32_msvc2017
 
 
     runs-on: ${{ matrix.config.os }}-latest
@@ -58,19 +60,11 @@ jobs:
         path: ../Qt
         key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-QtCache
 
-    - name: Install Qt x86
-      if: ${{ matrix.config.arch == 'x86' }} 
+    - name: Install Qt
       uses: jurplel/install-qt-action@v2
       with:
         version: ${{ matrix.qt_version }}
-        arch: win32_msvc2017
-        cached: ${{ steps.cache-qt.outputs.cache-hit }}
-
-    - name: Install Qt x64
-      if: ${{ matrix.config.arch == 'x64' }} 
-      uses: jurplel/install-qt-action@v2
-      with:
-        version: ${{ matrix.qt_version }}
+        arch: ${{ matrix.config.qt_arch }}
         cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
     - name: Install curl
@@ -78,17 +72,17 @@ jobs:
       run: |
         sudo apt-get install libcurl4-openssl-dev
 
-    - name: cmake
+    - name: configure
       run: |
         mkdir build
         cd build
         cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
 
-    - name: cmake build klogg
+    - name: build
       run: |
         cmake --build build -t ci_build
 
-    - name: cmake test
+    - name: test
       run: |
         cd build
-        ctest -R klogg_smoke
+        ctest --verbose

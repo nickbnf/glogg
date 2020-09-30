@@ -42,8 +42,30 @@
   text-align: center;
 }
 
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
 .hidden {
   display: none;
+}
+
+input.toggle {
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  position: absolute;
+}
+
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 @mixin spin($duration) {
@@ -63,12 +85,8 @@
   overflow-y: auto;
 }
 
-@mixin dark-links {
-  a {
-    color: $color-dark-link;
-  }
-
-  a.active {
-    color: $color-link;
-  }
+@mixin outline {
+  outline-style: auto;
+  outline-color: currentColor;
+  outline-color: -webkit-focus-ring-color;
 }

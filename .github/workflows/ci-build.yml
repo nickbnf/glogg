@@ -178,7 +178,7 @@ jobs:
     - uses: "marvinpinto/action-automatic-releases@latest"
       if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
         automatic_release_tag: continuous-${{ matrix.config.release_tag }}-${{ matrix.config.arch }}
         prerelease: true
         files: ./build/packages/*

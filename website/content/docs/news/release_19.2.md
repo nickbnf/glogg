@@ -3,6 +3,7 @@ title: "Version 19.2 released"
 date: 2018-01-27T15:42:17+01:00
 anchor: "v19_2"
 weight: 70
+bookhidden: true
 ---
 
 ## Version 19.2

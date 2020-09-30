@@ -3,6 +3,7 @@ title: "Version 1.1.3-r1 released"
 date: 2018-01-27T15:42:17+01:00
 anchor: "v1_1_3-r1"
 weight: 90
+bookhidden: true
 ---
 
 ## Version 1.1.3-r1

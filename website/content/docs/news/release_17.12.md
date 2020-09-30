@@ -3,6 +3,7 @@ title: "Version 17.12 released"
 date: 2018-01-27T15:42:17+01:00
 anchor: "v17_12"
 weight: 80
+bookhidden: true
 ---
 
 ## Version 17.12

@@ -193,9 +193,7 @@ jobs:
     - name: Upload symbols
       shell: sh
       run: |
-        sentry-cli upload-dif ./build/output/*.sym
-        sentry-cli upload-dif ./build/output/*.pdb
-
+        sentry-cli upload-dif ./build/output/klogg.sym ./build/output/klogg*.pdb
 
     
         

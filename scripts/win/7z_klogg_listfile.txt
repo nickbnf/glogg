@@ -1,6 +1,4 @@
 .\release\*.dll
-.\release\platforms\*.dll
-.\release\styles\*.dll
 .\release\klogg_portable.exe
 .\release\documentation.html
 .\COPYING

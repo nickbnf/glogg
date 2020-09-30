@@ -11,18 +11,20 @@ Please refer to the
 [documentation](DOCUMENTATION.md)
 page for how to use Klogg.
 
-### Current release
+### Current stable release
 
 [ ![Github](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.4)
 [ ![Bintray](https://img.shields.io/bintray/v/variar/generic/klogg?style=flat)](https://bintray.com/variar/generic/klogg/_latestVersion)
 [ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg?style=flat)](https://chocolatey.org/packages/klogg)
 [ ![homebrew cask](https://img.shields.io/homebrew/cask/v/klogg?style=flat)](https://formulae.brew.sh/cask/klogg)
 
+### Latest testing builds
 
-| CI | Windows | Linux  | Mac | Smoke build |
-| ------------- |------------- | ------------- | ------------- | ------------- |
-| Build status | [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) | ![GH Smoke](https://github.com/variar/klogg/workflows/CI:%20Build%20Test/badge.svg?branch=master)
-| Artifacts | [continuous-win](https://github.com/variar/klogg/releases/tag/continuous-win) | [continuous-linux](https://github.com/variar/klogg/releases/tag/continuous-linux) | [continuous-osx](https://github.com/variar/klogg/releases/tag/continuous-osx) | n/a |
+![CI Build and Release](https://github.com/variar/klogg/workflows/CI%20Build%20and%20Release/badge.svg)
+
+| Windows x64 | Windows x86 | Linux x64  | Mac x64 |
+| ------------- |------------- | ------------- | ------------- |
+| [ci-win-x64](https://github.com/variar/klogg/releases/tag/continuous-windows-x64) | [ci-win-x86](https://github.com/variar/klogg/releases/tag/continuous-windows-x86) |  [ci-linux](https://github.com/variar/klogg/releases/tag/continuous-linux-x64) | [ci-mac](https://github.com/variar/klogg/releases/tag/continuous-macos-x64) |
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f6db6ef0be3a4a5abff94111a5291c45)](https://www.codacy.com/manual/variar/klogg?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=variar/klogg&amp;utm_campaign=Badge_Grade)
 
@@ -74,7 +76,7 @@ Latest news about klogg development can be found at https://klogg.filimonov.dev.
 
 This project uses [Calendar Versioning](https://calver.org/). For a list of available versions, see the [repository tag list](https://github.com/variar/klogg/tags).
 
-### Current release builds
+### Current stable release builds
 
 Current release is 20.4. Binaries for all platforms can be downloaded from GitHub releases or Bintray.
 
@@ -106,12 +108,13 @@ yum update
 yum install klogg
 ```
 
-### CI builds
+### Tesing builds
 
-| | Windows | Linux  | Mac |
+![CI Build and Release](https://github.com/variar/klogg/workflows/CI%20Build%20and%20Release/badge.svg)
+
+| Windows x64 | Windows x86 | Linux x64  | Mac x64 |
 | ------------- |------------- | ------------- | ------------- |
-| Build status | [![Win32 Build Status](https://ci.appveyor.com/api/projects/status/github/variar/klogg?svg=true)](https://ci.appveyor.com/project/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) | [![Build Status](https://travis-ci.org/variar/klogg.svg?branch=master)](https://travis-ci.org/variar/klogg) |
-| Artifacts | [continuous-win](https://github.com/variar/klogg/releases/tag/continuous-win) | [continuous-linux](https://github.com/variar/klogg/releases/tag/continuous-linux) | [continuous-osx](https://github.com/variar/klogg/releases/tag/continuous-osx) |
+| [ci-win-x64](https://github.com/variar/klogg/releases/tag/continuous-windows-x64) | [ci-win-x86](https://github.com/variar/klogg/releases/tag/continuous-windows-x86) |  [ci-linux](https://github.com/variar/klogg/releases/tag/continuous-linux-x64) | [ci-mac](https://github.com/variar/klogg/releases/tag/continuous-macos-x64) |
 
 **[Back to top](#table-of-contents)**
 

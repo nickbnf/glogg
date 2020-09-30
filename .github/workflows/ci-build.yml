@@ -5,10 +5,22 @@ on:
     branches: [ master ]
     paths-ignore:
       - 'website/**'
+      - BUILD.md
+      - CODE_OF_CONDUCT.md
+      - CONTRIBUTING.md
+      - README.md
+      - latest.json
+      - .gitignore
   pull_request:
     branches: [ master ]
     paths-ignore:
       - 'website/**'
+      - BUILD.md
+      - CODE_OF_CONDUCT.md
+      - CONTRIBUTING.md
+      - README.md
+      - latest.json
+      - .gitignore
   workflow_dispatch:
 
 jobs:
@@ -78,7 +90,7 @@ jobs:
         echo "::set-env name=SSL_DIR::${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin"
 
     - name: Set ssl arch
-      if: ${{ matrix.config.arch == 'x64' }} 
+      if: ${{ matrix.config.os == 'windows' && matrix.config.arch == 'x64' }} 
       run: |
         echo "::set-env name=SSL_ARCH::-x64"
         

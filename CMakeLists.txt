@@ -16,7 +16,7 @@ set(PROJECT_DESCRIPTION "${PROJECT_NAME} log viewer")
 option(BUILD_TESTS "Build tests" ON)
 option(USE_LTO "Use link time optimization" ON)
 
-set(BUILD_VERSION "" CACHE STRING "build version")
+set(BUILD_VERSION $ENV{KLOGG_VERSION} CACHE STRING "build version")
 set(BUILD_NUMBER "" CACHE STRING "build number")
 
 set(NOTICE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE)
@@ -218,12 +218,10 @@ endif()
 
 # for IDE grouping
 add_custom_target(ci_config SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml
-    ${CMAKE_CURRENT_SOURCE_DIR}/appveyor.yml
+    ${CMAKE_CURRENT_SOURCE_DIR}/.github/workflows/ci-build.yml
     ${CMAKE_CURRENT_SOURCE_DIR}/latest.json
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/prepare_release.cmd
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_klogg_listfile.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_dll_listfile.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linux/make_appimage.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh

@@ -1,0 +1,194 @@
+name: "CI Build and Release"
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - 'website/**'
+  pull_request:
+    branches: [ master ]
+    paths-ignore:
+      - 'website/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: ubuntu
+            os_version: 16.04
+            qt_version: 5.9.9
+            release_tag: linux
+            cc: gcc-8
+            cxx: g++-8
+            arch: x64
+
+          - os: macos
+            os_version: latest
+            qt_version: 5.12.8
+            release_tag: macos
+            cc: clang
+            cxx: clang++
+            arch: x64
+
+          - os: windows
+            os_version: latest
+            qt_version: 5.15.1
+            release_tag: windows
+            cc: cl
+            cxx: cl
+            arch: x64
+
+          - os: windows
+            os_version: latest
+            qt_version: 5.15.1
+            release_tag: windows
+            cc: cl
+            cxx: cl
+            arch: x86
+            qt_arch: win32_msvc2019
+
+
+    runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
+    
+    steps:
+    - uses: actions/checkout@v2
+    - uses: seanmiddleditch/gha-setup-ninja@master
+
+    - name: Set workspace environment
+      shell: sh
+      run: |
+        echo "::set-env name=KLOGG_WORKSPACE::${{ github.workspace }}"
+        echo "::set-env name=KLOGG_VERSION::20.9.0.$((${{ github.run_number }} + 717))"
+        echo "::set-env name=KLOGG_ARCH::${{ matrix.config.arch }}"
+
+    - name: Install curl
+      if: ${{ matrix.config.os == 'ubuntu' }} 
+      run: |
+        sudo apt-get install libcurl4-openssl-dev
+
+    - name: Download openssl
+      if: ${{ matrix.config.os == 'windows' }} 
+      run: |
+        Invoke-WebRequest -Uri "https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1h-dev.zip" -OutFile openssl.zip
+        7z x openssl.zip
+        echo "::set-env name=SSL_DIR::${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin"
+
+    - name: Set ssl arch
+      if: ${{ matrix.config.arch == 'x64' }} 
+      run: |
+        echo "::set-env name=SSL_ARCH::-x64"
+        
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.qt_version }}-QtCache
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: ${{ matrix.config.qt_version }}
+        arch: ${{ matrix.config.qt_arch }}
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Prepare dev cmd
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.config.arch }}
+
+    - name: Prepare compiler env
+      run: |
+        echo "::set-env name=CC::${{ matrix.config.cc }}"
+        echo "::set-env name=CXX::${{ matrix.config.cxx }}"
+
+    - name: configure
+      run: |
+        mkdir build
+        cd build
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+
+    - name: build
+      run: |
+        cmake --build build -t ci_build
+
+    - name: test
+      run: |
+        cd build
+        ctest --verbose
+
+    - name: Linux package 
+      if: ${{ matrix.config.os == 'ubuntu' }} 
+      run: |
+        cd build
+        cpack --verbose -G "RPM;DEB"
+        cp ./output/klogg.sym ./packages/klogg.sym
+
+    - name: Mac package
+      if: ${{ matrix.config.os == 'macos' }} 
+      run: |
+        cd build
+        ../scripts/osx/prepare_bundle.sh
+        cpack --verbose -G "DragNDrop"
+        cp ./output/klogg.sym ./packages/klogg.sym
+
+    - name: Win portable
+      if: ${{ matrix.config.os == 'windows' }} 
+      shell: cmd
+      run: |
+        scripts\win\prepare_release.cmd
+
+    - name: Win installer
+      if: ${{ matrix.config.os == 'windows' }} 
+      uses: joncloud/makensis-action@v3.3
+      with:
+        script-file: klogg.nsi
+        arguments: "-DVERSION=%KLOGG_VERSION% -DPLATFORM=%KLOGG_ARCH%"
+
+    - name: Win package
+      if: ${{ matrix.config.os == 'windows' }} 
+      shell: cmd
+      run: |
+        md build\packages
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.7z build\packages\ /y
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.7z build\packages\ /y
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe build\packages\ /y
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        path: './build/packages/*'
+
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        automatic_release_tag: continuous-${{ matrix.config.release_tag }}-${{ matrix.config.arch }}
+        prerelease: true
+        files: ./build/packages/*
+
+    - name: Setup Sentry CLI
+      uses: mathrix-education/setup-sentry-cli@0.1.0
+      with:
+        token: ${{ secrets.SENTRY_TOKEN }}
+        organization: anton-filimonov
+        project: klogg
+
+    - name: Upload symbols
+      shell: sh
+      run: |
+        sentry-cli upload-dif ./build/output/*.sym
+        sentry-cli upload-dif ./build/output/*.pdb
+
+
+    
+        
+        
+
+
+
+

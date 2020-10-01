@@ -63,7 +63,6 @@ jobs:
             arch: x86
             qt_arch: win32_msvc2019
 
-
     runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
     
     steps:
@@ -202,6 +201,29 @@ jobs:
       run: |
         sentry-cli upload-dif ./build/output/klogg.sym ./build/output/klogg*.pdb
 
+  sentry_release:
+    runs-on: ubuntu-latest
+    needs: build 
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set workspace environment
+      shell: sh
+      run: |
+        echo "::set-env name=KLOGG_VERSION::20.9.0.$((${{ github.run_number }} + 717))"
+
+    - name: Setup Sentry CLI
+      uses: mathrix-education/setup-sentry-cli@0.1.0
+      with:
+        token: ${{ secrets.SENTRY_TOKEN }}
+        organization: anton-filimonov
+        project: klogg
+
+    - name: Create release
+      shell: sh
+      run: |
+        sentry-cli releases new $KLOGG_VERSION
+        sentry-cli releases set-commits --auto $KLOGG_VERSION
     
         
         

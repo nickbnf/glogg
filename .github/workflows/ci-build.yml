@@ -214,7 +214,7 @@ jobs:
         repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
         automatic_release_tag: continuous-linux
         prerelease: true
-        files: ./packages-linux-x64/*
+        files: ./packages-ubuntu-x64/*
 
     - name: Release mac
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -241,6 +241,6 @@ jobs:
       shell: sh
       run: |
         sentry-cli upload-dif ./packages-macos-x64/klogg.sym 
-        sentry-cli upload-dif ./packages-linux-x64/klogg.sym 
+        sentry-cli upload-dif ./packages-ubuntu-x64/klogg.sym 
         sentry-cli upload-dif ./packages-windows-x64/klogg*.pdb
         sentry-cli upload-dif ./packages-windows-x86/klogg*.pdb

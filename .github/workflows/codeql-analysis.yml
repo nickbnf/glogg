@@ -22,11 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Override automatic language detection by changing the below list
-        # Supported options are ['csharp', 'cpp', 'go', 'java', 'javascript', 'python']
         language: ['cpp']
-        # Learn more...
-        # https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#overriding-automatic-language-detection
+        qt_version: [5.15.1]
 
     steps:
     - name: Checkout repository
@@ -51,21 +48,31 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+    - name: Install curl
+      run: sudo apt-get install libcurl4-openssl-dev
 
-    # ℹ️ Command-line programs to run using the OS shell.
-    # 📚 https://git.io/JvXDl
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: ${{ matrix.qt_version }}
 
-    # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
-    #    and modify them (or add more) to build your code if your project
-    #    uses a compiled language
+    - name: Install ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
 
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - name: Prepare compiler env
+      run: |
+        echo "::set-env name=CC::gcc-8"
+        echo "::set-env name=CXX::g++-8"
+
+    - name: configure
+      run: |
+        mkdir build
+        cd build
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+
+    - name: build
+      run: |
+        cmake --build build -t klogg
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

@@ -8,12 +8,12 @@ AppDir:
     name: klogg
     icon: klogg
     version: latest
-    exec: opt/klogg/bin/klogg
+    exec: usr/bin/klogg
     exec_args: $@
 
   runtime:
     env:
-      APPDIR_LIBRARY_PATH: $APPDIR/opt/klogg/lib:$APPDIR/opt/qt59/bin:$APPDIR/usr/lib/x86_64-linux-gnu:$APPDIR/lib/x86_64-linux-gnu
+      APPDIR_LIBRARY_PATH: $APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu:$APPDIR/lib/x86_64-linux-gnu
 
   apt:
     arch: amd64
@@ -23,15 +23,12 @@ AppDir:
       - sourceline: deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
       - sourceline: deb http://archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse
       - sourceline: deb http://archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
-      - sourceline: deb http://ppa.launchpad.net/beineri/opt-qt595-xenial/ubuntu xenial main 
-        key_url: 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xc65d51784edc19a871dbdbb710c56d0de9977759'
       
     include:
-      - qt59base
+      - curl
 
   files:
     exclude:
-      - opt/qt59/examples
       - usr/lib/x86_64-linux-gnu/gconv
       - usr/share/man
       - usr/share/doc/*/README.*

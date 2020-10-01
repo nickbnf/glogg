@@ -1,12 +1,7 @@
 name: C/C++ AppImage
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
   workflow_dispatch:
-
 
 jobs:
   build-appimage:
@@ -17,37 +12,33 @@ jobs:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-ninja@master
 
+      - name: Install curl
+        run: sudo apt-get install libcurl4-openssl-dev
+
       - name: Install Qt
-        run: |
-          sudo add-apt-repository ppa:beineri/opt-qt595-xenial
-          sudo apt-get update
-          sudo apt-get install -y qt59base mesa-common-dev
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: 5.9.9
         
       - name: Prepare compiler env
         run: |
           echo "::set-env name=CC::gcc-8"
           echo "::set-env name=CXX::g++-8"
 
-      - name: Install curl
-        if: ${{ matrix.config.os == 'ubuntu' }} 
-        run: |
-          sudo apt-get install libcurl4-openssl-dev
-
       - name: Configure
-        run: . /opt/qt59/bin/qt59-env.sh && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/klogg .
+        run: cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .
 
       - name: Build
         run: ninja klogg
 
       - name: Install
-        run: |
-          DESTDIR=AppDir ninja install 
-          mkdir AppDir/usr
-          cp -a AppDir/opt/klogg/share AppDir/usr/share
+        run: DESTDIR=AppDir ninja install 
 
       - name: Bundle Qt
         run: |
-          cp -a /opt/qt59/plugins AppDir/plugins
+          wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+          chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+          ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/bin/klogg -qmake=$Qt5_Dir/bin/qmake
       
       - name: Build AppImage
         uses: AppImageCrafters/build-appimage-action@master

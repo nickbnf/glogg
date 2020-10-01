@@ -22,9 +22,9 @@ page for how to use Klogg.
 
 ![CI Build and Release](https://github.com/variar/klogg/workflows/CI%20Build%20and%20Release/badge.svg)
 
-| Windows x64 | Windows x86 | Linux x64  | Mac x64 |
-| ------------- |------------- | ------------- | ------------- |
-| [ci-win-x64](https://github.com/variar/klogg/releases/tag/continuous-windows-x64) | [ci-win-x86](https://github.com/variar/klogg/releases/tag/continuous-windows-x86) |  [ci-linux](https://github.com/variar/klogg/releases/tag/continuous-linux-x64) | [ci-mac](https://github.com/variar/klogg/releases/tag/continuous-macos-x64) |
+| Windows | Linux | Mac |
+| ------------- |------------- | ------------- |
+| [continuous-win](https://github.com/variar/klogg/releases/tag/continuous-win) | [continuous-linux](https://github.com/variar/klogg/releases/tag/continuous-linux) | [continuous-osx](https://github.com/variar/klogg/releases/tag/continuous-osx) |
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f6db6ef0be3a4a5abff94111a5291c45)](https://www.codacy.com/manual/variar/klogg?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=variar/klogg&amp;utm_campaign=Badge_Grade)
 
@@ -112,9 +112,9 @@ yum install klogg
 
 ![CI Build and Release](https://github.com/variar/klogg/workflows/CI%20Build%20and%20Release/badge.svg)
 
-| Windows x64 | Windows x86 | Linux x64  | Mac x64 |
-| ------------- |------------- | ------------- | ------------- |
-| [ci-win-x64](https://github.com/variar/klogg/releases/tag/continuous-windows-x64) | [ci-win-x86](https://github.com/variar/klogg/releases/tag/continuous-windows-x86) |  [ci-linux](https://github.com/variar/klogg/releases/tag/continuous-linux-x64) | [ci-mac](https://github.com/variar/klogg/releases/tag/continuous-macos-x64) |
+| Windows | Linux | Mac |
+| ------------- |------------- | ------------- |
+| [continuous-win](https://github.com/variar/klogg/releases/tag/continuous-win) | [continuous-linux](https://github.com/variar/klogg/releases/tag/continuous-linux) | [continuous-osx](https://github.com/variar/klogg/releases/tag/continuous-osx) |
 
 **[Back to top](#table-of-contents)**
 

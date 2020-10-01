@@ -45,20 +45,11 @@
 namespace {
 
 #if defined( Q_OS_WIN )
-static constexpr QLatin1String OsSuffix = QLatin1String( "-windows", 8 );
+static constexpr QLatin1String OsSuffix = QLatin1String( "-win", 4 );
 #elif defined( Q_OS_OSX )
-static constexpr QLatin1String OsSuffix = QLatin1String( "-macos", 6 );
+static constexpr QLatin1String OsSuffix = QLatin1String( "-osx", 4 );
 #else
 static constexpr QLatin1String OsSuffix = QLatin1String( "-linux", 6 );
-#endif
-
-
-#if defined(Q_OS_WIN64) || (defined(Q_OS_WINRT) && defined(_M_X64))
-static constexpr QLatin1String ArchSuffix = QLatin1String( "-x64", 4 );
-#elif defined(__LP64__) || QT_POINTER_SIZE - 0 == 8
-static constexpr QLatin1String ArchSuffix = QLatin1String( "-x64", 4 );
-#else
-static constexpr QLatin1String ArchSuffix = QLatin1String( "-x32", 4 );
 #endif
 
 static constexpr QLatin1String VERSION_URL
@@ -155,7 +146,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
         }
         else {
             latestVersion = latestVersionMap.value( "ci" ).toString();
-            url = latestVersionMap.value( "ci_url" ).toString() + OsSuffix + ArchSuffix;
+            url = latestVersionMap.value( "ci_url" ).toString() + OsSuffix;
         }
 
         LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "

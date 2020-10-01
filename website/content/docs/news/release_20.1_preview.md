@@ -12,9 +12,9 @@ I've decided to postpone next release to January 2020. Mainly because I like
 
 Preview builds can be downloaded from Github: 
 
-{{< button href="https://github.com/variar/klogg/releases/tag/continuous-windows-x64" >}}Windows{{< /button >}}
-{{< button href="https://github.com/variar/klogg/releases/tag/continuous-linux-x64" >}}Linux{{< /button >}}
-{{< button href="https://github.com/variar/klogg/releases/tag/continuous-macos-x64" >}}Mac{{< /button >}}
+{{< button href="https://github.com/variar/klogg/releases/tag/continuous-win" >}}Windows{{< /button >}}
+{{< button href="https://github.com/variar/klogg/releases/tag/continuous-linux" >}}Linux{{< /button >}}
+{{< button href="https://github.com/variar/klogg/releases/tag/continuous-osx" >}}Mac{{< /button >}}
 
 Feedback is very welcome.
 

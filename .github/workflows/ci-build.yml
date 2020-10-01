@@ -181,27 +181,8 @@ jobs:
         name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: './build/packages/*'
 
-    - uses: "marvinpinto/action-automatic-releases@latest"
-      if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-      with:
-        repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
-        automatic_release_tag: continuous-${{ matrix.config.release_tag }}-${{ matrix.config.arch }}
-        prerelease: true
-        files: ./build/packages/*
-
-    - name: Setup Sentry CLI
-      uses: mathrix-education/setup-sentry-cli@0.1.0
-      with:
-        token: ${{ secrets.SENTRY_TOKEN }}
-        organization: anton-filimonov
-        project: klogg
-
-    - name: Upload symbols
-      shell: sh
-      run: |
-        sentry-cli upload-dif ./build/output/klogg.sym ./build/output/klogg*.pdb
-
-  sentry_release:
+  release:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     needs: build 
     steps:
@@ -212,6 +193,37 @@ jobs:
       run: |
         echo "::set-env name=KLOGG_VERSION::20.9.0.$((${{ github.run_number }} + 717))"
 
+    - uses: actions/download-artifact@v2
+
+    - name: Display structure of downloaded files
+      run: ls -R
+
+    - name: Release win
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
+        automatic_release_tag: continuous-win
+        prerelease: true
+        files: |
+          ./packages-windows-x64/*
+          ./packages-windows-x86/*
+
+    - name: Release linux
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
+        automatic_release_tag: continuous-linux
+        prerelease: true
+        files: ./packages-linux-x64/*
+
+    - name: Release mac
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
+        automatic_release_tag: continuous-osx
+        prerelease: true
+        files: ./packages-macos-x64/*
+
     - name: Setup Sentry CLI
       uses: mathrix-education/setup-sentry-cli@0.1.0
       with:
@@ -219,15 +231,16 @@ jobs:
         organization: anton-filimonov
         project: klogg
 
-    - name: Create release
+    - name: Create Sentry release
       shell: sh
       run: |
         sentry-cli releases new $KLOGG_VERSION
         sentry-cli releases set-commits --auto $KLOGG_VERSION
-    
-        
-        
 
-
-
-
+    - name: Upload symbols
+      shell: sh
+      run: |
+        sentry-cli upload-dif ./packages-macos-x64/klogg.sym 
+        sentry-cli upload-dif ./packages-linux-x64/klogg.sym 
+        sentry-cli upload-dif ./packages-windows-x64/klogg*.pdb
+        sentry-cli upload-dif ./packages-windows-x86/klogg*.pdb

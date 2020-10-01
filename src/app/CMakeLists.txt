@@ -68,6 +68,14 @@ if (NOT WIN32)
     )
 endif()
 
+if (APPLE)
+    add_custom_command(TARGET klogg POST_BUILD
+        COMMAND cmake -E copy $<TARGET_FILE:crashpad_handler> $<TARGET_FILE_DIR:klogg>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Copy crash_handler"
+    )
+endif()
+
 if (WIN32)
 
     target_sources(klogg PRIVATE ${ProductVersionResourceFiles})

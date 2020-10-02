@@ -32,10 +32,15 @@
 #include <QHBoxLayout>
 #include <QJsonDocument>
 #include <QLabel>
+#include <QProcess>
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QTextEdit>
 #include <QVBoxLayout>
+
+#ifdef Q_OS_MAC
+#include "client/crash_report_database.h"
+#endif
 
 namespace {
 
@@ -97,27 +102,13 @@ std::vector<QJsonDocument> extractMessage( const QByteArray& envelopeString )
     return messages;
 }
 
-int askUserConfirmation( sentry_envelope_t* envelope, void* )
+QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const QString& reportPath )
 {
-    size_t size_out = 0;
-    char* rawEnvelope = sentry_envelope_serialize( envelope, &size_out );
-    LOG( logINFO ) << "raw envelope:" << rawEnvelope;
-    auto envelopeString = QByteArray( rawEnvelope );
-    sentry_free( rawEnvelope );
-
-    const auto messages = extractMessage( envelopeString );
-    QString formattedReport;
-    for ( const auto& message : messages ) {
-        formattedReport.append( QString::fromUtf8( message.toJson( QJsonDocument::Indented ) ) );
-    }
-
-    LOG( logINFO ) << "Envelope: " << formattedReport;
-
     auto message = std::make_unique<QLabel>();
-    message->setText( "During last run klogg has encountered an unexpected error." );
+    message->setText( "During last run application has encountered an unexpected error." );
 
     auto crashReportHeader = std::make_unique<QLabel>();
-    crashReportHeader->setText( "Klogg has collected following crash report:" );
+    crashReportHeader->setText( "We collected the following crash report:" );
 
     auto report = std::make_unique<QTextEdit>();
     report->setReadOnly( true );
@@ -125,8 +116,8 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     report->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
 
     auto sendReportLabel = std::make_unique<QLabel>();
-    sendReportLabel->setText(
-        "Klogg may send this report to sentry.io for developers to analyze and fix the issue" );
+    sendReportLabel->setText( "Application can send this report to sentry.io for developers to "
+                              "analyze and fix the issue" );
 
     auto privacyPolicy = std::make_unique<QLabel>();
     privacyPolicy->setText(
@@ -139,9 +130,8 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
     auto exploreButton = std::make_unique<QPushButton>();
     exploreButton->setText( "Open report directory" );
     exploreButton->setFlat( true );
-    QObject::connect( exploreButton.get(), &QPushButton::clicked, [] {
-        showPathInFileExplorer( sentryDatabasePath().append( "/last_crash" ) );
-    } );
+    QObject::connect( exploreButton.get(), &QPushButton::clicked,
+                      [&reportPath] { showPathInFileExplorer( reportPath ); } );
 
     auto privacyLayout = std::make_unique<QHBoxLayout>();
     privacyLayout->addWidget( privacyPolicy.release() );
@@ -170,9 +160,63 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
 
     confirmationDialog->setLayout( layout.release() );
 
-    auto confirmationResult = confirmationDialog->exec();
-    return confirmationResult == QDialog::Accepted ? 0 : 1;
+    return static_cast<QDialog::DialogCode>( confirmationDialog->exec() );
 }
+
+int askUserConfirmation( sentry_envelope_t* envelope, void* )
+{
+    size_t size_out = 0;
+    char* rawEnvelope = sentry_envelope_serialize( envelope, &size_out );
+    auto envelopeString = QByteArray( rawEnvelope );
+    sentry_free( rawEnvelope );
+
+    const auto messages = extractMessage( envelopeString );
+    QString formattedReport;
+    for ( const auto& message : messages ) {
+        formattedReport.append( QString::fromUtf8( message.toJson( QJsonDocument::Indented ) ) );
+    }
+
+    return askUserConfirmation( formattedReport, sentryDatabasePath().append( "/last_crash" ) )
+                   == QDialog::Accepted
+               ? 0
+               : 1;
+}
+
+#ifdef Q_OS_MAC
+void checkCrashpadReports( const QString& databasePath )
+{
+    using namespace crashpad;
+
+    auto database = CrashReportDatabase::InitializeWithoutCreating(
+        base::FilePath{ databasePath.toStdString() } );
+
+    std::vector<CrashReportDatabase::Report> pendingReports;
+    database->GetCompletedReports( &pendingReports );
+    LOG( logINFO ) << "Pending reports " << pendingReports.size();
+
+    const auto stackwalker = QCoreApplication::applicationDirPath() + "/minidump_stackwalk";
+    for ( const auto& report : pendingReports ) {
+        if ( !report.uploaded ) {
+            const auto reportFile = QString::fromStdString( report.file_path.value() );
+
+            QProcess stackProcess;
+            stackProcess.start( stackwalker, QStringList() << reportFile );
+            stackProcess.waitForFinished();
+
+            QString formattedReport = reportFile;
+            formattedReport.append( QChar::LineFeed )
+                .append( QString::fromUtf8( stackProcess.readAllStandardOutput() ) );
+
+            if ( QDialog::Accepted == askUserConfirmation( formattedReport, reportFile ) ) {
+                database->RequestUpload( report.uuid );
+            }
+            else {
+                database->DeleteReport( report.uuid );
+            }
+        }
+    }
+}
+#endif
 
 } // namespace
 
@@ -193,7 +237,14 @@ CrashHandler::CrashHandler()
 
     sentry_options_set_dsn( sentryOptions, DSN );
 
+#ifdef Q_OS_MAC
+    // klogg asks confirmation and sends reports using crashpad
+    sentry_options_set_require_user_consent( sentryOptions, true );
+#else
+    // klogg intercepts all sentry sends and asks confirmation
     sentry_options_set_require_user_consent( sentryOptions, false );
+#endif
+
     sentry_options_set_auto_session_tracking( sentryOptions, false );
 
     sentry_options_set_symbolize_stacktraces( sentryOptions, true );
@@ -211,6 +262,10 @@ CrashHandler::CrashHandler()
 
     sentry_set_tag( "commit", kloggCommit().data() );
     sentry_set_tag( "qt", qVersion() );
+
+#ifdef Q_OS_MAC
+    checkCrashpadReports( dumpPath );
+#endif
 }
 
 CrashHandler::~CrashHandler()

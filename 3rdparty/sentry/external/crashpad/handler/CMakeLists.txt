@@ -109,7 +109,5 @@ if(NOT IOS)
     set_property(TARGET crashpad_handler PROPERTY EXPORT_NAME handler)
     add_executable(crashpad::handler ALIAS crashpad_handler)
 
-    install(TARGETS crashpad_handler EXPORT crashpad_export
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-    )
+    crashpad_install_target(crashpad_handler)
 endif()

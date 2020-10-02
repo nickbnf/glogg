@@ -47,6 +47,8 @@ if (NOT APPLE)
         target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
         target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
     endif()
+else()
+    LIST(APPEND MAIN_LIBS crashpad_client)
 endif()
 
 target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
@@ -56,13 +58,13 @@ target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 
 if (NOT WIN32)
     add_custom_command(TARGET klogg POST_BUILD
-        COMMAND ${DUMP_SYMS} $<TARGET_FILE:klogg> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg.sym
+        COMMAND ${SYMS_TOOLS}/dump_syms $<TARGET_FILE:klogg> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg.sym
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Generating symbols for $<TARGET_FILE:klogg>"
     )
 
     add_custom_command(TARGET klogg_portable POST_BUILD
-        COMMAND ${DUMP_SYMS} $<TARGET_FILE:klogg_portable> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg_portable.sym
+        COMMAND ${SYMS_TOOLS}/dump_syms $<TARGET_FILE:klogg_portable> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg_portable.sym
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Generating symbols for $<TARGET_FILE:klogg_portable>"
     )
@@ -73,6 +75,11 @@ if (APPLE)
         COMMAND cmake -E copy $<TARGET_FILE:crashpad_handler> $<TARGET_FILE_DIR:klogg>
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Copy crash_handler"
+    )
+    add_custom_command(TARGET klogg POST_BUILD
+        COMMAND cmake -E copy  ${SYMS_TOOLS}/minidump_stackwalk $<TARGET_FILE_DIR:klogg>
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Copy stackwalk"
     )
 endif()
 
@@ -101,8 +108,19 @@ elseif (APPLE)
 
 endif()
 
+
+
 install(TARGETS
     klogg
     DESTINATION bin
     BUNDLE DESTINATION .
 )
+
+if(APPLE)
+    install(PROGRAMS
+        ${SYMS_TOOLS}/minidump_stackwalk
+        $<TARGET_FILE:crashpad_handler>
+        DESTINATION $<TARGET_BUNDLE_CONTENT_DIR:klogg>/MacOS
+    )
+endif()
+

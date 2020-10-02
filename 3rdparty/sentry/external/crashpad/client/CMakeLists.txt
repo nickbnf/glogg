@@ -52,7 +52,7 @@ if(WIN32)
     )
 endif()
 
-target_include_directories(crashpad_client INTERFACE
+target_include_directories(crashpad_client SYSTEM INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
     "$<INSTALL_INTERFACE:include/crashpad/client>"
 )

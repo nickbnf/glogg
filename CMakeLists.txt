@@ -75,11 +75,11 @@ if(MSVC)
 endif(MSVC)
 
 if (WIN32)
-    set(DUMP_SYMS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/win/dump_syms.exe)
+    set(SYMS_TOOLS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/win)
 elseif(APPLE)
-    set(DUMP_SYMS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/mac/dump_syms)
+    set(SYMS_TOOLS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/mac)
 else()
-    set(DUMP_SYMS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/linux/dump_syms)
+    set(SYMS_TOOLS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/sentry/dump_syms/linux)
 endif()
 
 # standard compiler warnings

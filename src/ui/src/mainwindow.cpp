@@ -55,14 +55,18 @@
 #include <QClipboard>
 #include <QCloseEvent>
 #include <QDesktopWidget>
+#include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QInputDialog>
+#include <QListView>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QProgressDialog>
 #include <QScreen>
+#include <QSortFilterProxyModel>
+#include <QStringListModel>
 #include <QTemporaryFile>
 #include <QTextBrowser>
 #include <QToolBar>
@@ -1678,28 +1682,68 @@ void MainWindow::selectOpenedFile()
     std::transform( openedFiles.begin(), openedFiles.end(), std::back_inserter( filesToShow ),
                     []( const auto& f ) { return f.nativeFullPath(); } );
 
-    auto currentIndex = 0;
+    auto selectFileDialog = std::make_unique<QDialog>( this );
+    selectFileDialog->setWindowTitle( "klogg -- switch to file" );
+    selectFileDialog->setMinimumWidth( 800 );
+    selectFileDialog->setMinimumHeight( 600 );
 
-    if ( const auto crawler = currentCrawlerWidget() ) {
-        const auto currentPath = session_.getFilename( crawler );
-        const auto currentItem = std::find_if( openedFiles.begin(), openedFiles.end(),
-                                               FullPathComparator( currentPath ) );
-        if ( currentItem != openedFiles.end() ) {
-            currentIndex = static_cast<int>( std::distance( openedFiles.begin(), currentItem ) );
-        }
-    }
+    auto filesModel = std::make_unique<QStringListModel>( filesToShow, selectFileDialog.get() );
+    auto filteredModel = std::make_unique<QSortFilterProxyModel>( selectFileDialog.get() );
+    filteredModel->setSourceModel( filesModel.get() );
 
-    bool ok = false;
-    const auto pathToSelect = QInputDialog::getItem( this, "Switch to file", "Select opened file",
-                                                     filesToShow, currentIndex, false, &ok );
-    if ( ok ) {
-        const auto selectedFile = std::find_if( openedFiles.begin(), openedFiles.end(),
-                                                FullPathNativeComparator( pathToSelect ) );
+    auto filesView = std::make_unique<QListView>();
+    filesView->setModel( filteredModel.get() );
+    filesView->setEditTriggers( QAbstractItemView::NoEditTriggers );
+    filesView->setSelectionMode( QAbstractItemView::SingleSelection );
 
-        if ( selectedFile != openedFiles.end() ) {
-            loadFile( selectedFile->fullPath() );
-        }
-    }
+    auto filterEdit = std::make_unique<QLineEdit>();
+    auto buttonBox
+        = std::make_unique<QDialogButtonBox>( QDialogButtonBox::Ok | QDialogButtonBox::Cancel );
+
+    connect( buttonBox.get(), &QDialogButtonBox::accepted, selectFileDialog.get(),
+             &QDialog::accept );
+    connect( buttonBox.get(), &QDialogButtonBox::rejected, selectFileDialog.get(),
+             &QDialog::reject );
+
+    connect( filterEdit.get(), &QLineEdit::textEdited,
+             [model = filteredModel.get(), view = filesView.get()]( const QString& filter ) {
+                 model->setFilterWildcard( filter );
+                 model->invalidate();
+                 view->selectionModel()->select( model->index( 0, 0 ),
+                                                 QItemSelectionModel::SelectCurrent );
+             } );
+
+    QTimer::singleShot( 0, [edit = filterEdit.get()]() { edit->setFocus(); } );
+
+    connect( selectFileDialog.get(), &QDialog::finished,
+             [this, openedFiles, dialog = selectFileDialog.get(), model = filteredModel.get(),
+              view = filesView.get()]( auto result ) {
+                 dialog->deleteLater();
+                 if ( result != QDialog::Accepted || !view->selectionModel()->hasSelection() ) {
+                     return;
+                 }
+                 const auto selectedPath
+                     = model->data( view->selectionModel()->selectedIndexes().front() ).toString();
+                 const auto selectedFile = std::find_if( openedFiles.begin(), openedFiles.end(),
+                                                         FullPathNativeComparator( selectedPath ) );
+
+                 if ( selectedFile != openedFiles.end() ) {
+                     loadFile( selectedFile->fullPath() );
+                 }
+             } );
+
+    auto layout = std::make_unique<QVBoxLayout>();
+    layout->addWidget( filesView.release() );
+    layout->addWidget( filterEdit.release() );
+    layout->addWidget( buttonBox.release() );
+
+    selectFileDialog->setLayout( layout.release() );
+    selectFileDialog->setModal( true );
+    selectFileDialog->open();
+
+    filesModel.release();
+    filteredModel.release();
+    selectFileDialog.release();
 }
 
 void MainWindow::showInfoLabels( bool show )
@@ -1821,12 +1865,12 @@ void MainWindow::reportIssue() const
 void MainWindow::generateDump()
 {
     const auto userAction = QMessageBox::warning(
-            this, "klogg - generate crash dump",
-            QString( "This will shutdown klogg and generate diagnostic crash dump. Continue?" ),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
+        this, "klogg - generate crash dump",
+        QString( "This will shutdown klogg and generate diagnostic crash dump. Continue?" ),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
 
-        if ( userAction == QMessageBox::Yes ) {
-            int *a = nullptr;
-            *a = 1;
-        }
+    if ( userAction == QMessageBox::Yes ) {
+        int* a = nullptr;
+        *a = 1;
+    }
 }

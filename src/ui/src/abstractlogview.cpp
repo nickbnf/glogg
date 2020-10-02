@@ -71,6 +71,7 @@
 
 #include "configuration.h"
 #include "highlighterset.h"
+#include "highlightersmenu.h"
 #include "logmainview.h"
 #include "overview.h"
 #include "quickfind.h"
@@ -345,29 +346,13 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         if ( config.mainRegexpType() != SearchRegexpType::ExtendedRegexp )
             addToSearchAction_->setEnabled( false );
 
-        const auto& highlightersCollection = HighlighterSetCollection::get();
-        const auto& highlighterSets = highlightersCollection.highlighterSets();
-        const auto currentSetId = highlightersCollection.currentSetId();
-
         auto highlightersActionGroup = new QActionGroup( this );
         connect( highlightersActionGroup, &QActionGroup::triggered, this,
                  &AbstractLogView::setHighlighterSet );
 
         highlightersMenu_->clear();
 
-        auto noneAction = highlightersMenu_->addAction( "None" );
-        noneAction->setActionGroup( highlightersActionGroup );
-        noneAction->setCheckable( true );
-        noneAction->setChecked( !highlightersCollection.hasSet( currentSetId ) );
-
-        highlightersMenu_->addSeparator();
-        for ( const auto& highlighter : qAsConst( highlighterSets ) ) {
-            auto setAction = highlightersMenu_->addAction( highlighter.name() );
-            setAction->setActionGroup( highlightersActionGroup );
-            setAction->setCheckable( true );
-            setAction->setChecked( currentSetId == highlighter.id() );
-            setAction->setData( highlighter.id() );
-        }
+        populateHighlightersMenu( highlightersMenu_, highlightersActionGroup );
 
         // Display the popup (blocking)
         popupMenu_->exec( QCursor::pos() );
@@ -1779,7 +1764,8 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 
                             const auto matchPart
                                 = logLine.midRef( match.startColumn(), match.length() );
-                            const auto expandedMatchLength = untabify( matchPart, expandedPrefixLength ).length();
+                            const auto expandedMatchLength
+                                = untabify( matchPart, expandedPrefixLength ).length();
                             auto lengthDelta = expandedMatchLength - matchPart.length();
 
                             return HighlightedMatch{ match.startColumn() + startDelta,
@@ -1952,11 +1938,7 @@ void AbstractLogView::disableFollow()
 
 void AbstractLogView::setHighlighterSet( QAction* action )
 {
-    auto setId = action->data().toString();
-    auto& highlighterSets = HighlighterSetCollection::get();
-    highlighterSets.setCurrentSet( setId );
-    highlighterSets.save();
-
+    saveCurrentHighlighterFromAction( action );
     textAreaCache_.invalid_ = true;
     update();
 }

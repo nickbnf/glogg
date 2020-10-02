@@ -82,6 +82,7 @@
 #include "encodings.h"
 #include "favoritefiles.h"
 #include "highlightersdialog.h"
+#include "highlightersmenu.h"
 #include "klogg_version.h"
 #include "log.h"
 #include "openfilehelper.h"
@@ -381,9 +382,10 @@ void MainWindow::createActions()
     stopAction->setEnabled( true );
     signalMux_.connect( stopAction, SIGNAL( triggered() ), SLOT( stopLoading() ) );
 
-    highlightersAction = new QAction( tr( "&Highlighters..." ), this );
-    highlightersAction->setStatusTip( tr( "Show the Highlighters box" ) );
-    connect( highlightersAction, &QAction::triggered, [this]( auto ) { this->highlighters(); } );
+    editHighlightersAction = new QAction( tr( "Configure &highlighters..." ), this );
+    editHighlightersAction->setStatusTip( tr( "Show highlighters configuration" ) );
+    connect( editHighlightersAction, &QAction::triggered,
+             [this]( auto ) { this->editHighlighters(); } );
 
     optionsAction = new QAction( tr( "&Options..." ), this );
     optionsAction->setStatusTip( tr( "Show the Options box" ) );
@@ -500,7 +502,13 @@ void MainWindow::createMenus()
     viewMenu->addAction( reloadAction );
 
     toolsMenu = menuBar()->addMenu( tr( "&Tools" ) );
-    toolsMenu->addAction( highlightersAction );
+
+    highlightersMenu = toolsMenu->addMenu( "Highlighters" );
+    connect(highlightersMenu, &QMenu::aboutToShow, [this]()
+    {
+        setCurrentHighlighterAction(highlightersActionGroup);
+    });
+
     toolsMenu->addSeparator();
     toolsMenu->addAction( optionsAction );
 
@@ -861,10 +869,13 @@ void MainWindow::openUrl()
 }
 
 // Opens the 'Highlighters' dialog box
-void MainWindow::highlighters()
+void MainWindow::editHighlighters()
 {
     HighlightersDialog dialog( this );
     signalMux_.connect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
+
+    connect( &dialog, &HighlightersDialog::optionsChanged, [this]() { updateHighlightersMenu(); } );
+
     dialog.exec();
     signalMux_.disconnect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
 }
@@ -1210,7 +1221,9 @@ void MainWindow::changeEvent( QEvent* event )
     else if ( event->type() == QEvent::StyleChange ) {
         QTimer::singleShot( 0, [this] {
             loadIcons();
+            updateOpenedFilesMenu();
             updateFavoritesMenu();
+            updateHighlightersMenu();
         } );
     }
 
@@ -1558,6 +1571,32 @@ void MainWindow::updateOpenedFilesMenu()
     selectOpenFileAction->setDisabled( files.empty() );
 }
 
+void MainWindow::updateHighlightersMenu()
+{
+    highlightersMenu->clear();
+    if ( highlightersActionGroup ) {
+        highlightersActionGroup->deleteLater();
+    }
+
+    highlightersActionGroup = new QActionGroup( this );
+    connect( highlightersActionGroup, &QActionGroup::triggered, this,
+             &MainWindow::setCurrentHighlighter );
+
+    highlightersMenu->addAction( editHighlightersAction );
+    highlightersMenu->addSeparator();
+
+    populateHighlightersMenu( highlightersMenu, highlightersActionGroup );
+}
+
+void MainWindow::setCurrentHighlighter( QAction* action )
+{
+    saveCurrentHighlighterFromAction( action );
+
+    if ( auto current = currentCrawlerWidget() ) {
+        current->applyConfiguration();
+    }
+}
+
 void MainWindow::updateFavoritesMenu()
 {
     favoritesMenu->clear();
@@ -1788,10 +1827,11 @@ void MainWindow::readSettings()
     RecentFiles::getSynced();
     updateRecentFileActions();
 
-    HighlighterSetCollection::getSynced();
-
     FavoriteFiles::getSynced();
     updateFavoritesMenu();
+
+    HighlighterSetCollection::getSynced();
+    updateHighlightersMenu();
 }
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )

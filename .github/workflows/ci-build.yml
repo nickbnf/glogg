@@ -73,7 +73,7 @@ jobs:
       shell: sh
       run: |
         echo "::set-env name=KLOGG_WORKSPACE::${{ github.workspace }}"
-        echo "::set-env name=KLOGG_VERSION::20.9.0.$((${{ github.run_number }} + 717))"
+        echo "::set-env name=KLOGG_VERSION::20.10.0.$((${{ github.run_number }} + 717))"
         echo "::set-env name=KLOGG_ARCH::${{ matrix.config.arch }}"
 
     - name: Install curl
@@ -191,7 +191,7 @@ jobs:
     - name: Set workspace environment
       shell: sh
       run: |
-        echo "::set-env name=KLOGG_VERSION::20.9.0.$((${{ github.run_number }} + 717))"
+        echo "::set-env name=KLOGG_VERSION::20.10.0.$((${{ github.run_number }} + 717))"
 
     - uses: actions/download-artifact@v2
 

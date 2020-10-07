@@ -468,8 +468,27 @@ void CrawlerWidget::updateLineNumberHandler( LineNumber line )
 
 void CrawlerWidget::markLinesFromMain( const std::vector<LineNumber>& lines )
 {
+    std::vector<LineNumber> alreadyMarkedLines;
+    alreadyMarkedLines.reserve( lines.size() );
+
+    bool markAdded = false;
     for ( const auto& line : lines ) {
-        if ( line < logData_->getNbLine() ) {
+        if ( line > logData_->getNbLine() ) {
+            continue;
+        }
+
+        if ( !logFilteredData_->lineTypeByLine( line ).testFlag(
+                 AbstractLogData::LineTypeFlags::Mark ) ) {
+            logFilteredData_->addMark( line );
+            markAdded = true;
+        }
+        else {
+            alreadyMarkedLines.push_back( line );
+        }
+    }
+
+    if ( !markAdded ) {
+        for ( const auto& line : alreadyMarkedLines ) {
             logFilteredData_->toggleMark( line );
         }
     }
@@ -487,22 +506,19 @@ void CrawlerWidget::markLinesFromMain( const std::vector<LineNumber>& lines )
 
 void CrawlerWidget::markLinesFromFiltered( const std::vector<LineNumber>& lines )
 {
-    for ( const auto& line : lines ) {
-        if ( line < logData_->getNbLine() ) {
-            const auto line_in_file = logFilteredData_->getMatchingLineNumber( line );
-            logFilteredData_->toggleMark( line_in_file );
-        }
-    }
+    std::vector<LineNumber> linesInMain;
+    linesInMain.reserve( lines.size() );
+    std::transform( lines.begin(), lines.end(), std::back_inserter( linesInMain ),
+                    [this]( const auto& filteredLine ) {
+                        if ( filteredLine < logData_->getNbLine() ) {
+                            return logFilteredData_->getMatchingLineNumber( filteredLine );
+                        }
+                        else {
+                            return maxValue<LineNumber>();
+                        }
+                    } );
 
-    // Recompute the content of both window.
-    filteredView->updateData();
-    logMainView->updateData();
-
-    // Update the match overview
-    overview_.updateData( logData_->getNbLine() );
-
-    // Also update the top window for the coloured bullets.
-    update();
+    markLinesFromMain( linesInMain );
 }
 
 void CrawlerWidget::applyConfiguration()

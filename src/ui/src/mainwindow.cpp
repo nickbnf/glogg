@@ -833,14 +833,19 @@ void MainWindow::openInEditor()
 void MainWindow::onClipboardDataChanged()
 {
     auto clipboard = QGuiApplication::clipboard();
-    auto text = clipboard->text();
+    QString subtype;
+    auto text = clipboard->text(subtype);
+
+    LOG(logINFO) << "Clipboard data type: " << subtype;
+
     openClipboardAction->setEnabled( !text.isEmpty() );
 }
 
 void MainWindow::openClipboard()
 {
     auto clipboard = QGuiApplication::clipboard();
-    auto text = clipboard->text();
+    QString subtype;
+    auto text = clipboard->text(subtype);
     if ( text.isEmpty() ) {
         return;
     }

@@ -189,6 +189,12 @@ jobs:
         name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: './build/packages/*'
 
+    - uses: actions/upload-artifact@v2
+      if: ${{ matrix.config.os == 'windows' }}
+      with:
+        name: sym-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        path: './build/output/klogg*.pdb'
+
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
@@ -250,5 +256,5 @@ jobs:
       run: |
         sentry-cli upload-dif ./packages-macos-x64/klogg.sym 
         sentry-cli upload-dif ./packages-ubuntu-x64/klogg.sym 
-        sentry-cli upload-dif ./packages-windows-x64/klogg*.pdb
-        sentry-cli upload-dif ./packages-windows-x86/klogg*.pdb
+        sentry-cli upload-dif ./sym-windows-x64/klogg*.pdb
+        sentry-cli upload-dif ./sym-windows-x86/klogg*.pdb

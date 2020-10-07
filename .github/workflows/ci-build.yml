@@ -161,6 +161,8 @@ jobs:
         cpack --verbose -G "DragNDrop"
         codesign -v -f -o runtime --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./packages/*
         cp ./output/klogg.sym ./packages/klogg.sym
+        cp -a ./output/klogg.dSym ./packages/
+        cp -a ./output/klogg.app ./packages/
 
     - name: Win portable
       if: ${{ matrix.config.os == 'windows' }} 
@@ -180,20 +182,14 @@ jobs:
       shell: cmd
       run: |
         md build\packages
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.7z build\packages\ /y
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.7z build\packages\ /y
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip build\packages\ /y
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip build\packages\ /y
         xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe build\packages\ /y
 
     - uses: actions/upload-artifact@v2
       with:
         name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: './build/packages/*'
-
-    - uses: actions/upload-artifact@v2
-      if: ${{ matrix.config.os == 'windows' }}
-      with:
-        name: sym-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: './build/output/klogg*.pdb'
 
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
@@ -251,10 +247,24 @@ jobs:
         sentry-cli releases new $KLOGG_VERSION
         sentry-cli releases set-commits --auto $KLOGG_VERSION
 
-    - name: Upload symbols
+    - name: Upload symbols linux
       shell: sh
       run: |
-        sentry-cli upload-dif ./packages-macos-x64/klogg.sym 
         sentry-cli upload-dif ./packages-ubuntu-x64/klogg.sym 
-        sentry-cli upload-dif ./sym-windows-x64/klogg*.pdb
-        sentry-cli upload-dif ./sym-windows-x86/klogg*.pdb
+
+    - name: Upload symbols mac
+      shell: sh
+      run: |
+        sentry-cli upload-dif ./packages-macos-x64/klogg.app/Contents/MacOS/klogg ./packages-macos-x64/klogg.dSym
+
+    - name: Upload symbols win x64
+      shell: sh
+      run: |
+        sentry-cli upload-dif ./packages-windows-x64/klogg-$KLOGG_VERSION-x64-pdb.zip
+
+    - name: Upload symbols win x86
+      shell: sh
+      run: |
+        sentry-cli upload-dif ./packages-windows-x86/klogg-$KLOGG_VERSION-x86-pdb.zip 
+
+

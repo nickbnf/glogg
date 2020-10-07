@@ -1,1 +1,4 @@
-.\release\*.pdb
+.\release\klogg.exe
+.\release\klogg.pdb
+.\release\klogg_portable.exe
+.\release\klogg_portable.pdb

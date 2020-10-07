@@ -55,6 +55,7 @@ target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
 
 if (NOT WIN32)
+
     add_custom_command(TARGET klogg POST_BUILD
         COMMAND ${SYMS_TOOLS}/dump_syms $<TARGET_FILE:klogg> > ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg.sym
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -66,6 +67,22 @@ if (NOT WIN32)
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Generating symbols for $<TARGET_FILE:klogg_portable>"
     )
+
+    if (APPLE)
+        find_program (DSYMUTIL dsymutil)
+        add_custom_command(TARGET klogg POST_BUILD
+            COMMAND ${DSYMUTIL} --out=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg.dSym $<TARGET_FILE:klogg>
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Generating symbols for $<TARGET_FILE:klogg>"
+        )
+
+        add_custom_command(TARGET klogg_portable POST_BUILD
+            COMMAND ${DSYMUTIL} --out=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/klogg_portable.dSym $<TARGET_FILE:klogg_portable>
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Generating symbols for $<TARGET_FILE:klogg_portable>"
+        )
+
+    endif()
 
     add_custom_command(TARGET klogg POST_BUILD
         COMMAND cmake -E copy $<TARGET_FILE:crashpad_handler> $<TARGET_FILE_DIR:klogg>/klogg_crashpad_handler

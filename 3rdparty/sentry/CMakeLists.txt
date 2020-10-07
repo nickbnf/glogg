@@ -263,7 +263,7 @@ endif()
 
 
 target_include_directories(sentry
-	PUBLIC
+	SYSTEM PUBLIC
 		"$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
 		"$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 	PRIVATE

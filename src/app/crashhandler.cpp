@@ -38,9 +38,7 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-#ifdef Q_OS_MAC
 #include "client/crash_report_database.h"
-#endif
 
 namespace {
 
@@ -182,22 +180,36 @@ int askUserConfirmation( sentry_envelope_t* envelope, void* )
                : 1;
 }
 
-#ifdef Q_OS_MAC
 void checkCrashpadReports( const QString& databasePath )
 {
     using namespace crashpad;
 
+#ifdef Q_OS_WIN
+    auto database = CrashReportDatabase::InitializeWithoutCreating(
+        base::FilePath{ databasePath.toStdWString() } );
+#else
     auto database = CrashReportDatabase::InitializeWithoutCreating(
         base::FilePath{ databasePath.toStdString() } );
+#endif
 
     std::vector<CrashReportDatabase::Report> pendingReports;
     database->GetCompletedReports( &pendingReports );
     LOG( logINFO ) << "Pending reports " << pendingReports.size();
 
-    const auto stackwalker = QCoreApplication::applicationDirPath() + "/minidump_stackwalk";
+#ifdef Q_OS_WIN
+    const auto stackwalker = QCoreApplication::applicationDirPath() + "/klogg_minidump_dump.exe";
+#else
+    const auto stackwalker = QCoreApplication::applicationDirPath() + "/klogg_minidump_dump";
+#endif
+
     for ( const auto& report : pendingReports ) {
         if ( !report.uploaded ) {
+#ifdef Q_OS_WIN
+            const auto reportFile = QString::fromStdWString( report.file_path.value() );
+
+#else
             const auto reportFile = QString::fromStdString( report.file_path.value() );
+#endif
 
             QProcess stackProcess;
             stackProcess.start( stackwalker, QStringList() << reportFile );
@@ -216,8 +228,6 @@ void checkCrashpadReports( const QString& databasePath )
         }
     }
 }
-#endif
-
 } // namespace
 
 CrashHandler::CrashHandler()
@@ -230,20 +240,19 @@ CrashHandler::CrashHandler()
     const auto dumpPath = sentryDatabasePath();
 
 #ifdef Q_OS_WIN
+    const auto handlerPath = QCoreApplication::applicationDirPath() + "/klogg_crashpad_handler.exe";
     sentry_options_set_database_pathw( sentryOptions, dumpPath.toStdWString().c_str() );
+    sentry_options_set_handler_pathw( sentryOptions, handlerPath.toStdWString().c_str() );
 #else
+    const auto handlerPath = QCoreApplication::applicationDirPath() + "/klogg_crashpad_handler";
     sentry_options_set_database_path( sentryOptions, dumpPath.toStdString().c_str() );
+    sentry_options_set_handler_path( sentryOptions, handlerPath.toStdString().c_str() );
 #endif
 
     sentry_options_set_dsn( sentryOptions, DSN );
 
-#ifdef Q_OS_MAC
     // klogg asks confirmation and sends reports using crashpad
     sentry_options_set_require_user_consent( sentryOptions, true );
-#else
-    // klogg intercepts all sentry sends and asks confirmation
-    sentry_options_set_require_user_consent( sentryOptions, false );
-#endif
 
     sentry_options_set_auto_session_tracking( sentryOptions, false );
 
@@ -263,9 +272,7 @@ CrashHandler::CrashHandler()
     sentry_set_tag( "commit", kloggCommit().data() );
     sentry_set_tag( "qt", qVersion() );
 
-#ifdef Q_OS_MAC
     checkCrashpadReports( dumpPath );
-#endif
 }
 
 CrashHandler::~CrashHandler()

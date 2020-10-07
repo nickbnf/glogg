@@ -22,12 +22,7 @@ add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 
-if (APPLE)
 set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)
-else()
-set(SENTRY_BACKEND "breakpad" CACHE INTERNAL "" FORCE)
-endif()
-
 set(SENTRY_BUILD_EXAMPLES ON CACHE INTERNAL "" FORCE)
 set(CRASHPAD_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
 set(CRASHPAD_ENABLE_INSTALL_DEV OFF CACHE INTERNAL "" FORCE)

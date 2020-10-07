@@ -8,13 +8,16 @@ xcopy %KLOGG_WORKSPACE%\build\output\klogg_portable.exe %KLOGG_WORKSPACE%\releas
 xcopy %KLOGG_WORKSPACE%\build\output\klogg_portable.pdb %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\build\output\klogg.exe %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\build\output\klogg.pdb %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\generated\documentation.html %KLOGG_WORKSPACE%\release\ /y
+
+xcopy %KLOGG_WORKSPACE%\build\output\klogg_crashpad_handler.exe %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\build\output\klogg_minidump_dump.exe %KLOGG_WORKSPACE%\release\ /y
 
 xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc.dll %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc.pdb %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc_proxy.dll %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc_proxy.pdb %KLOGG_WORKSPACE%\release\ /y
 
+xcopy %KLOGG_WORKSPACE%\build\generated\documentation.html %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\COPYING %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\NOTICE %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\README.md %KLOGG_WORKSPACE%\release\ /y

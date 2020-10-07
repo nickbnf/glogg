@@ -40,15 +40,13 @@ set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 set_property(TARGET klogg_portable PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-set(MAIN_LIBS ui cli11 singleapp sentry)
+set(MAIN_LIBS ui cli11 singleapp sentry crashpad_client)
 if (NOT APPLE)
     if (TBB_BUILD_TBBMALLOC)
         LIST(APPEND MAIN_LIBS klogg_tbbmalloc_proxy)
         target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
         target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
     endif()
-else()
-    LIST(APPEND MAIN_LIBS crashpad_client)
 endif()
 
 target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
@@ -68,20 +66,42 @@ if (NOT WIN32)
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Generating symbols for $<TARGET_FILE:klogg_portable>"
     )
-endif()
 
-if (APPLE)
     add_custom_command(TARGET klogg POST_BUILD
-        COMMAND cmake -E copy $<TARGET_FILE:crashpad_handler> $<TARGET_FILE_DIR:klogg>
+        COMMAND cmake -E copy $<TARGET_FILE:crashpad_handler> $<TARGET_FILE_DIR:klogg>/klogg_crashpad_handler
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Copy crash_handler"
     )
+
     add_custom_command(TARGET klogg POST_BUILD
-        COMMAND cmake -E copy  ${SYMS_TOOLS}/minidump_stackwalk $<TARGET_FILE_DIR:klogg>
+        COMMAND cmake -E copy  ${SYMS_TOOLS}/minidump_dump $<TARGET_FILE_DIR:klogg>/klogg_minidump_dump
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Copy stackwalk"
     )
+else()
+    add_custom_command(TARGET klogg POST_BUILD
+        COMMAND cmake -E copy $<TARGET_FILE:crashpad_handler> $<TARGET_FILE_DIR:klogg>/klogg_crashpad_handler.exe
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Copy crash_handler"
+    )
+
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        add_custom_command(TARGET klogg POST_BUILD
+            COMMAND cmake -E copy  ${SYMS_TOOLS}/minidump_dump_x64.exe $<TARGET_FILE_DIR:klogg>/klogg_minidump_dump.exe
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Copy stackwalk"
+        )
+    else()
+        add_custom_command(TARGET klogg POST_BUILD
+            COMMAND cmake -E copy  ${SYMS_TOOLS}/minidump_dump_x86.exe $<TARGET_FILE_DIR:klogg>/klogg_minidump_dump.exe
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Copy stackwalk"
+        )
+    endif()
 endif()
+
+
+
 
 if (WIN32)
 
@@ -118,9 +138,15 @@ install(TARGETS
 
 if(APPLE)
     install(PROGRAMS
-        ${SYMS_TOOLS}/minidump_stackwalk
-        $<TARGET_FILE:crashpad_handler>
+        $<TARGET_FILE_DIR:klogg>/klogg_minidump_dump
+        $<TARGET_FILE_DIR:klogg>/klogg_crashpad_handler
         DESTINATION $<TARGET_BUNDLE_CONTENT_DIR:klogg>/MacOS
+    )
+elseif(NOT WIN32)
+    install(PROGRAMS
+        $<TARGET_FILE_DIR:klogg>/klogg_minidump_dump
+        $<TARGET_FILE_DIR:klogg>/klogg_crashpad_handler
+        DESTINATION bin
     )
 endif()
 

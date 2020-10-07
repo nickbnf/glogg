@@ -1,9 +1,11 @@
 ---
 title: "Version 19.2 released"
-date: 2018-01-27T15:42:17+01:00
+date: 2019-02-08T15:42:17+01:00
 anchor: "v19_2"
 weight: 70
 bookhidden: true
+aliases:
+    - /docs/news/release_19.2
 ---
 
 ## Version 19.2
@@ -28,4 +30,5 @@ This release has following changes:
  - updated 3rdparty libraries to latest versions
   
 Download on Github: [klogg 19.2](https://github.com/variar/klogg/releases/tag/v19.2)
+<!--more--> 
 

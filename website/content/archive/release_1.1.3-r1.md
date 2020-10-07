@@ -1,9 +1,12 @@
 ---
 title: "Version 1.1.3-r1 released"
-date: 2018-01-27T15:42:17+01:00
+date: 2017-03-25T15:42:17+01:00
 anchor: "v1_1_3-r1"
 weight: 90
 bookhidden: true
+description: ""
+aliases:
+    - /docs/news/release_1.1.3-r1
 ---
 
 ## Version 1.1.3-r1
@@ -17,3 +20,4 @@ Changes:
  - Use several cores during search
 
 Download on Github: [klogg 1.1.3-r1](https://github.com/variar/klogg/releases/tag/v1.1.3_r1)
+<!--more--> 

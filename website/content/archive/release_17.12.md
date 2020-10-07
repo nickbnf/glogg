@@ -1,9 +1,11 @@
 ---
 title: "Version 17.12 released"
-date: 2018-01-27T15:42:17+01:00
+date: 2017-12-11T15:42:17+01:00
 anchor: "v17_12"
 weight: 80
 bookhidden: true
+aliases:
+    - /docs/news/release_17.12
 ---
 
 ## Version 17.12
@@ -24,3 +26,4 @@ Changes:
  - Some quick find hotkeys changed
   
 Download on Github: [klogg 17.12](https://github.com/variar/klogg/releases/tag/17.12.0)
+<!--more--> 

@@ -1,0 +1,41 @@
+name: "Notarize mac release"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  notarize:
+    runs-on: macos-latest
+    steps:
+      - name: Download dmg
+        uses: houqp/download-release-assets@v1
+        with:
+          release: continuous-osx
+          match: "klogg-.+.dmg$"
+      
+      - name: Extract version
+        run: echo "KLOGG_VERSION=`basename klogg-*.dmg | cut -d "-" -f 2`" >> $GITHUB_ENV
+      
+      - name: "Notarize"
+        uses: devbotsxyz/xcode-notarize@v1
+        with:
+          product-path: "klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+          primary-bundle-id: "dev.filimonov.klogg"
+          appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
+          appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+
+      - name: "Staple"
+        uses: devbotsxyz/xcode-staple@v1
+        with:
+          product-path: "klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+
+      - name: "Update release"
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.KLOGG_GITHUB_TOKEN }}
+        with:
+          file: "klogg*.dmg"
+          prerelease: true
+          overwrite: true
+          tag_name: continuous-osx
+    

@@ -146,7 +146,7 @@ jobs:
         VERSION=$KLOGG_VERSION ../scripts/linux/make_appimage.sh
         cp ./klogg-$KLOGG_VERSION-x86_64.AppImage ./packages/klogg-$KLOGG_VERSION-x86_64.AppImage
 
-    - name: Prepare codesign
+    - name: Mac prepare codesign
       if: ${{ matrix.config.os == 'macos' }} 
       uses: apple-actions/import-codesign-certs@v1
       with: 
@@ -160,7 +160,26 @@ jobs:
         ../scripts/osx/prepare_bundle.sh
         cpack --verbose -G "DragNDrop"
         codesign -v -f -o runtime --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./packages/*
-        cp ./output/klogg.sym ./packages/klogg.sym
+        
+    - name: "Mac notarize"
+      if: ${{ matrix.config.os == 'macos' }} 
+      uses: devbotsxyz/xcode-notarize@v1
+      with:
+        product-path: "./build/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+        primary-bundle-id: "dev.filimonov.klogg"
+        appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
+        appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+
+    - name: "Mac staple"
+      if: ${{ matrix.config.os == 'macos' }} 
+      uses: devbotsxyz/xcode-staple@v1
+      with:
+        product-path: "./build/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+
+    - name: Mac symbols
+      if: ${{ matrix.config.os == 'macos' }} 
+      run: |
+        cd build
         cp -a ./output/klogg.dSym ./packages/
         cp -a ./output/klogg.app ./packages/
 

@@ -16,6 +16,7 @@ These instructions will get you a copy of the project up and running on your loc
     - QtNetwork
     - QtXml
     - QtTest
+* curl on Mac\Linux to build sentry (or switch to none in cmake options)
 * nsis to build windows installer (optional)
 
 All other dependencies are provided in 3rdparty directory.
@@ -35,22 +36,22 @@ Here is how to build klogg on Ubuntu 18.04.
 
 Install dependencies:
 ```
-sudo apt-get install build-essential cmake qtbase5-dev
+sudo apt-get install build-essential cmake qtbase5-dev libcurl4-openssl-dev
 ```
 
 Configure and build klogg:
 
 ```
 cd <path_to_klogg_repository_clone>
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=False ..
+mkdir build_root
+cd build_root
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 cmake --build .
 ```
 
-Binaries are placed into `build/output`.
+Binaries are placed into `build_root/output`.
 
-See `.travis.yml` for more information on build process.
+See `.github/workflows/ci-build.yml` for more information on build process.
 
 ### Building on Windows
 
@@ -85,14 +86,14 @@ set PATH=<path_to_cmake_bin>:$PATH
 Configure klogg solution (use CMake generator matching Visual Studio version):
 ```
 cd <path_to_project_root>
-md build
-cd build
-cmake -G "Visual Studio 16 2019 Win64" -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=False ..
+md build_root
+cd build_root
+cmake -G "Visual Studio 16 2019 Win64" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 ```
 
-CMake should generate `klogg.sln` file in `<path_to_project_root>\build` directory. Open solution and build it.
+CMake should generate `klogg.sln` file in `<path_to_project_root>\build_root` directory. Open solution and build it.
 
-Binaries are placed into `build/output`.
+Binaries are placed into `build_root/output`.
 
 ### Building on Mac OS
 
@@ -110,22 +111,24 @@ Download and install build dependencies:
 brew install cmake ninja qt
 ```
 
+Usually path to qt installation looks like `/usr/local/Cellar/qt/5.14.0/lib/cmake/Qt5`
+
 Configure and build klogg:
 ```
 cd <path_to_klogg_repository_clone>
-mkdir build
-cd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=False -DQt5_DIR=/usr/local/Cellar/qt/5.14.0/lib/cmake/Qt5 ..
+mkdir build_root
+cd build_root
+cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DQt5_DIR=<path_to_qt_install> ..
 cmake --build .
 ```
 
-Binaries are placed into `build/output`.
+Binaries are placed into `build_root/output`.
 
 ## Running tests
 Tests are built by default. To turn them off pass `-DBUILD_TESTS:BOOL=OFF` to cmake.
 Tests use catch2 (bundled with klogg sources) and require Qt5Test module. Tests can be run using ctest tool provider by CMake:
 ```
 cd <path_to_klogg_repository_clone>
-cd build
-ctest --build-config Release --verbose
+cd build_root
+ctest --build-config RelWithDebInfo --verbose
 ```

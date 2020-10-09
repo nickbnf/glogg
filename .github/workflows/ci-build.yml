@@ -53,6 +53,7 @@ jobs:
             cc: cl
             cxx: cl
             arch: x64
+            ssl_arch: -x64
 
           - os: windows
             os_version: latest
@@ -72,10 +73,12 @@ jobs:
     - name: Set workspace environment
       shell: sh
       run: |
-        echo "::set-env name=KLOGG_WORKSPACE::${{ github.workspace }}"
-        echo "::set-env name=KLOGG_VERSION::20.10.0.$((${{ github.run_number }} + 717))"
-        echo "::set-env name=KLOGG_ARCH::${{ matrix.config.arch }}"
+        echo "KLOGG_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV 
+        echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
+        echo "KLOGG_VERSION=20.10.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV 
+        echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
 
+# Install build dependencies
     - name: Install curl
       if: ${{ matrix.config.os == 'ubuntu' }} 
       run: |
@@ -85,13 +88,14 @@ jobs:
       if: ${{ matrix.config.os == 'windows' }} 
       run: |
         Invoke-WebRequest -Uri "https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1h-dev.zip" -OutFile openssl.zip
-        7z x openssl.zip
-        echo "::set-env name=SSL_DIR::${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin"
+        7z x openssl.zip 
 
-    - name: Set ssl arch
-      if: ${{ matrix.config.os == 'windows' && matrix.config.arch == 'x64' }} 
+    - name: Set openssl paths
+      if: ${{ matrix.config.os == 'windows'}} 
+      shell: sh
       run: |
-        echo "::set-env name=SSL_ARCH::-x64"
+        echo "SSL_DIR=${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin" >> $GITHUB_ENV
+        echo "SSL_ARCH=${{ matrix.config.ssl_arch }}" >> $GITHUB_ENV 
         
     - name: Cache Qt
       id: cache-qt
@@ -107,45 +111,56 @@ jobs:
         arch: ${{ matrix.config.qt_arch }}
         cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
+# Configure and build binaries
     - name: Prepare dev cmd
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.config.arch }}
 
     - name: Prepare compiler env
+      shell: sh
       run: |
-        echo "::set-env name=CC::${{ matrix.config.cc }}"
-        echo "::set-env name=CXX::${{ matrix.config.cxx }}"
+        echo "CC=${{ matrix.config.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.config.cxx }}" >> $GITHUB_ENV
 
     - name: configure
+      shell: sh
       run: |
-        mkdir build
-        cd build
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr ..
+        mkdir $KLOGG_BUILD_ROOT
+        cd $KLOGG_BUILD_ROOT
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr $KLOGG_WORKSPACE
 
     - name: build
+      shell: sh
       run: |
-        cmake --build build -t ci_build
+        cmake --build $KLOGG_BUILD_ROOT -t ci_build
 
     - name: test
+      shell: sh
       run: |
-        cd build
+        cd $KLOGG_BUILD_ROOT
         ctest --verbose
 
+# Linux packaging
     - name: Linux package 
-      if: ${{ matrix.config.os == 'ubuntu' }} 
+      if: ${{ matrix.config.os == 'ubuntu' }}
       run: |
-        cd build
+        cd $KLOGG_BUILD_ROOT
         cpack --verbose -G "RPM;DEB"
         cp ./output/klogg.sym ./packages/klogg.sym
     
     - name: Linux AppImage 
       if: ${{ matrix.config.os == 'ubuntu' }} 
       run: |
-        cd build
-        VERSION=$KLOGG_VERSION ../scripts/linux/make_appimage.sh
+        cd $KLOGG_BUILD_ROOT
+        DESTDIR=$(readlink -f appdir) ninja install
+        wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/7/linuxdeployqt-7-x86_64.AppImage"
+        chmod a+x linuxdeployqt-7-x86_64.AppImage
+        VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -qmake=$Qt5_Dir/bin/qmake -bundle-non-qt-libs
+        VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -appimage
         cp ./klogg-$KLOGG_VERSION-x86_64.AppImage ./packages/klogg-$KLOGG_VERSION-x86_64.AppImage
 
+# Mac packaging
     - name: Mac prepare codesign
       if: ${{ matrix.config.os == 'macos' }} 
       uses: apple-actions/import-codesign-certs@v1
@@ -156,8 +171,10 @@ jobs:
     - name: Mac package
       if: ${{ matrix.config.os == 'macos' }} 
       run: |
-        cd build
-        ../scripts/osx/prepare_bundle.sh
+        cd $KLOGG_BUILD_ROOT
+        macdeployqt ./output/klogg.app -always-overwrite -verbose=2
+        $KLOGG_WORKSPACE/3rdparty/macdeployqtfix/macdeployqtfix.py ./output/klogg.app/Contents/MacOS/klogg $Qt5_Dir
+        codesign -v -f -o runtime --deep --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./output/klogg.app;
         cpack --verbose -G "DragNDrop"
         codesign -v -f -o runtime --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./packages/*
         
@@ -165,7 +182,7 @@ jobs:
       if: ${{ matrix.config.os == 'macos' }} 
       uses: devbotsxyz/xcode-notarize@v1
       with:
-        product-path: "./build/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+        product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
         primary-bundle-id: "dev.filimonov.klogg"
         appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
         appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
@@ -174,15 +191,16 @@ jobs:
       if: ${{ matrix.config.os == 'macos' }} 
       uses: devbotsxyz/xcode-staple@v1
       with:
-        product-path: "./build/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+        product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
 
     - name: Mac symbols
       if: ${{ matrix.config.os == 'macos' }} 
       run: |
-        cd build
+        cd $KLOGG_BUILD_ROOT
         cp -a ./output/klogg.dSym ./packages/
         cp -a ./output/klogg.app ./packages/
 
+# Win packaging
     - name: Win codesign executables
       if: ${{ matrix.config.os == 'windows' }}
       uses: DanaBear/code-sign-action@v4
@@ -190,14 +208,14 @@ jobs:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
         password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
         certificatesha1: '${{ secrets.MS_CODESIGN_HASH }}'
-        folder: 'build\output'
+        folder: '${{ env.KLOGG_BUILD_ROOT }}\output'
         recursive: true
 
     - name: Win portable
       if: ${{ matrix.config.os == 'windows' }} 
       shell: cmd
       run: |
-        scripts\win\prepare_release.cmd
+        packaging\windows\prepare_release.cmd
 
     - name: Win installer
       if: ${{ matrix.config.os == 'windows' }} 
@@ -210,10 +228,10 @@ jobs:
       if: ${{ matrix.config.os == 'windows' }} 
       shell: cmd
       run: |
-        md build\packages
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip build\packages\ /y
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip build\packages\ /y
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe build\packages\ /y
+        md %KLOGG_BUILD_ROOT%\packages
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip %KLOGG_BUILD_ROOT%\packages\ /y
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip %KLOGG_BUILD_ROOT%\packages\ /y
+        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe %KLOGG_BUILD_ROOT%\packages\ /y
 
     - name: Win codesign installer
       if: ${{ matrix.config.os == 'windows' }}
@@ -222,13 +240,14 @@ jobs:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
         password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
         certificatesha1: '${{ secrets.MS_CODESIGN_HASH }}'
-        folder: 'build\packages'
+        folder: '${{ env.KLOGG_BUILD_ROOT }}\packages'
         recursive: true
 
+# Final upload of all packages
     - uses: actions/upload-artifact@v2
       with:
         name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: './build/packages/*'
+        path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*'
 
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
@@ -240,7 +259,7 @@ jobs:
     - name: Set workspace environment
       shell: sh
       run: |
-        echo "::set-env name=KLOGG_VERSION::20.10.0.$((${{ github.run_number }} + 717))"
+        echo "KLOGG_VERSION=20.10.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV
 
     - uses: actions/download-artifact@v2
 

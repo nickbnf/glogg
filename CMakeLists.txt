@@ -129,6 +129,8 @@ endif()
 
 # Installation and packaging
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+set(CPACK_SOURCE_IGNORE_FILES "build_root;.git")
+
 if(UNIX)
     include(InstallRequiredSystemLibraries)
 
@@ -217,16 +219,6 @@ if(UNIX)
 endif()
 
 # for IDE grouping
-add_custom_target(ci_config SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/.github/workflows/ci-build.yml
-    ${CMAKE_CURRENT_SOURCE_DIR}/latest.json
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/prepare_release.cmd
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/win/7z_klogg_listfile.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linux/make_appimage.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/install_deps.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/osx/prepare_bundle.sh
-)
-
 add_custom_target(installation SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/packaging/windows/klogg.nsi
     ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop

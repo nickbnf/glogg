@@ -32,7 +32,7 @@ object_script.glogg.Debug
 object_script.glogg.Release
 
 
-build/
+build_root/
 
 # Qt-specific
 /.moc

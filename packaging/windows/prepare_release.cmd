@@ -4,20 +4,20 @@ echo %Qt5_DIR%
 
 md %KLOGG_WORKSPACE%\release
 
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_portable.exe %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_portable.pdb %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg.exe %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg.pdb %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_portable.exe %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_portable.pdb %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg.exe %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg.pdb %KLOGG_WORKSPACE%\release\ /y
 
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_crashpad_handler.exe %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_minidump_dump.exe %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_crashpad_handler.exe %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_minidump_dump.exe %KLOGG_WORKSPACE%\release\ /y
 
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc.dll %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc.pdb %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc_proxy.dll %KLOGG_WORKSPACE%\release\ /y
-xcopy %KLOGG_WORKSPACE%\build\output\klogg_tbbmalloc_proxy.pdb %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_tbbmalloc.dll %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_tbbmalloc.pdb %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_tbbmalloc_proxy.dll %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\output\klogg_tbbmalloc_proxy.pdb %KLOGG_WORKSPACE%\release\ /y
 
-xcopy %KLOGG_WORKSPACE%\build\generated\documentation.html %KLOGG_WORKSPACE%\release\ /y
+xcopy %KLOGG_WORKSPACE%\%KLOGG_BUILD_ROOT%\generated\documentation.html %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\COPYING %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\NOTICE %KLOGG_WORKSPACE%\release\ /y
 xcopy %KLOGG_WORKSPACE%\README.md %KLOGG_WORKSPACE%\release\ /y
@@ -51,5 +51,5 @@ xcopy %KLOGG_WORKSPACE%\packaging\windows\chocolatelyInstall.ps1 chocolately\too
 xcopy %KLOGG_WORKSPACE%\packaging\windows\klogg.nsi  /y
 xcopy %KLOGG_WORKSPACE%\packaging\windows\FileAssociation.nsh  /y
 
-7z a -r %KLOGG_WORKSPACE%\klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip @%KLOGG_WORKSPACE%\scripts\win\7z_klogg_listfile.txt
-7z a %KLOGG_WORKSPACE%\klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip @%KLOGG_WORKSPACE%\scripts\win\7z_pdb_listfile.txt
+7z a -r %KLOGG_WORKSPACE%\klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip @%KLOGG_WORKSPACE%\packaging\windows\7z_klogg_listfile.txt
+7z a %KLOGG_WORKSPACE%\klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip @%KLOGG_WORKSPACE%\packaging\windows\7z_pdb_listfile.txt

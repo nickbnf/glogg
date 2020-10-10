@@ -157,6 +157,16 @@ jobs:
         cpack --verbose -G "RPM;DEB"
         cp ./output/klogg.sym ./packages/klogg.sym
     
+    - name: Check deb package
+      if: ${{ matrix.config.os == 'ubuntu' }}
+      run: |
+        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:focal /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
+    
+    - name: Check rpm package
+      if: ${{ matrix.config.os == 'ubuntu' }}
+      run: |
+        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:7 /bin/bash -c "yum install /usr/local/klogg*.rpm"
+    
     - name: Linux AppImage 
       if: ${{ matrix.config.os == 'ubuntu' }} 
       run: |

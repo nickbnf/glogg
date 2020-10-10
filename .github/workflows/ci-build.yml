@@ -84,8 +84,16 @@ jobs:
       run: |
         sudo apt-get install libcurl4-openssl-dev
 
+    - name: Cache openssl
+      id: cache-openssl
+      if: ${{ matrix.config.os == 'windows' }}
+      uses: actions/cache@v2
+      with:
+        path: ${{ github.workspace }}\openssl-1.1
+        key: OpensslCache-1-1-1h
+
     - name: Download openssl
-      if: ${{ matrix.config.os == 'windows' }} 
+      if: ${{ matrix.config.os == 'windows' && steps.cache-openssl.outputs.cache-hit != 'true' }} 
       run: |
         Invoke-WebRequest -Uri "https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1h-dev.zip" -OutFile openssl.zip
         7z x openssl.zip 

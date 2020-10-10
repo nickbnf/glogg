@@ -32,7 +32,7 @@ jobs:
         config:
           - os: ubuntu
             os_version: 16.04
-            qt_version: 5.9.9
+            qt_version: 5.9.5
             release_tag: linux
             cc: gcc-8
             cxx: g++-8
@@ -155,7 +155,7 @@ jobs:
     - name: Check deb package
       if: ${{ matrix.config.os == 'ubuntu' }}
       run: |
-        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:focal /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
+        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:bionic /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
     
     - name: Check rpm package
       if: ${{ matrix.config.os == 'ubuntu' }}

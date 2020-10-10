@@ -30,7 +30,6 @@
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QHBoxLayout>
-#include <QJsonDocument>
 #include <QLabel>
 #include <QProcess>
 #include <QPushButton>
@@ -73,31 +72,6 @@ void logSentry( sentry_level_t level, const char* message, va_list args, void* u
     }
 
     PLOG( severity ).printf( message, args );
-}
-
-QJsonDocument extractJson( const QByteArray& data, int& lastOffset )
-{
-    QJsonParseError parseError;
-    auto envelopeJson = QJsonDocument::fromJson( data, &parseError );
-    if ( parseError.error != QJsonParseError::NoError ) {
-        envelopeJson = QJsonDocument::fromJson( data.mid( 0, parseError.offset ) );
-    }
-
-    lastOffset = parseError.offset;
-    return envelopeJson;
-}
-
-std::vector<QJsonDocument> extractMessage( const QByteArray& envelopeString )
-{
-    std::vector<QJsonDocument> messages;
-    int position = 0;
-    auto offset = 0;
-    do {
-        messages.push_back( extractJson( envelopeString.mid( position ), offset ) );
-        position += offset;
-    } while ( offset > 0 && position < envelopeString.size() );
-
-    return messages;
 }
 
 QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const QString& reportPath )
@@ -159,25 +133,6 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     confirmationDialog->setLayout( layout.release() );
 
     return static_cast<QDialog::DialogCode>( confirmationDialog->exec() );
-}
-
-int askUserConfirmation( sentry_envelope_t* envelope, void* )
-{
-    size_t size_out = 0;
-    char* rawEnvelope = sentry_envelope_serialize( envelope, &size_out );
-    auto envelopeString = QByteArray( rawEnvelope );
-    sentry_free( rawEnvelope );
-
-    const auto messages = extractMessage( envelopeString );
-    QString formattedReport;
-    for ( const auto& message : messages ) {
-        formattedReport.append( QString::fromUtf8( message.toJson( QJsonDocument::Indented ) ) );
-    }
-
-    return askUserConfirmation( formattedReport, sentryDatabasePath().append( "/last_crash" ) )
-                   == QDialog::Accepted
-               ? 0
-               : 1;
 }
 
 void checkCrashpadReports( const QString& databasePath )
@@ -260,12 +215,6 @@ CrashHandler::CrashHandler()
 
     sentry_options_set_environment( sentryOptions, "development" );
     sentry_options_set_release( sentryOptions, kloggVersion().data() );
-
-    auto transport = sentry_transport_new_default();
-
-    sentry_transport_set_ask_consent_func( transport, askUserConfirmation );
-
-    sentry_options_set_transport( sentryOptions, transport );
 
     sentry_init( sentryOptions );
 

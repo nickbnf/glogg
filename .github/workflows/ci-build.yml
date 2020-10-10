@@ -79,11 +79,6 @@ jobs:
         echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
 
 # Install build dependencies
-    - name: Install curl
-      if: ${{ matrix.config.os == 'ubuntu' }} 
-      run: |
-        sudo apt-get install libcurl4-openssl-dev
-
     - name: Cache openssl
       id: cache-openssl
       if: ${{ matrix.config.os == 'windows' }}
@@ -165,7 +160,7 @@ jobs:
     - name: Check rpm package
       if: ${{ matrix.config.os == 'ubuntu' }}
       run: |
-        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:7 /bin/bash -c "yum install /usr/local/klogg*.rpm"
+        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
     
     - name: Linux AppImage 
       if: ${{ matrix.config.os == 'ubuntu' }} 

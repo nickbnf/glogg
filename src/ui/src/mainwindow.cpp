@@ -1915,7 +1915,6 @@ void MainWindow::generateDump()
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
 
     if ( userAction == QMessageBox::Yes ) {
-        int* a = nullptr;
-        *a = 1;
+        throw std::logic_error("test dump");
     }
 }

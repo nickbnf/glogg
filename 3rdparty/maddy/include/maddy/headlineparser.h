@@ -126,10 +126,18 @@ protected:
       , "<h6>$1</h6>"
     };
 
+    
+    static auto anchorRegex = std::regex("^#{1,6} (.*)");
+
+    std::string anchor = line;
+    const auto firstSpace = anchor.find(' ');
+    std::replace( anchor.begin() + firstSpace + 1, anchor.end(), ' ', '-');
+
     for (uint8_t i = 0; i < 6; ++i)
     {
       line = std::regex_replace(line, hlRegex[i], hlReplacement[i]);
     }
+    line += std::regex_replace(anchor, anchorRegex, "<a id=\"$1\"/>");;
   }
 }; // class HeadlineParser
 

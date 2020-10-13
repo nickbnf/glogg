@@ -504,10 +504,8 @@ void MainWindow::createMenus()
     toolsMenu = menuBar()->addMenu( tr( "&Tools" ) );
 
     highlightersMenu = toolsMenu->addMenu( "Highlighters" );
-    connect(highlightersMenu, &QMenu::aboutToShow, [this]()
-    {
-        setCurrentHighlighterAction(highlightersActionGroup);
-    });
+    connect( highlightersMenu, &QMenu::aboutToShow,
+             [this]() { setCurrentHighlighterAction( highlightersActionGroup ); } );
 
     toolsMenu->addSeparator();
     toolsMenu->addAction( optionsAction );
@@ -834,9 +832,9 @@ void MainWindow::onClipboardDataChanged()
 {
     auto clipboard = QGuiApplication::clipboard();
     QString subtype;
-    auto text = clipboard->text(subtype);
+    auto text = clipboard->text( subtype );
 
-    LOG(logINFO) << "Clipboard data type: " << subtype;
+    LOG( logINFO ) << "Clipboard data type: " << subtype;
 
     openClipboardAction->setEnabled( !text.isEmpty() );
 }
@@ -845,7 +843,7 @@ void MainWindow::openClipboard()
 {
     auto clipboard = QGuiApplication::clipboard();
     QString subtype;
-    auto text = clipboard->text(subtype);
+    auto text = clipboard->text( subtype );
     if ( text.isEmpty() ) {
         return;
     }
@@ -949,6 +947,10 @@ void MainWindow::documentation()
 
 void MainWindow::showScratchPad()
 {
+    auto state = scratchPad_.windowState();
+    state.setFlag( Qt::WindowMinimized, false );
+    scratchPad_.setWindowState( state );
+
     scratchPad_.show();
     scratchPad_.activateWindow();
 }
@@ -1915,6 +1917,6 @@ void MainWindow::generateDump()
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
 
     if ( userAction == QMessageBox::Yes ) {
-        throw std::logic_error("test dump");
+        throw std::logic_error( "test dump" );
     }
 }

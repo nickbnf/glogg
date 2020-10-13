@@ -206,6 +206,8 @@ void OptionsDialog::updateDialogFromConfig()
     if ( familyIndex != -1 )
         fontFamilyBox->setCurrentIndex( familyIndex );
 
+    updateFontSize(fontInfo.family());
+
     int sizeIndex = fontSizeBox->findText( QString::number( fontInfo.pointSize() ) );
     if ( sizeIndex != -1 )
         fontSizeBox->setCurrentIndex( sizeIndex );

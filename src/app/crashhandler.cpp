@@ -23,6 +23,7 @@
 
 #include "klogg_version.h"
 #include "log.h"
+#include "memory_info.h"
 #include "openfilehelper.h"
 
 #include <QByteArray>
@@ -220,6 +221,11 @@ CrashHandler::CrashHandler()
 
     sentry_set_tag( "commit", kloggCommit().data() );
     sentry_set_tag( "qt", qVersion() );
+
+    auto totalMemory = std::to_string( physicalMemory() );
+    LOG( logINFO ) << "Physical memory " << totalMemory;
+
+    sentry_set_extra( "memory", sentry_value_new_string( totalMemory.c_str() ) );
 
     checkCrashpadReports( dumpPath );
 }

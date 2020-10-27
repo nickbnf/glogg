@@ -116,6 +116,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
               .value( "filewatch.fastModificationDetection", Default.fastModificationDetection_ )
               .toBool();
 
+    assumeUtf8Filenames_
+        = settings.value( "file.utf8Filenames", Default.assumeUtf8Filenames_ ).toBool();
+
     loadLastSession_ = settings.value( "session.loadLast", Default.loadLastSession_ ).toBool();
     allowMultipleWindows_
         = settings.value( "session.multipleWindows", Default.allowMultipleWindows_ ).toBool();
@@ -215,6 +218,8 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "logging.verbosity", loggingLevel_ );
 
     settings.setValue( "versionchecker.enabled", enableVersionChecking_ );
+
+    settings.setValue( "file.utf8Filenames", assumeUtf8Filenames_ );
 
     settings.setValue( "archives.extract", extractArchives_ );
     settings.setValue( "archives.extractAlways", extractArchivesAlways_ );

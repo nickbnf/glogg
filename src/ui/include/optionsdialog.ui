@@ -433,6 +433,22 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="fileSettingsBox">
+         <property name="title">
+          <string>Misc</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_16">
+          <item>
+           <widget class="QCheckBox" name="assumeUtf8FilenamesCheckBox">
+            <property name="text">
+             <string>Assume utf-8 filenames</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>

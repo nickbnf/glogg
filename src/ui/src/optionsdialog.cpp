@@ -206,7 +206,7 @@ void OptionsDialog::updateDialogFromConfig()
     if ( familyIndex != -1 )
         fontFamilyBox->setCurrentIndex( familyIndex );
 
-    updateFontSize( fontInfo.family() );
+    updateFontSize(fontInfo.family());
 
     int sizeIndex = fontSizeBox->findText( QString::number( fontInfo.pointSize() ) );
     if ( sizeIndex != -1 )
@@ -262,8 +262,6 @@ void OptionsDialog::updateDialogFromConfig()
 
     // downloads
     verifySslCheckBox->setChecked( config.verifySslPeers() );
-
-    assumeUtf8FilenamesCheckBox->setChecked( config.assumeUtf8Filenames() );
 }
 
 //
@@ -337,8 +335,6 @@ void OptionsDialog::updateConfigFromDialog()
     config.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     config.setVerifySslPeers( verifySslCheckBox->isChecked() );
-
-    config.setAssumeUtf8Filenames( assumeUtf8FilenamesCheckBox->isChecked() );
 
     config.setStyle( styleComboBox->currentText() );
 

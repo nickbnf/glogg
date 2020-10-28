@@ -374,15 +374,6 @@ class Configuration final : public Persistable<Configuration> {
         scaleFactorRounding_ = rounding;
     }
 
-    bool assumeUtf8Filenames() const
-    {
-        return assumeUtf8Filenames_;
-    }
-    void setAssumeUtf8Filenames( bool enable )
-    {
-        assumeUtf8Filenames_ = enable;
-    }
-
     // Reads/writes the current config in the QSettings object passed
     void saveToStorage( QSettings& settings ) const;
     void retrieveFromStorage( QSettings& settings );
@@ -446,8 +437,6 @@ class Configuration final : public Persistable<Configuration> {
     bool enableQtHighDpi_ = true;
 
     int scaleFactorRounding_ = 1;
-
-    bool assumeUtf8Filenames_ = false;
 };
 
 #endif

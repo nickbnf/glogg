@@ -123,7 +123,7 @@ struct CliParameters {
     bool follow_file = false;
     int64_t log_level = static_cast<int64_t>( logWARNING );
 
-    std::vector<std::string> filenames;
+    std::vector<QString> filenames;
 
     CliParameters() = default;
 
@@ -154,9 +154,19 @@ struct CliParameters {
             [this]( auto count ) { log_level = static_cast<int64_t>( logWARNING ) + count; },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
-        options.add_option( "files", filenames, "files to open" );
+        std::vector<std::string> raw_filenames;
+        options.add_option( "files", raw_filenames, "files to open" );
 
         options.parse( argc, argv );
+
+        for ( const auto& file : raw_filenames ) {
+            const auto rawName =  QByteArray{ file.data(), static_cast<int>( file.size() ) };
+            const auto decodedName = QFile::decodeName( rawName );
+            if ( !decodedName.isEmpty() ) {
+                const auto fileInfo = QFileInfo( decodedName );
+                filenames.emplace_back( fileInfo.absoluteFilePath() );
+            }
+        }
     }
 };
 
@@ -181,35 +191,15 @@ int main( int argc, char* argv[] )
 
     LOG( logINFO ) << "Klogg instance " << app.instanceId();
 
-    Configuration::getSynced();
-    const auto& config = Configuration::get();
-
-    const auto decodeFilename
-        = [assumeUtf8 = config.assumeUtf8Filenames()]( const QByteArray& rawName ) {
-#ifdef Q_OS_LINUX
-              return assumeUtf8 ? QString::fromUtf8( rawName ) : QFile::decodeName( rawName );
-#else
-              Q_UNUSED(assumeUtf8)
-              return QFile::decodeName( rawName );
-#endif
-          };
-
-    std::vector<QString> initialFiles;
-    for ( const auto& file : parameters.filenames ) {
-        const auto rawName = QByteArray{ file.data(), static_cast<int>( file.size() ) };
-        const auto decodedName = decodeFilename( rawName );
-        if ( !decodedName.isEmpty() ) {
-            const auto fileInfo = QFileInfo( decodedName );
-            initialFiles.emplace_back( fileInfo.absoluteFilePath() );
-        }
-    }
-
     if ( !parameters.multi_instance && app.isSecondary() ) {
         LOG( logINFO ) << "Found another klogg, pid " << app.primaryPid();
-        app.sendFilesToPrimaryInstance( initialFiles );
+        app.sendFilesToPrimaryInstance( parameters.filenames );
     }
     else {
+        Configuration::getSynced();
 
+        // Load the existing session if needed
+        const auto& config = Configuration::get();
         plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 
         MainWindow* mw = nullptr;
@@ -225,7 +215,7 @@ int main( int argc, char* argv[] )
             mw->show();
         }
 
-        for ( const auto& filename : initialFiles ) {
+        for ( const auto& filename : parameters.filenames ) {
             mw->loadInitialFile( filename, parameters.follow_file );
         }
 

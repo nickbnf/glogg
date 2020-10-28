@@ -160,8 +160,7 @@ struct CliParameters {
         options.parse( argc, argv );
 
         for ( const auto& file : raw_filenames ) {
-            const auto rawName =  QByteArray{ file.data(), static_cast<int>( file.size() ) };
-            const auto decodedName = QFile::decodeName( rawName );
+            auto decodedName = QFile::decodeName( file.c_str() );
             if ( !decodedName.isEmpty() ) {
                 const auto fileInfo = QFileInfo( decodedName );
                 filenames.emplace_back( fileInfo.absoluteFilePath() );

@@ -10,6 +10,7 @@ function(set_project_compile_flags project_name)
   set(CLANG_FLAGS
         -ffast-math
   )
+  
   set(CLANG_DEFINITIONS 
 
   )
@@ -40,10 +41,13 @@ function(set_project_compile_flags project_name)
     set(PROJECT_DEFINITIONS ${CLANG_DEFINITIONS})
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(PROJECT_FLAGS ${GCC_FLAGS})
-    set(PROJECT_FLAGS ${GCC_DEFINITIONS})
+    set(PROJECT_DEFINITIONS ${GCC_DEFINITIONS})
   else()
     message(AUTHOR_WARNING "No compiler flags set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
   endif()
+
+  message("Flags set for '${CMAKE_CXX_COMPILER_ID}' compiler:${PROJECT_FLAGS}")
+  message("Defines set for '${CMAKE_CXX_COMPILER_ID}' compiler:${PROJECT_DEFINITIONS}")
 
   target_compile_options(${project_name} INTERFACE ${PROJECT_FLAGS})
   target_compile_definitions(${project_name} INTERFACE ${PROJECT_DEFINITIONS})

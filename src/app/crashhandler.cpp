@@ -32,10 +32,12 @@
 #include <QDir>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QTextEdit>
+#include <QUrlQuery>
 #include <QVBoxLayout>
 
 #include "client/crash_report_database.h"
@@ -136,6 +138,42 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     return static_cast<QDialog::DialogCode>( confirmationDialog->exec() );
 }
 
+void reportIssue( const std::string& reportUuid )
+{
+    const QString version = kloggVersion();
+    const QString commit = kloggCommit();
+
+    const QString os = QSysInfo::prettyProductName();
+    const QString kernelType = QSysInfo::kernelType();
+    const QString kernelVersion = QSysInfo::kernelVersion();
+    const QString arch = QSysInfo::currentCpuArchitecture();
+    const QString built_for = QSysInfo::buildAbi();
+
+    const QString body = QString( "Details for the issue\n"
+                                  "--------------------\n\n"
+                                  "#### What did you do?\n\n\n"
+
+                                  "-------------------------\n"
+                                  "Crash id\n"
+                                  "%1\n"
+                                  "-------------------------\n"
+                                  "Useful extra information\n"
+                                  "-------------------------\n"
+                                  "> Klogg version %2 (built from commit %3) [built for %4]\n"
+                                  "> running on %5 (%6/%7) [%8]\n"
+                                  "> and Qt %9" )
+                             .arg( reportUuid.c_str(), version, commit, built_for, os, kernelType,
+                                   kernelVersion, arch, qVersion() );
+
+    QUrlQuery query;
+    query.addQueryItem( "labels", "type: crash" );
+    query.addQueryItem( "body", body );
+
+    QUrl url( "https://github.com/variar/klogg/issues/new" );
+    url.setQuery( query );
+    QDesktopServices::openUrl( url );
+}
+
 void checkCrashpadReports( const QString& databasePath )
 {
     using namespace crashpad;
@@ -180,6 +218,12 @@ void checkCrashpadReports( const QString& databasePath )
             }
             else {
                 database->DeleteReport( report.uuid );
+            }
+
+            if ( QMessageBox::Yes
+                 == QMessageBox::question( nullptr, "Klogg", "Create issue on GitHub",
+                                           QMessageBox::Yes, QMessageBox::No ) ) {
+                reportIssue( report.uuid.ToString() );
             }
         }
     }

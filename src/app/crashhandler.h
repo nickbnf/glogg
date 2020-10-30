@@ -20,10 +20,18 @@
 #ifndef KLOGG_CRASHHANDLER
 #define KLOGG_CRASHHANDLER
 
+#ifdef KLOGG_USE_SENTRY
 class CrashHandler {
   public:
     CrashHandler();
     ~CrashHandler();
 };
+#else
+class CrashHandler {
+  public:
+    CrashHandler(){}
+    ~CrashHandler(){}
+};
+#endif
 
 #endif

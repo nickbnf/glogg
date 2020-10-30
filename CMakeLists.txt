@@ -73,7 +73,7 @@ if(MSVC)
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")	
     ENDIF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
 else()
-    ucm_add_flags("-fno-sized-deallocation")
+    ucm_add_flags(CXX "-fno-sized-deallocation")
 endif(MSVC)
 
 

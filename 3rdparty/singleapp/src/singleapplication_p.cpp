@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) Itay Grudev 2015 - 2018
+// Copyright (c) Itay Grudev 2015 - 2020
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,11 +33,19 @@
 #include <cstddef>
 
 #include <QtCore/QDir>
+#include <QtCore/QThread>
 #include <QtCore/QByteArray>
 #include <QtCore/QDataStream>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QCryptographicHash>
 #include <QtNetwork/QLocalServer>
 #include <QtNetwork/QLocalSocket>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+#include <QtCore/QRandomGenerator>
+#else
+#include <QtCore/QDateTime>
+#endif
 
 #include "singleapplication.h"
 #include "singleapplication_p.h"
@@ -64,23 +72,57 @@ SingleApplicationPrivate::SingleApplicationPrivate( SingleApplication *q_ptr )
 
 SingleApplicationPrivate::~SingleApplicationPrivate()
 {
-    if( socket != nullptr ) {
+    if( socket != nullptr ){
         socket->close();
         delete socket;
     }
 
-    memory->lock();
-    InstancesInfo* inst = static_cast<InstancesInfo*>(memory->data());
-    if( server != nullptr ) {
-        server->close();
-        delete server;
-        inst->primary = false;
-        inst->primaryPid = -1;
-        inst->checksum = blockChecksum();
-    }
-    memory->unlock();
+    if( memory != nullptr ){
+        memory->lock();
+        auto *inst = static_cast<InstancesInfo*>(memory->data());
+        if( server != nullptr ){
+            server->close();
+            delete server;
+            inst->primary = false;
+            inst->primaryPid = -1;
+            inst->primaryUser[0] =  '\0';
+            inst->checksum = blockChecksum();
+        }
+        memory->unlock();
 
-    delete memory;
+        delete memory;
+    }
+}
+
+QString SingleApplicationPrivate::getUsername()
+{
+#ifdef Q_OS_WIN
+      wchar_t username[UNLEN + 1];
+      // Specifies size of the buffer on input
+      DWORD usernameLength = UNLEN + 1;
+      if( GetUserNameW( username, &usernameLength ) )
+          return QString::fromWCharArray( username );
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+      return QString::fromLocal8Bit( qgetenv( "USERNAME" ) );
+#else
+      return qEnvironmentVariable( "USERNAME" );
+#endif
+#endif
+#ifdef Q_OS_UNIX
+      QString username;
+      uid_t uid = geteuid();
+      struct passwd *pw = getpwuid( uid );
+      if( pw )
+          username = QString::fromLocal8Bit( pw->pw_name );
+      if ( username.isEmpty() ){
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+          username = QString::fromLocal8Bit( qgetenv( "USER" ) );
+#else
+          username = qEnvironmentVariable( "USER" );
+#endif
+      }
+      return username;
+#endif
 }
 
 void SingleApplicationPrivate::genBlockServerName()
@@ -91,11 +133,11 @@ void SingleApplicationPrivate::genBlockServerName()
     appData.addData( SingleApplication::app_t::organizationName().toUtf8() );
     appData.addData( SingleApplication::app_t::organizationDomain().toUtf8() );
 
-    if( ! (options & SingleApplication::Mode::ExcludeAppVersion) ) {
+    if( ! (options & SingleApplication::Mode::ExcludeAppVersion) ){
         appData.addData( SingleApplication::app_t::applicationVersion().toUtf8() );
     }
 
-    if( ! (options & SingleApplication::Mode::ExcludeAppPath) ) {
+    if( ! (options & SingleApplication::Mode::ExcludeAppPath) ){
 #ifdef Q_OS_WIN
         appData.addData( SingleApplication::app_t::applicationFilePath().toLower().toUtf8() );
 #else
@@ -104,29 +146,8 @@ void SingleApplicationPrivate::genBlockServerName()
     }
 
     // User level block requires a user specific data in the hash
-    if( options & SingleApplication::Mode::User ) {
-#ifdef Q_OS_WIN
-        wchar_t username [ UNLEN + 1 ];
-        // Specifies size of the buffer on input
-        DWORD usernameLength = UNLEN + 1;
-        if( GetUserNameW( username, &usernameLength ) ) {
-            appData.addData( QString::fromWCharArray(username).toUtf8() );
-        } else {
-            appData.addData( qgetenv("USERNAME") );
-        }
-#endif
-#ifdef Q_OS_UNIX
-        QByteArray username;
-        uid_t uid = geteuid();
-        struct passwd *pw = getpwuid(uid);
-        if( pw ) {
-            username = pw->pw_name;
-        }
-        if( username.isEmpty() ) {
-            username = qgetenv("USER");
-        }
-        appData.addData(username);
-#endif
+    if( options & SingleApplication::Mode::User ){
+        appData.addData( getUsername().toUtf8() );
     }
 
     // Replace the backslash in RFC 2045 Base64 [a-zA-Z0-9+/=] to comply with
@@ -136,10 +157,11 @@ void SingleApplicationPrivate::genBlockServerName()
 
 void SingleApplicationPrivate::initializeMemoryBlock()
 {
-    InstancesInfo* inst = static_cast<InstancesInfo*>( memory->data() );
+    auto *inst = static_cast<InstancesInfo*>( memory->data() );
     inst->primary = false;
     inst->secondary = 0;
     inst->primaryPid = -1;
+    inst->primaryUser[0] =  '\0';
     inst->checksum = blockChecksum();
 }
 
@@ -147,6 +169,14 @@ void SingleApplicationPrivate::startPrimary()
 {
     Q_Q(SingleApplication);
 
+    // Reset the number of connections
+    auto *inst = static_cast <InstancesInfo*>( memory->data() );
+
+    inst->primary = true;
+    inst->primaryPid = q->applicationPid();
+    qstrncpy( inst->primaryUser, getUsername().toUtf8().data(), sizeof(inst->primaryUser) );
+    inst->checksum = blockChecksum();
+    instanceNumber = 0;
     // Successful creation means that no main process exists
     // So we start a QLocalServer to listen for connections
     QLocalServer::removeServer( blockServerName );
@@ -154,7 +184,7 @@ void SingleApplicationPrivate::startPrimary()
 
     // Restrict access to the socket according to the
     // SingleApplication::Mode::User flag on User level or no restrictions
-    if( options & SingleApplication::Mode::User ) {
+    if( options & SingleApplication::Mode::User ){
       server->setSocketOptions( QLocalServer::UserAccessOption );
     } else {
       server->setSocketOptions( QLocalServer::WorldAccessOption );
@@ -167,74 +197,79 @@ void SingleApplicationPrivate::startPrimary()
         this,
         &SingleApplicationPrivate::slotConnectionEstablished
     );
-
-    // Reset the number of connections
-    InstancesInfo* inst = static_cast <InstancesInfo*>( memory->data() );
-
-    inst->primary = true;
-    inst->primaryPid = q->applicationPid();
-    inst->checksum = blockChecksum();
-
-    instanceNumber = 0;
 }
 
 void SingleApplicationPrivate::startSecondary()
 {
+  auto *inst = static_cast <InstancesInfo*>( memory->data() );
+
+  inst->secondary += 1;
+  inst->checksum = blockChecksum();
+  instanceNumber = inst->secondary;
 }
 
-void SingleApplicationPrivate::connectToPrimary( int msecs, ConnectionType connectionType )
+bool SingleApplicationPrivate::connectToPrimary( int timeout, ConnectionType connectionType )
 {
+    QElapsedTimer time;
+    time.start();
+
     // Connect to the Local Server of the Primary Instance if not already
     // connected.
-    if( socket == nullptr ) {
+    if( socket == nullptr ){
         socket = new QLocalSocket();
     }
 
-    // If already connected - we are done;
-    if( socket->state() == QLocalSocket::ConnectedState )
-        return;
+    if( socket->state() == QLocalSocket::ConnectedState ) return true;
 
-    // If not connect
-    if( socket->state() == QLocalSocket::UnconnectedState ||
-        socket->state() == QLocalSocket::ClosingState ) {
-        socket->connectToServer( blockServerName );
-    }
+    if( socket->state() != QLocalSocket::ConnectedState ){
 
-    // Wait for being connected
-    if( socket->state() == QLocalSocket::ConnectingState ) {
-        socket->waitForConnected( msecs );
+        while( true ){
+          randomSleep();
+
+          if( socket->state() != QLocalSocket::ConnectingState )
+            socket->connectToServer( blockServerName );
+
+          if( socket->state() == QLocalSocket::ConnectingState ){
+              socket->waitForConnected( timeout - time.elapsed() );
+          }
+
+          // If connected break out of the loop
+          if( socket->state() == QLocalSocket::ConnectedState ) break;
+
+          // If elapsed time since start is longer than the method timeout return
+          if( time.elapsed() >= timeout ) return false;
+        }
     }
 
     // Initialisation message according to the SingleApplication protocol
-    if( socket->state() == QLocalSocket::ConnectedState ) {
-        // Notify the parent that a new instance had been started;
-        QByteArray initMsg;
-        QDataStream writeStream(&initMsg, QIODevice::WriteOnly);
+    QByteArray initMsg;
+    QDataStream writeStream(&initMsg, QIODevice::WriteOnly);
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-        writeStream.setVersion(QDataStream::Qt_5_6);
+    writeStream.setVersion(QDataStream::Qt_5_6);
 #endif
 
-        writeStream << blockServerName.toLatin1();
-        writeStream << static_cast<quint8>(connectionType);
-        writeStream << instanceNumber;
-        quint16 checksum = qChecksum(initMsg.constData(), static_cast<quint32>(initMsg.length()));
-        writeStream << checksum;
+    writeStream << blockServerName.toLatin1();
+    writeStream << static_cast<quint8>(connectionType);
+    writeStream << instanceNumber;
+    quint16 checksum = qChecksum(initMsg.constData(), static_cast<quint32>(initMsg.length()));
+    writeStream << checksum;
 
-        // The header indicates the message length that follows
-        QByteArray header;
-        QDataStream headerStream(&header, QIODevice::WriteOnly);
+    // The header indicates the message length that follows
+    QByteArray header;
+    QDataStream headerStream(&header, QIODevice::WriteOnly);
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-        headerStream.setVersion(QDataStream::Qt_5_6);
+    headerStream.setVersion(QDataStream::Qt_5_6);
 #endif
-        headerStream << static_cast <quint64>( initMsg.length() );
+    headerStream << static_cast <quint64>( initMsg.length() );
 
-        socket->write( header );
-        socket->write( initMsg );
-        socket->flush();
-        socket->waitForBytesWritten( msecs );
-    }
+    socket->write( header );
+    socket->write( initMsg );
+    socket->flush();
+    if( socket->waitForBytesWritten( timeout - time.elapsed() )) return true;
+
+    return false;
 }
 
 quint16 SingleApplicationPrivate::blockChecksum()
@@ -250,11 +285,23 @@ qint64 SingleApplicationPrivate::primaryPid()
     qint64 pid;
 
     memory->lock();
-    InstancesInfo* inst = static_cast<InstancesInfo*>( memory->data() );
+    auto *inst = static_cast<InstancesInfo*>( memory->data() );
     pid = inst->primaryPid;
     memory->unlock();
 
     return pid;
+}
+
+QString SingleApplicationPrivate::primaryUser()
+{
+    QByteArray username;
+
+    memory->lock();
+    auto *inst = static_cast<InstancesInfo*>( memory->data() );
+    username = inst->primaryUser;
+    memory->unlock();
+
+    return QString::fromUtf8( username );
 }
 
 /**
@@ -266,7 +313,7 @@ void SingleApplicationPrivate::slotConnectionEstablished()
     connectionMap.insert(nextConnSocket, ConnectionInfo());
 
     QObject::connect(nextConnSocket, &QLocalSocket::aboutToClose,
-        [nextConnSocket, this]() {
+        [nextConnSocket, this](){
             auto &info = connectionMap[nextConnSocket];
             Q_EMIT this->slotClientConnectionClosed( nextConnSocket, info.instanceId );
         }
@@ -280,9 +327,9 @@ void SingleApplicationPrivate::slotConnectionEstablished()
     );
 
     QObject::connect(nextConnSocket, &QLocalSocket::readyRead,
-        [nextConnSocket, this]() {
+        [nextConnSocket, this](){
             auto &info = connectionMap[nextConnSocket];
-            switch(info.stage) {
+            switch(info.stage){
             case StageHeader:
                 readInitMessageHeader(nextConnSocket);
                 break;
@@ -301,11 +348,11 @@ void SingleApplicationPrivate::slotConnectionEstablished()
 
 void SingleApplicationPrivate::readInitMessageHeader( QLocalSocket *sock )
 {
-    if (!connectionMap.contains( sock )) {
+    if (!connectionMap.contains( sock )){
         return;
     }
 
-    if( sock->bytesAvailable() < ( qint64 )sizeof( quint64 ) ) {
+    if( sock->bytesAvailable() < ( qint64 )sizeof( quint64 ) ){
         return;
     }
 
@@ -322,7 +369,7 @@ void SingleApplicationPrivate::readInitMessageHeader( QLocalSocket *sock )
     info.stage = StageBody;
     info.msgLen = msgLen;
 
-    if ( sock->bytesAvailable() >= (qint64) msgLen ) {
+    if ( sock->bytesAvailable() >= (qint64) msgLen ){
         readInitMessageBody( sock );
     }
 }
@@ -331,12 +378,12 @@ void SingleApplicationPrivate::readInitMessageBody( QLocalSocket *sock )
 {
     Q_Q(SingleApplication);
 
-    if (!connectionMap.contains( sock )) {
+    if (!connectionMap.contains( sock )){
         return;
     }
 
     ConnectionInfo &info = connectionMap[sock];
-    if( sock->bytesAvailable() < ( qint64 )info.msgLen ) {
+    if( sock->bytesAvailable() < ( qint64 )info.msgLen ){
         return;
     }
 
@@ -372,7 +419,7 @@ void SingleApplicationPrivate::readInitMessageBody( QLocalSocket *sock )
                    QLatin1String(latin1Name) == blockServerName &&
                    msgChecksum == actualChecksum;
 
-    if( !isValid ) {
+    if( !isValid ){
         sock->close();
         return;
     }
@@ -387,7 +434,7 @@ void SingleApplicationPrivate::readInitMessageBody( QLocalSocket *sock )
         Q_EMIT q->instanceStarted();
     }
 
-    if (sock->bytesAvailable() > 0) {
+    if (sock->bytesAvailable() > 0){
         Q_EMIT this->slotDataAvailable( sock, instanceId );
     }
 }
@@ -402,4 +449,14 @@ void SingleApplicationPrivate::slotClientConnectionClosed( QLocalSocket *closedS
 {
     if( closedSocket->bytesAvailable() > 0 )
         Q_EMIT slotDataAvailable( closedSocket, instanceId  );
+}
+
+void SingleApplicationPrivate::randomSleep()
+{
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 10, 0 )
+    QThread::msleep( QRandomGenerator::global()->bounded( 8u, 18u ));
+#else
+    qsrand( QDateTime::currentMSecsSinceEpoch() % std::numeric_limits<uint>::max() );
+    QThread::msleep( 8 + static_cast <unsigned long>( static_cast <float>( qrand() ) / RAND_MAX * 10 ));
+#endif
 }

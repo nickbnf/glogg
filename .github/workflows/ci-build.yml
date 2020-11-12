@@ -75,7 +75,7 @@ jobs:
       run: |
         echo "KLOGG_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV 
         echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
-        echo "KLOGG_VERSION=20.10.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV 
+        echo "KLOGG_VERSION=20.11.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV 
         echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
 
 # Install build dependencies
@@ -272,7 +272,7 @@ jobs:
     - name: Set workspace environment
       shell: sh
       run: |
-        echo "KLOGG_VERSION=20.10.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV
+        echo "KLOGG_VERSION=20.11.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV
 
     - uses: actions/download-artifact@v2
 

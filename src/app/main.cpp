@@ -125,6 +125,9 @@ struct CliParameters {
 
     std::vector<QString> filenames;
 
+    int window_width = 0;
+    int window_height = 0;
+
     CliParameters() = default;
 
     CliParameters( CLI::App& options, int argc, char* const* argv )
@@ -153,6 +156,9 @@ struct CliParameters {
             "-d,--debug",
             [this]( auto count ) { log_level = static_cast<int64_t>( logWARNING ) + count; },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
+
+        options.add_flag( "--window-width", window_width, "new window width" )
+            ->needs(options.add_flag( "--window-height", window_height, "new window width" ));
 
         std::vector<std::string> raw_filenames;
         options.add_option( "files", raw_filenames, "files to open" );
@@ -212,6 +218,10 @@ int main( int argc, char* argv[] )
             mw->reloadGeometry();
             LOG( logDEBUG ) << "MainWindow created.";
             mw->show();
+        }
+
+        if ( parameters.window_width > 0 && parameters.window_height > 0 ) {
+            mw->resize( parameters.window_width, parameters.window_height );
         }
 
         for ( const auto& filename : parameters.filenames ) {

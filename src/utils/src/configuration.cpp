@@ -42,19 +42,27 @@
 #include "log.h"
 #include "styles.h"
 
+#include <mutex>
+
+namespace {
+std::once_flag fontInitFlag;
+}
+
 Configuration::Configuration()
 {
-    mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
-
-    QFontInfo fi( mainFont_ );
-    LOG( logDEBUG ) << "Default font is " << fi.family().toStdString();
-
     splitterSizes_ << 400 << 100;
 }
 
 // Accessor functions
 QFont Configuration::mainFont() const
 {
+    std::call_once( fontInitFlag, [this]() {
+        mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
+
+        QFontInfo fi( mainFont_ );
+        LOG( logINFO ) << "Default font is " << fi.family().toStdString() << ": " << fi.pointSize();
+    } );
+
     return mainFont_;
 }
 

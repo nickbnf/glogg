@@ -380,7 +380,7 @@ class Configuration final : public Persistable<Configuration> {
 
   private:
     // Configuration settings
-    QFont mainFont_ = { "monaco", 10 };
+    mutable QFont mainFont_ = { "DejaVu Sans Mono", 10 };
     SearchRegexpType mainRegexpType_ = SearchRegexpType::ExtendedRegexp;
     SearchRegexpType quickfindRegexpType_ = SearchRegexpType::FixedString;
     bool quickfindIncremental_ = true;

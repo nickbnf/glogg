@@ -30,6 +30,7 @@
 #include <QMessageBox>
 #include <QNetworkProxyFactory>
 #include <QUuid>
+#include <QFontDatabase>
 
 #ifdef Q_OS_MAC
 #include <QFileOpenEvent>
@@ -64,6 +65,8 @@ class KloggApp : public SingleApplication {
                                  | SingleApplication::ExcludeAppPath
                                  | SingleApplication::ExcludeAppVersion )
     {
+        QFontDatabase::addApplicationFont(":/fonts/DejaVuSansMono.ttf");
+
         QNetworkProxyFactory::setUseSystemConfiguration( true );
 
         qRegisterMetaType<LoadingStatus>( "LoadingStatus" );

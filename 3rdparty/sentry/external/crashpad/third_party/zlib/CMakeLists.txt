@@ -73,6 +73,7 @@ else()
             "/wd4267" # conversion from 'size_t' to 't', possible loss of data
             "/wd4324" # structure was padded due to alignment specifier
             "/wd4702" # unreachable code
+            "/wd5105" # the preprocessor detected a defined operator in the output of a macro expansion
         )
     endif()
 endif()

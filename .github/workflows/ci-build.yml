@@ -307,6 +307,8 @@ jobs:
 
     - name: Setup Sentry CLI
       uses: mathrix-education/setup-sentry-cli@0.1.0
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       with:
         token: ${{ secrets.SENTRY_TOKEN }}
         organization: anton-filimonov

@@ -13,7 +13,7 @@ page for how to use Klogg.
 
 ### Current stable release
 
-[ ![Github](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.4)
+[ ![Github](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.12)
 [ ![Bintray](https://img.shields.io/bintray/v/variar/generic/klogg?style=flat)](https://bintray.com/variar/generic/klogg/_latestVersion)
 [ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg?style=flat)](https://chocolatey.org/packages/klogg)
 [ ![homebrew cask](https://img.shields.io/homebrew/cask/v/klogg?style=flat)](https://formulae.brew.sh/cask/klogg)
@@ -78,9 +78,9 @@ This project uses [Calendar Versioning](https://calver.org/). For a list of avai
 
 ### Current stable release builds
 
-Current release is 20.4. Binaries for all platforms can be downloaded from GitHub releases or Bintray.
+Current release is 20.12. Binaries for all platforms can be downloaded from GitHub releases or Bintray.
 
-[ ![Release](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.4)
+[ ![Release](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.12)
 [ ![Bintray](https://img.shields.io/bintray/v/variar/generic/klogg?style=flat)](https://bintray.com/variar/generic/klogg/_latestVersion)
 
 Windows installer is also available from Chocolatey:

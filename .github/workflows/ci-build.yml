@@ -40,7 +40,7 @@ jobs:
 
           - os: macos
             os_version: latest
-            qt_version: 5.12.8
+            qt_version: 5.15.2
             release_tag: macos
             cc: clang
             cxx: clang++
@@ -48,7 +48,7 @@ jobs:
 
           - os: windows
             os_version: latest
-            qt_version: 5.15.1
+            qt_version: 5.15.2
             release_tag: windows
             cc: cl
             cxx: cl
@@ -57,7 +57,7 @@ jobs:
 
           - os: windows
             os_version: latest
-            qt_version: 5.15.1
+            qt_version: 5.15.2
             release_tag: windows
             cc: cl
             cxx: cl
@@ -75,7 +75,7 @@ jobs:
       run: |
         echo "KLOGG_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV 
         echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
-        echo "KLOGG_VERSION=20.11.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV 
+        echo "KLOGG_VERSION=20.12.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV 
         echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
 
 # Install build dependencies
@@ -272,7 +272,7 @@ jobs:
     - name: Set workspace environment
       shell: sh
       run: |
-        echo "KLOGG_VERSION=20.11.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV
+        echo "KLOGG_VERSION=20.12.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV
 
     - uses: actions/download-artifact@v2
 

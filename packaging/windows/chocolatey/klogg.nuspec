@@ -8,16 +8,16 @@
     <authors>Nicolas Bonnefon, Anton Filimonov</authors>
     <projectUrl>https://klogg.filimonov.dev</projectUrl>
     <iconUrl>https://klogg.filimonov.dev/klogg.png</iconUrl>
-    <docsUrl>https://github.com/variar/klogg/blob/v19.9/README.md</docsUrl>
+    <docsUrl>https://github.com/variar/klogg/blob/v20.12/README.md</docsUrl>
     <bugTrackerUrl>https://github.com/variar/klogg/issues</bugTrackerUrl>
     <copyright>Copyright © 2019 Nicolas Bonnefon, Anton Filimonov</copyright>
-    <licenseUrl>https://github.com/variar/klogg/blob/v19.9/COPYING</licenseUrl>
+    <licenseUrl>https://github.com/variar/klogg/blob/v20.12/COPYING</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <tags>log tail grep glogg klogg admin</tags>
     <summary>The fast, smart log explorer</summary>
     <description>klogg is a multi-platform GUI application to search through all kinds of text log files using regular expressions,
     kind of interactive combination of grep and less. It is fork of glogg project created by Nicolas Bonnefon.</description>
-    <releaseNotes>https://github.com/variar/klogg/releases/tag/v19.9</releaseNotes>
+    <releaseNotes>https://github.com/variar/klogg/releases/tag/v20.12</releaseNotes>
     <packageSourceUrl>https://github.com/variar/klogg/blob/master/packaging/windows</packageSourceUrl>
   </metadata>
 </package>

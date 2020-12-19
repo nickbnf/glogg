@@ -95,17 +95,17 @@ Linux packages are also available from DEB and RPM repositories.
 
 For DEB add Bintray GPG key and repository, then install from apt:
 ```
-apt-key adv --keyserver hkps://keyserver.ubuntu.com --recv-keys 379CE192D401AB61
+wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
 echo deb https://dl.bintray.com/variar/deb stable utils | sudo tee -a /etc/apt/sources.list
-apt-get update
-apt-get install klogg
+sudo apt-get update
+sudo apt-get install klogg
 ```
 
 For RPM:
 ```
 curl https://bintray.com/variar/rpm/rpm | sudo tee /etc/yum.repos.d/bintray-variar-rpm.repo
-yum update
-yum install klogg
+sudo yum update
+sudo yum install klogg
 ```
 
 ### Tesing builds

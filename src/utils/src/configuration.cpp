@@ -177,6 +177,9 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 
     auto styles = availableStyles();
     if ( !styles.contains( style_ ) ) {
+        style_ = defaultPlatformStyle();
+    }
+    if ( !styles.contains( style_ ) ) {
         style_ = styles.front();
     }
 

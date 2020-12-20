@@ -3,6 +3,9 @@ title: "Version 19.12 preview"
 date: 2019-12-06T01:46+03:00
 anchor: "v19_12_preview1"
 weight: 55
+bookhidden: true
+aliases:
+    - /docs/news/release_19.12_preview
 ---
 
 ## Version 19.12 preview

@@ -3,6 +3,9 @@ title: "Version 19.9 released"
 date: 2019-09-21T15:42:17+01:00
 anchor: "v19_9"
 weight: 60
+bookhidden: true
+aliases:
+    - /docs/news/release_19.9
 ---
 
 ## Version 19.9

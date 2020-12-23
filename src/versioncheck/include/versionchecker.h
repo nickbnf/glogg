@@ -87,11 +87,14 @@ class VersionChecker : public QObject {
 
   signals:
     // New version "version" is available
-    void newVersionFound( const QString& version, const QString& url );
+    void newVersionFound( const QString& version, const QString& url, const QStringList& changes );
 
   private slots:
     // Called when download is finished
     void downloadFinished( QNetworkReply* );
+
+  private:
+    void checkVersionData( QByteArray versionData );
 
   private:
     QNetworkAccessManager* manager_ = nullptr;

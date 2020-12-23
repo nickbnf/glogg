@@ -125,36 +125,8 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
     LOG( logDEBUG ) << "VersionChecker::downloadFinished()";
 
     if ( reply->error() == QNetworkReply::NoError ) {
-        const auto currentVersion = kloggVersion();
-
-        const auto rawReply = reply->readAll();
-        LOG( logDEBUG ) << "Version reply: " << QString::fromUtf8( rawReply );
-
-        const auto latestJson = QJsonDocument::fromJson( rawReply );
-        const auto latestVersionMap = latestJson.toVariant().toMap();
-
-        QString latestVersion;
-        QString url;
-        const auto stableVersions = latestVersionMap.value( "releases" ).toList();
-
-        if ( std::any_of( stableVersions.begin(), stableVersions.end(),
-                          [&currentVersion]( const auto& version ) {
-                              return version.toString() == currentVersion;
-                          } ) ) {
-            latestVersion = latestVersionMap.value( "stable" ).toString();
-            url = latestVersionMap.value( "stable_url" ).toString();
-        }
-        else {
-            latestVersion = latestVersionMap.value( "ci" ).toString();
-            url = latestVersionMap.value( "ci_url" ).toString() + OsSuffix;
-        }
-
-        LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "
-                        << latestVersion << ", url " << url;
-        if ( isVersionNewer( currentVersion, latestVersion ) ) {
-            LOG( logDEBUG ) << "Sending new version notification";
-            emit newVersionFound( latestVersion, url );
-        }
+        const auto rawReply = reply->readAll() ;
+        checkVersionData(rawReply);
     }
     else {
         LOG( logWARNING ) << "Download failed: err " << reply->error();
@@ -168,4 +140,49 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
     config.setNextDeadline( std::time( nullptr ) + CHECK_INTERVAL_S );
 
     config.save();
+}
+
+void VersionChecker::checkVersionData( QByteArray versionData )
+{
+    LOG( logDEBUG ) << "Version reply: " << QString::fromUtf8( versionData );
+
+    const auto latestJson = QJsonDocument::fromJson( versionData );
+    const auto latestVersionMap = latestJson.toVariant().toMap();
+
+    QString latestVersion;
+    QString url;
+    const auto stableVersions = latestVersionMap.value( "releases" ).toList();
+
+    const auto currentVersion = kloggVersion();
+    if ( std::any_of( stableVersions.begin(), stableVersions.end(),
+                      [ &currentVersion ]( const auto& version ) {
+                          return version.toString() == currentVersion;
+                      } ) ) {
+        latestVersion = latestVersionMap.value( "stable" ).toString();
+        url = latestVersionMap.value( "stable_url" ).toString();
+    }
+    else {
+        latestVersion = latestVersionMap.value( "ci" ).toString();
+        url = latestVersionMap.value( "ci_url" ).toString() + OsSuffix;
+    }
+
+    const auto changeLog = latestVersionMap.value( "changelog" ).toList();
+
+    QStringList changes;
+    for ( const auto& entry : qAsConst( changeLog ) ) {
+        const auto entryData = entry.toMap();
+        const auto version = entryData.value( "version" ).toString();
+
+        if ( isVersionNewer( currentVersion, version ) ) {
+            changes << QString("%1: %2").arg(version, entryData.value( "description" ).toString());
+        }
+    }
+
+    LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "
+                    << latestVersion << ", url " << url;
+    if ( isVersionNewer( currentVersion, latestVersion ) ) {
+        LOG( logINFO ) << "Sending new version notification";
+
+        emit newVersionFound( latestVersion, url, changes );
+    }
 }

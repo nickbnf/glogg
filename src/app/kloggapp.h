@@ -27,10 +27,10 @@
 #endif
 
 #include <QDir>
+#include <QFontDatabase>
 #include <QMessageBox>
 #include <QNetworkProxyFactory>
 #include <QUuid>
-#include <QFontDatabase>
 
 #ifdef Q_OS_MAC
 #include <QFileOpenEvent>
@@ -65,7 +65,7 @@ class KloggApp : public SingleApplication {
                                  | SingleApplication::ExcludeAppPath
                                  | SingleApplication::ExcludeAppVersion )
     {
-        QFontDatabase::addApplicationFont(":/fonts/DejaVuSansMono.ttf");
+        QFontDatabase::addApplicationFont( ":/fonts/DejaVuSansMono.ttf" );
 
         QNetworkProxyFactory::setUseSystemConfiguration( true );
 
@@ -93,8 +93,9 @@ class KloggApp : public SingleApplication {
 
             // Version checker notification
             connect( &versionChecker_, &VersionChecker::newVersionFound,
-                     [this]( const QString& new_version, const QString& url ) {
-                         newVersionNotification( new_version, url );
+                     [ this ]( const QString& new_version, const QString& url,
+                               const QStringList& changes ) {
+                         newVersionNotification( new_version, url, changes );
                      } );
         }
     }
@@ -105,7 +106,7 @@ class KloggApp : public SingleApplication {
         ::AllowSetForegroundWindow( static_cast<DWORD>( primaryPid() ) );
 #endif
 
-        QTimer::singleShot( 100, [&filenames, this] {
+        QTimer::singleShot( 100, [ &filenames, this ] {
             QStringList filesToOpen;
 
             for ( const auto& filename : filenames ) {
@@ -234,12 +235,12 @@ class KloggApp : public SingleApplication {
         activeWindows_.push( QPointer<MainWindow>( window ) );
 
         LOG( logINFO ) << "Window " << &window << " created";
-        connect( window, &MainWindow::newWindow, [=]() { newWindow()->show(); } );
+        connect( window, &MainWindow::newWindow, [ = ]() { newWindow()->show(); } );
         connect( window, &MainWindow::windowActivated,
-                 [this, window]() { onWindowActivated( *window ); } );
+                 [ this, window ]() { onWindowActivated( *window ); } );
         connect( window, &MainWindow::windowClosed,
-                 [this, window]() { onWindowClosed( *window ); } );
-        connect( window, &MainWindow::exitRequested, [this] { exitApplication(); } );
+                 [ this, window ]() { onWindowClosed( *window ); } );
+        connect( window, &MainWindow::exitRequested, [ this ] { exitApplication(); } );
 
         return window;
     }
@@ -254,7 +255,7 @@ class KloggApp : public SingleApplication {
     {
         LOG( logINFO ) << "Window " << &window << " closed";
         auto w = std::find_if( mainWindows_.begin(), mainWindows_.end(),
-                               [&window]( const auto& p ) { return p.second == &window; } );
+                               [ &window ]( const auto& p ) { return p.second == &window; } );
 
         if ( w != mainWindows_.end() ) {
             mainWindows_.erase( w );
@@ -274,14 +275,25 @@ class KloggApp : public SingleApplication {
         QTimer::singleShot( 100, this, &QCoreApplication::quit );
     }
 
-    void newVersionNotification( const QString& new_version, const QString& url )
+    void newVersionNotification( const QString& new_version, const QString& url,
+                                 const QStringList& changes )
     {
         LOG( logDEBUG ) << "newVersionNotification( " << new_version << " from " << url << " )";
 
+        QString message = QString( "<p> A new version of klogg (%1) is available for download </p>"
+                                   "<a href=\"%2\">%2</a>" )
+                              .arg( new_version, url );
+
+        if (!changes.empty()) {
+            message.append("<p>Important changes:</p><ul>");
+            for ( const auto& change : qAsConst( changes ) ) {
+                message.append(QString("<li>%1</li>").arg(change));            
+            }
+            message.append("</ul>");
+        }
+
         QMessageBox msgBox;
-        msgBox.setText( QString( "A new version of klogg (%1) is available for download <p>"
-                                 "<a href=\"%2\">%2</a>" )
-                            .arg( new_version, url ) );
+        msgBox.setText( message );
         msgBox.exec();
     }
 
@@ -304,7 +316,7 @@ class KloggApp : public SingleApplication {
     std::unique_ptr<plog::IAppender> logAppender_;
 
     std::unique_ptr<CrashHandler> crashHandler_;
-    
+
     MessageReceiver messageReceiver_;
 
     std::shared_ptr<Session> session_;

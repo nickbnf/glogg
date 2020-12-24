@@ -1,12 +1,13 @@
 {
-    "ci":"20.12.0.812",
+    "ci":"20.12.0.813",
     "ci_url" : "https://github.com/variar/klogg/releases/tag/continuous",
-    "stable": "20.12.0.812",
+    "stable": "20.12.0.813",
     "stable_url" : "https://github.com/variar/klogg/releases/tag/v20.12",
-    "releases": ["17.12.0.245", "19.2.0.366", "19.9.0.467", "20.4.0.589", "20.12.0.808", "20.12.0.810", "20.12.0.812"],
+    "releases": ["17.12.0.245", "19.2.0.366", "19.9.0.467", "20.4.0.589", "20.12.0.808", "20.12.0.810", "20.12.0.812", , "20.12.0.813"],
     "changelog": [
         { "version": "20.12.0.808", "description": "New stable release" },
         { "version": "20.12.0.810", "description": "Removed broken Gtk2 style" },
-        { "version": "20.12.0.812", "description": "Fixed crash when saving selection to file" }
+        { "version": "20.12.0.812", "description": "Fixed crash when saving results to file" },
+        { "version": "20.12.0.813", "description": "Fixed actual saving results to file" }
     ]
 }

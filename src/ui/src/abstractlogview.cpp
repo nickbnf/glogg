@@ -1086,8 +1086,8 @@ void AbstractLogView::saveToFile()
     using LinesData = std::pair<std::vector<QString>, bool>;
     auto lineReader = tbb::flow::source_node<LinesData>(
         saveFileGraph,
-        [ this, &offsets, &interruptRequest, &progressDialog,
-          offsetIndex = 0u ]( LinesData& lines ) mutable -> bool {
+        [ this, &offsets, &interruptRequest, &progressDialog, offsetIndex = 0u,
+          finalLines = false ]( LinesData& lines ) mutable -> bool {
             if ( !interruptRequest && offsetIndex < offsets.size() ) {
                 const auto& offset = offsets.at( offsetIndex );
                 lines.first = logData->getLines( offset.first, offset.second );
@@ -1103,9 +1103,12 @@ void AbstractLogView::saveToFile()
                 progressDialog.setValue( static_cast<int>( offsetIndex ) );
                 return true;
             }
-            else {
+            else if ( !finalLines ) {
+                finalLines = true;
                 lines.second = false;
-
+                return true;
+            }
+            else {
                 return false;
             }
         },

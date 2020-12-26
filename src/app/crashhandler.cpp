@@ -36,6 +36,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTextEdit>
 #include <QUrlQuery>
 #include <QVBoxLayout>
@@ -106,7 +107,7 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     exploreButton->setText( "Open report directory" );
     exploreButton->setFlat( true );
     QObject::connect( exploreButton.get(), &QPushButton::clicked,
-                      [&reportPath] { showPathInFileExplorer( reportPath ); } );
+                      [ &reportPath ] { showPathInFileExplorer( reportPath ); } );
 
     auto privacyLayout = std::make_unique<QHBoxLayout>();
     privacyLayout->addWidget( privacyPolicy.release() );
@@ -265,6 +266,7 @@ CrashHandler::CrashHandler()
 
     sentry_set_tag( "commit", kloggCommit().data() );
     sentry_set_tag( "qt", qVersion() );
+    sentry_set_tag( "build_arch", QSysInfo::buildCpuArchitecture().toLatin1().data() );
 
     auto totalMemory = std::to_string( physicalMemory() );
     LOG( logINFO ) << "Physical memory " << totalMemory;

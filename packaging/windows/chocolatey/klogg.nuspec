@@ -20,4 +20,7 @@
     <releaseNotes>https://github.com/variar/klogg/releases/tag/v20.12</releaseNotes>
     <packageSourceUrl>https://github.com/variar/klogg/blob/master/packaging/windows</packageSourceUrl>
   </metadata>
+  <files>
+    <file src="tools/**" target="tools" />
+  </files>
 </package>

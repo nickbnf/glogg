@@ -64,27 +64,35 @@ class UI(PyHandler):
         return " ".join(ret)
 
 
-    def on_display_line(self, line):
-        #print("on_display_line", line)
-        # cmd = "echo " + line + " | cut -f1 -d' '"
-        # proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        # ret = proc.communicate()[0].decode("utf8").split("\n")[0]
-        all = line.split()
+    def filter_by_index(self, line):
+        columns = line.split()
+        remove_col_list = self.myapp.getColumns().split()
+        remove_col_list = [int(x) for x in remove_col_list if x.isdigit()]
+
         ret = []
-
-        col_list = self.myapp.getColumns().split()
-
-        print(col_list)
-        if len(col_list) > 0:
-            for col_range in col_list:
-                print(col_range)
-                r = col_range.split(':')
-                ret += all[self.value(r[0]):self.value(r[1])]
-                print(r, len(r), ret)
-        else:
-            ret = all
+        for col in range(1, len(columns)):
+            if not col in remove_col_list:
+                ret.append(columns[col - 1])
 
         return " ".join(ret)
+
+
+    def filter_by_regex(self, line):
+        return line
+
+
+    def filter_by_shell(self, line):
+        cmd = "echo " + line + " | cut -f1 -d' '"
+        proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ret = proc.communicate()[0].decode("utf8").split("\n")[0]
+
+        return " ".join(ret)
+
+
+    def on_display_line(self, line):
+        print("on_display_line", line)
+
+        return self.filter_by_index(line)
 
     def on_search(self, file, pattern):
         print("on_search beg")

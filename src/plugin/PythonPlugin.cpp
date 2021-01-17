@@ -115,6 +115,22 @@ bool PythonPlugin::isEnabled()
     return mPluginImpl.operator bool();
 }
 
+vector<string> getPythonPluginFilePaths(const string dir)
+{
+    vector<string> ret;
+
+    cout << "Looking for python plugins files:\n";
+
+    for(auto & entry : boost::filesystem::directory_iterator( dir )){
+        if(entry.path().extension() == ".py"){
+            std::cout << entry << std::endl;
+            ret.push_back(entry.path().string());
+        }
+    }
+
+    return ret;
+}
+
 PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config):mInitialConfig(config)
 {
     using namespace boost::python;
@@ -127,7 +143,8 @@ PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config
         boost::filesystem::path workingDir = boost::filesystem::absolute("").normalize();
 
         string s= workingDir.string() + "/plugins";
-        cout << s << "\n";
+        cout << "WorkDir: " << s << "\n";
+
 
         PyObject* sysPath = PySys_GetObject("path");
         PyList_Insert( sysPath, 0, PyUnicode_FromString(/*workingDir.string()*/s.c_str()));
@@ -140,13 +157,18 @@ PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config
         object BaseClass = mymodule_namespace["PyHandler"];
         //object VerifierBaseClass = mymodule_namespace["PyTestVerifier"];
 
-        exec_file("plugins/handlers.py", main_namespace, main_namespace);
-        exec_file("plugins/handlers2.py", main_namespace, main_namespace);
-        exec_file("plugins/PyDialog.py", main_namespace, main_namespace);
+        cout <<"\n";
+        for(const auto file: getPythonPluginFilePaths(s)){
+            cout << "Loading plugin file to python namespace: " << file << "\n";
+            exec_file(file.c_str(), main_namespace, main_namespace);
+        }
+
         PyTypeObject* base_class = reinterpret_cast<PyTypeObject*>(BaseClass.ptr());
         //PyTypeObject* verifier_base_class = reinterpret_cast<PyTypeObject*>(VerifierBaseClass.ptr());
 
         boost::python::list keys = main_namespace.keys();
+
+        cout << "\nLooking for types derived from main plugin type:\n";
 
         for (unsigned int i = 0; i<len(keys) ; ++i) {
             object k = keys[i];
@@ -193,7 +215,10 @@ void PythonPlugin::PythonPluginImpl::createInstance(std::optional<boost::python:
         type = std::find_if(mDerivedClassContainer.begin(), mDerivedClassContainer.end(), [typeName](const DerivedType& t){ return t.name == typeName; })->type;
     }
 
+    cout << "Creating plugin instance of type:" << typeName << "\n";
+
     PyHandlerInitParams *init = nullptr;
+
 
     boost::python::object obj = (*type)(init);
 
@@ -209,6 +234,8 @@ void PythonPlugin::PythonPluginImpl::createInstances()
     string typeName;
 
     PyGIL gil;
+
+    cout << "\nCreating plugins instances:\n";
 
     try {
         for(auto& t: mDerivedClassContainer){

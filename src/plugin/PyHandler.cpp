@@ -41,8 +41,6 @@ PyHandler::PyHandler(PyHandlerInitParams *init)
         return;
     }
 
-    setPyhonType(init->ref->mType);
-    setPythonPlugin(init->ref->mpyPlugin);
     className = init->ref->className;
     mInstanceName = init->ref->mInstanceName;
 
@@ -56,9 +54,6 @@ PyHandler::~PyHandler()
 
 bool PyHandler::onTrigger(int index)
 {
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-
     bool ret = false;
     if(mPyHandlers[on_trigger] != 0 &&
             PyObject_HasAttrString(mObj->ptr(), on_trigger)){
@@ -71,8 +66,6 @@ bool PyHandler::onTrigger(int index)
         ret = mObj->attr(on_trigger)(index);
     }
 
-//    PyGILState_Release(gstate);
-
     return ret;
 }
 
@@ -80,24 +73,16 @@ void PyHandler::onPopupMenu(AbstractLogView* alv)
 {
     auto ul = std::unique_lock<std::mutex>(pyContextLock);
 
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-
     if(PyObject_HasAttrString(mObj->ptr(), on_popup_menu)){
 
 //        cout << __FUNCTION__ << " call python, index: " << index << "\n";
         mObj->attr(on_popup_menu)();
     }
-
-//    PyGILState_Release(gstate);
 }
 
 void PyHandler::onCreateMenu(AbstractLogView* alv)
 {
     std::unique_lock<std::mutex>(pyContextLock);
-
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
 
     if(PyObject_HasAttrString(mObj->ptr(), on_create_menu)){
 
@@ -105,15 +90,11 @@ void PyHandler::onCreateMenu(AbstractLogView* alv)
         mObj->attr(on_create_menu)();
     }
 
-//    PyGILState_Release(gstate);
 }
 
 bool PyHandler::onTriggerAction(const string& action, const string& data)
 {
     std::unique_lock<std::mutex>(pyContextLock);
-
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
 
     bool ret = false;
     if(PyObject_HasAttrString(mObj->ptr(), action.c_str())){
@@ -125,14 +106,7 @@ bool PyHandler::onTriggerAction(const string& action, const string& data)
                                string("] trigger action:[" + action + "] Not found during executing of Python code\n"));
     }
 
-//    PyGILState_Release(gstate);
-
     return ret;
-}
-
-void PyHandler::setPyhonType(const boost::python::api::object &type)
-{
-    mType = type;
 }
 
 void PyHandler::setPyhonObject(const boost::python::api::object &obj)
@@ -155,16 +129,18 @@ bool PyHandler::setPyHandlerCallCount(string handler, int count)
      return true;
 }
 
-void PyHandler::del()
+std::optional<boost::python::object> PyHandler::del()
 {
-    mObj = {};
+    //std::optional<boost::python::object> safeDelete = mObj;
+    std::optional<boost::python::object> ret = *mObj;
+
+    mObj.reset();
+
+    return ret;
 }
 
 void PyHandler::onRelease()
 {
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-
     try{
         if(PyObject_HasAttrString(mObj->ptr(), on_release)){
             mObj->attr(on_release)();
@@ -175,8 +151,6 @@ void PyHandler::onRelease()
                                __FUNCTION__ +
                                string("] !Error during executing Python code\n"));
     }
-
-//    PyGILState_Release(gstate);
 }
 
 
@@ -184,13 +158,8 @@ bool PyHandler::isOnSearcAvailable()
 {
     std::unique_lock<std::mutex>(pyContextLock);
 
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-
-
     try{
         if(PyObject_HasAttrString(mObj->ptr(), on_search)){
-            //mObj->attr(on_search)();
             return true;
         }
     } catch (error_already_set& e) {
@@ -200,8 +169,6 @@ bool PyHandler::isOnSearcAvailable()
                                string("] !Error during executing Python code\n"));
     }
 
-//    PyGILState_Release(gstate);
-
     return false;
 }
 
@@ -209,15 +176,10 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
 {
     std::unique_lock<std::mutex>(pyContextLock);
 
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-
     try{
         if(PyObject_HasAttrString(mObj->ptr(), on_search)){
             vector<string> ss;
-            //py::list ret = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());;
             boost::python::object o = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
-            //std::list<int> l = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
             list l = extract<boost::python::list>(o);
             cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
 
@@ -233,10 +195,6 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
                 }
             }
 
-
-            //FOREACH(const string& s, ss) ret.append(s);
-            //return s;
-
             return ret;
         }
     } catch (error_already_set& e) {
@@ -246,39 +204,21 @@ SearchResultArray PyHandler::onSearch(const string& fileName, const string& patt
                                string("] !Error during executing Python code\n"));
     }
 
-//    PyGILState_Release(gstate);
-
     return {};
-
 }
 
-void PyHandler::doGetExpandedLines(string& line)
+bool PyHandler::doGetExpandedLines(string& line)
 {
+    std::unique_lock<std::mutex>(pyContextLock);
+    bool ret = false;
+    
     try{
         if(PyObject_HasAttrString(mObj->ptr(), on_display_line)){
             vector<string> ss;
-            //py::list ret = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());;
             boost::python::object o = mObj->attr(on_display_line)(line.c_str());
             char *data = extract<char*>(o);
             line = data;
-            //std::list<int> l = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
-            //list l = extract<boost::python::list>(o);
-            //cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
-
-//            SearchResultArray ret;
-//            for(int i = 0; i < boost::python::len(l); ++i){
-//                char *data = extract<char*>(l[i]);
-//                //cout << __FUNCTION__ << "data " << data << "\n";
-//                if(strlen(data) > 0){
-//                    ret.push_back(MatchingLine(atoi(data) - 1));
-//                }
-//            }
-
-
-            //FOREACH(const string& s, ss) ret.append(s);
-            //return s;
-
-            //return ret;
+            ret = true;
         }
     } catch (error_already_set& e) {
         PyErr_PrintEx(0);
@@ -287,5 +227,6 @@ void PyHandler::doGetExpandedLines(string& line)
                                string("] !Error during executing Python code\n"));
     }
 
+    return ret;
 }
 

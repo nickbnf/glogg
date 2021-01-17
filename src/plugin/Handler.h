@@ -9,6 +9,7 @@
 #include <memory>
 #include <algorithm>
 #include <boost/core/demangle.hpp>
+#include <boost/python.hpp>
 
 using namespace std;
 
@@ -19,6 +20,7 @@ class Handler
     virtual ~Handler() = default;
 
     virtual void onRelease();
+    virtual std::optional<boost::python::api::object> del() = 0;
 
     template<typename T>
     static void addPythonTemplate(vector<JSONParser>& jh, const string& className, T* hTemplate)
@@ -56,9 +58,7 @@ class Handler
 
     static void initSharedData(const JSONParser &jp);
 
-    //optional<Timer> mTimer;
 protected:
-    static map<string, shared_ptr<Handler>> mHandlers;
 
     string className;
     string mInstanceName;

@@ -537,9 +537,6 @@ void MainWindow::plugins()
     PluginsDialog dialog(pythonPlugin_, this);
     signalMux_.connect(&dialog, SIGNAL( pluginsOptionsChanged() ), SLOT( applyPluginConfiguration() ));
     dialog.exec();
-    //FiltersDialog dialog(this);
-    //dialog.exec();
-    //signalMux_.disconnect(&dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ));
 }
 
 // Opens the 'Options' modal dialog box

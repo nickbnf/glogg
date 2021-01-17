@@ -1,9 +1,6 @@
 #include "Handler.h"
 #include <iostream>
 
-map<string, shared_ptr<Handler>> Handler::mHandlers;
-
-
 void Handler::onRelease()
 {
     cout << "\n" << __FUNCTION__ << "\n";

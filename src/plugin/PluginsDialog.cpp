@@ -22,21 +22,23 @@ PluginsDialog::~PluginsDialog()
 
 void PluginsDialog::createPluginClassList()
 {
-    for(const auto& type: pythonPlugin_->getTypes()){
-        QListWidgetItem* item = new QListWidgetItem(type.name.c_str(), ui->listWidget);
+    for(const auto& type: pythonPlugin_->getConfig()){
+        QListWidgetItem* item = new QListWidgetItem(type.first.c_str(), ui->listWidget);
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable); // set checkable flag
-        item->setCheckState(Qt::Unchecked); // AND initialize check state
+        item->setCheckState(type.second ? Qt::Checked : Qt::Unchecked); // AND initialize check state
     }
 }
 
 void PluginsDialog::on_buttonBox_accepted()
 {
+    pluginSet_->setPlugins(pythonPlugin_->getConfig());
+    pluginSet_->setPluginSystemEnabled(pythonPlugin_->isEnabled());
     GetPersistentInfo().save("pluginSet");
 }
 
 void PluginsDialog::on_pluginSystemEnabled_clicked(bool checked)
 {
-    pluginSet_->setPluginSystemEnabled(checked);
+    pythonPlugin_->enable(checked);
 }
 
 void PluginsDialog::on_listWidget_itemClicked(QListWidgetItem *item)

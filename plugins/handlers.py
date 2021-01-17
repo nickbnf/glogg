@@ -17,15 +17,15 @@ class glogg(PyHandler):
     def on_create_menu(self):
         print("on_create_menu")
 
-    def on_display_line(self, line):
-        print("on_display_line", line)
-        # cmd = "echo " + line + " | cut -f1 -d' '"
-        # proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        # ret = proc.communicate()[0].decode("utf8").split("\n")[0]
-        ret = line.split()
-        ret = ret[0:2] + ret[4:]
-        #print(ret)
-        return " ".join(ret)
+#    def on_display_line(self, line):
+#        print("on_display_line", line)
+#        # cmd = "echo " + line + " | cut -f1 -d' '"
+#        # proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+#        # ret = proc.communicate()[0].decode("utf8").split("\n")[0]
+#        ret = line.split()
+#        ret = ret[0:2] + ret[4:]
+#        #print(ret)
+#        return " ".join(ret)
 
 
 class UI(PyHandler):
@@ -39,6 +39,52 @@ class UI(PyHandler):
     #     print("on_popup_menu UI")
     #     #myapp.show()
     #     print(self.myapp.getValue())
+
+    def value(self, x):
+        if x.isdigit():
+            return int(x)
+        else:
+            return None
+
+    def create_slice_by_string(self, line):
+        all = line.split()
+        ret = []
+        col_list = self.myapp.getColumns().split()
+
+        print(col_list)
+        if len(col_list) > 0:
+            for col_range in col_list:
+                print(col_range)
+                r = col_range.split(':')
+                ret += all[self.value(r[0]):self.value(r[1])]
+                print(r, len(r), ret)
+        else:
+            ret = all
+
+        return " ".join(ret)
+
+
+    def on_display_line(self, line):
+        #print("on_display_line", line)
+        # cmd = "echo " + line + " | cut -f1 -d' '"
+        # proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # ret = proc.communicate()[0].decode("utf8").split("\n")[0]
+        all = line.split()
+        ret = []
+
+        col_list = self.myapp.getColumns().split()
+
+        print(col_list)
+        if len(col_list) > 0:
+            for col_range in col_list:
+                print(col_range)
+                r = col_range.split(':')
+                ret += all[self.value(r[0]):self.value(r[1])]
+                print(r, len(r), ret)
+        else:
+            ret = all
+
+        return " ".join(ret)
 
     def on_search(self, file, pattern):
         print("on_search beg")

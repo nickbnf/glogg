@@ -6,7 +6,6 @@
 #include "PyHandler.h"
 #include "abstractlogview.h"
 #include "persistentinfo.h"
-#include "pluginset.h"
 
 using namespace boost::python;
 
@@ -24,15 +23,101 @@ PythonPlugin::PythonPlugin()
     using namespace boost::python;
 
     GetPersistentInfo().retrieve("pluginSet");
+    enable(Persistent<PluginSet>( "pluginSet" )->isPluginSystemEnabled());
+}
 
-    std::shared_ptr<const PluginSet> pluginSet =
-        Persistent<PluginSet>( "pluginSet" );
-
-    isPluginSystemEnabled = pluginSet->isPluginSystemEnabled();
-
-    if(not isPluginSystemEnabled){
+void PythonPlugin::createInstances()
+{
+    if(not mPluginImpl){
         return;
     }
+
+    mPluginImpl->createInstances();
+}
+
+void PythonPlugin::onPopupMenu(AbstractLogView *alv)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->onPopupMenu(alv);
+}
+
+void PythonPlugin::onCreateMenu(AbstractLogView *alv)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->onCreateMenu(alv);
+}
+
+bool PythonPlugin::isOnSearcAvailable()
+{
+    if(not mPluginImpl){
+        return false;
+    }
+
+    return mPluginImpl->isOnSearcAvailable();
+}
+
+SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern )
+{
+    if(not mPluginImpl){
+        return {};
+    }
+
+    return mPluginImpl->doSearch(fileName, pattern);
+}
+
+void PythonPlugin::doGetExpandedLines(string& line)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->doGetExpandedLines(line);
+}
+
+map<string, bool> PythonPlugin::getConfig() const
+{
+    if(not mPluginImpl){
+        return {};
+    }
+
+    return mPluginImpl->getConfig();
+}
+
+void PythonPlugin::setPluginState(const string &typeName, bool state)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->setPluginState(typeName, state);
+}
+
+void PythonPlugin::enable(bool set)
+{
+    if(set){
+        GetPersistentInfo().retrieve("pluginSet");
+
+        mPluginImpl = make_unique<PythonPluginImpl>(Persistent<PluginSet>( "pluginSet" )->getPlugins());
+    }else{
+        mPluginImpl.reset();
+    }
+
+}
+
+bool PythonPlugin::isEnabled()
+{
+    return mPluginImpl.operator bool();
+}
+
+PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config):mInitialConfig(config)
+{
+    using namespace boost::python;
 
     try {
         PyImport_AppendInittab((char*)"PyHandler", INIT_MODULE);
@@ -75,10 +160,7 @@ PythonPlugin::PythonPlugin()
                 if ( ( type_obj != base_class) && ( PyType_IsSubtype( type_obj,  base_class) > 0) ) {
                     cout << "type name:" << type_obj->tp_name << "\n";
                     mDerivedClassContainer.emplace_back(DerivedType(type_obj->tp_name, item));
-                }/*else if(( type_obj != verifier_base_class) && ( PyType_IsSubtype( type_obj,  verifier_base_class) > 0)){
-                    cout << "verifier type name:" << type_obj->tp_name << "\n";
-                    mDerivedVerifierClassContainer.emplace(type_obj->tp_name, item);
-                }*/
+                }
             }
         }
 
@@ -88,47 +170,22 @@ PythonPlugin::PythonPlugin()
     }
 
     threadState = PyEval_SaveThread();
+
 }
 
-void PythonPlugin::createInstances()
+PythonPlugin::PythonPluginImpl::~PythonPluginImpl()
 {
-    if(not isPluginSystemEnabled){
-        return;
-    }
+    //mHandlers.clear();
 
-    string typeName;
-
-    PyGIL gil;
-
-    PyHandlerInitParams *init = nullptr;
-
-    try {
-        for(auto& t: mDerivedClassContainer){
-            createInstance(t.type, t.name);
-//            typeName = t.name;
-//            boost::python::object obj = t.type(init);
-
-//            PyHandler* p = extract<PyHandler*>(obj.ptr());
-//            p->setPyhonObject(obj);
-//            p->setPythonPlugin(this);
-
-//            p->setPyhonType(t.type);
-
-//            mHandlers.emplace(typeName, create(p));
-        }
-
-    } catch (error_already_set& e) {
-        PyErr_PrintEx(0);
-        throw std::logic_error("\n!Error while loading template handler: [" + typeName + "]\n\n");
-    }
+//    shared_ptr<PyHandler> el = mHandlers["UI"];
+//    mHandlers.erase("UI");
+//    std::optional<boost::python::object> o = el->del();
+//    o.reset();
+    Py_Finalize();
 }
 
-void PythonPlugin::createInstance(std::optional<boost::python::object> type, const string& typeName)
+void PythonPlugin::PythonPluginImpl::createInstance(std::optional<boost::python::api::object> type, const string &typeName)
 {
-    if(not isPluginSystemEnabled){
-        return;
-    }
-
     PyGIL gil;
 
     if(not type){
@@ -141,34 +198,33 @@ void PythonPlugin::createInstance(std::optional<boost::python::object> type, con
 
     PyHandler* p = extract<PyHandler*>(obj.ptr());
     p->setPyhonObject(obj);
-    p->setPythonPlugin(this);
-
-    p->setPyhonType(*type);
 
     mHandlers.emplace(typeName, create(p));
+
 }
 
-
-shared_ptr<PyHandler> PythonPlugin::operator [](const string &className)
+void PythonPlugin::PythonPluginImpl::createInstances()
 {
-    return mHandlers.at(className);
-}
+    string typeName;
 
-void PythonPlugin::setActivePlugin(const string &className)
-{
-    if(not isPluginSystemEnabled){
-        return;
+    PyGIL gil;
+
+    try {
+        for(auto& t: mDerivedClassContainer){
+            if(mInitialConfig[t.name]){
+                createInstance(t.type, t.name);
+            }
+        }
+
+    } catch (error_already_set& e) {
+        PyErr_PrintEx(0);
+        throw std::logic_error("\n!Error while loading template handler: [" + typeName + "]\n\n");
     }
 
-    mActiveHandler = mHandlers.at(className);
 }
 
-void PythonPlugin::onPopupMenu(AbstractLogView *alv)
+void PythonPlugin::PythonPluginImpl::onPopupMenu(AbstractLogView *alv)
 {
-    if(not isPluginSystemEnabled){
-        return;
-    }
-
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -176,12 +232,8 @@ void PythonPlugin::onPopupMenu(AbstractLogView *alv)
     }
 }
 
-void PythonPlugin::onCreateMenu(AbstractLogView *alv)
+void PythonPlugin::PythonPluginImpl::onCreateMenu(AbstractLogView *alv)
 {
-    if(not isPluginSystemEnabled){
-        return;
-    }
-
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -189,12 +241,8 @@ void PythonPlugin::onCreateMenu(AbstractLogView *alv)
     }
 }
 
-bool PythonPlugin::isOnSearcAvailable()
+bool PythonPlugin::PythonPluginImpl::isOnSearcAvailable()
 {
-    if(not isPluginSystemEnabled){
-        return false;
-    }
-
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -206,12 +254,8 @@ bool PythonPlugin::isOnSearcAvailable()
     return false;
 }
 
-SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern )
+SearchResultArray PythonPlugin::PythonPluginImpl::doSearch(const string &fileName, const string &pattern)
 {
-    if(not isPluginSystemEnabled){
-        return {};
-    }
-
     PyGIL gil;
 
     for(auto &o: mHandlers){
@@ -223,39 +267,41 @@ SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& p
     return {};
 }
 
-void PythonPlugin::doGetExpandedLines(string& line)
+void PythonPlugin::PythonPluginImpl::doGetExpandedLines(string &line)
 {
-    if(not isPluginSystemEnabled){
-        return;
-    }
-
     PyGIL gil;
 
     for(auto &o: mHandlers){
 //        if (o.second->isOnSearcAvailable()){
-            return o.second->doGetExpandedLines(line);
+            if(o.second->doGetExpandedLines(line)){
+                return;
+            }
 //        }
     }
-
 }
 
-void PythonPlugin::setPluginState(const string &typeName, bool state)
+map<string, bool> PythonPlugin::PythonPluginImpl::getConfig() const
 {
-    if(not isPluginSystemEnabled){
-        return;
+    map<string, bool> config;
+
+    for(auto& t: mDerivedClassContainer){
+        config[t.name] = mHandlers.find(t.name) != mHandlers.end();
     }
 
+    return config;
+}
+
+void PythonPlugin::PythonPluginImpl::setPluginState(const string &typeName, bool state)
+{
     PyGIL gil;
 
     if(not state){
         mHandlers.erase(typeName);
     }else{
-
+        createInstance({}, typeName);
     }
 }
+PythonPlugin::PythonPluginImpl::DerivedType::~DerivedType()
+{
 
-
-//boost::python::api::object PythonPlugin::getTestVerifierType(const string &className)
-//{
-//    return mDerivedVerifierClassContainer.at(className);
-//}
+}

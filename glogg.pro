@@ -69,7 +69,9 @@ SOURCES += \
     src/plugin/PyHandler.cpp \
     src/plugin/Handler.cpp \
     src/plugin/PluginsDialog.cpp \
-    src/plugin/pluginset.cpp
+    src/plugin/pluginset.cpp \
+    src/plugin/Process.cpp \
+    src/plugin/SyncPipe.cpp
 
 INCLUDEPATH += src/
 INCLUDEPATH += src/plugin
@@ -127,7 +129,9 @@ HEADERS += \
     src/plugin/Handler.h \
     src/data/search_result.h \
     src/plugin/PluginsDialog.h \
-    src/plugin/pluginset.h
+    src/plugin/pluginset.h \
+    src/plugin/Process.h \
+    src/plugin/SyncPipe.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)
@@ -351,4 +355,5 @@ DISTFILES += \
     debug/handlers2.py \
     plugins/handlers.py \
     plugins/handlers2.py \
-    plugins/PyDialog.py
+    plugins/PyDialog.py \
+    plugins/PyDialog_ui.py

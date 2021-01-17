@@ -25,14 +25,12 @@ public:
     PyHandler(PyHandlerInitParams *init);
     virtual ~PyHandler();
 
-    void setPythonPlugin(PythonPlugin* pyPlugin) { mpyPlugin = pyPlugin; }
-    void setPyhonType(const boost::python::object& type);
     void setPyhonObject(const boost::python::object& obj);
     bool setPyHandlerCallCount(string handler, int count);
 
-    void del();
+    std::optional<boost::python::api::object> del() override;
 
-    optional<boost::python::object> mObj = {};
+    optional<boost::python::object> mObj;
     private:
     const char* on_popup_menu = "on_popup_menu";
     const char* on_create_menu = "on_create_menu";
@@ -43,13 +41,11 @@ public:
     const char* on_display_line = "on_display_line";
 
     map<string, int> mPyHandlers = {{on_trigger, -1}};
-    boost::python::object mType;
 
     // Handler interface
     bool onTriggerAction(const string &action, const string &data);
 public:
     bool onTrigger(int index);
-    PythonPlugin* mpyPlugin = nullptr;
 
     // Handler interface
 public:
@@ -60,7 +56,7 @@ public:
     void onCreateMenu(AbstractLogView *alv);
     bool isOnSearcAvailable();
     SearchResultArray onSearch(const string &fileName, const string &pattern);
-    void doGetExpandedLines(string &line);
+    bool doGetExpandedLines(string &line);
 };
 
 

@@ -1,4 +1,4 @@
-#ifndef PYTHONPLUGIN_H
+﻿#ifndef PYTHONPLUGIN_H
 #define PYTHONPLUGIN_H
 
 #include <vector>
@@ -12,6 +12,8 @@
 #include <JSonParser.h>
 #include "Handler.h"
 #include "data/search_result.h"
+#include "pluginset.h"
+#include <memory>
 
 using namespace std;
 
@@ -30,53 +32,91 @@ struct PyGIL {
   }
 };
 
+class PythonPluginInterface
+{
+public:
+    virtual ~PythonPluginInterface() = default;
 
-class PythonPlugin
+    virtual void createInstances() = 0;
+    virtual void onPopupMenu(AbstractLogView* alv) = 0;
+    virtual void onCreateMenu(AbstractLogView *alv) = 0;
+    virtual bool isOnSearcAvailable() = 0;
+    virtual SearchResultArray doSearch(const string &fileName, const string &pattern) = 0;
+    virtual void doGetExpandedLines(string &line) = 0;
+    virtual map<string, bool> getConfig() const = 0;
+    virtual void setPluginState(const string& typeName, bool state) = 0;
+};
+
+class PythonPlugin: public PythonPluginInterface
 {
 public:
     PythonPlugin();
-    //const std::unordered_map<string, PyTypeObject*>& getTypeMap() const;
     void createInstances();
-    void createInstance(std::optional<boost::python::object> type, const string &typeName);
-    shared_ptr<PyHandler> operator [](const string& className);
-    void setActivePlugin(const string& className);
     void onPopupMenu(AbstractLogView* alv);
-    //boost::python::object getTestVerifierType(const string& className);
     void onCreateMenu(AbstractLogView *alv);
     bool isOnSearcAvailable();
     SearchResultArray doSearch(const string &fileName, const string &pattern);
     void doGetExpandedLines(string &line);
 
-    struct DerivedType
-    {
-        DerivedType() = default;
-        DerivedType(const string& name_, boost::python::object type_): name(name_), type(type_){}
-        string name;
-        boost::python::object type;
-        //vector<boost::python::object> instanceContainer;
-//        boost::python::object instance;
-    };
-
-    const vector<DerivedType>& getTypes() { return mDerivedClassContainer; }
+    map<string, bool> getConfig() const;
     void setPluginState(const string& typeName, bool state);
+    void enable(bool set);
+    bool isEnabled();
 
 private:
 
-    template<typename T>
-    static shared_ptr<T> create(T* obj)
+    struct PythonPluginImpl: public PythonPluginInterface
     {
-        return shared_ptr<T>(obj, [](PyHandler* o){ o->del(); });
-    }
+        struct PythonGlobalInitialization
+        {
+            PythonGlobalInitialization()
+            {
+                Py_Initialize();
+            }
 
-    vector<DerivedType> mDerivedClassContainer;
-    map<string, shared_ptr<PyHandler>> mHandlers;
-    //map<string, boost::python::object> mDerivedVerifierClassContainer;
-    //map<string, boost::python::object> mDerivedClassMap;
-    shared_ptr<PyHandler> mActiveHandler;
+            ~PythonGlobalInitialization()
+            {
+                Py_Finalize();
+            }
+        };
 
-    PyThreadState *threadState = nullptr;
+        PythonPluginImpl() = default;
+        PythonPluginImpl(const map<string, bool>& config);
+        ~PythonPluginImpl();
+        void createInstance(std::optional<boost::python::object> type, const string &typeName);
 
-    bool isPluginSystemEnabled = false;
+        struct DerivedType
+        {
+            DerivedType() = default;
+            ~DerivedType();
+            DerivedType(const string& name_, boost::python::object& type_): name(name_), type(type_){}
+            string name;
+            boost::python::object type;
+        };
+
+        template<typename T>
+        static shared_ptr<T> create(T* obj)
+        {
+            return shared_ptr<T>(obj, [](T* o){ o->del(); });
+        }
+        vector<DerivedType> mDerivedClassContainer;
+        map<string, shared_ptr<PyHandler>> mHandlers;
+        PyThreadState *threadState = nullptr;
+        map<string, bool> mInitialConfig;
+
+        // PythonPluginInterface interfaces
+    public:
+        void createInstances() override;
+        void onPopupMenu(AbstractLogView *alv) override;
+        void onCreateMenu(AbstractLogView *alv) override;
+        bool isOnSearcAvailable() override;
+        SearchResultArray doSearch(const string &fileName, const string &pattern) override;
+        void doGetExpandedLines(string &line) override;
+        map<string, bool> getConfig() const override;
+        void setPluginState(const string &typeName, bool state) override;
+    };
+
+    unique_ptr<PythonPluginImpl> mPluginImpl;
 };
 
 #endif // PYTHONPLUGIN_H

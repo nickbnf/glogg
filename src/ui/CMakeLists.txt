@@ -8,6 +8,8 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighterset.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersmenu.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightedmatch.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/predefinedfilters.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/predefinedfiltersdialog.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/infoline.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/pathline.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/logmainview.h
@@ -41,6 +43,7 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlighteredit.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersetedit.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/highlightersdialog.ui
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/predefinedfiltersdialog.ui
         ${CMAKE_CURRENT_SOURCE_DIR}/include/optionsdialog.ui
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/abstractlogview.cpp
@@ -50,6 +53,8 @@ add_library(ui STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlighteredit.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlightersetedit.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/highlighterset.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/predefinedfilters.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/predefinedfiltersdialog.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/infoline.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/pathline.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logmainview.cpp

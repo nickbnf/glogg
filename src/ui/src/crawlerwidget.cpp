@@ -63,6 +63,7 @@
 #include "configuration.h"
 #include "infoline.h"
 #include "overview.h"
+#include "predefinedfilters.h"
 #include "quickfindpattern.h"
 #include "quickfindwidget.h"
 #include "savedsearches.h"
@@ -177,6 +178,21 @@ absl::optional<int> CrawlerWidget::encodingMib() const
 bool CrawlerWidget::isFollowEnabled() const
 {
     return logMainView->isFollowEnabled();
+}
+
+void CrawlerWidget::setSearchLineEditText( const QString& text )
+{
+    searchLineEdit->setCurrentText( text );
+}
+
+QString CrawlerWidget::currentSearchLineEditText() const
+{
+    return searchLineEdit->currentText();
+}
+
+void CrawlerWidget::reloadPredefinedFilters() const
+{
+    predefinedFilters->populatePredefinedFilters();
 }
 
 QString CrawlerWidget::encodingText() const
@@ -567,6 +583,8 @@ void CrawlerWidget::applyConfiguration()
     if ( isFollowEnabled() ) {
         changeDataStatus( DataStatus::OLD_DATA );
     }
+
+    reloadPredefinedFilters();
 }
 
 void CrawlerWidget::enteringQuickFind()
@@ -902,6 +920,8 @@ void CrawlerWidget::setup()
     stopButton->setVisible( false );
     stopButton->setContentsMargins( 2, 2, 2, 2 );
 
+    predefinedFilters = new PredefinedFiltersComboBox( this );
+
     auto* searchLineLayout = new QHBoxLayout;
     searchLineLayout->setContentsMargins( 2, 2, 2, 2 );
 
@@ -913,6 +933,7 @@ void CrawlerWidget::setup()
     searchLineLayout->addWidget( stopButton );
     searchLineLayout->addWidget( searchRefreshButton );
     searchLineLayout->addWidget( searchInfoLine );
+    searchLineLayout->addWidget( predefinedFilters );
 
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;

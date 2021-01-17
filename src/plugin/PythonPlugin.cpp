@@ -126,10 +126,11 @@ PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config
 
         boost::filesystem::path workingDir = boost::filesystem::absolute("").normalize();
 
-        string s= workingDir.string();
+        string s= workingDir.string() + "/plugins";
+        cout << s << "\n";
 
         PyObject* sysPath = PySys_GetObject("path");
-        PyList_Insert( sysPath, 0, PyUnicode_FromString(workingDir.string().c_str()));
+        PyList_Insert( sysPath, 0, PyUnicode_FromString(/*workingDir.string()*/s.c_str()));
 
         object main_module = import("__main__");
         dict main_namespace = extract<dict>(main_module.attr("__dict__"));
@@ -139,9 +140,9 @@ PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config
         object BaseClass = mymodule_namespace["PyHandler"];
         //object VerifierBaseClass = mymodule_namespace["PyTestVerifier"];
 
-        exec_file("handlers.py", main_namespace, main_namespace);
-        exec_file("handlers2.py", main_namespace, main_namespace);
-        exec_file("PyDialog.py", main_namespace, main_namespace);
+        exec_file("plugins/handlers.py", main_namespace, main_namespace);
+        exec_file("plugins/handlers2.py", main_namespace, main_namespace);
+        exec_file("plugins/PyDialog.py", main_namespace, main_namespace);
         PyTypeObject* base_class = reinterpret_cast<PyTypeObject*>(BaseClass.ptr());
         //PyTypeObject* verifier_base_class = reinterpret_cast<PyTypeObject*>(VerifierBaseClass.ptr());
 

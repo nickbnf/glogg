@@ -37,19 +37,20 @@
  */
 
 #include "predefinedfiltersdialog.h"
+
+#include <QDialogButtonBox>
+#include <QTimer>
+
+#include "iconloader.h"
 #include "log.h"
 #include "predefinedfilters.h"
-#include <qdialogbuttonbox.h>
-#include <qwindowdefs.h>
-
-#include <set>
 
 PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent )
     : QDialog( parent )
 {
     setupUi( this );
 
-    filters = PredefinedFiltersCollection::getSynced().getFilters();
+    filters_ = PredefinedFiltersCollection::getSynced().getFilters();
 
     populateFiltersTable();
 
@@ -59,23 +60,31 @@ PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent )
 
     connect( buttonBox, &QDialogButtonBox::clicked, this,
              &PredefinedFiltersDialog::resolveStandardButton );
+
+    QTimer::singleShot( 0, [ this ] {
+        IconLoader iconLoader( this );
+
+        addFilterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );
+        removeFilterButton->setIcon( iconLoader.load( "icons8-minus-16" ) );
+    } );
 }
 
 void PredefinedFiltersDialog::populateFiltersTable() const
 {
     filtersTableWidget->clear();
 
-    filtersTableWidget->setRowCount( filters.size() );
+    filtersTableWidget->setRowCount( static_cast<int>( filters_.size() ) );
     filtersTableWidget->setColumnCount( 2 );
 
-    filtersTableWidget->setHorizontalHeaderLabels( QStringList() << "Filter name"
+    filtersTableWidget->setHorizontalHeaderLabels( QStringList() << "Name"
                                                                  << "Pattern" );
 
-    PredefinedFiltersCollection::CollectionIterator iter( filters );
-    for ( int i = 0; iter.hasNext(); ++i ) {
-        iter.next();
-        filtersTableWidget->setItem( i, 0, new QTableWidgetItem( iter.key() ) );
-        filtersTableWidget->setItem( i, 1, new QTableWidgetItem( iter.value() ) );
+    int filterIndex = 0;
+    for ( const auto& filter : filters_ ) {
+        filtersTableWidget->setItem( filterIndex, 0, new QTableWidgetItem( filter.first ) );
+        filtersTableWidget->setItem( filterIndex, 1, new QTableWidgetItem( filter.second ) );
+
+        filterIndex++;
     }
 
     filtersTableWidget->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Stretch );
@@ -85,20 +94,23 @@ void PredefinedFiltersDialog::saveSettings()
 {
     const auto rows = filtersTableWidget->rowCount();
 
-    filters.clear();
+    filters_.clear();
 
     for ( auto i = 0; i < rows; ++i ) {
         if ( nullptr == filtersTableWidget->item( i, 0 )
-             || nullptr == filtersTableWidget->item( i, 1 ) )
+             || nullptr == filtersTableWidget->item( i, 1 ) ) {
             continue;
+        }
+
         const auto key = filtersTableWidget->item( i, 0 )->text();
         const auto value = filtersTableWidget->item( i, 1 )->text();
 
-        if ( key != "" && value != "" )
-            filters.insert( key, value );
+        if ( !key.isEmpty() && !value.isEmpty() ) {
+            filters_.emplace( key, value );
+        }
     }
 
-    PredefinedFiltersCollection::getSynced().saveToStorage( filters );
+    PredefinedFiltersCollection::getSynced().saveToStorage( filters_ );
 }
 
 void PredefinedFiltersDialog::addFilter() const
@@ -117,19 +129,20 @@ void PredefinedFiltersDialog::resolveStandardButton( QAbstractButton* button )
 
     const auto role = buttonBox->buttonRole( button );
 
-    if ( role == QDialogButtonBox::RejectRole ) {
+    switch ( role ) {
+    case QDialogButtonBox::RejectRole:
         reject();
         return;
-    }
 
-    if ( role == QDialogButtonBox::AcceptRole ) {
+    case QDialogButtonBox::ApplyRole:
+        saveSettings();
+        break;
+
+    case QDialogButtonBox::AcceptRole:
         saveSettings();
         accept();
-    }
-    else if ( role == QDialogButtonBox::ApplyRole ) {
-        saveSettings();
-    }
-    else {
+        break;
+    default:
         LOG( logERROR ) << "PredefinedFiltersDialog::resolveStandardButton unhandled role: "
                         << role;
         return;

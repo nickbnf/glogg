@@ -447,7 +447,7 @@ void MainWindow::createActions()
     selectOpenFileAction->setShortcuts( QList<QKeySequence>()
                                         << QKeySequence( Qt::SHIFT | Qt::CTRL | Qt::Key_O ) );
 
-    predefinedFiltersDialogAction = new QAction( tr( "Configure predefined filters" ), this );
+    predefinedFiltersDialogAction = new QAction( tr( "Predefined filters..." ), this );
     predefinedFiltersDialogAction->setStatusTip( tr( "Show dialog to configure filters" ) );
     connect( predefinedFiltersDialogAction, &QAction::triggered,
              [ this ]( auto ) { this->editPredefinedFilters(); } );

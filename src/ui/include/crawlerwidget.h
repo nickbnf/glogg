@@ -59,7 +59,7 @@
 #include "iconloader.h"
 #include "logmainview.h"
 #include "overview.h"
-#include "predefinedfilters.h"
+#include "predefinedfilterscombobox.h"
 #include "signalmux.h"
 #include "viewinterface.h"
 
@@ -104,15 +104,6 @@ class CrawlerWidget : public QSplitter,
 
     // Returns whether follow is enabled in this crawler
     bool isFollowEnabled() const;
-
-    // Set content of search line
-    void setSearchLineEditText( const QString& text );
-
-    // Get content of search line
-    QString currentSearchLineEditText() const;
-
-    // Reload predefined filters after changing settings
-    void reloadPredefinedFilters() const;
 
   public slots:
     // Stop the asynchoronous loading of the file if one is in progress
@@ -294,6 +285,9 @@ class CrawlerWidget : public QSplitter,
     void changeDataStatus( DataStatus status );
     void updateEncoding();
     void changeTopViewSize( int32_t delta );
+
+    // Reload predefined filters after changing settings
+    void reloadPredefinedFilters() const;
 
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;

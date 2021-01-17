@@ -37,10 +37,8 @@
  */
 
 #include "predefinedfilters.h"
-#include "crawlerwidget.h"
+
 #include "log.h"
-#include <qnamespace.h>
-#include <qstandarditemmodel.h>
 
 void PredefinedFiltersCollection::retrieveFromStorage( QSettings& settings )
 {
@@ -49,15 +47,15 @@ void PredefinedFiltersCollection::retrieveFromStorage( QSettings& settings )
     if ( settings.contains( "PredefinedFiltersCollection/version" ) ) {
         settings.beginGroup( "PredefinedFiltersCollection" );
         if ( settings.value( "version" ).toInt() <= PredefinedFiltersCollection_VERSION ) {
-            filters.clear();
+            filters_.clear();
 
             int size = settings.beginReadArray( "filters" );
 
             for ( int i = 0; i < size; ++i ) {
                 settings.setArrayIndex( i );
 
-                filters.insert( QString( settings.value( "name" ).toString() ),
-                                QString( settings.value( "filter" ).toString() ) );
+                filters_.emplace( settings.value( "name" ).toString(),
+                                settings.value( "filter" ).toString() );
             }
             settings.endArray();
         }
@@ -77,115 +75,32 @@ void PredefinedFiltersCollection::saveToStorage( QSettings& settings ) const
 
     settings.remove( "filters" );
 
-    CollectionIterator iter( filters );
     settings.beginWriteArray( "filters" );
-    for ( int i = 0; iter.hasNext(); ++i ) {
-        iter.next();
-        settings.setArrayIndex( i );
-        settings.setValue( "name", iter.key() );
-        settings.setValue( "filter", iter.value() );
+    int arrayIndex = 0;
+    for ( const auto& filter : filters_ ) {
+        settings.setArrayIndex( arrayIndex );
+        settings.setValue( "name", filter.first );
+        settings.setValue( "filter", filter.second );
+
+        arrayIndex++;
     }
     settings.endArray();
     settings.endGroup();
 }
 
-void PredefinedFiltersCollection::saveToStorage( const PredefinedFiltersCollection::Collection& f )
+void PredefinedFiltersCollection::saveToStorage( const PredefinedFiltersCollection::Collection& filters )
 {
-    filters = f;
+    filters_ = filters;
     this->save();
 }
 
 PredefinedFiltersCollection::Collection PredefinedFiltersCollection::getFilters() const
 {
-    return this->filters;
+    return filters_;
 }
 
 PredefinedFiltersCollection::Collection PredefinedFiltersCollection::getSyncedFilters()
 {
-    return this->getSynced().getFilters();
-}
-
-PredefinedFiltersComboBox::PredefinedFiltersComboBox( QWidget* crawler )
-    : crawlerWidget( crawler )
-{
-    model = new QStandardItemModel();
-
-    setup();
-}
-
-void PredefinedFiltersComboBox::setup()
-{
-    this->setFocusPolicy( Qt::NoFocus );
-    populatePredefinedFilters();
-}
-
-void PredefinedFiltersComboBox::populatePredefinedFilters()
-{
-    model->clear();
-    const auto filters = filtersCollection.getSyncedFilters();
-
-    setTitle( "Predefined filters" );
-
-    insertFilters( filters );
-
-    this->setModel( model );
-
-    connectFilters( filters );
-}
-
-void PredefinedFiltersComboBox::setTitle( const QString& title )
-{
-    auto* titleItem = new QStandardItem( title );
-    model->insertRow( 0, titleItem );
-}
-
-void PredefinedFiltersComboBox::insertFilters(
-    const PredefinedFiltersCollection::Collection& filters )
-{
-    auto i = model->rowCount();
-
-    PredefinedFiltersCollection::CollectionIterator iter( filters );
-
-    while ( iter.hasNext() ) {
-        iter.next();
-        auto* item = new QStandardItem( iter.key() );
-
-        item->setFlags( Qt::ItemIsUserCheckable | Qt::ItemIsEnabled );
-        item->setData( Qt::Unchecked, Qt::CheckStateRole );
-
-        model->insertRow( i++, item );
-    }
-}
-
-void PredefinedFiltersComboBox::connectFilters(
-    const PredefinedFiltersCollection::Collection& filters )
-{
-    connect( model, &QStandardItemModel::itemChanged, [ = ]( const QStandardItem* changed_item ) {
-        (void)changed_item;
-
-        const auto size = model->rowCount();
-
-        /* If multiple filters are selected connect those with "|" */
-
-        QString filter;
-        auto crawler = qobject_cast<CrawlerWidget*>( crawlerWidget );
-        crawler->setSearchLineEditText( "" );
-
-        for ( auto j = 0; j < size; ++j ) {
-            const auto item = model->item( j );
-
-            if ( item->checkState() == Qt::Checked ) {
-                const auto new_filter = filters.find( item->text() );
-
-                if ( filters.end() != new_filter ) {
-                    auto current_filter = crawler->currentSearchLineEditText();
-
-                    if ( current_filter != "" )
-                        current_filter += "|";
-
-                    crawler->setSearchLineEditText( current_filter + new_filter.value() );
-                }
-            }
-        }
-    } );
+    filters_ = this->getSynced().getFilters();
+    return filters_;
 }

@@ -37,37 +37,40 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PREDEFINEDFILTERS_H_
-#define PREDEFINEDFILTERS_H_
+#ifndef PREDEFINEDFILTERSCOMBOBOX_H_
+#define PREDEFINEDFILTERSCOMBOBOX_H_
 
-#include <unordered_map>
+#include <QComboBox>
 
-#include <QString>
+#include "predefinedfilters.h"
 
-#include "persistable.h"
+class QStandardItemModel;
 
+class PredefinedFiltersComboBox final : public QComboBox {
+    Q_OBJECT
 
-// Represents collection of filters read from settings file.
-class PredefinedFiltersCollection final : public Persistable<PredefinedFiltersCollection> {
   public:
-    using Collection = std::unordered_map<QString, QString>;
+    explicit PredefinedFiltersComboBox( QWidget* parent );
 
-    static const char* persistableName()
-    {
-        return "PredefinedFiltersCollection";
-    }
+    PredefinedFiltersComboBox( const PredefinedFiltersComboBox& other ) = delete;
+    PredefinedFiltersComboBox( PredefinedFiltersComboBox&& other ) noexcept = delete;
+    PredefinedFiltersComboBox& operator=( const PredefinedFiltersComboBox& other ) = delete;
+    PredefinedFiltersComboBox& operator=( PredefinedFiltersComboBox&& other ) = delete;
 
-    Collection getSyncedFilters();
-    Collection getFilters() const;
+    void populatePredefinedFilters();
 
-    void retrieveFromStorage( QSettings& settings );
-    void saveToStorage( QSettings& settings ) const;
-    void saveToStorage( const Collection& filters );
+  signals:
+    void filterChanged( const QString& newFilter );
 
   private:
-    static constexpr int PredefinedFiltersCollection_VERSION = 1;
+    void setTitle( const QString& title );
+    void insertFilters( const PredefinedFiltersCollection::Collection& filters );
+    void collectFilters();
 
-    Collection filters_;
+  private:
+    PredefinedFiltersCollection filtersCollection_;
+
+    QStandardItemModel* model_;
 };
 
 #endif

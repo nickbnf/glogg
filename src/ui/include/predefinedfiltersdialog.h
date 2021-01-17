@@ -40,23 +40,17 @@
 #ifndef PREDEFINEDFILTERSDIALOG_H_
 #define PREDEFINEDFILTERSDIALOG_H_
 
+#include <QDialog>
+
 #include "predefinedfilters.h"
 #include "predefinedfiltersdialog.h"
 #include "ui_predefinedfiltersdialog.h"
-
-#include <QDialog>
 
 class PredefinedFiltersDialog : public QDialog, public Ui::PredefinedFiltersDialog {
     Q_OBJECT
 
   public:
     explicit PredefinedFiltersDialog( QWidget* parent = nullptr );
-
-  private:
-    PredefinedFiltersCollection::Collection filters;
-
-    void populateFiltersTable() const;
-    void saveSettings();
 
   private slots:
     void addFilter() const;
@@ -66,6 +60,13 @@ class PredefinedFiltersDialog : public QDialog, public Ui::PredefinedFiltersDial
 
   signals:
     void optionsChanged();
+
+  private:
+    void populateFiltersTable() const;
+    void saveSettings();
+
+  private:
+    PredefinedFiltersCollection::Collection filters_;
 };
 
 #endif

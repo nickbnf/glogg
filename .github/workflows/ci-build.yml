@@ -248,7 +248,7 @@ jobs:
 
     - name: Win codesign installer
       if: ${{ matrix.config.os == 'windows' }}
-      uses: DanaBear/code-sign-action@v4
+      uses: apptim/code-sign-action@v5
       with:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
         password: '${{ secrets.MS_CODESIGN_PASSWORD }}'

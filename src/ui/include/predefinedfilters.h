@@ -42,10 +42,20 @@
 
 #include <unordered_map>
 
+#include <QHash>
 #include <QString>
 
 #include "persistable.h"
 
+#if QT_VERSION < QT_VERSION_CHECK( 5, 14, 0 )
+namespace std {
+  template<> struct hash<QString> {
+    std::size_t operator()(const QString& s) const noexcept {
+      return (size_t) qHash(s);
+    }
+  };
+}
+#endif
 
 // Represents collection of filters read from settings file.
 class PredefinedFiltersCollection final : public Persistable<PredefinedFiltersCollection> {

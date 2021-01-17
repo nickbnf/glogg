@@ -11,6 +11,7 @@ on:
     branches: [master]
   schedule:
     - cron: '0 22 * * 4'
+  workflow_dispatch:
 
 jobs:
   analyze:
@@ -21,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         language: ['cpp']
-        qt_version: [5.15.1]
+        qt_version: [5.15.2]
 
     steps:
     - name: Checkout repository
@@ -59,8 +60,8 @@ jobs:
 
     - name: Prepare compiler env
       run: |
-        echo "::set-env name=CC::gcc-8"
-        echo "::set-env name=CXX::g++-8"
+        echo "CC=gcc-8" >> $GITHUB_ENV
+        echo "CXX=g++-8" >> $GITHUB_ENV
 
     - name: configure
       run: |

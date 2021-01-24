@@ -34,6 +34,7 @@
 #include "versionchecker.h"
 #endif
 #include "utils.h"
+#include "QActionExtended.h"
 
 class QAction;
 class QActionGroup;
@@ -65,7 +66,8 @@ class MainWindow : public QMainWindow
     // version checking etc...
     void startBackgroundTasks();
 
-  protected:
+    void addPluginAction(string tooltip, string icon, string pluginName, function<void(string)> action);
+protected:
     void closeEvent( QCloseEvent* event );
     // Drag and drop support
     void dragEnterEvent( QDragEnterEvent* event );
@@ -82,6 +84,7 @@ class MainWindow : public QMainWindow
     void find();
     void filters();
     void plugins();
+    void showPluginUI();
     void options();
     void about();
     void aboutQt();

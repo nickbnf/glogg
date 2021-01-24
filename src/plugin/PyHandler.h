@@ -39,6 +39,7 @@ public:
     const char* on_trigger = "on_trigger";
     const char* on_release = "on_release";
     const char* on_search = "on_search";
+    const char* on_show_ui = "on_show_ui";
     const char* on_display_line = "on_display_line";
 
     map<string, int> mPyHandlers = {{on_trigger, -1}};
@@ -60,6 +61,7 @@ public:
     SearchResultArray onSearch(const string &fileName, const string &pattern);
     bool doGetExpandedLines(string &line);
     void updateAppViews();
+    void onShowUI();
 };
 
 

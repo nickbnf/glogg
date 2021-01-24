@@ -93,6 +93,9 @@ private:
         PyThreadState *threadState = nullptr;
         map<string, bool> mInitialConfig;
         function<void ()> mUpdateViewsFun;
+        function<void (string, string, string, function<void (string)>)> mCreateAction;
+
+        void onShowUI(string pluginName);
 
         // PythonPluginInterface interfaces
     public:
@@ -108,11 +111,22 @@ private:
         bool isEnabled() override;
         void enable(bool set) override;
         void updateAppViews() override;
+
+        // PythonPluginInterface interface
+    public:
+        void onCreateToolBars(function<void (string, string, string, function<void (string)>)> createAction) override;
     };
+
     unique_ptr<PythonPluginImpl> mPluginImpl;
 
     // PythonPluginInterface interface
+
+    // PythonPluginInterface interface
+public:
+    void onCreateToolBars(function<void (string, string, string, function<void (string)>)> createAction) override;
 };
+
+
 
 
 

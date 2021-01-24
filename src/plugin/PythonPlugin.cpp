@@ -259,10 +259,35 @@ void PythonPlugin::PythonPluginImpl::createInstance(std::optional<boost::python:
 
 }
 
+void PythonPlugin::PythonPluginImpl::onShowUI(string pluginName)
+{
+    PyGIL gil;
+
+    cout << __FUNCTION__ << ":" << pluginName << "\n";
+    mHandlers[pluginName]->onShowUI();
+}
+
 void PythonPlugin::PythonPluginImpl::updateAppViews()
 {
     mUpdateViewsFun();
     cout << __FUNCTION__ <<"\n";
+}
+
+void PythonPlugin::PythonPluginImpl::onCreateToolBars(function<void (string, string, string, function<void (string)>)> createAction)
+{
+    PyGIL gil;
+
+    mCreateAction = createAction;
+
+    for(auto &o: mHandlers){
+        //o.second->
+
+        mCreateAction("", "", o.first, [this](string option)
+        {
+            cout << "dupa\n";
+            onShowUI(option);
+        });
+    }
 }
 
 void PythonPlugin::PythonPluginImpl::createInstances()
@@ -362,6 +387,7 @@ void PythonPlugin::PythonPluginImpl::setPluginState(const string &typeName, bool
     if(not state){
         //mHandlers[typeName]->onRelease();
         mHandlers.erase(typeName);
+        updateAppViews();
     }else{
         createInstance({}, typeName);
     }
@@ -371,3 +397,12 @@ PythonPlugin::PythonPluginImpl::DerivedType::~DerivedType()
 
 }
 
+
+void PythonPlugin::onCreateToolBars(function<void(string, string, string, function<void (string)>)> createAction)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->onCreateToolBars(createAction);
+}

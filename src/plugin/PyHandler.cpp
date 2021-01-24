@@ -174,6 +174,22 @@ bool PyHandler::isOnSearcAvailable()
     return false;
 }
 
+void PyHandler::onShowUI()
+{
+    std::unique_lock<std::mutex>(pyContextLock);
+
+    try{
+        if(PyObject_HasAttrString(mObj->ptr(), on_show_ui)){
+            mObj->attr(on_show_ui)();
+        }
+    } catch (error_already_set& e) {
+        PyErr_PrintEx(0);
+        throw std::logic_error(string("\n[") +
+                               __FUNCTION__ +
+                               string("] !Error during executing Python code\n"));
+    }
+}
+
 SearchResultArray PyHandler::onSearch(const string& fileName, const string& pattern )
 {
     std::unique_lock<std::mutex>(pyContextLock);

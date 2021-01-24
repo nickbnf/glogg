@@ -5,6 +5,7 @@
 #include <map>
 #include <functional>
 #include "data/search_result.h"
+#include <functional>
 
 using namespace std;
 
@@ -28,6 +29,7 @@ public:
     virtual bool isEnabled() = 0;
     virtual void enable(bool set) = 0;
     virtual void updateAppViews() = 0;
+    virtual void onCreateToolBars(function<void(string tooltip, string icon, string pluginName, function<void(string)> action)> createAction) = 0;
 };
 
 #endif // PYTHONPLUGININTERFACE_H

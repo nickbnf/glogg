@@ -71,7 +71,8 @@ SOURCES += \
     src/plugin/PluginsDialog.cpp \
     src/plugin/pluginset.cpp \
     src/plugin/Process.cpp \
-    src/plugin/SyncPipe.cpp
+    src/plugin/SyncPipe.cpp \
+    src/QActionExtended.cpp
 
 INCLUDEPATH += src/
 INCLUDEPATH += src/plugin
@@ -132,7 +133,8 @@ HEADERS += \
     src/plugin/pluginset.h \
     src/plugin/Process.h \
     src/plugin/SyncPipe.h \
-    src/plugin/PythonPluginInterface.h
+    src/plugin/PythonPluginInterface.h \
+    src/QActionExtended.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

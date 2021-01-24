@@ -419,6 +419,22 @@ void MainWindow::createMenus()
     helpMenu->addAction( aboutAction );
 }
 
+//class QActionExtended: public QAction
+//{
+//    Q_OBJECT
+
+//public:
+
+//    QActionExtended(const QString &text, QObject *parent = nullptr):QAction(text, parent)
+//    {
+//    }
+//private slots:
+//    void showPluginUI()
+//    {
+//        cout << __FUNCTION__ << "\n";
+//    }
+//};
+
 void MainWindow::createToolBars()
 {
     infoLine = new InfoLine();
@@ -439,6 +455,24 @@ void MainWindow::createToolBars()
     toolBar->addWidget( infoLine );
     toolBar->addAction( stopAction );
     toolBar->addWidget( lineNbField );
+
+    pythonPlugin_->onCreateToolBars([this](string tooltip, string icon, string pluginName, function<void(string)> action)
+    {
+        addPluginAction(tooltip, icon, pluginName, action);
+    });
+
+
+
+}
+
+void MainWindow::addPluginAction(string tooltip, string icon, string pluginName, function<void(string)> action)
+{
+    QActionExtended* pluginAction = new QActionExtended(pluginName, action, this);
+    pluginAction->setShortcut(QKeySequence::Open);
+    pluginAction->setIcon( QIcon( ":/images/open14.png" ) );
+    pluginAction->setStatusTip(tr(tooltip.c_str()));
+    connect(pluginAction, SIGNAL(triggered()), pluginAction, SLOT(showPluginUI()));
+    toolBar->addAction(pluginAction);
 }
 
 //
@@ -537,6 +571,11 @@ void MainWindow::plugins()
     PluginsDialog dialog(pythonPlugin_, this);
     signalMux_.connect(&dialog, SIGNAL( pluginsOptionsChanged() ), SLOT( applyPluginConfiguration() ));
     dialog.exec();
+}
+
+void MainWindow::showPluginUI()
+{
+    cout << __FUNCTION__ << "\n";
 }
 
 // Opens the 'Options' modal dialog box

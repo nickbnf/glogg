@@ -110,6 +110,10 @@ class UI(PyHandler):
         self.myapp = None
 
 
+    def on_show_ui(self):
+        print("on_show_ui")
+        self.myapp.show()
+
 # handler that executes egrep using pattern from main APP, with possibility to exetend it by passing egrep features,
 # context for example: -C 5, -A 3, -B 7
 # input file to be grepped, search pattern from main APP

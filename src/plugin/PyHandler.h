@@ -26,6 +26,7 @@ public:
     virtual ~PyHandler();
 
     void setPyhonObject(const boost::python::object& obj);
+    void setPythonPlugin(PythonPluginInterface* pp) {mPythonPlugin = pp;}
     bool setPyHandlerCallCount(string handler, int count);
 
     std::optional<boost::python::api::object> del() override;
@@ -41,6 +42,7 @@ public:
     const char* on_display_line = "on_display_line";
 
     map<string, int> mPyHandlers = {{on_trigger, -1}};
+    PythonPluginInterface *mPythonPlugin = nullptr;
 
     // Handler interface
     bool onTriggerAction(const string &action, const string &data);
@@ -57,6 +59,7 @@ public:
     bool isOnSearcAvailable();
     SearchResultArray onSearch(const string &fileName, const string &pattern);
     bool doGetExpandedLines(string &line);
+    void updateAppViews();
 };
 
 

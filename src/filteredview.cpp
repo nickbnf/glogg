@@ -25,7 +25,7 @@
 
 #include "filteredview.h"
 
-FilteredView::FilteredView(PythonPlugin* pp,  LogFilteredData* newLogData,
+FilteredView::FilteredView(PythonPluginInterface* pp,  LogFilteredData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent )
     : AbstractLogView(pp, newLogData, quickFindPattern, parent )
 {

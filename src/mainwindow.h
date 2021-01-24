@@ -224,7 +224,7 @@ class MainWindow : public QMainWindow
     VersionChecker versionChecker_;
 #endif
 
-    PythonPlugin* pythonPlugin_ = nullptr;
+    PythonPluginInterface* pythonPlugin_ = nullptr;
 };
 
 #endif

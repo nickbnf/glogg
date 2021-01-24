@@ -29,7 +29,7 @@
 
 #include <QKeyEvent>
 
-LogMainView::LogMainView(PythonPlugin* pp, const LogData* newLogData,
+LogMainView::LogMainView(PythonPluginInterface* pp, const LogData* newLogData,
         const QuickFindPattern* const quickFindPattern,
         Overview* overview,
         OverviewWidget* overview_widget,

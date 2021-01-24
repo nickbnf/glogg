@@ -115,6 +115,35 @@ bool PythonPlugin::isEnabled()
     return mPluginImpl.operator bool();
 }
 
+void PythonPlugin::registerUpdateViewsFunction(function<void ()> updateViewsFun)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->registerUpdateViewsFunction(updateViewsFun);
+}
+
+void PythonPlugin::updateAppViews()
+{
+    mPluginImpl->updateAppViews();
+}
+
+void PythonPlugin::PythonPluginImpl::enable(bool set)
+{
+}
+
+bool PythonPlugin::PythonPluginImpl::isEnabled()
+{
+    return true;
+}
+
+
+void PythonPlugin::PythonPluginImpl::registerUpdateViewsFunction(function<void ()> updateViewsFun)
+{
+    mUpdateViewsFun = updateViewsFun;
+}
+
 vector<string> getPythonPluginFilePaths(const string dir)
 {
     vector<string> ret;
@@ -224,9 +253,16 @@ void PythonPlugin::PythonPluginImpl::createInstance(std::optional<boost::python:
 
     PyHandler* p = extract<PyHandler*>(obj.ptr());
     p->setPyhonObject(obj);
+    p->setPythonPlugin(this);
 
     mHandlers.emplace(typeName, create(p));
 
+}
+
+void PythonPlugin::PythonPluginImpl::updateAppViews()
+{
+    mUpdateViewsFun();
+    cout << __FUNCTION__ <<"\n";
 }
 
 void PythonPlugin::PythonPluginImpl::createInstances()
@@ -324,6 +360,7 @@ void PythonPlugin::PythonPluginImpl::setPluginState(const string &typeName, bool
     PyGIL gil;
 
     if(not state){
+        mHandlers[typeName]->onRelease();
         mHandlers.erase(typeName);
     }else{
         createInstance({}, typeName);
@@ -333,3 +370,4 @@ PythonPlugin::PythonPluginImpl::DerivedType::~DerivedType()
 {
 
 }
+

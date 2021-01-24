@@ -32,7 +32,7 @@ class UI(PyHandler):
     def __init__(self, obj):
         PyHandler.__init__(self, obj)
         print("UI")
-        self.myapp = PyDialog.MyForm()
+        self.myapp = PyDialog.MyForm(self)
         self.myapp.show()
 
     # def on_popup_menu(self):
@@ -67,13 +67,17 @@ class UI(PyHandler):
 # filters displayed lines input with number of columns tha should not be displayed, 1 based (1 5 8)
     def filter_by_index(self, line):
         columns = line.split()
+
         remove_col_list = self.myapp.getColumns().split()
-        remove_col_list = [int(x) for x in remove_col_list if x.isdigit()]
+        remove_col_list_all = [int(x) for x in remove_col_list if x.lstrip('-').isdigit() != 0]
+
+        remove_col_list = [x for x in remove_col_list_all if x > 0]
+        remove_col_list += [len(columns) + x for x in remove_col_list_all if x < 0]
 
         ret = []
         for col in range(1, len(columns)):
             if not col in remove_col_list:
-                ret.append(columns[col - 1])
+                ret.append(columns[col])
 
         return " ".join(ret)
 
@@ -92,9 +96,17 @@ class UI(PyHandler):
 # handler that executes chosen method of filtering displayed data
 # input/output line to be displayed
     def on_display_line(self, line):
-        print("on_display_line", line)
+        #print("on_display_line", line)
 
         return self.filter_by_index(line)
+
+
+    def on_release(self):
+        print("on_release")
+        #self.myapp.show()
+        self.myapp.close()
+        self.myapp = None
+
 
 # handler that executes egrep using pattern from main APP, with possibility to exetend it by passing egrep features,
 # context for example: -C 5, -A 3, -B 7
@@ -105,6 +117,7 @@ class UI(PyHandler):
         print(file, pattern)
 
         cmd = "egrep -n -i " + self.myapp.getValue() + " \"" + pattern + "\" '" + file + "'  | cut -f1 -d:"
+        print("\n\n",cmd,"\n\n")
         proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE)
         ret = proc.communicate()[0].decode("utf8").split("\n")
 

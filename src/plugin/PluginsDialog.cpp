@@ -3,7 +3,7 @@
 #include "PluginsDialog.h"
 #include "ui_PluginsDialog.h"
 
-PluginsDialog::PluginsDialog(PythonPlugin* pyPlugin, QWidget *parent) :
+PluginsDialog::PluginsDialog(PythonPluginInterface* pyPlugin, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PluginsDialog),
     pluginSet_(Persistent<PluginSet>( "pluginSet" )),

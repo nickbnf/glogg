@@ -14,6 +14,8 @@
 #include "data/search_result.h"
 #include "pluginset.h"
 #include <memory>
+#include <functional>
+#include <PythonPluginInterface.h>
 
 using namespace std;
 
@@ -32,21 +34,6 @@ struct PyGIL {
   }
 };
 
-class PythonPluginInterface
-{
-public:
-    virtual ~PythonPluginInterface() = default;
-
-    virtual void createInstances() = 0;
-    virtual void onPopupMenu(AbstractLogView* alv) = 0;
-    virtual void onCreateMenu(AbstractLogView *alv) = 0;
-    virtual bool isOnSearcAvailable() = 0;
-    virtual SearchResultArray doSearch(const string &fileName, const string &pattern) = 0;
-    virtual void doGetExpandedLines(string &line) = 0;
-    virtual map<string, bool> getConfig() const = 0;
-    virtual void setPluginState(const string& typeName, bool state) = 0;
-};
-
 class PythonPlugin: public PythonPluginInterface
 {
 public:
@@ -61,7 +48,9 @@ public:
     map<string, bool> getConfig() const;
     void setPluginState(const string& typeName, bool state);
     void enable(bool set);
-    bool isEnabled();
+    bool isEnabled() override;
+    void registerUpdateViewsFunction(function<void ()> updateViewsFun) override;
+    void updateAppViews() override;
 
 private:
 
@@ -103,6 +92,7 @@ private:
         map<string, shared_ptr<PyHandler>> mHandlers;
         PyThreadState *threadState = nullptr;
         map<string, bool> mInitialConfig;
+        function<void ()> mUpdateViewsFun;
 
         // PythonPluginInterface interfaces
     public:
@@ -114,9 +104,16 @@ private:
         void doGetExpandedLines(string &line) override;
         map<string, bool> getConfig() const override;
         void setPluginState(const string &typeName, bool state) override;
+        void registerUpdateViewsFunction(function<void ()> updateViewsFun) override;
+        bool isEnabled() override;
+        void enable(bool set) override;
+        void updateAppViews() override;
     };
-
     unique_ptr<PythonPluginImpl> mPluginImpl;
+
+    // PythonPluginInterface interface
 };
+
+
 
 #endif // PYTHONPLUGIN_H

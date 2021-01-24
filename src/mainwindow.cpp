@@ -422,8 +422,8 @@ void MainWindow::createMenus()
 void MainWindow::createToolBars()
 {
     infoLine = new InfoLine();
-    infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
-    infoLine->setLineWidth( 0 );
+    //infoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
+    //infoLine->setLineWidth( 0 );
 
     lineNbField = new QLabel( );
     lineNbField->setText( "Line 0" );

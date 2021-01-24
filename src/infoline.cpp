@@ -27,11 +27,12 @@
 // widget and managing the completion gauge.
 
 InfoLine::InfoLine() :
-    QLabel(), origPalette_( palette() ),
+    QLineEdit(), origPalette_( palette() ),
     backgroundColor_( origPalette_.color( QPalette::Button ) ),
     darkBackgroundColor_( origPalette_.color( QPalette::Dark ) )
 {
     setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
+    setReadOnly(true);
 }
 
 void InfoLine::displayGauge( int completion )
@@ -65,5 +66,5 @@ void InfoLine::paintEvent( QPaintEvent* paintEvent )
     }
 
     // Call the parent's painter
-    QLabel::paintEvent( paintEvent );
+    QLineEdit::paintEvent( paintEvent );
 }

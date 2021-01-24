@@ -140,7 +140,7 @@ void DigitsBuffer::timerEvent( QTimerEvent* event )
     }
 }
 
-AbstractLogView::AbstractLogView(PythonPlugin* pp, const AbstractLogData* newLogData,
+AbstractLogView::AbstractLogView(PythonPluginInterface *pp, const AbstractLogData* newLogData,
         const QuickFindPattern* const quickFindPattern, QWidget* parent) :
     QAbstractScrollArea( parent ),
     followElasticHook_( HOOK_THRESHOLD ),
@@ -697,10 +697,12 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 
 void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 {
+    cout << __FUNCTION__ << "\n";
     const QRect invalidRect = paintEvent->rect();
     if ( (invalidRect.isEmpty()) || (logData == NULL) )
         return;
 
+    cout << __FUNCTION__ << "2\n";
     LOG(logDEBUG4) << "paintEvent received, firstLine=" << firstLine
         << " lastLineAligned=" << lastLineAligned
         << " rect: " << invalidRect.topLeft().x() <<
@@ -758,6 +760,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                 viewport()->width(), viewport()->devicePixelRatio() );
         pullToFollowCache_.nb_columns_ = getNbVisibleCols();
     }
+
+    cout << __FUNCTION__ << "3\n";
 
     QPainter devicePainter( viewport() );
     int drawingTopPosition = - pullToFollowHeight;
@@ -1036,6 +1040,7 @@ void AbstractLogView::copyWithLineNumbers()
 
 void AbstractLogView::updateData()
 {
+    cout << __FUNCTION__ << "\n";
     LOG(logDEBUG) << "AbstractLogView::updateData";
 
     // Check the top Line is within range

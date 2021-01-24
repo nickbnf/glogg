@@ -26,6 +26,7 @@ BOOST_PYTHON_MODULE(PyHandler)
     class_<PyHandler>("PyHandler", init<PyHandlerInitParams*>())
         .def("seq_properties", &PyHandler::getRawProperties)
         .def("set_call_count", &PyHandler::setPyHandlerCallCount)
+        .def("update_app_views", &PyHandler::updateAppViews)
     ;
 }
 
@@ -228,5 +229,10 @@ bool PyHandler::doGetExpandedLines(string& line)
     }
 
     return ret;
+}
+
+void PyHandler::updateAppViews()
+{
+    mPythonPlugin->updateAppViews();
 }
 

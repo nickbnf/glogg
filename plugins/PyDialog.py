@@ -14,19 +14,24 @@ from PyDialog_ui import Ui_Dialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
+import handlers
+
 
 class MyForm(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, plugin, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+        self.plugin = plugin
 
         #QtCore.QObject.connect(self.ui.buttonBox, QtCore.SIGNAL("clicked()"), self.calculate_value)
         self.ui.pushButton.clicked.connect(self.funkcja)
+        self.ui.pushButtonColumns.clicked.connect(self.funkcja)
 
     def funkcja(self):
         print("funkcja")
-        self.ui.lineEdit.setText("dupa")
+        #self.ui.lineEdit.setText("dupa")
+        self.plugin.update_app_views()
 
     def getValue(self):
         return self.ui.lineEdit.text()

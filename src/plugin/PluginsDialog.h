@@ -5,6 +5,7 @@
 #include "persistentinfo.h"
 #include "pluginset.h"
 #include "ui_PluginsDialog.h"
+#include "PythonPluginInterface.h"
 
 
 class PythonPlugin;
@@ -21,7 +22,7 @@ public:
 signals:
     void pluginsOptionsChanged();
 public:
-    explicit PluginsDialog(PythonPlugin* pyPlugin, QWidget *parent = nullptr);
+    explicit PluginsDialog(PythonPluginInterface *pyPlugin, QWidget *parent = nullptr);
     ~PluginsDialog();
 
 private slots:
@@ -37,7 +38,7 @@ private:
     void createPluginClassList();
 
     std::shared_ptr<PluginSet> pluginSet_;
-    PythonPlugin* pythonPlugin_;
+    PythonPluginInterface* pythonPlugin_;
 };
 
 #endif // PLUGINSDIALOG_H

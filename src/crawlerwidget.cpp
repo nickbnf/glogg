@@ -83,7 +83,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
 
 // Constructor only does trivial construction. The real work is done once
 // the data is attached.
-CrawlerWidget::CrawlerWidget(PythonPlugin *pp, QWidget *parent )
+CrawlerWidget::CrawlerWidget(PythonPluginInterface *pp, QWidget *parent )
         : QSplitter( parent ), overview_(), pythonPlugin_(pp)
 {
     logData_         = nullptr;
@@ -730,6 +730,13 @@ void CrawlerWidget::setup()
     filteredView    = new FilteredView(
             pythonPlugin_, logFilteredData_, quickFindPattern_.get() );
 
+    pythonPlugin_->registerUpdateViewsFunction([this](){
+        filteredView->updateData();
+        logMainView->updateData();
+        logMainView->repaint();
+    });
+
+
     overviewWidget_->setOverview( &overview_ );
     overviewWidget_->setParent( logMainView );
 
@@ -793,8 +800,8 @@ void CrawlerWidget::setup()
 
     // Construct the Search Info line
     searchInfoLine = new InfoLine();
-    searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
-    searchInfoLine->setLineWidth( 1 );
+    //searchInfoLine->setFrameStyle( QFrame::WinPanel | QFrame::Sunken );
+    //searchInfoLine->setLineWidth( 1 );
     searchInfoLineDefaultPalette = searchInfoLine->palette();
 
     ignoreCaseCheck = new QCheckBox( "Ignore &case" );

@@ -30,7 +30,7 @@
 class FilteredView : public AbstractLogView
 {
   public:
-    FilteredView(PythonPlugin *pp, LogFilteredData* newLogData,
+    FilteredView(PythonPluginInterface *pp, LogFilteredData* newLogData,
             const QuickFindPattern* const quickFindPattern,
             QWidget* parent = 0 );
 

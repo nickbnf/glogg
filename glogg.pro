@@ -131,7 +131,8 @@ HEADERS += \
     src/plugin/PluginsDialog.h \
     src/plugin/pluginset.h \
     src/plugin/Process.h \
-    src/plugin/SyncPipe.h
+    src/plugin/SyncPipe.h \
+    src/plugin/PythonPluginInterface.h
 
 isEmpty(BOOST_PATH) {
     message(Building using system dynamic Boost libraries)

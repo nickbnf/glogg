@@ -258,10 +258,10 @@ int main(int argc, char *argv[])
     // FIXME: should be replaced by a two staged init of MainWindow
     GetPersistentInfo().retrieve( QString( "settings" ) );
 
-    PythonPlugin pythonPlugin;
-    pythonPlugin.createInstances();
-    std::unique_ptr<Session> session( new Session(&pythonPlugin) );
-    MainWindow mw(&pythonPlugin, std::move( session ), externalCommunicator );
+    PythonPlugin *pythonPlugin = new PythonPlugin;
+    pythonPlugin->createInstances();
+    std::unique_ptr<Session> session( new Session(pythonPlugin) );
+    MainWindow mw(pythonPlugin, std::move( session ), externalCommunicator );
 
     // Geometry
     mw.reloadGeometry();

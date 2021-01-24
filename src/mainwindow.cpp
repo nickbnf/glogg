@@ -788,6 +788,8 @@ void MainWindow::newVersionNotification( const QString& new_version )
 // Closes the application
 void MainWindow::closeEvent( QCloseEvent *event )
 {
+    delete pythonPlugin_;
+    pythonPlugin_ = nullptr;
     writeSettings();
     event->accept();
 }

@@ -64,7 +64,9 @@ class UI(PyHandler):
 
         return " ".join(ret)
 
-# filters displayed lines input with number of columns tha should not be displayed, 1 based (1 5 8)
+# filters displayed lines input with number of columns tha should not be displayed, 1 based (1 5 8).
+# There is possible to remove columns counting from last coulumn, by using "-", so (-1 -2) removes last and
+# second column form the end
     def filter_by_index(self, line):
         columns = line.split()
 

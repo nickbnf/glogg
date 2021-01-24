@@ -133,6 +133,7 @@ bool PyHandler::setPyHandlerCallCount(string handler, int count)
 std::optional<boost::python::object> PyHandler::del()
 {
     //std::optional<boost::python::object> safeDelete = mObj;
+    onRelease();
     std::optional<boost::python::object> ret = *mObj;
 
     mObj.reset();

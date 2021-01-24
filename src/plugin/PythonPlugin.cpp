@@ -227,13 +227,13 @@ PythonPlugin::PythonPluginImpl::PythonPluginImpl(const map<string, bool> &config
 
 PythonPlugin::PythonPluginImpl::~PythonPluginImpl()
 {
-    //mHandlers.clear();
+    mHandlers.clear();
 
 //    shared_ptr<PyHandler> el = mHandlers["UI"];
 //    mHandlers.erase("UI");
 //    std::optional<boost::python::object> o = el->del();
 //    o.reset();
-    Py_Finalize();
+    //Py_Finalize();
 }
 
 void PythonPlugin::PythonPluginImpl::createInstance(std::optional<boost::python::api::object> type, const string &typeName)
@@ -360,7 +360,7 @@ void PythonPlugin::PythonPluginImpl::setPluginState(const string &typeName, bool
     PyGIL gil;
 
     if(not state){
-        mHandlers[typeName]->onRelease();
+        //mHandlers[typeName]->onRelease();
         mHandlers.erase(typeName);
     }else{
         createInstance({}, typeName);

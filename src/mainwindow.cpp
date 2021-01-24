@@ -469,6 +469,10 @@ void MainWindow::createToolBars()
 
 void MainWindow::addPluginAction(string tooltip, string icon, string pluginName, function<void(string)> action)
 {
+    if(pluginActions_[pluginName]){
+        return;
+    }
+
     QActionExtended* pluginAction = new QActionExtended(pluginName, action, this);
     pluginAction->setShortcut(QKeySequence::Open);
     pluginAction->setIcon( QIcon( ":/images/open14.png" ) );
@@ -628,6 +632,7 @@ void MainWindow::applyPluginConfiguration(string pluginName, bool state)
 
     if(not state){
         toolBar->removeAction(pluginActions_[pluginName]);
+        pluginActions_[pluginName] = nullptr;
     } else {
         pythonPlugin_->onCreateToolBarItem(pluginName);
     }

@@ -18,9 +18,9 @@ class PluginsDialog : public QDialog
 {
     Q_OBJECT
 
-public:
-signals:
-    void pluginsOptionsChanged();
+protected:
+    signals:
+    void pluginsOptionsChanged(string pluginName, bool state);
 public:
     explicit PluginsDialog(PythonPluginInterface *pyPlugin, QWidget *parent = nullptr);
     ~PluginsDialog();

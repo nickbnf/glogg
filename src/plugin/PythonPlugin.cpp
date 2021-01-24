@@ -273,6 +273,16 @@ void PythonPlugin::PythonPluginImpl::updateAppViews()
     cout << __FUNCTION__ <<"\n";
 }
 
+void PythonPlugin::PythonPluginImpl::onCreateToolBarItem(string pluginName)
+{
+    //mHandlers[pluginName]
+    mCreateAction("", "", pluginName, [this](string option)
+    {
+        cout << "dupa\n";
+        onShowUI(option);
+    });
+}
+
 void PythonPlugin::PythonPluginImpl::onCreateToolBars(function<void (string, string, string, function<void (string)>)> createAction)
 {
     PyGIL gil;
@@ -405,4 +415,13 @@ void PythonPlugin::onCreateToolBars(function<void(string, string, string, functi
     }
 
     mPluginImpl->onCreateToolBars(createAction);
+}
+
+void PythonPlugin::onCreateToolBarItem(string pluginName)
+{
+    if(not mPluginImpl){
+        return;
+    }
+
+    mPluginImpl->onCreateToolBarItem(pluginName);
 }

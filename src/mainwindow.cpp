@@ -456,6 +456,8 @@ void MainWindow::createToolBars()
     toolBar->addAction( stopAction );
     toolBar->addWidget( lineNbField );
 
+    toolBar->addSeparator();
+
     pythonPlugin_->onCreateToolBars([this](string tooltip, string icon, string pluginName, function<void(string)> action)
     {
         addPluginAction(tooltip, icon, pluginName, action);
@@ -473,6 +475,7 @@ void MainWindow::addPluginAction(string tooltip, string icon, string pluginName,
     pluginAction->setStatusTip(tr(tooltip.c_str()));
     connect(pluginAction, SIGNAL(triggered()), pluginAction, SLOT(showPluginUI()));
     toolBar->addAction(pluginAction);
+    pluginActions_[pluginName] = pluginAction;
 }
 
 //
@@ -569,7 +572,8 @@ void MainWindow::filters()
 void MainWindow::plugins()
 {
     PluginsDialog dialog(pythonPlugin_, this);
-    signalMux_.connect(&dialog, SIGNAL( pluginsOptionsChanged() ), SLOT( applyPluginConfiguration() ));
+    connect(&dialog, &PluginsDialog::pluginsOptionsChanged ,
+                       this, &MainWindow::applyPluginConfiguration );
     dialog.exec();
 }
 
@@ -616,6 +620,17 @@ void MainWindow::encodingChanged( QAction* action )
     LOG(logDEBUG) << "encodingChanged, encoding " << i;
     currentCrawlerWidget()->setEncoding( static_cast<Encoding>( i ) );
     updateInfoLine();
+}
+
+void MainWindow::applyPluginConfiguration(string pluginName, bool state)
+{
+    cout << __FUNCTION__ << "\n";
+
+    if(not state){
+        toolBar->removeAction(pluginActions_[pluginName]);
+    } else {
+        pythonPlugin_->onCreateToolBarItem(pluginName);
+    }
 }
 
 void MainWindow::toggleOverviewVisibility( bool isVisible )

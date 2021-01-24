@@ -115,6 +115,7 @@ private:
         // PythonPluginInterface interface
     public:
         void onCreateToolBars(function<void (string, string, string, function<void (string)>)> createAction) override;
+        void onCreateToolBarItem(string pluginName);
     };
 
     unique_ptr<PythonPluginImpl> mPluginImpl;
@@ -124,6 +125,7 @@ private:
     // PythonPluginInterface interface
 public:
     void onCreateToolBars(function<void (string, string, string, function<void (string)>)> createAction) override;
+    void onCreateToolBarItem(string pluginName);
 };
 
 

@@ -46,4 +46,5 @@ void PluginsDialog::on_listWidget_itemClicked(QListWidgetItem *item)
     bool checked = item->checkState();
     QString text = item->text();
     pythonPlugin_->setPluginState(text.toStdString(), checked);
+    emit pluginsOptionsChanged(text.toStdString(), checked);
 }

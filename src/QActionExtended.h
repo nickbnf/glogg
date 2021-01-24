@@ -15,6 +15,10 @@ public:
     QActionExtended(string pluginName, function<void(string)> action, QObject *parent = nullptr):QAction(tr(""), parent),action_(action),pluginName_(pluginName)
     {
     }
+    string getName()
+    {
+        return pluginName_;
+    }
 private slots:
     void showPluginUI()
     {

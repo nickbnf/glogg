@@ -30,6 +30,7 @@ public:
     virtual void enable(bool set) = 0;
     virtual void updateAppViews() = 0;
     virtual void onCreateToolBars(function<void(string tooltip, string icon, string pluginName, function<void(string)> action)> createAction) = 0;
+    virtual void onCreateToolBarItem(string pluginName) = 0;
 };
 
 #endif // PYTHONPLUGININTERFACE_H

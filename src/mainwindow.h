@@ -21,6 +21,7 @@
 #define MAINWINDOW_H
 
 #include <memory>
+#include <map>
 #include <QMainWindow>
 
 #include "session.h"
@@ -89,6 +90,7 @@ protected:
     void about();
     void aboutQt();
     void encodingChanged( QAction* action );
+    void applyPluginConfiguration(string pluginName, bool state);
 
     // Change the view settings
     void toggleOverviewVisibility( bool isVisible );
@@ -228,6 +230,7 @@ protected:
 #endif
 
     PythonPluginInterface* pythonPlugin_ = nullptr;
+    map<string, QActionExtended*> pluginActions_;
 };
 
 #endif

@@ -27,7 +27,7 @@
 #include <functional>
 
 // Number of lines in each chunk to read
-const int SearchOperation::nbLinesInChunk = 5000;
+const int SearchOperation::nbLinesInChunk = 25000;
 
 void SearchData::getAll( int* length, SearchResultArray* matches,
         qint64* lines) const
@@ -240,11 +240,16 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 
         if(pythonPlugin_->isOnSearcAvailable()){
             currentList = pythonPlugin_->doSearch(sourceLogData_->getFileName().toStdString(),
-                                                  regexp_.pattern().toStdString(), initialLine);
+                                                  regexp_.pattern().toStdString(), i);
 
-            std::for_each(currentList.begin(), currentList.end(), [initialLine](MatchingLine& d) { d.addOffset(initialLine);});
+            std::for_each(currentList.begin(), currentList.end(), [i](MatchingLine& d) { d.addOffset(i);});
 
-            searchData.addAll( maxLength, currentList, i );
+            int processedLines = i + nbLinesInChunk;
+
+            if(processedLines > nbSourceLines)
+                processedLines = nbSourceLines;
+
+            searchData.addAll( maxLength, currentList, processedLines);
             nbMatches += currentList.size();
         }else{
             const QStringList lines = sourceLogData_->getLines( i,

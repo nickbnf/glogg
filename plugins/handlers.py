@@ -97,10 +97,10 @@ class UI(PyHandler):
 
 # handler that executes chosen method of filtering displayed data
 # input/output line to be displayed
-#    def on_display_line(self, line):
-#        #print("on_display_line", line)
+    def on_display_line(self, line):
+        #print("on_display_line", line)
 
-#        return self.filter_by_index(line)
+        return self.filter_by_index(line)
 
 # handler to release resources, C++ destructoror like. Release UI here
     def on_release(self):
@@ -122,12 +122,12 @@ class UI(PyHandler):
         print("on_search beg")
         print(file, pattern)
 
-        offset = ""
+        offset = str(initialLine)
 
-        if initialLine:
-            offset = "+"+str(initialLine)
+#        if initialLine:
+#            offset = "+"+str(initialLine)
 
-        cmd = "head " + offset + " -n 5000 '" + file + "' | egrep -n -i " + self.myapp.getValue() + " \"" + pattern + "\" | cut -f1 -d:"
+        cmd = "tail -n +" + offset + " '" + file + "'" + " | head -n 5000 | egrep -n -i " + self.myapp.getValue() + " \"" + pattern + "\" | cut -f1 -d:"
         print(cmd)
         print("\n\n",cmd,"\n\n")
         proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE)

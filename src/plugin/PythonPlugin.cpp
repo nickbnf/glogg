@@ -62,13 +62,13 @@ bool PythonPlugin::isOnSearcAvailable()
     return mPluginImpl->isOnSearcAvailable();
 }
 
-SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern )
+SearchResultArray PythonPlugin::doSearch(const string& fileName, const string& pattern, int initialLine)
 {
     if(not mPluginImpl){
         return {};
     }
 
-    return mPluginImpl->doSearch(fileName, pattern);
+    return mPluginImpl->doSearch(fileName, pattern, initialLine);
 }
 
 void PythonPlugin::doGetExpandedLines(string& line)
@@ -353,13 +353,13 @@ bool PythonPlugin::PythonPluginImpl::isOnSearcAvailable()
     return false;
 }
 
-SearchResultArray PythonPlugin::PythonPluginImpl::doSearch(const string &fileName, const string &pattern)
+SearchResultArray PythonPlugin::PythonPluginImpl::doSearch(const string &fileName, const string &pattern, int initialLine)
 {
     PyGIL gil;
 
     for(auto &o: mHandlers){
         if (o.second->isOnSearcAvailable()){
-            return o.second->onSearch(fileName, pattern);
+            return o.second->onSearch(fileName, pattern, initialLine);
         }
     }
 

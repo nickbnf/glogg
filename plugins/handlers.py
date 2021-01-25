@@ -97,19 +97,19 @@ class UI(PyHandler):
 
 # handler that executes chosen method of filtering displayed data
 # input/output line to be displayed
-    def on_display_line(self, line):
-        #print("on_display_line", line)
+#    def on_display_line(self, line):
+#        #print("on_display_line", line)
 
-        return self.filter_by_index(line)
+#        return self.filter_by_index(line)
 
-
+# handler to release resources, C++ destructoror like. Release UI here
     def on_release(self):
         print("on_release")
         #self.myapp.show()
         self.myapp.close()
         self.myapp = None
 
-
+# handler to show UI, when was hidden. Used by the Toolbar.
     def on_show_ui(self):
         print("on_show_ui")
         self.myapp.show()
@@ -118,11 +118,17 @@ class UI(PyHandler):
 # context for example: -C 5, -A 3, -B 7
 # input file to be grepped, search pattern from main APP
 # output list of indexes of lines to be displayed
-    def on_search(self, file, pattern):
+    def on_search(self, file, pattern, initialLine):
         print("on_search beg")
         print(file, pattern)
 
-        cmd = "egrep -n -i " + self.myapp.getValue() + " \"" + pattern + "\" '" + file + "'  | cut -f1 -d:"
+        offset = ""
+
+        if initialLine:
+            offset = "+"+str(initialLine)
+
+        cmd = "head " + offset + " -n 5000 '" + file + "' | egrep -n -i " + self.myapp.getValue() + " \"" + pattern + "\" | cut -f1 -d:"
+        print(cmd)
         print("\n\n",cmd,"\n\n")
         proc = subprocess.Popen(cmd, bufsize=0, shell=True, stdout=subprocess.PIPE)
         ret = proc.communicate()[0].decode("utf8").split("\n")

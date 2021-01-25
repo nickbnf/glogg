@@ -190,14 +190,14 @@ void PyHandler::onShowUI()
     }
 }
 
-SearchResultArray PyHandler::onSearch(const string& fileName, const string& pattern )
+SearchResultArray PyHandler::onSearch(const string& fileName, const string& pattern, int initialLine)
 {
     std::unique_lock<std::mutex>(pyContextLock);
 
     try{
         if(PyObject_HasAttrString(mObj->ptr(), on_search)){
             vector<string> ss;
-            boost::python::object o = mObj->attr(on_search)(fileName.c_str(), pattern.c_str());
+            boost::python::object o = mObj->attr(on_search)(fileName.c_str(), pattern.c_str(), initialLine);
             list l = extract<boost::python::list>(o);
             cout << __FUNCTION__ << " "<< boost::python::len(l) << "\n";
 

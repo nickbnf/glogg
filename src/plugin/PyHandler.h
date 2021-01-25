@@ -58,7 +58,7 @@ public:
     void onPopupMenu(AbstractLogView *alv);
     void onCreateMenu(AbstractLogView *alv);
     bool isOnSearcAvailable();
-    SearchResultArray onSearch(const string &fileName, const string &pattern);
+    SearchResultArray onSearch(const string &fileName, const string &pattern, int initialLine);
     bool doGetExpandedLines(string &line);
     void updateAppViews();
     void onShowUI();

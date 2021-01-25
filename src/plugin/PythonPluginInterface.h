@@ -21,7 +21,7 @@ public:
     virtual void onPopupMenu(AbstractLogView* alv) = 0;
     virtual void onCreateMenu(AbstractLogView *alv) = 0;
     virtual bool isOnSearcAvailable() = 0;
-    virtual SearchResultArray doSearch(const string &fileName, const string &pattern) = 0;
+    virtual SearchResultArray doSearch(const string &fileName, const string &pattern, int initialLine) = 0;
     virtual void doGetExpandedLines(string &line) = 0;
     virtual map<string, bool> getConfig() const = 0;
     virtual void setPluginState(const string& typeName, bool state) = 0;

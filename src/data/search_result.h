@@ -21,6 +21,8 @@ class MatchingLine {
     bool operator == (const MatchingLine& other) const
     { return lineNumber_ == other.lineNumber_; }
 
+    void addOffset(int offset){ lineNumber_ += offset; }
+
   private:
     LineNumber lineNumber_;
 };

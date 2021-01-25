@@ -42,7 +42,7 @@ public:
     void onPopupMenu(AbstractLogView* alv);
     void onCreateMenu(AbstractLogView *alv);
     bool isOnSearcAvailable();
-    SearchResultArray doSearch(const string &fileName, const string &pattern);
+    SearchResultArray doSearch(const string &fileName, const string &pattern, int initialLine);
     void doGetExpandedLines(string &line);
 
     map<string, bool> getConfig() const;
@@ -103,7 +103,7 @@ private:
         void onPopupMenu(AbstractLogView *alv) override;
         void onCreateMenu(AbstractLogView *alv) override;
         bool isOnSearcAvailable() override;
-        SearchResultArray doSearch(const string &fileName, const string &pattern) override;
+        SearchResultArray doSearch(const string &fileName, const string &pattern, int initialLine) override;
         void doGetExpandedLines(string &line) override;
         map<string, bool> getConfig() const override;
         void setPluginState(const string &typeName, bool state) override;

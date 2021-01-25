@@ -229,16 +229,6 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
 
     function<bool(const QString& line)> search;
 
-    if(pythonPlugin_->isOnSearcAvailable()){
-        //search = [this](const QString& file, const QString& re){
-        currentList = pythonPlugin_->doSearch(sourceLogData_->getFileName().toStdString(), regexp_.pattern().toStdString());
-        searchData.addAll( maxLength, currentList, 3 );
-        nbMatches = currentList.size();
-        emit searchProgressed( nbMatches, 100, initialLine );
-        return;
-        //};
-    }
-
     LOG(logDEBUG) << "Searching from line " << initialLine << " to " << nbSourceLines;
 
     for ( qint64 i = initialLine; i < nbSourceLines; i += nbLinesInChunk ) {
@@ -248,26 +238,36 @@ void SearchOperation::doSearch( SearchData& searchData, qint64 initialLine )
         const int percentage = ( i - initialLine ) * 100 / ( nbSourceLines - initialLine );
         emit searchProgressed( nbMatches, percentage, initialLine );
 
-        const QStringList lines = sourceLogData_->getLines( i,
-                qMin( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
-        LOG(logDEBUG) << "Chunk starting at " << i <<
-            ", " << lines.size() << " lines read.";
+        if(pythonPlugin_->isOnSearcAvailable()){
+            currentList = pythonPlugin_->doSearch(sourceLogData_->getFileName().toStdString(),
+                                                  regexp_.pattern().toStdString(), initialLine);
 
-        int j = 0;
-        for ( ; j < lines.size(); j++ ) {
-            if ( regexp_.match( lines[j] ).hasMatch() ) {
-                // FIXME: increase perf by removing temporary
-                const int length = sourceLogData_->getExpandedLineString(i+j).length();
-                if ( length > maxLength )
-                    maxLength = length;
-                currentList.push_back( MatchingLine( i+j ) );
-                nbMatches++;
+            std::for_each(currentList.begin(), currentList.end(), [initialLine](MatchingLine& d) { d.addOffset(initialLine);});
+
+            searchData.addAll( maxLength, currentList, i );
+            nbMatches += currentList.size();
+        }else{
+            const QStringList lines = sourceLogData_->getLines( i,
+                    qMin( nbLinesInChunk, (int) ( nbSourceLines - i ) ) );
+            LOG(logDEBUG) << "Chunk starting at " << i <<
+                ", " << lines.size() << " lines read.";
+
+            int j = 0;
+            for ( ; j < lines.size(); j++ ) {
+                if ( regexp_.match( lines[j] ).hasMatch() ) {
+                    // FIXME: increase perf by removing temporary
+                    const int length = sourceLogData_->getExpandedLineString(i+j).length();
+                    if ( length > maxLength )
+                        maxLength = length;
+                    currentList.push_back( MatchingLine( i+j ) );
+                    nbMatches++;
+                }
             }
+            searchData.addAll( maxLength, currentList, i+j );
         }
 
         // After each block, copy the data to shared data
         // and update the client
-        searchData.addAll( maxLength, currentList, i+j );
         currentList.clear();
     }
 

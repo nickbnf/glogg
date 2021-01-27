@@ -13,17 +13,14 @@ _klogg_ is designed to:
  - handle huge log files
  - provide a clear view of the matches even in heavily cluttered files.
 
-General usage can be described as simple loop:
+Here is what _klogg_ looks like:
 
-{{< mermaid >}}
-
-graph TD;
-    A[Search for some regular expression]-->B[Mark interesting lines to keep in results window];
-    B-->A;
-  
-{{< /mermaid >}}
-
- Using this pattern you can get full picture of what was happening at the time of logging.
+<div id="gallery" style="display:none;">
+<img src="/screenshots/mainwindow.png" alt="Klogg main window" />
+<img src="/screenshots/dark.png" alt="Klogg dark theme" />
+<img src="/screenshots/scratchpad.png" alt="Klogg scratchpad" />
+<img src="/screenshots/highlighters.png" alt="Klogg highlighters configuration" />
+</div>
 
 ## Features
 {{< columns >}}

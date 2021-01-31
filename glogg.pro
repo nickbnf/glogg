@@ -11,7 +11,7 @@ QMAKE_CXXFLAGS += "-DHAVE_MAKE_UNIQUE"
 
 libpython = $$system(find /usr -name libpython3*m.so)
 message("lib python list: " $$libpython)
-message("chosen lib python: " $$member(libpython,  1))
+message("chosen lib python: " $$member(libpython,  0))
 LIBS += $$member(libpython,  1)
 #LIBS += /usr/lib/python3.5/config-3.5m-x86_64-linux-gnu/libpython3.5m.so
 
@@ -96,8 +96,6 @@ for(in, include_python) {
     }
 }
 
-#INCLUDEPATH += /usr/include/python3.5m
-
 HEADERS += \
     src/data/abstractlogdata.h \
     src/data/logdata.h \
@@ -145,7 +143,6 @@ HEADERS += \
     src/gloggapp.h \
     src/drawhelpers.h \
     src/plugin/PythonPlugin.h \
-    src/plugin/JSonParser.h \
     src/plugin/PyHandler.h \
     src/plugin/Handler.h \
     src/data/search_result.h \

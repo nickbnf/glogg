@@ -24,7 +24,6 @@ BOOST_PYTHON_MODULE(PyHandler)
     // return_internal_reference() - This creates a Python object that contains a reference to the original C++ object.
     //
     class_<PyHandler>("PyHandler", init<PyHandlerInitParams*>())
-        .def("seq_properties", &PyHandler::getRawProperties)
         .def("set_call_count", &PyHandler::setPyHandlerCallCount)
         .def("update_app_views", &PyHandler::updateAppViews)
     ;
@@ -44,8 +43,6 @@ PyHandler::PyHandler(PyHandlerInitParams *init)
 
     className = init->ref->className;
     mInstanceName = init->ref->mInstanceName;
-
-    setProperties(*init->prop);
 }
 
 PyHandler::~PyHandler()

@@ -125,7 +125,6 @@ HEADERS += \
     src/gloggapp.h \
     src/drawhelpers.h \
     src/plugin/PythonPlugin.h \
-    src/plugin/JSonParser.h \
     src/plugin/PyHandler.h \
     src/plugin/Handler.h \
     src/data/search_result.h \

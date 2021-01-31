@@ -12,11 +12,9 @@ class PyHandler;
 struct PyHandlerInitParams
 {
     PyHandlerInitParams(){}
-    PyHandlerInitParams(PyHandler* r, JSONParser* p, int i):ref(r), prop(p), inpuFD(i)
+    PyHandlerInitParams(PyHandler* r):ref(r)
     {}
     PyHandler* ref;
-    JSONParser* prop;
-    int inpuFD;
 };
 
 class PyHandler : public Handler {

@@ -9,7 +9,6 @@
 #include <boost/python.hpp>
 #pragma pop_macro("slots")
 #include <string>
-#include <JSonParser.h>
 #include "Handler.h"
 #include "data/search_result.h"
 #include "pluginset.h"

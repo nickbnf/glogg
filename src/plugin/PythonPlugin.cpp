@@ -236,7 +236,7 @@ PythonPlugin::PythonPluginImpl::~PythonPluginImpl()
     //Py_Finalize();
 }
 
-void PythonPlugin::PythonPluginImpl::createInstance(std::optional<boost::python::api::object> type, const string &typeName)
+void PythonPlugin::PythonPluginImpl::createInstance(boost::optional<boost::python::api::object> type, const string &typeName)
 {
     PyGIL gil;
 

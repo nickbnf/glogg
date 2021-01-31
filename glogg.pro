@@ -6,11 +6,21 @@
 # Release builds: qmake
 
 CONFIG += cpp17
-QMAKE_CXXFLAGS += -std=c++17
+QMAKE_CXXFLAGS += -std=c++14
 QMAKE_CXXFLAGS += "-DHAVE_MAKE_UNIQUE"
 
-LIBS += /usr/lib/x86_64-linux-gnu/libpython3.6m.so
-LIBS += -lboost_python3-py36
+libpython = $$system(find /usr -name libpython3*m.so)
+message("lib python list: " $$libpython)
+message("chosen lib python: " $$member(libpython,  1))
+LIBS += $$member(libpython,  1)
+#LIBS += /usr/lib/python3.5/config-3.5m-x86_64-linux-gnu/libpython3.5m.so
+
+libboost_python = $$system(find /usr -name libboost_python-py3*.so)
+message("lib boost python list: " $$libboost_python)
+message("chosen lib boost python: " $$member(libboost_python,  0))
+LIBS += $$member(libboost_python,  0)
+#LIBS += /usr/lib/x86_64-linux-gnu/libboost_python-py35.so
+
 LIBS += -lboost_system
 LIBS += -lboost_filesystem
 
@@ -70,13 +80,23 @@ SOURCES += \
     src/plugin/Handler.cpp \
     src/plugin/PluginsDialog.cpp \
     src/plugin/pluginset.cpp \
-    src/plugin/Process.cpp \
     src/plugin/SyncPipe.cpp \
     src/QActionExtended.cpp
 
 INCLUDEPATH += src/
 INCLUDEPATH += src/plugin
-INCLUDEPATH += /usr/include/python3.6m
+
+include_python = $$system(find /usr/include -name python3*m)
+message("python include dir list:" $$include_python)
+
+for(in, include_python) {
+    !contains(in,".*x86_64-linux-gnu.*") {
+        INCLUDEPATH += $$in
+        message("chosen python include dir: " $$in)
+    }
+}
+
+#INCLUDEPATH += /usr/include/python3.5m
 
 HEADERS += \
     src/data/abstractlogdata.h \
@@ -125,12 +145,12 @@ HEADERS += \
     src/gloggapp.h \
     src/drawhelpers.h \
     src/plugin/PythonPlugin.h \
+    src/plugin/JSonParser.h \
     src/plugin/PyHandler.h \
     src/plugin/Handler.h \
     src/data/search_result.h \
     src/plugin/PluginsDialog.h \
     src/plugin/pluginset.h \
-    src/plugin/Process.h \
     src/plugin/SyncPipe.h \
     src/plugin/PythonPluginInterface.h \
     src/QActionExtended.h

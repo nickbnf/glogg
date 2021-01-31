@@ -71,7 +71,7 @@ private:
         PythonPluginImpl() = default;
         PythonPluginImpl(const map<string, bool>& config);
         ~PythonPluginImpl();
-        void createInstance(std::optional<boost::python::object> type, const string &typeName);
+        void createInstance(boost::optional<boost::python::object> type, const string &typeName);
 
         struct DerivedType
         {

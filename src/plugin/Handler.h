@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <boost/core/demangle.hpp>
 #include <boost/python.hpp>
+#include <boost/optional.hpp>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ class Handler
     virtual ~Handler() = default;
 
     virtual void onRelease();
-    virtual std::optional<boost::python::api::object> del() = 0;
+    virtual boost::optional<boost::python::api::object> del() = 0;
 
     static Handler& getHandler(const string& className);
 

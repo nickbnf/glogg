@@ -27,9 +27,9 @@ public:
     void setPythonPlugin(PythonPluginInterface* pp) {mPythonPlugin = pp;}
     bool setPyHandlerCallCount(string handler, int count);
 
-    std::optional<boost::python::api::object> del() override;
+    boost::optional<boost::python::api::object> del() override;
 
-    optional<boost::python::object> mObj;
+    boost::optional<boost::python::object> mObj;
     private:
     const char* on_popup_menu = "on_popup_menu";
     const char* on_create_menu = "on_create_menu";

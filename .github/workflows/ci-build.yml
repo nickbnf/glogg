@@ -181,18 +181,33 @@ jobs:
         p12-file-base64: ${{ secrets.CODESIGN_BASE64 }}
         p12-password: ${{ secrets.CODESIGN_PASSWORD }}
 
-    - name: Mac package
+    - name: Mac deploy Qt
       if: ${{ matrix.config.os == 'macos' }} 
       run: |
         cd $KLOGG_BUILD_ROOT
         macdeployqt ./output/klogg.app -always-overwrite -verbose=2
         $KLOGG_WORKSPACE/3rdparty/macdeployqtfix/macdeployqtfix.py ./output/klogg.app/Contents/MacOS/klogg $Qt5_Dir
+    
+    - name: Mac codesign binaries
+      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }}
+      run: |
+        cd $KLOGG_BUILD_ROOT
         codesign -v -f -o runtime --deep --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./output/klogg.app;
+    
+    - name: Mac pack dmg
+      if: ${{ matrix.config.os == 'macos' }} 
+      run: |
+        cd $KLOGG_BUILD_ROOT
         cpack --verbose -G "DragNDrop"
+
+    - name: Mac codesign dmg
+      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }}
+      run: |
+        cd $KLOGG_BUILD_ROOT
         codesign -v -f -o runtime --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./packages/*
         
     - name: "Mac notarize"
-      if: ${{ matrix.config.os == 'macos' }} 
+      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }} 
       uses: devbotsxyz/xcode-notarize@v1
       with:
         product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
@@ -201,7 +216,7 @@ jobs:
         appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
 
     - name: "Mac staple"
-      if: ${{ matrix.config.os == 'macos' }} 
+      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }} 
       uses: devbotsxyz/xcode-staple@v1
       with:
         product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
@@ -215,7 +230,7 @@ jobs:
 
 # Win packaging
     - name: Win codesign executables
-      if: ${{ matrix.config.os == 'windows' }}
+      if: ${{ matrix.config.os == 'windows' && github.event_name != 'pull_request' }}
       uses: apptim/code-sign-action@v5
       with:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
@@ -247,7 +262,7 @@ jobs:
         xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe %KLOGG_BUILD_ROOT%\packages\ /y
 
     - name: Win codesign installer
-      if: ${{ matrix.config.os == 'windows' }}
+      if: ${{ matrix.config.os == 'windows' && github.event_name != 'pull_request' }}
       uses: apptim/code-sign-action@v5
       with:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'

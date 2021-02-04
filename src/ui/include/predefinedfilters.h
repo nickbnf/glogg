@@ -40,7 +40,7 @@
 #ifndef PREDEFINEDFILTERS_H_
 #define PREDEFINEDFILTERS_H_
 
-#include <unordered_map>
+#include <map>
 
 #include <QHash>
 #include <QString>
@@ -60,7 +60,7 @@ namespace std {
 // Represents collection of filters read from settings file.
 class PredefinedFiltersCollection final : public Persistable<PredefinedFiltersCollection> {
   public:
-    using Collection = std::unordered_map<QString, QString>;
+    using Collection = std::map<QString, QString>;
 
     static const char* persistableName()
     {

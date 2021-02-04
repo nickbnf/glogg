@@ -13,18 +13,43 @@
   <property name="windowTitle">
    <string>Predefined Filters</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0">
    <property name="sizeConstraint">
     <enum>QLayout::SetDefaultConstraint</enum>
    </property>
-   <item>
-    <widget class="QTableWidget" name="filtersTableWidget"/>
-   </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item>
+      <widget class="QToolButton" name="addFilterButton">
+       <property name="toolTip">
+        <string>New Filter</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../../app/klogg.qrc">
+         <normaloff>:/images/icons8-plus-16.png</normaloff>:/images/icons8-plus-16.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="removeFilterButton">
+       <property name="toolTip">
+        <string>Remove Filter</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../../app/klogg.qrc">
+         <normaloff>:/images/icons8-minus-16.png</normaloff>:/images/icons8-minus-16.png</iconset>
+       </property>
+      </widget>
+     </item>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
@@ -58,37 +83,10 @@
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QToolButton" name="addFilterButton">
-       <property name="toolTip">
-        <string>New Filter</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset resource="../../app/klogg.qrc">
-         <normaloff>:/images/icons8-plus-16.png</normaloff>:/images/icons8-plus-16.png
-        </iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="removeFilterButton">
-       <property name="toolTip">
-        <string>Remove Filter</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset resource="../../app/klogg.qrc">
-         <normaloff>:/images/icons8-minus-16.png</normaloff>:/images/icons8-minus-16.png
-        </iconset>
-       </property>
-      </widget>
-     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="filtersTableWidget"/>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">

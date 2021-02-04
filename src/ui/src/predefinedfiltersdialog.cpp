@@ -41,7 +41,7 @@
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QTimer>
-#include <qtoolbutton.h>
+#include <QToolButton>
 
 #include "iconloader.h"
 #include "log.h"

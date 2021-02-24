@@ -175,7 +175,7 @@ jobs:
 
 # Mac packaging
     - name: Mac prepare codesign
-      if: ${{ matrix.config.os == 'macos' }} 
+      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }} 
       uses: apple-actions/import-codesign-certs@v1
       with: 
         p12-file-base64: ${{ secrets.CODESIGN_BASE64 }}

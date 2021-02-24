@@ -70,6 +70,8 @@ private:
     void retrieve()
     {
         auto& settings = PersistentInfo::getSettings(SettingsType{});
+        
+        settings.sync();
         static_cast<T&>(*this).retrieveFromStorage( settings );
     }
 };

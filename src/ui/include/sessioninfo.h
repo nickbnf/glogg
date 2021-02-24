@@ -95,8 +95,9 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
     bool remove( const QString& windowId )
     {
         if ( windows_.size() > 1 ) {
-            auto window = std::find_if( windows_.begin(), windows_.end(),
-                                        [&windowId]( const auto& w ) { return w.id == windowId; } );
+            auto window
+                = std::find_if( windows_.begin(), windows_.end(),
+                                [ &windowId ]( const auto& w ) { return w.id == windowId; } );
             if ( window != windows_.end() ) {
                 windows_.erase( window );
             }
@@ -117,23 +118,31 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
 
     QByteArray geometry( const QString& windowId ) const
     {
-        return findWindow( windowId )->geometry;
+        auto window = findWindow( windowId );
+        return window ? window->geometry : QByteArray{};
     }
 
     void setGeometry( const QString& windowId, const QByteArray& geometry )
     {
-        findWindow( windowId )->geometry = geometry;
+        auto window = findWindow( windowId );
+        if ( window ) {
+            window->geometry = geometry;
+        }
     }
 
     // List of the loaded files
     std::vector<OpenFile> openFiles( const QString& windowId ) const
     {
-        return findWindow( windowId )->openFiles;
+        auto window = findWindow( windowId );
+        return window ? window->openFiles : std::vector<OpenFile>{};
     }
 
     void setOpenFiles( const QString& windowId, const std::vector<OpenFile>& loaded_files )
     {
-        findWindow( windowId )->openFiles = loaded_files;
+        auto window = findWindow( windowId );
+        if ( window ) {
+            window->openFiles = loaded_files;
+        }
     }
 
     // Reads/writes the current config in the QSettings object passed
@@ -144,7 +153,7 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
     Window* findWindow( const QString& windowId ) const
     {
         auto window = std::find_if( windows_.begin(), windows_.end(),
-                                    [&windowId]( const auto& w ) { return w.id == windowId; } );
+                                    [ &windowId ]( const auto& w ) { return w.id == windowId; } );
 
         if ( window == windows_.end() ) {
             LOG( logINFO ) << "Can't find window " << windowId;

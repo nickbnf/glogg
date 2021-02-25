@@ -231,7 +231,7 @@ jobs:
 # Win packaging
     - name: Win codesign executables
       if: ${{ matrix.config.os == 'windows' && github.event_name != 'pull_request' }}
-      uses: apptim/code-sign-action@v5
+      uses: apptim/code-sign-action@v8
       with:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
         password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
@@ -263,7 +263,7 @@ jobs:
 
     - name: Win codesign installer
       if: ${{ matrix.config.os == 'windows' && github.event_name != 'pull_request' }}
-      uses: apptim/code-sign-action@v5
+      uses: apptim/code-sign-action@v8
       with:
         certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
         password: '${{ secrets.MS_CODESIGN_PASSWORD }}'

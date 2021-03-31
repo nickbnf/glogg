@@ -47,7 +47,7 @@
 #include "log.h"
 #include "predefinedfilters.h"
 
-PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent, QString newFilter )
+PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent )
     : QDialog( parent )
 {
     setupUi( this );
@@ -73,7 +73,11 @@ PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent, QString newFi
         addFilterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );
         removeFilterButton->setIcon( iconLoader.load( "icons8-minus-16" ) );
     } );
+}
 
+PredefinedFiltersDialog::PredefinedFiltersDialog( const QString& newFilter, QWidget* parent )
+    : PredefinedFiltersDialog( parent )
+{
     if ( newFilter != "" ) {
         addFilterFromSearchLine( newFilter );
     }
@@ -133,7 +137,7 @@ void PredefinedFiltersDialog::addFilter() const
     filtersTableWidget->setRowCount( filtersTableWidget->rowCount() + 1 );
 }
 
-void PredefinedFiltersDialog::addFilterFromSearchLine( QString newFilter ) const
+void PredefinedFiltersDialog::addFilterFromSearchLine( const QString& newFilter ) const
 {
     addFilter();
 

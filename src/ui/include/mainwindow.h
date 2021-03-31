@@ -113,7 +113,7 @@ class MainWindow : public QMainWindow {
     void openClipboard();
     void openUrl();
     void editHighlighters();
-    void editPredefinedFilters( QString newFilter = "" );
+    void editPredefinedFilters( const QString& newFilter = {} );
     void options();
     void about();
     void aboutQt();

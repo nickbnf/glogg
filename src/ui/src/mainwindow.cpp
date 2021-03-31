@@ -895,9 +895,9 @@ void MainWindow::editHighlighters()
 }
 
 // Opens dialog to configure predefined filters
-void MainWindow::editPredefinedFilters( QString newFilter )
+void MainWindow::editPredefinedFilters( const QString& newFilter )
 {
-    PredefinedFiltersDialog dialog( this, newFilter );
+    PredefinedFiltersDialog dialog( newFilter, this );
 
     signalMux_.connect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
 

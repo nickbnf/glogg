@@ -37,7 +37,7 @@
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QSysInfo>
-#include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QUrlQuery>
 #include <QVBoxLayout>
 
@@ -86,7 +86,7 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     auto crashReportHeader = std::make_unique<QLabel>();
     crashReportHeader->setText( "We collected the following crash report:" );
 
-    auto report = std::make_unique<QTextEdit>();
+    auto report = std::make_unique<QPlainTextEdit>();
     report->setReadOnly( true );
     report->setPlainText( formattedReport );
     report->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );

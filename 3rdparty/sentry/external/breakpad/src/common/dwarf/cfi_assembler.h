@@ -120,7 +120,7 @@ class CFISection: public Section {
   // Use the addresses in BASES as the base addresses for encoded
   // pointers in subsequent calls to FDEHeader or EncodedPointer.
   // This function makes a copy of BASES.
-  void SetEncodedPointerBases(const EncodedPointerBases &bases) {
+  void SetEncodedPointerBases(const EncodedPointerBases& bases) {
     encoded_pointer_bases_ = bases;
   }
 
@@ -133,11 +133,11 @@ class CFISection: public Section {
   // Before calling this function, you will typically want to use Mark
   // or Here to make a label to pass to FDEHeader that refers to this
   // CIE's position in the section.
-  CFISection &CIEHeader(uint64_t code_alignment_factor,
+  CFISection& CIEHeader(uint64_t code_alignment_factor,
                         int data_alignment_factor,
                         unsigned return_address_register,
                         uint8_t version = 3,
-                        const string &augmentation = "",
+                        const string& augmentation = "",
                         bool dwarf64 = false,
                         uint8_t address_size = 8,
                         uint8_t segment_size = 0);
@@ -152,7 +152,7 @@ class CFISection: public Section {
   // 0xffffff00 bytes. (The "initial length" is always a 32-bit
   // value.) Nor does it support .debug_frame sections longer than
   // 0xffffff00 bytes.
-  CFISection &FDEHeader(Label cie_pointer,
+  CFISection& FDEHeader(Label cie_pointer,
                         uint64_t initial_location,
                         uint64_t address_range,
                         bool dwarf64 = false);
@@ -161,11 +161,11 @@ class CFISection: public Section {
   // started, after padding with DW_CFA_nops for alignment. This
   // defines the label representing the entry's length, cited in the
   // entry's header. Return a reference to this section.
-  CFISection &FinishEntry();
+  CFISection& FinishEntry();
 
   // Append the contents of BLOCK as a DW_FORM_block value: an
   // unsigned LEB128 length, followed by that many bytes of data.
-  CFISection &Block(const string &block) {
+  CFISection& Block(const string& block) {
     ULEB128(block.size());
     Append(block);
     return *this;
@@ -173,11 +173,11 @@ class CFISection: public Section {
 
   // Append ADDRESS to this section, in the appropriate size and
   // endianness. Return a reference to this section.
-  CFISection &Address(uint64_t address) {
+  CFISection& Address(uint64_t address) {
     Section::Append(endianness(), address_size_, address);
     return *this;
   }
-  CFISection &Address(Label address) {
+  CFISection& Address(Label address) {
     Section::Append(endianness(), address_size_, address);
     return *this;
   }
@@ -191,26 +191,26 @@ class CFISection: public Section {
   // 
   // (C++ doesn't let me use default arguments here, because I want to
   // refer to members of *this in the default argument expression.)
-  CFISection &EncodedPointer(uint64_t address) {
+  CFISection& EncodedPointer(uint64_t address) {
     return EncodedPointer(address, pointer_encoding_, encoded_pointer_bases_);
   }
-  CFISection &EncodedPointer(uint64_t address, DwarfPointerEncoding encoding) {
+  CFISection& EncodedPointer(uint64_t address, DwarfPointerEncoding encoding) {
     return EncodedPointer(address, encoding, encoded_pointer_bases_);
   }
-  CFISection &EncodedPointer(uint64_t address, DwarfPointerEncoding encoding,
-                             const EncodedPointerBases &bases);
+  CFISection& EncodedPointer(uint64_t address, DwarfPointerEncoding encoding,
+                             const EncodedPointerBases& bases);
 
   // Restate some member functions, to keep chaining working nicely.
-  CFISection &Mark(Label *label)   { Section::Mark(label); return *this; }
-  CFISection &D8(uint8_t v)       { Section::D8(v);       return *this; }
-  CFISection &D16(uint16_t v)     { Section::D16(v);      return *this; }
-  CFISection &D16(Label v)         { Section::D16(v);      return *this; }
-  CFISection &D32(uint32_t v)     { Section::D32(v);      return *this; }
-  CFISection &D32(const Label &v)  { Section::D32(v);      return *this; }
-  CFISection &D64(uint64_t v)     { Section::D64(v);      return *this; }
-  CFISection &D64(const Label &v)  { Section::D64(v);      return *this; }
-  CFISection &LEB128(long long v)  { Section::LEB128(v);   return *this; }
-  CFISection &ULEB128(uint64_t v) { Section::ULEB128(v);  return *this; }
+  CFISection& Mark(Label* label)  { Section::Mark(label); return *this; }
+  CFISection& D8(uint8_t v)       { Section::D8(v);       return *this; }
+  CFISection& D16(uint16_t v)     { Section::D16(v);      return *this; }
+  CFISection& D16(Label v)        { Section::D16(v);      return *this; }
+  CFISection& D32(uint32_t v)     { Section::D32(v);      return *this; }
+  CFISection& D32(const Label& v) { Section::D32(v);      return *this; }
+  CFISection& D64(uint64_t v)     { Section::D64(v);      return *this; }
+  CFISection& D64(const Label& v) { Section::D64(v);      return *this; }
+  CFISection& LEB128(long long v) { Section::LEB128(v);   return *this; }
+  CFISection& ULEB128(uint64_t v) { Section::ULEB128(v);  return *this; }
 
  private:
   // A length value that we've appended to the section, but is not yet

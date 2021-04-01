@@ -17,12 +17,9 @@ import("../build/crashpad_fuzzer_test.gni")
 
 if (crashpad_is_in_chromium) {
   import("//build/config/compiler/compiler.gni")
-
-  # Prevent Chromium source assignment filters from being inherited.
-  set_sources_assignment_filter([])
 }
 
-static_library("snapshot") {
+crashpad_static_library("snapshot") {
   sources = [
     "annotation_snapshot.cc",
     "annotation_snapshot.h",
@@ -260,12 +257,6 @@ static_library("snapshot") {
     cflags = [ "/wd4201" ]  # nonstandard extension used : nameless struct/union
     libs = [ "powrprof.lib" ]
   }
-
-  configs += [ "..:disable_ubsan" ]
-
-  if (crashpad_is_in_fuchsia) {
-    configs += [ "//build/config:Wno-conversion" ]
-  }
 }
 
 # :context is the only part of snapshot that minidump may depend on.
@@ -285,10 +276,6 @@ static_library("context") {
 
   if (crashpad_is_win) {
     cflags = [ "/wd4201" ]  # nonstandard extension used : nameless struct/union
-  }
-
-  if (crashpad_is_in_fuchsia) {
-    configs += [ "//build/config:Wno-conversion" ]
   }
 }
 
@@ -379,6 +366,8 @@ source_set("snapshot_test") {
       "linux/exception_snapshot_linux_test.cc",
       "linux/process_reader_linux_test.cc",
       "linux/system_snapshot_linux_test.cc",
+      "linux/test_modules.cc",
+      "linux/test_modules.h",
       "sanitized/process_snapshot_sanitized_test.cc",
       "sanitized/sanitization_information_test.cc",
     ]

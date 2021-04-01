@@ -23,6 +23,7 @@ namespace unwindstack {
 
 void log_to_stdout(bool enable);
 void log(uint8_t indent, const char* format, ...);
+void log_async_safe(const char* format, ...);
 
 }  // namespace unwindstack
 

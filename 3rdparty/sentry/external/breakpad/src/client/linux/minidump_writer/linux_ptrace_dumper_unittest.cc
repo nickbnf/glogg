@@ -337,7 +337,7 @@ TEST_F(LinuxPtraceDumperChildTest, MappingsIncludeLinuxGate) {
   ASSERT_TRUE(dumper.Init());
 
   void* linux_gate_loc =
-    reinterpret_cast<void *>(dumper.auxv()[AT_SYSINFO_EHDR]);
+    reinterpret_cast<void*>(dumper.auxv()[AT_SYSINFO_EHDR]);
   ASSERT_TRUE(linux_gate_loc);
   bool found_linux_gate = false;
 

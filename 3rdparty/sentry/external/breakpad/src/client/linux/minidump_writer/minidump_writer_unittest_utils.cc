@@ -41,7 +41,7 @@ namespace google_breakpad {
 
 string GetHelperBinary() {
   string helper_path;
-  char *bindir = getenv("bindir");
+  char* bindir = getenv("bindir");
   if (bindir) {
     helper_path = string(bindir) + "/";
   } else {

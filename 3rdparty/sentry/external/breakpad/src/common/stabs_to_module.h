@@ -76,10 +76,10 @@ class StabsToModule: public google_breakpad::StabsHandler {
   bool StartCompilationUnit(const char *name, uint64_t address,
                             const char *build_directory);
   bool EndCompilationUnit(uint64_t address);
-  bool StartFunction(const string &name, uint64_t address);
+  bool StartFunction(const string& name, uint64_t address);
   bool EndFunction(uint64_t address);
   bool Line(uint64_t address, const char *name, int number);
-  bool Extern(const string &name, uint64_t address);
+  bool Extern(const string& name, uint64_t address);
   void Warning(const char *format, ...);
 
   // Do any final processing necessary to make module_ contain all the
@@ -107,7 +107,7 @@ class StabsToModule: public google_breakpad::StabsHandler {
   // We could just stick them in module_ from the outset, but if
   // module_ already contains data gathered from other debugging
   // formats, that would complicate the size computation.
-  vector<Module::Function *> functions_;
+  vector<Module::Function*> functions_;
 
   // Boundary addresses.  STABS doesn't necessarily supply sizes for
   // functions and lines, so we need to compute them ourselves by

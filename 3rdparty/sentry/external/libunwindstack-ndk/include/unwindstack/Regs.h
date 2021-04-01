@@ -18,16 +18,18 @@
 #define _LIBUNWINDSTACK_REGS_H
 
 #include <stdint.h>
+#include <unistd.h>
 
 #include <functional>
 #include <string>
 #include <vector>
 
+#include <unwindstack/Arch.h>
+
 namespace unwindstack {
 
 // Forward declarations.
 class Elf;
-enum ArchEnum : uint8_t;
 class Memory;
 
 class Regs {
@@ -51,7 +53,7 @@ class Regs {
 
   virtual ArchEnum Arch() = 0;
 
-  virtual bool Is32Bit() = 0;
+  bool Is32Bit() { return ArchIs32Bit(Arch()); }
 
   virtual void* RawData() = 0;
   virtual uint64_t pc() = 0;
@@ -63,15 +65,19 @@ class Regs {
   uint64_t dex_pc() { return dex_pc_; }
   void set_dex_pc(uint64_t dex_pc) { dex_pc_ = dex_pc; }
 
-  virtual uint64_t GetPcAdjustment(uint64_t rel_pc, Elf* elf) = 0;
+  virtual void ResetPseudoRegisters() {}
+  virtual bool SetPseudoRegister(uint16_t, uint64_t) { return false; }
+  virtual bool GetPseudoRegister(uint16_t, uint64_t*) { return false; }
 
-  virtual bool StepIfSignalHandler(uint64_t rel_pc, Elf* elf, Memory* process_memory) = 0;
+  virtual bool StepIfSignalHandler(uint64_t elf_offset, Elf* elf, Memory* process_memory) = 0;
 
   virtual bool SetPcFromReturnAddress(Memory* process_memory) = 0;
 
   virtual void IterateRegisters(std::function<void(const char*, uint64_t)>) = 0;
 
   uint16_t total_regs() { return total_regs_; }
+
+  virtual Regs* Clone() = 0;
 
   static ArchEnum CurrentArch();
   static Regs* RemoteGet(pid_t pid);
@@ -91,8 +97,6 @@ class RegsImpl : public Regs {
       : Regs(total_regs, return_loc), regs_(total_regs) {}
   virtual ~RegsImpl() = default;
 
-  bool Is32Bit() override { return sizeof(AddressType) == sizeof(uint32_t); }
-
   inline AddressType& operator[](size_t reg) { return regs_[reg]; }
 
   void* RawData() override { return regs_.data(); }
@@ -106,6 +110,8 @@ class RegsImpl : public Regs {
  protected:
   std::vector<AddressType> regs_;
 };
+
+uint64_t GetPcAdjustment(uint64_t rel_pc, Elf* elf, ArchEnum arch);
 
 }  // namespace unwindstack
 

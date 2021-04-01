@@ -35,7 +35,7 @@
 
 namespace google_breakpad {
 
-BOOL EnsureDirectoryPathExists(NSString *dirPath);
+BOOL EnsureDirectoryPathExists(NSString* dirPath);
 
 //=============================================================================
 class ConfigFile {
@@ -50,11 +50,11 @@ class ConfigFile {
   }
 
   void WriteFile(const char* directory,
-                 const SimpleStringDictionary *configurationParameters,
-                 const char *dump_dir,
-                 const char *minidump_id);
+                 const SimpleStringDictionary* configurationParameters,
+                 const char* dump_dir,
+                 const char* minidump_id);
 
-  const char *GetFilePath() { return config_file_path_; }
+  const char* GetFilePath() { return config_file_path_; }
 
   void Unlink() {
     if (config_file_ != -1)
@@ -64,16 +64,16 @@ class ConfigFile {
   }
 
  private:
-  BOOL WriteData(const void *data, size_t length);
+  BOOL WriteData(const void* data, size_t length);
 
-  BOOL AppendConfigData(const char *key,
-                        const void *data,
+  BOOL AppendConfigData(const char* key,
+                        const void* data,
                         size_t length);
 
-  BOOL AppendConfigString(const char *key,
-                          const char *value);
+  BOOL AppendConfigString(const char* key,
+                          const char* value);
 
-  BOOL AppendCrashTimeParameters(const char *processStartTimeString);
+  BOOL AppendCrashTimeParameters(const char* processStartTimeString);
 
   int   config_file_;                    // descriptor for config file
   char  config_file_path_[PATH_MAX];     // Path to configuration file

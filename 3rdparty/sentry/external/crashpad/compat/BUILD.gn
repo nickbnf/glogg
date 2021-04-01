@@ -14,18 +14,11 @@
 
 import("../build/crashpad_buildconfig.gni")
 
-if (crashpad_is_in_chromium) {
-  # Prevent Chromium source assignment filters from being inherited.
-  set_sources_assignment_filter([])
-}
-
 config("compat_config") {
   include_dirs = []
 
   if (crashpad_is_mac || crashpad_is_ios) {
     include_dirs += [ "mac" ]
-  } else {
-    include_dirs += [ "non_mac" ]
   }
 
   if (crashpad_is_ios) {
@@ -45,10 +38,6 @@ config("compat_config") {
   } else {
     include_dirs += [ "non_win" ]
   }
-
-  if (!crashpad_is_linux && !crashpad_is_android && !crashpad_is_fuchsia) {
-    include_dirs += [ "non_elf" ]
-  }
 }
 
 template("compat_target") {
@@ -60,9 +49,9 @@ template("compat_target") {
       not_needed([ "configs" ])
     }
   } else {
-    static_library(target_name) {
+    crashpad_static_library(target_name) {
       forward_variables_from(invoker, "*", [ "configs" ])
-      if (!(defined(configs))) {
+      if (!defined(configs)) {
         configs = []
       }
       if (defined(invoker.configs)) {
@@ -86,12 +75,7 @@ compat_target("compat") {
       "mac/sys/resource.h",
     ]
   } else {
-    sources += [
-      "non_mac/mach-o/loader.h",
-      "non_mac/mach/mach.h",
-      "non_mac/mach/machine.h",
-      "non_mac/mach/vm_prot.h",
-    ]
+    sources += [ "non_mac/mach/mach.h" ]
   }
 
   if (crashpad_is_ios) {
@@ -116,8 +100,6 @@ compat_target("compat") {
 
   if (crashpad_is_android) {
     sources += [
-      "android/android/api-level.cc",
-      "android/android/api-level.h",
       "android/dlfcn_internal.cc",
       "android/dlfcn_internal.h",
       "android/elf.h",
@@ -157,30 +139,18 @@ compat_target("compat") {
     ]
   }
 
-  if (!crashpad_is_linux && !crashpad_is_android && !crashpad_is_fuchsia) {
-    sources += [ "non_elf/elf.h" ]
-  }
-
   public_configs = [
     ":compat_config",
     "..:crashpad_config",
   ]
 
-  deps = []
-
-  if (!crashpad_is_mac) {
-    deps += [ "../third_party/xnu" ]
+  if (!crashpad_is_win) {
+    public_deps = [ "../third_party/mini_chromium:base" ]
   }
+
+  deps = [ "../util:no_cfi_icall" ]
 
   if (crashpad_is_win) {
     deps += [ "../third_party/getopt" ]
-  }
-
-  if (!crashpad_is_linux && !crashpad_is_android && !crashpad_is_fuchsia) {
-    deps += [ "../third_party/glibc" ]
-  }
-
-  if (crashpad_is_in_fuchsia) {
-    configs = [ "//build/config:Wno-conversion" ]
   }
 }

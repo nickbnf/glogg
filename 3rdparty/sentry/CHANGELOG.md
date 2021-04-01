@@ -1,5 +1,114 @@
 # Changelog
 
+## 0.4.8
+
+**Features**:
+
+- The unwinder on Android was updated to a newer version.
+- Experimental support for the Breakpad backend on Android and iOS.
+
+**Fixes**:
+
+- Fixed some memory leaks on Windows.
+- Build System improvements.
+
+**Thank you**:
+
+Features, fixes and improvements in this release have been contributed by:
+
+- [@Mixaill](https://github.com/Mixaill)
+- [@daxpedda](https://github.com/daxpedda)
+- [@Amphaal](https://github.com/Amphaal)
+
+## 0.4.7
+
+**Features**:
+
+- Events will automatically get an `os` context with OS version information.
+- Added a new `max_breadcrumbs` option.
+
+**Fixes**:
+
+- Fixed some memory leaks related to bounded breadcrumbs.
+
+## 0.4.6
+
+**Fixes**:
+
+- Restore compatibility with CMake 3.10 (as used in Android NDK Tools)
+
+**Internal**:
+
+- Update Crashpad and Breakpad submodules to 2021-01-25
+
+## 0.4.5
+
+**Features**:
+
+- The Breakpad backend is now supported on macOS, although the crashpad backend is recommended on that platform.
+- Added a new `sentry_reinstall_backend` function which can be used in case a third-party library is overriding the signal/exception handler.
+- Add a Qt integration that hooks into Qt logging (opt-in CMake option).
+- Expose the sentry-native version via CMake.
+
+**Fixes**:
+
+- Install `.pdb` files correctly.
+- Improve macOS runtime version detection.
+- Fixed a potential segfault when doing concurrent scope modification.
+
+**Thank you**:
+
+Features, fixes and improvements in this release have been contributed by:
+
+- [@Mixaill](https://github.com/Mixaill)
+- [@eakoli](https://github.com/eakoli)
+- [@GenuineAster](https://github.com/GenuineAster)
+- [@daxpedda](https://github.com/daxpedda)
+- [@torarnv](https://github.com/torarnv)
+
+## 0.4.4
+
+**Features**:
+
+- The `sentry_get_modules_list` function was made public, which will return a list of loaded libraries that will be sent to sentry with each event.
+- A new `sentry_options_set_transport_thread_name` function was added to set an explicit name for sentries http transport thread.
+
+**Fixes**:
+
+- The session duration is now printed in a locale-independent way, avoiding invalid session payloads.
+- Correctly clean up locks and pass the Windows Application Verifier.
+- Build fixes for MinGW and better documentation for universal MacOS builds.
+- Crashes captured by the `crashpad` backend _after_ calling `sentry_shutdown` will now have the full metadata.
+
+**Thank you**:
+
+Features, fixes and improvements in this release have been contributed by:
+
+- [@Mixaill](https://github.com/Mixaill)
+
+## 0.4.3
+
+**Caution**:
+
+- The representation of `sentry_value_t` was changed to avoid problems with the newly introduced Memory Tagging Extension (MTE) on ARM / Android.
+  Implementation details of `sentry_value_t` were never considered public, and it should always be treated as an opaque type.
+
+**Fixes**:
+
+- Fix corrupted breadcrumb data when using the crashpad backend on Windows.
+- Avoid sending empty envelopes when using the crashpad backend.
+- Correctly encode the signal number when using the Windows inproc backend, avoiding a processing Error.
+- Unwind from the local call-stack, fixing empty stacktraces when using the inproc backend on Linux.
+- Improvements to the Build configuration.
+
+**Thank you**:
+
+Features, fixes and improvements in this release have been contributed by:
+
+- [@4diekmann](https://github.com/4diekmann)
+- [@variar](https://github.com/variar)
+- [@Mixaill](https://github.com/Mixaill)
+
 ## 0.4.2
 
 **Fixes**:

@@ -121,7 +121,7 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
   // sort out which lines belong to which functions; we don't add them
   // to any particular function in MODULE ourselves.
   DwarfLineToModule(Module *module, const string& compilation_dir,
-                    vector<Module::Line> *lines)
+                    vector<Module::Line>* lines)
       : module_(module),
         compilation_dir_(compilation_dir),
         lines_(lines),
@@ -132,8 +132,8 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
   
   ~DwarfLineToModule() { }
 
-  void DefineDir(const string &name, uint32_t dir_num);
-  void DefineFile(const string &name, int32_t file_num,
+  void DefineDir(const string& name, uint32_t dir_num);
+  void DefineFile(const string& name, int32_t file_num,
                   uint32_t dir_num, uint64_t mod_time,
                   uint64_t length);
   void AddLine(uint64_t address, uint64_t length,
@@ -142,7 +142,7 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
  private:
 
   typedef std::map<uint32_t, string> DirectoryTable;
-  typedef std::map<uint32_t, Module::File *> FileTable;
+  typedef std::map<uint32_t, Module::File*> FileTable;
 
   // The module we're contributing debugging info to. Owned by our
   // client.
@@ -161,7 +161,7 @@ class DwarfLineToModule: public dwarf2reader::LineInfoHandler {
   // to the appropriate function from module_ until we've read the
   // function info as well. Instead, we accumulate lines here, and let
   // whoever constructed this sort it all out.
-  vector<Module::Line> *lines_;
+  vector<Module::Line>* lines_;
 
   // A table mapping directory numbers to paths.
   DirectoryTable directories_;

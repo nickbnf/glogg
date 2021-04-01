@@ -87,13 +87,14 @@ bool MemoryMappedFile::Map(const char* path, size_t offset) {
     return true;
   }
 
-  void* data = sys_mmap(NULL, file_len, PROT_READ, MAP_PRIVATE, fd, offset);
+  size_t content_len = file_len - offset;
+  void* data = sys_mmap(NULL, content_len, PROT_READ, MAP_PRIVATE, fd, offset);
   sys_close(fd);
   if (data == MAP_FAILED) {
     return false;
   }
 
-  content_.Set(data, file_len - offset);
+  content_.Set(data, content_len);
   return true;
 }
 

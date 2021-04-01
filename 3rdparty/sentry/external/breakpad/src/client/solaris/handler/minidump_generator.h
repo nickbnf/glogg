@@ -48,10 +48,10 @@ namespace google_breakpad {
 //
 class MinidumpGenerator {
   // Callback run for writing lwp information in the process.
-  friend bool LwpInformationCallback(lwpstatus_t *lsp, void *context);
+  friend bool LwpInformationCallback(lwpstatus_t* lsp, void* context);
 
   // Callback run for writing module information in the process.
-  friend bool ModuleInfoCallback(const ModuleInfo &module_info, void *context);
+  friend bool ModuleInfoCallback(const ModuleInfo& module_info, void* context);
 
  public:
   MinidumpGenerator();
@@ -59,10 +59,10 @@ class MinidumpGenerator {
   ~MinidumpGenerator();
 
   // Write minidump.
-  bool WriteMinidumpToFile(const char *file_pathname,
+  bool WriteMinidumpToFile(const char* file_pathname,
                            int signo,
                            uintptr_t sighandler_ebp,
-                           ucontext_t **sig_ctx) const;
+                           ucontext_t** sig_ctx) const;
 };
 
 }  // namespace google_breakpad

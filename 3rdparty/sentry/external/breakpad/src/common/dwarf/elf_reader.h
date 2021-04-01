@@ -34,7 +34,7 @@ class ElfReaderImpl;
 
 class ElfReader {
  public:
-  explicit ElfReader(const string &path);
+  explicit ElfReader(const string& path);
   ~ElfReader();
 
   // Parse the ELF prologue of this file and return whether it was
@@ -62,29 +62,29 @@ class ElfReader {
   // mem_offset - position at which the segment is mapped into memory
   // file_offset - offset in the file where the mapping begins
   // length - length of the mapped segment
-  void AddSymbols(SymbolMap *symbols,
+  void AddSymbols(SymbolMap* symbols,
                   uint64_t mem_offset, uint64_t file_offset,
                   uint64_t length);
 
   class SymbolSink {
    public:
     virtual ~SymbolSink() {}
-    virtual void AddSymbol(const char *name, uint64_t address,
+    virtual void AddSymbol(const char* name, uint64_t address,
                            uint64_t size) = 0;
   };
 
   // Like AddSymbols above, but with no address correction.
   // Processes any SHT_SYMTAB section, followed by any SHT_DYNSYM section.
-  void VisitSymbols(SymbolSink *sink);
+  void VisitSymbols(SymbolSink* sink);
 
   // Like VisitSymbols above, but for a specific symbol binding/type.
   // A negative value for the binding and type parameters means any
   // binding or type.
-  void VisitSymbols(SymbolSink *sink, int symbol_binding, int symbol_type);
+  void VisitSymbols(SymbolSink* sink, int symbol_binding, int symbol_type);
 
   // Like VisitSymbols above but can optionally export raw symbol values instead
   // of adjusted ones.
-  void VisitSymbols(SymbolSink *sink, int symbol_binding, int symbol_type,
+  void VisitSymbols(SymbolSink* sink, int symbol_binding, int symbol_type,
                     bool get_raw_symbol_values);
 
   // p_vaddr of the first PT_LOAD segment (if any), or 0 if no PT_LOAD
@@ -95,7 +95,7 @@ class ElfReader {
 
   // Return the name of section "shndx".  Returns NULL if the section
   // is not found.
-  const char *GetSectionName(int shndx);
+  const char* GetSectionName(int shndx);
 
   // Return the number of sections in the given ELF file.
   uint64_t GetNumSections();
@@ -104,14 +104,14 @@ class ElfReader {
   // the pointer to the section and store the size in "size".
   // On error, return NULL.  The returned section data is only valid
   // until the ElfReader gets destroyed.
-  const char *GetSectionByIndex(int shndx, size_t *size);
+  const char* GetSectionByIndex(int shndx, size_t* size);
 
   // Get section with "section_name" (ex. ".text", ".symtab") in the
   // given ELF file.  On success, return the pointer to the section
   // and store the size in "size".  On error, return NULL.  The
   // returned section data is only valid until the ElfReader gets
   // destroyed.
-  const char *GetSectionByName(const string &section_name, size_t *size);
+  const char* GetSectionByName(const string& section_name, size_t* size);
 
   // This is like GetSectionByName() but it returns a lot of extra information
   // about the section. The SectionInfo structure is almost identical to
@@ -129,37 +129,37 @@ class ElfReader {
     uint64_t addralign;         // Section alignment.
     uint64_t entsize;           // Entry size if section holds a table.
   };
-  const char *GetSectionInfoByName(const string &section_name,
-                                   SectionInfo *info);
+  const char* GetSectionInfoByName(const string& section_name,
+                                   SectionInfo* info);
 
   // Check if "path" is an ELF binary that has not been stripped of symbol
   // tables.  This function supports both 32-bit and 64-bit ELF binaries.
-  static bool IsNonStrippedELFBinary(const string &path);
+  static bool IsNonStrippedELFBinary(const string& path);
 
   // Check if "path" is an ELF binary that has not been stripped of debug
   // info. Unlike IsNonStrippedELFBinary, this function will return
   // false for binaries passed through "strip -S".
-  static bool IsNonDebugStrippedELFBinary(const string &path);
+  static bool IsNonDebugStrippedELFBinary(const string& path);
 
   // Match a requested section name with the section name as it
   // appears in the elf-file, adjusting for compressed debug section
   // names.  For example, returns true if name == ".debug_abbrev" and
   // sh_name == ".zdebug_abbrev"
-  static bool SectionNamesMatch(const string &name, const string &sh_name);
+  static bool SectionNamesMatch(const string& name, const string& sh_name);
 
  private:
   // Lazily initialize impl32_ and return it.
-  ElfReaderImpl<Elf32> *GetImpl32();
+  ElfReaderImpl<Elf32>* GetImpl32();
   // Ditto for impl64_.
-  ElfReaderImpl<Elf64> *GetImpl64();
+  ElfReaderImpl<Elf64>* GetImpl64();
 
   // Path of the file we're reading.
   const string path_;
   // Read-only file descriptor for the file. May be -1 if there was an
   // error during open.
   int fd_;
-  ElfReaderImpl<Elf32> *impl32_;
-  ElfReaderImpl<Elf64> *impl64_;
+  ElfReaderImpl<Elf32>* impl32_;
+  ElfReaderImpl<Elf64>* impl64_;
 };
 
 }  // namespace dwarf2reader

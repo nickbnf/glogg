@@ -62,12 +62,12 @@ struct DumpOptions {
 // If OBJ_FILE has been stripped but contains a .gnu_debuglink section,
 // then look for the debug file in DEBUG_DIRS.
 // SYMBOL_DATA allows limiting the type of symbol data written.
-bool WriteSymbolFile(const string &load_path,
-                     const string &obj_file,
-                     const string &obj_os,
+bool WriteSymbolFile(const string& load_path,
+                     const string& obj_file,
+                     const string& obj_os,
                      const std::vector<string>& debug_dirs,
                      const DumpOptions& options,
-                     std::ostream &sym_stream);
+                     std::ostream& sym_stream);
 
 // Read the selected object file's debugging information, and write out the
 // header only to |stream|. Return true on success; if an error occurs, report
@@ -76,7 +76,7 @@ bool WriteSymbolFile(const string &load_path,
 bool WriteSymbolFileHeader(const string& load_path,
                            const string& obj_file,
                            const string& obj_os,
-                           std::ostream &sym_stream);
+                           std::ostream& sym_stream);
 
 // As above, but simply return the debugging information in MODULE
 // instead of writing it to a stream. The caller owns the resulting

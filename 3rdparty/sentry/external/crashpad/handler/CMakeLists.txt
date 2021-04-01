@@ -11,7 +11,7 @@ add_library(crashpad_handler_lib STATIC
     user_stream_data_source.h
 )
 
-if(APPLE)
+if(APPLE AND NOT IOS)
     target_sources(crashpad_handler_lib PRIVATE
         mac/crash_report_exception_handler.cc
         mac/crash_report_exception_handler.h
@@ -74,6 +74,10 @@ set_property(TARGET crashpad_handler_lib PROPERTY EXPORT_NAME handler)
 add_library(crashpad::handler_lib ALIAS crashpad_handler_lib)
 
 crashpad_install_target(crashpad_handler_lib)
+crashpad_install_dev(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/crashpad/handler"
+    FILES_MATCHING PATTERN "*.h"
+)
 
 if(NOT IOS)
     add_executable(crashpad_handler WIN32
@@ -109,5 +113,7 @@ if(NOT IOS)
     set_property(TARGET crashpad_handler PROPERTY EXPORT_NAME handler)
     add_executable(crashpad::handler ALIAS crashpad_handler)
 
-    crashpad_install_target(crashpad_handler)
+    # install(TARGETS crashpad_handler EXPORT crashpad_export
+    #     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    # )
 endif()

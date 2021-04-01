@@ -74,8 +74,8 @@ class Language {
   // take into account the parent and child DIE types, allow languages
   // to use their own data type for complex parent names, etc. But if
   // C++ doesn't need all that, who would?
-  virtual string MakeQualifiedName (const string &parent_name,
-                                    const string &name) const = 0;
+  virtual string MakeQualifiedName (const string& parent_name,
+                                    const string& name) const = 0;
 
   enum DemangleResult {
     // Demangling was not performed because it’s not appropriate to attempt.

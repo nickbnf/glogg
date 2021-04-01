@@ -48,12 +48,12 @@ std::string ConvertToString(CFStringRef str) {
   CFStringGetBytes(str, CFRangeMake(0, length), kCFStringEncodingUTF8, 0,
                    false, buffer.get(), maxUTF8Length, &actualUTF8Length);
   buffer[actualUTF8Length] = 0;
-  result.assign((const char *)buffer.get());
+  result.assign((const char*)buffer.get());
 
   return result;
 }
 
-unsigned int IntegerValueAtIndex(string &str, unsigned int idx) {
+unsigned int IntegerValueAtIndex(string& str, unsigned int idx) {
   string digits("0123456789"), temp;
   size_t start = 0;
   size_t end;

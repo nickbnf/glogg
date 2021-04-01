@@ -58,7 +58,7 @@ TEST(StabsToModule, SimpleCU) {
   Module::File *file = m.FindExistingFile("source-file-name");
   ASSERT_TRUE(file != NULL);
 
-  vector<Module::Function *> functions;
+  vector<Module::Function*> functions;
   m.GetFunctions(&functions, functions.end());
   ASSERT_EQ((size_t) 1, functions.size());
   Module::Function *function = functions[0];
@@ -88,7 +88,7 @@ TEST(StabsToModule, Externs) {
   h.Finalize();
 
   // Now check to see what has been added to the Module.
-  vector<Module::Extern *> externs;
+  vector<Module::Extern*> externs;
   m.GetExterns(&externs, externs.end());
   ASSERT_EQ((size_t) 3, externs.size());
   Module::Extern *extern1 = externs[0];
@@ -124,7 +124,7 @@ TEST(StabsToModule, DuplicateFunctionNames) {
   Module::File *file = m.FindExistingFile("compilation-unit");
   ASSERT_TRUE(file != NULL);
 
-  vector<Module::Function *> functions;
+  vector<Module::Function*> functions;
   m.GetFunctions(&functions, functions.end());
   ASSERT_EQ(1U, functions.size());
 
@@ -159,7 +159,7 @@ TEST(InferSizes, LineSize) {
   Module::File *file2 = m.FindExistingFile("source-file-name-2");
   ASSERT_TRUE(file2 != NULL);
 
-  vector<Module::Function *> functions;
+  vector<Module::Function*> functions;
   m.GetFunctions(&functions, functions.end());
   ASSERT_EQ((size_t) 1, functions.size());
 
@@ -204,7 +204,7 @@ TEST(FunctionNames, Mangled) {
   Module::File *file = m.FindExistingFile("compilation-unit");
   ASSERT_TRUE(file != NULL);
 
-  vector<Module::Function *> functions;
+  vector<Module::Function*> functions;
   m.GetFunctions(&functions, functions.end());
   ASSERT_EQ(1U, functions.size());
 

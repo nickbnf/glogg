@@ -103,10 +103,17 @@ template("create_signed_bundle") {
     code_signing_args +=
         [ "-e=" + rebase_path(_entitlements_path, root_build_dir) ]
 
+    # Bundle ID should respect rfc1034 and replace _ with -.
+    _xcode_product_bundle_id =
+        string_replace("$ios_app_bundle_id_prefix.googletest.$_output_name",
+                       "_",
+                       "-")
+
     xcode_extra_attributes = {
       IPHONEOS_DEPLOYMENT_TARGET = ios_deployment_target
       CODE_SIGN_STYLE = "Manual"
       CODE_SIGN_IDENTITY = ""
+      PRODUCT_BUNDLE_IDENTIFIER = _xcode_product_bundle_id
 
       if (defined(invoker.xcode_extra_attributes)) {
         forward_variables_from(invoker.xcode_extra_attributes, "*")
@@ -384,7 +391,7 @@ template("ios_xctest_bundle") {
     }
     extra_substitutions = [
       "XCTEST_BUNDLE_PRINCIPAL_CLASS=${_principal_class}",
-      "MODULE_BUNDLE_ID=gtest.$_output_name",
+      "MODULE_BUNDLE_ID=googletest.$_output_name",
     ]
   }
 

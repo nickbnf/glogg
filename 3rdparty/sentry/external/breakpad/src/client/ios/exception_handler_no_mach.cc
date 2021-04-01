@@ -47,7 +47,7 @@
 // for more details.
 #if USE_PROTECTED_ALLOCATIONS
   #include "client/mac/handler/protected_memory_allocator.h"
-  extern ProtectedMemoryAllocator *gBreakpadAllocator;
+  extern ProtectedMemoryAllocator* gBreakpadAllocator;
 #endif
 
 namespace google_breakpad {
@@ -72,10 +72,10 @@ static union {
   char protected_buffer[PAGE_SIZE] __attribute__((aligned(PAGE_SIZE)));
 #endif  // defined PAGE_MAX_SIZE
 #endif  // USE_PROTECTED_ALLOCATIONS
-  google_breakpad::ExceptionHandler *handler;
+  google_breakpad::ExceptionHandler* handler;
 } gProtectedData;
 
-ExceptionHandler::ExceptionHandler(const string &dump_path,
+ExceptionHandler::ExceptionHandler(const string& dump_path,
                                    FilterCallback filter,
                                    MinidumpCallback callback,
                                    void* callback_context,
@@ -194,6 +194,9 @@ void ExceptionHandler::SignalHandler(int sig, siginfo_t* info, void* uc) {
   if (gBreakpadAllocator)
     gBreakpadAllocator->Protect();
 #endif
+  // uninstall our own crash handler so that when the signal is re-raised, the
+  // default handler takes over.
+  gProtectedData.handler->UninstallHandlers();
 }
 
 bool ExceptionHandler::InstallHandlers() {

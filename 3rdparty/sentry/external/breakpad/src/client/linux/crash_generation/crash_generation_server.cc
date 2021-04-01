@@ -229,7 +229,7 @@ CrashGenerationServer::ClientEvent(short revents)
   // Walk the control payload and extract the file descriptor and validated pid.
   pid_t crashing_pid = -1;
   int signal_fd = -1;
-  for (struct cmsghdr *hdr = CMSG_FIRSTHDR(&msg); hdr;
+  for (struct cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr;
        hdr = CMSG_NXTHDR(&msg, hdr)) {
     if (hdr->cmsg_level != SOL_SOCKET)
       continue;
@@ -248,7 +248,7 @@ CrashGenerationServer::ClientEvent(short revents)
         signal_fd = reinterpret_cast<int*>(CMSG_DATA(hdr))[0];
       }
     } else if (hdr->cmsg_type == SCM_CREDENTIALS) {
-      const struct ucred *cred =
+      const struct ucred* cred =
           reinterpret_cast<struct ucred*>(CMSG_DATA(hdr));
       crashing_pid = cred->pid;
     }
@@ -324,7 +324,7 @@ CrashGenerationServer::MakeMinidumpFilename(string& outFilename)
 
 // static
 void*
-CrashGenerationServer::ThreadMain(void *arg)
+CrashGenerationServer::ThreadMain(void* arg)
 {
   reinterpret_cast<CrashGenerationServer*>(arg)->Run();
   return NULL;

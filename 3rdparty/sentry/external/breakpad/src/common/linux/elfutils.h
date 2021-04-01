@@ -86,11 +86,11 @@ int ElfClass(const void* elf_base);
 // in the ELF binary data at |elf_mapped_base|. On success, returns true
 // and sets |*section_start| to point to the start of the section data,
 // and |*section_size| to the size of the section's data.
-bool FindElfSection(const void *elf_mapped_base,
-                    const char *section_name,
+bool FindElfSection(const void* elf_mapped_base,
+                    const char* section_name,
                     uint32_t section_type,
-                    const void **section_start,
-                    size_t *section_size);
+                    const void** section_start,
+                    size_t* section_size);
 
 // Internal helper method, exposed for convenience for callers
 // that already have more info.

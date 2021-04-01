@@ -51,7 +51,7 @@ TEST(SimpleModule, One) {
   h.AddLine(0x6fd126fbf74f2680LL, 0x63c9a14cf556712bLL, 0x30bf0f27,
             0x4c090cbf, 0x1cf9fe0d);
 
-  vector<Module::File *> files;
+  vector<Module::File*> files;
   m.GetFiles(&files);
   EXPECT_EQ(1U, files.size());
   EXPECT_STREQ("/file1", files[0]->name.c_str());
@@ -86,7 +86,7 @@ TEST(SimpleModule, Many) {
   h.AddLine(0xe2d72a37f8d9403aULL, 0x034dfab5b0d4d236ULL, 0x63beb4a5,
             0x75047044U, 0xb6a0016cU);
 
-  vector<Module::File *> files;
+  vector<Module::File*> files;
   m.GetFiles(&files);
   ASSERT_EQ(5U, files.size());
   EXPECT_STREQ("/directory1/file1", files[0]->name.c_str());
@@ -133,7 +133,7 @@ TEST(Filenames, Absolute) {
 
   h.AddLine(1, 1, 1, 0, 0);
 
-  vector<Module::File *> files;
+  vector<Module::File*> files;
   m.GetFiles(&files);
   ASSERT_EQ(1U, files.size());
   EXPECT_STREQ("/absolute", files[0]->name.c_str());
@@ -151,7 +151,7 @@ TEST(Filenames, Relative) {
 
   h.AddLine(1, 1, 1, 0, 0);
 
-  vector<Module::File *> files;
+  vector<Module::File*> files;
   m.GetFiles(&files);
   ASSERT_EQ(1U, files.size());
   EXPECT_STREQ("/directory1/relative", files[0]->name.c_str());

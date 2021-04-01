@@ -86,7 +86,7 @@ public:
   // 4 or 8 (bytes)
   size_t value_size;
 
-  vector<Module::Extern *> externs;
+  vector<Module::Extern*> externs;
 };
 
 class ELFSymbolsToModuleTest32 : public ELFSymbolsToModuleTestFixture,
@@ -248,9 +248,9 @@ TEST_P(ELFSymbolsToModuleTest32, SkipStuff) {
 }
 
 // Run all the 32-bit tests with both endianness
-INSTANTIATE_TEST_CASE_P(Endian,
-                        ELFSymbolsToModuleTest32,
-                        ::testing::Values(kLittleEndian, kBigEndian));
+INSTANTIATE_TEST_SUITE_P(Endian,
+                         ELFSymbolsToModuleTest32,
+                         ::testing::Values(kLittleEndian, kBigEndian));
 
 // Similar tests, but with 64-bit values. Ostensibly this could be
 // shoehorned into the parameterization by using ::testing::Combine,
@@ -365,6 +365,6 @@ TEST_P(ELFSymbolsToModuleTest64, SkipStuff) {
 }
 
 // Run all the 64-bit tests with both endianness
-INSTANTIATE_TEST_CASE_P(Endian,
-                        ELFSymbolsToModuleTest64,
-                        ::testing::Values(kLittleEndian, kBigEndian));
+INSTANTIATE_TEST_SUITE_P(Endian,
+                         ELFSymbolsToModuleTest64,
+                         ::testing::Values(kLittleEndian, kBigEndian));

@@ -110,8 +110,8 @@ class LinuxDumper {
   }
 
   // These are only valid after a call to |Init|.
-  const wasteful_vector<pid_t> &threads() { return threads_; }
-  const wasteful_vector<MappingInfo*> &mappings() { return mappings_; }
+  const wasteful_vector<pid_t>& threads() { return threads_; }
+  const wasteful_vector<MappingInfo*>& mappings() { return mappings_; }
   const MappingInfo* FindMapping(const void* address) const;
   // Find the mapping which the given memory address falls in. Unlike
   // FindMapping, this method uses the unadjusted mapping address

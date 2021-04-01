@@ -16,26 +16,8 @@ import("build/crashpad_buildconfig.gni")
 import("build/test.gni")
 import("util/net/tls.gni")
 
-if (crashpad_is_in_chromium) {
-  # Prevent Chromium source assignment filters from being inherited.
-  set_sources_assignment_filter([])
-}
-
 config("crashpad_config") {
   include_dirs = [ "." ]
-}
-
-# TODO(fuchsia:46805): Remove this once instances of UB have been cleaned up.
-config("disable_ubsan") {
-  if (crashpad_is_in_fuchsia) {
-    cflags = [ "-fno-sanitize=undefined" ]
-  }
-  visibility = [
-    "snapshot:snapshot",
-    "minidump:minidump_test",
-    "third_party/googletest:googletest",
-    "util:util",
-  ]
 }
 
 if (crashpad_is_in_chromium || crashpad_is_in_fuchsia) {

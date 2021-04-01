@@ -88,14 +88,14 @@ bool LibcurlWrapper::AddFile(const string& upload_file_path,
 }
 
 // Callback to get the response data from server.
-static size_t WriteCallback(void *ptr, size_t size,
-                            size_t nmemb, void *userp) {
+static size_t WriteCallback(void* ptr, size_t size,
+                            size_t nmemb, void* userp) {
   if (!userp)
     return 0;
 
-  string *response = reinterpret_cast<string *>(userp);
+  string* response = reinterpret_cast<string*>(userp);
   size_t real_size = size * nmemb;
-  response->append(reinterpret_cast<char *>(ptr), real_size);
+  response->append(reinterpret_cast<char*>(ptr), real_size);
   return real_size;
 }
 
@@ -250,7 +250,7 @@ bool LibcurlWrapper::SetFunctionPointers() {
 
   SET_AND_CHECK_FUNCTION_POINTER(easy_getinfo_,
                                  "curl_easy_getinfo",
-                                 CURLcode(*)(CURL *, CURLINFO info, ...));
+                                 CURLcode(*)(CURL*, CURLINFO info, ...));
 
   SET_AND_CHECK_FUNCTION_POINTER(easy_reset_,
                                  "curl_easy_reset",

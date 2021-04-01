@@ -91,27 +91,27 @@ class LibcurlWrapper {
                                  // dealing
   // with CURL.
 
-  CURL *curl_;                   // Pointer for handle for CURL calls.
+  CURL* curl_;                   // Pointer for handle for CURL calls.
 
   CURL* (*easy_init_)(void);
 
   // Stateful pointers for calling into curl_formadd()
-  struct curl_httppost *formpost_;
-  struct curl_httppost *lastptr_;
-  struct curl_slist *headerlist_;
+  struct curl_httppost* formpost_;
+  struct curl_httppost* lastptr_;
+  struct curl_slist* headerlist_;
 
   // Function pointers into CURL library
-  CURLcode (*easy_setopt_)(CURL *, CURLoption, ...);
-  CURLFORMcode (*formadd_)(struct curl_httppost **,
-                           struct curl_httppost **, ...);
-  struct curl_slist* (*slist_append_)(struct curl_slist *, const char *);
-  void (*slist_free_all_)(struct curl_slist *);
-  CURLcode (*easy_perform_)(CURL *);
+  CURLcode (*easy_setopt_)(CURL*, CURLoption, ...);
+  CURLFORMcode (*formadd_)(struct curl_httppost**,
+                           struct curl_httppost**, ...);
+  struct curl_slist* (*slist_append_)(struct curl_slist*, const char*);
+  void (*slist_free_all_)(struct curl_slist*);
+  CURLcode (*easy_perform_)(CURL*);
   const char* (*easy_strerror_)(CURLcode);
-  void (*easy_cleanup_)(CURL *);
-  CURLcode (*easy_getinfo_)(CURL *, CURLINFO info, ...);
+  void (*easy_cleanup_)(CURL*);
+  CURLcode (*easy_getinfo_)(CURL*, CURLINFO info, ...);
   void (*easy_reset_)(CURL*);
-  void (*formfree_)(struct curl_httppost *);
+  void (*formfree_)(struct curl_httppost*);
 
 };
 }

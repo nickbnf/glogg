@@ -57,7 +57,7 @@ class SuperFatArch {
       align(0) {
   }
 
-  explicit SuperFatArch(const struct fat_arch &arch) :
+  explicit SuperFatArch(const struct fat_arch& arch) :
       cputype(arch.cputype),
       cpusubtype(arch.cpusubtype),
       offset(arch.offset),

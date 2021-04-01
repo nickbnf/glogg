@@ -61,6 +61,10 @@
 #define __MAC_10_13 101300
 #endif
 
+#ifndef __MAC_10_13_4
+#define __MAC_10_13_4 101304
+#endif
+
 // 10.14 SDK
 
 #ifndef __MAC_10_14

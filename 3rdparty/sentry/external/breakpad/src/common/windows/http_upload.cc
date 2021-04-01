@@ -65,7 +65,7 @@ namespace {
     HINTERNET handle_;
   };
 
-  wstring UTF8ToWide(const string &utf8) {
+  wstring UTF8ToWide(const string& utf8) {
     if (utf8.length() == 0) {
       return wstring();
     }
@@ -85,7 +85,7 @@ namespace {
     return result;
   }
 
-  string WideToMBCP(const wstring &wide, unsigned int cp) {
+  string WideToMBCP(const wstring& wide, unsigned int cp) {
     if (wide.length() == 0) {
       return string();
     }
@@ -107,7 +107,7 @@ namespace {
     return result;
   }
 
-  bool GetFileContents(const wstring &filename, vector<char> *contents) {
+  bool GetFileContents(const wstring& filename, vector<char>* contents) {
     bool rv = false;
     // The "open" method on pre-MSVC8 ifstream implementations doesn't accept a
     // wchar_t* filename, so use _wfopen directly in that case.  For VC8 and
@@ -141,10 +141,10 @@ namespace {
     return rv;
   }
 
-  bool CheckParameters(const map<wstring, wstring> &parameters) {
+  bool CheckParameters(const map<wstring, wstring>& parameters) {
     for (map<wstring, wstring>::const_iterator pos = parameters.begin();
           pos != parameters.end(); ++pos) {
-      const wstring &str = pos->first;
+      const wstring& str = pos->first;
       if (str.size() == 0) {
         return false;  // disallow empty parameter names
       }
@@ -159,7 +159,7 @@ namespace {
   }
 
   // Converts a UTF16 string to UTF8.
-  string WideToUTF8(const wstring &wide) {
+  string WideToUTF8(const wstring& wide) {
     return WideToMBCP(wide, CP_UTF8);
   }
 
@@ -305,7 +305,7 @@ namespace {
     }
 
     if (!HttpSendRequest(request.get(), NULL, 0,
-        const_cast<char *>(request_body.data()),
+        const_cast<char*>(request_body.data()),
         static_cast<DWORD>(request_body.size()))) {
       return false;
     }
@@ -351,7 +351,7 @@ namespace {
     return wstring(temp);
   }
 
-  wstring GenerateMultipartPostRequestHeader(const wstring &boundary) {
+  wstring GenerateMultipartPostRequestHeader(const wstring& boundary) {
     wstring header = L"Content-Type: multipart/form-data; boundary=";
     header += boundary;
     return header;
@@ -390,9 +390,9 @@ namespace {
     return true;
   }
 
-  bool GenerateRequestBody(const map<wstring, wstring> &parameters,
-      const map<wstring, wstring> &files,
-      const wstring &boundary,
+  bool GenerateRequestBody(const map<wstring, wstring>& parameters,
+      const map<wstring, wstring>& files,
+      const wstring& boundary,
       string *request_body) {
     string boundary_str = WideToUTF8(boundary);
     if (boundary_str.empty()) {

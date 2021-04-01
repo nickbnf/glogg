@@ -70,16 +70,16 @@ typedef struct {
   ArrayStructure array[0];
 } ObjectAndArrayStructure;
 
-static bool WriteFile(const char *path) {
+static bool WriteFile(const char* path) {
   MinidumpFileWriter writer;
   if (writer.Open(path)) {
     // Test a single structure
     google_breakpad::TypedMDRVA<StringStructure> strings(&writer);
     ASSERT_TRUE(strings.Allocate());
     strings.get()->integer_value = 0xBEEF;
-    const char *first = "First String";
+    const char* first = "First String";
     ASSERT_TRUE(writer.WriteString(first, 0, &strings.get()->first_string));
-    const wchar_t *second = L"Second String";
+    const wchar_t* second = L"Second String";
     ASSERT_TRUE(writer.WriteString(second, 0, &strings.get()->second_string));
 
     // Test an array structure
@@ -111,7 +111,7 @@ static bool WriteFile(const char *path) {
   return writer.Close();
 }
 
-static bool CompareFile(const char *path) {
+static bool CompareFile(const char* path) {
   unsigned long expected[] = {
 #if defined(__BIG_ENDIAN__)
     0x0000beef, 0x0000001e, 0x00000018, 0x00000020, 0x00000038, 0x00000000, 
@@ -146,13 +146,14 @@ static bool CompareFile(const char *path) {
   };
   size_t expected_byte_count = sizeof(expected);
   int fd = open(path, O_RDONLY, 0600);
-  void *buffer = malloc(expected_byte_count);
+  void* buffer = malloc(expected_byte_count);
   ASSERT_NE(fd, -1);
   ASSERT_TRUE(buffer);
   ASSERT_EQ(read(fd, buffer, expected_byte_count), 
             static_cast<ssize_t>(expected_byte_count));
 
-  char *b1, *b2;
+  char* b1;
+  char* b2;
   b1 = reinterpret_cast<char*>(buffer);
   b2 = reinterpret_cast<char*>(expected);
   while (*b1 == *b2) {
@@ -167,13 +168,13 @@ static bool CompareFile(const char *path) {
 }
 
 static bool RunTests() {
-  const char *path = "/tmp/minidump_file_writer_unittest.dmp";
+  const char* path = "/tmp/minidump_file_writer_unittest.dmp";
   ASSERT_TRUE(WriteFile(path));
   ASSERT_TRUE(CompareFile(path));
   unlink(path);
   return true;
 }
 
-extern "C" int main(int argc, const char *argv[]) {
+extern "C" int main(int argc, const char* argv[]) {
   return RunTests() ? 0 : 1;
 }

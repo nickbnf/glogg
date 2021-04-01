@@ -143,7 +143,7 @@ vector<string> DwarfCFIToModule::RegisterNames::MIPS() {
 }
 
 bool DwarfCFIToModule::Entry(size_t offset, uint64_t address, uint64_t length,
-                             uint8_t version, const string &augmentation,
+                             uint8_t version, const string& augmentation,
                              unsigned return_address) {
   assert(!entry_);
 
@@ -190,7 +190,7 @@ string DwarfCFIToModule::RegisterName(int i) {
 }
 
 void DwarfCFIToModule::Record(Module::Address address, int reg,
-                              const string &rule) {
+                              const string& rule) {
   assert(entry_);
 
   // Place the name in our global set of strings, and then use the string
@@ -247,14 +247,14 @@ bool DwarfCFIToModule::RegisterRule(uint64_t address, int reg,
 }
 
 bool DwarfCFIToModule::ExpressionRule(uint64_t address, int reg,
-                                      const string &expression) {
+                                      const string& expression) {
   reporter_->ExpressionsNotSupported(entry_offset_, RegisterName(reg));
   // Treat this as a non-fatal error.
   return true;
 }
 
 bool DwarfCFIToModule::ValExpressionRule(uint64_t address, int reg,
-                                         const string &expression) {
+                                         const string& expression) {
   reporter_->ExpressionsNotSupported(entry_offset_, RegisterName(reg));
   // Treat this as a non-fatal error.
   return true;
@@ -274,7 +274,7 @@ void DwarfCFIToModule::Reporter::UnnamedRegister(size_t offset, int reg) {
 }
 
 void DwarfCFIToModule::Reporter::UndefinedNotSupported(size_t offset,
-                                                       const string &reg) {
+                                                       const string& reg) {
   fprintf(stderr, "%s, section '%s': "
           "the call frame entry at offset 0x%zx sets the rule for "
           "register '%s' to 'undefined', but the Breakpad symbol file format"
@@ -283,7 +283,7 @@ void DwarfCFIToModule::Reporter::UndefinedNotSupported(size_t offset,
 }
 
 void DwarfCFIToModule::Reporter::ExpressionsNotSupported(size_t offset,
-                                                         const string &reg) {
+                                                         const string& reg) {
   fprintf(stderr, "%s, section '%s': "
           "the call frame entry at offset 0x%zx uses a DWARF expression to"
           " describe how to recover register '%s', "

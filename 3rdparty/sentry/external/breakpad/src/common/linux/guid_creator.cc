@@ -105,7 +105,7 @@ class GUIDGenerator {
  private:
 #ifdef HAVE_ARC4RANDOM
   static void CreateGuidFromArc4Random(GUID *guid) {
-    char *buf = reinterpret_cast<char *>(guid);
+    char *buf = reinterpret_cast<char*>(guid);
 
     for (size_t i = 0; i < sizeof(GUID); i += sizeof(uint32_t)) {
       uint32_t random_data = arc4random();
@@ -129,7 +129,7 @@ class GUIDGenerator {
 
 #if defined(HAVE_SYS_RANDOM_H) && defined(HAVE_GETRANDOM)
   static bool CreateGUIDFromGetrandom(GUID *guid) {
-    char *buf = reinterpret_cast<char *>(guid);
+    char *buf = reinterpret_cast<char*>(guid);
     int read_bytes = getrandom(buf, sizeof(GUID), GRND_NONBLOCK);
 
     return (read_bytes == static_cast<int>(sizeof(GUID)));
@@ -139,7 +139,7 @@ class GUIDGenerator {
   // Populate the GUID using random bytes read from /dev/urandom, returns false
   // if the GUID wasn't fully populated with random data.
   static bool CreateGUIDFromDevUrandom(GUID *guid) {
-    char *buf = reinterpret_cast<char *>(guid);
+    char *buf = reinterpret_cast<char*>(guid);
     int fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
 
     if (fd == -1) {
@@ -154,7 +154,7 @@ class GUIDGenerator {
 
   // Populate the GUID using a stream of random bytes obtained from rand().
   static void CreateGUIDFromRand(GUID *guid) {
-    char *buf = reinterpret_cast<char *>(guid);
+    char *buf = reinterpret_cast<char*>(guid);
 
     InitOnce();
 

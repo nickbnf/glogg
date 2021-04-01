@@ -40,7 +40,7 @@ using google_breakpad::MinidumpGenerator;
 
 static bool doneWritingReport = false;
 
-static void *Reporter(void *) {
+static void* Reporter(void*) {
   char buffer[PATH_MAX];
   MinidumpGenerator md;
 

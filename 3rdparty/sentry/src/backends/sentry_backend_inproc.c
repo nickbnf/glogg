@@ -193,8 +193,10 @@ make_signal_event(
     if (sig_slot) {
         sentry_value_set_by_key(
             signal_meta, "name", sentry_value_new_string(sig_slot->signame));
+        // at least on windows, the signum is a true u32 which we can't
+        // otherwise represent.
         sentry_value_set_by_key(signal_meta, "number",
-            sentry_value_new_int32((int32_t)sig_slot->signum));
+            sentry_value_new_double((double)sig_slot->signum));
     }
     sentry_value_set_by_key(mechanism_meta, "signal", signal_meta);
     sentry_value_set_by_key(
@@ -207,13 +209,20 @@ make_signal_event(
     void *backtrace[MAX_FRAMES];
     size_t frame_count
         = sentry_unwind_stack_from_ucontext(uctx, &backtrace[0], MAX_FRAMES);
+    // if unwinding from a ucontext didn't yield any results, try again with a
+    // direct unwind. this is most likely the case when using `libbacktrace`,
+    // since that does not allow to unwind from a ucontext at all.
+    if (!frame_count) {
+        frame_count = sentry_unwind_stack(NULL, &backtrace[0], MAX_FRAMES);
+    }
     SENTRY_TRACEF("captured backtrace with %lu frames", frame_count);
 
     sentry_value_t frames = sentry__value_new_list_with_size(frame_count);
     for (size_t i = 0; i < frame_count; i++) {
         sentry_value_t frame = sentry_value_new_object();
         sentry_value_set_by_key(frame, "instruction_addr",
-            sentry__value_new_addr((uint64_t)backtrace[frame_count - i - 1]));
+            sentry__value_new_addr(
+                (uint64_t)(size_t)backtrace[frame_count - i - 1]));
         sentry_value_append(frames, frame);
     }
 

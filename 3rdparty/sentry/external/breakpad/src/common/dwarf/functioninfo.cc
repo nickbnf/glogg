@@ -51,15 +51,9 @@ CULineInfoHandler::CULineInfoHandler(std::vector<SourceFileInfo>* files,
                                      LineMap* linemap):linemap_(linemap),
                                                        files_(files),
                                                        dirs_(dirs) {
-  // The dirs and files are 1 indexed, so just make sure we put
-  // nothing in the 0 vector.
-  assert(dirs->size() == 0);
-  assert(files->size() == 0);
-  dirs->push_back("");
-  SourceFileInfo s;
-  s.name = "";
-  s.lowpc = ULLONG_MAX;
-  files->push_back(s);
+  // In dwarf4, the dirs and files are 1 indexed, and in dwarf5 they are zero
+  // indexed. This is handled in the LineInfo reader, so empty files are not
+  // needed here.
 }
 
 void CULineInfoHandler::DefineDir(const string& name, uint32_t dir_num) {
@@ -150,7 +144,7 @@ bool CUFunctionInfoHandler::StartDIE(uint64_t offset, enum DwarfTag tag) {
 void CUFunctionInfoHandler::ProcessAttributeString(uint64_t offset,
                                                    enum DwarfAttribute attr,
                                                    enum DwarfForm form,
-                                                   const string &data) {
+                                                   const string& data) {
   if (current_function_info_) {
     if (attr == DW_AT_name)
       current_function_info_->name = data;
@@ -164,7 +158,8 @@ void CUFunctionInfoHandler::ProcessAttributeUnsigned(uint64_t offset,
                                                      enum DwarfForm form,
                                                      uint64_t data) {
   if (attr == DW_AT_stmt_list) {
-    SectionMap::const_iterator iter = sections_.find("__debug_line");
+    SectionMap::const_iterator iter =
+        GetSectionByName(sections_, ".debug_line");
     assert(iter != sections_.end());
 
     scoped_ptr<LineInfo> lireader(new LineInfo(iter->second.first + data,

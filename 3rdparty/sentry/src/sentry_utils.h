@@ -127,7 +127,7 @@ static inline uint64_t
 sentry__monotonic_time(void)
 {
 #ifdef SENTRY_PLATFORM_WINDOWS
-    static LARGE_INTEGER qpc_frequency = { 0 };
+    static LARGE_INTEGER qpc_frequency = { { 0, 0 } };
 
     if (!qpc_frequency.QuadPart) {
         QueryPerformanceFrequency(&qpc_frequency);
@@ -164,5 +164,15 @@ char *sentry__msec_time_to_iso8601(uint64_t time);
  * produced by the `sentry__msec_time_to_iso8601` function.
  */
 uint64_t sentry__iso8601_to_msec(const char *iso);
+
+/**
+ * Locale independent (or rather, using "C" locale) `strtod`.
+ */
+double sentry__strtod_c(const char *ptr, char **endptr);
+
+/**
+ * Locale independent (or rather, using "C" locale) `snprintf`.
+ */
+int sentry__snprintf_c(char *buf, size_t buf_size, const char *fmt, ...);
 
 #endif

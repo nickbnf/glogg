@@ -4,14 +4,14 @@ Breakpad is a set of client and server components which implement a
 crash-reporting system.
 
 * [Homepage](https://chromium.googlesource.com/breakpad/breakpad/)
-* [Documentation](https://chromium.googlesource.com/breakpad/breakpad/+/master/docs/)
+* [Documentation](./docs/)
 * [Bugs](https://bugs.chromium.org/p/google-breakpad/)
 * Discussion/Questions: [google-breakpad-discuss@googlegroups.com](https://groups.google.com/d/forum/google-breakpad-discuss)
 * Developer/Reviews: [google-breakpad-dev@googlegroups.com](https://groups.google.com/d/forum/google-breakpad-dev)
-* Tests: [![Build Status](https://travis-ci.org/google/breakpad.svg?branch=master)](https://travis-ci.org/google/breakpad) [![Build status](https://ci.appveyor.com/api/projects/status/eguv4emv2rhq68u2?svg=true)](https://ci.appveyor.com/project/vapier/breakpad)
+* Tests: [![Build Status](https://travis-ci.org/google/breakpad.svg?branch=main)](https://travis-ci.org/google/breakpad) [![Build status](https://ci.appveyor.com/api/projects/status/eguv4emv2rhq68u2?svg=true)](https://ci.appveyor.com/project/vapier/breakpad)
 * Coverage [![Coverity Status](https://scan.coverity.com/projects/9215/badge.svg)](https://scan.coverity.com/projects/google-breakpad)
 
-## Getting started (from master)
+## Getting started (from main)
 
 1.  First, [download depot_tools](http://dev.chromium.org/developers/how-tos/install-depot-tools)
     and ensure that they’re in your `PATH`.

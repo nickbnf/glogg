@@ -25,3 +25,14 @@ if (current_os == "mac") {
 
 mini_chromium_is_posix = mini_chromium_is_mac || mini_chromium_is_ios ||
                          mini_chromium_is_linux || mini_chromium_is_android
+
+declare_args() {
+  mini_chromium_is_chromeos_lacros = false
+  mini_chromium_is_chromeos_ash = false
+}
+
+assert(!mini_chromium_is_chromeos_lacros || !mini_chromium_is_chromeos_ash)
+assert(!(mini_chromium_is_chromeos_lacros || mini_chromium_is_chromeos_ash) ||
+       mini_chromium_is_linux)
+
+

@@ -291,7 +291,7 @@ class MinidumpThread : public MinidumpObject {
   // so a special getter is provided to retrieve this data from the
   // MDRawThread structure.  Returns false if the thread ID cannot be
   // determined.
-  virtual bool GetThreadID(uint32_t *thread_id) const;
+  virtual bool GetThreadID(uint32_t* thread_id) const;
 
   // Print a human-readable representation of the object to stdout.
   void Print();
@@ -549,9 +549,9 @@ class MinidumpModuleList : public MinidumpStream,
   static uint32_t max_modules_;
 
   // Access to modules using addresses as the key.
-  RangeMap<uint64_t, unsigned int> *range_map_;
+  RangeMap<uint64_t, unsigned int>* range_map_;
 
-  MinidumpModules *modules_;
+  MinidumpModules* modules_;
   uint32_t module_count_;
 
   DISALLOW_COPY_AND_ASSIGN(MinidumpModuleList);
@@ -606,16 +606,16 @@ class MinidumpMemoryList : public MinidumpStream {
   static uint32_t max_regions_;
 
   // Access to memory regions using addresses as the key.
-  RangeMap<uint64_t, unsigned int> *range_map_;
+  RangeMap<uint64_t, unsigned int>* range_map_;
 
   // The list of descriptors.  This is maintained separately from the list
   // of regions, because MemoryRegion doesn't own its MemoryDescriptor, it
   // maintains a pointer to it.  descriptors_ provides the storage for this
   // purpose.
-  MemoryDescriptors *descriptors_;
+  MemoryDescriptors* descriptors_;
 
   // The list of regions.
-  MemoryRegions *regions_;
+  MemoryRegions* regions_;
   uint32_t region_count_;
 
   DISALLOW_COPY_AND_ASSIGN(MinidumpMemoryList);
@@ -640,7 +640,7 @@ class MinidumpException : public MinidumpStream {
   // so a special getter is provided to retrieve this data from the
   // MDRawExceptionStream structure.  Returns false if the thread ID cannot
   // be determined.
-  bool GetThreadID(uint32_t *thread_id) const;
+  bool GetThreadID(uint32_t* thread_id) const;
 
   MinidumpContext* GetContext();
 
@@ -862,9 +862,9 @@ class MinidumpUnloadedModuleList : public MinidumpStream,
   static uint32_t max_modules_;
 
   // Access to module indices using addresses as the key.
-  RangeMap<uint64_t, unsigned int> *range_map_;
+  RangeMap<uint64_t, unsigned int>* range_map_;
 
-  MinidumpUnloadedModules *unloaded_modules_;
+  MinidumpUnloadedModules* unloaded_modules_;
   uint32_t module_count_;
 
   DISALLOW_COPY_AND_ASSIGN(MinidumpUnloadedModuleList);
@@ -919,8 +919,8 @@ class MinidumpBreakpadInfo : public MinidumpStream {
   // treatment, so special getters are provided to retrieve this data from
   // the MDRawBreakpadInfo structure.  The getters return false if the thread
   // IDs cannot be determined.
-  bool GetDumpThreadID(uint32_t *thread_id) const;
-  bool GetRequestingThreadID(uint32_t *thread_id) const;
+  bool GetDumpThreadID(uint32_t* thread_id) const;
+  bool GetRequestingThreadID(uint32_t* thread_id) const;
 
   // Print a human-readable representation of the object to stdout.
   void Print();
@@ -1003,7 +1003,7 @@ class MinidumpMemoryInfoList : public MinidumpStream {
   bool Read(uint32_t expected_size) override;
 
   // Access to memory info using addresses as the key.
-  RangeMap<uint64_t, unsigned int> *range_map_;
+  RangeMap<uint64_t, unsigned int>* range_map_;
 
   MinidumpMemoryInfos* infos_;
   uint32_t info_count_;
@@ -1056,7 +1056,7 @@ class MinidumpLinuxMaps : public MinidumpObject {
   friend class MinidumpLinuxMapsList;
 
   // This caller owns the pointer.
-  explicit MinidumpLinuxMaps(Minidump *minidump);
+  explicit MinidumpLinuxMaps(Minidump* minidump);
 
   // The memory region struct that this class wraps.
   MappedMemoryRegion region_;
@@ -1075,9 +1075,9 @@ class MinidumpLinuxMapsList : public MinidumpStream {
   unsigned int get_maps_count() const { return valid_ ? maps_count_ : 0; }
 
   // Get mapping at the given memory address. The caller owns the pointer.
-  const MinidumpLinuxMaps *GetLinuxMapsForAddress(uint64_t address) const;
+  const MinidumpLinuxMaps* GetLinuxMapsForAddress(uint64_t address) const;
   // Get mapping at the given index. The caller owns the pointer.
-  const MinidumpLinuxMaps *GetLinuxMapsAtIndex(unsigned int index) const;
+  const MinidumpLinuxMaps* GetLinuxMapsAtIndex(unsigned int index) const;
 
   // Print the contents of /proc/self/maps to stdout.
   void Print() const;
@@ -1085,12 +1085,12 @@ class MinidumpLinuxMapsList : public MinidumpStream {
  private:
   friend class Minidump;
 
-  typedef vector<MinidumpLinuxMaps *> MinidumpLinuxMappings;
+  typedef vector<MinidumpLinuxMaps*> MinidumpLinuxMappings;
 
   static const uint32_t kStreamType = MD_LINUX_MAPS;
 
   // The caller owns the pointer.
-  explicit MinidumpLinuxMapsList(Minidump *minidump);
+  explicit MinidumpLinuxMapsList(Minidump* minidump);
 
   // Read and load the contents of the process mapping data.
   // The stream should have data in the form of /proc/self/maps.
@@ -1098,7 +1098,7 @@ class MinidumpLinuxMapsList : public MinidumpStream {
   bool Read(uint32_t expected_size) override;
 
   // The list of individual mappings.
-  MinidumpLinuxMappings *maps_;
+  MinidumpLinuxMappings* maps_;
   // The number of mappings.
   uint32_t maps_count_;
 
@@ -1200,7 +1200,7 @@ class Minidump {
   MinidumpCrashpadInfo* GetCrashpadInfo();
 
   // The next method also calls GetStream, but is exclusive for Linux dumps.
-  virtual MinidumpLinuxMapsList *GetLinuxMapsList();
+  virtual MinidumpLinuxMapsList* GetLinuxMapsList();
 
   // The next set of methods are provided for users who wish to access
   // data in minidump files directly, while leveraging the rest of

@@ -114,18 +114,20 @@ sentry__crashpad_handler(int UNUSED(signum), siginfo_t *UNUSED(info),
     SENTRY_WITH_OPTIONS (options) {
         sentry__write_crash_marker(options);
 
-        sentry_envelope_t *envelope = sentry__envelope_new();
         sentry__record_errors_on_current_session(1);
         sentry_session_t *session = sentry__end_current_session_with_status(
             SENTRY_SESSION_STATUS_CRASHED);
-        sentry__envelope_add_session(envelope, session);
+        if (session) {
+            sentry_envelope_t *envelope = sentry__envelope_new();
+            sentry__envelope_add_session(envelope, session);
 
-        // capture the envelope with the disk transport
-        sentry_transport_t *disk_transport
-            = sentry_new_disk_transport(options->run);
-        sentry__capture_envelope(disk_transport, envelope);
-        sentry__transport_dump_queue(disk_transport, options->run);
-        sentry_transport_free(disk_transport);
+            // capture the envelope with the disk transport
+            sentry_transport_t *disk_transport
+                = sentry_new_disk_transport(options->run);
+            sentry__capture_envelope(disk_transport, envelope);
+            sentry__transport_dump_queue(disk_transport, options->run);
+            sentry_transport_free(disk_transport);
+        }
 
         sentry__transport_dump_queue(options->transport, options->run);
     }
@@ -302,7 +304,6 @@ sentry__crashpad_backend_add_breadcrumb(
 
     size_t mpack_size;
     char *mpack = sentry_value_to_msgpack(breadcrumb, &mpack_size);
-    sentry_value_decref(breadcrumb);
     if (!mpack) {
         return;
     }
@@ -408,6 +409,7 @@ sentry__backend_new(void)
         = sentry__crashpad_backend_user_consent_changed;
     backend->get_last_crash_func = sentry__crashpad_backend_last_crash;
     backend->data = data;
+    backend->can_capture_after_shutdown = true;
 
     return backend;
 }

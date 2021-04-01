@@ -106,6 +106,8 @@ class ElfCoreDump {
   // Constructor that takes the core dump content from |content|.
   explicit ElfCoreDump(const MemoryRange& content);
 
+  ~ElfCoreDump();
+
   // Sets the core dump content to |content|.
   void SetContent(const MemoryRange& content);
 
@@ -139,9 +141,15 @@ class ElfCoreDump {
   // an empty note if no note is found.
   Note GetFirstNote() const;
 
+  // Sets the mem fd.
+  void SetProcMem(const int fd);
+
  private:
   // Core dump content.
   MemoryRange content_;
+
+  // Descriptor for /proc/<pid>/mem.
+  int proc_mem_fd_;
 };
 
 }  // namespace google_breakpad

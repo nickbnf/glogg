@@ -65,7 +65,7 @@ class CrashReportSender {
   // If checkpoint_file is non-empty, breakpad will persist crash report
   // state to this file.  A checkpoint file is required for
   // set_max_reports_per_day() to function properly.
-  explicit CrashReportSender(const wstring &checkpoint_file);
+  explicit CrashReportSender(const wstring& checkpoint_file);
   ~CrashReportSender() {}
 
   // Sets the maximum number of crash reports that will be sent in a 24-hour
@@ -87,14 +87,14 @@ class CrashReportSender {
   // the return value is RESULT_SUCCEEDED), a code uniquely identifying the
   // report will be returned in report_code.
   // (Otherwise, report_code will be unchanged.)
-  ReportResult SendCrashReport(const wstring &url,
-                               const map<wstring, wstring> &parameters,
-                               const map<wstring, wstring> &files,
-                               wstring *report_code);
+  ReportResult SendCrashReport(const wstring& url,
+                               const map<wstring, wstring>& parameters,
+                               const map<wstring, wstring>& files,
+                               wstring* report_code);
 
  private:
   // Reads persistent state from a checkpoint file.
-  void ReadCheckpoint(FILE *fd);
+  void ReadCheckpoint(FILE* fd);
 
   // Called when a new report has been sent, to update the checkpoint state.
   void ReportSent(int today);
@@ -104,7 +104,7 @@ class CrashReportSender {
 
   // Opens the checkpoint file with the specified mode.
   // Returns zero on success, or an error code on failure.
-  int OpenCheckpointFile(const wchar_t *mode, FILE **fd);
+  int OpenCheckpointFile(const wchar_t* mode, FILE** fd);
 
   wstring checkpoint_file_;
   int max_reports_per_day_;
@@ -114,8 +114,8 @@ class CrashReportSender {
   int reports_sent_;
 
   // Disallow copy constructor and operator=
-  explicit CrashReportSender(const CrashReportSender &);
-  void operator=(const CrashReportSender &);
+  explicit CrashReportSender(const CrashReportSender&);
+  void operator=(const CrashReportSender&);
 };
 
 }  // namespace google_breakpad

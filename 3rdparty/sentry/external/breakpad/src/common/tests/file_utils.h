@@ -33,9 +33,12 @@
 #ifndef COMMON_TESTS_FILE_UTILS_H_
 #define COMMON_TESTS_FILE_UTILS_H_
 
+#include <string>
+
 namespace google_breakpad {
 
 // Copies a file from |from_path| to |to_path|. Returns true on success.
+bool CopyFile(const std::string& from_path, const std::string& to_path);
 bool CopyFile(const char* from_path, const char* to_path);
 
 // Reads the content of a file at |path| into |buffer|. |buffer_size| specifies

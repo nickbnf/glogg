@@ -73,7 +73,7 @@ TEST_F(Reader, SimpleConstructor) {
     .LEB128(-0x4f337badf4483f83LL)
     .D32(0xfec319c9);
   ASSERT_TRUE(section.GetContents(&contents));
-  const uint8_t *data = reinterpret_cast<const uint8_t *>(contents.data());
+  const uint8_t* data = reinterpret_cast<const uint8_t*>(contents.data());
   EXPECT_EQ(0xc0U, reader.ReadOneByte(data));
   EXPECT_EQ(0xcf0dU, reader.ReadTwoBytes(data + 1));
   EXPECT_EQ(0x96fdd219U, reader.ReadFourBytes(data + 3));

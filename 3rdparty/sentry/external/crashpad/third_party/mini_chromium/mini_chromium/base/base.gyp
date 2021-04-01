@@ -30,6 +30,12 @@
               '-ladvapi32.lib',
             ],
           }],
+          ['OS=="android"', {
+            'libraries': [
+              '-llog',
+            ],
+          }],
+
         ],
       },
       'sources': [

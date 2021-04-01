@@ -740,14 +740,14 @@ class MinidumpWriter {
   }
 
   bool WriteDSODebugStream(MDRawDirectory* dirent) {
-    ElfW(Phdr)* phdr = reinterpret_cast<ElfW(Phdr) *>(dumper_->auxv()[AT_PHDR]);
+    ElfW(Phdr)* phdr = reinterpret_cast<ElfW(Phdr)*>(dumper_->auxv()[AT_PHDR]);
     char* base;
     int phnum = dumper_->auxv()[AT_PHNUM];
     if (!phnum || !phdr)
       return false;
 
     // Assume the program base is at the beginning of the same page as the PHDR
-    base = reinterpret_cast<char *>(reinterpret_cast<uintptr_t>(phdr) & ~0xfff);
+    base = reinterpret_cast<char*>(reinterpret_cast<uintptr_t>(phdr) & ~0xfff);
 
     // Search for the program PT_DYNAMIC segment
     ElfW(Addr) dyn_addr = 0;
@@ -768,7 +768,7 @@ class MinidumpWriter {
     if (!dyn_addr)
       return false;
 
-    ElfW(Dyn) *dynamic = reinterpret_cast<ElfW(Dyn) *>(dyn_addr + base);
+    ElfW(Dyn)* dynamic = reinterpret_cast<ElfW(Dyn)*>(dyn_addr + base);
 
     // The dynamic linker makes information available that helps gdb find all
     // DSOs loaded into the program. If this information is indeed available,
@@ -1222,7 +1222,7 @@ class MinidumpWriter {
       Buffers* next;
       size_t len;
       uint8_t data[kBufSize];
-    } *buffers = reinterpret_cast<Buffers*>(Alloc(sizeof(Buffers)));
+    }* buffers = reinterpret_cast<Buffers*>(Alloc(sizeof(Buffers)));
     buffers->next = NULL;
     buffers->len = 0;
 

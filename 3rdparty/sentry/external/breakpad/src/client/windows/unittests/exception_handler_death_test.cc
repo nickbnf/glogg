@@ -52,7 +52,7 @@ const char kSuccessIndicator[] = "success";
 const char kFailureIndicator[] = "failure";
 
 // Utility function to test for a path's existence.
-BOOL DoesPathExist(const TCHAR *path_name);
+BOOL DoesPathExist(const TCHAR* path_name);
 
 enum OutOfProcGuarantee {
   OUT_OF_PROC_GUARANTEED,
@@ -92,7 +92,7 @@ void ExceptionHandlerDeathTest::SetUp() {
   CreateDirectory(temp_path_, NULL);
 }
 
-BOOL DoesPathExist(const TCHAR *path_name) {
+BOOL DoesPathExist(const TCHAR* path_name) {
   DWORD flags = GetFileAttributes(path_name);
   if (flags == INVALID_FILE_ATTRIBUTES) {
     return FALSE;
@@ -135,15 +135,15 @@ TEST_F(ExceptionHandlerDeathTest, InProcTest) {
   // Disable GTest SEH handler
   testing::DisableExceptionHandlerInScope disable_exception_handler;
 
-  int *i = NULL;
+  int* i = NULL;
   ASSERT_DEATH((*i)++, kSuccessIndicator);
 }
 
 static bool gDumpCallbackCalled = false;
 
-void clientDumpCallback(void *dump_context,
-                        const google_breakpad::ClientInfo *client_info,
-                        const std::wstring *dump_path) {
+void clientDumpCallback(void* dump_context,
+                        const google_breakpad::ClientInfo* client_info,
+                        const std::wstring* dump_path) {
   gDumpCallbackCalled = true;
 }
 
@@ -152,7 +152,7 @@ void ExceptionHandlerDeathTest::DoCrashAccessViolation(
   scoped_ptr<google_breakpad::ExceptionHandler> exc;
 
   if (out_of_proc_guarantee == OUT_OF_PROC_GUARANTEED) {
-    google_breakpad::CrashGenerationClient *client =
+    google_breakpad::CrashGenerationClient* client =
         new google_breakpad::CrashGenerationClient(kPipeName,
                                                    MiniDumpNormal,
                                                    NULL);  // custom_info
@@ -184,7 +184,7 @@ void ExceptionHandlerDeathTest::DoCrashAccessViolation(
   // if it's not true we'll still get an error rather than the crash
   // being expected.
   ASSERT_TRUE(exc->IsOutOfProcess());
-  int *i = NULL;
+  int* i = NULL;
   printf("%d\n", (*i)++);
 }
 
@@ -283,7 +283,7 @@ TEST_F(ExceptionHandlerDeathTest, PureVirtualCallTest) {
   EXPECT_EXIT(DoCrashPureVirtualCall(), ::testing::ExitedWithCode(0), "");
 }
 
-wstring find_minidump_in_directory(const wstring &directory) {
+wstring find_minidump_in_directory(const wstring& directory) {
   wstring search_path = directory + L"\\*";
   WIN32_FIND_DATA find_data;
   HANDLE find_handle = FindFirstFileW(search_path.c_str(), &find_data);

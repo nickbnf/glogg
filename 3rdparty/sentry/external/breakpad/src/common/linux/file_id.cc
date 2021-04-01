@@ -61,7 +61,7 @@ FileID::FileID(const char* path) : path_(path) {}
 // These functions are also used inside the crashed process, so be safe
 // and use the syscall/libc wrappers instead of direct syscalls or libc.
 
-static bool ElfClassBuildIDNoteIdentifier(const void *section, size_t length,
+static bool ElfClassBuildIDNoteIdentifier(const void* section, size_t length,
                                           wasteful_vector<uint8_t>& identifier) {
   static_assert(sizeof(ElfClass32::Nhdr) == sizeof(ElfClass64::Nhdr),
                 "Elf32_Nhdr and Elf64_Nhdr should be the same");
@@ -69,7 +69,7 @@ static bool ElfClassBuildIDNoteIdentifier(const void *section, size_t length,
 
   const void* section_end = reinterpret_cast<const char*>(section) + length;
   const Nhdr* note_header = reinterpret_cast<const Nhdr*>(section);
-  while (reinterpret_cast<const void *>(note_header) < section_end) {
+  while (reinterpret_cast<const void*>(note_header) < section_end) {
     if (note_header->n_type == NT_GNU_BUILD_ID)
       break;
     note_header = reinterpret_cast<const Nhdr*>(
@@ -77,7 +77,7 @@ static bool ElfClassBuildIDNoteIdentifier(const void *section, size_t length,
                   NOTE_PADDING(note_header->n_namesz) +
                   NOTE_PADDING(note_header->n_descsz));
   }
-  if (reinterpret_cast<const void *>(note_header) >= section_end ||
+  if (reinterpret_cast<const void*>(note_header) >= section_end ||
       note_header->n_descsz == 0) {
     return false;
   }

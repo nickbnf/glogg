@@ -593,7 +593,7 @@ TEST(Extractor, Signed4) {
   int32_t a;
   // For some reason, G++ 4.4.1 complains:
   //   warning: array subscript is above array bounds
-  // in ByteCursor::Read(size_t, bool, T *) as it inlines this call, but
+  // in ByteCursor::Read(size_t, bool, T*) as it inlines this call, but
   // I'm not able to see how such a reference would occur.
   EXPECT_TRUE(cursor >> a);
   EXPECT_EQ(-380377902, a);
@@ -627,7 +627,7 @@ TEST(Extractor, Unsigned4) {
   uint32_t a;
   // For some reason, G++ 4.4.1 complains:
   //   warning: array subscript is above array bounds
-  // in ByteCursor::Read(size_t, bool, T *) as it inlines this call, but
+  // in ByteCursor::Read(size_t, bool, T*) as it inlines this call, but
   // I'm not able to see how such a reference would occur.
   EXPECT_TRUE(cursor >> a);
   EXPECT_EQ(0xe953e4d2, a);
@@ -718,10 +718,10 @@ TEST(Strings, PointTo) {
   ByteBuffer buffer(data, sizeof(data));
   ByteCursor cursor(&buffer);
 
-  const uint8_t *received1;
-  const uint8_t *received2;
-  const uint8_t *received3;
-  const uint8_t *received4;
+  const uint8_t* received1;
+  const uint8_t* received2;
+  const uint8_t* received3;
+  const uint8_t* received4;
   EXPECT_FALSE(cursor
                .PointTo(&received1, 3)
                .PointTo(&received2, 3)

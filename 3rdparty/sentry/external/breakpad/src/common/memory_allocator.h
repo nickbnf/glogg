@@ -71,12 +71,12 @@ class PageAllocator {
     FreeAll();
   }
 
-  void *Alloc(size_t bytes) {
+  void* Alloc(size_t bytes) {
     if (!bytes)
       return NULL;
 
     if (current_page_ && page_size_ - page_offset_ >= bytes) {
-      uint8_t *const ret = current_page_ + page_offset_;
+      uint8_t* const ret = current_page_ + page_offset_;
       page_offset_ += bytes;
       if (page_offset_ == page_size_) {
         page_offset_ = 0;
@@ -88,7 +88,7 @@ class PageAllocator {
 
     const size_t pages =
         (bytes + sizeof(PageHeader) + page_size_ - 1) / page_size_;
-    uint8_t *const ret = GetNPages(pages);
+    uint8_t* const ret = GetNPages(pages);
     if (!ret)
       return NULL;
 
@@ -115,8 +115,8 @@ class PageAllocator {
   unsigned long pages_allocated() { return pages_allocated_; }
 
  private:
-  uint8_t *GetNPages(size_t num_pages) {
-    void *a = sys_mmap(NULL, page_size_ * num_pages, PROT_READ | PROT_WRITE,
+  uint8_t* GetNPages(size_t num_pages) {
+    void* a = sys_mmap(NULL, page_size_ * num_pages, PROT_READ | PROT_WRITE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (a == MAP_FAILED)
       return NULL;
@@ -127,7 +127,7 @@ class PageAllocator {
     __msan_unpoison(a, page_size_ * num_pages);
 #endif
 
-    struct PageHeader *header = reinterpret_cast<PageHeader*>(a);
+    struct PageHeader* header = reinterpret_cast<PageHeader*>(a);
     header->next = last_;
     header->num_pages = num_pages;
     last_ = header;
@@ -138,22 +138,22 @@ class PageAllocator {
   }
 
   void FreeAll() {
-    PageHeader *next;
+    PageHeader* next;
 
-    for (PageHeader *cur = last_; cur; cur = next) {
+    for (PageHeader* cur = last_; cur; cur = next) {
       next = cur->next;
       sys_munmap(cur, cur->num_pages * page_size_);
     }
   }
 
   struct PageHeader {
-    PageHeader *next;  // pointer to the start of the next set of pages.
+    PageHeader* next;  // pointer to the start of the next set of pages.
     size_t num_pages;  // the number of pages in this set.
   };
 
   const size_t page_size_;
-  PageHeader *last_;
-  uint8_t *current_page_;
+  PageHeader* last_;
+  uint8_t* current_page_;
   size_t page_offset_;
   unsigned long pages_allocated_;
 };

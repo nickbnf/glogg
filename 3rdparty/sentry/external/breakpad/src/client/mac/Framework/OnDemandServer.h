@@ -41,7 +41,7 @@
 // Example Usage :
 //
 //  kern_return_t result;
-//  OnDemandServer *server = OnDemandServer::Create("/tmp/myserver",
+//  OnDemandServer* server = OnDemandServer::Create("/tmp/myserver",
 //                                                  "com.MyCompany.MyServiceName",
 //                                                  true,
 //                                                  &result);
@@ -88,8 +88,8 @@ class OnDemandServer {
   }
 
   // Creates the bootstrap server and service
-  kern_return_t Initialize(const char *server_command,
-                           const char *service_name,
+  kern_return_t Initialize(const char* server_command,
+                           const char* service_name,
                            bool unregister_on_cleanup);
 
   // Returns an OnDemandServer object if successful, or NULL if there's
@@ -110,10 +110,10 @@ class OnDemandServer {
   //    out_result : if non-NULL, returns the result
   //      this value will be KERN_SUCCESS if Create() returns non-NULL
   //
-  static OnDemandServer *Create(const char *server_command,
-                                const char *service_name,
+  static OnDemandServer* Create(const char *server_command,
+                                const char* service_name,
                                 bool unregister_on_cleanup,
-                                kern_return_t *out_result);
+                                kern_return_t* out_result);
 
   // Cleans up and if LaunchOnDemand() has not yet been called then
   // the bootstrap service will be unregistered.

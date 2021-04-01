@@ -135,7 +135,7 @@ const size_t kHpageMask = (~(kHpageSize - 1));
 //   next is backed by some file.
 //   curr and next are contiguous.
 //   offset(next) == sizeof(curr)
-void TryRecoverMappings(MappingInfo *curr, MappingInfo *next) {
+void TryRecoverMappings(MappingInfo* curr, MappingInfo* next) {
   // Merged segments are marked with size = 0.
   if (curr->size == 0 || next->size == 0)
     return;
@@ -167,8 +167,8 @@ void TryRecoverMappings(MappingInfo *curr, MappingInfo *next) {
 //   next and prev are backed by the same file.
 //   prev, curr and next are contiguous.
 //   offset(next) == offset(prev) + sizeof(prev) + sizeof(curr)
-void TryRecoverMappings(MappingInfo *prev, MappingInfo *curr,
-    MappingInfo *next) {
+void TryRecoverMappings(MappingInfo* prev, MappingInfo* curr,
+                        MappingInfo* next) {
   // Merged segments are marked with size = 0.
   if (prev->size == 0 || curr->size == 0 || next->size == 0)
     return;
@@ -551,11 +551,11 @@ bool LinuxDumper::EnumerateMappings() {
   // See http://www.trilithium.com/johan/2005/08/linux-gate/ for more
   // information.
   const void* linux_gate_loc =
-      reinterpret_cast<void *>(auxv_[AT_SYSINFO_EHDR]);
+      reinterpret_cast<void*>(auxv_[AT_SYSINFO_EHDR]);
   // Although the initial executable is usually the first mapping, it's not
   // guaranteed (see http://crosbug.com/25355); therefore, try to use the
   // actual entry point to find the mapping.
-  const void* entry_point_loc = reinterpret_cast<void *>(auxv_[AT_ENTRY]);
+  const void* entry_point_loc = reinterpret_cast<void*>(auxv_[AT_ENTRY]);
 
   const int fd = sys_open(maps_path, O_RDONLY, 0);
   if (fd < 0)

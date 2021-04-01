@@ -36,11 +36,11 @@
 
 namespace dwarf2reader {
 
-inline uint8_t ByteReader::ReadOneByte(const uint8_t *buffer) const {
+inline uint8_t ByteReader::ReadOneByte(const uint8_t* buffer) const {
   return buffer[0];
 }
 
-inline uint16_t ByteReader::ReadTwoBytes(const uint8_t *buffer) const {
+inline uint16_t ByteReader::ReadTwoBytes(const uint8_t* buffer) const {
   const uint16_t buffer0 = buffer[0];
   const uint16_t buffer1 = buffer[1];
   if (endian_ == ENDIANNESS_LITTLE) {
@@ -50,7 +50,18 @@ inline uint16_t ByteReader::ReadTwoBytes(const uint8_t *buffer) const {
   }
 }
 
-inline uint64_t ByteReader::ReadFourBytes(const uint8_t *buffer) const {
+inline uint64_t ByteReader::ReadThreeBytes(const uint8_t* buffer) const {
+  const uint32_t buffer0 = buffer[0];
+  const uint32_t buffer1 = buffer[1];
+  const uint32_t buffer2 = buffer[2];
+  if (endian_ == ENDIANNESS_LITTLE) {
+    return buffer0 | buffer1 << 8 | buffer2 << 16;
+  } else {
+    return buffer2 | buffer1 << 8 | buffer0 << 16;
+  }
+}
+
+inline uint64_t ByteReader::ReadFourBytes(const uint8_t* buffer) const {
   const uint32_t buffer0 = buffer[0];
   const uint32_t buffer1 = buffer[1];
   const uint32_t buffer2 = buffer[2];
@@ -62,7 +73,7 @@ inline uint64_t ByteReader::ReadFourBytes(const uint8_t *buffer) const {
   }
 }
 
-inline uint64_t ByteReader::ReadEightBytes(const uint8_t *buffer) const {
+inline uint64_t ByteReader::ReadEightBytes(const uint8_t* buffer) const {
   const uint64_t buffer0 = buffer[0];
   const uint64_t buffer1 = buffer[1];
   const uint64_t buffer2 = buffer[2];
@@ -84,7 +95,7 @@ inline uint64_t ByteReader::ReadEightBytes(const uint8_t *buffer) const {
 // information, plus one bit saying whether the number continues or
 // not.
 
-inline uint64_t ByteReader::ReadUnsignedLEB128(const uint8_t *buffer,
+inline uint64_t ByteReader::ReadUnsignedLEB128(const uint8_t* buffer,
                                              size_t* len) const {
   uint64_t result = 0;
   size_t num_read = 0;
@@ -109,7 +120,7 @@ inline uint64_t ByteReader::ReadUnsignedLEB128(const uint8_t *buffer,
 // Read a signed LEB128 number.  These are like regular LEB128
 // numbers, except the last byte may have a sign bit set.
 
-inline int64_t ByteReader::ReadSignedLEB128(const uint8_t *buffer,
+inline int64_t ByteReader::ReadSignedLEB128(const uint8_t* buffer,
                                           size_t* len) const {
   int64_t result = 0;
   unsigned int shift = 0;
@@ -129,18 +140,18 @@ inline int64_t ByteReader::ReadSignedLEB128(const uint8_t *buffer,
   return result;
 }
 
-inline uint64_t ByteReader::ReadOffset(const uint8_t *buffer) const {
+inline uint64_t ByteReader::ReadOffset(const uint8_t* buffer) const {
   assert(this->offset_reader_);
   return (this->*offset_reader_)(buffer);
 }
 
-inline uint64_t ByteReader::ReadAddress(const uint8_t *buffer) const {
+inline uint64_t ByteReader::ReadAddress(const uint8_t* buffer) const {
   assert(this->address_reader_);
   return (this->*address_reader_)(buffer);
 }
 
 inline void ByteReader::SetCFIDataBase(uint64_t section_base,
-                                       const uint8_t *buffer_base) {
+                                       const uint8_t* buffer_base) {
   section_base_ = section_base;
   buffer_base_ = buffer_base;
   have_section_base_ = true;

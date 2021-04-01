@@ -127,8 +127,8 @@ size_t DumpAnalysis::GetStreamImpl(ULONG stream_number, void** stream) const {
   return ret ? memory_list_size : 0;
 }
 
-bool DumpAnalysis::HasMemoryImpl(const void *addr_in, size_t structuresize,
-                                 void **structure) const {
+bool DumpAnalysis::HasMemoryImpl(const void* addr_in, size_t structuresize,
+                                 void** structure) const {
   uintptr_t address = reinterpret_cast<uintptr_t>(addr_in);
   MINIDUMP_MEMORY_LIST* memory_list = NULL;
   size_t memory_list_size = GetStream(MemoryListStream, &memory_list);

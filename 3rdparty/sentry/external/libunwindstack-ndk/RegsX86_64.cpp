@@ -15,6 +15,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 
 #include <functional>
 
@@ -48,13 +49,6 @@ void RegsX86_64::set_pc(uint64_t pc) {
 
 void RegsX86_64::set_sp(uint64_t sp) {
   regs_[X86_64_REG_SP] = sp;
-}
-
-uint64_t RegsX86_64::GetPcAdjustment(uint64_t rel_pc, Elf*) {
-  if (rel_pc == 0) {
-    return 0;
-  }
-  return 1;
 }
 
 bool RegsX86_64::SetPcFromReturnAddress(Memory* process_memory) {
@@ -138,24 +132,23 @@ Regs* RegsX86_64::CreateFromUcontext(void* ucontext) {
   return regs;
 }
 
-bool RegsX86_64::StepIfSignalHandler(uint64_t rel_pc, Elf* elf, Memory* process_memory) {
+bool RegsX86_64::StepIfSignalHandler(uint64_t elf_offset, Elf* elf, Memory* process_memory) {
   uint64_t data;
   Memory* elf_memory = elf->memory();
   // Read from elf memory since it is usually more expensive to read from
   // process memory.
-  if (!elf_memory->ReadFully(rel_pc, &data, sizeof(data)) || data != 0x0f0000000fc0c748) {
+  if (!elf_memory->ReadFully(elf_offset, &data, sizeof(data)) || data != 0x0f0000000fc0c748) {
     return false;
   }
 
-  uint16_t data2;
-  if (!elf_memory->ReadFully(rel_pc + 8, &data2, sizeof(data2)) || data2 != 0x0f05) {
+  uint8_t data2;
+  if (!elf_memory->ReadFully(elf_offset + 8, &data2, sizeof(data2)) || data2 != 0x05) {
     return false;
   }
 
   // __restore_rt:
   // 0x48 0xc7 0xc0 0x0f 0x00 0x00 0x00   mov $0xf,%rax
   // 0x0f 0x05                            syscall
-  // 0x0f                                 nopl 0x0($rax)
 
   // Read the mcontext data from the stack.
   // sp points to the ucontext data structure, read only the mcontext part.
@@ -166,6 +159,10 @@ bool RegsX86_64::StepIfSignalHandler(uint64_t rel_pc, Elf* elf, Memory* process_
   }
   SetFromUcontext(&x86_64_ucontext);
   return true;
+}
+
+Regs* RegsX86_64::Clone() {
+  return new RegsX86_64(*this);
 }
 
 }  // namespace unwindstack

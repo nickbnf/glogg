@@ -66,7 +66,7 @@ struct task_dyld_info {
   mach_vm_size_t all_image_info_size;
 };
 typedef struct task_dyld_info task_dyld_info_data_t;
-typedef struct task_dyld_info *task_dyld_info_t;
+typedef struct task_dyld_info* task_dyld_info_t;
 #define TASK_DYLD_INFO_COUNT (sizeof(task_dyld_info_data_t) / sizeof(natural_t))
 
 #endif
@@ -88,7 +88,7 @@ using std::vector;
 //
 static mach_vm_size_t GetMemoryRegionSize(task_port_t target_task,
                                           const uint64_t address,
-                                          mach_vm_size_t *size_to_end) {
+                                          mach_vm_size_t* size_to_end) {
   mach_vm_address_t region_base = (mach_vm_address_t)address;
   mach_vm_size_t region_size;
   natural_t nesting_level = 0;
@@ -182,7 +182,7 @@ static string ReadTaskString(task_port_t target_task,
 kern_return_t ReadTaskMemory(task_port_t target_task,
                              const uint64_t address,
                              size_t length,
-                             vector<uint8_t> &bytes) {
+                             vector<uint8_t>& bytes) {
   int systemPageSize = getpagesize();
 
   // use the negative of the page size for the mask to find the page address
@@ -250,16 +250,16 @@ bool FindTextSection(DynamicImage& image) {
     return false;
   }
 
-  const struct load_command *cmd =
-      reinterpret_cast<const struct load_command *>(header + 1);
+  const struct load_command* cmd =
+      reinterpret_cast<const struct load_command*>(header + 1);
 
   bool found_text_section = false;
   bool found_dylib_id_command = false;
   for (unsigned int i = 0; cmd && (i < header->ncmds); ++i) {
     if (!found_text_section) {
       if (cmd->cmd == MachBits::segment_load_command) {
-        const mach_segment_command_type *seg =
-            reinterpret_cast<const mach_segment_command_type *>(cmd);
+        const mach_segment_command_type* seg =
+            reinterpret_cast<const mach_segment_command_type*>(cmd);
 
         if (!strcmp(seg->segname, "__TEXT")) {
           image.vmaddr_ = static_cast<mach_vm_address_t>(seg->vmaddr);
@@ -277,8 +277,8 @@ bool FindTextSection(DynamicImage& image) {
 
     if (!found_dylib_id_command) {
       if (cmd->cmd == LC_ID_DYLIB) {
-        const struct dylib_command *dc =
-            reinterpret_cast<const struct dylib_command *>(cmd);
+        const struct dylib_command* dc =
+            reinterpret_cast<const struct dylib_command*>(cmd);
 
         image.version_ = dc->dylib.current_version;
         found_dylib_id_command = true;
@@ -289,8 +289,8 @@ bool FindTextSection(DynamicImage& image) {
       return true;
     }
 
-    cmd = reinterpret_cast<const struct load_command *>
-        (reinterpret_cast<const char *>(cmd) + cmd->cmdsize);
+    cmd = reinterpret_cast<const struct load_command*>
+        (reinterpret_cast<const char*>(cmd) + cmd->cmdsize);
   }
 
   return false;
@@ -349,8 +349,8 @@ static uint64_t LookupSymbol(const char* symbol_name,
   typedef typename MachBits::nlist_type nlist_type;
 
   nlist_type symbol_info[8] = {};
-  const char *symbolNames[2] = { symbol_name, "\0" };
-  nlist_type &list = symbol_info[0];
+  const char* symbolNames[2] = { symbol_name, "\0" };
+  nlist_type& list = symbol_info[0];
   int invalidEntriesCount = breakpad_nlist(filename,
                                            &list,
                                            symbolNames,
@@ -396,8 +396,8 @@ uint64_t DynamicImages::GetDyldAllImageInfosPointer() {
 
     return (uint64_t)task_dyld_info.all_image_info_addr;
   } else {
-    const char *imageSymbolName = "_dyld_all_image_infos";
-    const char *dyldPath = "/usr/lib/dyld";
+    const char* imageSymbolName = "_dyld_all_image_infos";
+    const char* dyldPath = "/usr/lib/dyld";
 
     if (Is64Bit())
       return LookupSymbol<MachO64>(imageSymbolName, dyldPath, cpu_type_);
@@ -428,7 +428,7 @@ void ReadImageInfo(DynamicImages& images,
                      dyld_all_info_bytes) != KERN_SUCCESS)
     return;
 
-  dyld_all_image_infos *dyldInfo =
+  dyld_all_image_infos* dyldInfo =
     reinterpret_cast<dyld_all_image_infos*>(&dyld_all_info_bytes[0]);
 
   // number of loaded images
@@ -443,12 +443,12 @@ void ReadImageInfo(DynamicImages& images,
                        dyld_info_array_bytes) != KERN_SUCCESS)
       return;
 
-    dyld_image_info *infoArray =
+    dyld_image_info* infoArray =
         reinterpret_cast<dyld_image_info*>(&dyld_info_array_bytes[0]);
     images.image_list_.reserve(count);
 
     for (int i = 0; i < count; ++i) {
-      dyld_image_info &info = infoArray[i];
+      dyld_image_info& info = infoArray[i];
 
       // First read just the mach_header from the image in the task.
       vector<uint8_t> mach_header_bytes;
@@ -458,7 +458,7 @@ void ReadImageInfo(DynamicImages& images,
                          mach_header_bytes) != KERN_SUCCESS)
         continue;  // bail on this dynamic image
 
-      mach_header_type *header =
+      mach_header_type* header =
           reinterpret_cast<mach_header_type*>(&mach_header_bytes[0]);
 
       // Now determine the total amount necessary to read the header
@@ -482,7 +482,7 @@ void ReadImageInfo(DynamicImages& images,
       }
 
       // Create an object representing this image and add it to our list.
-      DynamicImage *new_image;
+      DynamicImage* new_image;
       new_image = new DynamicImage(&mach_header_bytes[0],
                                    header_size,
                                    info.load_address_,
@@ -522,7 +522,7 @@ void DynamicImages::ReadImageInfoForTask() {
 }
 
 //==============================================================================
-DynamicImage  *DynamicImages::GetExecutableImage() {
+DynamicImage* DynamicImages::GetExecutableImage() {
   int executable_index = GetExecutableImageIndex();
 
   if (executable_index >= 0) {
@@ -538,7 +538,7 @@ int DynamicImages::GetExecutableImageIndex() {
   int image_count = GetImageCount();
 
   for (int i = 0; i < image_count; ++i) {
-    DynamicImage  *image = GetImage(i);
+    DynamicImage* image = GetImage(i);
     if (image->GetFileType() == MH_EXECUTE) {
       return i;
     }

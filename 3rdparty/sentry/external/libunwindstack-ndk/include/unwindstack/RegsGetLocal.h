@@ -33,30 +33,28 @@ namespace unwindstack {
 
 #if defined(__arm__)
 
-inline __always_inline void RegsGetLocal(Regs* regs) {
-  void* reg_data = regs->RawData();
+inline __attribute__((__always_inline__)) void AsmGetRegs(void* reg_data) {
   asm volatile(
       ".align 2\n"
       "bx pc\n"
       "nop\n"
       ".code 32\n"
       "stmia %[base], {r0-r12}\n"
-      "add %[base], #52\n"
-      "mov r1, r13\n"
-      "mov r2, r14\n"
-      "mov r3, r15\n"
-      "stmia %[base], {r1-r3}\n"
+      "add r2, %[base], #52\n"
+      "mov r3, r13\n"
+      "mov r4, r14\n"
+      "mov r5, r15\n"
+      "stmia r2, {r3-r5}\n"
       "orr %[base], pc, #1\n"
       "bx %[base]\n"
-      : [base] "+r"(reg_data)
+      : [ base ] "+r"(reg_data)
       :
-      : "memory");
+      : "r2", "r3", "r4", "r5", "memory");
 }
 
 #elif defined(__aarch64__)
 
-inline __always_inline void RegsGetLocal(Regs* regs) {
-  void* reg_data = regs->RawData();
+inline __attribute__((__always_inline__)) void AsmGetRegs(void* reg_data) {
   asm volatile(
       "1:\n"
       "stp x0, x1, [%[base], #0]\n"
@@ -83,15 +81,16 @@ inline __always_inline void RegsGetLocal(Regs* regs) {
       : "x12", "x13", "memory");
 }
 
-#elif defined(__i386__) || defined(__x86_64__) || defined(__mips__)
+#elif defined(__i386__) || defined(__x86_64__)
 
 extern "C" void AsmGetRegs(void* regs);
 
-inline void RegsGetLocal(Regs* regs) {
+#endif
+
+inline __attribute__((__always_inline__)) void RegsGetLocal(Regs* regs) {
   AsmGetRegs(regs->RawData());
 }
 
-#endif
 
 }  // namespace unwindstack
 

@@ -1,6 +1,7 @@
 #include "sentry_boot.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,38 +27,48 @@
 #include "sentry_value.h"
 
 /**
- * NaN-boxing of sentry_value_t
+ * Pointer Tagging of `sentry_value_t`
  *
- * We do encode 32-bit values as well as some constants and pointers into the
- * NaN-space of 64-bit floating-point numbers, like so:
+ * We expect all of the pointers we deal with to be at least 4-byte aligned,
+ * which means we can use the least significant 2 bits for tagging.
+ * We only ever save pointers to `thing_t`, which has an `alignof >= 4`, and
+ * also both our own allocator, and the system allocator should give us
+ * properly aligned pointers.
  *
- * 11111111 11111000 00000000 00000000 00000000 00000000 00000000 00000000
- *               |||
- *               001 - INT32
- *               010 - CONST
- *               100 - THING
- *
- * `THING` (pointers) are expected to be at least 4-byte aligned, as they are
- * shifted by 2 bits, which means we can encode pointers with up to *52* bits.
+ * xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xxxxxx00
+ *                                                                      ||
+ *               Pointer to a `thing_t`, a refcounted heap allocation - 00
+ * xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx -   A `int32_t` shifted by 32  - 01
+ *                                                     CONST as below - 10
+ *                                                            false - 0010
+ *                                                             true - 0110
+ *                                                             null - 1010
  */
 
-#define MAX_DOUBLE 0xfff8000000000000ULL
-#define TAG_INT32 0xfff9000000000000ULL
-#define TAG_CONST 0xfffa000000000000ULL
-#define TAG_THING 0xfffc000000000000ULL
+#define TAG_MASK 0x3
+#define TAG_INT32 0x1
+#define TAG_CONST 0x2
+
+#define CONST_FALSE 0x2
+#define CONST_TRUE 0x6
+#define CONST_NULL 0xa
 
 #define THING_TYPE_MASK 0x7f
 #define THING_TYPE_FROZEN 0x80
-#define THING_TYPE_LIST 1
-#define THING_TYPE_OBJECT 2
-#define THING_TYPE_STRING 0
+#define THING_TYPE_LIST 0
+#define THING_TYPE_OBJECT 1
+#define THING_TYPE_STRING 2
+#define THING_TYPE_DOUBLE 3
 
 /* internal value helpers */
 
 typedef struct {
-    void *payload;
+    union {
+        void *_ptr;
+        double _double;
+    } payload;
     long refcount;
-    char type;
+    uint8_t type;
 } thing_t;
 
 typedef struct {
@@ -126,7 +137,7 @@ reserve(void **buf, size_t item_size, size_t *allocated, size_t min_len)
 static int
 thing_get_type(const thing_t *thing)
 {
-    return thing->type & (char)THING_TYPE_MASK;
+    return thing->type & (uint8_t)THING_TYPE_MASK;
 }
 
 static void
@@ -134,7 +145,7 @@ thing_free(thing_t *thing)
 {
     switch (thing_get_type(thing)) {
     case THING_TYPE_LIST: {
-        list_t *list = thing->payload;
+        list_t *list = thing->payload._ptr;
         for (size_t i = 0; i < list->len; i++) {
             sentry_value_decref(list->items[i]);
         }
@@ -143,7 +154,7 @@ thing_free(thing_t *thing)
         break;
     }
     case THING_TYPE_OBJECT: {
-        obj_t *obj = thing->payload;
+        obj_t *obj = thing->payload._ptr;
         for (size_t i = 0; i < obj->len; i++) {
             sentry_free(obj->pairs[i].k);
             sentry_value_decref(obj->pairs[i].v);
@@ -153,7 +164,7 @@ thing_free(thing_t *thing)
         break;
     }
     case THING_TYPE_STRING: {
-        sentry_free(thing->payload);
+        sentry_free(thing->payload._ptr);
         break;
     }
     }
@@ -175,14 +186,14 @@ thing_freeze(thing_t *thing)
     thing->type |= 0x80;
     switch (thing_get_type(thing)) {
     case THING_TYPE_LIST: {
-        const list_t *l = thing->payload;
+        const list_t *l = thing->payload._ptr;
         for (size_t i = 0; i < l->len; i++) {
             sentry_value_freeze(l->items[i]);
         }
         break;
     }
     case THING_TYPE_OBJECT: {
-        const obj_t *o = thing->payload;
+        const obj_t *o = thing->payload._ptr;
         for (size_t i = 0; i < o->len; i++) {
             sentry_value_freeze(o->pairs[i].v);
         }
@@ -193,31 +204,28 @@ thing_freeze(thing_t *thing)
 }
 
 static sentry_value_t
-new_thing_value(void *ptr, int thing_type)
+new_thing_value(void *ptr, uint8_t thing_type)
 {
-    sentry_value_t rv;
     thing_t *thing = sentry_malloc(sizeof(thing_t));
     if (!thing) {
         return sentry_value_new_null();
     }
-
-    thing->payload = ptr;
+    thing->payload._ptr = ptr;
     thing->refcount = 1;
-    thing->type = (char)thing_type;
-    rv._bits = (((uint64_t)(size_t)thing) >> 2) | TAG_THING;
+    thing->type = thing_type;
+
+    sentry_value_t rv;
+    rv._bits = (uint64_t)(size_t)thing;
     return rv;
 }
 
 static thing_t *
 value_as_thing(sentry_value_t value)
 {
-    if (value._bits <= MAX_DOUBLE) {
-        return NULL;
-    } else if ((value._bits & TAG_THING) == TAG_THING) {
-        return (thing_t *)(size_t)((value._bits & ~TAG_THING) << 2);
-    } else {
+    if (value._bits & TAG_MASK) {
         return NULL;
     }
+    return (thing_t *)(size_t)value._bits;
 }
 
 static thing_t *
@@ -274,7 +282,7 @@ sentry_value_t
 sentry_value_new_null(void)
 {
     sentry_value_t rv;
-    rv._bits = (uint64_t)2 | TAG_CONST;
+    rv._bits = (uint64_t)CONST_NULL;
     return rv;
 }
 
@@ -282,21 +290,23 @@ sentry_value_t
 sentry_value_new_int32(int32_t value)
 {
     sentry_value_t rv;
-    rv._bits = (uint64_t)(uint32_t)value | TAG_INT32;
+    rv._bits = ((uint64_t)(uint32_t)value) << 32 | TAG_INT32;
     return rv;
 }
 
 sentry_value_t
 sentry_value_new_double(double value)
 {
-    sentry_value_t rv;
-    // if we are a nan value we want to become the max double value which
-    // is a NAN.
-    if (value != value) {
-        rv._bits = MAX_DOUBLE;
-    } else {
-        rv._double = value;
+    thing_t *thing = sentry_malloc(sizeof(thing_t));
+    if (!thing) {
+        return sentry_value_new_null();
     }
+    thing->payload._double = value;
+    thing->refcount = 1;
+    thing->type = (uint8_t)(THING_TYPE_DOUBLE | THING_TYPE_FROZEN);
+
+    sentry_value_t rv;
+    rv._bits = (uint64_t)(size_t)thing;
     return rv;
 }
 
@@ -304,7 +314,7 @@ sentry_value_t
 sentry_value_new_bool(int value)
 {
     sentry_value_t rv;
-    rv._bits = (uint64_t)(value ? 1 : 0) | TAG_CONST;
+    rv._bits = (uint64_t)(value ? CONST_TRUE : CONST_FALSE);
     return rv;
 }
 
@@ -403,6 +413,9 @@ sentry__value_new_object_with_size(size_t size)
 sentry_value_type_t
 sentry_value_get_type(sentry_value_t value)
 {
+    if (sentry_value_is_null(value)) {
+        return SENTRY_VALUE_TYPE_NULL;
+    }
     const thing_t *thing = value_as_thing(value);
     if (thing) {
         switch (thing_get_type(thing)) {
@@ -412,25 +425,17 @@ sentry_value_get_type(sentry_value_t value)
             return SENTRY_VALUE_TYPE_LIST;
         case THING_TYPE_OBJECT:
             return SENTRY_VALUE_TYPE_OBJECT;
+        case THING_TYPE_DOUBLE:
+            return SENTRY_VALUE_TYPE_DOUBLE;
         }
         assert(!"unreachable");
-    } else if (value._bits <= MAX_DOUBLE) {
-        return SENTRY_VALUE_TYPE_DOUBLE;
-    } else if ((value._bits & TAG_CONST) == TAG_CONST) {
-        uint64_t val = value._bits & ~TAG_CONST;
-        switch (val) {
-        case 0:
-        case 1:
-            return SENTRY_VALUE_TYPE_BOOL;
-        case 2:
-            return SENTRY_VALUE_TYPE_NULL;
-        default:
-            assert(!"unreachable");
-        }
-    } else if ((value._bits & TAG_INT32) == TAG_INT32) {
+    } else if ((value._bits & TAG_MASK) == TAG_CONST) {
+        return SENTRY_VALUE_TYPE_BOOL;
+    } else if ((value._bits & TAG_MASK) == TAG_INT32) {
         return SENTRY_VALUE_TYPE_INT32;
     }
-    return SENTRY_VALUE_TYPE_DOUBLE;
+    assert(!"unreachable");
+    return SENTRY_VALUE_TYPE_NULL;
 }
 
 int
@@ -440,7 +445,7 @@ sentry_value_set_by_key(sentry_value_t value, const char *k, sentry_value_t v)
     if (!thing || thing_get_type(thing) != THING_TYPE_OBJECT) {
         goto fail;
     }
-    obj_t *o = thing->payload;
+    obj_t *o = thing->payload._ptr;
     for (size_t i = 0; i < o->len; i++) {
         obj_pair_t *pair = &o->pairs[i];
         if (sentry__string_eq(pair->k, k)) {
@@ -474,9 +479,9 @@ sentry_value_remove_by_key(sentry_value_t value, const char *k)
 {
     thing_t *thing = value_as_unfrozen_thing(value);
     if (!thing || thing_get_type(thing) != THING_TYPE_OBJECT) {
-        return 0;
+        return 1;
     }
-    obj_t *o = thing->payload;
+    obj_t *o = thing->payload._ptr;
     for (size_t i = 0; i < o->len; i++) {
         obj_pair_t *pair = &o->pairs[i];
         if (sentry__string_eq(pair->k, k)) {
@@ -496,18 +501,22 @@ sentry_value_append(sentry_value_t value, sentry_value_t v)
 {
     thing_t *thing = value_as_unfrozen_thing(value);
     if (!thing || thing_get_type(thing) != THING_TYPE_LIST) {
-        return 1;
+        goto fail;
     }
 
-    list_t *l = thing->payload;
+    list_t *l = thing->payload._ptr;
 
     if (!reserve((void **)&l->items, sizeof(l->items[0]), &l->allocated,
             l->len + 1)) {
-        return 1;
+        goto fail;
     }
 
     l->items[l->len++] = v;
     return 0;
+
+fail:
+    sentry_value_decref(v);
+    return 1;
 }
 
 sentry_uuid_t
@@ -551,7 +560,7 @@ sentry__value_clone(sentry_value_t value)
     }
     switch (thing_get_type(thing)) {
     case THING_TYPE_LIST: {
-        const list_t *list = thing->payload;
+        const list_t *list = thing->payload._ptr;
         sentry_value_t rv = sentry__value_new_list_with_size(list->len);
         for (size_t i = 0; i < list->len; i++) {
             sentry_value_incref(list->items[i]);
@@ -560,7 +569,7 @@ sentry__value_clone(sentry_value_t value)
         return rv;
     }
     case THING_TYPE_OBJECT: {
-        const obj_t *obj = thing->payload;
+        const obj_t *obj = thing->payload._ptr;
         sentry_value_t rv = sentry__value_new_object_with_size(obj->len);
         for (size_t i = 0; i < obj->len; i++) {
             sentry_value_incref(obj->pairs[i].v);
@@ -569,6 +578,7 @@ sentry__value_clone(sentry_value_t value)
         return rv;
     }
     case THING_TYPE_STRING:
+    case THING_TYPE_DOUBLE:
         sentry_value_incref(value);
         return value;
     default:
@@ -581,10 +591,10 @@ sentry__value_append_bounded(sentry_value_t value, sentry_value_t v, size_t max)
 {
     thing_t *thing = value_as_unfrozen_thing(value);
     if (!thing || thing_get_type(thing) != THING_TYPE_LIST) {
-        return 1;
+        goto fail;
     }
 
-    list_t *l = thing->payload;
+    list_t *l = thing->payload._ptr;
 
     if (l->len < max) {
         return sentry_value_append(value, v);
@@ -597,11 +607,18 @@ sentry__value_append_bounded(sentry_value_t value, sentry_value_t v, size_t max)
     //   from 20
 
     size_t to_move = max - 1;
-    memmove(
-        l->items, l->items + (l->len - to_move), to_move * sizeof(l->items[0]));
+    size_t to_shift = l->len - to_move;
+    for (size_t i = 0; i < to_shift; i++) {
+        sentry_value_decref(l->items[i]);
+    }
+    memmove(l->items, l->items + (to_shift), to_move * sizeof(l->items[0]));
     l->items[max - 1] = v;
     l->len = max;
     return 0;
+
+fail:
+    sentry_value_decref(v);
+    return 1;
 }
 
 int
@@ -609,13 +626,13 @@ sentry_value_set_by_index(sentry_value_t value, size_t index, sentry_value_t v)
 {
     thing_t *thing = value_as_unfrozen_thing(value);
     if (!thing || thing_get_type(thing) != THING_TYPE_LIST) {
-        return 1;
+        goto fail;
     }
 
-    list_t *l = thing->payload;
+    list_t *l = thing->payload._ptr;
     if (!reserve(
             (void *)&l->items, sizeof(l->items[0]), &l->allocated, index + 1)) {
-        return 1;
+        goto fail;
     }
 
     if (index >= l->len) {
@@ -628,6 +645,10 @@ sentry_value_set_by_index(sentry_value_t value, size_t index, sentry_value_t v)
     sentry_value_decref(l->items[index]);
     l->items[index] = v;
     return 0;
+
+fail:
+    sentry_value_decref(v);
+    return 1;
 }
 
 int
@@ -638,7 +659,7 @@ sentry_value_remove_by_index(sentry_value_t value, size_t index)
         return 1;
     }
 
-    list_t *l = thing->payload;
+    list_t *l = thing->payload._ptr;
     if (index >= l->len) {
         return 0;
     }
@@ -655,7 +676,7 @@ sentry_value_get_by_key(sentry_value_t value, const char *k)
 {
     const thing_t *thing = value_as_thing(value);
     if (thing && thing_get_type(thing) == THING_TYPE_OBJECT) {
-        obj_t *o = thing->payload;
+        obj_t *o = thing->payload._ptr;
         for (size_t i = 0; i < o->len; i++) {
             obj_pair_t *pair = &o->pairs[i];
             if (sentry__string_eq(pair->k, k)) {
@@ -679,7 +700,7 @@ sentry_value_get_by_index(sentry_value_t value, size_t index)
 {
     const thing_t *thing = value_as_thing(value);
     if (thing && thing_get_type(thing) == THING_TYPE_LIST) {
-        list_t *l = thing->payload;
+        list_t *l = thing->payload._ptr;
         if (index < l->len) {
             return l->items[index];
         }
@@ -702,11 +723,11 @@ sentry_value_get_length(sentry_value_t value)
     if (thing) {
         switch (thing_get_type(thing)) {
         case THING_TYPE_STRING:
-            return strlen(thing->payload);
+            return strlen(thing->payload._ptr);
         case THING_TYPE_LIST:
-            return ((const list_t *)thing->payload)->len;
+            return ((const list_t *)thing->payload._ptr)->len;
         case THING_TYPE_OBJECT:
-            return ((const obj_t *)thing->payload)->len;
+            return ((const obj_t *)thing->payload._ptr)->len;
         }
     }
     return 0;
@@ -715,8 +736,8 @@ sentry_value_get_length(sentry_value_t value)
 int32_t
 sentry_value_as_int32(sentry_value_t value)
 {
-    if ((value._bits & TAG_INT32) == TAG_INT32) {
-        return (int32_t)(value._bits & ~TAG_INT32);
+    if ((value._bits & TAG_MASK) == TAG_INT32) {
+        return (int32_t)((int64_t)value._bits >> 32);
     } else {
         return 0;
     }
@@ -725,12 +746,15 @@ sentry_value_as_int32(sentry_value_t value)
 double
 sentry_value_as_double(sentry_value_t value)
 {
-    if (value._bits <= MAX_DOUBLE) {
-        return value._double;
-    } else if ((value._bits & TAG_INT32) == TAG_INT32) {
+    if ((value._bits & TAG_MASK) == TAG_INT32) {
         return (double)sentry_value_as_int32(value);
+    }
+
+    const thing_t *thing = value_as_thing(value);
+    if (thing && thing_get_type(thing) == THING_TYPE_DOUBLE) {
+        return thing->payload._double;
     } else {
-        return MAX_DOUBLE;
+        return NAN;
     }
 }
 
@@ -739,7 +763,7 @@ sentry_value_as_string(sentry_value_t value)
 {
     const thing_t *thing = value_as_thing(value);
     if (thing && thing_get_type(thing) == THING_TYPE_STRING) {
-        return (const char *)thing->payload;
+        return (const char *)thing->payload._ptr;
     } else {
         return "";
     }
@@ -748,10 +772,13 @@ sentry_value_as_string(sentry_value_t value)
 int
 sentry_value_is_true(sentry_value_t value)
 {
+    if (value._bits == CONST_TRUE) {
+        return 1;
+    }
     switch (sentry_value_get_type(value)) {
     case SENTRY_VALUE_TYPE_BOOL:
     case SENTRY_VALUE_TYPE_NULL:
-        return (value._bits & ~TAG_CONST) == 1;
+        return 0;
     case SENTRY_VALUE_TYPE_INT32:
         return sentry_value_as_int32(value) != 0;
     case SENTRY_VALUE_TYPE_DOUBLE:
@@ -764,11 +791,7 @@ sentry_value_is_true(sentry_value_t value)
 int
 sentry_value_is_null(sentry_value_t value)
 {
-    if ((value._bits & TAG_CONST) == TAG_CONST) {
-        uint64_t val = value._bits & ~TAG_CONST;
-        return val == 2;
-    }
-    return false;
+    return value._bits == CONST_NULL;
 }
 
 static void
@@ -791,7 +814,7 @@ value_to_json(sentry_jsonwriter_t *jw, sentry_value_t value)
         sentry__jsonwriter_write_str(jw, sentry_value_as_string(value));
         break;
     case SENTRY_VALUE_TYPE_LIST: {
-        const list_t *l = value_as_thing(value)->payload;
+        const list_t *l = value_as_thing(value)->payload._ptr;
         sentry__jsonwriter_write_list_start(jw);
         for (size_t i = 0; i < l->len; i++) {
             value_to_json(jw, l->items[i]);
@@ -800,7 +823,7 @@ value_to_json(sentry_jsonwriter_t *jw, sentry_value_t value)
         break;
     }
     case SENTRY_VALUE_TYPE_OBJECT: {
-        const obj_t *o = value_as_thing(value)->payload;
+        const obj_t *o = value_as_thing(value)->payload._ptr;
         sentry__jsonwriter_write_object_start(jw);
         for (size_t i = 0; i < o->len; i++) {
             sentry__jsonwriter_write_key(jw, o->pairs[i].k);
@@ -841,7 +864,7 @@ value_to_msgpack(mpack_writer_t *writer, sentry_value_t value)
         break;
     }
     case SENTRY_VALUE_TYPE_LIST: {
-        const list_t *l = value_as_thing(value)->payload;
+        const list_t *l = value_as_thing(value)->payload._ptr;
 
         mpack_start_array(writer, (uint32_t)l->len);
         for (size_t i = 0; i < l->len; i++) {
@@ -851,7 +874,7 @@ value_to_msgpack(mpack_writer_t *writer, sentry_value_t value)
         break;
     }
     case SENTRY_VALUE_TYPE_OBJECT: {
-        const obj_t *o = value_as_thing(value)->payload;
+        const obj_t *o = value_as_thing(value)->payload._ptr;
 
         mpack_start_map(writer, (uint32_t)o->len);
         for (size_t i = 0; i < o->len; i++) {

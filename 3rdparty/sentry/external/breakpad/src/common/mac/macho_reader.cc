@@ -81,7 +81,7 @@ void FatReader::Reporter::MisplacedObjectFile() {
           " to contain\n", filename_.c_str());
 }
 
-bool FatReader::Read(const uint8_t *buffer, size_t size) {
+bool FatReader::Read(const uint8_t* buffer, size_t size) {
   buffer_.start = buffer;
   buffer_.end = buffer + size;
   ByteCursor cursor(&buffer_);
@@ -196,19 +196,19 @@ void Reader::Reporter::LoadCommandTooShort(size_t i, LoadCommandType type) {
           filename_.c_str(), i, type);
 }
 
-void Reader::Reporter::SectionsMissing(const string &name) {
+void Reader::Reporter::SectionsMissing(const string& name) {
   fprintf(stderr, "%s: the load command for segment '%s'"
           " is too short to hold the section headers it claims to have\n",
           filename_.c_str(), name.c_str());
 }
 
-void Reader::Reporter::MisplacedSegmentData(const string &name) {
+void Reader::Reporter::MisplacedSegmentData(const string& name) {
   fprintf(stderr, "%s: the segment '%s' claims its contents lie beyond"
           " the end of the file\n", filename_.c_str(), name.c_str());
 }
 
-void Reader::Reporter::MisplacedSectionData(const string &section,
-                                            const string &segment) {
+void Reader::Reporter::MisplacedSectionData(const string& section,
+                                            const string& segment) {
   fprintf(stderr, "%s: the section '%s' in segment '%s'"
           " claims its contents lie outside the segment's contents\n",
           filename_.c_str(), section.c_str(), segment.c_str());
@@ -225,7 +225,7 @@ void Reader::Reporter::UnsupportedCPUType(cpu_type_t cpu_type) {
           filename_.c_str(), cpu_type);
 }
 
-bool Reader::Read(const uint8_t *buffer,
+bool Reader::Read(const uint8_t* buffer,
                   size_t size,
                   cpu_type_t expected_cpu_type,
                   cpu_subtype_t expected_cpu_subtype) {
@@ -309,7 +309,7 @@ bool Reader::Read(const uint8_t *buffer,
   return true;
 }
 
-bool Reader::WalkLoadCommands(Reader::LoadCommandHandler *handler) const {
+bool Reader::WalkLoadCommands(Reader::LoadCommandHandler* handler) const {
   ByteCursor list_cursor(&load_commands_, big_endian_);
 
   for (size_t index = 0; index < load_command_count_; ++index) {
@@ -422,13 +422,13 @@ class Reader::SegmentFinder : public LoadCommandHandler {
  public:
   // Create a load command handler that looks for a segment named NAME,
   // and sets SEGMENT to describe it if found.
-  SegmentFinder(const string &name, Segment *segment)
+  SegmentFinder(const string& name, Segment* segment)
       : name_(name), segment_(segment), found_() { }
 
   // Return true if the traversal found the segment, false otherwise.
   bool found() const { return found_; }
 
-  bool SegmentCommand(const Segment &segment) {
+  bool SegmentCommand(const Segment& segment) {
     if (segment.name == name_) {
       *segment_ = segment;
       found_ = true;
@@ -439,23 +439,23 @@ class Reader::SegmentFinder : public LoadCommandHandler {
 
  private:
   // The name of the segment our creator is looking for.
-  const string &name_;
+  const string& name_;
 
   // Where we should store the segment if found. (WEAK)
-  Segment *segment_;
+  Segment* segment_;
 
   // True if we found the segment.
   bool found_;
 };
 
-bool Reader::FindSegment(const string &name, Segment *segment) const {
+bool Reader::FindSegment(const string& name, Segment* segment) const {
   SegmentFinder finder(name, segment);
   WalkLoadCommands(&finder);
   return finder.found();
 }
 
-bool Reader::WalkSegmentSections(const Segment &segment,
-                                 SectionHandler *handler) const {
+bool Reader::WalkSegmentSections(const Segment& segment,
+                                 SectionHandler* handler) const {
   size_t word_size = segment.bits_64 ? 8 : 4;
   ByteCursor cursor(&segment.section_list, big_endian_);
 
@@ -537,18 +537,18 @@ class Reader::SectionMapper: public SectionHandler {
  public:
   // Create a SectionHandler that populates MAP with an entry for
   // each section it is given.
-  SectionMapper(SectionMap *map) : map_(map) { }
-  bool HandleSection(const Section &section) {
+  SectionMapper(SectionMap* map) : map_(map) { }
+  bool HandleSection(const Section& section) {
     (*map_)[section.section_name] = section;
     return true;
   }
  private:
   // The map under construction. (WEAK)
-  SectionMap *map_;
+  SectionMap* map_;
 };
 
-bool Reader::MapSegmentSections(const Segment &segment,
-                                SectionMap *section_map) const {
+bool Reader::MapSegmentSections(const Segment& segment,
+                                SectionMap* section_map) const {
   section_map->clear();
   SectionMapper mapper(section_map);
   return WalkSegmentSections(segment, &mapper);

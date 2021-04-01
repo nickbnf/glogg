@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <io.h>
-#include <shlwapi.h>
+#include <stdlib.h>
 #include <sys/locking.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -124,7 +124,13 @@ sentry__path_dir(const sentry_path_t *path)
     if (!dir_path) {
         return NULL;
     }
-    PathRemoveFileSpecW(dir_path->path);
+
+    // find the filename part and truncate just in front of it if possible
+    sentry_pathchar_t *filename
+        = (sentry_pathchar_t *)sentry__path_filename(dir_path);
+    if (filename > dir_path->path) {
+        *(filename - 1) = L'\0';
+    }
     return dir_path;
 }
 
@@ -215,7 +221,7 @@ sentry__path_filename(const sentry_path_t *path)
     size_t idx = wcslen(s);
 
     while (true) {
-        if (s[idx] == L'/' || s[idx] == '\\') {
+        if (s[idx] == L'/' || s[idx] == L'\\') {
             ptr = s + idx + 1;
             break;
         }
@@ -406,6 +412,7 @@ sentry__pathiter_next(sentry_pathiter_t *piter)
             pattern[path_len + 1] = L'*';
             pattern[path_len + 2] = 0;
             piter->dir_handle = FindFirstFileW(pattern, &data);
+            sentry_free(pattern);
             if (piter->dir_handle == INVALID_HANDLE_VALUE) {
                 return NULL;
             }
@@ -483,7 +490,7 @@ sentry__path_read_to_buffer(const sentry_path_t *path, size_t *size_out)
 
     size_t remaining = len;
     size_t offset = 0;
-    while (true) {
+    while (remaining > 0) {
         size_t n = fread(rv + offset, 1, remaining, f);
         if (n == 0) {
             break;
@@ -527,5 +534,5 @@ int
 sentry__path_append_buffer(
     const sentry_path_t *path, const char *buf, size_t buf_len)
 {
-    return write_buffer_with_mode(path, buf, buf_len, L"a");
+    return write_buffer_with_mode(path, buf, buf_len, L"ab");
 }

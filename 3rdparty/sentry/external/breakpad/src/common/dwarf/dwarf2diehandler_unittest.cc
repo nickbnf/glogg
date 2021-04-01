@@ -69,9 +69,9 @@ class MockDIEHandler: public DIEHandler {
   MOCK_METHOD3(ProcessAttributeReference,
                void(DwarfAttribute, DwarfForm, uint64_t));
   MOCK_METHOD4(ProcessAttributeBuffer,
-               void(DwarfAttribute, DwarfForm, const uint8_t *, uint64_t));
+               void(DwarfAttribute, DwarfForm, const uint8_t*, uint64_t));
   MOCK_METHOD3(ProcessAttributeString,
-               void(DwarfAttribute, DwarfForm, const string &));
+               void(DwarfAttribute, DwarfForm, const string&));
   MOCK_METHOD3(ProcessAttributeSignature,
                void(DwarfAttribute, DwarfForm, uint64_t));
   MOCK_METHOD0(EndAttributes, bool());
@@ -88,9 +88,9 @@ class MockRootDIEHandler: public RootDIEHandler {
   MOCK_METHOD3(ProcessAttributeReference,
                void(DwarfAttribute, DwarfForm, uint64_t));
   MOCK_METHOD4(ProcessAttributeBuffer,
-               void(DwarfAttribute, DwarfForm, const uint8_t *, uint64_t));
+               void(DwarfAttribute, DwarfForm, const uint8_t*, uint64_t));
   MOCK_METHOD3(ProcessAttributeString,
-               void(DwarfAttribute, DwarfForm, const string &));
+               void(DwarfAttribute, DwarfForm, const string&));
   MOCK_METHOD3(ProcessAttributeSignature,
                void(DwarfAttribute, DwarfForm, uint64_t));
   MOCK_METHOD0(EndAttributes, bool());
@@ -339,7 +339,7 @@ TEST(Dwarf2DIEHandler, FindAndSkipChildren) {
       EXPECT_CALL(mock_root_handler,
                   FindChildHandler(0x97412be24875de9dLL,
                                    (DwarfTag) 0x505a068b))
-        .WillOnce(Return((DIEHandler *) NULL));
+        .WillOnce(Return((DIEHandler*) NULL));
 
       // Third child DIE.
       EXPECT_CALL(mock_root_handler,

@@ -53,7 +53,7 @@ class ExceptionHandler {
   // attempting to write a minidump.  If a FilterCallback returns false, Breakpad
   // will immediately report the exception as unhandled without writing a
   // minidump, allowing another handler the opportunity to handle it.
-  typedef bool (*FilterCallback)(void *context);
+  typedef bool (*FilterCallback)(void* context);
 
   // A callback function to run after the minidump has been written.
   // |minidump_id| is a unique id for the dump, so the minidump
@@ -63,18 +63,18 @@ class ExceptionHandler {
   // Return true if the exception was fully handled and breakpad should exit.
   // Return false to allow any other exception handlers to process the
   // exception.
-  typedef bool (*MinidumpCallback)(const char *dump_dir,
-                                   const char *minidump_id,
-                                   void *context, bool succeeded);
+  typedef bool (*MinidumpCallback)(const char* dump_dir,
+                                   const char* minidump_id,
+                                   void* context, bool succeeded);
 
   // A callback function which will be called directly if an exception occurs.
   // This bypasses the minidump file writing and simply gives the client
   // the exception information.
-  typedef bool (*DirectCallback)( void *context,
-                                  int exception_type,
-                                  int exception_code,
-                                  int exception_subcode,
-                                  mach_port_t thread_name);
+  typedef bool (*DirectCallback)(void* context,
+                                 int exception_type,
+                                 int exception_code,
+                                 int exception_subcode,
+                                 mach_port_t thread_name);
 
   // Creates a new ExceptionHandler instance to handle writing minidumps.
   // Minidump files will be written to dump_path, and the optional callback
@@ -84,22 +84,22 @@ class ExceptionHandler {
   // be written when WriteMinidump is called.
   // If port_name is non-NULL, attempt to perform out-of-process dump generation
   // If port_name is NULL, in-process dump generation will be used.
-  ExceptionHandler(const string &dump_path,
+  ExceptionHandler(const string& dump_path,
                    FilterCallback filter, MinidumpCallback callback,
-                   void *callback_context, bool install_handler,
-                   const char *port_name);
+                   void* callback_context, bool install_handler,
+                   const char* port_name);
 
   // A special constructor if we want to bypass minidump writing and
   // simply get a callback with the exception information.
   ExceptionHandler(DirectCallback callback,
-                   void *callback_context,
+                   void* callback_context,
                    bool install_handler);
 
   ~ExceptionHandler();
 
   // Get and set the minidump path.
   string dump_path() const { return dump_path_; }
-  void set_dump_path(const string &dump_path) {
+  void set_dump_path(const string& dump_path) {
     dump_path_ = dump_path;
     dump_path_c_ = dump_path_.c_str();
     UpdateNextID();  // Necessary to put dump_path_ in next_minidump_path_.
@@ -126,7 +126,7 @@ class ExceptionHandler {
   bool WriteMinidumpWithException(int exception_type,
                                   int exception_code,
                                   int exception_subcode,
-                                  breakpad_ucontext_t *task_context,
+                                  breakpad_ucontext_t* task_context,
                                   mach_port_t thread_name,
                                   bool exit_after_write,
                                   bool report_current_thread);
@@ -135,8 +135,8 @@ class ExceptionHandler {
   static void SignalHandler(int sig, siginfo_t* info, void* uc);
 
   // disallow copy ctor and operator=
-  explicit ExceptionHandler(const ExceptionHandler &);
-  void operator=(const ExceptionHandler &);
+  explicit ExceptionHandler(const ExceptionHandler&);
+  void operator=(const ExceptionHandler&);
 
   // Generates a new ID and stores it in next_minidump_id_, and stores the
   // path of the next minidump to be written in next_minidump_path_.
@@ -152,15 +152,15 @@ class ExceptionHandler {
   string next_minidump_path_;
 
   // Pointers to the UTF-8 versions of above
-  const char *dump_path_c_;
-  const char *next_minidump_id_c_;
-  const char *next_minidump_path_c_;
+  const char* dump_path_c_;
+  const char* next_minidump_id_c_;
+  const char* next_minidump_path_c_;
 
   // The callback function and pointer to be passed back after the minidump
   // has been written
   FilterCallback filter_;
   MinidumpCallback callback_;
-  void *callback_context_;
+  void* callback_context_;
 
   // The callback function to be passed back when we don't want a minidump
   // file to be written

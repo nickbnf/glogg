@@ -70,7 +70,7 @@ class DumpSymbols {
   // the name of a universal binary, a Mach-O file, or a dSYM bundle
   // containing either of the above. On success, return true; if there is a
   // problem reading |filename|, report it and return false.
-  bool Read(const std::string &filename);
+  bool Read(const std::string& filename);
 
   // If this dumper's file includes an object file for |cpu_type| and
   // |cpu_subtype|, then select that object file for dumping, and return
@@ -91,7 +91,7 @@ class DumpSymbols {
   // the dumper will dump those symbols; and if it contains more than one
   // object file, then the dumper will dump the object file whose
   // architecture matches that of this dumper program.
-  bool SetArchitecture(const std::string &arch_name);
+  bool SetArchitecture(const std::string& arch_name);
 
   // Return a pointer to an array of SuperFatArch structures describing the
   // object files contained in this dumper's file. Set *|count| to the number
@@ -100,7 +100,7 @@ class DumpSymbols {
   //
   // If there are no available architectures, this function
   // may return NULL.
-  const SuperFatArch* AvailableArchitectures(size_t *count) {
+  const SuperFatArch* AvailableArchitectures(size_t* count) {
     *count = object_files_.size();
     if (object_files_.size() > 0)
       return &object_files_[0];
@@ -110,12 +110,12 @@ class DumpSymbols {
   // Read the selected object file's debugging information, and write it out to
   // |stream|. Return true on success; if an error occurs, report it and
   // return false.
-  bool WriteSymbolFile(std::ostream &stream);
+  bool WriteSymbolFile(std::ostream& stream);
 
   // Read the selected object file's debugging information, and write out the
   // header only to |stream|. Return true on success; if an error occurs, report
   // it and return false.
-  bool WriteSymbolFileHeader(std::ostream &stream);
+  bool WriteSymbolFileHeader(std::ostream& stream);
 
   // As above, but simply return the debugging information in module
   // instead of writing it to a stream. The caller owns the resulting
@@ -142,9 +142,9 @@ class DumpSymbols {
 
   // Read debugging information from |dwarf_sections|, which was taken from
   // |macho_reader|, and add it to |module|.
-  void ReadDwarf(google_breakpad::Module *module,
-                 const mach_o::Reader &macho_reader,
-                 const mach_o::SectionMap &dwarf_sections,
+  void ReadDwarf(google_breakpad::Module* module,
+                 const mach_o::Reader& macho_reader,
+                 const mach_o::SectionMap& dwarf_sections,
                  bool handle_inter_cu_refs) const;
 
   // Read DWARF CFI or .eh_frame data from |section|, belonging to
@@ -152,9 +152,9 @@ class DumpSymbols {
   // then the data is .eh_frame-format data; otherwise, it is standard DWARF
   // .debug_frame data. On success, return true; on failure, report
   // the problem and return false.
-  bool ReadCFI(google_breakpad::Module *module,
-               const mach_o::Reader &macho_reader,
-               const mach_o::Section &section,
+  bool ReadCFI(google_breakpad::Module* module,
+               const mach_o::Reader& macho_reader,
+               const mach_o::Section& section,
                bool eh_frame) const;
 
   // The selection of what type of symbol data to read/write.
@@ -184,7 +184,7 @@ class DumpSymbols {
 
   // The object file in object_files_ selected to dump, or NULL if
   // SetArchitecture hasn't been called yet.
-  const SuperFatArch *selected_object_file_;
+  const SuperFatArch* selected_object_file_;
 
   // A string that identifies the selected object file, for use in error
   // messages.  This is usually object_filename_, but if that refers to a

@@ -69,7 +69,7 @@ public:
   // otherwise. Assume each symbol has a 'value' field whose size is
   // VALUE_SIZE.
   //
-  ELFSymbolIterator(const ByteBuffer *buffer, bool big_endian,
+  ELFSymbolIterator(const ByteBuffer* buffer, bool big_endian,
                     size_t value_size)
     : value_size_(value_size), cursor_(buffer, big_endian) {
     // Actually, weird sizes could be handled just fine, but they're
@@ -81,13 +81,13 @@ public:
 
   // Move to the next symbol. This function's behavior is undefined if
   // at_end() is true when it is called.
-  ELFSymbolIterator &operator++() { Fetch(); symbol_.index++; return *this; }
+  ELFSymbolIterator& operator++() { Fetch(); symbol_.index++; return *this; }
 
   // Dereferencing this iterator produces a reference to an Symbol structure
   // that holds the current symbol's values. The symbol is owned by this
   // SymbolIterator, and will be invalidated at the next call to operator++.
-  const Symbol &operator*() const { return symbol_; }
-  const Symbol *operator->() const { return &symbol_; }
+  const Symbol& operator*() const { return symbol_; }
+  const Symbol* operator->() const { return &symbol_; }
 
 private:
   // Read the symbol at cursor_, and set symbol_ appropriately.
@@ -126,21 +126,21 @@ private:
   Symbol symbol_;
 };
 
-const char *SymbolString(ptrdiff_t offset, ByteBuffer& strings) {
+const char* SymbolString(ptrdiff_t offset, ByteBuffer& strings) {
   if (offset < 0 || (size_t) offset >= strings.Size()) {
     // Return the null string.
     offset = 0;
   }
-  return reinterpret_cast<const char *>(strings.start + offset);
+  return reinterpret_cast<const char*>(strings.start + offset);
 }
 
-bool ELFSymbolsToModule(const uint8_t *symtab_section,
+bool ELFSymbolsToModule(const uint8_t* symtab_section,
                         size_t symtab_size,
-                        const uint8_t *string_section,
+                        const uint8_t* string_section,
                         size_t string_size,
                         const bool big_endian,
                         size_t value_size,
-                        Module *module) {
+                        Module* module) {
   ByteBuffer symbols(symtab_section, symtab_size);
   // Ensure that the string section is null-terminated.
   if (string_section[string_size - 1] != '\0') {
@@ -156,7 +156,7 @@ bool ELFSymbolsToModule(const uint8_t *symtab_section,
   while(!iterator->at_end) {
     if (ELF32_ST_TYPE(iterator->info) == STT_FUNC &&
         iterator->shndx != SHN_UNDEF) {
-      Module::Extern *ext = new Module::Extern(iterator->value);
+      Module::Extern* ext = new Module::Extern(iterator->value);
       ext->name = SymbolString(iterator->name_offset, strings);
 #if !defined(__ANDROID__)  // Android NDK doesn't provide abi::__cxa_demangle.
       int status = 0;

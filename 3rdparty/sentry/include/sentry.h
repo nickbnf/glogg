@@ -24,14 +24,19 @@ extern "C" {
 
 /* SDK Version */
 #define SENTRY_SDK_NAME "sentry.native"
-#define SENTRY_SDK_VERSION "0.4.2"
-#define SENTRY_SDK_USER_AGENT (SENTRY_SDK_NAME "/" SENTRY_SDK_VERSION)
+#define SENTRY_SDK_VERSION "0.4.8"
+#define SENTRY_SDK_USER_AGENT SENTRY_SDK_NAME "/" SENTRY_SDK_VERSION
 
 /* common platform detection */
 #ifdef _WIN32
 #    define SENTRY_PLATFORM_WINDOWS
 #elif defined(__APPLE__)
-#    define SENTRY_PLATFORM_MACOS
+#    include <TargetConditionals.h>
+#    if defined(TARGET_OS_OSX) && TARGET_OS_OSX
+#        define SENTRY_PLATFORM_MACOS
+#    elif defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
+#        define SENTRY_PLATFORM_IOS
+#    endif
 #    define SENTRY_PLATFORM_DARWIN
 #    define SENTRY_PLATFORM_UNIX
 #elif defined(__ANDROID__)
@@ -535,11 +540,6 @@ struct sentry_transport_s;
 typedef struct sentry_transport_s sentry_transport_t;
 
 /**
- * Creates a new default transport
- */
-SENTRY_API sentry_transport_t *sentry_transport_new_default();
-
-/**
  * Creates a new transport with an initial `send_func`.
  */
 SENTRY_API sentry_transport_t *sentry_transport_new(
@@ -580,17 +580,6 @@ SENTRY_API void sentry_transport_set_startup_func(sentry_transport_t *transport,
 SENTRY_API void sentry_transport_set_shutdown_func(
     sentry_transport_t *transport,
     int (*shutdown_func)(uint64_t timeout, void *state));
-
-/**
- * Sets the transport consent hook.
- *
- * This hook will be called before upload data to ask for user consent.
- * It should return `0` on success in case user confirmed consent,
- * or `1` if no consent.
- */
-void
-sentry_transport_set_ask_consent_func(sentry_transport_t *transport,
-    int (*ask_consent_func)(sentry_envelope_t *envelope, void *state));
 
 /**
  * Generic way to free a transport.
@@ -745,6 +734,18 @@ SENTRY_API const char *sentry_options_get_ca_certs(
     const sentry_options_t *opts);
 
 /**
+ * Configures the name of the http transport thread.
+ */
+SENTRY_API void sentry_options_set_transport_thread_name(
+    sentry_options_t *opts, const char *name);
+
+/**
+ * Returns the configured http transport thread name.
+ */
+SENTRY_API const char *sentry_options_get_transport_thread_name(
+    const sentry_options_t *opts);
+
+/**
  * Enables or disables debug printing mode.
  */
 SENTRY_API void sentry_options_set_debug(sentry_options_t *opts, int debug);
@@ -753,6 +754,20 @@ SENTRY_API void sentry_options_set_debug(sentry_options_t *opts, int debug);
  * Returns the current value of the debug flag.
  */
 SENTRY_API int sentry_options_get_debug(const sentry_options_t *opts);
+
+/**
+ * Sets the number of breadcrumbs being tracked and attached to events.
+ *
+ * Defaults to 100.
+ */
+SENTRY_API void sentry_options_set_max_breadcrumbs(
+    sentry_options_t *opts, size_t max_breadcrumbs);
+
+/**
+ * Gets the number of breadcrumbs being tracked and attached to events.
+ */
+SENTRY_API size_t sentry_options_get_max_breadcrumbs(
+    const sentry_options_t *opts);
 
 /**
  * Type of the callback for logger function.
@@ -930,6 +945,14 @@ SENTRY_API int sentry_init(sentry_options_t *options);
 SENTRY_API int sentry_shutdown(void);
 
 /**
+ * This will lazily load and cache a list of all the loaded libraries.
+ *
+ * Returns a new reference to an immutable, frozen list.
+ * The reference must be released with `sentry_value_decref`.
+ */
+SENTRY_EXPERIMENTAL_API sentry_value_t sentry_get_modules_list(void);
+
+/**
  * Clears the internal module cache.
  *
  * For performance reasons, sentry will cache the list of loaded libraries when
@@ -939,6 +962,17 @@ SENTRY_API int sentry_shutdown(void);
  * `sentry_capture_event` will have an up-to-date module list.
  */
 SENTRY_EXPERIMENTAL_API void sentry_clear_modulecache(void);
+
+/**
+ * Re-initializes the Sentry backend.
+ *
+ * This is needed if a third-party library overrides the previously installed
+ * signal handler. Calling this function can be potentially dangerous and should
+ * only be done when necessary.
+ *
+ * Returns 0 on success.
+ */
+SENTRY_EXPERIMENTAL_API int sentry_reinstall_backend(void);
 
 /**
  * Gives user consent.

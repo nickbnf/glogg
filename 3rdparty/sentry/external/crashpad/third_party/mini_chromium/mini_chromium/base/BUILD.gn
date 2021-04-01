@@ -4,13 +4,8 @@
 
 import("../build/platform.gni")
 
-config("base_public_config") {
-  include_dirs = [ ".." ]
-}
-
 static_library("base") {
   sources = [
-    "../build/build_config.h",
     "atomicops.h",
     "atomicops_internals_atomicword_compat.h",
     "atomicops_internals_portable.h",
@@ -164,5 +159,11 @@ static_library("base") {
     libs = [ "zircon" ]
   }
 
-  public_configs = [ ":base_public_config" ]
+  public_configs = [ "../build:mini_chromium_config" ]
+
+  public_deps = [ "../build" ]
+
+  if (mini_chromium_is_android) {
+    libs = [ "log" ]
+  }
 }

@@ -45,8 +45,8 @@ namespace MacFileUtilities {
 
 class MachoID {
  public:
-  MachoID(const char *path);
-  MachoID(const char *path, void *memory, size_t size);
+  MachoID(const char* path);
+  MachoID(const char* path, void* memory, size_t size);
   ~MachoID();
 
   // For the given |cpu_type| and |cpu_subtype|, return a UUID from the LC_UUID
@@ -78,40 +78,40 @@ class MachoID {
 
  private:
   // Signature of class member function to be called with data read from file
-  typedef void (MachoID::*UpdateFunction)(unsigned char *bytes, size_t size);
+  typedef void (MachoID::*UpdateFunction)(unsigned char* bytes, size_t size);
 
   // Update the CRC value by examining |size| |bytes| and applying the algorithm
   // to each byte.
-  void UpdateCRC(unsigned char *bytes, size_t size);
+  void UpdateCRC(unsigned char* bytes, size_t size);
 
   // Update the MD5 value by examining |size| |bytes| and applying the algorithm
   // to each byte.
-  void UpdateMD5(unsigned char *bytes, size_t size);
+  void UpdateMD5(unsigned char* bytes, size_t size);
 
   // Bottleneck for update routines
-  void Update(MachoWalker *walker, off_t offset, size_t size);
+  void Update(MachoWalker* walker, off_t offset, size_t size);
 
   // Factory for the MachoWalker
   bool WalkHeader(cpu_type_t cpu_type, cpu_subtype_t cpu_subtype,
-                  MachoWalker::LoadCommandCallback callback, void *context);
+                  MachoWalker::LoadCommandCallback callback, void* context);
 
   // The callback from the MachoWalker for CRC and MD5
-  static bool WalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
-                       bool swap, void *context);
+  static bool WalkerCB(MachoWalker* walker, load_command* cmd, off_t offset,
+                       bool swap, void* context);
 
   // The callback from the MachoWalker for LC_UUID
-  static bool UUIDWalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
-                           bool swap, void *context);
+  static bool UUIDWalkerCB(MachoWalker* walker, load_command* cmd, off_t offset,
+                           bool swap, void* context);
 
   // The callback from the MachoWalker for LC_ID_DYLIB
-  static bool IDWalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
-                         bool swap, void *context);
+  static bool IDWalkerCB(MachoWalker* walker, load_command* cmd, off_t offset,
+                         bool swap, void* context);
 
   // File path
   char path_[PATH_MAX];
 
   // Memory region to read from
-  void *memory_;
+  void* memory_;
 
   // Size of the memory region
   size_t memory_size_;

@@ -106,12 +106,12 @@ class MinidumpGenerator {
 
   // Return <dir>/<unique_name>.dmp
   // Sets |unique_name| (if requested) to the unique name for the minidump
-  static string UniqueNameInDirectory(const string &dir, string *unique_name);
+  static string UniqueNameInDirectory(const string& dir, string* unique_name);
 
   // Write out the minidump into |path|
   // All of the components of |path| must exist and be writable
   // Return true if successful, false otherwise
-  bool Write(const char *path);
+  bool Write(const char* path);
 
   // Specify some exception information, if applicable
   void SetExceptionInformation(int type, int code, int subcode,
@@ -125,7 +125,7 @@ class MinidumpGenerator {
   // Specify the task context. If |task_context| is not NULL, it will be used
   // to retrieve the context of the current thread, instead of using
   // |thread_get_state|.
-  void SetTaskContext(breakpad_ucontext_t *task_context);
+  void SetTaskContext(breakpad_ucontext_t* task_context);
 
   // Gather system information.  This should be call at least once before using
   // the MinidumpGenerator class.
@@ -133,81 +133,81 @@ class MinidumpGenerator {
 
  protected:
   // Overridable Stream writers
-  virtual bool WriteExceptionStream(MDRawDirectory *exception_stream);
+  virtual bool WriteExceptionStream(MDRawDirectory* exception_stream);
 
   // Overridable Helper
-  virtual bool WriteThreadStream(mach_port_t thread_id, MDRawThread *thread);
+  virtual bool WriteThreadStream(mach_port_t thread_id, MDRawThread* thread);
 
  private:
-  typedef bool (MinidumpGenerator::*WriteStreamFN)(MDRawDirectory *);
+  typedef bool (MinidumpGenerator::*WriteStreamFN)(MDRawDirectory*);
 
   // Stream writers
-  bool WriteThreadListStream(MDRawDirectory *thread_list_stream);
-  bool WriteMemoryListStream(MDRawDirectory *memory_list_stream);
-  bool WriteSystemInfoStream(MDRawDirectory *system_info_stream);
-  bool WriteModuleListStream(MDRawDirectory *module_list_stream);
-  bool WriteMiscInfoStream(MDRawDirectory *misc_info_stream);
-  bool WriteBreakpadInfoStream(MDRawDirectory *breakpad_info_stream);
+  bool WriteThreadListStream(MDRawDirectory* thread_list_stream);
+  bool WriteMemoryListStream(MDRawDirectory* memory_list_stream);
+  bool WriteSystemInfoStream(MDRawDirectory* system_info_stream);
+  bool WriteModuleListStream(MDRawDirectory* module_list_stream);
+  bool WriteMiscInfoStream(MDRawDirectory* misc_info_stream);
+  bool WriteBreakpadInfoStream(MDRawDirectory* breakpad_info_stream);
 
   // Helpers
   uint64_t CurrentPCForStack(breakpad_thread_state_data_t state);
   bool GetThreadState(thread_act_t target_thread, thread_state_t state,
-                      mach_msg_type_number_t *count);
+                      mach_msg_type_number_t* count);
   bool WriteStackFromStartAddress(mach_vm_address_t start_addr,
-                                  MDMemoryDescriptor *stack_location);
+                                  MDMemoryDescriptor* stack_location);
   bool WriteStack(breakpad_thread_state_data_t state,
-                  MDMemoryDescriptor *stack_location);
+                  MDMemoryDescriptor* stack_location);
   bool WriteContext(breakpad_thread_state_data_t state,
-                    MDLocationDescriptor *register_location);
-  bool WriteCVRecord(MDRawModule *module, int cpu_type,
-                     const char *module_path, bool in_memory);
-  bool WriteModuleStream(unsigned int index, MDRawModule *module);
+                    MDLocationDescriptor* register_location);
+  bool WriteCVRecord(MDRawModule* module, int cpu_type,
+                     const char* module_path, bool in_memory);
+  bool WriteModuleStream(unsigned int index, MDRawModule* module);
   size_t CalculateStackSize(mach_vm_address_t start_addr);
   int  FindExecutableModule();
 
   // Per-CPU implementations of these methods
 #ifdef HAS_ARM_SUPPORT
   bool WriteStackARM(breakpad_thread_state_data_t state,
-                     MDMemoryDescriptor *stack_location);
+                     MDMemoryDescriptor* stack_location);
   bool WriteContextARM(breakpad_thread_state_data_t state,
-                       MDLocationDescriptor *register_location);
+                       MDLocationDescriptor* register_location);
   uint64_t CurrentPCForStackARM(breakpad_thread_state_data_t state);
 #endif
 #ifdef HAS_ARM64_SUPPORT
   bool WriteStackARM64(breakpad_thread_state_data_t state,
-                       MDMemoryDescriptor *stack_location);
+                       MDMemoryDescriptor* stack_location);
   bool WriteContextARM64(breakpad_thread_state_data_t state,
-                         MDLocationDescriptor *register_location);
+                         MDLocationDescriptor* register_location);
   uint64_t CurrentPCForStackARM64(breakpad_thread_state_data_t state);
 #endif
 #ifdef HAS_PPC_SUPPORT
   bool WriteStackPPC(breakpad_thread_state_data_t state,
-                     MDMemoryDescriptor *stack_location);
+                     MDMemoryDescriptor* stack_location);
   bool WriteContextPPC(breakpad_thread_state_data_t state,
-                       MDLocationDescriptor *register_location);
+                       MDLocationDescriptor* register_location);
   uint64_t CurrentPCForStackPPC(breakpad_thread_state_data_t state);
   bool WriteStackPPC64(breakpad_thread_state_data_t state,
-                       MDMemoryDescriptor *stack_location);
+                       MDMemoryDescriptor* stack_location);
   bool WriteContextPPC64(breakpad_thread_state_data_t state,
-                       MDLocationDescriptor *register_location);
+                       MDLocationDescriptor* register_location);
   uint64_t CurrentPCForStackPPC64(breakpad_thread_state_data_t state);
 #endif
 #ifdef HAS_X86_SUPPORT
   bool WriteStackX86(breakpad_thread_state_data_t state,
-                       MDMemoryDescriptor *stack_location);
+                       MDMemoryDescriptor* stack_location);
   bool WriteContextX86(breakpad_thread_state_data_t state,
-                       MDLocationDescriptor *register_location);
+                       MDLocationDescriptor* register_location);
   uint64_t CurrentPCForStackX86(breakpad_thread_state_data_t state);
   bool WriteStackX86_64(breakpad_thread_state_data_t state,
-                        MDMemoryDescriptor *stack_location);
+                        MDMemoryDescriptor* stack_location);
   bool WriteContextX86_64(breakpad_thread_state_data_t state,
-                          MDLocationDescriptor *register_location);
+                          MDLocationDescriptor* register_location);
   uint64_t CurrentPCForStackX86_64(breakpad_thread_state_data_t state);
 #endif
 
   // disallow copy ctor and operator=
-  explicit MinidumpGenerator(const MinidumpGenerator &);
-  void operator=(const MinidumpGenerator &);
+  explicit MinidumpGenerator(const MinidumpGenerator&);
+  void operator=(const MinidumpGenerator&);
 
  protected:
   // Use this writer to put the data to disk
@@ -232,10 +232,10 @@ class MinidumpGenerator {
   static int os_build_number_;
 
   // Context of the task to dump.
-  breakpad_ucontext_t *task_context_;
+  breakpad_ucontext_t* task_context_;
 
   // Information about dynamically loaded code
-  DynamicImages *dynamic_images_;
+  DynamicImages* dynamic_images_;
 
   // PageAllocator makes it possible to allocate memory
   // directly from the system, even while handling an exception.

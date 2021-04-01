@@ -49,11 +49,11 @@
 #endif
 
 //==============================================================================
-OnDemandServer *OnDemandServer::Create(const char *server_command,
-                                       const char *service_name,
+OnDemandServer* OnDemandServer::Create(const char* server_command,
+                                       const char* service_name,
                                        bool unregister_on_cleanup,
-                                       kern_return_t *out_result) {
-  OnDemandServer *server = new OnDemandServer();
+                                       kern_return_t* out_result) {
+  OnDemandServer* server = new OnDemandServer();
 
   if (!server) return NULL;
 
@@ -74,8 +74,8 @@ OnDemandServer *OnDemandServer::Create(const char *server_command,
 }
 
 //==============================================================================
-kern_return_t OnDemandServer::Initialize(const char *server_command,
-                                         const char *service_name,
+kern_return_t OnDemandServer::Initialize(const char* server_command,
+                                         const char* service_name,
                                          bool unregister_on_cleanup) {
   unregister_on_cleanup_ = unregister_on_cleanup;
 

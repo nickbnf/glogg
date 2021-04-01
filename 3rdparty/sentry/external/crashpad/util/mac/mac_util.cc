@@ -61,7 +61,7 @@ extern const CFStringRef _kCFSystemVersionBuildVersionKey WEAK_IMPORT;
 
 namespace {
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_12
+#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_13_4
 // Returns the running system’s Darwin major version. Don’t call this, it’s an
 // implementation detail and its result is meant to be cached by
 // MacOSVersionNumber().
@@ -98,7 +98,7 @@ int DarwinMajorVersion() {
 
   return darwin_major_version;
 }
-#endif  // DT < 10.12
+#endif  // DT < 10.13.4
 
 // Helpers for the weak-imported private CoreFoundation internals.
 
@@ -192,10 +192,10 @@ int MacOSVersionNumber() {
   static int macos_version_number = []() {
     // kern.osproductversion is a lightweight way to get the operating system
     // version from the kernel without having to open any files or spin up any
-    // threads, but it’s only available in macOS 10.12 and later.
-    std::string macos_version_number_string =
-        ReadStringSysctlByName("kern.osproductversion",
-                               __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_12);
+    // threads, but it’s only available in macOS 10.13.4 and later.
+    std::string macos_version_number_string = ReadStringSysctlByName(
+        "kern.osproductversion",
+        __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_13_4);
     if (!macos_version_number_string.empty()) {
       int major;
       int minor;
@@ -212,12 +212,12 @@ int MacOSVersionNumber() {
       }
     }
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_12
-    // On macOS 10.12 and later, the sysctlbyname above should have been
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_13_4
+    // On macOS 10.13.4 and later, the sysctlbyname above should have been
     // successful.
     NOTREACHED();
     return -1;
-#else  // DT >= 10.12
+#else  // DT >= 10.13.4
     // The Darwin major version is always 4 greater than the macOS minor version
     // for Darwin versions beginning with 6, corresponding to Mac OS X 10.2,
     // through Darwin 19, corresponding to macOS 10.15.
@@ -227,12 +227,12 @@ int MacOSVersionNumber() {
 
     int macos_version_number = 10'00'00 + (darwin_major_version - 4) * 1'00;
 
-    // On macOS 10.12 and later, the sysctlbyname above should have been
+    // On macOS 10.13.4 and later, the sysctlbyname above should have been
     // successful.
-    DCHECK_LT(macos_version_number, 10'12'00);
+    DCHECK_LT(macos_version_number, 10'13'04);
 
     return macos_version_number;
-#endif  // DT >= 10.12
+#endif  // DT >= 10.13.4
   }();
 
   return macos_version_number;

@@ -154,7 +154,7 @@ class ELF : public Section {
 
   vector<ElfSection> sections_;
 
-  void AppendSection(ElfSection &section);
+  void AppendSection(ElfSection& section);
 };
 
 // A class to build .symtab or .dynsym sections.
@@ -187,7 +187,7 @@ public:
   }
 
   // Add a note.
-  void AddNote(int type, const string &name, const uint8_t* desc_bytes,
+  void AddNote(int type, const string& name, const uint8_t* desc_bytes,
                size_t desc_size);
 };
 

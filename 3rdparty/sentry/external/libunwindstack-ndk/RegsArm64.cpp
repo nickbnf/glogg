@@ -15,6 +15,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 
 #include <functional>
 
@@ -29,7 +30,10 @@
 namespace unwindstack {
 
 RegsArm64::RegsArm64()
-    : RegsImpl<uint64_t>(ARM64_REG_LAST, Location(LOCATION_REGISTER, ARM64_REG_LR)) {}
+    : RegsImpl<uint64_t>(ARM64_REG_LAST, Location(LOCATION_REGISTER, ARM64_REG_LR)) {
+  ResetPseudoRegisters();
+  pac_mask_ = 0;
+}
 
 ArchEnum RegsArm64::Arch() {
   return ARCH_ARM64;
@@ -44,18 +48,21 @@ uint64_t RegsArm64::sp() {
 }
 
 void RegsArm64::set_pc(uint64_t pc) {
+  // If the target is aarch64 then the return address may have been
+  // signed using the Armv8.3-A Pointer Authentication extension. The
+  // original return address can be restored by stripping out the
+  // authentication code using a mask or xpaclri. xpaclri is a NOP on
+  // pre-Armv8.3-A architectures.
+  if ((0 != pc) && IsRASigned()) {
+    if (pac_mask_) {
+      pc &= ~pac_mask_;
+    }
+  }
   regs_[ARM64_REG_PC] = pc;
 }
 
 void RegsArm64::set_sp(uint64_t sp) {
   regs_[ARM64_REG_SP] = sp;
-}
-
-uint64_t RegsArm64::GetPcAdjustment(uint64_t rel_pc, Elf*) {
-  if (rel_pc < 4) {
-    return 0;
-  }
-  return 4;
 }
 
 bool RegsArm64::SetPcFromReturnAddress(Memory*) {
@@ -99,19 +106,21 @@ void RegsArm64::IterateRegisters(std::function<void(const char*, uint64_t)> fn) 
   fn("x27", regs_[ARM64_REG_R27]);
   fn("x28", regs_[ARM64_REG_R28]);
   fn("x29", regs_[ARM64_REG_R29]);
-  fn("sp", regs_[ARM64_REG_SP]);
   fn("lr", regs_[ARM64_REG_LR]);
+  fn("sp", regs_[ARM64_REG_SP]);
   fn("pc", regs_[ARM64_REG_PC]);
+  fn("pst", regs_[ARM64_REG_PSTATE]);
 }
 
 Regs* RegsArm64::Read(void* remote_data) {
   arm64_user_regs* user = reinterpret_cast<arm64_user_regs*>(remote_data);
 
   RegsArm64* regs = new RegsArm64();
-  memcpy(regs->RawData(), &user->regs[0], (ARM64_REG_R31 + 1) * sizeof(uint64_t));
+  memcpy(regs->RawData(), &user->regs[0], (ARM64_REG_R30 + 1) * sizeof(uint64_t));
   uint64_t* reg_data = reinterpret_cast<uint64_t*>(regs->RawData());
-  reg_data[ARM64_REG_PC] = user->pc;
   reg_data[ARM64_REG_SP] = user->sp;
+  reg_data[ARM64_REG_PC] = user->pc;
+  reg_data[ARM64_REG_PSTATE] = user->pstate;
   return regs;
 }
 
@@ -123,12 +132,12 @@ Regs* RegsArm64::CreateFromUcontext(void* ucontext) {
   return regs;
 }
 
-bool RegsArm64::StepIfSignalHandler(uint64_t rel_pc, Elf* elf, Memory* process_memory) {
+bool RegsArm64::StepIfSignalHandler(uint64_t elf_offset, Elf* elf, Memory* process_memory) {
   uint64_t data;
   Memory* elf_memory = elf->memory();
   // Read from elf memory since it is usually more expensive to read from
   // process memory.
-  if (!elf_memory->ReadFully(rel_pc, &data, sizeof(data))) {
+  if (!elf_memory->ReadFully(elf_offset, &data, sizeof(data))) {
     return false;
   }
 
@@ -146,6 +155,41 @@ bool RegsArm64::StepIfSignalHandler(uint64_t rel_pc, Elf* elf, Memory* process_m
     return false;
   }
   return true;
+}
+
+void RegsArm64::ResetPseudoRegisters(void) {
+  // DWARF for AArch64 says RA_SIGN_STATE should be initialized to 0.
+  this->SetPseudoRegister(Arm64Reg::ARM64_PREG_RA_SIGN_STATE, 0);
+}
+
+bool RegsArm64::SetPseudoRegister(uint16_t id, uint64_t value) {
+  if ((id >= Arm64Reg::ARM64_PREG_FIRST) && (id < Arm64Reg::ARM64_PREG_LAST)) {
+    pseudo_regs_[id - Arm64Reg::ARM64_PREG_FIRST] = value;
+    return true;
+  }
+  return false;
+}
+
+bool RegsArm64::GetPseudoRegister(uint16_t id, uint64_t* value) {
+  if ((id >= Arm64Reg::ARM64_PREG_FIRST) && (id < Arm64Reg::ARM64_PREG_LAST)) {
+    *value = pseudo_regs_[id - Arm64Reg::ARM64_PREG_FIRST];
+    return true;
+  }
+  return false;
+}
+
+bool RegsArm64::IsRASigned() {
+  uint64_t value;
+  auto result = this->GetPseudoRegister(Arm64Reg::ARM64_PREG_RA_SIGN_STATE, &value);
+  return (result && (value != 0));
+}
+
+void RegsArm64::SetPACMask(uint64_t mask) {
+  pac_mask_ = mask;
+}
+
+Regs* RegsArm64::Clone() {
+  return new RegsArm64(*this);
 }
 
 }  // namespace unwindstack

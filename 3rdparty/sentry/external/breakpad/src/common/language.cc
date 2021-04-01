@@ -67,8 +67,8 @@ class CPPLanguage: public Language {
  public:
   CPPLanguage() {}
 
-  string MakeQualifiedName(const string &parent_name,
-                           const string &name) const {
+  string MakeQualifiedName(const string& parent_name,
+                           const string& name) const {
     return MakeQualifiedNameWithSeparator(parent_name, "::", name);
   }
 
@@ -108,7 +108,7 @@ class CPPLanguage: public Language {
   }
 
  private:
-  static bool IsMangledName(const string &name) {
+  static bool IsMangledName(const string& name) {
     // NOTE: For proper cross-compilation support, this should depend on target
     // binary's platform, not current build platform.
 #if defined(__APPLE__)
@@ -130,8 +130,8 @@ class JavaLanguage: public Language {
  public:
   JavaLanguage() {}
 
-  string MakeQualifiedName(const string &parent_name,
-                           const string &name) const {
+  string MakeQualifiedName(const string& parent_name,
+                           const string& name) const {
     return MakeQualifiedNameWithSeparator(parent_name, ".", name);
   }
 };
@@ -143,8 +143,8 @@ class SwiftLanguage: public Language {
  public:
   SwiftLanguage() {}
 
-  string MakeQualifiedName(const string &parent_name,
-                           const string &name) const {
+  string MakeQualifiedName(const string& parent_name,
+                           const string& name) const {
     return MakeQualifiedNameWithSeparator(parent_name, ".", name);
   }
 
@@ -167,8 +167,8 @@ class RustLanguage: public Language {
  public:
   RustLanguage() {}
 
-  string MakeQualifiedName(const string &parent_name,
-                           const string &name) const {
+  string MakeQualifiedName(const string& parent_name,
+                           const string& name) const {
     return MakeQualifiedNameWithSeparator(parent_name, ".", name);
   }
 
@@ -202,8 +202,8 @@ class AssemblerLanguage: public Language {
   AssemblerLanguage() {}
 
   bool HasFunctions() const { return false; }
-  string MakeQualifiedName(const string &parent_name,
-                           const string &name) const {
+  string MakeQualifiedName(const string& parent_name,
+                           const string& name) const {
     return name;
   }
 };

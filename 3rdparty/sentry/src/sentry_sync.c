@@ -1,9 +1,84 @@
 #include "sentry_sync.h"
 #include "sentry_alloc.h"
 #include "sentry_core.h"
+#include "sentry_string.h"
 #include "sentry_utils.h"
 #include <stdio.h>
 #include <string.h>
+
+#ifdef SENTRY_PLATFORM_WINDOWS
+typedef HRESULT(WINAPI *pSetThreadDescription)(
+    HANDLE hThread, PCWSTR lpThreadDescription);
+const DWORD MS_VC_EXCEPTION = 0x406D1388;
+
+#    pragma pack(push, 8)
+typedef struct {
+    DWORD dwType; // Must be 0x1000.
+    LPCSTR szName; // Pointer to name (in user addr space).
+    DWORD dwThreadID; // Thread ID (-1=caller thread).
+    DWORD dwFlags; // Reserved for future use, must be zero.
+} THREADNAME_INFO;
+#    pragma pack(pop)
+
+int
+sentry__thread_setname(sentry_threadid_t thread_id, const char *thread_name)
+{
+    if (!thread_id || !thread_name) {
+        return 0;
+    }
+    // https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-a-thread-name-in-native-code?view=vs-2019
+
+    // approach 1: Windows 10 1607+
+    pSetThreadDescription func = (pSetThreadDescription)GetProcAddress(
+        GetModuleHandleA("kernel32.dll"), "SetThreadDescription");
+    if (func) {
+        wchar_t *thread_name_wstr = sentry__string_to_wstr(thread_name);
+        HRESULT result = SUCCEEDED(func(thread_id, thread_name_wstr)) ? 0 : 1;
+        sentry_free(thread_name_wstr);
+        return SUCCEEDED(result) ? 0 : 1;
+    }
+
+    // approach 2: Windows Vista+ and MSVC debugger
+#    if _WIN32_WINNT >= 0x0600 && defined(_MSC_VER)
+    THREADNAME_INFO threadnameInfo;
+    threadnameInfo.dwType = 0x1000;
+    threadnameInfo.szName = thread_name;
+    threadnameInfo.dwThreadID
+        = GetThreadId(thread_id); // only available on Windows Vista+
+    threadnameInfo.dwFlags = 0;
+
+#        pragma warning(push)
+#        pragma warning(disable : 6320 6322)
+    __try {
+        RaiseException(MS_VC_EXCEPTION, 0,
+            sizeof(threadnameInfo) / sizeof(ULONG_PTR),
+            (ULONG_PTR *)&threadnameInfo);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+#        pragma warning(pop)
+#    endif
+
+    return 0;
+}
+#else
+int
+sentry__thread_setname(sentry_threadid_t thread_id, const char *thread_name)
+{
+    if (!thread_id || !thread_name) {
+        return 0;
+    }
+
+#    ifdef SENTRY_PLATFORM_DARWIN
+    // macOS supports thread naming only for current thread
+    if (thread_id != pthread_self()) {
+        return 1;
+    }
+    return pthread_setname_np(thread_name);
+#    else
+    return pthread_setname_np(thread_id, thread_name);
+#    endif
+}
+#endif
 
 /**
  * Queue operations, locking and Reference counting:
@@ -53,6 +128,7 @@ sentry__task_decref(sentry_bgworker_task_t *task)
 
 struct sentry_bgworker_s {
     sentry_threadid_t thread_id;
+    char *thread_name;
     sentry_cond_t submit_signal;
     sentry_cond_t done_signal;
     sentry_mutex_t task_lock;
@@ -75,6 +151,7 @@ sentry__bgworker_new(void *state, void (*free_state)(void *state))
         return NULL;
     }
     memset(bgw, 0, sizeof(sentry_bgworker_t));
+    sentry__thread_init(&bgw->thread_id);
     sentry__mutex_init(&bgw->task_lock);
     sentry__cond_init(&bgw->submit_signal);
     sentry__cond_init(&bgw->done_signal);
@@ -107,6 +184,9 @@ sentry__bgworker_decref(sentry_bgworker_t *bgw)
     if (bgw->free_state) {
         bgw->free_state(bgw->state);
     }
+    sentry__thread_free(&bgw->thread_id);
+    sentry__mutex_free(&bgw->task_lock);
+    sentry_free(bgw->thread_name);
     sentry_free(bgw);
 }
 
@@ -149,6 +229,12 @@ worker_thread(void *data)
 {
     sentry_bgworker_t *bgw = data;
     SENTRY_TRACE("background worker thread started");
+
+    // should be called inside thread itself because of MSVC issues and mac
+    // https://randomascii.wordpress.com/2015/10/26/thread-naming-in-windows-time-for-something-better/
+    if (sentry__thread_setname(bgw->thread_id, bgw->thread_name)) {
+        SENTRY_WARN("failed to set background worker thread name");
+    }
 
     sentry__mutex_lock(&bgw->task_lock);
     while (true) {
@@ -319,6 +405,12 @@ sentry__bgworker_foreach_matching(sentry_bgworker_t *bgw,
     sentry__mutex_unlock(&bgw->task_lock);
 
     return dropped;
+}
+
+void
+sentry__bgworker_setname(sentry_bgworker_t *bgw, const char *thread_name)
+{
+    bgw->thread_name = sentry__string_clone(thread_name);
 }
 
 #ifdef SENTRY_PLATFORM_UNIX

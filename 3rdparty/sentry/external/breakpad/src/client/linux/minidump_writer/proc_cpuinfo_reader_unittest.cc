@@ -65,7 +65,7 @@ TEST(ProcCpuInfoReaderTest, EmptyFile) {
   ASSERT_TRUE(file.IsOk());
   ProcCpuInfoReader reader(file.GetFd());
 
-  const char *field;
+  const char* field;
   ASSERT_FALSE(reader.GetNextField(&field));
 }
 
@@ -74,7 +74,7 @@ TEST(ProcCpuInfoReaderTest, OneLineTerminated) {
   ASSERT_TRUE(file.IsOk());
   ProcCpuInfoReader reader(file.GetFd());
 
-  const char *field;
+  const char* field;
   ASSERT_TRUE(reader.GetNextField(&field));
   ASSERT_STREQ("foo", field);
   ASSERT_STREQ("bar", reader.GetValue());
@@ -87,7 +87,7 @@ TEST(ProcCpuInfoReaderTest, OneLine) {
   ASSERT_TRUE(file.IsOk());
   ProcCpuInfoReader reader(file.GetFd());
 
-  const char *field;
+  const char* field;
   size_t value_len;
   ASSERT_TRUE(reader.GetNextField(&field));
   ASSERT_STREQ("foo", field);

@@ -49,7 +49,7 @@ static int foo2(int arg) {
   // Stack variable, used for debugging stack dumps.
   int c = 0xcccccccc;
   fprintf(stderr, "Thread trying to crash: %x\n", getpid());
-  c = *reinterpret_cast<int *>(0x5);
+  c = *reinterpret_cast<int*>(0x5);
   return c;
 }
 
@@ -60,7 +60,7 @@ static int foo(int arg) {
   return b;
 }
 
-static void *thread_crash(void *) {
+static void* thread_crash(void*) {
   // Stack variable, used for debugging stack dumps.
   int a = 0xaaaaaaaa;
   sleep(3);
@@ -69,7 +69,7 @@ static void *thread_crash(void *) {
   return NULL;
 }
 
-static void *thread_main(void *) {
+static void* thread_main(void*) {
   while (!should_exit)
     sleep(1);
   return NULL;
@@ -91,9 +91,9 @@ static void CreateThread(int num) {
 }
 
 // Callback when minidump written.
-static bool MinidumpCallback(const char *dump_path,
-                             const char *minidump_id,
-                             void *context,
+static bool MinidumpCallback(const char* dump_path,
+                             const char* minidump_id,
+                             void* context,
                              bool succeeded) {
   int index = reinterpret_cast<int>(context);
   if (index == 0) {
@@ -104,7 +104,7 @@ static bool MinidumpCallback(const char *dump_path,
   return false;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   int handler_index = 1;
   ExceptionHandler handler_ignore(".", NULL, MinidumpCallback,
                                   (void*)handler_index, true);

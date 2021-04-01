@@ -48,6 +48,10 @@ else()
             zlib/x86.c
             zlib/x86.h
         )
+
+        if(NOT MSVC)
+            target_compile_options(crashpad_zlib PRIVATE -msse4.2 -mpclmul)
+        endif()
     endif()
     target_compile_definitions(crashpad_zlib PUBLIC
         CRASHPAD_ZLIB_SOURCE_EMBEDDED
@@ -73,7 +77,7 @@ else()
             "/wd4267" # conversion from 'size_t' to 't', possible loss of data
             "/wd4324" # structure was padded due to alignment specifier
             "/wd4702" # unreachable code
-            "/wd5105" # the preprocessor detected a defined operator in the output of a macro expansion
+            "/wd5105" # see https://github.com/getsentry/sentry-native/issues/415
         )
     endif()
 endif()

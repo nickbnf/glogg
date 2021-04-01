@@ -20,6 +20,43 @@
 
 namespace logging {
 
+// A bitmask of potential logging destinations.
+using LoggingDestination = uint32_t;
+
+// Specifies where logs will be written. Multiple destinations can be specified
+// with bitwise OR.
+// Unless destination is LOG_NONE, all logs with severity ERROR and above will
+// be written to stderr in addition to the specified destination.
+enum : LoggingDestination {
+  LOG_NONE = 0,
+  LOG_TO_FILE = 1 << 0,
+  LOG_TO_SYSTEM_DEBUG_LOG = 1 << 1,
+  LOG_TO_STDERR = 1 << 2,
+
+  LOG_TO_ALL = LOG_TO_FILE | LOG_TO_SYSTEM_DEBUG_LOG | LOG_TO_STDERR,
+
+// On Windows, use a file next to the exe.
+// On POSIX platforms, where it may not even be possible to locate the
+// executable on disk, use stderr.
+// On Fuchsia, use the Fuchsia logging service.
+#if defined(OS_FUCHSIA)
+  LOG_DEFAULT = LOG_TO_SYSTEM_DEBUG_LOG,
+#elif defined(OS_WIN)
+  LOG_DEFAULT = LOG_TO_FILE,
+#elif defined(OS_POSIX)
+  LOG_DEFAULT = LOG_TO_SYSTEM_DEBUG_LOG | LOG_TO_STDERR,
+#endif
+};
+
+struct LoggingSettings {
+  LoggingDestination logging_dest = LOG_DEFAULT;
+};
+
+// Sets the logging destination.
+//
+// TODO(jperaza): LOG_TO_FILE is not yet supported.
+bool InitLogging(const LoggingSettings& settings);
+
 typedef int LogSeverity;
 const LogSeverity LOG_VERBOSE = -1;
 const LogSeverity LOG_INFO = 0;

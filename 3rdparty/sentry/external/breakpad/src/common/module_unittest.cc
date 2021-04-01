@@ -49,7 +49,7 @@ using std::stringstream;
 using std::vector;
 using testing::ContainerEq;
 
-static Module::Function* generate_duplicate_function(const string &name) {
+static Module::Function* generate_duplicate_function(const string& name) {
   const Module::Address DUP_ADDRESS = 0xd35402aac7a7ad5cULL;
   const Module::Address DUP_SIZE = 0x200b26e605f99071ULL;
   const Module::Address DUP_PARAMETER_SIZE = 0xf14ac4fed48c4a99ULL;
@@ -613,4 +613,9 @@ TEST(Write, OutOfRangeAddresses) {
                "STACK CFI INIT 2000 100 \n",
                s.str().c_str());
 
+  // Cleanup - Prevent Memory Leak errors.
+  delete (extern1);
+  delete (function);
+  delete (entry3);
+  delete (entry1);
 }

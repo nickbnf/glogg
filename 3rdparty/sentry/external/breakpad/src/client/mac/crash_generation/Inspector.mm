@@ -52,7 +52,7 @@
 namespace google_breakpad {
 
 //=============================================================================
-void Inspector::Inspect(const char *receive_port_name) {
+void Inspector::Inspect(const char* receive_port_name) {
   kern_return_t result = ResetBootstrapPort();
   if (result != KERN_SUCCESS) {
     return;
@@ -143,7 +143,7 @@ kern_return_t Inspector::ResetBootstrapPort() {
 }
 
 //=============================================================================
-kern_return_t Inspector::ServiceCheckIn(const char *receive_port_name) {
+kern_return_t Inspector::ServiceCheckIn(const char* receive_port_name) {
   // We need to get the mach port representing this service, so we can
   // get information from the crashed process.
   kern_return_t kr = bootstrap_check_in(bootstrap_subset_port_,
@@ -160,7 +160,7 @@ kern_return_t Inspector::ServiceCheckIn(const char *receive_port_name) {
 }
 
 //=============================================================================
-kern_return_t Inspector::ServiceCheckOut(const char *receive_port_name) {
+kern_return_t Inspector::ServiceCheckOut(const char* receive_port_name) {
   // We're done receiving mach messages from the crashed process,
   // so clean up a bit.
   kern_return_t kr;
@@ -198,7 +198,7 @@ kern_return_t Inspector::ReadMessages() {
   kern_return_t result = receive_port.WaitForMessage(&message, 1000);
 
   if (result == KERN_SUCCESS) {
-    InspectorInfo &info = (InspectorInfo &)*message.GetData();
+    InspectorInfo& info = (InspectorInfo&)*message.GetData();
     exception_type_ = info.exception_type;
     exception_code_ = info.exception_code;
     exception_subcode_ = info.exception_subcode;
@@ -237,7 +237,7 @@ kern_return_t Inspector::ReadMessages() {
       result = receive_port.WaitForMessage(&parameter_message, 1000);
 
       if(result == KERN_SUCCESS) {
-        KeyValueMessageData &key_value_data =
+        KeyValueMessageData& key_value_data =
           (KeyValueMessageData&)*parameter_message.GetData();
         // If we get a blank key, make sure we don't increment the
         // parameter count; in some cases (notably on-demand generation
@@ -267,27 +267,27 @@ bool Inspector::InspectTask() {
   // keep the task quiet while we're looking at it
   task_suspend(remote_task_);
 
-  NSString *minidumpDir;
+  NSString* minidumpDir;
 
-  const char *minidumpDirectory =
+  const char* minidumpDirectory =
     config_params_.GetValueForKey(BREAKPAD_DUMP_DIRECTORY);
 
   // If the client app has not specified a minidump directory,
   // use a default of Library/<kDefaultLibrarySubdirectory>/<Product Name>
   if (!minidumpDirectory || 0 == strlen(minidumpDirectory)) {
-    NSArray *libraryDirectories =
+    NSArray* libraryDirectories =
       NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
                                           NSUserDomainMask,
                                           YES);
 
-    NSString *applicationSupportDirectory =
+    NSString* applicationSupportDirectory =
         [libraryDirectories objectAtIndex:0];
-    NSString *library_subdirectory = [NSString
+    NSString* library_subdirectory = [NSString
         stringWithUTF8String:kDefaultLibrarySubdirectory];
-    NSString *breakpad_product = [NSString
+    NSString* breakpad_product = [NSString
         stringWithUTF8String:config_params_.GetValueForKey(BREAKPAD_PRODUCT)];
 
-    NSArray *path_components = [NSArray
+    NSArray* path_components = [NSArray
         arrayWithObjects:applicationSupportDirectory,
                          library_subdirectory,
                          breakpad_product,
@@ -306,11 +306,11 @@ bool Inspector::InspectTask() {
   // assumes system encoding and in RTL locales will prepend an LTR override
   // character for paths beginning with '/' which fileSystemRepresentation does
   // not remove. Filed as rdar://6889706 .
-  NSString *path_ns = [NSString
+  NSString* path_ns = [NSString
       stringWithUTF8String:minidumpLocation.GetPath()];
-  NSString *pathid_ns = [NSString
+  NSString* pathid_ns = [NSString
       stringWithUTF8String:minidumpLocation.GetID()];
-  NSString *minidumpPath = [path_ns stringByAppendingPathComponent:pathid_ns];
+  NSString* minidumpPath = [path_ns stringByAppendingPathComponent:pathid_ns];
   minidumpPath = [minidumpPath
       stringByAppendingPathExtension:@"dmp"];
 

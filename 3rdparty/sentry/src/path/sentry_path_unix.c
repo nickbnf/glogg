@@ -191,8 +191,8 @@ sentry__path_filename_matches(const sentry_path_t *path, const char *filename)
 bool
 sentry__path_ends_with(const sentry_path_t *path, const char *suffix)
 {
-    int pathlen = strlen(path->path);
-    int suffixlen = strlen(suffix);
+    size_t pathlen = strlen(path->path);
+    size_t suffixlen = strlen(suffix);
     if (suffixlen > pathlen) {
         return false;
     }

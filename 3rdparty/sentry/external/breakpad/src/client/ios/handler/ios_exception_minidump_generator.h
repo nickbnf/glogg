@@ -41,12 +41,12 @@ namespace google_breakpad {
 
 class IosExceptionMinidumpGenerator : public MinidumpGenerator {
  public:
-  explicit IosExceptionMinidumpGenerator(NSException *exception);
+  explicit IosExceptionMinidumpGenerator(NSException* exception);
   virtual ~IosExceptionMinidumpGenerator();
 
  protected:
-  virtual bool WriteExceptionStream(MDRawDirectory *exception_stream);
-  virtual bool WriteThreadStream(mach_port_t thread_id, MDRawThread *thread);
+  virtual bool WriteExceptionStream(MDRawDirectory* exception_stream);
+  virtual bool WriteThreadStream(mach_port_t thread_id, MDRawThread* thread);
 
  private:
 
@@ -57,16 +57,16 @@ class IosExceptionMinidumpGenerator : public MinidumpGenerator {
   uintptr_t GetLRFromException();
 
   // Write a virtual thread context for the crashing site.
-  bool WriteCrashingContext(MDLocationDescriptor *register_location);
+  bool WriteCrashingContext(MDLocationDescriptor* register_location);
   // Per-CPU implementations of the above method.
 #ifdef HAS_ARM_SUPPORT
-  bool WriteCrashingContextARM(MDLocationDescriptor *register_location);
+  bool WriteCrashingContextARM(MDLocationDescriptor* register_location);
 #endif
 #ifdef HAS_ARM64_SUPPORT
-  bool WriteCrashingContextARM64(MDLocationDescriptor *register_location);
+  bool WriteCrashingContextARM64(MDLocationDescriptor* register_location);
 #endif
 
-  NSArray *return_addresses_;
+  NSArray* return_addresses_;
 };
 
 }  // namespace google_breakpad

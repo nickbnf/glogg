@@ -9,13 +9,14 @@
 
 The _Sentry Native SDK_ is an error and crash reporting client for native
 applications, optimized for C and C++. Sentry allows to add tags, breadcrumbs
-and arbitrary custom context to enrich error reports.
+and arbitrary custom context to enrich error reports. Supports Sentry _20.6.0_
+and later.
 
 **Note**: This SDK is being actively developed and still in Beta. We recommend
 to check for updates regularly to benefit from latest features and bug fixes.
 Please see [Known Limitations](#known-limitations).
 
-## Resources
+## Resources <!-- omit in toc -->
 
 - [Discord](https://discord.gg/ez5KZN7) server for project discussions.
 - Follow [@getsentry](https://twitter.com/getsentry) on Twitter for updates
@@ -91,11 +92,11 @@ Building the Crashpad Backend requires a `C++14` compatible compiler.
 
 ```sh
 # configure the cmake build into the `build` directory, with crashpad (on macOS)
-$ cmake -B build -DSENTRY_BACKEND=crashpad
+$ cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
 # build the project
 $ cmake --build build --parallel
 # install the resulting artifacts into a specific prefix (use the correct config on windows)
-$ cmake --install build --prefix install --config Debug
+$ cmake --install build --prefix install --config RelWithDebInfo
 # which will result in the following (on macOS):
 $ exa --tree install
 install
@@ -104,6 +105,8 @@ install
 ├── include
 │  └── sentry.h
 └── lib
+   ├── cmake
+   │  └── sentry
    ├── libsentry.dylib
    └── libsentry.dylib.dSYM
 ```
@@ -139,14 +142,42 @@ $ cmake -GNinja -Bbuild -H. -DCMAKE_TOOLCHAIN_FILE=toolchains/msys2.cmake
 $ ninja -C build
 ```
 
+**MacOS**:
+
+Building universal binaries/libraries is possible out of the box when using the
+[`CMAKE_OSX_ARCHITECTURES`](https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_ARCHITECTURES.html) define, both with the `Xcode` generator as well
+as the default generator:
+
+```sh
+# using xcode generator:
+$ cmake -B xcodebuild -GXcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+$ xcodebuild build -project xcodebuild/Sentry-Native.xcodeproj
+$ lipo -info xcodebuild/Debug/libsentry.dylib
+Architectures in the fat file: xcodebuild/Debug/libsentry.dylib are: x86_64 arm64
+
+# using default generator:
+$ cmake -B defaultbuild -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+$ cmake --build defaultbuild --parallel
+$ lipo -info defaultbuild/libsentry.dylib
+Architectures in the fat file: defaultbuild/libsentry.dylib are: x86_64 arm64
+```
+
+Make sure that MacOSX SDK 11 or later is used. It is possible that this requires
+manually overriding the `SDKROOT`:
+
+```sh
+$ export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+```
+
 ### Compile-Time Options
 
 The following options can be set when running the cmake generator, for example
 using `cmake -D BUILD_SHARED_LIBS=OFF ..`.
 
-- `BUILD_SHARED_LIBS` (Default: ON):
+- `SENTRY_BUILD_SHARED_LIBS` (Default: ON):
   By default, `sentry` is built as a shared library. Setting this option to
   `OFF` will build `sentry` as a static library instead.
+  If sentry is used as a subdirectory of another project, the value `BUILD_SHARED_LIBS` will be inherited by default.
 
 - `SENTRY_PIC` (Default: ON):
   By default, `sentry` is built as a position independent library.
@@ -158,7 +189,7 @@ using `cmake -D BUILD_SHARED_LIBS=OFF ..`.
   Enables linking with the static MSVC runtime. Has no effect if the compiler is not MSVC.
 
 - `SENTRY_LINK_PTHREAD` (Default: ON):
-  Links to the `pthread` library on unix targets.
+  Links platform threads library like `pthread` on unix targets.
 
 - `SENTRY_BUILD_FORCE32` (Default: OFF):
   Forces cross-compilation from 64-bit host to 32-bit target. Only has an effect on Linux.
@@ -192,13 +223,16 @@ using `cmake -D BUILD_SHARED_LIBS=OFF ..`.
   Sentry can use different backends depending on platform.
 
   - **crashpad**: This uses the out-of-process crashpad handler. It is currently
-    only supported on Windows and macOS, and used as the default there.
+    only supported on Desktop OSs, and used as the default on Windows and macOS.
   - **breakpad**: This uses the in-process breakpad handler. It is currently
-    only supported on Linux and Windows, and used as the default on Linux.
+    only supported on Desktop OSs, and used as the default on Linux.
   - **inproc**: A small in-process handler which is supported on all platforms,
     and is used as default on Android.
   - **none**: This builds `sentry-native` without a backend, so it does not handle
     crashes at all. It is primarily used for tests.
+
+- `SENTRY_INTEGRATION_QT` (Default: OFF):
+  Builds the Qt integration, which turns Qt log messages into breadcrumbs.
 
 - `SENTRY_BREAKPAD_SYSTEM` / `SENTRY_CRASHPAD_SYSTEM` (Default: OFF):
   This instructs the build system to use system-installed breakpad or crashpad
@@ -207,18 +241,18 @@ using `cmake -D BUILD_SHARED_LIBS=OFF ..`.
   This is being worked on upstream as well, and a future version might work with
   an unmodified crashpad version as well.
 
-| Feature    | Windows | macOS | Linux | Android |
-| ---------- | ------- | ----- | ----- | ------- |
-| Transports |         |       |       |         |
-| - curl     |         | ☑     | ☑     | (✓)     |
-| - winhttp  | ☑       |       |       |         |
-| - none     | ✓       | ✓     | ✓     | ☑       |
-|            |         |       |       |         |
-| Backends   |         |       |       |         |
-| - inproc   | ✓       | ✓     | ✓     | ☑       |
-| - crashpad | ☑       | ☑     | ✓     |         |
-| - breakpad | ✓       |       | ☑     |         |
-| - none     | ✓       | ✓     | ✓     | ✓       |
+| Feature    | Windows | macOS | Linux | Android | iOS |
+| ---------- | ------- | ----- | ----- | ------- | --- |
+| Transports |         |       |       |         |     |
+| - curl     |         | ☑     | ☑     | (✓)     |     |
+| - winhttp  | ☑       |       |       |         |     |
+| - none     | ✓       | ✓     | ✓     | ☑       | ☑   |
+|            |         |       |       |         |     |
+| Backends   |         |       |       |         |     |
+| - inproc   | ✓       | ✓     | ✓     | ☑       |     |
+| - crashpad | ☑       | ☑     | ✓     |         |     |
+| - breakpad | ✓       | ✓     | ☑     | (✓)     | (✓) |
+| - none     | ✓       | ✓     | ✓     | ✓       |     |
 
 Legend:
 

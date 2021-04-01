@@ -96,6 +96,10 @@ bool CopyFile(const char* from_path, const char* to_path) {
   return result;
 }
 
+bool CopyFile(const std::string& from_path, const std::string& to_path) {
+  return CopyFile(from_path.c_str(), to_path.c_str());
+}
+
 bool ReadFile(const char* path, void* buffer, ssize_t* buffer_size) {
   int fd = HANDLE_EINTR(open(path, O_RDONLY));
   if (fd == -1) {

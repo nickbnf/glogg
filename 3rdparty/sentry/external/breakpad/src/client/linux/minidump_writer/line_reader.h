@@ -61,7 +61,7 @@ class LineReader {
   //
   // One must call |PopLine| after this function, otherwise you'll continue to
   // get the same line over and over.
-  bool GetNextLine(const char **line, unsigned *len) {
+  bool GetNextLine(const char** line, unsigned* len) {
     for (;;) {
       if (buf_used_ == 0 && hit_eof_)
         return false;

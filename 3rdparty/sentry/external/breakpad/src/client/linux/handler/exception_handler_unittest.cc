@@ -201,7 +201,7 @@ static bool DoneCallback(const MinidumpDescriptor& descriptor,
 // optimize them out. In the case of ExceptionHandlerTest::ExternalDumper,
 // GCC-4.9 optimized out the entire set up of ExceptionHandler, causing
 // test failure.
-volatile int *p_null;  // external linkage, so GCC can't tell that it
+volatile int* p_null;  // external linkage, so GCC can't tell that it
                        // remains NULL. Volatile just for a good measure.
 static void DoNullPointerDereference() {
   *p_null = 1;
@@ -994,7 +994,7 @@ CrashHandler(const void* crash_context, size_t crash_context_size,
   msg.msg_control = cmsg;
   msg.msg_controllen = sizeof(cmsg);
 
-  struct cmsghdr *hdr = CMSG_FIRSTHDR(&msg);
+  struct cmsghdr* hdr = CMSG_FIRSTHDR(&msg);
   hdr->cmsg_level = SOL_SOCKET;
   hdr->cmsg_type = SCM_RIGHTS;
   hdr->cmsg_len = CMSG_LEN(sizeof(int));
@@ -1003,7 +1003,7 @@ CrashHandler(const void* crash_context, size_t crash_context_size,
   hdr->cmsg_level = SOL_SOCKET;
   hdr->cmsg_type = SCM_CREDENTIALS;
   hdr->cmsg_len = CMSG_LEN(sizeof(struct ucred));
-  struct ucred *cred = reinterpret_cast<struct ucred*>(CMSG_DATA(hdr));
+  struct ucred* cred = reinterpret_cast<struct ucred*>(CMSG_DATA(hdr));
   cred->uid = getuid();
   cred->gid = getgid();
   cred->pid = getpid();
@@ -1056,7 +1056,7 @@ TEST(ExceptionHandlerTest, ExternalDumper) {
 
   pid_t crashing_pid = -1;
   int signal_fd = -1;
-  for (struct cmsghdr *hdr = CMSG_FIRSTHDR(&msg); hdr;
+  for (struct cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr;
        hdr = CMSG_NXTHDR(&msg, hdr)) {
     if (hdr->cmsg_level != SOL_SOCKET)
       continue;
@@ -1066,7 +1066,7 @@ TEST(ExceptionHandlerTest, ExternalDumper) {
       ASSERT_EQ(sizeof(int), len);
       signal_fd = *(reinterpret_cast<int*>(CMSG_DATA(hdr)));
     } else if (hdr->cmsg_type == SCM_CREDENTIALS) {
-      const struct ucred *cred =
+      const struct ucred* cred =
           reinterpret_cast<struct ucred*>(CMSG_DATA(hdr));
       crashing_pid = cred->pid;
     }

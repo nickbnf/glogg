@@ -118,7 +118,7 @@ ExceptionHandler::ExceptionHandler(
              NULL);                    // custom_info - not used
 }
 
-ExceptionHandler::ExceptionHandler(const wstring &dump_path,
+ExceptionHandler::ExceptionHandler(const wstring& dump_path,
                                    FilterCallback filter,
                                    MinidumpCallback callback,
                                    void* callback_context,
@@ -383,7 +383,7 @@ bool ExceptionHandler::RequestUpload(DWORD crash_id) {
 
 // static
 DWORD ExceptionHandler::ExceptionHandlerThreadMain(void* lpParameter) {
-  ExceptionHandler* self = reinterpret_cast<ExceptionHandler *>(lpParameter);
+  ExceptionHandler* self = reinterpret_cast<ExceptionHandler*>(lpParameter);
   assert(self);
   assert(self->handler_start_semaphore_ != NULL);
   assert(self->handler_finish_semaphore_ != NULL);
@@ -765,7 +765,7 @@ bool ExceptionHandler::WriteMinidumpForException(EXCEPTION_POINTERS* exinfo) {
 }
 
 // static
-bool ExceptionHandler::WriteMinidump(const wstring &dump_path,
+bool ExceptionHandler::WriteMinidump(const wstring& dump_path,
                                      MinidumpCallback callback,
                                      void* callback_context,
                                      MINIDUMP_TYPE dump_type) {

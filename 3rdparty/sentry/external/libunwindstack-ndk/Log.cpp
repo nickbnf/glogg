@@ -54,4 +54,6 @@ void log(uint8_t indent, const char* format, ...) {
   va_end(args);
 }
 
+void log_async_safe(const char*, ...) {}
+
 }  // namespace unwindstack

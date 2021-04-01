@@ -49,7 +49,7 @@ const char kFilterReturnsFalse[] = "filter_returns_false";
 const char kCallbackReturnsTrue[] = "callback_returns_true";
 const char kCallbackReturnsFalse[] = "callback_returns_false";
 
-bool DoesPathExist(const wchar_t *path_name) {
+bool DoesPathExist(const wchar_t* path_name) {
   DWORD flags = GetFileAttributes(path_name);
   if (flags == INVALID_FILE_ATTRIBUTES) {
     return false;
@@ -128,12 +128,12 @@ bool MinidumpWrittenCallback(const wchar_t* dump_path,
 }
 
 
-void DoCrash(const char *message) {
+void DoCrash(const char* message) {
   if (message) {
     fprintf(stderr, "%s", message);
     fflush(stderr);
   }
-  int *i = NULL;
+  int* i = NULL;
   (*i)++;
 
   ASSERT_TRUE(false);

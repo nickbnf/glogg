@@ -220,7 +220,7 @@ kern_return_t catch_exception_raise(mach_port_t port, mach_port_t failed_thread,
 }
 #endif
 
-ExceptionHandler::ExceptionHandler(const string &dump_path,
+ExceptionHandler::ExceptionHandler(const string& dump_path,
                                    FilterCallback filter,
                                    MinidumpCallback callback,
                                    void* callback_context,
@@ -304,7 +304,7 @@ bool ExceptionHandler::WriteMinidump(bool write_exception_stream) {
 }
 
 // static
-bool ExceptionHandler::WriteMinidump(const string &dump_path,
+bool ExceptionHandler::WriteMinidump(const string& dump_path,
                                      bool write_exception_stream,
                                      MinidumpCallback callback,
                                      void* callback_context) {
@@ -316,7 +316,7 @@ bool ExceptionHandler::WriteMinidump(const string &dump_path,
 // static
 bool ExceptionHandler::WriteMinidumpForChild(mach_port_t child,
                                              mach_port_t child_blamed_thread,
-                                             const string &dump_path,
+                                             const string& dump_path,
                                              MinidumpCallback callback,
                                              void* callback_context) {
   ScopedTaskSuspend suspend(child);

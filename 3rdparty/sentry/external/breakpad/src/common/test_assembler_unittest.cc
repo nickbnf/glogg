@@ -755,7 +755,7 @@ const uint8_t SectionFixture::data[] = {
     {                                                                   \
       static const uint8_t expected_bytes[] = b;                       \
       ASSERT_EQ(sizeof(expected_bytes), s.size());                      \
-      ASSERT_TRUE(memcmp(s.data(), (const char *) expected_bytes,       \
+      ASSERT_TRUE(memcmp(s.data(), (const char*) expected_bytes,       \
                          sizeof(expected_bytes)) == 0);                 \
     }                                                                   \
   while(0)
@@ -766,7 +766,7 @@ TEST_F(Append, Bytes) {
   section.Append(data, sizeof(data));
   ASSERT_TRUE(section.GetContents(&contents));
   ASSERT_EQ(sizeof(data), contents.size());
-  EXPECT_TRUE(0 == memcmp(contents.data(), (const char *) data, sizeof(data)));
+  EXPECT_TRUE(0 == memcmp(contents.data(), (const char*) data, sizeof(data)));
 }
 
 TEST_F(Append, BytesTwice) {
@@ -774,9 +774,9 @@ TEST_F(Append, BytesTwice) {
   section.Append(data, sizeof(data));
   ASSERT_TRUE(section.GetContents(&contents));
   ASSERT_EQ(2 * sizeof(data), contents.size());
-  ASSERT_TRUE(0 == memcmp(contents.data(), (const char *) data, sizeof(data)));
+  ASSERT_TRUE(0 == memcmp(contents.data(), (const char*) data, sizeof(data)));
   ASSERT_TRUE(0 == memcmp(contents.data() + sizeof(data),
-                          (const char *) data, sizeof(data)));
+                          (const char*) data, sizeof(data)));
 }
 
 TEST_F(Append, String) {

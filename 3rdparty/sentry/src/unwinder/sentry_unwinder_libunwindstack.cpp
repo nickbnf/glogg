@@ -1,15 +1,15 @@
 extern "C" {
 #include "sentry_boot.h"
+#include "sentry_core.h"
 }
 
 #include <memory>
 #include <ucontext.h>
-#include <unwindstack/Elf.h>
-#include <unwindstack/MapInfo.h>
 #include <unwindstack/Maps.h>
 #include <unwindstack/Memory.h>
 #include <unwindstack/Regs.h>
 #include <unwindstack/RegsGetLocal.h>
+#include <unwindstack/Unwinder.h>
 
 extern "C" {
 
@@ -33,36 +33,23 @@ sentry__unwind_stack_libunwindstack(
 
     unwindstack::LocalMaps maps;
     if (!maps.Parse()) {
+        SENTRY_WARN("unwinder failed to parse process maps\n");
         ptrs[0] = (void *)regs->pc();
         return 1;
     }
 
-    const std::shared_ptr<unwindstack::Memory> process_memory(
-        new unwindstack::MemoryLocal);
+    const std::shared_ptr<unwindstack::Memory> process_memory
+        = unwindstack::Memory::CreateProcessMemoryCached(getpid());
 
-    int rv = 0;
-    for (size_t i = 0; i < max_frames; i++) {
-        ptrs[rv++] = (void *)regs->pc();
-        unwindstack::MapInfo *map_info = maps.Find(regs->pc());
-        if (!map_info) {
-            break;
-        }
+    unwindstack::Unwinder unwinder(
+        max_frames, &maps, regs.get(), process_memory);
+    unwinder.Unwind();
 
-        // the boolean false parameter disables debugdata loading which we don't
-        // want due to size constraints.  Also that data is unlikely to be
-        // useful anyways.
-        unwindstack::Elf *elf = map_info->GetElf(process_memory, false);
-        if (!elf) {
-            break;
-        }
+    std::vector<unwindstack::FrameData> &frames = unwinder.frames();
 
-        uint64_t rel_pc = elf->GetRelPc(regs->pc(), map_info);
-        uint64_t adjusted_rel_pc = rel_pc - regs->GetPcAdjustment(rel_pc, elf);
-        bool finished = false;
-        if (!elf->Step(rel_pc, adjusted_rel_pc, map_info->elf_offset,
-                regs.get(), process_memory.get(), &finished)) {
-            break;
-        }
+    size_t rv = 0;
+    for (unwindstack::FrameData &frame : frames) {
+        ptrs[rv++] = (void *)frame.pc;
     }
 
     return rv;

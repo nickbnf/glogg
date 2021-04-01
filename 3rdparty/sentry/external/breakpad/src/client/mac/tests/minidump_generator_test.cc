@@ -79,7 +79,7 @@ class MinidumpGeneratorTest : public Test {
   AutoTempDir tempDir;
 };
 
-static void *Junk(void* data) {
+static void* Junk(void* data) {
   bool* wait = reinterpret_cast<bool*>(data);
   while (!*wait) {
     usleep(10000);

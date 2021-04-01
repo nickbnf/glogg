@@ -69,7 +69,7 @@ inline bool TypedMDRVA<MDType>::AllocateObjectAndArray(size_t count,
 }
 
 template<typename MDType>
-inline bool TypedMDRVA<MDType>::CopyIndex(unsigned int index, MDType *item) {
+inline bool TypedMDRVA<MDType>::CopyIndex(unsigned int index, MDType* item) {
   assert(allocation_state_ == ARRAY);
   return writer_->Copy(
       static_cast<MDRVA>(position_ + index * minidump_size<MDType>::size()), 
@@ -78,7 +78,7 @@ inline bool TypedMDRVA<MDType>::CopyIndex(unsigned int index, MDType *item) {
 
 template<typename MDType>
 inline bool TypedMDRVA<MDType>::CopyIndexAfterObject(unsigned int index,
-                                                     const void *src, 
+                                                     const void* src,
                                                      size_t length) {
   assert(allocation_state_ == SINGLE_OBJECT_WITH_ARRAY);
   return writer_->Copy(

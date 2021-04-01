@@ -65,7 +65,7 @@ class PDBSourceLineWriter {
   // file must be available; Open will be if it is not.
   // If there is already a pdb file open, it is automatically closed.
   // Returns true on success.
-  bool Open(const wstring &file, FileFormat format);
+  bool Open(const wstring& file, FileFormat format);
 
   // Closes the current pdb file and its associated resources.
   void Close();
@@ -77,7 +77,7 @@ class PDBSourceLineWriter {
   // file and it must be called after Open() and before WriteMap().
   // If Open() was called for an executable file, then it is an error to call
   // SetCodeFile() with a different file path and it will return false.
-  bool SetCodeFile(const wstring &exe_file);
+  bool SetCodeFile(const wstring& exe_file);
 
   // Writes a Breakpad symbol file from the current pdb file to |symbol_file|.
   // Returns true on success.
@@ -150,17 +150,17 @@ class PDBSourceLineWriter {
 
   // Returns true if this filename has already been seen,
   // and an ID is stored for it, or false if it has not.
-  bool FileIDIsCached(const wstring &file) {
+  bool FileIDIsCached(const wstring& file) {
     return unique_files_.find(file) != unique_files_.end();
   }
 
   // Cache this filename and ID for later reuse.
-  void CacheFileID(const wstring &file, DWORD id) {
+  void CacheFileID(const wstring& file, DWORD id) {
     unique_files_[file] = id;
   }
 
   // Store this ID in the cache as a duplicate for this filename.
-  void StoreDuplicateFileID(const wstring &file, DWORD id) {
+  void StoreDuplicateFileID(const wstring& file, DWORD id) {
     unordered_map<wstring, DWORD>::iterator iter = unique_files_.find(file);
     if (iter != unique_files_.end()) {
       // map this id to the previously seen one

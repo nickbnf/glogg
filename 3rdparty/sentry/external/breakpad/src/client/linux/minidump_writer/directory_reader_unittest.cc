@@ -47,7 +47,7 @@ typedef testing::Test DirectoryReaderTest;
 TEST(DirectoryReaderTest, CompareResults) {
   std::set<string> dent_set;
 
-  DIR *const dir = opendir("/proc/self");
+  DIR* const dir = opendir("/proc/self");
   ASSERT_TRUE(dir != NULL);
 
   struct dirent* dent;

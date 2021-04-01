@@ -50,6 +50,8 @@
 #elif defined(OS_FUCHSIA)
 #include <zircon/process.h>
 #include <zircon/syscalls.h>
+#elif defined(OS_ANDROID)
+#include <android/log.h>
 #endif
 
 #include "base/stl_util.h"
@@ -71,7 +73,16 @@ const char* const log_severity_names[] = {
 
 LogMessageHandlerFunction g_log_message_handler = nullptr;
 
+LoggingDestination g_logging_destination = LOG_DEFAULT;
+
 }  // namespace
+
+bool InitLogging(const LoggingSettings& settings) {
+  DCHECK_EQ(settings.logging_dest & LOG_TO_FILE, 0u);
+
+  g_logging_destination = settings.logging_dest;
+  return true;
+}
 
 void SetLogMessageHandler(LogMessageHandlerFunction log_message_handler) {
   g_log_message_handler = log_message_handler;
@@ -163,91 +174,94 @@ LogMessage::~LogMessage() {
     return;
   }
 
-  fprintf(stderr, "%s", str_newline.c_str());
-  fflush(stderr);
+  if ((g_logging_destination & LOG_TO_STDERR)) {
+    fprintf(stderr, "%s", str_newline.c_str());
+    fflush(stderr);
+  }
 
+  if ((g_logging_destination & LOG_TO_SYSTEM_DEBUG_LOG) != 0) {
 #if defined(OS_APPLE)
-  const bool log_to_system = []() {
-    struct stat stderr_stat;
-    if (fstat(fileno(stderr), &stderr_stat) == -1) {
-      return true;
-    }
-    if (!S_ISCHR(stderr_stat.st_mode)) {
-      return false;
-    }
+    const bool log_to_system = []() {
+      struct stat stderr_stat;
+      if (fstat(fileno(stderr), &stderr_stat) == -1) {
+        return true;
+      }
+      if (!S_ISCHR(stderr_stat.st_mode)) {
+        return false;
+      }
 
-    struct stat dev_null_stat;
-    if (stat(_PATH_DEVNULL, &dev_null_stat) == -1) {
-      return true;
-    }
+      struct stat dev_null_stat;
+      if (stat(_PATH_DEVNULL, &dev_null_stat) == -1) {
+        return true;
+      }
 
-    return !S_ISCHR(dev_null_stat.st_mode) ||
-           stderr_stat.st_rdev == dev_null_stat.st_rdev;
-  }();
+      return !S_ISCHR(dev_null_stat.st_mode) ||
+             stderr_stat.st_rdev == dev_null_stat.st_rdev;
+    }();
 
-  if (log_to_system) {
-    CFBundleRef main_bundle = CFBundleGetMainBundle();
-    CFStringRef main_bundle_id_cf =
-        main_bundle ? CFBundleGetIdentifier(main_bundle) : nullptr;
+    if (log_to_system) {
+      CFBundleRef main_bundle = CFBundleGetMainBundle();
+      CFStringRef main_bundle_id_cf =
+          main_bundle ? CFBundleGetIdentifier(main_bundle) : nullptr;
 
-    std::string main_bundle_id_buf;
-    const char* main_bundle_id = nullptr;
+      std::string main_bundle_id_buf;
+      const char* main_bundle_id = nullptr;
 
-    if (main_bundle_id_cf) {
-      main_bundle_id =
-          CFStringGetCStringPtr(main_bundle_id_cf, kCFStringEncodingUTF8);
-      if (!main_bundle_id) {
-        // 1024 is from 10.10.5 CF-1153.18/CFBundle.c __CFBundleMainID__ (at
-        // the point of use, not declaration).
-        main_bundle_id_buf.resize(1024);
-        if (!CFStringGetCString(main_bundle_id_cf,
-                                &main_bundle_id_buf[0],
-                                main_bundle_id_buf.size(),
-                                kCFStringEncodingUTF8)) {
-          main_bundle_id_buf.clear();
-        } else {
-          main_bundle_id = &main_bundle_id_buf[0];
+      if (main_bundle_id_cf) {
+        main_bundle_id =
+            CFStringGetCStringPtr(main_bundle_id_cf, kCFStringEncodingUTF8);
+        if (!main_bundle_id) {
+          // 1024 is from 10.10.5 CF-1153.18/CFBundle.c __CFBundleMainID__ (at
+          // the point of use, not declaration).
+          main_bundle_id_buf.resize(1024);
+          if (!CFStringGetCString(main_bundle_id_cf,
+                                  &main_bundle_id_buf[0],
+                                  main_bundle_id_buf.size(),
+                                  kCFStringEncodingUTF8)) {
+            main_bundle_id_buf.clear();
+          } else {
+            main_bundle_id = &main_bundle_id_buf[0];
+          }
         }
       }
-    }
 
 #if defined(USE_ASL)
-    // Use ASL when this might run on pre-10.12 systems. Unified Logging
-    // (os_log) was introduced in 10.12.
+      // Use ASL when this might run on pre-10.12 systems. Unified Logging
+      // (os_log) was introduced in 10.12.
 
-    const class ASLClient {
-     public:
-      explicit ASLClient(const char* asl_facility)
-          : client_(asl_open(nullptr, asl_facility, ASL_OPT_NO_DELAY)) {}
-      ~ASLClient() { asl_close(client_); }
+      const class ASLClient {
+       public:
+        explicit ASLClient(const char* asl_facility)
+            : client_(asl_open(nullptr, asl_facility, ASL_OPT_NO_DELAY)) {}
+        ~ASLClient() { asl_close(client_); }
 
-      aslclient get() const { return client_; }
+        aslclient get() const { return client_; }
 
-     private:
-      aslclient client_;
-      DISALLOW_COPY_AND_ASSIGN(ASLClient);
-    } asl_client(main_bundle_id ? main_bundle_id : "com.apple.console");
+       private:
+        aslclient client_;
+        DISALLOW_COPY_AND_ASSIGN(ASLClient);
+      } asl_client(main_bundle_id ? main_bundle_id : "com.apple.console");
 
-    const class ASLMessage {
-     public:
-      ASLMessage() : message_(asl_new(ASL_TYPE_MSG)) {}
-      ~ASLMessage() { asl_free(message_); }
+      const class ASLMessage {
+       public:
+        ASLMessage() : message_(asl_new(ASL_TYPE_MSG)) {}
+        ~ASLMessage() { asl_free(message_); }
 
-      aslmsg get() const { return message_; }
+        aslmsg get() const { return message_; }
 
-     private:
-      aslmsg message_;
-      DISALLOW_COPY_AND_ASSIGN(ASLMessage);
-    } asl_message;
+       private:
+        aslmsg message_;
+        DISALLOW_COPY_AND_ASSIGN(ASLMessage);
+      } asl_message;
 
-    // By default, messages are only readable by the admin group. Explicitly
-    // make them readable by the user generating the messages.
-    char euid_string[12];
-    snprintf(euid_string, base::size(euid_string), "%d", geteuid());
-    asl_set(asl_message.get(), ASL_KEY_READ_UID, euid_string);
+      // By default, messages are only readable by the admin group. Explicitly
+      // make them readable by the user generating the messages.
+      char euid_string[12];
+      snprintf(euid_string, base::size(euid_string), "%d", geteuid());
+      asl_set(asl_message.get(), ASL_KEY_READ_UID, euid_string);
 
-    // Map Chrome log severities to ASL log levels.
-    const char* const asl_level_string = [](LogSeverity severity) {
+      // Map Chrome log severities to ASL log levels.
+      const char* const asl_level_string = [](LogSeverity severity) {
 #define ASL_LEVEL_STR(level) ASL_LEVEL_STR_X(level)
 #define ASL_LEVEL_STR_X(level) #level
         switch (severity) {
@@ -265,55 +279,76 @@ LogMessage::~LogMessage() {
         }
 #undef ASL_LEVEL_STR
 #undef ASL_LEVEL_STR_X
-    }(severity_);
-    asl_set(asl_message.get(), ASL_KEY_LEVEL, asl_level_string);
+      }(severity_);
+      asl_set(asl_message.get(), ASL_KEY_LEVEL, asl_level_string);
 
-    asl_set(asl_message.get(), ASL_KEY_MSG, str_newline.c_str());
+      asl_set(asl_message.get(), ASL_KEY_MSG, str_newline.c_str());
 
-    asl_send(asl_client.get(), asl_message.get());
+      asl_send(asl_client.get(), asl_message.get());
 #else
-    // Use Unified Logging (os_log) when this will only run on 10.12 and later.
-    // ASL is deprecated in 10.12.
+      // Use Unified Logging (os_log) when this will only run on 10.12 and
+      // later. ASL is deprecated in 10.12.
 
-    const class OSLog {
-     public:
-      explicit OSLog(const char* subsystem)
-          : os_log_(subsystem ? os_log_create(subsystem, "chromium_logging")
-                              : OS_LOG_DEFAULT) {}
-      ~OSLog() {
-        if (os_log_ != OS_LOG_DEFAULT) {
-          os_release(os_log_);
+      const class OSLog {
+       public:
+        explicit OSLog(const char* subsystem)
+            : os_log_(subsystem ? os_log_create(subsystem, "chromium_logging")
+                                : OS_LOG_DEFAULT) {}
+        ~OSLog() {
+          if (os_log_ != OS_LOG_DEFAULT) {
+            os_release(os_log_);
+          }
         }
-      }
 
-      os_log_t get() const { return os_log_; }
+        os_log_t get() const { return os_log_; }
 
-     private:
-      os_log_t os_log_;
-      DISALLOW_COPY_AND_ASSIGN(OSLog);
-    } log(main_bundle_id);
+       private:
+        os_log_t os_log_;
+        DISALLOW_COPY_AND_ASSIGN(OSLog);
+      } log(main_bundle_id);
 
-    const os_log_type_t os_log_type = [](LogSeverity severity) {
-      switch (severity) {
-        case LOG_INFO:
-          return OS_LOG_TYPE_INFO;
-        case LOG_WARNING:
-          return OS_LOG_TYPE_DEFAULT;
-        case LOG_ERROR:
-          return OS_LOG_TYPE_ERROR;
-        case LOG_FATAL:
-          return OS_LOG_TYPE_FAULT;
-        default:
-          return severity < 0 ? OS_LOG_TYPE_DEBUG : OS_LOG_TYPE_DEFAULT;
-      }
-    }(severity_);
+      const os_log_type_t os_log_type = [](LogSeverity severity) {
+        switch (severity) {
+          case LOG_INFO:
+            return OS_LOG_TYPE_INFO;
+          case LOG_WARNING:
+            return OS_LOG_TYPE_DEFAULT;
+          case LOG_ERROR:
+            return OS_LOG_TYPE_ERROR;
+          case LOG_FATAL:
+            return OS_LOG_TYPE_FAULT;
+          default:
+            return severity < 0 ? OS_LOG_TYPE_DEBUG : OS_LOG_TYPE_DEFAULT;
+        }
+      }(severity_);
 
-    os_log_with_type(log.get(), os_log_type, "%{public}s", str_newline.c_str());
+      os_log_with_type(
+          log.get(), os_log_type, "%{public}s", str_newline.c_str());
 #endif
-  }
+    }
 #elif defined(OS_WIN)
-  OutputDebugString(base::UTF8ToUTF16(str_newline).c_str());
+    OutputDebugString(base::UTF8ToUTF16(str_newline).c_str());
+#elif defined(OS_ANDROID)
+    android_LogPriority priority =
+        (severity_ < 0) ? ANDROID_LOG_VERBOSE : ANDROID_LOG_UNKNOWN;
+    switch (severity_) {
+      case LOG_INFO:
+        priority = ANDROID_LOG_INFO;
+        break;
+      case LOG_WARNING:
+        priority = ANDROID_LOG_WARN;
+        break;
+      case LOG_ERROR:
+        priority = ANDROID_LOG_ERROR;
+        break;
+      case LOG_FATAL:
+        priority = ANDROID_LOG_FATAL;
+        break;
+    }
+    // The Android system may truncate the string if it's too long.
+    __android_log_write(priority, "chromium", str_newline.c_str());
 #endif  // OS_*
+  }
 
   if (severity_ == LOG_FATAL) {
 #if defined(COMPILER_MSVC)
@@ -362,7 +397,7 @@ void LogMessage::Init(const char* function) {
 #elif defined(OS_ANDROID)
   pid_t thread = gettid();
 #elif defined(OS_LINUX)
-  pid_t thread = syscall(__NR_gettid);
+  pid_t thread = static_cast<pid_t>(syscall(__NR_gettid));
 #elif defined(OS_WIN)
   DWORD thread = GetCurrentThreadId();
 #elif defined(OS_FUCHSIA)

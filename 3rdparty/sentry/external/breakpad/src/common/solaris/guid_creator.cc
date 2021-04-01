@@ -74,8 +74,8 @@ bool GUIDToString(const GUID *guid, char *buf, int buf_len) {
   assert(buf_len > kGUIDStringLength);
   int num = snprintf(buf, buf_len, kGUIDFormatString,
                      guid->data1, guid->data2, guid->data3,
-                     *reinterpret_cast<const uint32_t *>(&(guid->data4[0])),
-                     *reinterpret_cast<const uint32_t *>(&(guid->data4[4])));
+                     *reinterpret_cast<const uint32_t*>(&(guid->data4[0])),
+                     *reinterpret_cast<const uint32_t*>(&(guid->data4[4])));
   if (num != kGUIDStringLength)
     return false;
 

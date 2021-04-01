@@ -44,8 +44,8 @@ namespace {
 // __android_log_buf_write() is not exported in the NDK and is being used by
 // dynamic runtime linking. Its declaration is taken from Android's
 // system/core/include/log/log.h.
-using AndroidLogBufferWriteFunc = int (*)(int bufID, int prio, const char *tag,
-                                          const char *text);
+using AndroidLogBufferWriteFunc = int (*)(int bufID, int prio, const char* tag,
+                                          const char* text);
 const int kAndroidCrashLogId = 4;  // From LOG_ID_CRASH in log.h.
 const char kAndroidLogTag[] = "google-breakpad";
 

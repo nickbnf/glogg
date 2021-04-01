@@ -4,6 +4,7 @@ function(mc_append_sources)
     target_sources(mini_chromium PRIVATE ${ARGN})
 endfunction()
 
+target_sources(mini_chromium PRIVATE build/chromeos_buildflags.h)
 mc_append_sources(
     ../build/build_config.h
     atomicops.h
@@ -30,6 +31,7 @@ mc_append_sources(
     metrics/histogram_functions.h
     metrics/histogram_macros.h
     metrics/persistent_histogram_allocator.h
+    notreached.h
     numerics/checked_math.h
     numerics/checked_math_impl.h
     numerics/clamped_math.h
@@ -171,6 +173,9 @@ target_include_directories(mini_chromium PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mini_chromium>"
     $<INSTALL_INTERFACE:include/crashpad/mini_chromium>
 )
+target_include_directories(mini_chromium PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+)
 target_link_libraries(mini_chromium
     PRIVATE
         $<BUILD_INTERFACE:crashpad_interface>
@@ -189,7 +194,7 @@ if(WIN32)
             _UNICODE
         )
     elseif(MINGW)
-        target_compile_options(mini_chromium PRIVATE 
+        target_compile_options(mini_chromium PRIVATE
             "-municode"
             "-Wno-format"
             "-Wno-unknown-pragmas"

@@ -40,18 +40,14 @@
 namespace google_breakpad {
 
 void DwarfRangeListHandler::AddRange(uint64_t begin, uint64_t end) {
-  Module::Range r(begin + base_address_, end - begin);
+  Module::Range r(begin, end - begin);
 
   ranges_->push_back(r);
 }
 
-void DwarfRangeListHandler::SetBaseAddress(uint64_t base_address) {
-  base_address_ = base_address;
-}
-
 void DwarfRangeListHandler::Finish() {
   std::sort(ranges_->begin(), ranges_->end(),
-    [](const Module::Range &a, const Module::Range &b) {
+    [](const Module::Range& a, const Module::Range& b) {
       return a.address < b.address;
     }
   );

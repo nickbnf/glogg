@@ -75,7 +75,7 @@ using testing::_;
 
 class MockFatReaderReporter: public FatReader::Reporter {
  public:
-  MockFatReaderReporter(const string &filename)
+  MockFatReaderReporter(const string& filename)
       : FatReader::Reporter(filename) { }
   MOCK_METHOD0(BadHeader, void());
   MOCK_METHOD0(MisplacedObjectFile, void());
@@ -84,7 +84,7 @@ class MockFatReaderReporter: public FatReader::Reporter {
 
 class MockReaderReporter: public Reader::Reporter {
  public:
-  MockReaderReporter(const string &filename) : Reader::Reporter(filename) { }
+  MockReaderReporter(const string& filename) : Reader::Reporter(filename) { }
   MOCK_METHOD0(BadHeader, void());
   MOCK_METHOD4(CPUTypeMismatch, void(cpu_type_t cpu_type,
                                      cpu_subtype_t cpu_subtype,
@@ -95,24 +95,24 @@ class MockReaderReporter: public Reader::Reporter {
   MOCK_METHOD3(LoadCommandsOverrun, void(size_t claimed, size_t i,
                                          LoadCommandType type));
   MOCK_METHOD2(LoadCommandTooShort, void(size_t i, LoadCommandType type));
-  MOCK_METHOD1(SectionsMissing, void(const string &name));
-  MOCK_METHOD1(MisplacedSegmentData, void(const string &name));
-  MOCK_METHOD2(MisplacedSectionData, void(const string &section,
-                                          const string &segment));
+  MOCK_METHOD1(SectionsMissing, void(const string& name));
+  MOCK_METHOD1(MisplacedSegmentData, void(const string& name));
+  MOCK_METHOD2(MisplacedSectionData, void(const string& section,
+                                          const string& segment));
   MOCK_METHOD0(MisplacedSymbolTable, void());
   MOCK_METHOD1(UnsupportedCPUType, void(cpu_type_t cpu_type));
 };
 
 class MockLoadCommandHandler: public Reader::LoadCommandHandler {
  public:
-  MOCK_METHOD2(UnknownCommand, bool(LoadCommandType, const ByteBuffer &));
-  MOCK_METHOD1(SegmentCommand, bool(const Segment &));
-  MOCK_METHOD2(SymtabCommand,  bool(const ByteBuffer &, const ByteBuffer &));
+  MOCK_METHOD2(UnknownCommand, bool(LoadCommandType, const ByteBuffer&));
+  MOCK_METHOD1(SegmentCommand, bool(const Segment&));
+  MOCK_METHOD2(SymtabCommand,  bool(const ByteBuffer&, const ByteBuffer&));
 };
 
 class MockSectionHandler: public Reader::SectionHandler {
  public:
-  MOCK_METHOD1(HandleSection, bool(const Section &section));
+  MOCK_METHOD1(HandleSection, bool(const Section& section));
 };
 
 
@@ -221,7 +221,7 @@ struct FatReaderFixture {
   }
   void ReadFat(bool expect_parse_success = true) {
     ASSERT_TRUE(fat.GetContents(&contents));
-    fat_bytes = reinterpret_cast<const uint8_t *>(contents.data());
+    fat_bytes = reinterpret_cast<const uint8_t*>(contents.data());
     if (expect_parse_success) {
       EXPECT_TRUE(reader.Read(fat_bytes, contents.size()));
       size_t fat_files_count;
@@ -238,7 +238,7 @@ struct FatReaderFixture {
   MockFatReaderReporter reporter;
   FatReader reader;
   string contents;
-  const uint8_t *fat_bytes;
+  const uint8_t* fat_bytes;
   vector<struct fat_arch> object_files;
 };
 
@@ -487,16 +487,16 @@ class WithConfiguration {
  private:
   // The innermost WithConfiguration in whose dynamic scope we are
   // currently executing.
-  static WithConfiguration *current_;
+  static WithConfiguration* current_;
 
   // The innermost WithConfiguration whose dynamic scope encloses this
   // WithConfiguration.
   Endianness endianness_;
   size_t word_size_;
-  WithConfiguration *saved_;
+  WithConfiguration* saved_;
 };
 
-WithConfiguration *WithConfiguration::current_ = NULL;
+WithConfiguration* WithConfiguration::current_ = NULL;
 
 // A test_assembler::Section with a size that we can cite. The start(),
 // Here() and Mark() member functions of a SizedSection always represent
@@ -527,7 +527,7 @@ class SizedSection: public test_assembler::Section {
 
   // Append SECTION to the end of this section, and call its Finish member.
   // Return a reference to this section.
-  SizedSection &Place(SizedSection *section) {
+  SizedSection& Place(SizedSection* section) {
     assert(section->endianness() == endianness());
     section->Finish();
     section->start() = Here();
@@ -563,7 +563,7 @@ class LoadedSection: public SizedSection {
 
   // Placing a loaded section within a loaded section sets the relationship
   // between their addresses.
-  LoadedSection &Place(LoadedSection *section) {
+  LoadedSection& Place(LoadedSection* section) {
     section->address() = address() + Size();
     SizedSection::Place(section);
     return *this;
@@ -583,7 +583,7 @@ class SegmentLoadCommand: public SizedSection {
   // The load command will refer to CONTENTS, which must be Placed in the
   // file separately, at the desired position. Return a reference to this
   // section.
-  SegmentLoadCommand &Header(const string &name, const LoadedSection &contents,
+  SegmentLoadCommand& Header(const string& name, const LoadedSection& contents,
                              uint32_t maxprot, uint32_t initprot,
                              uint32_t flags) {
     assert(contents.word_size() == word_size());
@@ -608,16 +608,16 @@ class SegmentLoadCommand: public SizedSection {
   // memory. If this label is still undefined by the time we place this
   // segment, it defaults to the final size of the segment's in-file
   // contents. Return a reference to this load command.
-  Label &vmsize() { return vmsize_; }
+  Label& vmsize() { return vmsize_; }
 
   // Add a section entry with the given characteristics to this segment
   // load command. Return a reference to this. The section entry will refer
   // to CONTENTS, which must be Placed in the segment's contents
   // separately, at the desired position.
-  SegmentLoadCommand &AppendSectionEntry(const string &section_name,
-                                         const string &segment_name,
+  SegmentLoadCommand& AppendSectionEntry(const string& section_name,
+                                         const string& segment_name,
                                          uint32_t alignment, uint32_t flags,
-                                         const LoadedSection &contents) {
+                                         const LoadedSection& contents) {
     AppendCString(section_name, 16);
     AppendCString(segment_name, 16);
     Append(endianness(), word_size() / 8, contents.address());
@@ -671,14 +671,14 @@ class LoadCommands: public SizedSection {
   Label final_command_count() const { return final_command_count_; }
 
   // Increment the command count; return a reference to this section.
-  LoadCommands &CountCommand() {
+  LoadCommands& CountCommand() {
     command_count_++;
     return *this;
   }
 
   // Place COMMAND, containing a load command, at the end of this section.
   // Return a reference to this section.
-  LoadCommands &Place(SizedSection *section) {
+  LoadCommands& Place(SizedSection* section) {
     SizedSection::Place(section);
     CountCommand();
     return *this;
@@ -710,7 +710,7 @@ class MachOFile: public SizedSection {
   // Create a Mach-O file header using the given characteristics and load
   // command list. This Places COMMANDS immediately after the header.
   // Return a reference to this section.
-  MachOFile &Header(LoadCommands *commands,
+  MachOFile& Header(LoadCommands* commands,
                     cpu_type_t cpu_type = CPU_TYPE_X86,
                     cpu_subtype_t cpu_subtype = CPU_SUBTYPE_I386_ALL,
                     FileType file_type = MH_EXECUTE,
@@ -752,12 +752,12 @@ struct ReaderFixture {
     EXPECT_CALL(load_command_handler, SegmentCommand(_)).Times(0);
   }
 
-  void ReadFile(MachOFile *file,
+  void ReadFile(MachOFile* file,
                 bool expect_parse_success,
                 cpu_type_t expected_cpu_type,
                 cpu_subtype_t expected_cpu_subtype) {
     ASSERT_TRUE(file->GetContents(&file_contents));
-    file_bytes = reinterpret_cast<const uint8_t *>(file_contents.data());
+    file_bytes = reinterpret_cast<const uint8_t*>(file_contents.data());
     if (expect_parse_success) {
       EXPECT_TRUE(reader.Read(file_bytes,
                               file_contents.size(),
@@ -772,7 +772,7 @@ struct ReaderFixture {
   }
 
   string file_contents;
-  const uint8_t *file_bytes;
+  const uint8_t* file_bytes;
   MockReaderReporter reporter;
   Reader reader;
   MockLoadCommandHandler load_command_handler;
@@ -1343,14 +1343,14 @@ TEST_F(LoadCommand, ThreeLoadCommands) {
   EXPECT_TRUE(reader.WalkLoadCommands(&load_command_handler));
 }
 
-static inline Matcher<const Section &> MatchSection(
+static inline Matcher<const Section&> MatchSection(
     Matcher<bool> bits_64,
-    Matcher<const string &> section_name,
-    Matcher<const string &> segment_name,
+    Matcher<const string&> section_name,
+    Matcher<const string&> segment_name,
     Matcher<uint64_t> address,
     Matcher<uint32_t> alignment,
     Matcher<uint32_t> flags,
-    Matcher<const ByteBuffer &> contents) {
+    Matcher<const ByteBuffer&> contents) {
   return AllOf(AllOf(Field(&Section::bits_64, bits_64),
                      Field(&Section::section_name, section_name),
                      Field(&Section::segment_name, segment_name),
@@ -1360,10 +1360,10 @@ static inline Matcher<const Section &> MatchSection(
                      Field(&Section::contents, contents)));
 }
 
-static inline Matcher<const Section &> MatchSection(
+static inline Matcher<const Section&> MatchSection(
     Matcher<bool> bits_64,
-    Matcher<const string &> section_name,
-    Matcher<const string &> segment_name,
+    Matcher<const string&> section_name,
+    Matcher<const string&> segment_name,
     Matcher<uint64_t> address) {
   return AllOf(Field(&Section::bits_64, bits_64),
                Field(&Section::section_name, section_name),
@@ -1410,7 +1410,7 @@ TEST_F(LoadCommand, OneSegmentTwoSections) {
     contents1.start = file_bytes + section1.start().Value();
     contents1.end = contents1.start + section1.final_size().Value();
     EXPECT_EQ("buddha's hand",
-              string(reinterpret_cast<const char *>(contents1.start),
+              string(reinterpret_cast<const char*>(contents1.start),
                      contents1.Size()));
     EXPECT_CALL(section_handler,
                 HandleSection(MatchSection(true, "mandarin", "kishu",
@@ -1422,7 +1422,7 @@ TEST_F(LoadCommand, OneSegmentTwoSections) {
     contents2.start = file_bytes + section2.start().Value();
     contents2.end = contents2.start + section2.final_size().Value();
     EXPECT_EQ("kumquat",
-              string(reinterpret_cast<const char *>(contents2.start),
+              string(reinterpret_cast<const char*>(contents2.start),
                      contents2.Size()));
     EXPECT_CALL(section_handler,
                 HandleSection(MatchSection(true, "bergamot", "cara cara",
@@ -1716,7 +1716,7 @@ class StringAssembler: public SizedSection {
  public:
   // Add the string S to this StringAssembler, and return the string's
   // offset within this compilation unit's strings.
-  size_t Add(const string &s) {
+  size_t Add(const string& s) {
     size_t offset = Size();
     AppendCString(s);
     return offset;
@@ -1728,7 +1728,7 @@ class StringAssembler: public SizedSection {
 class SymbolAssembler: public SizedSection {
  public:
   // Create a SymbolAssembler that uses StringAssembler for its strings.
-  explicit SymbolAssembler(StringAssembler *string_assembler) 
+  explicit SymbolAssembler(StringAssembler* string_assembler)
       : string_assembler_(string_assembler),
         entry_count_(0) { }
 
@@ -1737,7 +1737,7 @@ class SymbolAssembler: public SizedSection {
   // its compilation unit's portion of the .stabstr section; this can be a
   // value generated by a StringAssembler. Return a reference to this
   // SymbolAssembler.
-  SymbolAssembler &Symbol(uint8_t type, uint8_t other, Label descriptor,
+  SymbolAssembler& Symbol(uint8_t type, uint8_t other, Label descriptor,
                           Label value, Label name) {
     D32(name);
     D8(type);
@@ -1749,14 +1749,14 @@ class SymbolAssembler: public SizedSection {
   }
 
   // As above, but automatically add NAME to our StringAssembler.
-  SymbolAssembler &Symbol(uint8_t type, uint8_t other, Label descriptor,
-                       Label value, const string &name) {
+  SymbolAssembler& Symbol(uint8_t type, uint8_t other, Label descriptor,
+                          Label value, const string& name) {
     return Symbol(type, other, descriptor, value, string_assembler_->Add(name));
   }
 
  private:
   // The strings for our STABS entries.
-  StringAssembler *string_assembler_;
+  StringAssembler* string_assembler_;
 
   // The number of entries in this compilation unit so far.
   size_t entry_count_;

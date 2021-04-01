@@ -114,8 +114,8 @@ class HTTPUpload {
   // No instances of this class should be created.
   // Disallow all constructors, destructors, and operator=.
   HTTPUpload();
-  explicit HTTPUpload(const HTTPUpload &);
-  void operator=(const HTTPUpload &);
+  explicit HTTPUpload(const HTTPUpload&);
+  void operator=(const HTTPUpload&);
   ~HTTPUpload();
 };
 

@@ -59,7 +59,7 @@ TEST(LineReaderTest, EmptyFile) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned len;
   ASSERT_FALSE(reader.GetNextLine(&line, &len));
 }
@@ -69,7 +69,7 @@ TEST(LineReaderTest, OneLineTerminated) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned int len;
   ASSERT_TRUE(reader.GetNextLine(&line, &len));
   ASSERT_EQ((unsigned int)1, len);
@@ -85,7 +85,7 @@ TEST(LineReaderTest, OneLine) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned len;
   ASSERT_TRUE(reader.GetNextLine(&line, &len));
   ASSERT_EQ((unsigned)1, len);
@@ -101,7 +101,7 @@ TEST(LineReaderTest, TwoLinesTerminated) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned len;
   ASSERT_TRUE(reader.GetNextLine(&line, &len));
   ASSERT_EQ((unsigned)1, len);
@@ -123,7 +123,7 @@ TEST(LineReaderTest, TwoLines) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned len;
   ASSERT_TRUE(reader.GetNextLine(&line, &len));
   ASSERT_EQ((unsigned)1, len);
@@ -147,7 +147,7 @@ TEST(LineReaderTest, MaxLength) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned len;
   ASSERT_TRUE(reader.GetNextLine(&line, &len));
   ASSERT_EQ(sizeof(l), len);
@@ -163,7 +163,7 @@ TEST(LineReaderTest, TooLong) {
   ASSERT_TRUE(file.IsOk());
   LineReader reader(file.GetFd());
 
-  const char *line;
+  const char* line;
   unsigned len;
   ASSERT_FALSE(reader.GetNextLine(&line, &len));
 }

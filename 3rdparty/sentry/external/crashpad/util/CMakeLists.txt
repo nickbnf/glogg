@@ -36,6 +36,7 @@ add_library(crashpad_util STATIC
     misc/memory_sanitizer.h
     misc/metrics.cc
     misc/metrics.h
+    misc/no_cfi_icall.h
     misc/paths.h
     misc/pdb_structures.cc
     misc/pdb_structures.h
@@ -199,7 +200,7 @@ if(APPLE)
             process/process_memory_mac.cc
             process/process_memory_mac.h
         )
-    elseif()
+    else()
         target_sources(crashpad_util PRIVATE
             ios/exception_processor.h
             ios/exception_processor.mm
@@ -333,7 +334,7 @@ if(APPLE)
     if(NOT IOS)
         set(def_relative_files "exc.defs" "mach_exc.defs" "notify.defs")
         set(input_files "${CMAKE_CURRENT_LIST_DIR}/mach/child_port.defs")
-    elseif()
+    else()
         set(def_relative_files "")
         set(input_files
             "${CMAKE_CURRENT_LIST_DIR}/../third_party/xnu/osfmk/mach/exc.defs"
@@ -355,6 +356,41 @@ if(APPLE)
     set(output_dir "${CMAKE_CURRENT_BINARY_DIR}/util/mach")
     file(MAKE_DIRECTORY "${output_dir}")
 
+    get_property(archs TARGET crashpad_util PROPERTY OSX_ARCHITECTURES)
+    if(NOT archs)
+        if(IOS)
+            set(archs "arm64")
+        else()
+            set(archs "x86_64")
+        endif()
+    endif()
+    list(TRANSFORM archs PREPEND "--arch=")
+
+    set(includes
+        "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        "${CMAKE_CURRENT_SOURCE_DIR}/../compat/mac"
+    )
+    if(IOS)
+        list(APPEND includes "${CMAKE_CURRENT_SOURCE_DIR}/../compat/ios")
+    endif()
+    list(TRANSFORM includes PREPEND "--include=")
+
+    if(CMAKE_OSX_SYSROOT)
+        set(sdk --sdk ${CMAKE_OSX_SYSROOT})
+    endif()
+
+    # When building for Xcode, the `CMAKE_OSX_SYSROOT` is not set to a proper
+    # directory, but rather is `iphoneos`, which confuses `mig`.
+    # Also, Xcode uses a different `SDKROOT` depending on the `-sdk` flag
+    # provided to `xcodebuild`.
+    # Similarly, we don't know the arch at configure-time, because it changes
+    # at build time depending on the `-sdk` flag as well.
+    # We hack around this by consuming the arch list from the env.
+    if(XCODE)
+        set(archs --arch "FROM_ENV")
+        set(sdk --sdk "$SDKROOT")
+    endif()
+
     # Create generate rule for each input file. Add each generated output
     # as a source to the target.
     foreach(input ${input_files})
@@ -367,7 +403,7 @@ if(APPLE)
             OUTPUT
             ${output_files}
             COMMAND
-            "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/mach/mig.py" "${input}" ${output_files}
+            "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/mach/mig.py" ${archs} ${sdk} ${includes} "${input}" ${output_files}
             DEPENDS
             "${CMAKE_CURRENT_SOURCE_DIR}/mach/mig.py" "${input}"
         )
@@ -390,12 +426,23 @@ target_link_libraries(crashpad_util
 )
 
 if(APPLE)
+    get_property(archs TARGET crashpad_util PROPERTY OSX_ARCHITECTURES)
+    if (archs)
+        list(TRANSFORM archs PREPEND "-arch ")
+        set(CMAKE_ASM_FLAGS "${CFLAGS} ${archs}")
+    endif()
+
     target_link_libraries(crashpad_util PRIVATE
         bsm
         "-framework CoreFoundation"
         "-framework Foundation"
         "-framework IOKit"
     )
+    if(IOS)
+        target_link_libraries(crashpad_util PRIVATE
+            "-framework UIKit"
+        )
+    endif()
 endif()
 
 if(LINUX)
@@ -440,3 +487,7 @@ set_property(TARGET crashpad_util PROPERTY EXPORT_NAME util)
 add_library(crashpad::util ALIAS crashpad_util)
 
 crashpad_install_target(crashpad_util)
+crashpad_install_dev(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/crashpad/util"
+    FILES_MATCHING PATTERN "*.h"
+)

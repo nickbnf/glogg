@@ -57,7 +57,7 @@ class TestCompilationUnit: public google_breakpad::test_assembler::Section {
     assert(format_size == 4 || format_size == 8);
     format_size_ = format_size;
   }
-    
+
   // Append a DWARF section offset value, of the appropriate size for this
   // compilation unit.
   template<typename T>
@@ -70,8 +70,8 @@ class TestCompilationUnit: public google_breakpad::test_assembler::Section {
 
   // Append a DWARF compilation unit header to the section, with the given
   // DWARF version, abbrev table offset, and address size.
-  TestCompilationUnit &Header(int version, const Label &abbrev_offset,
-                              size_t address_size) {
+  TestCompilationUnit& Header(int version, const Label& abbrev_offset,
+                              size_t address_size, int header_type) {
     if (format_size_ == 4) {
       D32(length_);
     } else {
@@ -80,13 +80,28 @@ class TestCompilationUnit: public google_breakpad::test_assembler::Section {
     }
     post_length_offset_ = Size();
     D16(version);
-    SectionOffset(abbrev_offset);
-    D8(address_size);
+    if (version <= 4) {
+      SectionOffset(abbrev_offset);
+      D8(address_size);
+    } else {
+      D8(header_type);  // DW_UT_compile, DW_UT_type, etc.
+      D8(address_size);
+      SectionOffset(abbrev_offset);
+      if (header_type == dwarf2reader::DW_UT_type) {
+        uint64_t dummy_type_signature = 0xdeadbeef;
+        uint64_t dummy_type_offset = 0x2b;
+        D64(dummy_type_signature);
+        if (format_size_ == 4)
+          D32(dummy_type_offset);
+        else
+          D64(dummy_type_offset);
+      }
+    }
     return *this;
   }
 
   // Mark the end of this header's DIEs.
-  TestCompilationUnit &Finish() {
+  TestCompilationUnit& Finish() {
     length_ = Size() - post_length_offset_;
     return *this;
   }
@@ -116,7 +131,7 @@ class TestAbbrevTable: public google_breakpad::test_assembler::Section {
   // Start a new abbreviation table entry for abbreviation code |code|,
   // encoding a DIE whose tag is |tag|, and which has children if and only
   // if |has_children| is true.
-  TestAbbrevTable &Abbrev(int code, DwarfTag tag, DwarfHasChild has_children) {
+  TestAbbrevTable& Abbrev(int code, DwarfTag tag, DwarfHasChild has_children) {
     assert(code != 0);
     ULEB128(code);
     ULEB128(static_cast<unsigned>(tag));
@@ -126,21 +141,21 @@ class TestAbbrevTable: public google_breakpad::test_assembler::Section {
 
   // Add an attribute to the current abbreviation code whose name is |name|
   // and whose form is |form|.
-  TestAbbrevTable &Attribute(DwarfAttribute name, DwarfForm form) {
+  TestAbbrevTable& Attribute(DwarfAttribute name, DwarfForm form) {
     ULEB128(static_cast<unsigned>(name));
     ULEB128(static_cast<unsigned>(form));
     return *this;
   }
 
   // Finish the current abbreviation code.
-  TestAbbrevTable &EndAbbrev() {
+  TestAbbrevTable& EndAbbrev() {
     ULEB128(0);
     ULEB128(0);
     return *this;
   }
 
   // Finish the current abbreviation table.
-  TestAbbrevTable &EndTable() {
+  TestAbbrevTable& EndTable() {
     ULEB128(0);
     return *this;
   }

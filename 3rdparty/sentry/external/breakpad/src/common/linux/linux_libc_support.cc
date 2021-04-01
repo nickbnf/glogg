@@ -190,7 +190,7 @@ const char* my_read_decimal_ptr(uintptr_t* result, const char* s) {
 }
 
 void my_memset(void* ip, char c, size_t len) {
-  char* p = (char *) ip;
+  char* p = (char*) ip;
   while (len--)
     *p++ = c;
 }

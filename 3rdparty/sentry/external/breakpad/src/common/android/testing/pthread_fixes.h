@@ -80,7 +80,7 @@ int pthread_barrier_wait(pthread_barrier_t* barrier) {
   return 0;
 }
 
-int pthread_barrier_destroy(pthread_barrier_t *barrier) {
+int pthread_barrier_destroy(pthread_barrier_t* barrier) {
   barrier->count = 0;
   pthread_cond_destroy(&barrier->cond);
   pthread_mutex_destroy(&barrier->mutex);

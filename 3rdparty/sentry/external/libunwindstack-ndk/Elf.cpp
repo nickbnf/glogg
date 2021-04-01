@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <linux/elf.h>
+#include <elf.h>
 #include <string.h>
 
 #include <memory>
@@ -24,7 +24,6 @@
 
 #define LOG_TAG "unwind"
 #include <android-base/log_main.h>
-#include <linux/elf-em.h>
 
 #include <unwindstack/Elf.h>
 #include <unwindstack/ElfInterface.h>
@@ -41,7 +40,7 @@ bool Elf::cache_enabled_;
 std::unordered_map<std::string, std::pair<std::shared_ptr<Elf>, bool>>* Elf::cache_;
 std::mutex* Elf::cache_lock_;
 
-bool Elf::Init(bool init_gnu_debugdata) {
+bool Elf::Init() {
   load_bias_ = 0;
   if (!memory_) {
     return false;
@@ -56,13 +55,7 @@ bool Elf::Init(bool init_gnu_debugdata) {
   if (valid_) {
     interface_->InitHeaders();
 #ifdef WITH_DEBUG_FRAME
-    if (init_gnu_debugdata) {
-      InitGnuDebugdata();
-    } else {
-      gnu_debugdata_interface_.reset(nullptr);
-    }
-#else
-    gnu_debugdata_interface_.reset(nullptr);
+    InitGnuDebugdata();
 #endif
   } else {
     interface_.reset(nullptr);
@@ -87,7 +80,7 @@ void Elf::InitGnuDebugdata() {
 
   // Ignore the load_bias from the compressed section, the correct load bias
   // is in the uncompressed data.
-  uint64_t load_bias;
+  int64_t load_bias;
   if (gnu->Init(&load_bias)) {
     gnu->InitHeaders();
     interface_->SetGnuDebugdataInterface(gnu);
@@ -97,12 +90,20 @@ void Elf::InitGnuDebugdata() {
     gnu_debugdata_interface_.reset(nullptr);
   }
 }
-
-bool Elf::GetSoname(std::string* name) {
-  std::lock_guard<std::mutex> guard(lock_);
-  return valid_ && interface_->GetSoname(name);
-}
 #endif
+
+void Elf::Invalidate() {
+  interface_.reset(nullptr);
+  valid_ = false;
+}
+
+std::string Elf::GetSoname() {
+  std::lock_guard<std::mutex> guard(lock_);
+  if (!valid_) {
+    return "";
+  }
+  return interface_->GetSoname();
+}
 
 uint64_t Elf::GetRelPc(uint64_t pc, const MapInfo* map_info) {
   return pc - map_info->start + load_bias_ + map_info->elf_offset;
@@ -110,41 +111,51 @@ uint64_t Elf::GetRelPc(uint64_t pc, const MapInfo* map_info) {
 
 bool Elf::GetFunctionName(uint64_t addr, std::string* name, uint64_t* func_offset) {
   std::lock_guard<std::mutex> guard(lock_);
-  return valid_ && (interface_->GetFunctionName(addr, load_bias_, name, func_offset) ||
-                    (gnu_debugdata_interface_ && gnu_debugdata_interface_->GetFunctionName(
-                                                     addr, load_bias_, name, func_offset)));
+  return valid_ && (interface_->GetFunctionName(addr, name, func_offset) ||
+                    (gnu_debugdata_interface_ &&
+                     gnu_debugdata_interface_->GetFunctionName(addr, name, func_offset)));
 }
 
-#ifdef WITH_DEBUG_FRAME
-bool Elf::GetGlobalVariable(const std::string& name, uint64_t* memory_address) {
+bool Elf::GetGlobalVariableOffset(const std::string& name, uint64_t* memory_offset) {
   if (!valid_) {
     return false;
   }
 
-  if (!interface_->GetGlobalVariable(name, memory_address) &&
+  uint64_t vaddr;
+  if (!interface_->GetGlobalVariable(name, &vaddr) &&
       (gnu_debugdata_interface_ == nullptr ||
-       !gnu_debugdata_interface_->GetGlobalVariable(name, memory_address))) {
+       !gnu_debugdata_interface_->GetGlobalVariable(name, &vaddr))) {
     return false;
   }
 
-  // Adjust by the load bias.
-  if (*memory_address < load_bias_) {
-    return false;
+  if (arch() == ARCH_ARM64) {
+    // Tagged pointer after Android R would lead top byte to have random values
+    // https://source.android.com/devices/tech/debug/tagged-pointers
+    vaddr &= (1ULL << 56) - 1;
   }
 
-  *memory_address -= load_bias_;
-
-  // If this winds up in the dynamic section, then we might need to adjust
-  // the address.
-  uint64_t dynamic_end = interface_->dynamic_vaddr() + interface_->dynamic_size();
-  if (*memory_address >= interface_->dynamic_vaddr() && *memory_address < dynamic_end) {
-    if (interface_->dynamic_vaddr() > interface_->dynamic_offset()) {
-      *memory_address -= interface_->dynamic_vaddr() - interface_->dynamic_offset();
-    } else {
-      *memory_address += interface_->dynamic_offset() - interface_->dynamic_vaddr();
-    }
+  // Check the .data section.
+  uint64_t vaddr_start = interface_->data_vaddr_start();
+  if (vaddr >= vaddr_start && vaddr < interface_->data_vaddr_end()) {
+    *memory_offset = vaddr - vaddr_start + interface_->data_offset();
+    return true;
   }
-  return true;
+
+  // Check the .dynamic section.
+  vaddr_start = interface_->dynamic_vaddr_start();
+  if (vaddr >= vaddr_start && vaddr < interface_->dynamic_vaddr_end()) {
+    *memory_offset = vaddr - vaddr_start + interface_->dynamic_offset();
+    return true;
+  }
+
+  return false;
+}
+
+std::string Elf::GetBuildID() {
+  if (!valid_) {
+    return "";
+  }
+  return interface_->GetBuildID();
 }
 
 void Elf::GetLastError(ErrorData* data) {
@@ -157,7 +168,7 @@ ErrorCode Elf::GetLastErrorCode() {
   if (valid_) {
     return interface_->LastErrorCode();
   }
-  return ERROR_NONE;
+  return ERROR_INVALID_ELF;
 }
 
 uint64_t Elf::GetLastErrorAddress() {
@@ -166,24 +177,30 @@ uint64_t Elf::GetLastErrorAddress() {
   }
   return 0;
 }
-#endif
 
-// The relative pc is always relative to the start of the map from which it comes.
-bool Elf::Step(uint64_t rel_pc, uint64_t adjusted_rel_pc, uint64_t elf_offset, Regs* regs,
-               Memory* process_memory, bool* finished) {
+// The relative pc expectd by this function is relative to the start of the elf.
+bool Elf::StepIfSignalHandler(uint64_t rel_pc, Regs* regs, Memory* process_memory) {
   if (!valid_) {
     return false;
   }
 
-  // The relative pc expectd by StepIfSignalHandler is relative to the start of the elf.
-  if (regs->StepIfSignalHandler(rel_pc + elf_offset, this, process_memory)) {
-    *finished = false;
-    return true;
+  // Convert the rel_pc to an elf_offset.
+  if (rel_pc < static_cast<uint64_t>(load_bias_)) {
+    return false;
+  }
+  return regs->StepIfSignalHandler(rel_pc - load_bias_, this, process_memory);
+}
+
+// The relative pc is always relative to the start of the map from which it comes.
+bool Elf::Step(uint64_t rel_pc, Regs* regs, Memory* process_memory, bool* finished,
+               bool* is_signal_frame) {
+  if (!valid_) {
+    return false;
   }
 
   // Lock during the step which can update information in the object.
   std::lock_guard<std::mutex> guard(lock_);
-  return interface_->Step(adjusted_rel_pc, load_bias_, regs, process_memory, finished);
+  return interface_->Step(rel_pc, regs, process_memory, finished, is_signal_frame);
 }
 
 bool Elf::IsValidElf(Memory* memory) {
@@ -203,34 +220,32 @@ bool Elf::IsValidElf(Memory* memory) {
   return true;
 }
 
-void Elf::GetInfo(Memory* memory, bool* valid, uint64_t* size) {
+bool Elf::GetInfo(Memory* memory, uint64_t* size) {
   if (!IsValidElf(memory)) {
-    *valid = false;
-    return;
+    return false;
   }
   *size = 0;
-  *valid = true;
 
-  // Now read the section header information.
   uint8_t class_type;
   if (!memory->ReadFully(EI_CLASS, &class_type, 1)) {
-    return;
+    return false;
   }
+
+  // Get the maximum size of the elf data from the header.
   if (class_type == ELFCLASS32) {
     ElfInterface32::GetMaxSize(memory, size);
   } else if (class_type == ELFCLASS64) {
     ElfInterface64::GetMaxSize(memory, size);
   } else {
-    *valid = false;
-  }
-}
-
-#ifdef WITH_DEBUG_FRAME
-bool Elf::IsValidPc(uint64_t pc) {
-  if (!valid_ || pc < load_bias_) {
     return false;
   }
-  pc -= load_bias_;
+  return true;
+}
+
+bool Elf::IsValidPc(uint64_t pc) {
+  if (!valid_ || (load_bias_ > 0 && pc < static_cast<uint64_t>(load_bias_))) {
+    return false;
+  }
 
   if (interface_->IsValidPc(pc)) {
     return true;
@@ -242,7 +257,6 @@ bool Elf::IsValidPc(uint64_t pc) {
 
   return false;
 }
-#endif
 
 ElfInterface* Elf::CreateInterfaceFromMemory(Memory* memory) {
   if (!IsValidElf(memory)) {
@@ -294,7 +308,7 @@ ElfInterface* Elf::CreateInterfaceFromMemory(Memory* memory) {
   return interface.release();
 }
 
-uint64_t Elf::GetLoadBias(Memory* memory) {
+int64_t Elf::GetLoadBias(Memory* memory) {
   if (!IsValidElf(memory)) {
     return 0;
   }
@@ -384,6 +398,24 @@ bool Elf::CacheGet(MapInfo* info) {
     return true;
   }
   return false;
+}
+
+std::string Elf::GetBuildID(Memory* memory) {
+  if (!IsValidElf(memory)) {
+    return "";
+  }
+
+  uint8_t class_type;
+  if (!memory->Read(EI_CLASS, &class_type, 1)) {
+    return "";
+  }
+
+  if (class_type == ELFCLASS32) {
+    return ElfInterface::ReadBuildIDFromMemory<Elf32_Ehdr, Elf32_Shdr, Elf32_Nhdr>(memory);
+  } else if (class_type == ELFCLASS64) {
+    return ElfInterface::ReadBuildIDFromMemory<Elf64_Ehdr, Elf64_Shdr, Elf64_Nhdr>(memory);
+  }
+  return "";
 }
 
 }  // namespace unwindstack

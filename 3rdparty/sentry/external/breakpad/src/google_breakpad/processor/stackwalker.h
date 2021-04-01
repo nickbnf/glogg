@@ -49,6 +49,7 @@
 #include "google_breakpad/common/breakpad_types.h"
 #include "google_breakpad/processor/code_modules.h"
 #include "google_breakpad/processor/memory_region.h"
+#include "google_breakpad/processor/minidump.h"
 #include "google_breakpad/processor/stack_frame_symbolizer.h"
 
 namespace google_breakpad {
@@ -88,6 +89,7 @@ class Stackwalker {
      const SystemInfo* system_info,
      DumpContext* context,
      MemoryRegion* memory,
+     MinidumpMemoryList* memory_list,
      const CodeModules* modules,
      const CodeModules* unloaded_modules,
      StackFrameSymbolizer* resolver_helper);
@@ -176,8 +178,12 @@ class Stackwalker {
       if (!memory_->GetMemoryAtAddress(location, &ip))
         break;
 
-      if (modules_ && modules_->GetModuleForAddress(ip) &&
-          InstructionAddressSeemsValid(ip)) {
+      // The return address points to the instruction after a call. If the
+      // caller was a no return function, this might point past the end of the
+      // function. Subtract one from the instruction pointer so it points into
+      // the call instruction instead.
+      if (modules_ && modules_->GetModuleForAddress(ip  - 1) &&
+          InstructionAddressSeemsValid(ip - 1)) {
         *ip_found = ip;
         *location_found = location;
         return true;

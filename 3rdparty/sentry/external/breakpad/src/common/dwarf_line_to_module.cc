@@ -44,18 +44,18 @@
 // it until we actually have to deal with DWARF on Windows.
 
 // Return true if PATH is an absolute path, false if it is relative.
-static bool PathIsAbsolute(const string &path) {
+static bool PathIsAbsolute(const string& path) {
   return (path.size() >= 1 && path[0] == '/');
 }
 
-static bool HasTrailingSlash(const string &path) {
+static bool HasTrailingSlash(const string& path) {
   return (path.size() >= 1 && path[path.size() - 1] == '/');
 }
 
 // If PATH is an absolute path, return PATH.  If PATH is a relative path,
 // treat it as relative to BASE and return the combined path.
-static string ExpandPath(const string &path,
-                         const string &base) {
+static string ExpandPath(const string& path,
+                         const string& base) {
   if (PathIsAbsolute(path) || base.empty())
     return path;
   return base + (HasTrailingSlash(base) ? "" : "/") + path;
@@ -63,14 +63,14 @@ static string ExpandPath(const string &path,
 
 namespace google_breakpad {
 
-void DwarfLineToModule::DefineDir(const string &name, uint32_t dir_num) {
+void DwarfLineToModule::DefineDir(const string& name, uint32_t dir_num) {
   // Directory number zero is reserved to mean the compilation
   // directory. Silently ignore attempts to redefine it.
   if (dir_num != 0)
     directories_[dir_num] = ExpandPath(name, compilation_dir_);
 }
 
-void DwarfLineToModule::DefineFile(const string &name, int32_t file_num,
+void DwarfLineToModule::DefineFile(const string& name, int32_t file_num,
                                    uint32_t dir_num, uint64_t mod_time,
                                    uint64_t length) {
   if (file_num == -1)

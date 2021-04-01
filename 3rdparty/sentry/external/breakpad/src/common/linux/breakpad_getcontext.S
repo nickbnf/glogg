@@ -32,7 +32,7 @@
 
 #include "common/linux/ucontext_constants.h"
 
-/* int getcontext (ucontext_t *ucp) */
+/* int getcontext (ucontext_t* ucp) */
 
 #if defined(__arm__)
 
@@ -336,7 +336,7 @@ symbol:   .frame  sp, framesize, rpc;
     .size function,.-function
 #endif
 
-/* int getcontext (ucontext_t *ucp) */
+/* int getcontext (ucontext_t* ucp) */
 
 NESTED (breakpad_getcontext, FRAME_SIZE, ra)
   .mask   0x10000000, 0

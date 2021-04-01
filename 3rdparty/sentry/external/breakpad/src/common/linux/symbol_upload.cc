@@ -46,8 +46,8 @@
 namespace google_breakpad {
 namespace sym_upload {
 
-void TokenizeByChar(const string &source_string, int c,
-                    std::vector<string> *results) {
+void TokenizeByChar(const string& source_string, int c,
+                    std::vector<string>* results) {
   assert(results);
   string::size_type cur_pos = 0, next_pos = 0;
   while ((next_pos = source_string.find(c, cur_pos)) != string::npos) {
@@ -62,8 +62,8 @@ void TokenizeByChar(const string &source_string, int c,
 //=============================================================================
 // Parse out the module line which have 5 parts.
 // MODULE <os> <cpu> <uuid> <module-name>
-bool ModuleDataForSymbolFile(const string &file,
-                             std::vector<string> *module_parts) {
+bool ModuleDataForSymbolFile(const string& file,
+                             std::vector<string>* module_parts) {
   assert(module_parts);
   const size_t kModulePartNumber = 5;
   FILE* fp = fopen(file.c_str(), "r");
@@ -90,7 +90,7 @@ bool ModuleDataForSymbolFile(const string &file,
 }
 
 //=============================================================================
-string CompactIdentifier(const string &uuid) {
+string CompactIdentifier(const string& uuid) {
   std::vector<string> components;
   TokenizeByChar(uuid, '-', &components);
   string result;

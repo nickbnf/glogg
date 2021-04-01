@@ -79,7 +79,7 @@ int tkill(pid_t tid, int sig) {
 // Core file size limit set to 1 MB, which is big enough for test purposes.
 const rlim_t kCoreSizeLimit = 1024 * 1024;
 
-void *thread_function(void *data) {
+void* thread_function(void* data) {
   ThreadData* thread_data = reinterpret_cast<ThreadData*>(data);
   volatile pid_t thread_id = gettid();
   *(thread_data->thread_id_ptr) = thread_id;

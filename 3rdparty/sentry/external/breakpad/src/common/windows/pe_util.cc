@@ -285,7 +285,7 @@ bool PrintPEFrameData(const wstring & pe_file, FILE * out_file)
       unwind_rva = chained_func->UnwindInfoAddress;
     }
 
-    UnwindInfo *unwind_info = static_cast<UnwindInfo *>(
+    UnwindInfo *unwind_info = static_cast<UnwindInfo*>(
       ImageRvaToVa(img->FileHeader,
         img->MappedAddress,
         unwind_rva,
@@ -351,7 +351,7 @@ bool PrintPEFrameData(const wstring & pe_file, FILE * out_file)
           (unwind_info->unwind_code +
             ((unwind_info->count_of_codes + 1) & ~1)));
 
-        unwind_info = static_cast<UnwindInfo *>(
+        unwind_info = static_cast<UnwindInfo*>(
           ImageRvaToVa(img->FileHeader,
             img->MappedAddress,
             chained_func->UnwindInfoAddress,

@@ -58,11 +58,11 @@ class SourceLineResolverInterface {
   // and debug_identifier members populated.
   //
   // map_file should contain line/address mappings for this module.
-  virtual bool LoadModule(const CodeModule *module,
-                          const string &map_file) = 0;
+  virtual bool LoadModule(const CodeModule* module,
+                          const string& map_file) = 0;
   // Same as above, but takes the contents of a pre-read map buffer
-  virtual bool LoadModuleUsingMapBuffer(const CodeModule *module,
-                                        const string &map_buffer) = 0;
+  virtual bool LoadModuleUsingMapBuffer(const CodeModule* module,
+                                        const string& map_buffer) = 0;
 
   // Add an interface to load symbol using C-String data instead of string.
   // This is useful in the optimization design for avoiding unnecessary copying
@@ -70,8 +70,8 @@ class SourceLineResolverInterface {
   // LoadModuleUsingMemoryBuffer() does NOT take ownership of memory_buffer.
   // LoadModuleUsingMemoryBuffer() null terminates the passed in buffer, if
   // the last character is not a null terminator.
-  virtual bool LoadModuleUsingMemoryBuffer(const CodeModule *module,
-                                           char *memory_buffer,
+  virtual bool LoadModuleUsingMemoryBuffer(const CodeModule* module,
+                                           char* memory_buffer,
                                            size_t memory_buffer_size) = 0;
 
   // Return true if the memory buffer should be deleted immediately after
@@ -81,31 +81,31 @@ class SourceLineResolverInterface {
 
   // Request that the specified module be unloaded from this resolver.
   // A resolver may choose to ignore such a request.
-  virtual void UnloadModule(const CodeModule *module) = 0;
+  virtual void UnloadModule(const CodeModule* module) = 0;
 
   // Returns true if the module has been loaded.
-  virtual bool HasModule(const CodeModule *module) = 0;
+  virtual bool HasModule(const CodeModule* module) = 0;
 
   // Returns true if the module has been loaded and it is corrupt.
-  virtual bool IsModuleCorrupt(const CodeModule *module) = 0;
+  virtual bool IsModuleCorrupt(const CodeModule* module) = 0;
 
   // Fills in the function_base, function_name, source_file_name,
   // and source_line fields of the StackFrame.  The instruction and
   // module_name fields must already be filled in.
-  virtual void FillSourceLineInfo(StackFrame *frame) = 0;
+  virtual void FillSourceLineInfo(StackFrame* frame) = 0;
 
   // If Windows stack walking information is available covering
   // FRAME's instruction address, return a WindowsFrameInfo structure
   // describing it. If the information is not available, returns NULL.
   // A NULL return value does not indicate an error. The caller takes
   // ownership of any returned WindowsFrameInfo object.
-  virtual WindowsFrameInfo *FindWindowsFrameInfo(const StackFrame *frame) = 0;
+  virtual WindowsFrameInfo* FindWindowsFrameInfo(const StackFrame* frame) = 0;
 
   // If CFI stack walking information is available covering ADDRESS,
   // return a CFIFrameInfo structure describing it. If the information
   // is not available, return NULL. The caller takes ownership of any
   // returned CFIFrameInfo object.
-  virtual CFIFrameInfo *FindCFIFrameInfo(const StackFrame *frame) = 0;
+  virtual CFIFrameInfo* FindCFIFrameInfo(const StackFrame* frame) = 0;
 
  protected:
   // SourceLineResolverInterface cannot be instantiated except by subclasses

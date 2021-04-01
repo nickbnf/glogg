@@ -78,7 +78,8 @@ void** ConstructTlsVector() {
     // another thread already did our dirty work.
     if (PlatformThreadLocalStorage::TLS_KEY_OUT_OF_INDEXES !=
         base::subtle::NoBarrier_CompareAndSwap(&g_native_tls_key,
-            PlatformThreadLocalStorage::TLS_KEY_OUT_OF_INDEXES, key)) {
+            PlatformThreadLocalStorage::TLS_KEY_OUT_OF_INDEXES,
+            static_cast<base::subtle::Atomic32>(key))) {
       // We've been shortcut. Another thread replaced g_native_tls_key first so
       // we need to destroy our index and use the one the other thread got
       // first.

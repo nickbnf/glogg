@@ -2,12 +2,20 @@
 #include "sentry_backend.h"
 #include "sentry_core.h"
 #include "sentry_database.h"
-#include "sentry_modulefinder.h"
 #include "sentry_options.h"
+#include "sentry_os.h"
 #include "sentry_string.h"
 #include "sentry_symbolizer.h"
 #include "sentry_sync.h"
 #include <stdlib.h>
+
+#ifdef SENTRY_BACKEND_CRASHPAD
+#    define SENTRY_BACKEND "crashpad"
+#elif defined(SENTRY_BACKEND_BREAKPAD)
+#    define SENTRY_BACKEND "breakpad"
+#elif defined(SENTRY_BACKEND_INPROC)
+#    define SENTRY_BACKEND "inproc"
+#endif
 
 static bool g_scope_initialized = false;
 static sentry_scope_t g_scope = { 0 };
@@ -37,6 +45,12 @@ get_client_sdk(void)
     sentry_value_append(packages, package);
     sentry_value_set_by_key(client_sdk, "packages", packages);
 
+#ifdef SENTRY_BACKEND
+    sentry_value_t integrations = sentry_value_new_list();
+    sentry_value_append(integrations, sentry_value_new_string(SENTRY_BACKEND));
+    sentry_value_set_by_key(client_sdk, "integrations", integrations);
+#endif
+
     sentry_value_freeze(client_sdk);
     return client_sdk;
 }
@@ -55,6 +69,7 @@ get_scope(void)
     g_scope.tags = sentry_value_new_object();
     g_scope.extra = sentry_value_new_object();
     g_scope.contexts = sentry_value_new_object();
+    sentry_value_set_by_key(g_scope.contexts, "os", sentry__get_os_context());
     g_scope.breadcrumbs = sentry_value_new_list();
     g_scope.level = SENTRY_LEVEL_ERROR;
     g_scope.client_sdk = get_client_sdk();
@@ -240,6 +255,12 @@ sentry__scope_apply_to_event(
             SET(Key, Source);                                                  \
         }                                                                      \
     } while (0)
+#define PLACE_CLONED_VALUE(Key, Source)                                        \
+    do {                                                                       \
+        if (IS_NULL(Key) && !sentry_value_is_null(Source)) {                   \
+            SET(Key, sentry__value_clone(Source));                             \
+        }                                                                      \
+    } while (0)
 
     PLACE_STRING("platform", "native");
 
@@ -259,22 +280,18 @@ sentry__scope_apply_to_event(
     PLACE_VALUE("sdk", scope->client_sdk);
 
     // TODO: these should merge
-    PLACE_VALUE("tags", scope->tags);
-    PLACE_VALUE("extra", scope->extra);
-    PLACE_VALUE("contexts", scope->contexts);
+    PLACE_CLONED_VALUE("tags", scope->tags);
+    PLACE_CLONED_VALUE("extra", scope->extra);
+    PLACE_CLONED_VALUE("contexts", scope->contexts);
 
     if (mode & SENTRY_SCOPE_BREADCRUMBS) {
-        sentry_value_t breadcrumbs = sentry__value_clone(scope->breadcrumbs);
-        PLACE_VALUE("breadcrumbs", breadcrumbs);
-        // because `PLACE_VALUE` adds a new ref, and we would otherwise leak
-        sentry_value_decref(breadcrumbs);
+        PLACE_CLONED_VALUE("breadcrumbs", scope->breadcrumbs);
     }
 
     if (mode & SENTRY_SCOPE_MODULES) {
-        sentry_value_t modules = sentry__modules_get_list();
+        sentry_value_t modules = sentry_get_modules_list();
         if (!sentry_value_is_null(modules)) {
             sentry_value_t debug_meta = sentry_value_new_object();
-            sentry_value_incref(modules);
             sentry_value_set_by_key(debug_meta, "images", modules);
             sentry_value_set_by_key(event, "debug_meta", debug_meta);
         }

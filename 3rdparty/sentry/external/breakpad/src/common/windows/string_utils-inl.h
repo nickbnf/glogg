@@ -72,26 +72,26 @@ class WindowsStringUtils {
   // Roughly equivalent to MSVC8's wcscpy_s, except pre-MSVC8, this does
   // not fail if source is longer than destination_size.  The destination
   // buffer is always 0-terminated.
-  static void safe_wcscpy(wchar_t *destination, size_t destination_size,
-                          const wchar_t *source);
+  static void safe_wcscpy(wchar_t* destination, size_t destination_size,
+                          const wchar_t* source);
 
   // Roughly equivalent to MSVC8's wcsncpy_s, except that _TRUNCATE cannot
   // be passed directly, and pre-MSVC8, this will not fail if source or count
   // are longer than destination_size.  The destination buffer is always
   // 0-terminated.
-  static void safe_wcsncpy(wchar_t *destination, size_t destination_size,
-                           const wchar_t *source, size_t count);
+  static void safe_wcsncpy(wchar_t* destination, size_t destination_size,
+                           const wchar_t* source, size_t count);
 
   // Performs multi-byte to wide character conversion on C++ strings, using
   // mbstowcs_s (MSVC8) or mbstowcs (pre-MSVC8).  Returns false on failure,
   // without setting wcs.
-  static bool safe_mbstowcs(const string &mbs, wstring *wcs);
+  static bool safe_mbstowcs(const string& mbs, wstring* wcs);
 
   // The inverse of safe_mbstowcs.
-  static bool safe_wcstombs(const wstring &wcs, string *mbs);
+  static bool safe_wcstombs(const wstring& wcs, string* mbs);
 
   // Returns the base name of a file, e.g. strips off the path.
-  static wstring GetBaseName(const wstring &filename);
+  static wstring GetBaseName(const wstring& filename);
 
  private:
   // Disallow instantiation and other object-based operations.
@@ -102,9 +102,9 @@ class WindowsStringUtils {
 };
 
 // static
-inline void WindowsStringUtils::safe_wcscpy(wchar_t *destination,
+inline void WindowsStringUtils::safe_wcscpy(wchar_t* destination,
                                             size_t destination_size,
-                                            const wchar_t *source) {
+                                            const wchar_t* source) {
 #if _MSC_VER >= 1400  // MSVC 2005/8
   wcscpy_s(destination, destination_size, source);
 #else  // _MSC_VER >= 1400
@@ -118,9 +118,9 @@ inline void WindowsStringUtils::safe_wcscpy(wchar_t *destination,
 }
 
 // static
-inline void WindowsStringUtils::safe_wcsncpy(wchar_t *destination,
+inline void WindowsStringUtils::safe_wcsncpy(wchar_t* destination,
                                              size_t destination_size,
-                                             const wchar_t *source,
+                                             const wchar_t* source,
                                              size_t count) {
 #if _MSC_VER >= 1400  // MSVC 2005/8
   wcsncpy_s(destination, destination_size, source, count);

@@ -71,7 +71,7 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
     // stream. FILE is the name of the file we're processing, and
     // SECTION is the name of the section within that file that we're
     // looking at (.debug_frame, .eh_frame, etc.).
-    Reporter(const string &file, const string &section)
+    Reporter(const string& file, const string& section)
       : file_(file), section_(section) { }
     virtual ~Reporter() { }
 
@@ -83,13 +83,13 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
 
     // The DWARF CFI entry at OFFSET says that REG is undefined, but the
     // Breakpad symbol file format cannot express this.
-    virtual void UndefinedNotSupported(size_t offset, const string &reg);
+    virtual void UndefinedNotSupported(size_t offset, const string& reg);
 
     // The DWARF CFI entry at OFFSET says that REG uses a DWARF
     // expression to find its value, but DwarfCFIToModule is not
     // capable of translating DWARF expressions to Breakpad postfix
     // expressions.
-    virtual void ExpressionsNotSupported(size_t offset, const string &reg);
+    virtual void ExpressionsNotSupported(size_t offset, const string& reg);
 
   protected:
     string file_, section_;
@@ -118,7 +118,7 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
    private:
     // Given STRINGS, an array of C strings with SIZE elements, return an
     // equivalent vector<string>.
-    static vector<string> MakeVector(const char * const *strings, size_t size);
+    static vector<string> MakeVector(const char* const* strings, size_t size);
   };
 
   // Create a handler for the dwarf2reader::CallFrameInfo parser that
@@ -130,15 +130,15 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
   //
   // Use REPORTER for reporting problems encountered in the conversion
   // process.
-  DwarfCFIToModule(Module *module, const vector<string> &register_names,
-                   Reporter *reporter)
+  DwarfCFIToModule(Module* module, const vector<string>& register_names,
+                   Reporter* reporter)
       : module_(module), register_names_(register_names), reporter_(reporter),
         entry_(NULL), return_address_(-1), cfa_name_(".cfa"), ra_name_(".ra") {
   }
   virtual ~DwarfCFIToModule() { delete entry_; }
 
   virtual bool Entry(size_t offset, uint64_t address, uint64_t length,
-                     uint8_t version, const string &augmentation,
+                     uint8_t version, const string& augmentation,
                      unsigned return_address);
   virtual bool UndefinedRule(uint64_t address, int reg);
   virtual bool SameValueRule(uint64_t address, int reg);
@@ -148,9 +148,9 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
                              int base_register, long offset);
   virtual bool RegisterRule(uint64_t address, int reg, int base_register);
   virtual bool ExpressionRule(uint64_t address, int reg,
-                              const string &expression);
+                              const string& expression);
   virtual bool ValExpressionRule(uint64_t address, int reg,
-                                 const string &expression);
+                                 const string& expression);
   virtual bool End();
 
  private:
@@ -158,19 +158,19 @@ class DwarfCFIToModule: public CallFrameInfo::Handler {
   string RegisterName(int i);
 
   // Record RULE for register REG at ADDRESS.
-  void Record(Module::Address address, int reg, const string &rule);
+  void Record(Module::Address address, int reg, const string& rule);
 
   // The module to which we should add entries.
-  Module *module_;
+  Module* module_;
 
   // Map from register numbers to register names.
-  const vector<string> &register_names_;
+  const vector<string>& register_names_;
 
   // The reporter to use to report problems.
-  Reporter *reporter_;
+  Reporter* reporter_;
 
   // The current entry we're constructing.
-  Module::StackFrameEntry *entry_;
+  Module::StackFrameEntry* entry_;
 
   // The section offset of the current frame description entry, for
   // use in error messages.

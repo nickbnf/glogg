@@ -122,7 +122,7 @@ struct sentry__winmutex_s {
 };
 
 static inline BOOL CALLBACK
-sentry__winmutex_init(
+sentry__winmutex_initonce(
     PINIT_ONCE UNUSED(InitOnce), PVOID cs, PVOID *UNUSED(lpContext))
 {
     InitializeCriticalSection((LPCRITICAL_SECTION)cs);
@@ -130,9 +130,16 @@ sentry__winmutex_init(
 }
 
 static inline void
+sentry__winmutex_init(struct sentry__winmutex_s *mutex)
+{
+    InitOnceExecuteOnce(&mutex->init_once, sentry__winmutex_initonce,
+        &mutex->critical_section, NULL);
+}
+
+static inline void
 sentry__winmutex_lock(struct sentry__winmutex_s *mutex)
 {
-    InitOnceExecuteOnce(&mutex->init_once, sentry__winmutex_init,
+    InitOnceExecuteOnce(&mutex->init_once, sentry__winmutex_initonce,
         &mutex->critical_section, NULL);
     EnterCriticalSection(&mutex->critical_section);
 }
@@ -143,15 +150,26 @@ typedef struct sentry__winmutex_s sentry_mutex_t;
         {                                                                      \
             INIT_ONCE_STATIC_INIT, { 0 }                                       \
         }
+#    define sentry__mutex_init(Lock) sentry__winmutex_init(Lock)
 #    define sentry__mutex_lock(Lock) sentry__winmutex_lock(Lock)
 #    define sentry__mutex_unlock(Lock)                                         \
         LeaveCriticalSection(&(Lock)->critical_section)
+#    define sentry__mutex_free(Lock)                                           \
+        DeleteCriticalSection(&(Lock)->critical_section)
 
+#    define sentry__thread_init(ThreadId) *ThreadId = INVALID_HANDLE_VALUE
 #    define sentry__thread_spawn(ThreadId, Func, Data)                         \
         (*ThreadId = CreateThread(NULL, 0, Func, Data, 0, NULL),               \
             *ThreadId == INVALID_HANDLE_VALUE ? 1 : 0)
 #    define sentry__thread_join(ThreadId)                                      \
         WaitForSingleObject(ThreadId, INFINITE)
+#    define sentry__thread_free(ThreadId)                                      \
+        do {                                                                   \
+            if (*ThreadId != INVALID_HANDLE_VALUE) {                           \
+                CloseHandle(*ThreadId);                                        \
+            }                                                                  \
+            *ThreadId = INVALID_HANDLE_VALUE;                                  \
+        } while (0)
 
 #    if _WIN32_WINNT < 0x0600
 typedef CONDITION_VARIABLE_PREVISTA sentry_cond_t;
@@ -201,6 +219,11 @@ typedef pthread_cond_t sentry_cond_t;
 #    else
 #        define SENTRY__MUTEX_INIT PTHREAD_RECURSIVE_MUTEX_INITIALIZER
 #    endif
+#    define sentry__mutex_init(Mutex)                                          \
+        do {                                                                   \
+            sentry_mutex_t tmp = SENTRY__MUTEX_INIT;                           \
+            *(Mutex) = tmp;                                                    \
+        } while (0)
 #    define sentry__mutex_lock(Mutex)                                          \
         do {                                                                   \
             if (sentry__block_for_signal_handler()) {                          \
@@ -215,6 +238,8 @@ typedef pthread_cond_t sentry_cond_t;
                 pthread_mutex_unlock(Mutex);                                   \
             }                                                                  \
         } while (0)
+#    define sentry__mutex_free(Lock) pthread_mutex_destroy(Lock)
+
 #    define sentry__cond_init(CondVar)                                         \
         do {                                                                   \
             sentry_cond_t tmp = PTHREAD_COND_INITIALIZER;                      \
@@ -227,9 +252,12 @@ typedef pthread_cond_t sentry_cond_t;
             }                                                                  \
         } while (0)
 #    define sentry__cond_wake pthread_cond_signal
+#    define sentry__thread_init(ThreadId)                                      \
+        memset(ThreadId, 0, sizeof(sentry_threadid_t))
 #    define sentry__thread_spawn(ThreadId, Func, Data)                         \
         (pthread_create(ThreadId, NULL, Func, Data) == 0 ? 0 : 1)
 #    define sentry__thread_join(ThreadId) pthread_join(ThreadId, NULL)
+#    define sentry__thread_free sentry__thread_init
 #    define sentry__threadid_equal pthread_equal
 #    define sentry__current_thread pthread_self
 
@@ -248,11 +276,6 @@ sentry__cond_wait_timeout(
     return pthread_cond_timedwait(cv, mutex, &lock_time);
 }
 #endif
-#define sentry__mutex_init(Mutex)                                              \
-    do {                                                                       \
-        sentry_mutex_t tmp = SENTRY__MUTEX_INIT;                               \
-        *(Mutex) = tmp;                                                        \
-    } while (0)
 
 static inline long
 sentry__atomic_fetch_and_add(volatile long *val, long diff)
@@ -323,6 +346,12 @@ int sentry__bgworker_start(sentry_bgworker_t *bgw);
  * Returns 0 on success.
  */
 int sentry__bgworker_shutdown(sentry_bgworker_t *bgw, uint64_t timeout);
+
+/**
+ * This will set a preferable thread name for background worker.
+ * Should be executed before worker start
+ */
+void sentry__bgworker_setname(sentry_bgworker_t *bgw, const char *thread_name);
 
 /**
  * This will submit a new task to the background thread.

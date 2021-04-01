@@ -63,7 +63,7 @@ void ByteReader::SetAddressSize(uint8_t size) {
   }
 }
 
-uint64_t ByteReader::ReadInitialLength(const uint8_t *start, size_t* len) {
+uint64_t ByteReader::ReadInitialLength(const uint8_t* start, size_t* len) {
   const uint64_t initial_length = ReadFourBytes(start);
   start += 4;
 
@@ -101,9 +101,9 @@ bool ByteReader::UsableEncoding(DwarfPointerEncoding encoding) const {
   }
 }
 
-uint64_t ByteReader::ReadEncodedPointer(const uint8_t *buffer,
+uint64_t ByteReader::ReadEncodedPointer(const uint8_t* buffer,
                                       DwarfPointerEncoding encoding,
-                                      size_t *len) const {
+                                      size_t* len) const {
   // UsableEncoding doesn't approve of DW_EH_PE_omit, so we shouldn't
   // see it here.
   assert(encoding != DW_EH_PE_omit);
@@ -130,7 +130,7 @@ uint64_t ByteReader::ReadEncodedPointer(const uint8_t *buffer,
     // Round up to the next boundary.
     uint64_t aligned = (offset + AddressSize() - 1) & -AddressSize();
     // Convert back to a pointer.
-    const uint8_t *aligned_buffer = buffer_base_ + (aligned - skew);
+    const uint8_t* aligned_buffer = buffer_base_ + (aligned - skew);
     // Finally, store the length and actually fetch the pointer.
     *len = aligned_buffer - buffer + AddressSize();
     return ReadAddress(aligned_buffer);

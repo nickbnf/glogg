@@ -22,6 +22,7 @@
 #include <functional>
 
 #include <unwindstack/Elf.h>
+#include <unwindstack/MachineArm64.h>
 #include <unwindstack/Regs.h>
 
 namespace unwindstack {
@@ -36,11 +37,9 @@ class RegsArm64 : public RegsImpl<uint64_t> {
 
   ArchEnum Arch() override final;
 
-  uint64_t GetPcAdjustment(uint64_t rel_pc, Elf* elf) override;
-
   bool SetPcFromReturnAddress(Memory* process_memory) override;
 
-  bool StepIfSignalHandler(uint64_t rel_pc, Elf* elf, Memory* process_memory) override;
+  bool StepIfSignalHandler(uint64_t elf_offset, Elf* elf, Memory* process_memory) override;
 
   void IterateRegisters(std::function<void(const char*, uint64_t)>) override final;
 
@@ -50,9 +49,25 @@ class RegsArm64 : public RegsImpl<uint64_t> {
   void set_pc(uint64_t pc) override;
   void set_sp(uint64_t sp) override;
 
+  void ResetPseudoRegisters() override;
+
+  bool SetPseudoRegister(uint16_t id, uint64_t value) override;
+
+  bool GetPseudoRegister(uint16_t id, uint64_t* value) override;
+
+  bool IsRASigned();
+
+  void SetPACMask(uint64_t mask);
+
+  Regs* Clone() override final;
+
   static Regs* Read(void* data);
 
   static Regs* CreateFromUcontext(void* ucontext);
+
+ protected:
+  uint64_t pseudo_regs_[Arm64Reg::ARM64_PREG_LAST - Arm64Reg::ARM64_PREG_FIRST];
+  uint64_t pac_mask_;
 };
 
 }  // namespace unwindstack

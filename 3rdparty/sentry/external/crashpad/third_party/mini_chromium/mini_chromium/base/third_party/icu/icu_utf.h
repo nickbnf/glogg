@@ -238,13 +238,13 @@ utf8_nextCharSafeBody(const uint8_t *s, int32_t *pi, int32_t length, ::base_icu:
                 (0xe0<=(c) && (c)<0xf0) && \
                 (((i)+1)<(length) || (length)<0) && \
                 CBU8_IS_VALID_LEAD3_AND_T1((c), __t1=(s)[i]) && \
-                (__t2=(s)[(i)+1]-0x80)<=0x3f) { \
+                (__t2=(uint8_t)((s)[(i)+1]-0x80))<=0x3f) { \
             (c)=(((c)&0xf)<<12)|((__t1&0x3f)<<6)|__t2; \
             (i)+=2; \
         } else if( /* handle U+0080..U+07FF inline */ \
                 ((c)<0xe0 && (c)>=0xc2) && \
                 ((i)!=(length)) && \
-                (__t1=(s)[i]-0x80)<=0x3f) { \
+                (__t1=(uint8_t)((s)[i]-0x80))<=0x3f) { \
             (c)=(((c)&0x1f)<<6)|__t1; \
             ++(i); \
         } else { \

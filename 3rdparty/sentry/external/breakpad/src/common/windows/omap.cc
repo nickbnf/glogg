@@ -449,11 +449,11 @@ void BuildEndpointIndexMap(ImageMap* image_map) {
   }
 }
 
-void BuildSubsequentRVAMap(const OmapData &omap_data,
-                           std::map<DWORD, DWORD> *subsequent) {
+void BuildSubsequentRVAMap(const OmapData& omap_data,
+                           std::map<DWORD, DWORD>* subsequent) {
   assert(subsequent->empty());
-  const OmapFromTable &orig2tran =
-      reinterpret_cast<const OmapFromTable &>(omap_data.omap_from);
+  const OmapFromTable& orig2tran =
+      reinterpret_cast<const OmapFromTable&>(omap_data.omap_from);
 
   if (orig2tran.empty())
     return;

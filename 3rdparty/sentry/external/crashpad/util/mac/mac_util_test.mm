@@ -134,7 +134,7 @@ TEST(MacUtil, MacOSVersionNumber) {
 
   EXPECT_EQ(macos_version_number,
             major * 1'00'00 + minor * 1'00 +
-                (macos_version_number >= 10'12'00 ? bugfix : 0));
+                (macos_version_number >= 10'13'04 ? bugfix : 0));
 }
 
 TEST(MacUtil, MacModelAndBoard) {

@@ -92,10 +92,10 @@ class StabsReader {
   // 
   // Note that, in ELF, the .stabstr section should be found using the
   // 'sh_link' field of the .stab section header, not by name.
-  StabsReader(const uint8_t *stab,    size_t stab_size,
-              const uint8_t *stabstr, size_t stabstr_size,
+  StabsReader(const uint8_t* stab,    size_t stab_size,
+              const uint8_t* stabstr, size_t stabstr_size,
               bool big_endian, size_t value_size, bool unitized,
-              StabsHandler *handler);
+              StabsHandler* handler);
 
   // Process the STABS data, calling the handler's member functions to
   // report what we find.  While the handler functions return true,
@@ -149,17 +149,17 @@ class StabsReader {
     // Mac, they are 32 or 64 bits long. Oddly, the section header's entry
     // size for a Linux ELF .stab section varies according to the ELF class
     // from 12 to 20 even as the actual entries remain unchanged.
-    EntryIterator(const ByteBuffer *buffer, bool big_endian, size_t value_size);
+    EntryIterator(const ByteBuffer* buffer, bool big_endian, size_t value_size);
 
     // Move to the next entry. This function's behavior is undefined if
     // at_end() is true when it is called.
-    EntryIterator &operator++() { Fetch(); entry_.index++; return *this; }
+    EntryIterator& operator++() { Fetch(); entry_.index++; return *this; }
 
     // Dereferencing this iterator produces a reference to an Entry structure
     // that holds the current entry's values. The entry is owned by this
     // EntryIterator, and will be invalidated at the next call to operator++.
-    const Entry &operator*() const { return entry_; }
-    const Entry *operator->() const { return &entry_; }
+    const Entry& operator*() const { return entry_; }
+    const Entry* operator->() const { return &entry_; }
 
    private:
     // Read the STABS entry at cursor_, and set entry_ appropriately.
@@ -178,12 +178,12 @@ class StabsReader {
   // A source line, saved to be reported later.
   struct Line {
     uint64_t address;
-    const char *filename;
+    const char* filename;
     int number;
   };
 
   // Return the name of the current symbol.
-  const char *SymbolString();
+  const char* SymbolString();
 
   // Process a compilation unit starting at symbol_.  Return true
   // to continue processing, or false to abort.
@@ -210,7 +210,7 @@ class StabsReader {
   // StabsReader::StabsReader.
   bool unitized_;
 
-  StabsHandler *handler_;
+  StabsHandler* handler_;
 
   // The offset of the current compilation unit's strings within stabstr_.
   size_t string_offset_;
@@ -220,7 +220,7 @@ class StabsReader {
   size_t next_cu_string_offset_;
 
   // The current source file name.
-  const char *current_source_file_;
+  const char* current_source_file_;
 
   // Mac OS X STABS place SLINE records before functions; we accumulate a
   // vector of these until we see the FUN record, and then report them
@@ -261,7 +261,7 @@ class StabsHandler {
   // FILENAME values are different addresses, they represent different
   // file names.
   //
-  // Thus, it's safe to use (say) std::map<char *, ...>, which does
+  // Thus, it's safe to use (say) std::map<char*, ...>, which does
   // string address comparisons, not string content comparisons.
   // Since all the strings are in same array of characters --- the
   // .stabstr section --- comparing their addresses produces
@@ -271,8 +271,8 @@ class StabsHandler {
   // named FILENAME, and whose base address is ADDRESS.  If
   // BUILD_DIRECTORY is non-NULL, it is the name of the build
   // directory in which the compilation occurred.
-  virtual bool StartCompilationUnit(const char *filename, uint64_t address,
-                                    const char *build_directory) {
+  virtual bool StartCompilationUnit(const char* filename, uint64_t address,
+                                    const char* build_directory) {
     return true;
   }
 
@@ -292,7 +292,7 @@ class StabsHandler {
   // StartFunction is the function name alone.
   //
   // In languages that use name mangling, like C++, NAME is mangled.
-  virtual bool StartFunction(const string &name, uint64_t address) {
+  virtual bool StartFunction(const string& name, uint64_t address) {
     return true;
   }
 
@@ -305,19 +305,19 @@ class StabsHandler {
   // Report that the code at ADDRESS is attributable to line NUMBER of
   // the source file named FILENAME.  The caller must infer the ending
   // address of the line.
-  virtual bool Line(uint64_t address, const char *filename, int number) {
+  virtual bool Line(uint64_t address, const char* filename, int number) {
     return true;
   }
 
   // Report that an exported function NAME is present at ADDRESS.
   // The size of the function is unknown.
-  virtual bool Extern(const string &name, uint64_t address) {
+  virtual bool Extern(const string& name, uint64_t address) {
     return true;
   }
 
   // Report a warning.  FORMAT is a printf-like format string,
   // specifying how to format the subsequent arguments.
-  virtual void Warning(const char *format, ...) = 0;
+  virtual void Warning(const char* format, ...) = 0;
 };
 
 } // namespace google_breakpad

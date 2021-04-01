@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -219,8 +220,16 @@ sentry__jsonwriter_write_double(sentry_jsonwriter_t *jw, double val)
 {
     if (can_write_item(jw)) {
         char buf[50];
-        snprintf(buf, sizeof(buf), "%g", val);
-        write_str(jw, buf);
+        // The MAX_SAFE_INTEGER is 9007199254740991, which has 16 digits
+        int written = sentry__snprintf_c(buf, sizeof(buf), "%.16g", val);
+        // print `null` if we have printf issues or a non-finite double, which
+        // can't be represented in JSON.
+        if (written < 0 || written >= (int)sizeof(buf) || !isfinite(val)) {
+            write_str(jw, "null");
+        } else {
+            buf[written] = '\0';
+            write_str(jw, buf);
+        }
     }
 }
 
@@ -429,7 +438,7 @@ tokens_to_value(jsmntok_t *tokens, size_t token_count, const char *buf,
             rv = sentry_value_new_null();
             break;
         default: {
-            double val = strtod(buf + root->start, NULL);
+            double val = sentry__strtod_c(buf + root->start, NULL);
             if (val == (double)(int32_t)val) {
                 rv = sentry_value_new_int32((int32_t)val);
             } else {

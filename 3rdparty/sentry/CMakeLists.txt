@@ -4,10 +4,21 @@ if(WIN32)
 	# enables support for CMAKE_MSVC_RUNTIME_LIBRARY
 	cmake_policy(SET CMP0091 NEW)
 else()
+	# The Android tools ship with this ancient version, which we need to support.
 	cmake_minimum_required (VERSION 3.10)
 endif()
 
-project(Sentry-Native LANGUAGES C CXX)
+#read sentry-native version
+file(READ "include/sentry.h" _SENTRY_HEADER_CONTENT)
+string(REGEX MATCH "#define SENTRY_SDK_VERSION \"([0-9\.]+)\"" _SENTRY_VERSION_MATCH "${_SENTRY_HEADER_CONTENT}")
+set(SENTRY_VERSION "${CMAKE_MATCH_1}")
+unset(_SENTRY_HEADER_CONTENT)
+unset(_SENTRY_VERSION_MATCH)
+
+project(Sentry-Native
+	LANGUAGES C CXX ASM
+	VERSION ${SENTRY_VERSION}
+)
 
 set(SENTRY_MAIN_PROJECT OFF)
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
@@ -29,11 +40,26 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	set(LINUX TRUE)
 endif()
 
-#option(BUILD_SHARED_LIBS "Build shared libraries (.dll/.so) instead of static ones (.lib/.a)" ON)
+#setup sentry library type
+if(SENTRY_MAIN_PROJECT AND NOT DEFINED BUILD_SHARED_LIBS)
+	set(BUILD_SHARED_LIBS ON)
+endif()
+option(SENTRY_BUILD_SHARED_LIBS "Build shared libraries (.dll/.so) instead of static ones (.lib/.a)" ${BUILD_SHARED_LIBS})
+if(SENTRY_BUILD_SHARED_LIBS)
+	set(SENTRY_LIBRARY_TYPE SHARED)
+else()
+	set(SENTRY_LIBRARY_TYPE STATIC)
+endif()
+
 option(SENTRY_PIC "Build sentry (and dependent) libraries as position independent libraries" ON)
 
 option(SENTRY_BUILD_TESTS "Build sentry-native tests" "${SENTRY_MAIN_PROJECT}")
 option(SENTRY_BUILD_EXAMPLES "Build sentry-native example(s)" "${SENTRY_MAIN_PROJECT}")
+
+option(SENTRY_LINK_PTHREAD "Link platform threads library" ON)
+if(SENTRY_LINK_PTHREAD)
+	find_package(Threads REQUIRED)
+endif()
 
 if(MSVC)
 	option(SENTRY_BUILD_RUNTIMESTATIC "Build sentry-native with static runtime" OFF)
@@ -57,7 +83,7 @@ endif()
 
 if(WIN32)
 	set(SENTRY_DEFAULT_TRANSPORT "winhttp")
-elseif(APPLE OR LINUX)
+elseif((APPLE AND NOT IOS) OR LINUX)
 	set(SENTRY_DEFAULT_TRANSPORT "curl")
 else()
 	set(SENTRY_DEFAULT_TRANSPORT "none")
@@ -88,12 +114,12 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
 	set(SENTRY_MAIN_PROJECT ON)
 endif()
 
-option(SENTRY_ENABLE_INSTALL "Enable sentry installation" OFF)
+option(SENTRY_ENABLE_INSTALL "Enable sentry installation" "${SENTRY_MAIN_PROJECT}")
 
 if(MSVC AND CMAKE_GENERATOR_TOOLSET MATCHES "_xp$")
 	message(WARNING "Crashpad is not supported for MSVC with XP toolset. Default backend was switched to 'breakpad'")
 	set(SENTRY_DEFAULT_BACKEND "breakpad")
-elseif(APPLE OR WIN32)
+elseif((APPLE AND NOT IOS) OR WIN32)
 	set(SENTRY_DEFAULT_BACKEND "crashpad")
 elseif(LINUX)
 	set(SENTRY_DEFAULT_BACKEND "breakpad")
@@ -119,12 +145,10 @@ endif()
 if(SENTRY_BACKEND_CRASHPAD AND ANDROID)
 	message(FATAL_ERROR "The Crashpad backend is not currently supported on Android")
 endif()
-if(SENTRY_BACKEND_BREAKPAD AND NOT (LINUX OR WIN32))
-	message(FATAL_ERROR "The Breakpad backend is currently only supported on Linux and Windows")
-endif()
 
 message(STATUS "SENTRY_TRANSPORT=${SENTRY_TRANSPORT}")
 message(STATUS "SENTRY_BACKEND=${SENTRY_BACKEND}")
+message(STATUS "SENTRY_LIBRARY_TYPE=${SENTRY_LIBRARY_TYPE}")
 
 if(ANDROID)
 	set(SENTRY_WITH_LIBUNWINDSTACK TRUE)
@@ -187,9 +211,18 @@ endfunction()
 
 # ===== sentry library =====
 
-add_library(sentry "${PROJECT_SOURCE_DIR}/vendor/mpack.c")
+add_library(sentry ${SENTRY_LIBRARY_TYPE} "${PROJECT_SOURCE_DIR}/vendor/mpack.c")
+target_sources(sentry PRIVATE "${PROJECT_SOURCE_DIR}/include/sentry.h")
 add_library(sentry::sentry ALIAS sentry)
 add_subdirectory(src)
+
+# we do not need this on android, only linux
+if(LINUX)
+	target_sources(sentry PRIVATE
+		"${PROJECT_SOURCE_DIR}/vendor/stb_sprintf.c"
+		"${PROJECT_SOURCE_DIR}/vendor/stb_sprintf.h"
+	)
+endif()
 
 set_target_properties(sentry PROPERTIES PUBLIC_HEADER "include/sentry.h")
 
@@ -198,7 +231,7 @@ include(CheckTypeSize)
 check_type_size("long" CMAKE_SIZEOF_LONG)
 
 # https://gitlab.kitware.com/cmake/cmake/issues/18393
-if(BUILD_SHARED_LIBS)
+if(SENTRY_BUILD_SHARED_LIBS)
 	if(APPLE)
 		sentry_install(FILES "$<TARGET_FILE:sentry>.dSYM" DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 	elseif(MSVC)
@@ -207,7 +240,7 @@ if(BUILD_SHARED_LIBS)
 	endif()
 endif()
 
-if(BUILD_SHARED_LIBS)
+if(SENTRY_BUILD_SHARED_LIBS)
 	target_compile_definitions(sentry PRIVATE SENTRY_BUILD_SHARED)
 else()
 	target_compile_definitions(sentry PUBLIC SENTRY_BUILD_STATIC)
@@ -234,7 +267,8 @@ if(MSVC)
 	endif()
 
 	# using `/Wall` is not feasible, as it spews tons of warnings from windows headers
-	target_compile_options(sentry PRIVATE $<BUILD_INTERFACE:/W4>)
+	# supress C5105, introduced in VS 16.8, which breaks on the Windows SDKs own `winbase.h` header
+	target_compile_options(sentry PRIVATE $<BUILD_INTERFACE:/W4 /wd5105>)
 	# ignore all warnings for mpack
 	set_source_files_properties(
 		"${PROJECT_SOURCE_DIR}/vendor/mpack.c"
@@ -309,18 +343,29 @@ if(WIN32)
 	endif()
 endif()
 
-if(LINUX)
-	option(SENTRY_LINK_PTHREAD "Link Sentry with pthread" ON)
-	if(SENTRY_LINK_PTHREAD)
-		target_link_libraries(sentry PRIVATE pthread)
-	endif()
-	target_link_libraries(sentry PRIVATE dl)
-elseif(ANDROID)
-	target_link_libraries(sentry PRIVATE dl log)
-elseif(MSVC)
-	target_link_libraries(sentry PRIVATE dbghelp)
-elseif(MINGW)
-	target_link_libraries(sentry PRIVATE dbghelp)
+# handle platform libraries
+if(ANDROID)
+    set(_SENTRY_PLATFORM_LIBS "dl" "log")
+elseif(LINUX)
+    set(_SENTRY_PLATFORM_LIBS "dl" "rt")
+elseif(WIN32)
+    set(_SENTRY_PLATFORM_LIBS "dbghelp" "version")
+endif()
+
+# handle platform threads library
+if(SENTRY_LINK_PTHREAD)
+	list(APPEND _SENTRY_PLATFORM_LIBS "Threads::Threads")
+endif()
+
+# apply platform libraries to sentry library
+if(SENTRY_LIBRARY_TYPE STREQUAL "static")
+    target_link_libraries(sentry PUBLIC ${_SENTRY_PLATFORM_LIBS})
+else()
+    target_link_libraries(sentry PRIVATE ${_SENTRY_PLATFORM_LIBS})
+endif()
+
+# suppress some errors and warnings for MinGW target
+if(MINGW)
 	target_compile_options(sentry PRIVATE
 		-Wno-unused-variable
 		-Wno-unused-parameter
@@ -335,7 +380,7 @@ if(SENTRY_WITH_LIBUNWINDSTACK)
 		"$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/external/libunwindstack-ndk/include>")
 	add_subdirectory("${PROJECT_SOURCE_DIR}/external/libunwindstack-ndk/cmake")
 	target_link_libraries(sentry PRIVATE unwindstack)
-	if(NOT BUILD_SHARED_LIBS)
+	if(NOT SENTRY_BUILD_SHARED_LIBS)
 		sentry_install(TARGETS unwindstack EXPORT sentry
 			LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 			ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -351,12 +396,8 @@ if(SENTRY_BACKEND_CRASHPAD)
 	else()
 		# FIXME: required for cmake 3.12 and lower:
 		# - NEW behavior lets normal variable override option
-		if("${CMAKE_VERSION}" VERSION_LESS "3.13")
-    		message(WARNING "CMake ${CMAKE_VERSION} has no CMP0077 policy: options will erase uncached/untyped normal vars!")
-		else()
-			cmake_policy (SET CMP0077 NEW)
-		endif()
-		if(BUILD_SHARED_LIBS)
+		cmake_policy(SET CMP0077 NEW)
+		if(SENTRY_BUILD_SHARED_LIBS)
 			set(CRASHPAD_ENABLE_INSTALL OFF CACHE BOOL "Enable crashpad installation" FORCE)
 		else()
 			set(CRASHPAD_ENABLE_INSTALL OFF CACHE BOOL "Enable crashpad installation" FORCE)
@@ -382,9 +423,13 @@ if(SENTRY_BACKEND_CRASHPAD)
 			$<BUILD_INTERFACE:crashpad::client>
 			$<INSTALL_INTERFACE:sentry_crashpad::client>
 		)
-		#install(EXPORT crashpad_export NAMESPACE sentry_crashpad:: FILE sentry_crashpad-targets.cmake
-		#	DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
-		#)
+		# install(EXPORT crashpad_export NAMESPACE sentry_crashpad:: FILE sentry_crashpad-targets.cmake
+		# 	DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+		# )
+		# if(WIN32 AND MSVC)
+		# 	sentry_install(FILES $<TARGET_PDB_FILE:crashpad_handler>
+		# 		DESTINATION "${CMAKE_INSTALL_BINDIR}" OPTIONAL)
+		# endif()
 	endif()
 	add_dependencies(sentry crashpad::handler)
 elseif(SENTRY_BACKEND_BREAKPAD)
@@ -402,7 +447,7 @@ elseif(SENTRY_BACKEND_BREAKPAD)
 		target_link_libraries(sentry PRIVATE
 			breakpad_client
 		)
-		if(NOT BUILD_SHARED_LIBS)
+		if(NOT SENTRY_BUILD_SHARED_LIBS)
 			sentry_install(TARGETS breakpad_client EXPORT sentry
 				LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 				ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -413,9 +458,22 @@ elseif(SENTRY_BACKEND_INPROC)
 	target_compile_definitions(sentry PRIVATE SENTRY_WITH_INPROC_BACKEND)
 endif()
 
+option(SENTRY_INTEGRATION_QT "Build Qt integration")
+if(SENTRY_INTEGRATION_QT)
+	find_package(Qt5 COMPONENTS Core REQUIRED)
+	target_link_libraries(sentry PRIVATE Qt5::Core)
+endif()
+
 include(CMakePackageConfigHelpers)
 configure_package_config_file(sentry-config.cmake.in sentry-config.cmake
 	INSTALL_DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+
+# generate package version file
+# We would have liked to use `SameMinorVersion`, but that is only supported on
+# CMake >= 3.11.
+write_basic_package_version_file(sentry-config-version.cmake
+	VERSION ${SENTRY_VERSION}
+	COMPATIBILITY SameMajorVersion)
 
 sentry_install(TARGETS sentry EXPORT sentry
 	ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -425,8 +483,15 @@ sentry_install(TARGETS sentry EXPORT sentry
 )
 sentry_install(EXPORT sentry NAMESPACE sentry:: FILE sentry-targets.cmake
 	DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
-sentry_install(FILES "${PROJECT_BINARY_DIR}/sentry-config.cmake"
+sentry_install(
+	FILES
+		"${PROJECT_BINARY_DIR}/sentry-config.cmake"
+		"${PROJECT_BINARY_DIR}/sentry-config-version.cmake"
 	DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+if(WIN32 AND MSVC AND SENTRY_BUILD_SHARED_LIBS)
+	sentry_install(FILES $<TARGET_PDB_FILE:sentry>
+		DESTINATION "${CMAKE_INSTALL_BINDIR}" OPTIONAL)
+endif()
 
 # ===== tests =====
 
@@ -439,6 +504,10 @@ endif()
 if(SENTRY_BUILD_EXAMPLES)
 	add_executable(sentry_example examples/example.c)
 	target_link_libraries(sentry_example PRIVATE sentry)
+
+	if(MSVC)
+		target_compile_options(sentry_example PRIVATE $<BUILD_INTERFACE:/wd5105>)
+	endif()
 
 	# set static runtime if enabled
 	if(SENTRY_BUILD_RUNTIMESTATIC AND MSVC)

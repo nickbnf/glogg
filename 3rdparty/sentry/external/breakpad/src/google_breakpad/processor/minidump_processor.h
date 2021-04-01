@@ -70,7 +70,7 @@ class MinidumpProcessor {
   ~MinidumpProcessor();
 
   // Processes the minidump file and fills process_state with the result.
-  ProcessResult Process(const string &minidump_file,
+  ProcessResult Process(const string& minidump_file,
                         ProcessState* process_state);
 
   // Processes the minidump structure and fills process_state with the

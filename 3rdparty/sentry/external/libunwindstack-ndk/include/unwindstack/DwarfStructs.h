@@ -35,6 +35,7 @@ struct DwarfCie {
   uint64_t code_alignment_factor = 0;
   int64_t data_alignment_factor = 0;
   uint64_t return_address_register = 0;
+  bool is_signal_frame = false;
 };
 
 struct DwarfFde {

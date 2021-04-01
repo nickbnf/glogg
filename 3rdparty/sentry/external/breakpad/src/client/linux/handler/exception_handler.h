@@ -82,7 +82,7 @@ class ExceptionHandler {
   // attempting to write a minidump.  If a FilterCallback returns false,
   // Breakpad  will immediately report the exception as unhandled without
   // writing a minidump, allowing another handler the opportunity to handle it.
-  typedef bool (*FilterCallback)(void *context);
+  typedef bool (*FilterCallback)(void* context);
 
   // A callback function to run after the minidump has been written.
   // |descriptor| contains the file descriptor or file path containing the
@@ -234,7 +234,7 @@ class ExceptionHandler {
   static void RestoreHandlersLocked();
 
   void PreresolveSymbols();
-  bool GenerateDump(CrashContext *context);
+  bool GenerateDump(CrashContext* context);
   void SendContinueSignalToChild();
   void WaitForContinueSignal();
 

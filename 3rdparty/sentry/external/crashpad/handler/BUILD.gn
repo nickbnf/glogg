@@ -14,11 +14,6 @@
 
 import("../build/crashpad_buildconfig.gni")
 
-if (crashpad_is_in_chromium) {
-  # Prevent Chromium source assignment filters from being inherited.
-  set_sources_assignment_filter([])
-}
-
 static_library("handler") {
   sources = [
     "crash_report_upload_thread.cc",
@@ -80,6 +75,7 @@ static_library("handler") {
   deps = [
     "../minidump",
     "../snapshot",
+    "../third_party/mini_chromium:chromeos_buildflags",
     "../tools:tool_support",
   ]
 
@@ -150,10 +146,12 @@ if (!crashpad_is_ios) {
         remove_configs = [ "//build/config/win:console" ]
         configs = [ "//build/config/win:windowed" ]
       } else {
-        remove_configs =
-            [ "//third_party/mini_chromium/mini_chromium/build:win_console" ]
-        configs =
-            [ "//third_party/mini_chromium/mini_chromium/build:win_windowed" ]
+        remove_configs = [
+          "//third_party/mini_chromium/mini_chromium/build/config:win_console",
+        ]
+        configs = [
+          "//third_party/mini_chromium/mini_chromium/build/config:win_windowed",
+        ]
       }
     }
 
@@ -181,7 +179,9 @@ if (crashpad_is_android) {
 
     sources = [ "linux/handler_trampoline.cc" ]
 
-    ldflags = [ "-llog" ]
+    deps = [ "../util:no_cfi_icall" ]
+
+    libs = [ "log" ]
 
     if (crashpad_is_in_chromium) {
       no_default_deps = true

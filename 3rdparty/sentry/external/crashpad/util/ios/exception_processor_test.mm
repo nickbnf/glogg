@@ -26,14 +26,20 @@ namespace {
 using IOSExceptionProcessor = PlatformTest;
 
 TEST_F(IOSExceptionProcessor, SelectorExists) {
-  IMP uigesture_deliver_event_imp = class_getMethodImplementation(
-      NSClassFromString(@"UIGestureEnvironment"),
-      NSSelectorFromString(@"_deliverEvent:toGestureRecognizers:usingBlock:"));
+  IMP init_imp =
+      class_getMethodImplementation(NSClassFromString(@"UIGestureEnvironment"),
+                                    NSSelectorFromString(@"init"));
+
+  IMP destruct_imp =
+      class_getMethodImplementation(NSClassFromString(@"UIGestureEnvironment"),
+                                    NSSelectorFromString(@".cxx_destruct"));
 
   // From 10.15.0 objc4-779.1/runtime/objc-class.mm
   // class_getMethodImplementation returns nil or _objc_msgForward on failure.
-  ASSERT_TRUE(uigesture_deliver_event_imp);
-  ASSERT_NE(uigesture_deliver_event_imp, _objc_msgForward);
+  ASSERT_TRUE(init_imp);
+  EXPECT_NE(init_imp, _objc_msgForward);
+  ASSERT_TRUE(destruct_imp);
+  EXPECT_NE(destruct_imp, _objc_msgForward);
 }
 
 }  // namespace

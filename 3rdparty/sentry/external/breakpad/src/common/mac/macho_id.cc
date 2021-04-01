@@ -53,7 +53,7 @@ using google_breakpad::MD5Init;
 using google_breakpad::MD5Update;
 using google_breakpad::MD5Final;
 
-MachoID::MachoID(const char *path)
+MachoID::MachoID(const char* path)
    : memory_(0),
      memory_size_(0),
      crc_(0), 
@@ -62,7 +62,7 @@ MachoID::MachoID(const char *path)
   snprintf(path_, sizeof(path_), "%s", path);
 }
 
-MachoID::MachoID(const char *path, void *memory, size_t size)
+MachoID::MachoID(const char* path, void* memory, size_t size)
    : memory_(memory),
      memory_size_(size),
      crc_(0), 
@@ -82,7 +82,7 @@ MachoID::~MachoID() {
 // MAX_BLOCK is the largest n such that 255n(n+1)/2 + (n+1)(MAX_BLOCK-1) <= 2^32-1
 #define MAX_BLOCK 5552
 
-void MachoID::UpdateCRC(unsigned char *bytes, size_t size) {
+void MachoID::UpdateCRC(unsigned char* bytes, size_t size) {
 // Unrolled loops for summing
 #define DO1(buf,i)  {sum1 += (buf)[i]; sum2 += sum1;}
 #define DO2(buf,i)  DO1(buf,i); DO1(buf,i+1);
@@ -122,11 +122,11 @@ void MachoID::UpdateCRC(unsigned char *bytes, size_t size) {
   }
 }
 
-void MachoID::UpdateMD5(unsigned char *bytes, size_t size) {
+void MachoID::UpdateMD5(unsigned char* bytes, size_t size) {
   MD5Update(&md5_context_, bytes, static_cast<unsigned>(size));
 }
 
-void MachoID::Update(MachoWalker *walker, off_t offset, size_t size) {
+void MachoID::Update(MachoWalker* walker, off_t offset, size_t size) {
   if (!update_function_ || !size)
     return;
 
@@ -237,7 +237,7 @@ bool MachoID::MD5(cpu_type_t cpu_type, cpu_subtype_t cpu_subtype, unsigned char 
 bool MachoID::WalkHeader(cpu_type_t cpu_type,
                          cpu_subtype_t cpu_subtype,
                          MachoWalker::LoadCommandCallback callback,
-                         void *context) {
+                         void* context) {
   if (memory_) {
     MachoWalker walker(memory_, memory_size_, callback, context);
     return walker.WalkHeader(cpu_type, cpu_subtype);
@@ -248,9 +248,9 @@ bool MachoID::WalkHeader(cpu_type_t cpu_type,
 }
 
 // static
-bool MachoID::WalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
-                       bool swap, void *context) {
-  MachoID *macho_id = (MachoID *)context;
+bool MachoID::WalkerCB(MachoWalker* walker, load_command* cmd, off_t offset,
+                       bool swap, void* context) {
+  MachoID* macho_id = (MachoID*)context;
 
   if (cmd->cmd == LC_SEGMENT) {
     struct segment_command seg;
@@ -327,11 +327,11 @@ bool MachoID::WalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
 }
 
 // static
-bool MachoID::UUIDWalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
-                           bool swap, void *context) {
+bool MachoID::UUIDWalkerCB(MachoWalker* walker, load_command* cmd, off_t offset,
+                           bool swap, void* context) {
   if (cmd->cmd == LC_UUID) {
-    struct breakpad_uuid_command *uuid_cmd =
-      (struct breakpad_uuid_command *)context;
+    struct breakpad_uuid_command* uuid_cmd =
+      (struct breakpad_uuid_command*)context;
 
     if (!walker->ReadBytes(uuid_cmd, sizeof(struct breakpad_uuid_command),
                            offset))
@@ -348,10 +348,10 @@ bool MachoID::UUIDWalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
 }
 
 // static
-bool MachoID::IDWalkerCB(MachoWalker *walker, load_command *cmd, off_t offset,
-                         bool swap, void *context) {
+bool MachoID::IDWalkerCB(MachoWalker* walker, load_command* cmd, off_t offset,
+                         bool swap, void* context) {
   if (cmd->cmd == LC_ID_DYLIB) {
-    struct dylib_command *dylib_cmd = (struct dylib_command *)context;
+    struct dylib_command* dylib_cmd = (struct dylib_command*)context;
 
     if (!walker->ReadBytes(dylib_cmd, sizeof(struct dylib_command), offset))
       return false;

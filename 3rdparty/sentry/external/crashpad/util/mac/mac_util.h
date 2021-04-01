@@ -28,7 +28,7 @@ namespace crashpad {
 //! `__MAC_OS_X_VERSION_MIN_REQUIRED`, `__MAC_OS_X_VERSION_MAX_ALLOWED`, and
 //! per-version `__MAC_*` macros, for versions since OS X 10.10.
 //!
-//! On macOS 10.12 and later, this function will return the major, minor, and
+//! On macOS 10.13.4 and later, this function will return the major, minor, and
 //! bugfix components combined into a single number. On older OS versions, only
 //! the major and minor components will be returned, and the bugfix component
 //! will always be reported as 0. By contrast, MacOSVersionComponents() always

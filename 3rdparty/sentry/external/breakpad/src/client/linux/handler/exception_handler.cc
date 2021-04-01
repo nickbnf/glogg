@@ -419,8 +419,8 @@ struct ThreadArgument {
 // This is the entry function for the cloned process. We are in a compromised
 // context here: see the top of the file.
 // static
-int ExceptionHandler::ThreadEntry(void *arg) {
-  const ThreadArgument *thread_arg = reinterpret_cast<ThreadArgument*>(arg);
+int ExceptionHandler::ThreadEntry(void* arg) {
+  const ThreadArgument* thread_arg = reinterpret_cast<ThreadArgument*>(arg);
 
   // Close the write end of the pipe. This allows us to fail if the parent dies
   // while waiting for the continue signal.
@@ -495,7 +495,7 @@ bool ExceptionHandler::SimulateSignalDelivery(int sig) {
 }
 
 // This function may run in a compromised context: see the top of the file.
-bool ExceptionHandler::GenerateDump(CrashContext *context) {
+bool ExceptionHandler::GenerateDump(CrashContext* context) {
   if (IsOutOfProcess())
     return crash_generation_client_->RequestDump(context, sizeof(*context));
 

@@ -71,7 +71,7 @@ class ExceptionHandlerTest : public Test {
 };
 
 static void Crasher() {
-  int *a = (int*)0x42;
+  int* a = (int*)0x42;
 
   fprintf(stdout, "Going to crash...\n");
   fprintf(stdout, "A = %d", *a);
@@ -86,8 +86,8 @@ static void SoonToCrash(void(*crasher)()) {
   crasher();
 }
 
-static bool MDCallback(const char *dump_dir, const char *file_name,
-                       void *context, bool success) {
+static bool MDCallback(const char* dump_dir, const char* file_name,
+                       void* context, bool success) {
   string path(dump_dir);
   path.append("/");
   path.append(file_name);
@@ -179,9 +179,9 @@ TEST_F(ExceptionHandlerTest, InProcessAbort) {
   InProcessCrash(true);
 }
 
-static bool DumpNameMDCallback(const char *dump_dir, const char *file_name,
-                               void *context, bool success) {
-  ExceptionHandlerTest *self = reinterpret_cast<ExceptionHandlerTest*>(context);
+static bool DumpNameMDCallback(const char* dump_dir, const char* file_name,
+                               void* context, bool success) {
+  ExceptionHandlerTest* self = reinterpret_cast<ExceptionHandlerTest*>(context);
   if (dump_dir && file_name) {
     self->lastDumpName = dump_dir;
     self->lastDumpName += "/";
@@ -652,7 +652,7 @@ TEST_F(ExceptionHandlerTest, InstructionPointerMemoryNullPointer) {
   ASSERT_EQ((unsigned int)1, memory_list->region_count());
 }
 
-static void *Junk(void *) {
+static void* Junk(void*) {
   sleep(1000000);
   return NULL;
 }

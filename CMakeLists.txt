@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 project(klogg
         VERSION 21.04.0
         DESCRIPTION "klogg log viewer"
-        LANGUAGES C CXX)
+        LANGUAGES C CXX ASM)
 
 set(PROJECT_HOMEPAGE_URL "https://github.com/variar/klogg")
 

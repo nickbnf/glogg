@@ -79,6 +79,12 @@ jobs:
         echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
 
 # Install build dependencies
+    - name: Install gcc-8
+      if: ${{ matrix.config.os == 'ubuntu' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install g++-8 -y
+
     - name: Cache openssl
       id: cache-openssl
       if: ${{ matrix.config.os == 'windows' }}

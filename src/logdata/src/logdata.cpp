@@ -84,14 +84,13 @@ void LogData::CheckFileChangesOperation::doStart( LogDataWorker& workerThread ) 
 LogData::LogData()
     : AbstractLogData()
     , indexing_data_()
+    , codec_( QTextCodec::codecForName( "ISO-8859-1" ) )
     , workerThread_( indexing_data_ )
 {
     // Start with an "empty" log
     attached_file_ = nullptr;
     currentOperation_ = nullptr;
     nextOperation_ = nullptr;
-
-    codec_ = QTextCodec::codecForName( "ISO-8859-1" );
 
     // Initialise the file watcher
     connect( &FileWatcher::getFileWatcher(), &FileWatcher::fileChanged, this,
@@ -351,25 +350,34 @@ LineLength LogData::doGetLineLength( LineNumber line ) const
 void LogData::doSetDisplayEncoding( const char* encoding )
 {
     LOG( logDEBUG ) << "AbstractLogData::setDisplayEncoding: " << encoding;
-    codec_ = QTextCodec::codecForName( encoding );
+    codec_.setCodec( QTextCodec::codecForName( encoding ) );
+    auto needReload = false;
+    auto useGuessedCodec = false;
 
-    IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
+    {
+        IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
 
-    const QTextCodec* currentIndexCodec = scopedAccessor.getForcedEncoding();
-    if ( !currentIndexCodec )
-        currentIndexCodec = scopedAccessor.getEncodingGuess();
-
-    if ( codec_->mibEnum() != currentIndexCodec->mibEnum() ) {
-        if ( EncodingParameters( codec_ ) != EncodingParameters( currentIndexCodec ) ) {
-            bool isGuessedCodec = codec_->mibEnum() == scopedAccessor.getEncodingGuess()->mibEnum();
-            reload( isGuessedCodec ? nullptr : codec_ );
+        const QTextCodec* currentIndexCodec = scopedAccessor.getForcedEncoding();
+        if ( !currentIndexCodec ) {
+            currentIndexCodec = scopedAccessor.getEncodingGuess();
         }
+
+        if ( codec_.mibEnum() != currentIndexCodec->mibEnum() ) {
+            if ( codec_.encodingParameters() != EncodingParameters( currentIndexCodec ) ) {
+                needReload = true;
+                useGuessedCodec = codec_.mibEnum() == scopedAccessor.getEncodingGuess()->mibEnum();
+            }
+        }
+    }
+
+    if ( needReload ) {
+        reload( useGuessedCodec ? nullptr : codec_.codec() );
     }
 }
 
 QTextCodec* LogData::doGetDisplayEncoding() const
 {
-    return codec_;
+    return codec_.codec();
 }
 
 QString LogData::doGetLineString( LineNumber line ) const
@@ -390,7 +398,7 @@ QString LogData::doGetLineString( LineNumber line ) const
         rawString = locker.getFile()->readLine();
     }
 
-    auto string = codec_->toUnicode( rawString );
+    auto string = codec_.codec()->toUnicode( rawString );
     string.chop( 1 );
     if ( string.endsWith( QChar::CarriageReturn ) ) {
         string.chop( 1 );
@@ -461,28 +469,28 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
         buffer = locker.getFile()->read( last_byte - first_byte );
     }
 
-    std::vector<QString> list;
-    list.reserve( number.get() );
+    std::vector<QString> processedLines;
+    processedLines.reserve( number.get() );
 
-    qint64 beginning = 0;
-    qint64 end = 0;
+    qint64 lineStart = 0;
+    qint64 lineEnd = 0;
     size_t currentLine = 0;
-    std::unique_ptr<QTextDecoder> decoder{ codec_->makeDecoder() };
-
-    EncodingParameters encodingParams{ codec_ };
+    auto decoder = codec_.makeDecoder();
+    const auto lineFeedWidth = decoder.second.lineFeedWidth;
 
     for ( LineNumber line = first_line; ( line <= last_line ); ++line, ++currentLine ) {
-        end = endOfLines[ currentLine ];
+        lineEnd = endOfLines[ currentLine ];
 
-        auto lineData = decoder->toUnicode( buffer.data() + beginning,
-                                            static_cast<LineLength::UnderlyingType>(
-                                                end - beginning - encodingParams.lineFeedWidth ) );
+        const auto length
+            = static_cast<LineLength::UnderlyingType>( lineEnd - lineStart - lineFeedWidth );
 
-        list.emplace_back( processLine( std::move( lineData ) ) );
-        beginning = end;
+        processedLines.emplace_back(
+            processLine( decoder.first->toUnicode( buffer.data() + lineStart, length ) ) );
+
+        lineStart = lineEnd;
     }
 
-    return list;
+    return processedLines;
 }
 
 QTextCodec* LogData::getDetectedEncoding() const

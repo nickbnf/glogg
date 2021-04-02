@@ -205,7 +205,7 @@ class LogData : public AbstractLogData {
     std::shared_ptr<const LogDataOperation> nextOperation_;
 
     // Codec to decode text
-    QTextCodec* codec_;
+    TextCodecHolder codec_;
 
     // Offset to apply to the newline character
     int before_cr_offset_ = 0;

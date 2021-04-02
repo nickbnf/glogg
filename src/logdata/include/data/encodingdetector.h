@@ -22,10 +22,12 @@
 
 #include "synchronization.h"
 
+#include <memory>
 #include <QByteArray>
 
-class QTextCodec;
 
+class QTextCodec;
+class QTextDecoder;
 
 struct EncodingParameters {
     EncodingParameters() = default;
@@ -74,6 +76,24 @@ class EncodingDetector {
     EncodingDetector() = default;
     ~EncodingDetector() = default;
 
+    mutable Lock mutex_;
+};
+
+class TextCodecHolder {
+  public:
+    explicit TextCodecHolder( QTextCodec* codec );
+
+    void setCodec( QTextCodec* codec );
+
+    QTextCodec* codec() const;
+    EncodingParameters encodingParameters() const;
+    int mibEnum() const;
+
+    std::pair<std::unique_ptr<QTextDecoder>, EncodingParameters> makeDecoder() const;
+
+  private:
+    QTextCodec* codec_;
+    EncodingParameters encodingParams_;
     mutable Lock mutex_;
 };
 

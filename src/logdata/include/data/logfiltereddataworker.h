@@ -43,7 +43,6 @@
 #include <QRegularExpression>
 
 #include <QFuture>
-#include <QFutureWatcher>
 
 #include <immer/flex_vector.hpp>
 
@@ -134,12 +133,13 @@ class SearchOperation : public QObject {
     SearchOperation( const LogData& sourceLogData, AtomicFlag& interruptRequested,
                      const QRegularExpression& regExp, LineNumber startLine, LineNumber endLine );
 
-    // Start the search operation, returns true if it has been done
+    // Run the search operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
-    virtual void start( SearchData& result ) = 0;
+    virtual void run( SearchData& result ) = 0;
 
   signals:
     void searchProgressed( LinesCount nbMatches, int percent, LineNumber initialLine );
+    void searchFinished();
 
   protected:
     // Implement the common part of the search, passing
@@ -163,7 +163,8 @@ class FullSearchOperation : public SearchOperation {
     {
     }
 
-    void start( SearchData& result ) override;
+    void run( SearchData& result ) override;
+
 };
 
 class UpdateSearchOperation : public SearchOperation {
@@ -177,7 +178,7 @@ class UpdateSearchOperation : public SearchOperation {
     {
     }
 
-    void start( SearchData& result ) override;
+    void run( SearchData& result ) override;
 
   private:
     LineNumber initialPosition_;
@@ -221,7 +222,6 @@ class LogFilteredDataWorker : public QObject {
     // Mutex to protect operationRequested_ and friends
     Lock mutex_;
     QFuture<void> operationFuture_;
-    QFutureWatcher<void> operationWatcher_;
 
     // Shared indexing data
     SearchData searchData_;

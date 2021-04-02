@@ -200,8 +200,6 @@ size_t IndexingData::allocatedSize() const
 LogDataWorker::LogDataWorker( IndexingData& indexing_data )
     : indexing_data_( indexing_data )
 {
-    connect( &operationWatcher_, &QFutureWatcher<OperationResult>::finished, this,
-             &LogDataWorker::onOperationFinished, Qt::QueuedConnection );
 }
 
 LogDataWorker::~LogDataWorker()
@@ -222,7 +220,7 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
     ScopedLock locker( &mutex_ );
     LOG( logDEBUG ) << "FullIndex requested";
 
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
     operationFuture_ = QtConcurrent::run( [this, forcedEncoding, fileName = fileName_] {
@@ -230,8 +228,6 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
             fileName, indexing_data_, interruptRequest_, forcedEncoding );
         return connectSignalsAndRun( operationRequested.get() );
     } );
-
-    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void LogDataWorker::indexAdditionalLines()
@@ -239,7 +235,7 @@ void LogDataWorker::indexAdditionalLines()
     ScopedLock locker( &mutex_ );
     LOG( logDEBUG ) << "AddLines requested";
 
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
     operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
@@ -247,8 +243,6 @@ void LogDataWorker::indexAdditionalLines()
                                                                            interruptRequest_ );
         return connectSignalsAndRun( operationRequested.get() );
     } );
-
-    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void LogDataWorker::checkFileChanges()
@@ -256,17 +250,15 @@ void LogDataWorker::checkFileChanges()
     ScopedLock locker( &mutex_ );
     LOG( logDEBUG ) << "Check file changes requested";
 
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
     operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
         auto operationRequested = std::make_unique<CheckFileChangesOperation>(
             fileName, indexing_data_, interruptRequest_ );
 
-        return operationRequested->start();
+        return connectSignalsAndRun( operationRequested.get() );
     } );
-
-    operationWatcher_.setFuture( operationFuture_ );
 }
 
 OperationResult LogDataWorker::connectSignalsAndRun( IndexOperation* operationRequested )
@@ -274,7 +266,17 @@ OperationResult LogDataWorker::connectSignalsAndRun( IndexOperation* operationRe
     connect( operationRequested, &IndexOperation::indexingProgressed, this,
              &LogDataWorker::indexingProgressed );
 
-    return operationRequested->start();
+    connect( operationRequested, &IndexOperation::indexingFinished, this,
+             &LogDataWorker::onIndexingFinished, Qt::QueuedConnection );
+
+    connect( operationRequested, &IndexOperation::fileCheckFinished, this,
+             &LogDataWorker::onCheckFileFinished, Qt::QueuedConnection );
+
+    auto result = operationRequested->run();
+
+    operationRequested->disconnect( this );
+
+    return result;
 }
 
 void LogDataWorker::interrupt()
@@ -283,25 +285,22 @@ void LogDataWorker::interrupt()
     interruptRequest_.set();
 }
 
-void LogDataWorker::onOperationFinished()
+void LogDataWorker::onIndexingFinished( bool result )
 {
-    const auto variantResult = operationWatcher_.result();
-    absl::visit( make_visitor(
-                     [this]( bool result ) {
-                         if ( result ) {
-                             LOG( logDEBUG ) << "... finished copy in workerThread.";
-                             emit indexingFinished( LoadingStatus::Successful );
-                         }
-                         else {
-                             LOG( logINFO ) << "indexing interrupted";
-                             emit indexingFinished( LoadingStatus::Interrupted );
-                         }
-                     },
-                     [this]( MonitoredFileStatus result ) {
-                         LOG( logINFO ) << "checking file finished";
-                         emit checkFileChangesFinished( result );
-                     } ),
-                 variantResult );
+    if ( result ) {
+        LOG( logINFO ) << "finished indexing in worker thread";
+        emit indexingFinished( LoadingStatus::Successful );
+    }
+    else {
+        LOG( logINFO ) << "indexing interrupted in worker thread";
+        emit indexingFinished( LoadingStatus::Interrupted );
+    }
+}
+
+void LogDataWorker::onCheckFileFinished( const MonitoredFileStatus result )
+{
+    LOG( logINFO ) << "checking file finished in worker thread";
+    emit checkFileChangesFinished( result );
 }
 
 //
@@ -588,15 +587,19 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                           / ( 1024 * 1024 )
                    << " MiB/s";
 
+    if ( interruptRequest_ ) {
+        scopedAccessor.clear();
+    }
+
     if ( !scopedAccessor.getEncodingGuess() ) {
         scopedAccessor.setEncodingGuess( QTextCodec::codecForLocale() );
     }
 }
 
 // Called in the worker thread's context
-OperationResult FullIndexOperation::start()
+OperationResult FullIndexOperation::run()
 {
-    LOG( logDEBUG ) << "FullIndexOperation::start(), file " << fileName_.toStdString();
+    LOG( logDEBUG ) << "FullIndexOperation::run(), file " << fileName_.toStdString();
 
     LOG( logDEBUG ) << "FullIndexOperation: Starting the count...";
 
@@ -614,12 +617,14 @@ OperationResult FullIndexOperation::start()
                        "interrupt = "
                     << static_cast<bool>( interruptRequest_ );
 
-    return ( interruptRequest_ ? false : true );
+    const auto result = interruptRequest_ ? false : true;
+    emit indexingFinished( result );
+    return result;
 }
 
-OperationResult PartialIndexOperation::start()
+OperationResult PartialIndexOperation::run()
 {
-    LOG( logDEBUG ) << "PartialIndexOperation::start(), file " << fileName_.toStdString();
+    LOG( logDEBUG ) << "PartialIndexOperation::run(), file " << fileName_.toStdString();
 
     const auto initial_position
         = LineOffset( IndexingData::ConstAccessor{ &indexing_data_ }.getIndexedSize() );
@@ -633,13 +638,21 @@ OperationResult PartialIndexOperation::start()
 
     LOG( logDEBUG ) << "PartialIndexOperation: ... finished counting.";
 
-    return ( interruptRequest_ ? false : true );
+    const auto result = interruptRequest_ ? false : true;
+    emit indexingFinished( result );
+    return result;
 }
 
-OperationResult CheckFileChangesOperation::start()
+OperationResult CheckFileChangesOperation::run()
 {
-    LOG( logINFO ) << "CheckFileChangesOperation::start(), file " << fileName_.toStdString();
+    LOG( logINFO ) << "CheckFileChangesOperation::run(), file " << fileName_.toStdString();
+    const auto result = doCheckFileChanges();
+    emit fileCheckFinished( result );
+    return result;
+}
 
+MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
+{
     QFileInfo info( fileName_ );
     const auto indexedHash = IndexingData::ConstAccessor{ &indexing_data_ }.getHash();
     const auto realFileSize = info.size();

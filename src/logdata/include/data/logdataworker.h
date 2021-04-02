@@ -41,7 +41,6 @@
 
 #include <QCryptographicHash>
 #include <QFuture>
-#include <QFutureWatcher>
 #include <QMutex>
 #include <QObject>
 #include <QSemaphore>
@@ -238,12 +237,14 @@ class IndexOperation : public QObject {
     {
     }
 
-    // Start the indexing operation, returns true if it has been done
+    // Run the indexing operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
-    virtual OperationResult start() = 0;
+    virtual OperationResult run() = 0;
 
   signals:
     void indexingProgressed( int );
+    void indexingFinished( bool );
+    void fileCheckFinished( MonitoredFileStatus );
 
   protected:
     // Returns the total size indexed
@@ -270,7 +271,7 @@ class FullIndexOperation : public IndexOperation {
         , forcedEncoding_( forcedEncoding )
     {
     }
-    OperationResult start() override;
+    OperationResult run() override;
 
   private:
     QTextCodec* forcedEncoding_;
@@ -285,7 +286,7 @@ class PartialIndexOperation : public IndexOperation {
     {
     }
 
-    OperationResult start() override;
+    OperationResult run() override;
 };
 
 class CheckFileChangesOperation : public IndexOperation {
@@ -297,7 +298,10 @@ class CheckFileChangesOperation : public IndexOperation {
     {
     }
 
-    OperationResult start() override;
+    OperationResult run() override;
+
+  private:
+    MonitoredFileStatus doCheckFileChanges();
 };
 
 class LogDataWorker : public QObject {
@@ -337,13 +341,13 @@ class LogDataWorker : public QObject {
     void checkFileChangesFinished( MonitoredFileStatus status );
 
   private slots:
-    void onOperationFinished();
+    void onIndexingFinished( bool result );
+    void onCheckFileFinished( MonitoredFileStatus result );
 
   private:
     OperationResult connectSignalsAndRun( IndexOperation* operationRequested );
 
     QFuture<OperationResult> operationFuture_;
-    QFutureWatcher<OperationResult> operationWatcher_;
 
     AtomicFlag interruptRequest_;
 

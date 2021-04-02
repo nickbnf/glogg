@@ -223,23 +223,24 @@ LogFilteredDataWorker::LogFilteredDataWorker( const LogData& sourceLogData )
     , mutex_()
     , searchData_()
 {
-    connect( &operationWatcher_, &QFutureWatcher<void>::finished, this,
-             &LogFilteredDataWorker::searchFinished );
 }
 
 LogFilteredDataWorker::~LogFilteredDataWorker()
 {
     interruptRequested_.set();
     ScopedLock locker( &mutex_ );
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
 }
 
 void LogFilteredDataWorker::connectSignalsAndRun( SearchOperation* operationRequested )
 {
     connect( operationRequested, &SearchOperation::searchProgressed, this,
              &LogFilteredDataWorker::searchProgressed );
+    connect( operationRequested, &SearchOperation::searchFinished, this,
+             &LogFilteredDataWorker::searchFinished, Qt::QueuedConnection );
 
-    operationRequested->start( searchData_ );
+    operationRequested->run( searchData_ );
+    operationRequested->disconnect(this);
 }
 
 void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber startLine,
@@ -249,7 +250,7 @@ void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber
 
     LOG( logINFO ) << "Search requested";
 
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
     interruptRequested_.clear();
 
     operationFuture_ = QtConcurrent::run( [this, regExp, startLine, endLine] {
@@ -257,8 +258,6 @@ void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber
             sourceLogData_, interruptRequested_, regExp, startLine, endLine );
         connectSignalsAndRun( operationRequested.get() );
     } );
-
-    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, LineNumber startLine,
@@ -268,7 +267,7 @@ void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, Line
 
     LOG( logINFO ) << "Search update requested from " << position.get();
 
-    operationWatcher_.waitForFinished();
+    operationFuture_.waitForFinished();
     interruptRequested_.clear();
 
     operationFuture_ = QtConcurrent::run( [this, regExp, startLine, endLine, position] {
@@ -276,8 +275,6 @@ void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, Line
             sourceLogData_, interruptRequested_, regExp, startLine, endLine, position );
         connectSignalsAndRun( operationRequested.get() );
     } );
-
-    operationWatcher_.setFuture( operationFuture_ );
 }
 
 void LogFilteredDataWorker::interrupt()
@@ -513,10 +510,11 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                    << " lines/s";
 
     emit searchProgressed( nbMatches, 100, initialLine );
+    emit searchFinished();
 }
 
 // Called in the worker thread's context
-void FullSearchOperation::start( SearchData& searchData )
+void FullSearchOperation::run( SearchData& searchData )
 {
     // Clear the shared data
     searchData.clear();
@@ -525,7 +523,7 @@ void FullSearchOperation::start( SearchData& searchData )
 }
 
 // Called in the worker thread's context
-void UpdateSearchOperation::start( SearchData& searchData )
+void UpdateSearchOperation::run( SearchData& searchData )
 {
     auto initial_line = qMax( searchData.getLastProcessedLine(), initialPosition_ );
 

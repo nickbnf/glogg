@@ -442,7 +442,8 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
         return std::vector<QString>();
     }
 
-    QByteArray buffer;
+    std::vector<char> buffer;
+
     std::vector<qint64> endOfLines;
     endOfLines.reserve( number.get() );
 
@@ -465,8 +466,15 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
             endOfLines.emplace_back( scopedAccessor.getPosForLine( line ).get() - first_byte );
         }
 
+        const auto bytesToRead = last_byte - first_byte;
         locker.getFile()->seek( first_byte );
-        buffer = locker.getFile()->read( last_byte - first_byte );
+        buffer.resize( static_cast<std::size_t>( bytesToRead ) );
+        const auto bytesRead = locker.getFile()->read( buffer.data(), bytesToRead );
+
+        if ( bytesRead != bytesToRead ) {
+            LOG( logWARNING ) << "LogData::getLines failed to read " << bytesToRead
+                              << " bytes, got " << bytesRead;
+        }
     }
 
     std::vector<QString> processedLines;

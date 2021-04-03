@@ -378,8 +378,7 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
         // When a end of line has been found...
         if ( pos_within_block != -1 ) {
             state.end = pos_within_block + block_beginning;
-            const auto length = static_cast<LineLength::UnderlyingType>(
-                state.end - state.pos + state.additional_spaces );
+            const auto length = state.end - state.pos + state.additional_spaces;
             if ( length > state.max_length )
                 state.max_length = length;
 
@@ -531,9 +530,16 @@ void IndexOperation::doIndex( LineOffset initialPosition )
             IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
 
             if ( !block.isEmpty() ) {
-                auto line_positions = parseDataBlock( block_beginning, block, state );
-                scopedAccessor.addAll( block, LineLength( state.max_length ), line_positions,
-                                       state.encodingGuess );
+                const auto line_positions = parseDataBlock( block_beginning, block, state );
+                auto max_length = state.max_length;
+                if ( max_length > std::numeric_limits<LineLength::UnderlyingType>::max() ) {
+                    LOG( logERROR ) << "Too long lines " << max_length;
+                    max_length = std::numeric_limits<LineLength::UnderlyingType>::max();
+                }
+
+                scopedAccessor.addAll(
+                    block, LineLength( static_cast<LineLength::UnderlyingType>( max_length ) ),
+                    line_positions, state.encodingGuess );
 
                 // Update the caller for progress indication
                 const auto progress = ( state.file_size > 0 )
@@ -581,6 +587,8 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     LOG( logINFO ) << "Indexing done, took " << duration << ", io " << ioDuration;
     LOG( logINFO ) << "Index size "
                    << readableSize( static_cast<uint64_t>( scopedAccessor.allocatedSize() ) );
+    LOG( logINFO ) << "Indexed lines " << scopedAccessor.getNbLines();
+    LOG( logINFO ) << "Max line " << scopedAccessor.getMaxLength();
     LOG( logINFO ) << "Indexing perf "
                    << ( 1000.f * static_cast<float>( state.file_size )
                         / static_cast<float>( duration.count() ) )

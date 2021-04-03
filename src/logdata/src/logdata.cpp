@@ -473,16 +473,20 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
     processedLines.reserve( number.get() );
 
     qint64 lineStart = 0;
-    qint64 lineEnd = 0;
     size_t currentLine = 0;
     auto decoder = codec_.makeDecoder();
     const auto lineFeedWidth = decoder.second.lineFeedWidth;
 
     for ( LineNumber line = first_line; ( line <= last_line ); ++line, ++currentLine ) {
-        lineEnd = endOfLines[ currentLine ];
+        const auto lineEnd = endOfLines[ currentLine ];
 
         const auto length
             = static_cast<LineLength::UnderlyingType>( lineEnd - lineStart - lineFeedWidth );
+
+        if ( lineStart + length >= static_cast<qint64>( buffer.size() ) ) {
+            LOG( logWARNING ) << "LogData::getLines not enough data in buffer";
+            break;
+        }
 
         processedLines.emplace_back(
             processLine( decoder.first->toUnicode( buffer.data() + lineStart, length ) ) );

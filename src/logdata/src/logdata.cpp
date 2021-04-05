@@ -491,7 +491,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
         const auto length
             = static_cast<LineLength::UnderlyingType>( lineEnd - lineStart - lineFeedWidth );
 
-        if ( lineStart + length >= static_cast<qint64>( buffer.size() ) ) {
+        if ( lineStart + length > static_cast<qint64>( buffer.size() ) ) {
             LOG( logWARNING ) << "LogData::getLines not enough data in buffer";
             break;
         }

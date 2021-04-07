@@ -35,6 +35,7 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QProcess>
+#include <QProgressDialog>
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QSysInfo>
@@ -176,9 +177,11 @@ void reportIssue( const std::string& reportUuid )
     QDesktopServices::openUrl( url );
 }
 
-void checkCrashpadReports( const QString& databasePath )
+bool checkCrashpadReports( const QString& databasePath )
 {
     using namespace crashpad;
+
+    bool needWaitForUpload = false;
 
 #ifdef Q_OS_WIN
     auto database = CrashReportDatabase::InitializeWithoutCreating(
@@ -217,6 +220,7 @@ void checkCrashpadReports( const QString& databasePath )
 
             if ( QDialog::Accepted == askUserConfirmation( formattedReport, reportFile ) ) {
                 database->RequestUpload( report.uuid );
+                needWaitForUpload = true;
             }
             else {
                 database->DeleteReport( report.uuid );
@@ -229,24 +233,20 @@ void checkCrashpadReports( const QString& databasePath )
             }
         }
     }
+    return needWaitForUpload;
 }
 } // namespace
 
 CrashHandler::CrashHandler()
 {
-    memoryUsageTimer_ = std::make_unique<QTimer>();
-    QObject::connect( memoryUsageTimer_.get(), &QTimer::timeout, []() {
-        const auto memory = std::to_string( usedMemory() );
-        LOG( logINFO ) << "Used memory " << memory;
-        sentry_set_extra( "vm_used", sentry_value_new_string( memory.c_str() ) );
-    } );
+    const auto dumpPath = sentryDatabasePath();
+
+    const auto needWaitForUpload = checkCrashpadReports( dumpPath );
 
     sentry_options_t* sentryOptions = sentry_options_new();
 
     sentry_options_set_logger( sentryOptions, logSentry, nullptr );
     sentry_options_set_debug( sentryOptions, 1 );
-
-    const auto dumpPath = sentryDatabasePath();
 
 #ifdef Q_OS_WIN
     const auto handlerPath = QCoreApplication::applicationDirPath() + "/klogg_crashpad_handler.exe";
@@ -281,9 +281,22 @@ CrashHandler::CrashHandler()
 
     sentry_set_extra( "memory", sentry_value_new_string( totalMemory.c_str() ) );
 
-    checkCrashpadReports( dumpPath );
-
+    memoryUsageTimer_ = std::make_unique<QTimer>();
+    QObject::connect( memoryUsageTimer_.get(), &QTimer::timeout, []() {
+        const auto memory = std::to_string( usedMemory() );
+        LOG( logINFO ) << "Used memory " << memory;
+        sentry_set_extra( "vm_used", sentry_value_new_string( memory.c_str() ) );
+    } );
     memoryUsageTimer_->start( 10000 );
+
+    if ( needWaitForUpload ) {
+        QProgressDialog progressDialog;
+        progressDialog.setLabelText( QString( "Uploading crash reports" ) );
+        progressDialog.setRange( 0, 0 );
+
+        QTimer::singleShot(30*1000, &progressDialog, &QProgressDialog::cancel);
+        progressDialog.exec();
+    }
 }
 
 CrashHandler::~CrashHandler()

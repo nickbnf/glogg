@@ -33,11 +33,12 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
+#include <QPlainTextEdit>
 #include <QProcess>
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QSysInfo>
-#include <QPlainTextEdit>
+#include <QTimer>
 #include <QUrlQuery>
 #include <QVBoxLayout>
 
@@ -107,7 +108,7 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     exploreButton->setText( "Open report directory" );
     exploreButton->setFlat( true );
     QObject::connect( exploreButton.get(), &QPushButton::clicked,
-                      [ &reportPath ] { showPathInFileExplorer( reportPath ); } );
+                      [&reportPath] { showPathInFileExplorer( reportPath ); } );
 
     auto privacyLayout = std::make_unique<QHBoxLayout>();
     privacyLayout->addWidget( privacyPolicy.release() );
@@ -233,6 +234,13 @@ void checkCrashpadReports( const QString& databasePath )
 
 CrashHandler::CrashHandler()
 {
+    memoryUsageTimer_ = std::make_unique<QTimer>();
+    QObject::connect( memoryUsageTimer_.get(), &QTimer::timeout, []() {
+        const auto memory = std::to_string( usedMemory() );
+        LOG( logINFO ) << "Used memory " << memory;
+        sentry_set_extra( "vm_used", sentry_value_new_string( memory.c_str() ) );
+    } );
+
     sentry_options_t* sentryOptions = sentry_options_new();
 
     sentry_options_set_logger( sentryOptions, logSentry, nullptr );
@@ -268,15 +276,18 @@ CrashHandler::CrashHandler()
     sentry_set_tag( "qt", qVersion() );
     sentry_set_tag( "build_arch", QSysInfo::buildCpuArchitecture().toLatin1().data() );
 
-    auto totalMemory = std::to_string( physicalMemory() );
+    const auto totalMemory = std::to_string( physicalMemory() );
     LOG( logINFO ) << "Physical memory " << totalMemory;
 
     sentry_set_extra( "memory", sentry_value_new_string( totalMemory.c_str() ) );
 
     checkCrashpadReports( dumpPath );
+
+    memoryUsageTimer_->start( 10000 );
 }
 
 CrashHandler::~CrashHandler()
 {
+    memoryUsageTimer_->stop();
     sentry_shutdown();
 }

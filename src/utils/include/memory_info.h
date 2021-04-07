@@ -23,5 +23,6 @@
 #include <cstdint>
 
 uint64_t physicalMemory();
+uint64_t usedMemory();
 
 #endif

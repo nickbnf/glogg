@@ -21,10 +21,17 @@
 #define KLOGG_CRASHHANDLER
 
 #ifdef KLOGG_USE_SENTRY
+
+#include <memory>
+
+class QTimer;
 class CrashHandler {
   public:
     CrashHandler();
     ~CrashHandler();
+
+  private:
+    std::unique_ptr<QTimer> memoryUsageTimer_;
 };
 #else
 class CrashHandler {

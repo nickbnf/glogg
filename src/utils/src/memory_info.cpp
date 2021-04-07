@@ -25,8 +25,8 @@
 
 #if defined( Q_OS_WIN )
 
-#include <psapi.h>
 #include <windows.h>
+#include <psapi.h>
 
 uint64_t systemPhysicalMemory()
 {

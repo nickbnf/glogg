@@ -163,7 +163,6 @@ class MainWindow : public QMainWindow {
     // and confirm it.
     void changeQFPattern( const QString& newPattern );
 
-    void onClipboardDataChanged();
   signals:
     // Is emitted when new settings must be used
     void optionsChanged();
@@ -206,6 +205,7 @@ class MainWindow : public QMainWindow {
     void logScreenInfo( QScreen* screen );
     void removeFromFavorites( const QString& pathToRemove );
     void removeFromRecent( const QString& pathToRemove );
+    void tryOpenClipboard( int tryTimes );
 
     WindowSession session_;
     QString loadingFileName;

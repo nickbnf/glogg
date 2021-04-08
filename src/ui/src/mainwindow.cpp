@@ -101,6 +101,8 @@ void signalCrawlerToFollowFile( CrawlerWidget* crawler_widget )
     QMetaObject::invokeMethod( crawler_widget, "followSet", Q_ARG( bool, true ) );
 }
 
+static constexpr auto ClipboardMaxTry = 5;
+
 } // namespace
 
 MainWindow::MainWindow( WindowSession session )
@@ -208,10 +210,6 @@ MainWindow::MainWindow( WindowSession session )
     central_widget->setLayout( main_layout );
 
     setCentralWidget( central_widget );
-
-    auto clipboard = QGuiApplication::clipboard();
-    connect( clipboard, &QClipboard::dataChanged, this, &MainWindow::onClipboardDataChanged );
-    onClipboardDataChanged();
 
     updateTitleBar( "" );
 
@@ -452,7 +450,7 @@ void MainWindow::createActions()
     predefinedFiltersDialogAction = new QAction( tr( "Predefined filters..." ), this );
     predefinedFiltersDialogAction->setStatusTip( tr( "Show dialog to configure filters" ) );
     connect( predefinedFiltersDialogAction, &QAction::triggered,
-             [ this ]( auto ) { this->editPredefinedFilters(); } );
+             [this]( auto ) { this->editPredefinedFilters(); } );
 }
 
 void MainWindow::loadIcons()
@@ -839,33 +837,27 @@ void MainWindow::openInEditor()
     openFileInDefaultApplication( session_.getFilename( currentCrawlerWidget() ) );
 }
 
-void MainWindow::onClipboardDataChanged()
+void MainWindow::tryOpenClipboard( int tryTimes )
 {
     auto clipboard = QGuiApplication::clipboard();
-    QString subtype;
-    auto text = clipboard->text( subtype );
+    auto text = clipboard->text();
 
-    LOG( logINFO ) << "Clipboard data type: " << subtype;
+    if ( text.isEmpty() && tryTimes > 0 ) {
+        QTimer::singleShot( 50, [tryTimes, this]() { tryOpenClipboard( tryTimes - 1 ); } );
+    }
+    else {
+        auto tempFile = new QTemporaryFile( tempDir_.filePath( "klogg_clipboard" ), this );
+        if ( tempFile->open() ) {
+            tempFile->write( text.toUtf8() );
+            tempFile->flush();
 
-    openClipboardAction->setEnabled( !text.isEmpty() );
+            loadFile( tempFile->fileName() );
+        }
+    }
 }
 
-void MainWindow::openClipboard()
-{
-    auto clipboard = QGuiApplication::clipboard();
-    QString subtype;
-    auto text = clipboard->text( subtype );
-    if ( text.isEmpty() ) {
-        return;
-    }
-
-    auto tempFile = new QTemporaryFile( tempDir_.filePath( "klogg_clipboard" ), this );
-    if ( tempFile->open() ) {
-        tempFile->write( text.toUtf8() );
-        tempFile->flush();
-
-        loadFile( tempFile->fileName() );
-    }
+void MainWindow::openClipboard() {
+    tryOpenClipboard(ClipboardMaxTry);
 }
 
 void MainWindow::openUrl()

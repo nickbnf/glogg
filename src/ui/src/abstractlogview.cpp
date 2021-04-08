@@ -1031,8 +1031,9 @@ void AbstractLogView::findPreviousSelected()
 void AbstractLogView::copy()
 {
     static QClipboard* clipboard = QApplication::clipboard();
-
-    clipboard->setText( selection_.getSelectedText( logData ) );
+    auto text = selection_.getSelectedText( logData );
+    text.replace(QChar::Null, QChar::Space);
+    clipboard->setText( text );
 }
 
 void AbstractLogView::markSelected()

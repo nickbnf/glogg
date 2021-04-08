@@ -798,10 +798,12 @@ void MainWindow::copy()
     static QClipboard* clipboard = QApplication::clipboard();
 
     if ( auto current = currentCrawlerWidget() ) {
-        clipboard->setText( current->getSelectedText() );
+        auto text = current->getSelectedText();
+        text.replace(QChar::Null, QChar::Space);
 
+        clipboard->setText( text );
         // Put it in the global selection as well (X11 only)
-        clipboard->setText( current->getSelectedText(), QClipboard::Selection );
+        clipboard->setText( text, QClipboard::Selection );
     }
 }
 

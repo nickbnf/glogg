@@ -382,7 +382,7 @@ QTextCodec* LogData::doGetDisplayEncoding() const
 
 QString LogData::doGetLineString( LineNumber line ) const
 {
-    const auto lines = doGetLines( line, 2_lcount );
+    const auto lines = doGetLines( line, 1_lcount );
     return lines.empty() ? QString{} : lines.front();
 }
 

@@ -79,7 +79,7 @@ SCENARIO( "filtered log data", "[logdata]" )
 {
     static int counter = 0;
     counter++;
-    LOG(logINFO) << "Test run " << counter;
+    LOG_INFO << "Test run " << counter;
     
     using VisibilityFlags = LogFilteredData::VisibilityFlags;
     using LineTypeFlags = LogFilteredData::LineTypeFlags;

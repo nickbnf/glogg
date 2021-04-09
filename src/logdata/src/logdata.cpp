@@ -56,26 +56,26 @@
 
 void LogData::AttachOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logINFO ) << "Attaching " << filename_.toStdString();
+    LOG_INFO << "Attaching " << filename_.toStdString();
     workerThread.attachFile( filename_ );
     workerThread.indexAll();
 }
 
 void LogData::FullIndexOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logINFO ) << "Reindexing (full)";
+    LOG_INFO << "Reindexing (full)";
     workerThread.indexAll( forcedEncoding_ );
 }
 
 void LogData::PartialIndexOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logINFO ) << "Reindexing (partial)";
+    LOG_INFO << "Reindexing (partial)";
     workerThread.indexAdditionalLines();
 }
 
 void LogData::CheckFileChangesOperation::doStart( LogDataWorker& workerThread ) const
 {
-    LOG( logINFO ) << "Checking file changes";
+    LOG_INFO << "Checking file changes";
     workerThread.checkFileChanges();
 }
 
@@ -107,7 +107,7 @@ LogData::LogData()
     keepFileClosed_ = config.keepFileClosed();
 
     if ( keepFileClosed_ ) {
-        LOG( logINFO ) << "Keep file closed option is set";
+        LOG_INFO << "Keep file closed option is set";
     }
 }
 
@@ -119,7 +119,7 @@ LogData::~LogData() {}
 
 void LogData::attachFile( const QString& fileName )
 {
-    LOG( logDEBUG ) << "LogData::attachFile " << fileName.toStdString();
+    LOG_DEBUG << "LogData::attachFile " << fileName.toStdString();
 
     if ( attached_file_ ) {
         // We cannot reattach
@@ -192,7 +192,7 @@ void LogData::startOperation()
     attached_file_->attachReader();
 
     if ( currentOperation_ ) {
-        LOG( logDEBUG ) << "startOperation found something to do.";
+        LOG_DEBUG << "startOperation found something to do.";
 
         // Let the operation do its stuff
         currentOperation_->start( workerThread_ );
@@ -205,7 +205,7 @@ void LogData::startOperation()
 
 void LogData::fileChangedOnDisk( const QString& filename )
 {
-    LOG( logINFO ) << "signalFileChanged " << filename << ", indexed file " << indexingFileName_;
+    LOG_INFO << "signalFileChanged " << filename << ", indexed file " << indexingFileName_;
 
     QFileInfo info( indexingFileName_ );
     const auto currentFileId = FileId::getFileId( indexingFileName_ );
@@ -213,13 +213,13 @@ void LogData::fileChangedOnDisk( const QString& filename )
 
     const auto indexedHash = IndexingData::ConstAccessor{ &indexing_data_ }.getHash();
 
-    LOG( logINFO ) << "current indexed fileSize=" << indexedHash.size;
-    LOG( logINFO ) << "current indexed hash=" << indexedHash.fullDigest;
-    LOG( logINFO ) << "info file_->size()=" << info.size();
+    LOG_INFO << "current indexed fileSize=" << indexedHash.size;
+    LOG_INFO << "current indexed hash=" << indexedHash.fullDigest;
+    LOG_INFO << "info file_->size()=" << info.size();
 
-    LOG( logINFO ) << "attached_file_->size()=" << attached_file_->size();
-    LOG( logINFO ) << "attached_file_id_ index " << attachedFileId.fileIndex;
-    LOG( logINFO ) << "currentFileId index " << currentFileId.fileIndex;
+    LOG_INFO << "attached_file_->size()=" << attached_file_->size();
+    LOG_INFO << "attached_file_id_ index " << attachedFileId.fileIndex;
+    LOG_INFO << "currentFileId index " << currentFileId.fileIndex;
 
     // In absence of any clearer information, we use the following size comparison
     // to determine whether we are following the same file or not (i.e. the file
@@ -232,14 +232,14 @@ void LogData::fileChangedOnDisk( const QString& filename )
     const bool isFileIdChanged = attachedFileId != currentFileId;
 
     if ( !isFileIdChanged && filename != indexingFileName_ ) {
-        LOG( logINFO ) << "ignore other file update";
+        LOG_INFO << "ignore other file update";
         return;
     }
 
     if ( isFileIdChanged || ( info.size() != attached_file_->size() )
          || ( !attached_file_->isOpen() ) ) {
 
-        LOG( logINFO )
+        LOG_INFO
             << "Inconsistent size, or file index, the file might have changed, re-opening";
 
         attached_file_->reOpenFile();
@@ -252,7 +252,7 @@ void LogData::indexingFinished( LoadingStatus status )
 {
     attached_file_->detachReader();
 
-    LOG( logDEBUG ) << "indexingFinished for: " << indexingFileName_
+    LOG_DEBUG << "indexingFinished for: " << indexingFileName_
                     << ( status == LoadingStatus::Successful ) << ", found "
                     << IndexingData::ConstAccessor{ &indexing_data_ }.getNbLines() << " lines.";
 
@@ -268,7 +268,7 @@ void LogData::indexingFinished( LoadingStatus status )
 
     fileChangedOnDisk_ = MonitoredFileStatus::Unchanged;
 
-    LOG( logDEBUG ) << "Sending indexingFinished.";
+    LOG_DEBUG << "Sending indexingFinished.";
     emit loadingFinished( status );
 
     // So now the operation is done, let's see if there is something
@@ -279,7 +279,7 @@ void LogData::indexingFinished( LoadingStatus status )
     nextOperation_.reset();
 
     if ( currentOperation_ ) {
-        LOG( logDEBUG ) << "indexingFinished is performing the next operation";
+        LOG_DEBUG << "indexingFinished is performing the next operation";
         startOperation();
     }
 }
@@ -288,7 +288,7 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
 {
     attached_file_->detachReader();
 
-    LOG( logINFO ) << "File " << indexingFileName_ << " status " << static_cast<int>( status );
+    LOG_INFO << "File " << indexingFileName_ << " status " << static_cast<int>( status );
 
     std::function<std::shared_ptr<LogDataOperation>()> newOperation;
     if ( fileChangedOnDisk_ != MonitoredFileStatus::Truncated ) {
@@ -320,7 +320,7 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
     nextOperation_.reset();
 
     if ( currentOperation_ ) {
-        LOG( logDEBUG ) << "checkFileChangesFinished is performing the next operation";
+        LOG_DEBUG << "checkFileChangesFinished is performing the next operation";
         startOperation();
     }
 }
@@ -349,7 +349,7 @@ LineLength LogData::doGetLineLength( LineNumber line ) const
 
 void LogData::doSetDisplayEncoding( const char* encoding )
 {
-    LOG( logDEBUG ) << "AbstractLogData::setDisplayEncoding: " << encoding;
+    LOG_DEBUG << "AbstractLogData::setDisplayEncoding: " << encoding;
     codec_.setCodec( QTextCodec::codecForName( encoding ) );
     auto needReload = false;
     auto useGuessedCodec = false;
@@ -415,7 +415,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
 {
     const auto last_line = first_line + number - 1_lcount;
 
-    LOG( logDEBUG ) << "LogData::getLines first_line:" << first_line << " nb:" << number;
+    LOG_DEBUG << "LogData::getLines first_line:" << first_line << " nb:" << number;
 
     if ( number.get() == 0 ) {
         return std::vector<QString>();
@@ -434,7 +434,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
             IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
 
             if ( last_line >= scopedAccessor.getNbLines() ) {
-                LOG( logWARNING ) << "LogData::getLines Lines out of bound asked for";
+                LOG_WARNING << "LogData::getLines Lines out of bound asked for";
                 return std::vector<QString>(); /* exception? */
             }
 
@@ -451,19 +451,19 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
             }
 
             const auto bytesToRead = last_byte - first_byte;
-            LOG( logDEBUG ) << "LogData::getLines will try to read:" << bytesToRead << " bytes";
+            LOG_DEBUG << "LogData::getLines will try to read:" << bytesToRead << " bytes";
             buffer.resize( static_cast<std::size_t>( bytesToRead ) );
 
             locker.getFile()->seek( first_byte );
             const auto bytesRead = locker.getFile()->read( buffer.data(), bytesToRead );
 
             if ( bytesRead != bytesToRead ) {
-                LOG( logWARNING ) << "LogData::getLines failed to read " << bytesToRead
+                LOG_WARNING << "LogData::getLines failed to read " << bytesToRead
                                   << " bytes, got " << bytesRead;
             }
         }
 
-        LOG( logDEBUG ) << "LogData::getLines done reading lines:" << buffer.size();
+        LOG_DEBUG << "LogData::getLines done reading lines:" << buffer.size();
 
         qint64 lineStart = 0;
         size_t currentLine = 0;
@@ -475,7 +475,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
 
             const auto length = lineEnd - lineStart - lineFeedWidth;
 
-            LOG( logDEBUG ) << "LogData::getLines line " << line << ", length " << length;
+            LOG_DEBUG << "LogData::getLines line " << line << ", length " << length;
 
             if ( length >= std::numeric_limits<LineLength::UnderlyingType>::max() / 2 ) {
                 processedLines.emplace_back( "KLOGG WARNING: this line is too long" );
@@ -484,7 +484,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
 
             if ( lineStart + length > static_cast<qint64>( buffer.size() ) ) {
                 processedLines.emplace_back( "KLOGG WARNING: file read failed" );
-                LOG( logWARNING ) << "LogData::getLines not enough data in buffer";
+                LOG_WARNING << "LogData::getLines not enough data in buffer";
                 break;
             }
 
@@ -494,7 +494,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
             lineStart = lineEnd;
         }
     } catch ( const std::bad_alloc& e ) {
-        LOG( logDEBUG ) << "LogData::getLines not enough memory " << e.what();
+        LOG_DEBUG << "LogData::getLines not enough memory " << e.what();
         processedLines.emplace_back( "KLOGG WARNING: not enough memory" );
     }
 

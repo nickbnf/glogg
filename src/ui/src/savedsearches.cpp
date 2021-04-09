@@ -58,7 +58,7 @@ void SavedSearches::clear()
 
 void SavedSearches::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "SavedSearches::saveToStorage";
+    LOG_DEBUG << "SavedSearches::saveToStorage";
 
     settings.beginGroup( "SavedSearches" );
     settings.setValue( "version", SAVEDSEARCHES_VERSION );
@@ -74,7 +74,7 @@ void SavedSearches::saveToStorage( QSettings& settings ) const
 
 void SavedSearches::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "SavedSearches::retrieveFromStorage";
+    LOG_DEBUG << "SavedSearches::retrieveFromStorage";
 
     savedSearches_.clear();
 
@@ -90,7 +90,7 @@ void SavedSearches::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of saved searches, ignoring it...";
+            LOG_ERROR << "Unknown version of saved searches, ignoring it...";
         }
         settings.endGroup();
     }

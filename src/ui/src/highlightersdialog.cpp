@@ -134,7 +134,7 @@ void HighlightersDialog::importHighlighters()
                                                        "Highlighters (*.conf)" );
 
     for ( const auto& file : qAsConst( files ) ) {
-        LOG( logDEBUG ) << "Loading highlighters from " << file;
+        LOG_DEBUG << "Loading highlighters from " << file;
         QSettings settings{ file, QSettings::IniFormat };
         HighlighterSetCollection collection;
         collection.retrieveFromStorage( settings );
@@ -151,7 +151,7 @@ void HighlightersDialog::importHighlighters()
 
 void HighlightersDialog::addHighlighterSet()
 {
-    LOG( logDEBUG ) << "addHighlighter()";
+    LOG_DEBUG << "addHighlighter()";
 
     highlighterSetCollection_.highlighters_.append( HighlighterSet::createNewSet( DEFAULT_NAME ) );
 
@@ -164,7 +164,7 @@ void HighlightersDialog::addHighlighterSet()
 void HighlightersDialog::removeHighlighterSet()
 {
     int index = highlighterListWidget->currentRow();
-    LOG( logDEBUG ) << "removeHighlighter() index " << index;
+    LOG_DEBUG << "removeHighlighter() index " << index;
 
     if ( index >= 0 ) {
         setCurrentRow( -1 );
@@ -195,7 +195,7 @@ void HighlightersDialog::removeHighlighterSet()
 void HighlightersDialog::moveHighlighterSetUp()
 {
     int index = highlighterListWidget->currentRow();
-    LOG( logDEBUG ) << "moveHighlighterUp() index " << index;
+    LOG_DEBUG << "moveHighlighterUp() index " << index;
 
     if ( index > 0 ) {
         highlighterSetCollection_.highlighters_.move( index, index - 1 );
@@ -212,7 +212,7 @@ void HighlightersDialog::moveHighlighterSetUp()
 void HighlightersDialog::moveHighlighterSetDown()
 {
     int index = highlighterListWidget->currentRow();
-    LOG( logDEBUG ) << "moveHighlighterDown() index " << index;
+    LOG_DEBUG << "moveHighlighterDown() index " << index;
 
     if ( ( index >= 0 ) && ( index < ( highlighterListWidget->count() - 1 ) ) ) {
         highlighterSetCollection_.highlighters_.move( index, index + 1 );
@@ -228,7 +228,7 @@ void HighlightersDialog::moveHighlighterSetDown()
 
 void HighlightersDialog::resolveDialog( QAbstractButton* button )
 {
-    LOG( logDEBUG ) << "resolveDialog()";
+    LOG_DEBUG << "resolveDialog()";
 
     QDialogButtonBox::ButtonRole role = buttonBox->buttonRole( button );
     if ( role == QDialogButtonBox::RejectRole ) {
@@ -246,7 +246,7 @@ void HighlightersDialog::resolveDialog( QAbstractButton* button )
         persistentHighlighterSet = highlighterSetCollection_;
     }
     else {
-        LOG( logERROR ) << "unhandled role : " << role;
+        LOG_ERROR << "unhandled role : " << role;
         return;
     }
     persistentHighlighterSet.save();
@@ -271,7 +271,7 @@ void HighlightersDialog::updatePropertyFields()
     else
         selectedRow_ = -1;
 
-    LOG( logDEBUG ) << "updatePropertyFields(), row = " << selectedRow_;
+    LOG_DEBUG << "updatePropertyFields(), row = " << selectedRow_;
 
     if ( selectedRow_ >= 0 ) {
         const HighlighterSet& currentSet
@@ -296,7 +296,7 @@ void HighlightersDialog::updatePropertyFields()
 
 void HighlightersDialog::updateHighlighterProperties()
 {
-    LOG( logDEBUG ) << "updateHighlighterProperties()";
+    LOG_DEBUG << "updateHighlighterProperties()";
 
     // If a row is selected
     if ( selectedRow_ >= 0 ) {

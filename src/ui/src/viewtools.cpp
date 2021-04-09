@@ -59,7 +59,7 @@ void ElasticHook::move( int value )
 
     last_update_ = std::chrono::steady_clock::now();
 
-    LOG( logDEBUG ) << "ElasticHook::move: new value " << position_;
+    LOG_DEBUG << "ElasticHook::move: new value " << position_;
 
     emit lengthChanged();
 }
@@ -91,7 +91,7 @@ void ElasticHook::decreasePosition()
     else if ( position_ < 0 )
         position_ += DECREASE_RATE - ( position_ / PROP_RATIO );
 
-    LOG( logDEBUG ) << "ElasticHook::timerEvent: new value " << position_;
+    LOG_DEBUG << "ElasticHook::timerEvent: new value " << position_;
 
     emit lengthChanged();
 }

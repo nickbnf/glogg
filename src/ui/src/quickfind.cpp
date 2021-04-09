@@ -60,7 +60,7 @@ void SearchingNotifier::reset()
 
 void SearchingNotifier::sendNotification( qint64 current_line, qint64 nb_lines )
 {
-    LOG( logDEBUG ) << "Emitting Searching....";
+    LOG_DEBUG << "Emitting Searching....";
     const auto progress
         = static_cast<int>( current_line < 0 ? ( nb_lines + current_line ) * 100 / nb_lines
                                              : ( current_line * 100 / nb_lines ) );
@@ -157,7 +157,7 @@ Selection QuickFind::incrementalSearchAbort()
 
 void QuickFind::stopSearch()
 {
-    LOG( logINFO ) << "Stop search for quickfind " << this;
+    LOG_INFO << "Stop search for quickfind " << this;
     interruptRequested_.set();
     operationWatcher_.waitForFinished();
 }
@@ -179,7 +179,7 @@ void QuickFind::onSearchFutureReady()
 
 void QuickFind::incrementallySearchForward( Selection selection, QuickFindMatcher matcher )
 {
-    LOG( logDEBUG ) << "QuickFind::incrementallySearchForward";
+    LOG_DEBUG << "QuickFind::incrementallySearchForward";
 
     interruptRequested_.set();
     operationWatcher_.waitForFinished();
@@ -190,7 +190,7 @@ void QuickFind::incrementallySearchForward( Selection selection, QuickFindMatche
     if ( incrementalSearchStatus_.direction() == Forward ) {
         // An incremental search is active, we restart the search
         // from the initial point
-        LOG( logDEBUG ) << "Restart search from initial point";
+        LOG_DEBUG << "Restart search from initial point";
         start_position = incrementalSearchStatus_.position();
     }
     else {
@@ -205,7 +205,7 @@ void QuickFind::incrementallySearchForward( Selection selection, QuickFindMatche
 
 void QuickFind::incrementallySearchBackward( Selection selection, QuickFindMatcher matcher )
 {
-    LOG( logDEBUG ) << "QuickFind::incrementallySearchBackward";
+    LOG_DEBUG << "QuickFind::incrementallySearchBackward";
 
     interruptRequested_.set();
     operationWatcher_.waitForFinished();
@@ -216,7 +216,7 @@ void QuickFind::incrementallySearchBackward( Selection selection, QuickFindMatch
     if ( incrementalSearchStatus_.direction() == Backward ) {
         // An incremental search is active, we restart the search
         // from the initial point
-        LOG( logDEBUG ) << "Restart search from initial point";
+        LOG_DEBUG << "Restart search from initial point";
         start_position = incrementalSearchStatus_.position();
     }
     else {
@@ -279,7 +279,7 @@ Portion QuickFind::doSearchForward( const FilePosition& start_position, const Se
     }
 
     auto line = start_position.line();
-    LOG( logDEBUG ) << "Start searching at line " << line;
+    LOG_DEBUG << "Start searching at line " << line;
     // We look at the rest of the first line
     if ( matcher.isLineMatching( logData_.getExpandedLineString( line ),
                                  start_position.column() ) ) {
@@ -362,7 +362,7 @@ Portion QuickFind::doSearchBackward( const FilePosition& start_position, const S
     }
 
     auto line = start_position.line();
-    LOG( logDEBUG ) << "Start searching at line " << line;
+    LOG_DEBUG << "Start searching at line " << line;
     // We look at the beginning of the first line
     if ( ( start_position.column() > 0 )
          && ( matcher.isLineMatchingBackward( logData_.getExpandedLineString( line ),

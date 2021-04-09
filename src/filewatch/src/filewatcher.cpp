@@ -83,13 +83,13 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         if ( enable ) {
             for ( auto& dir : watchedPaths_ ) {
-                LOG( logINFO ) << "Will reenable watch for " << dir.name;
+                LOG_INFO << "Will reenable watch for " << dir.name;
                 dir.watchId = watcher_.addWatch( dir.name, this, false );
             }
         }
         else {
             for ( auto& dir : watchedPaths_ ) {
-                LOG( logINFO ) << "Will disable watch for " << dir.name;
+                LOG_INFO << "Will disable watch for " << dir.name;
                 watcher_.removeWatch( dir.watchId );
             }
         }
@@ -99,7 +99,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
     {
         ScopedRecursiveLock lock( &mutex_ );
 
-        LOG( logDEBUG ) << fullFileName.toStdString();
+        LOG_DEBUG << fullFileName.toStdString();
 
         const QFileInfo fileInfo = QFileInfo( fullFileName );
 
@@ -119,7 +119,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             auto watchId = nativeWatchEnabled_ ? watcher_.addWatch( path, this, false ) : -111;
 
             if ( watchId < 0 ) {
-                LOG( logWARNING ) << "failed to add watch " << path << " error " << watchId;
+                LOG_WARNING << "failed to add watch " << path << " error " << watchId;
             }
 
             return watchId;
@@ -138,7 +138,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             if ( std::find( watchedDirectory->files.begin(), watchedDirectory->files.end(),
                             watchedFile.name )
                  != watchedDirectory->files.end() ) {
-                LOG( logDEBUG ) << "already watching " << watchedFile.name << " in " << directory;
+                LOG_DEBUG << "already watching " << watchedFile.name << " in " << directory;
                 return;
             }
 
@@ -154,7 +154,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
     {
         ScopedRecursiveLock lock( &mutex_ );
 
-        LOG( logDEBUG ) << fullFileName.toStdString();
+        LOG_DEBUG << fullFileName.toStdString();
 
         const QFileInfo fileInfo = QFileInfo( fullFileName );
 
@@ -184,11 +184,11 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
             }
         }
         else {
-            LOG( logWARNING ) << "The file is not watched";
+            LOG_WARNING << "The file is not watched";
         }
 
         for ( const auto& d : watcher_.directories() ) {
-            LOG( logINFO ) << "Directories still watched: " << d;
+            LOG_INFO << "Directories still watched: " << d;
         }
     }
 
@@ -213,7 +213,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
                     if ( file != watchedFile ) {
                         changedFiles.push_back( path );
-                        LOG( logINFO ) << "will notify for " << path;
+                        LOG_INFO << "will notify for " << path;
                     }
 
                     file = std::move( watchedFile );
@@ -236,7 +236,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         Q_UNUSED( watchid );
         Q_UNUSED( action );
 
-        LOG( logDEBUG ) << "Notification from esfw for " << dir;
+        LOG_DEBUG << "Notification from esfw for " << dir;
 
         // post to other thread to avoid deadlock between internal esfw lock and our mutex_
         auto signalSource = new QObject;
@@ -257,7 +257,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         const auto directory = qtDir.toStdString();
 
-        LOG( logDEBUG ) << "fileChangedOnDisk " << directory << " " << filename << ", old name "
+        LOG_DEBUG << "fileChangedOnDisk " << directory << " " << filename << ", old name "
                         << oldFilename;
 
         const auto fullChangedFilename = findChangedFilename( directory, filename, oldFilename );
@@ -292,18 +292,18 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
                                } );
 
             if ( isFileWatched ) {
-                LOG( logDEBUG ) << "fileChangedOnDisk - will notify for " << filename
+                LOG_DEBUG << "fileChangedOnDisk - will notify for " << filename
                                 << ", old name " << oldFilename;
 
                 return QDir::cleanPath( QString::fromStdString( directory ) + QDir::separator()
                                         + QString::fromStdString( changedFilename ) );
             }
             else {
-                LOG( logDEBUG ) << "fileChangedOnDisk - call but no file monitored";
+                LOG_DEBUG << "fileChangedOnDisk - call but no file monitored";
             }
         }
         else {
-            LOG( logDEBUG ) << "fileChangedOnDisk - call but no dir monitored";
+            LOG_DEBUG << "fileChangedOnDisk - call but no dir monitored";
         }
 
         return QString{};
@@ -379,11 +379,11 @@ void FileWatcher::updateConfiguration()
     const auto& config = Configuration::get();
 
     if ( config.pollingEnabled() ) {
-        LOG( logINFO ) << "Polling files enabled";
+        LOG_INFO << "Polling files enabled";
         checkTimer_->start( config.pollIntervalMs() );
     }
     else {
-        LOG( logINFO ) << "Polling files disabled";
+        LOG_INFO << "Polling files disabled";
         checkTimer_->stop();
     }
 

@@ -202,7 +202,7 @@ class KloggApp : public SingleApplication {
 
     void startBackgroundTasks()
     {
-        LOG( logDEBUG ) << "startBackgroundTasks";
+        LOG_DEBUG << "startBackgroundTasks";
         versionChecker_.startCheck();
     }
 
@@ -211,7 +211,7 @@ class KloggApp : public SingleApplication {
     {
         if ( event->type() == QEvent::FileOpen ) {
             QFileOpenEvent* openEvent = static_cast<QFileOpenEvent*>( event );
-            LOG( logINFO ) << "File open request " << openEvent->file();
+            LOG_INFO << "File open request " << openEvent->file();
 
             if ( isPrimary() ) {
                 loadFileNonInteractive( openEvent->file() );
@@ -234,7 +234,7 @@ class KloggApp : public SingleApplication {
 
         activeWindows_.push( QPointer<MainWindow>( window ) );
 
-        LOG( logINFO ) << "Window " << &window << " created";
+        LOG_INFO << "Window " << &window << " created";
         connect( window, &MainWindow::newWindow, [ = ]() { newWindow()->show(); } );
         connect( window, &MainWindow::windowActivated,
                  [ this, window ]() { onWindowActivated( *window ); } );
@@ -247,13 +247,13 @@ class KloggApp : public SingleApplication {
 
     void onWindowActivated( MainWindow& window )
     {
-        LOG( logINFO ) << "Window " << &window << " activated";
+        LOG_INFO << "Window " << &window << " activated";
         activeWindows_.push( QPointer<MainWindow>( &window ) );
     }
 
     void onWindowClosed( MainWindow& window )
     {
-        LOG( logINFO ) << "Window " << &window << " closed";
+        LOG_INFO << "Window " << &window << " closed";
         auto w = std::find_if( mainWindows_.begin(), mainWindows_.end(),
                                [ &window ]( const auto& p ) { return p.second == &window; } );
 
@@ -264,7 +264,7 @@ class KloggApp : public SingleApplication {
 
     void exitApplication()
     {
-        LOG( logINFO ) << "exit application";
+        LOG_INFO << "exit application";
         session_->setExitRequested( true );
         auto mainWindows = mainWindows_;
         mainWindows.reverse();
@@ -278,7 +278,7 @@ class KloggApp : public SingleApplication {
     void newVersionNotification( const QString& new_version, const QString& url,
                                  const QStringList& changes )
     {
-        LOG( logDEBUG ) << "newVersionNotification( " << new_version << " from " << url << " )";
+        LOG_DEBUG << "newVersionNotification( " << new_version << " from " << url << " )";
 
         QString message = QString( "<p> A new version of klogg (%1) is available for download </p>"
                                    "<a href=\"%2\">%2</a>" )

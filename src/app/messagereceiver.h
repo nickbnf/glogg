@@ -58,7 +58,7 @@ class MessageReceiver final : public QObject {
         const auto data = QJsonDocument::fromBinaryData( message ).toVariant().toMap();
 #endif
 
-        LOG( logINFO ) << "Message from  " << instanceId << QJsonDocument::fromVariant(data).toJson();
+        LOG_INFO << "Message from  " << instanceId << QJsonDocument::fromVariant(data).toJson();
 
         Q_UNUSED( instanceId );
 

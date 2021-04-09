@@ -89,7 +89,7 @@ struct SearchBlockData {
 PartialSearchResults filterLines( const QRegularExpression& regex,
                                   const std::vector<QString>& lines, LineNumber chunkStart )
 {
-    LOG( logDEBUG ) << "Filter lines at " << chunkStart;
+    LOG_DEBUG << "Filter lines at " << chunkStart;
     PartialSearchResults results;
     results.chunkStart = chunkStart;
     results.processedLines = LinesCount( static_cast<LinesCount::UnderlyingType>( lines.size() ) );
@@ -149,11 +149,11 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
                 = insertIt == end( oldMatches ) || !( *insertIt < matches.back() );
 
             if ( !areMatchesValid ) {
-                LOG( logERROR ) << "Invalid matches";
-                LOG( logERROR ) << "insertIt: " << insertIt->lineNumber();
-                LOG( logERROR ) << "old matches: " << oldMatches.front().lineNumber() << "-"
+                LOG_ERROR << "Invalid matches";
+                LOG_ERROR << "insertIt: " << insertIt->lineNumber();
+                LOG_ERROR << "old matches: " << oldMatches.front().lineNumber() << "-"
                                 << oldMatches.back().lineNumber();
-                LOG( logERROR ) << "new matches: " << matches.front().lineNumber() << "-"
+                LOG_ERROR << "new matches: " << matches.front().lineNumber() << "-"
                                 << matches.back().lineNumber();
             }
 
@@ -248,7 +248,7 @@ void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber
 {
     ScopedLock locker( &mutex_ ); // to protect operationRequested_
 
-    LOG( logINFO ) << "Search requested";
+    LOG_INFO << "Search requested";
 
     operationFuture_.waitForFinished();
     interruptRequested_.clear();
@@ -265,7 +265,7 @@ void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, Line
 {
     ScopedLock locker( &mutex_ ); // to protect operationRequested_
 
-    LOG( logINFO ) << "Search update requested from " << position.get();
+    LOG_INFO << "Search update requested from " << position.get();
 
     operationFuture_.waitForFinished();
     interruptRequested_.clear();
@@ -279,7 +279,7 @@ void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, Line
 
 void LogFilteredDataWorker::interrupt()
 {
-    LOG( logINFO ) << "Search interruption requested";
+    LOG_INFO << "Search interruption requested";
     interruptRequested_.set();
 }
 
@@ -310,7 +310,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 {
     const auto nbSourceLines = sourceLogData_.getNbLine();
 
-    LOG( logINFO ) << "Searching from line " << initialLine << " to " << nbSourceLines;
+    LOG_INFO << "Searching from line " << initialLine << " to " << nbSourceLines;
 
     using namespace std::chrono;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -326,7 +326,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                             : static_cast<int>( config.searchThreadPoolSize() ) );
     }() );
 
-    LOG( logINFO ) << "Using " << matchingThreadsCount << " matching threads";
+    LOG_INFO << "Using " << matchingThreadsCount << " matching threads";
 
     tbb::flow::graph searchGraph;
 
@@ -349,7 +349,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         [this, endLine, nbLinesInChunk, &chunkStart,
          &fileReadingDuration]( BlockDataType& blockData ) {
             if ( interruptRequested_ ) {
-                LOG( logINFO ) << "Block reader interrupted";
+                LOG_INFO << "Block reader interrupted";
                 return false;
             }
 
@@ -359,13 +359,13 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
             const auto lineSourceStartTime = high_resolution_clock::now();
 
-            LOG( logDEBUG ) << "Reading chunk starting at " << chunkStart;
+            LOG_DEBUG << "Reading chunk starting at " << chunkStart;
 
             const auto linesInChunk
                 = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
             auto lines = sourceLogData_.getLines( chunkStart, linesInChunk );
 
-            LOG( logDEBUG ) << "Sending chunk starting at " << chunkStart << ", " << lines.size()
+            LOG_DEBUG << "Sending chunk starting at " << chunkStart << ", " << lines.size()
                             << " lines read.";
 
             blockData = BlockDataType{ chunkStart, std::move( lines ) };
@@ -374,7 +374,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             const auto chunkReadTime
                 = duration_cast<microseconds>( lineSourceEndTime - lineSourceStartTime );
 
-            LOG( logDEBUG ) << "Sent chunk starting at " << chunkStart << ", "
+            LOG_DEBUG << "Sent chunk starting at " << chunkStart << ", "
                             << blockData->lines.size() << " lines read in "
                             << static_cast<float>( chunkReadTime.count() ) / 1000.f << " ms";
 
@@ -410,7 +410,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
                     microseconds& matchDuration = std::get<1>( regexMatchers.at( index ) );
                     matchDuration += duration_cast<microseconds>( matchEndTime - matchStartTime );
-                    LOG( logDEBUG ) << "Searcher " << index << " block " << blockData->chunkStart
+                    LOG_DEBUG << "Searcher " << index << " block " << blockData->chunkStart
                                     << " sending matches " << results->matchingLines.size();
                     return results;
                 } ) );
@@ -432,7 +432,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                                                    tbb::flow::rejecting>(
         searchGraph, 1, [&]( const PartialResultType& matchResults ) {
             if ( interruptRequested_ ) {
-                LOG( logINFO ) << "Match processor interrupted";
+                LOG_INFO << "Match processor interrupted";
                 return tbb::flow::continue_msg{};
             }
 
@@ -453,7 +453,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                 // and update the client
                 searchData.addAll( maxLength, matchResults->matchingLines, processedLines );
 
-                LOG( logDEBUG ) << "done Searching chunk starting at " << matchResults->chunkStart
+                LOG_DEBUG << "done Searching chunk starting at " << matchResults->chunkStart
                                 << ", " << matchResults->processedLines << " lines read.";
             }
 
@@ -491,19 +491,19 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     const auto duration = static_cast<float>( duration_cast<microseconds>( t2 - t1 ).count() );
 
-    LOG( logINFO ) << "Searching done, overall duration " << duration / 1000.f << " ms";
-    LOG( logINFO ) << "Line reading took "
+    LOG_INFO << "Searching done, overall duration " << duration / 1000.f << " ms";
+    LOG_INFO << "Line reading took "
                    << static_cast<float>( fileReadingDuration.count() ) / 1000.f << " ms";
-    LOG( logINFO ) << "Results combining took "
+    LOG_INFO << "Results combining took "
                    << static_cast<float>( matchCombiningDuration.count() ) / 1000.f << " ms";
 
     for ( const auto& regexMatcher : regexMatchers ) {
-        LOG( logINFO ) << "Matching took "
+        LOG_INFO << "Matching took "
                        << static_cast<float>( std::get<1>( regexMatcher ).count() ) / 1000.f
                        << " ms";
     }
 
-    LOG( logINFO ) << "Searching perf "
+    LOG_INFO << "Searching perf "
                    << static_cast<uint32_t>( std::floor(
                           1000 * 1000.f * static_cast<float>( ( endLine - initialLine ).get() )
                           / duration ) )

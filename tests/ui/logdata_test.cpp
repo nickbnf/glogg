@@ -56,7 +56,7 @@ namespace {
             arguments << file_->fileName() << QString::number(numberOfLines_) << QString::number(static_cast<uint8_t>(flag_));
 
             const auto result = QProcess::execute(writeHelper, arguments);
-            LOG(logINFO) << "Write helper result " << result;
+            LOG_INFO << "Write helper result " << result;
         }
 
     private:

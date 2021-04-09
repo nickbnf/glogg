@@ -74,7 +74,7 @@ bool isVersionNewer( const QString& current_version, const QString& new_version 
 
 void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "VersionCheckerConfig::retrieveFromStorage";
+    LOG_DEBUG << "VersionCheckerConfig::retrieveFromStorage";
 
     if ( settings.contains( "VersionChecker/nextDeadline" ) )
         next_deadline_ = settings.value( "VersionChecker/nextDeadline" ).toLongLong();
@@ -82,7 +82,7 @@ void VersionCheckerConfig::retrieveFromStorage( QSettings& settings )
 
 void VersionCheckerConfig::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "VersionCheckerConfig::saveToStorage";
+    LOG_DEBUG << "VersionCheckerConfig::saveToStorage";
 
     settings.setValue( "VersionChecker/nextDeadline", static_cast<long long>( next_deadline_ ) );
 }
@@ -96,7 +96,7 @@ VersionChecker::VersionChecker()
 
 void VersionChecker::startCheck()
 {
-    LOG( logDEBUG ) << "VersionChecker::startCheck()";
+    LOG_DEBUG << "VersionChecker::startCheck()";
 
     const auto& deadlineConfig = VersionCheckerConfig::getSynced();
     const auto& appConfig = Configuration::get();
@@ -107,14 +107,14 @@ void VersionChecker::startCheck()
             connect( manager_, &QNetworkAccessManager::finished, this,
                      &VersionChecker::downloadFinished );
 
-            LOG( logDEBUG ) << "Requesting new version info from " << VERSION_URL;
+            LOG_DEBUG << "Requesting new version info from " << VERSION_URL;
 
             QNetworkRequest request;
             request.setUrl( QUrl( VERSION_URL ) );
             manager_->get( request );
         }
         else {
-            LOG( logDEBUG ) << "Deadline not reached yet, next check in "
+            LOG_DEBUG << "Deadline not reached yet, next check in "
                             << std::difftime( deadlineConfig.nextDeadline(), std::time( nullptr ) );
         }
     }
@@ -122,14 +122,14 @@ void VersionChecker::startCheck()
 
 void VersionChecker::downloadFinished( QNetworkReply* reply )
 {
-    LOG( logDEBUG ) << "VersionChecker::downloadFinished()";
+    LOG_DEBUG << "VersionChecker::downloadFinished()";
 
     if ( reply->error() == QNetworkReply::NoError ) {
         const auto rawReply = reply->readAll() ;
         checkVersionData(rawReply);
     }
     else {
-        LOG( logWARNING ) << "Download failed: err " << reply->error();
+        LOG_WARNING << "Download failed: err " << reply->error();
     }
 
     reply->deleteLater();
@@ -144,7 +144,7 @@ void VersionChecker::downloadFinished( QNetworkReply* reply )
 
 void VersionChecker::checkVersionData( QByteArray versionData )
 {
-    LOG( logDEBUG ) << "Version reply: " << QString::fromUtf8( versionData );
+    LOG_DEBUG << "Version reply: " << QString::fromUtf8( versionData );
 
     const auto latestJson = QJsonDocument::fromJson( versionData );
     const auto latestVersionMap = latestJson.toVariant().toMap();
@@ -178,10 +178,10 @@ void VersionChecker::checkVersionData( QByteArray versionData )
         }
     }
 
-    LOG( logDEBUG ) << "Current version: " << currentVersion << ". Latest version is "
+    LOG_DEBUG << "Current version: " << currentVersion << ". Latest version is "
                     << latestVersion << ", url " << url;
     if ( isVersionNewer( currentVersion, latestVersion ) ) {
-        LOG( logINFO ) << "Sending new version notification";
+        LOG_INFO << "Sending new version notification";
 
         emit newVersionFound( latestVersion, url, changes );
     }

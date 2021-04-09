@@ -164,7 +164,7 @@ void PredefinedFiltersDialog::importFilters()
         return;
     }
 
-    LOG( logDEBUG ) << "Loading predefined filters from " << file;
+    LOG_DEBUG << "Loading predefined filters from " << file;
     QSettings settings{ file, QSettings::IniFormat };
 
     PredefinedFiltersCollection collection;
@@ -193,7 +193,7 @@ void PredefinedFiltersDialog::exportFilters()
 
 void PredefinedFiltersDialog::resolveStandardButton( QAbstractButton* button )
 {
-    LOG( logDEBUG ) << "PredefinedFiltersDialog::resolveStandardButton";
+    LOG_DEBUG << "PredefinedFiltersDialog::resolveStandardButton";
 
     const auto role = buttonBox->buttonRole( button );
 
@@ -211,7 +211,7 @@ void PredefinedFiltersDialog::resolveStandardButton( QAbstractButton* button )
         accept();
         break;
     default:
-        LOG( logERROR ) << "PredefinedFiltersDialog::resolveStandardButton unhandled role: "
+        LOG_ERROR << "PredefinedFiltersDialog::resolveStandardButton unhandled role: "
                         << role;
         return;
     }

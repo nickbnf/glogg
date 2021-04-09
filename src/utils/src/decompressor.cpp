@@ -39,7 +39,7 @@ Archive archiveTypeByExtension( const QString& archiveFilePath )
 {
     const auto info = QFileInfo( archiveFilePath );
     const auto extension = info.suffix().toLower();
-    LOG( logINFO ) << "Suffix is " << extension;
+    LOG_INFO << "Suffix is " << extension;
 
     if ( extension == "zip" ) {
         return Archive::Zip;
@@ -165,7 +165,7 @@ Decompressor::Decompressor( QObject* parent )
     : QObject( parent )
 {
     connect( &watcher_, &QFutureWatcher<bool>::finished, [this]() {
-        LOG( logINFO ) << "Decompressor finished " << watcher_.result();
+        LOG_INFO << "Decompressor finished " << watcher_.result();
         emit finished( watcher_.result() );
     } );
 }
@@ -192,13 +192,13 @@ bool Decompressor::decompress( const QString& archiveFilePath, QFile* outputFile
 {
     auto decompressor = makeDecompressor( archiveType( archiveFilePath ), archiveFilePath );
     if ( !decompressor ) {
-        LOG( logWARNING ) << "Unsupported archive " << archiveFilePath.constData();
+        LOG_WARNING << "Unsupported archive " << archiveFilePath.constData();
         return false;
     }
 
     future_ = QtConcurrent::run( [input = std::move( decompressor ), archiveFilePath, outputFile] {
         if ( !input->open( QIODevice::ReadOnly ) ) {
-            LOG( logWARNING ) << "Cannot open " << archiveFilePath;
+            LOG_WARNING << "Cannot open " << archiveFilePath;
             return false;
         }
 
@@ -208,7 +208,7 @@ bool Decompressor::decompress( const QString& archiveFilePath, QFile* outputFile
             if ( data.size() > 0 ) {
                 const auto writtenBytes = outputFile->write( data );
                 if ( writtenBytes < 0 ) {
-                    LOG( logERROR ) << "Error decompressing " << archiveFilePath;
+                    LOG_ERROR << "Error decompressing " << archiveFilePath;
                     success = false;
                     break;
                 }
@@ -229,7 +229,7 @@ bool Decompressor::extract( const QString& archiveFilePath, const QString& desti
 {
     auto archive = makeExtractor( archiveType( archiveFilePath ), archiveFilePath );
     if ( !archive ) {
-        LOG( logWARNING ) << "Unsupported archive " << archiveFilePath;
+        LOG_WARNING << "Unsupported archive " << archiveFilePath;
         return false;
     }
 
@@ -237,7 +237,7 @@ bool Decompressor::extract( const QString& archiveFilePath, const QString& desti
 
     future_ = QtConcurrent::run( [ar = std::move( archive ), archiveFilePath, destination] {
         if ( !ar->open( QIODevice::ReadOnly ) ) {
-            LOG( logWARNING ) << "Cannot open " << archiveFilePath;
+            LOG_WARNING << "Cannot open " << archiveFilePath;
             return false;
         }
 

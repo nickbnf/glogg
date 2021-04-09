@@ -73,7 +73,7 @@ int main( int argc, char* argv[] )
     QApplication a( argc, argv );
 
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init( logINFO, &appender );
+    plog::init( plog::info, &appender );
 
     qRegisterMetaType<LinesCount>( "LinesCount" );
     qRegisterMetaType<LineNumber>( "LineNumber" );

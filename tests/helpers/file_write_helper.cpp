@@ -32,13 +32,13 @@
 int main( int argc, const char** argv )
 {
     plog::ConsoleAppender<plog::GloggFormatter> appender;
-    plog::init( logINFO, &appender );
+    plog::init( plog::info, &appender );
 
     if ( argc < 4 ) {
-        LOG( logERROR ) << "Expected 3 arguments";
+        LOG_ERROR << "Expected 3 arguments";
     }
 
-    LOG( logINFO ) << "Will write to " << argv[ 1 ] << " lines " << argv[ 2 ] << ", flag "
+    LOG_INFO << "Will write to " << argv[ 1 ] << " lines " << argv[ 2 ] << ", flag "
                    << argv[ 3 ];
 
     QFile file{ argv[ 1 ] };
@@ -81,7 +81,7 @@ int main( int argc, const char** argv )
 
     file.open( QIODevice::Unbuffered | QIODevice::ReadOnly | QIODevice::Append );
 
-    LOG( logINFO ) << "Write to " << argv[ 1 ] << " finished, size " << file.size();
+    LOG_INFO << "Write to " << argv[ 1 ] << " finished, size " << file.size();
 
     file.close();
 

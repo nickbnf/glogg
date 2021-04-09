@@ -259,7 +259,7 @@ void MainWindow::reloadSession()
 
 void MainWindow::loadInitialFile( QString fileName, bool followFile )
 {
-    LOG( logDEBUG ) << "loadInitialFile";
+    LOG_DEBUG << "loadInitialFile";
 
     // Is there a file passed as argument?
     if ( !fileName.isEmpty() ) {
@@ -587,7 +587,7 @@ void MainWindow::applyStyle()
 {
     const auto& config = Configuration::get();
     auto style = config.style();
-    LOG( logINFO ) << "Setting style to " << style;
+    LOG_INFO << "Setting style to " << style;
     if ( style == DarkStyleKey ) {
         QFile styleFile( ":qdarkstyle/style.qss" );
         styleFile.open( QFile::ReadOnly | QFile::Text );
@@ -957,7 +957,7 @@ void MainWindow::documentation()
         tb->show();
     }
     else {
-        LOG( logERROR ) << "Can't open documentation resource";
+        LOG_ERROR << "Can't open documentation resource";
     }
 }
 
@@ -979,7 +979,7 @@ void MainWindow::encodingChanged( QAction* action )
         mib = mibData.toInt();
     }
 
-    LOG( logDEBUG ) << "encodingChanged, encoding " << mib;
+    LOG_DEBUG << "encodingChanged, encoding " << mib;
     if ( auto crawler = currentCrawlerWidget() ) {
         crawler->setEncoding( mib );
         updateInfoLine();
@@ -1013,7 +1013,7 @@ void MainWindow::changeFollowMode( bool follow )
 {
     auto& config = Configuration::get();
     if ( follow && !( config.nativeFileWatchEnabled() || config.pollingEnabled() ) ) {
-        LOG( logWARNING ) << "File watch disabled in settings";
+        LOG_WARNING << "File watch disabled in settings";
     }
 
     followAction->setChecked( follow );
@@ -1043,7 +1043,7 @@ void MainWindow::newPredefinedFilterHandler( QString newFilter )
 
 void MainWindow::updateLoadingProgress( int progress )
 {
-    LOG( logDEBUG ) << "Loading progress: " << progress;
+    LOG_DEBUG << "Loading progress: " << progress;
 
     QString current_file
         = QDir::toNativeSeparators( session_.getFilename( currentCrawlerWidget() ) );
@@ -1063,7 +1063,7 @@ void MainWindow::updateLoadingProgress( int progress )
 
 void MainWindow::handleLoadingFinished( LoadingStatus status )
 {
-    LOG( logDEBUG ) << "handleLoadingFinished success=" << ( status == LoadingStatus::Successful );
+    LOG_DEBUG << "handleLoadingFinished success=" << ( status == LoadingStatus::Successful );
 
     // No file is loading
     loadingFileName.clear();
@@ -1126,7 +1126,7 @@ void MainWindow::closeTab( int index )
 
 void MainWindow::currentTabChanged( int index )
 {
-    LOG( logDEBUG ) << "currentTabChanged";
+    LOG_DEBUG << "currentTabChanged";
 
     if ( index >= 0 ) {
         auto* crawler_widget = static_cast<CrawlerWidget*>( mainTabWidget_.widget( index ) );
@@ -1166,7 +1166,7 @@ void MainWindow::changeQFPattern( const QString& newPattern )
 
 void MainWindow::loadFileNonInteractive( const QString& file_name )
 {
-    LOG( logDEBUG ) << "loadFileNonInteractive( " << file_name.toStdString() << " )";
+    LOG_DEBUG << "loadFileNonInteractive( " << file_name.toStdString() << " )";
 
     loadFile( file_name );
 
@@ -1281,7 +1281,7 @@ void MainWindow::dropEvent( QDropEvent* event )
 
 void MainWindow::keyPressEvent( QKeyEvent* keyEvent )
 {
-    LOG( logDEBUG4 ) << "keyPressEvent received";
+    LOG_DEBUG << "keyPressEvent received";
 
     switch ( keyEvent->key() ) {
     case Qt::Key_Apostrophe:
@@ -1402,7 +1402,7 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
 // The loading is done asynchronously.
 bool MainWindow::loadFile( const QString& fileName, bool followFile )
 {
-    LOG( logDEBUG ) << "loadFile ( " << fileName.toStdString() << " )";
+    LOG_DEBUG << "loadFile ( " << fileName.toStdString() << " )";
 
     // First check if the file is already open...
     auto* existing_crawler = static_cast<CrawlerWidget*>( session_.getViewIfOpen( fileName ) );
@@ -1425,7 +1425,7 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
                 session_.open( fileName, []() { return new CrawlerWidget(); } ) );
 
             if ( !crawler_widget ) {
-                LOG( logERROR ) << "Can't create crawler for " << fileName.toStdString();
+                LOG_ERROR << "Can't create crawler for " << fileName.toStdString();
                 return false;
             }
 
@@ -1457,11 +1457,11 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
                 followAction->setChecked( true );
             }
         } catch ( ... ) {
-            LOG( logERROR ) << "Can't open file " << fileName.toStdString();
+            LOG_ERROR << "Can't open file " << fileName.toStdString();
             return false;
         }
 
-        LOG( logDEBUG ) << "Success loading file " << fileName.toStdString();
+        LOG_DEBUG << "Success loading file " << fileName.toStdString();
         return true;
     }
     else {
@@ -1864,7 +1864,7 @@ void MainWindow::readSettings()
 
 void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
 {
-    LOG( logDEBUG ) << "MainWindow::displayQuickFindBar";
+    LOG_DEBUG << "MainWindow::displayQuickFindBar";
 
     // Warn crawlers so they can save the position of the focus in order
     // to do incremental search in the right view.
@@ -1884,16 +1884,16 @@ void MainWindow::displayQuickFindBar( QuickFindMux::QFDirection direction )
 
 void MainWindow::logScreenInfo( QScreen* screen )
 {
-    LOG( logINFO ) << "screen changed for " << session_.windowIndex();
+    LOG_INFO << "screen changed for " << session_.windowIndex();
     if ( screen == nullptr ) {
         return;
     }
 
-    LOG( logINFO ) << "screen name " << screen->name();
-    LOG( logINFO ) << "screen size " << screen->size().width() << "x" << screen->size().height();
-    LOG( logINFO ) << "screen ratio " << screen->devicePixelRatio();
-    LOG( logINFO ) << "screen logical dpi " << screen->logicalDotsPerInch();
-    LOG( logINFO ) << "screen physical dpi " << screen->physicalDotsPerInch();
+    LOG_INFO << "screen name " << screen->name();
+    LOG_INFO << "screen size " << screen->size().width() << "x" << screen->size().height();
+    LOG_INFO << "screen ratio " << screen->devicePixelRatio();
+    LOG_INFO << "screen logical dpi " << screen->logicalDotsPerInch();
+    LOG_INFO << "screen physical dpi " << screen->physicalDotsPerInch();
 }
 
 void MainWindow::reportIssue() const

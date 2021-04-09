@@ -144,7 +144,7 @@ template <typename Storage> class LinePosition {
     // (this is NOT checked!)
     inline void append( LineOffset pos )
     {
-        LOG( logDEBUG2 ) << "Next line at " << pos;
+        LOG_DEBUG << "Next line at " << pos;
         if ( fakeFinalLF_ )
             array.pop_back();
 
@@ -166,7 +166,7 @@ template <typename Storage> class LinePosition {
     inline LineOffset at( LineNumber::UnderlyingType i ) const
     {
         const auto pos = array.at( i );
-        LOG( logDEBUG2 ) << "Line pos at " << i << " is " << pos;
+        LOG_DEBUG << "Line pos at " << i << " is " << pos;
         return pos;
     }
     inline LineOffset operator[]( LineNumber::UnderlyingType i ) const

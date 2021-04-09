@@ -28,7 +28,7 @@ constexpr int SESSION_VERSION = 1;
 
 void SessionInfo::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "SessionInfo::retrieveFromStorage";
+    LOG_DEBUG << "SessionInfo::retrieveFromStorage";
 
     settings.beginGroup( "Window" );
 
@@ -45,7 +45,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 settings.beginGroup( "OpenFiles" );
                 if ( settings.value( "version" ).toInt() == OPENFILES_VERSION ) {
                     int size = settings.beginReadArray( "openFiles" );
-                    LOG( logDEBUG ) << "SessionInfo: " << size << " files.";
+                    LOG_DEBUG << "SessionInfo: " << size << " files.";
                     for ( int i = 0; i < size; ++i ) {
                         settings.setArrayIndex( i );
                         QString file_name = settings.value( "fileName" ).toString();
@@ -56,18 +56,18 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                     settings.endArray();
                 }
                 else {
-                    LOG( logERROR ) << "Unknown version of OpenFiles, ignoring it...";
+                    LOG_ERROR << "Unknown version of OpenFiles, ignoring it...";
                 }
                 settings.endGroup();
             }
 
-            LOG( logINFO ) << "Reloaded window session info for " << windowId;
+            LOG_INFO << "Reloaded window session info for " << windowId;
             windows_.emplace_back( window );
         }
         settings.endArray();
     }
     else {
-        LOG( logERROR ) << "Unknown version of session, ignoring it...";
+        LOG_ERROR << "Unknown version of session, ignoring it...";
     }
 
     settings.endGroup();
@@ -75,7 +75,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
 
 void SessionInfo::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "SessionInfo::saveToStorage";
+    LOG_DEBUG << "SessionInfo::saveToStorage";
 
     settings.beginGroup( "Window" );
     settings.setValue( "version", SESSION_VERSION );

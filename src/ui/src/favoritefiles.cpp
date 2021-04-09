@@ -57,7 +57,7 @@ std::vector<DisplayFilePath> FavoriteFiles::favorites() const
 
 void FavoriteFiles::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "FavoriteFiles::saveToStorage";
+    LOG_DEBUG << "FavoriteFiles::saveToStorage";
 
     settings.beginGroup( "FavoriteFiles" );
     settings.setValue( "version", FavoriteFilesVersion );
@@ -73,7 +73,7 @@ void FavoriteFiles::saveToStorage( QSettings& settings ) const
 
 void FavoriteFiles::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "FavoriteFiles::retrieveFromStorage";
+    LOG_DEBUG << "FavoriteFiles::retrieveFromStorage";
 
     files_.clear();
 
@@ -89,7 +89,7 @@ void FavoriteFiles::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of favorite files, ignoring it...";
+            LOG_ERROR << "Unknown version of favorite files, ignoring it...";
         }
         settings.endGroup();
     }

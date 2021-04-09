@@ -193,7 +193,7 @@ bool checkCrashpadReports( const QString& databasePath )
 
     std::vector<CrashReportDatabase::Report> pendingReports;
     database->GetCompletedReports( &pendingReports );
-    LOG( logINFO ) << "Pending reports " << pendingReports.size();
+    LOG_INFO << "Pending reports " << pendingReports.size();
 
 #ifdef Q_OS_WIN
     const auto stackwalker = QCoreApplication::applicationDirPath() + "/klogg_minidump_dump.exe";
@@ -278,14 +278,14 @@ CrashHandler::CrashHandler()
     sentry_set_tag( "build_arch", QSysInfo::buildCpuArchitecture().toLatin1().data() );
 
     const auto totalMemory = std::to_string( physicalMemory() );
-    LOG( logINFO ) << "Physical memory " << totalMemory;
+    LOG_INFO << "Physical memory " << totalMemory;
 
     sentry_set_extra( "memory", sentry_value_new_string( totalMemory.c_str() ) );
 
     memoryUsageTimer_ = std::make_unique<QTimer>();
     QObject::connect( memoryUsageTimer_.get(), &QTimer::timeout, []() {
         const auto memory = std::to_string( usedMemory() );
-        LOG( logINFO ) << "Used memory " << memory;
+        LOG_INFO << "Used memory " << memory;
         sentry_set_extra( "vm_used", sentry_value_new_string( memory.c_str() ) );
     } );
     memoryUsageTimer_->start( 10000 );

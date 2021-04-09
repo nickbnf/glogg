@@ -60,7 +60,7 @@ TabNameMapping& TabNameMapping::setTabName( const QString& path, const QString& 
 
 void TabNameMapping::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "TabNameMapping::saveToStorage";
+    LOG_DEBUG << "TabNameMapping::saveToStorage";
 
     settings.beginGroup( "TabNameMapping" );
     settings.setValue( "version", TABNAMEMAPPING_VERSION );
@@ -77,7 +77,7 @@ void TabNameMapping::saveToStorage( QSettings& settings ) const
 
 void TabNameMapping::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "TabNameMapping::retrieveFromStorage";
+    LOG_DEBUG << "TabNameMapping::retrieveFromStorage";
 
     tabNames_.clear();
 
@@ -95,7 +95,7 @@ void TabNameMapping::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of tab names mapping, ignoring it...";
+            LOG_ERROR << "Unknown version of tab names mapping, ignoring it...";
         }
         settings.endGroup();
     }

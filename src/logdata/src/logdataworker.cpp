@@ -218,7 +218,7 @@ void LogDataWorker::attachFile( const QString& fileName )
 void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
 {
     ScopedLock locker( &mutex_ );
-    LOG( logDEBUG ) << "FullIndex requested";
+    LOG_DEBUG << "FullIndex requested";
 
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
@@ -233,7 +233,7 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
 void LogDataWorker::indexAdditionalLines()
 {
     ScopedLock locker( &mutex_ );
-    LOG( logDEBUG ) << "AddLines requested";
+    LOG_DEBUG << "AddLines requested";
 
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
@@ -248,7 +248,7 @@ void LogDataWorker::indexAdditionalLines()
 void LogDataWorker::checkFileChanges()
 {
     ScopedLock locker( &mutex_ );
-    LOG( logDEBUG ) << "Check file changes requested";
+    LOG_DEBUG << "Check file changes requested";
 
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
@@ -281,25 +281,25 @@ OperationResult LogDataWorker::connectSignalsAndRun( IndexOperation* operationRe
 
 void LogDataWorker::interrupt()
 {
-    LOG( logINFO ) << "Load interrupt requested";
+    LOG_INFO << "Load interrupt requested";
     interruptRequest_.set();
 }
 
 void LogDataWorker::onIndexingFinished( bool result )
 {
     if ( result ) {
-        LOG( logINFO ) << "finished indexing in worker thread";
+        LOG_INFO << "finished indexing in worker thread";
         emit indexingFinished( LoadingStatus::Successful );
     }
     else {
-        LOG( logINFO ) << "indexing interrupted in worker thread";
+        LOG_INFO << "indexing interrupted in worker thread";
         emit indexingFinished( LoadingStatus::Interrupted );
     }
 }
 
 void LogDataWorker::onCheckFileFinished( const MonitoredFileStatus result )
 {
-    LOG( logINFO ) << "checking file finished in worker thread";
+    LOG_INFO << "checking file finished in worker thread";
     emit checkFileChangesFinished( result );
 }
 
@@ -327,7 +327,7 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
         while ( next_tab != nullptr ) {
             pos_within_block = adjustToCharWidth( next_tab - block.data() );
 
-            LOG( logDEBUG1 ) << "Tab at " << pos_within_block;
+            LOG_DEBUG << "Tab at " << pos_within_block;
 
             state.additional_spaces
                 += TabStop
@@ -364,7 +364,7 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
             if ( next_line_feed != nullptr ) {
                 expandTabs( search_start, next_line_feed - search_start );
                 pos_within_block = adjustToCharWidth( next_line_feed - block.data() );
-                LOG( logDEBUG1 ) << "LF at " << pos_within_block;
+                LOG_DEBUG << "LF at " << pos_within_block;
             }
             else {
                 expandTabs( search_start, search_line_size );
@@ -395,7 +395,7 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
 {
     if ( !state.encodingGuess ) {
         state.encodingGuess = EncodingDetector::getInstance().detectEncoding( block );
-        LOG( logINFO ) << "Encoding guess " << state.encodingGuess->name().toStdString();
+        LOG_INFO << "Encoding guess " << state.encodingGuess->name().toStdString();
     }
 
     IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
@@ -412,7 +412,7 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
         }
 
         state.encodingParams = EncodingParameters( state.fileTextCodec );
-        LOG( logINFO ) << "Encoding " << state.fileTextCodec->name().toStdString()
+        LOG_INFO << "Encoding " << state.fileTextCodec->name().toStdString()
                        << ", Char width " << state.encodingParams.lineFeedWidth;
     }
 }
@@ -424,7 +424,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     if ( !( file.isOpen() || file.open( QIODevice::ReadOnly ) ) ) {
         // TODO: Check that the file is seekable?
         // If the file cannot be open, we do as if it was empty
-        LOG( logWARNING ) << "Cannot open file " << fileName_.toStdString();
+        LOG_WARNING << "Cannot open file " << fileName_.toStdString();
 
         IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
 
@@ -485,7 +485,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                         const auto readBytes = file.read( readBuffer.data(), readBuffer.size() );
 
                         if ( readBytes < 0 ) {
-                            LOG( logERROR ) << "Reading past the end of file";
+                            LOG_ERROR << "Reading past the end of file";
                             break;
                         }
 
@@ -494,7 +494,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
                         ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 );
 
-                        LOG( logDEBUG ) << "Sending block " << blockData.first << " size "
+                        LOG_DEBUG << "Sending block " << blockData.first << " size "
                                         << blockData.second.size();
 
                         while ( !gw.get().try_put( blockData ) ) {
@@ -519,7 +519,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
             const auto& block_beginning = blockData.first;
             const auto& block = blockData.second;
 
-            LOG( logDEBUG ) << "Indexing block " << block_beginning << " start";
+            LOG_DEBUG << "Indexing block " << block_beginning << " start";
 
             if ( block_beginning < 0 ) {
                 return tbb::flow::continue_msg{};
@@ -533,7 +533,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 const auto line_positions = parseDataBlock( block_beginning, block, state );
                 auto max_length = state.max_length;
                 if ( max_length > std::numeric_limits<LineLength::UnderlyingType>::max() ) {
-                    LOG( logERROR ) << "Too long lines " << max_length;
+                    LOG_ERROR << "Too long lines " << max_length;
                     max_length = std::numeric_limits<LineLength::UnderlyingType>::max();
                 }
 
@@ -551,7 +551,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 scopedAccessor.setEncodingGuess( state.encodingGuess );
             }
 
-            LOG( logDEBUG ) << "Indexing block " << block_beginning << " done";
+            LOG_DEBUG << "Indexing block " << block_beginning << " done";
 
             return tbb::flow::continue_msg{};
         } );
@@ -568,11 +568,11 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
     IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
 
-    LOG( logDEBUG ) << "Indexed up to " << state.pos;
+    LOG_DEBUG << "Indexed up to " << state.pos;
 
     // Check if there is a non LF terminated line at the end of the file
     if ( !interruptRequest_ && state.file_size > state.pos ) {
-        LOG( logWARNING ) << "Non LF terminated file, adding a fake end of line";
+        LOG_WARNING << "Non LF terminated file, adding a fake end of line";
 
         FastLinePositionArray line_position;
         line_position.append( LineOffset( state.file_size + 1 ) );
@@ -584,12 +584,12 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     const auto indexingEndTime = high_resolution_clock::now();
     const auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime );
 
-    LOG( logINFO ) << "Indexing done, took " << duration << ", io " << ioDuration;
-    LOG( logINFO ) << "Index size "
+    LOG_INFO << "Indexing done, took " << duration << ", io " << ioDuration;
+    LOG_INFO << "Index size "
                    << readableSize( static_cast<uint64_t>( scopedAccessor.allocatedSize() ) );
-    LOG( logINFO ) << "Indexed lines " << scopedAccessor.getNbLines();
-    LOG( logINFO ) << "Max line " << scopedAccessor.getMaxLength();
-    LOG( logINFO ) << "Indexing perf "
+    LOG_INFO << "Indexed lines " << scopedAccessor.getNbLines();
+    LOG_INFO << "Max line " << scopedAccessor.getMaxLength();
+    LOG_INFO << "Indexing perf "
                    << ( 1000.f * static_cast<float>( state.file_size )
                         / static_cast<float>( duration.count() ) )
                           / ( 1024 * 1024 )
@@ -607,9 +607,9 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 // Called in the worker thread's context
 OperationResult FullIndexOperation::run()
 {
-    LOG( logDEBUG ) << "FullIndexOperation::run(), file " << fileName_.toStdString();
+    LOG_DEBUG << "FullIndexOperation::run(), file " << fileName_.toStdString();
 
-    LOG( logDEBUG ) << "FullIndexOperation: Starting the count...";
+    LOG_DEBUG << "FullIndexOperation: Starting the count...";
 
     emit indexingProgressed( 0 );
 
@@ -621,7 +621,7 @@ OperationResult FullIndexOperation::run()
 
     doIndex( 0_offset );
 
-    LOG( logDEBUG ) << "FullIndexOperation: ... finished counting."
+    LOG_DEBUG << "FullIndexOperation: ... finished counting."
                        "interrupt = "
                     << static_cast<bool>( interruptRequest_ );
 
@@ -632,19 +632,19 @@ OperationResult FullIndexOperation::run()
 
 OperationResult PartialIndexOperation::run()
 {
-    LOG( logDEBUG ) << "PartialIndexOperation::run(), file " << fileName_.toStdString();
+    LOG_DEBUG << "PartialIndexOperation::run(), file " << fileName_.toStdString();
 
     const auto initial_position
         = LineOffset( IndexingData::ConstAccessor{ &indexing_data_ }.getIndexedSize() );
 
-    LOG( logDEBUG ) << "PartialIndexOperation: Starting the count at " << initial_position
+    LOG_DEBUG << "PartialIndexOperation: Starting the count at " << initial_position
                     << " ...";
 
     emit indexingProgressed( 0 );
 
     doIndex( initial_position );
 
-    LOG( logDEBUG ) << "PartialIndexOperation: ... finished counting.";
+    LOG_DEBUG << "PartialIndexOperation: ... finished counting.";
 
     const auto result = interruptRequest_ ? false : true;
     emit indexingFinished( result );
@@ -653,7 +653,7 @@ OperationResult PartialIndexOperation::run()
 
 OperationResult CheckFileChangesOperation::run()
 {
-    LOG( logINFO ) << "CheckFileChangesOperation::run(), file " << fileName_.toStdString();
+    LOG_INFO << "CheckFileChangesOperation::run(), file " << fileName_.toStdString();
     const auto result = doCheckFileChanges();
     emit fileCheckFinished( result );
     return result;
@@ -666,7 +666,7 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
     const auto realFileSize = info.size();
 
     if ( realFileSize == 0 || realFileSize < indexedHash.size ) {
-        LOG( logINFO ) << "File truncated";
+        LOG_INFO << "File truncated";
         return MonitoredFileStatus::Truncated;
     }
     else {
@@ -678,7 +678,7 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
         const auto& config = Configuration::get();
 
         if ( !file.isOpen() && !file.open( QIODevice::ReadOnly ) ) {
-            LOG( logINFO ) << "File failed to open";
+            LOG_INFO << "File failed to open";
             return MonitoredFileStatus::Truncated;
         }
 
@@ -703,8 +703,8 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
         if ( config.fastModificationDetection() && indexedHash.size > 2 * IndexingBlockSize ) {
             const auto headerDigest = getDigest( indexedHash.headerSize );
 
-            LOG( logINFO ) << "indexed header xxhash " << indexedHash.headerDigest;
-            LOG( logINFO ) << "current header xxhash " << headerDigest << ", size "
+            LOG_INFO << "indexed header xxhash " << indexedHash.headerDigest;
+            LOG_INFO << "current header xxhash " << headerDigest << ", size "
                            << indexedHash.headerSize;
 
             isFileModified = headerDigest != indexedHash.headerDigest;
@@ -713,8 +713,8 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
                 file.seek( indexedHash.tailOffset );
                 const auto tailDigest = getDigest( indexedHash.tailSize );
 
-                LOG( logINFO ) << "indexed tail xxhash " << indexedHash.tailDigest;
-                LOG( logINFO ) << "current tail xxhash " << tailDigest << ", size "
+                LOG_INFO << "indexed tail xxhash " << indexedHash.tailDigest;
+                LOG_INFO << "current tail xxhash " << tailDigest << ", size "
                                << indexedHash.tailSize;
 
                 isFileModified = tailDigest != indexedHash.tailDigest;
@@ -724,22 +724,22 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
 
             const auto realHashDigest = getDigest( indexedHash.size );
 
-            LOG( logINFO ) << "indexed xxhash " << indexedHash.fullDigest;
-            LOG( logINFO ) << "current xxhash " << realHashDigest;
+            LOG_INFO << "indexed xxhash " << indexedHash.fullDigest;
+            LOG_INFO << "current xxhash " << realHashDigest;
 
             isFileModified = realHashDigest != indexedHash.fullDigest;
         }
 
         if ( isFileModified ) {
-            LOG( logINFO ) << "File changed in indexed range";
+            LOG_INFO << "File changed in indexed range";
             return MonitoredFileStatus::Truncated;
         }
         else if ( realFileSize > indexedHash.size ) {
-            LOG( logINFO ) << "New data on disk";
+            LOG_INFO << "New data on disk";
             return MonitoredFileStatus::DataAdded;
         }
         else {
-            LOG( logINFO ) << "No change in file";
+            LOG_INFO << "No change in file";
             return MonitoredFileStatus::Unchanged;
         }
     }

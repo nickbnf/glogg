@@ -104,7 +104,7 @@ void LogFilteredData::runSearch( const QRegularExpression& regExp )
 void LogFilteredData::runSearch( const QRegularExpression& regExp, LineNumber startLine,
                                  LineNumber endLine )
 {
-    LOG( logDEBUG ) << "Entering runSearch";
+    LOG_DEBUG << "Entering runSearch";
 
     const auto& config = Configuration::get();
 
@@ -116,7 +116,7 @@ void LogFilteredData::runSearch( const QRegularExpression& regExp, LineNumber st
     if ( config.useSearchResultsCache() ) {
         const auto cachedResults = searchResultsCache_.find( currentSearchKey_ );
         if ( cachedResults != std::end( searchResultsCache_ ) ) {
-            LOG( logDEBUG ) << "Got result from cache";
+            LOG_DEBUG << "Got result from cache";
             shouldRunSearch = false;
             matching_lines_ = cachedResults.value().matching_lines;
             maxLength_ = cachedResults.value().maxLength;
@@ -137,7 +137,7 @@ void LogFilteredData::runSearch( const QRegularExpression& regExp, LineNumber st
 
 void LogFilteredData::updateSearch( LineNumber startLine, LineNumber endLine )
 {
-    LOG( logDEBUG ) << "Entering updateSearch";
+    LOG_DEBUG << "Entering updateSearch";
 
     currentSearchKey_ = makeCacheKey( currentRegExp_, startLine, endLine );
 
@@ -148,7 +148,7 @@ void LogFilteredData::updateSearch( LineNumber startLine, LineNumber endLine )
 
 void LogFilteredData::interruptSearch()
 {
-    LOG( logDEBUG ) << "Entering interruptSearch";
+    LOG_DEBUG << "Entering interruptSearch";
 
     workerThread_.interrupt();
 }
@@ -238,7 +238,7 @@ void LogFilteredData::toggleMark( LineNumber line, QChar mark )
         }
     }
     else {
-        LOG( logERROR )
+        LOG_ERROR
             << "LogFilteredData::toggleMark trying to toggle a mark outside of the file.";
     }
 }
@@ -250,7 +250,7 @@ void LogFilteredData::addMark( LineNumber line, QChar mark )
         updateCacheWithMark( index, line );
     }
     else {
-        LOG( logERROR ) << "LogFilteredData::addMark trying to create a mark outside of the file.";
+        LOG_ERROR << "LogFilteredData::addMark trying to create a mark outside of the file.";
     }
 }
 
@@ -322,15 +322,15 @@ void LogFilteredData::deleteMark( LineNumber line )
 void LogFilteredData::updateMaxLengthMarks( LineNumber removed_line )
 {
     if ( removed_line < 0_lnum ) {
-        LOG( logWARNING ) << "updateMaxLengthMarks called with negative line-number";
+        LOG_WARNING << "updateMaxLengthMarks called with negative line-number";
         return;
     }
     // Now update the max length if needed
     if ( sourceLogData_->getLineLength( removed_line ) >= maxLengthMarks_ ) {
-        LOG( logDEBUG ) << "deleteMark recalculating longest mark";
+        LOG_DEBUG << "deleteMark recalculating longest mark";
         maxLengthMarks_ = 0_length;
         for ( const auto& mark : marks_ ) {
-            LOG( logDEBUG ) << "line " << mark.lineNumber();
+            LOG_DEBUG << "line " << mark.lineNumber();
             maxLengthMarks_
                 = qMax( maxLengthMarks_, sourceLogData_->getLineLength( mark.lineNumber() ) );
         }
@@ -367,7 +367,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 {
     const auto& config = Configuration::get();
 
-    LOG( logDEBUG ) << "LogFilteredData::handleSearchProgressed matches=" << nbMatches
+    LOG_DEBUG << "LogFilteredData::handleSearchProgressed matches=" << nbMatches
                     << " progress=" << progress;
 
     assert( nbMatches >= 0_lcount );
@@ -386,13 +386,13 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
         const auto maxCacheLines = static_cast<size_t>( config.searchResultsCacheLines() );
 
         if ( matching_lines_.size() > maxCacheLines ) {
-            LOG( logDEBUG ) << "LogFilteredData: too many matches to place in cache";
+            LOG_DEBUG << "LogFilteredData: too many matches to place in cache";
         }
         else if ( !config.useSearchResultsCache() ) {
-            LOG( logDEBUG ) << "LogFilteredData: search results cache disabled by configs";
+            LOG_DEBUG << "LogFilteredData: search results cache disabled by configs";
         }
         else {
-            LOG( logDEBUG ) << "LogFilteredData: caching results for pattern "
+            LOG_DEBUG << "LogFilteredData: caching results for pattern "
                             << currentRegExp_.pattern().toStdString();
 
             searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
@@ -403,7 +403,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
                                        return val + cachedResults.matching_lines.size();
                                    } );
 
-            LOG( logDEBUG ) << "LogFilteredData: cache size " << cacheSize;
+            LOG_DEBUG << "LogFilteredData: cache size " << cacheSize;
 
             auto cachedResult = std::begin( searchResultsCache_ );
             while ( cachedResult != std::end( searchResultsCache_ ) && cacheSize > maxCacheLines ) {
@@ -430,7 +430,7 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
 {
     if ( lineNum.get() >= filteredItemsCache_.size() ) {
         if ( !filteredItemsCache_.empty() ) {
-            LOG( logERROR ) << "Index too big in LogFilteredData: " << lineNum << " cache size "
+            LOG_ERROR << "Index too big in LogFilteredData: " << lineNum << " cache size "
                             << filteredItemsCache_.size();
         }
         return maxValue<LineNumber>();
@@ -513,7 +513,7 @@ LineLength LogFilteredData::doGetLineLength( LineNumber lineNum ) const
 
 void LogFilteredData::doSetDisplayEncoding( const char* encoding )
 {
-    LOG( logDEBUG ) << "AbstractLogData::setDisplayEncoding: " << encoding;
+    LOG_DEBUG << "AbstractLogData::setDisplayEncoding: " << encoding;
 }
 
 QTextCodec* LogFilteredData::doGetDisplayEncoding() const
@@ -537,7 +537,7 @@ void LogFilteredData::regenerateFilteredItemsCache() const
     using clock = high_resolution_clock;
     clock::time_point t1 = clock::now();
 
-    LOG( logDEBUG ) << "regenerateFilteredItemsCache";
+    LOG_DEBUG << "regenerateFilteredItemsCache";
 
     filteredItemsCache_.clear();
     filteredItemsCache_.reserve( matching_lines_.size() + marks_.size() );
@@ -556,14 +556,14 @@ void LogFilteredData::regenerateFilteredItemsCache() const
         LineType lineType = LineTypeFlags::Plain;
 
         if ( next_mark <= next_match ) {
-            // LOG(logDEBUG) << "Add mark at " << next_mark;
+            // LOG_DEBUG << "Add mark at " << next_mark;
             line = next_mark;
             lineType |= LineTypeFlags::Mark;
             ++j;
         }
 
         if ( next_mark >= next_match ) {
-            // LOG(logDEBUG) << "Add match at " << next_match;
+            // LOG_DEBUG << "Add match at " << next_match;
             line = next_match;
             lineType |= LineTypeFlags::Match;
             ++i;
@@ -577,9 +577,9 @@ void LogFilteredData::regenerateFilteredItemsCache() const
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     const auto duration = static_cast<float>( duration_cast<microseconds>( t2 - t1 ).count() );
 
-    LOG( logINFO ) << "Regenerating cache done, took " << duration / 1000.f << " ms";
+    LOG_INFO << "Regenerating cache done, took " << duration / 1000.f << " ms";
 
-    LOG( logDEBUG ) << "finished regenerateFilteredItemsCache, size " << filteredItemsCache_.size();
+    LOG_DEBUG << "finished regenerateFilteredItemsCache, size " << filteredItemsCache_.size();
 }
 
 void LogFilteredData::insertIntoFilteredItemsCache( size_t insert_index, FilteredItem&& item )
@@ -653,13 +653,13 @@ void LogFilteredData::removeFromFilteredItemsCache( size_t remove_index, Filtere
         next( begin( filteredItemsCache_ ), static_cast<diff_type>( remove_index ) ),
         end( filteredItemsCache_ ), item );
     if ( found.first == found.second ) {
-        LOG( logERROR ) << "Attempt to remove line " << item.lineNumber()
+        LOG_ERROR << "Attempt to remove line " << item.lineNumber()
                         << " from filteredItemsCache_ failed, since it was not found";
         return;
     }
 
     if ( next( found.first ) != found.second ) {
-        LOG( logERROR ) << "Multiple matches found for line " << item.lineNumber()
+        LOG_ERROR << "Multiple matches found for line " << item.lineNumber()
                         << " in filteredItemsCache_";
         // FIXME: collapse them?
     }

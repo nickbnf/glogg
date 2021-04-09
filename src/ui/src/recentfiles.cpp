@@ -60,7 +60,7 @@ QStringList RecentFiles::recentFiles() const
 
 void RecentFiles::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "RecentFiles::saveToStorage";
+    LOG_DEBUG << "RecentFiles::saveToStorage";
 
     settings.beginGroup( "RecentFiles" );
     settings.setValue( "version", RECENTFILES_VERSION );
@@ -76,7 +76,7 @@ void RecentFiles::saveToStorage( QSettings& settings ) const
 
 void RecentFiles::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "RecentFiles::retrieveFromStorage";
+    LOG_DEBUG << "RecentFiles::retrieveFromStorage";
 
     recentFiles_.clear();
 
@@ -92,7 +92,7 @@ void RecentFiles::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of recent files, ignoring it...";
+            LOG_ERROR << "Unknown version of recent files, ignoring it...";
         }
         settings.endGroup();
     }

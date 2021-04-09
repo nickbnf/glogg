@@ -158,7 +158,7 @@ void WindowSession::save(
                                  std::shared_ptr<const ViewContextInterface>>>& view_list,
     const QByteArray& geometry )
 {
-    LOG( logDEBUG ) << "Session::save";
+    LOG_DEBUG << "Session::save";
 
     std::vector<SessionInfo::OpenFile> session_files;
     for ( const auto& view : view_list ) {
@@ -171,7 +171,7 @@ void WindowSession::save(
         const Session::OpenFile* file = appSession_->findOpenFileFromView( view_object );
         assert( file );
 
-        LOG( logDEBUG ) << "Saving " << file->fileName.toLocal8Bit().data() << " in session.";
+        LOG_DEBUG << "Saving " << file->fileName.toLocal8Bit().data() << " in session.";
         session_files.emplace_back( file->fileName, top_line, view_context->toString() );
     }
 
@@ -188,11 +188,11 @@ WindowSession::restore( const std::function<ViewInterface*()>& view_factory,
     const auto& session = SessionInfo::getSynced();
 
     std::vector<SessionInfo::OpenFile> session_files = session.openFiles( windowId_ );
-    LOG( logDEBUG ) << "Session returned " << session_files.size();
+    LOG_DEBUG << "Session returned " << session_files.size();
     std::vector<std::pair<QString, ViewInterface*>> result;
 
     for ( auto file : session_files ) {
-        LOG( logDEBUG ) << "Create view for " << file.fileName;
+        LOG_DEBUG << "Create view for " << file.fileName;
         ViewInterface* view
             = appSession_->openAlways( file.fileName, view_factory, file.viewContext );
         result.emplace_back( file.fileName, view );
@@ -209,7 +209,7 @@ WindowSession::WindowSession( std::shared_ptr<Session> appSession, const QString
     , windowId_{ id }
     , windowIndex_{ index }
 {
-    LOG( logINFO ) << "created session for " << id;
+    LOG_INFO << "created session for " << id;
     auto sessionInfo = SessionInfo::getSynced();
     sessionInfo.add( id );
     sessionInfo.save();
@@ -223,7 +223,7 @@ void WindowSession::restoreGeometry( QByteArray* geometry ) const
 
 bool WindowSession::close()
 {
-    LOG( logINFO ) << "close window session " << windowId_;
+    LOG_INFO << "close window session " << windowId_;
 
     if ( appSession_->exitRequested() ) {
         return true;
@@ -233,7 +233,7 @@ bool WindowSession::close()
     auto isRemoved = session.remove( windowId_ );
     session.save();
 
-    LOG( logINFO ) << "session is removed " << isRemoved;
+    LOG_INFO << "session is removed " << isRemoved;
 
     return !isRemoved;
 }

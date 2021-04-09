@@ -55,11 +55,11 @@ uint32_t Marks::addMark( LineNumber line, QChar mark )
     uint32_t index{ 0 };
     if ( !lookupLineNumber( marks_, line, index ) ) {
         // If a mark is not already set for this line
-        LOG( logDEBUG ) << "Inserting mark at line " << line << " (index " << index << ")";
+        LOG_DEBUG << "Inserting mark at line " << line << " (index " << index << ")";
         marks_.emplace( marks_.begin() + index, line );
     }
     else {
-        LOG( logERROR ) << "Trying to add an existing mark at line " << line;
+        LOG_ERROR << "Trying to add an existing mark at line " << line;
     }
 
     return index;
@@ -108,7 +108,7 @@ bool Marks::toggleMark( LineNumber line, QChar mark, uint32_t& index )
     }
     else {
         // If a mark is not already set for this line
-        LOG( logDEBUG ) << "Inserting mark at line " << line << " (index " << index << ")";
+        LOG_DEBUG << "Inserting mark at line " << line << " (index " << index << ")";
         marks_.emplace( marks_.begin() + index, line );
         return true;
     }

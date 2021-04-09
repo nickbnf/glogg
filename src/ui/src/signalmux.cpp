@@ -62,7 +62,7 @@ void SignalMux::disconnect( QObject *sender,
     }
     else
     {
-        LOG( logERROR ) << "SignalMux disconnecting a non-existing signal";
+        LOG_ERROR << "SignalMux disconnecting a non-existing signal";
     }
 }
 
@@ -99,7 +99,7 @@ void SignalMux::disconnect( const char *signal,
     }
     else
     {
-        LOG( logERROR ) << "SignalMux disconnecting a non-existing signal";
+        LOG_ERROR << "SignalMux disconnecting a non-existing signal";
     }
 }
 
@@ -129,7 +129,7 @@ void SignalMux::connect( const Connection& connection )
 {
     if ( currentDocument_ )
     {
-        LOG( logDEBUG ) << "SignalMux::connect";
+        LOG_DEBUG << "SignalMux::connect";
         if ( connection.source && ( ! connection.sink ) )
         {
             // Downstream signal
@@ -144,7 +144,7 @@ void SignalMux::connect( const Connection& connection )
         }
         else
         {
-            LOG( logERROR ) << "SignalMux has an unexpected signal";
+            LOG_ERROR << "SignalMux has an unexpected signal";
         }
     }
 }
@@ -153,7 +153,7 @@ void SignalMux::disconnect( const Connection& connection )
 {
     if ( currentDocument_ )
     {
-        LOG( logDEBUG ) << "SignalMux::disconnect";
+        LOG_DEBUG << "SignalMux::disconnect";
         if ( connection.source && ( ! connection.sink ) )
         {
             // Downstream signal
@@ -168,7 +168,7 @@ void SignalMux::disconnect( const Connection& connection )
         }
         else
         {
-            LOG( logERROR ) << "SignalMux has an unexpected signal";
+            LOG_ERROR << "SignalMux has an unexpected signal";
         }
     }
 }

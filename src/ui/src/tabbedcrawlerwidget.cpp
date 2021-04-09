@@ -117,8 +117,8 @@ void TabbedCrawlerWidget::addTabBarItem( int index, const QString& file_name )
     icon_label->setAlignment( Qt::AlignCenter );
     myTabBar_.setTabButton( index, QTabBar::RightSide, icon_label.release() );
 
-    LOG( logDEBUG ) << "addTab, count = " << count();
-    LOG( logDEBUG ) << "width = " << olddata_icon_.pixmap( 11, 12 ).devicePixelRatio();
+    LOG_DEBUG << "addTab, count = " << count();
+    LOG_DEBUG << "width = " << olddata_icon_.pixmap( 11, 12 ).devicePixelRatio();
 
     if ( count() > 1 )
         myTabBar_.show();
@@ -134,7 +134,7 @@ void TabbedCrawlerWidget::removeCrawler( int index )
 
 void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent* event )
 {
-    LOG( logDEBUG ) << "TabbedCrawlerWidget::mouseReleaseEvent";
+    LOG_DEBUG << "TabbedCrawlerWidget::mouseReleaseEvent";
 
     if ( event->button() == Qt::MidButton ) {
         int tab = this->myTabBar_.tabAt( event->pos() );
@@ -245,7 +245,7 @@ void TabbedCrawlerWidget::keyPressEvent( QKeyEvent* event )
     const auto mod = event->modifiers();
     const auto key = event->key();
 
-    LOG( logDEBUG ) << "TabbedCrawlerWidget::keyPressEvent";
+    LOG_DEBUG << "TabbedCrawlerWidget::keyPressEvent";
 
     // Ctrl + tab
     if ( ( mod == Qt::ControlModifier && key == Qt::Key_Tab )
@@ -306,7 +306,7 @@ void TabbedCrawlerWidget::updateIcon( int index )
 
 void TabbedCrawlerWidget::setTabDataStatus( int index, DataStatus status )
 {
-    LOG( logDEBUG ) << "TabbedCrawlerWidget::setTabDataStatus " << index;
+    LOG_DEBUG << "TabbedCrawlerWidget::setTabDataStatus " << index;
 
     auto tabData = myTabBar_.tabData( index ).toMap();
     tabData[ StatusKey ] = static_cast<int>( status );

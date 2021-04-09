@@ -60,7 +60,7 @@ QFont Configuration::mainFont() const
         mainFont_.setStyleHint( QFont::Courier, QFont::PreferOutline );
 
         QFontInfo fi( mainFont_ );
-        LOG( logINFO ) << "Default font is " << fi.family().toStdString() << ": " << fi.pointSize();
+        LOG_INFO << "Default font is " << fi.family().toStdString() << ": " << fi.pointSize();
     } );
 
     return mainFont_;
@@ -68,14 +68,14 @@ QFont Configuration::mainFont() const
 
 void Configuration::setMainFont( QFont newFont )
 {
-    LOG( logDEBUG ) << "Configuration::setMainFont";
+    LOG_DEBUG << "Configuration::setMainFont";
 
     mainFont_ = newFont;
 }
 
 void Configuration::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "Configuration::retrieveFromStorage";
+    LOG_DEBUG << "Configuration::retrieveFromStorage";
 
     static const Configuration Default;
 
@@ -204,7 +204,7 @@ void Configuration::retrieveFromStorage( QSettings& settings )
 
 void Configuration::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "Configuration::saveToStorage";
+    LOG_DEBUG << "Configuration::saveToStorage";
 
     QFontInfo fi( mainFont_ );
 

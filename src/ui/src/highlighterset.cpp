@@ -61,7 +61,7 @@ Highlighter::Highlighter( const QString& pattern, bool ignoreCase, bool onlyMatc
     , foreColor_( foreColor )
     , backColor_( backColor )
 {
-    LOG( logDEBUG ) << "New Highlighter, fore: " << foreColor_.name()
+    LOG_DEBUG << "New Highlighter, fore: " << foreColor_.name()
                     << " back: " << backColor_.name();
 }
 
@@ -215,7 +215,7 @@ HighlighterMatchType HighlighterSet::matchLine( const QString& line,
 
 void Highlighter::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "Highlighter::saveToStorage";
+    LOG_DEBUG << "Highlighter::saveToStorage";
 
     settings.setValue( "regexp", regexp_.pattern() );
     settings.setValue( "ignore_case", regexp_.patternOptions().testFlag(
@@ -229,7 +229,7 @@ void Highlighter::saveToStorage( QSettings& settings ) const
 
 void Highlighter::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "Highlighter::retrieveFromStorage";
+    LOG_DEBUG << "Highlighter::retrieveFromStorage";
 
     regexp_ = QRegularExpression(
         settings.value( "regexp" ).toString(),
@@ -242,7 +242,7 @@ void Highlighter::retrieveFromStorage( QSettings& settings )
 
 void HighlighterSet::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "HighlighterSet::saveToStorage";
+    LOG_DEBUG << "HighlighterSet::saveToStorage";
 
     settings.beginGroup( "HighlighterSet" );
     settings.setValue( "version", HighlighterSet_VERSION );
@@ -260,12 +260,12 @@ void HighlighterSet::saveToStorage( QSettings& settings ) const
 
 void HighlighterSet::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "HighlighterSet::retrieveFromStorage";
+    LOG_DEBUG << "HighlighterSet::retrieveFromStorage";
 
     highlighterList_.clear();
 
     if ( settings.contains( "FilterSet/version" ) ) {
-        LOG( logINFO ) << "HighlighterSet found old filters";
+        LOG_INFO << "HighlighterSet found old filters";
         settings.beginGroup( "FilterSet" );
         if ( settings.value( "version" ).toInt() <= FilterSet_VERSION ) {
             name_ = settings.value( "name", "Highlighters set" ).toString();
@@ -280,7 +280,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of filterSet, ignoring it...";
+            LOG_ERROR << "Unknown version of filterSet, ignoring it...";
         }
         settings.endGroup();
         settings.remove( "FilterSet" );
@@ -303,7 +303,7 @@ void HighlighterSet::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of highlighterSet, ignoring it...";
+            LOG_ERROR << "Unknown version of highlighterSet, ignoring it...";
         }
         settings.endGroup();
     }
@@ -350,7 +350,7 @@ bool HighlighterSetCollection::hasSet( const QString& setId ) const
 
 void HighlighterSetCollection::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "HighlighterSetCollection::saveToStorage";
+    LOG_DEBUG << "HighlighterSetCollection::saveToStorage";
 
     settings.beginGroup( "HighlighterSetCollection" );
     settings.setValue( "version", HighlighterSetCollection_VERSION );
@@ -367,7 +367,7 @@ void HighlighterSetCollection::saveToStorage( QSettings& settings ) const
 
 void HighlighterSetCollection::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "HighlighterSetCollection::retrieveFromStorage";
+    LOG_DEBUG << "HighlighterSetCollection::retrieveFromStorage";
 
     highlighters_.clear();
 
@@ -386,7 +386,7 @@ void HighlighterSetCollection::retrieveFromStorage( QSettings& settings )
             setCurrentSet( currentSet );
         }
         else {
-            LOG( logERROR ) << "Unknown version of HighlighterSetCollection, ignoring it...";
+            LOG_ERROR << "Unknown version of HighlighterSetCollection, ignoring it...";
         }
         settings.endGroup();
     }
@@ -394,12 +394,12 @@ void HighlighterSetCollection::retrieveFromStorage( QSettings& settings )
     HighlighterSet oldHighlighterSet;
     oldHighlighterSet.retrieveFromStorage( settings );
     if ( !oldHighlighterSet.isEmpty() ) {
-        LOG( logINFO ) << "Importing old HighlighterSet";
+        LOG_INFO << "Importing old HighlighterSet";
         setCurrentSet( oldHighlighterSet.id() );
         highlighters_.append( std::move( oldHighlighterSet ) );
         settings.remove( "HighlighterSet" );
         saveToStorage( settings );
     }
 
-    LOG( logINFO ) << "Loaded " << highlighters_.size() << " highlighter sets";
+    LOG_INFO << "Loaded " << highlighters_.size() << " highlighter sets";
 }

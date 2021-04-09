@@ -138,7 +138,7 @@ void QuickFindWidget::changeDisplayedPattern( const QString& newPattern )
 
 void QuickFindWidget::notify( const QFNotification& message )
 {
-    LOG(logDEBUG) << "QuickFindWidget::notify()";
+    LOG_DEBUG << "QuickFindWidget::notify()";
 
     notificationText_->setText( message.message() );
     QWidget::show();
@@ -147,7 +147,7 @@ void QuickFindWidget::notify( const QFNotification& message )
 
 void QuickFindWidget::clearNotification()
 {
-    LOG(logDEBUG) << "QuickFindWidget::clearNotification()";
+    LOG_DEBUG << "QuickFindWidget::clearNotification()";
 
     notificationText_->setText( "" );
 }
@@ -155,7 +155,7 @@ void QuickFindWidget::clearNotification()
 // User clicks forward arrow
 void QuickFindWidget::doSearchForward()
 {
-    LOG(logDEBUG) << "QuickFindWidget::doSearchForward()";
+    LOG_DEBUG << "QuickFindWidget::doSearchForward()";
 
     // The user has clicked on a button, so we assume she wants
     // the widget to stay visible.
@@ -168,7 +168,7 @@ void QuickFindWidget::doSearchForward()
 // User clicks backward arrow
 void QuickFindWidget::doSearchBackward()
 {
-    LOG(logDEBUG) << "QuickFindWidget::doSearchBackward()";
+    LOG_DEBUG << "QuickFindWidget::doSearchBackward()";
 
     // The user has clicked on a button, so we assume she wants
     // the widget to stay visible.

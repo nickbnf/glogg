@@ -204,7 +204,7 @@ QString untabify( const LineType& line, int initialPosition = 0 )
     for ( int position = 0; position < line.length(); ++position ) {
         if ( line[ position ] == QChar::Tabulation ) {
             int spaces = TabStop - ( ( initialPosition + position + total_spaces ) % TabStop );
-            // LOG(logDEBUG4) << "Replacing tab at char " << j << " (" << spaces << " spaces)";
+            // LOG_DEBUG << "Replacing tab at char " << j << " (" << spaces << " spaces)";
             QString blanks( spaces, QChar::Space );
             untabified_line.append( blanks );
             total_spaces += spaces - 1;

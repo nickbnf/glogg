@@ -88,7 +88,7 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
     {
         if ( findWindow( windowId ) == nullptr ) {
             windows_.emplace_back( Window{ windowId } );
-            LOG( logINFO ) << "Created window session info for " << windowId;
+            LOG_INFO << "Created window session info for " << windowId;
         }
     }
 
@@ -156,7 +156,7 @@ class SessionInfo : public Persistable<SessionInfo, session_settings> {
                                     [ &windowId ]( const auto& w ) { return w.id == windowId; } );
 
         if ( window == windows_.end() ) {
-            LOG( logINFO ) << "Can't find window " << windowId;
+            LOG_INFO << "Can't find window " << windowId;
             return nullptr;
         }
         else {

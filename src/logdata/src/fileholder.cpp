@@ -44,12 +44,12 @@ void openFileByHandle( QFile* file )
             openedByHandle = file->open( fd, QIODevice::ReadOnly, QFile::AutoCloseHandle );
         }
         else {
-            LOG( logWARNING ) << "Failed to open file by handle " << file->fileName();
+            LOG_WARNING << "Failed to open file by handle " << file->fileName();
             ::CloseHandle( fileHandle );
         }
     }
     else {
-        LOG( logWARNING ) << "Failed to open file by handle " << file->fileName();
+        LOG_WARNING << "Failed to open file by handle " << file->fileName();
     }
 #endif
     if ( !openedByHandle ) {
@@ -93,7 +93,7 @@ void FileHolder::open( const QString& fileName )
     ScopedRecursiveLock locker( &file_mutex_ );
     file_name_ = fileName;
 
-    LOG( logDEBUG ) << "open file " << file_name_ << " keep closed " << keep_closed_;
+    LOG_DEBUG << "open file " << file_name_ << " keep closed " << keep_closed_;
 
     if ( !keep_closed_ ) {
         counter_ = 1;
@@ -116,13 +116,13 @@ void FileHolder::attachReader()
     ScopedRecursiveLock locker( &file_mutex_ );
 
     if ( keep_closed_ && counter_ == 0 ) {
-        LOG( logDEBUG ) << "fist reader opened for " << file_name_;
+        LOG_DEBUG << "fist reader opened for " << file_name_;
         reOpenFile();
     }
 
     counter_++;
 
-    LOG( logDEBUG ) << "has " << counter_ << " readers for " << file_name_;
+    LOG_DEBUG << "has " << counter_ << " readers for " << file_name_;
 }
 
 void FileHolder::detachReader()
@@ -134,13 +134,13 @@ void FileHolder::detachReader()
 
     if ( keep_closed_ && counter_ == 0 ) {
         attached_file_->close();
-        LOG( logDEBUG ) << "last reader closed for " << file_name_;
+        LOG_DEBUG << "last reader closed for " << file_name_;
     }
 }
 
 void FileHolder::reOpenFile()
 {
-    LOG( logDEBUG ) << "reopen " << file_name_;
+    LOG_DEBUG << "reopen " << file_name_;
 
     auto reopened = std::make_unique<QFile>( file_name_ );
     if ( QFileInfo( file_name_ ).isReadable() ) {
@@ -173,7 +173,7 @@ FileId FileId::getFileId( const QString& filename )
                        creationDisp, FILE_FLAG_BACKUP_SEMANTICS, NULL );
 
     if ( fileHandle == INVALID_HANDLE_VALUE ) {
-        LOG( logDEBUG ) << "Failed to get file info for " << filename.toStdString() << ", gle "
+        LOG_DEBUG << "Failed to get file info for " << filename.toStdString() << ", gle "
                         << ::GetLastError();
         return FileId{};
     }
@@ -183,7 +183,7 @@ FileId FileId::getFileId( const QString& filename )
 
     BY_HANDLE_FILE_INFORMATION info;
     if ( !::GetFileInformationByHandle( fileHandle, &info ) ) {
-        LOG( logDEBUG ) << "Failed to get file info for " << filename.toStdString() << ", gle "
+        LOG_DEBUG << "Failed to get file info for " << filename.toStdString() << ", gle "
                         << ::GetLastError();
         return FileId{};
     }
@@ -193,7 +193,7 @@ FileId FileId::getFileId( const QString& filename )
 #else
     struct stat info;
     if ( lstat( filename.toUtf8().constData(), &info ) != 0 ) {
-        LOG( logDEBUG ) << "Failed to get file info for " << filename.toStdString();
+        LOG_DEBUG << "Failed to get file info for " << filename.toStdString();
         return FileId{};
     }
 

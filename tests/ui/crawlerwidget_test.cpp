@@ -114,7 +114,7 @@ template <> struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
             REQUIRE( searchProgressSpy.wait() );
             QList<QVariant> progressArgs = searchProgressSpy.last();
             progress = progressArgs.at( 1 ).toInt();
-            LOG( logWARNING ) << "Progress " << progress;
+            LOG_WARNING << "Progress " << progress;
         } while ( progress < 100 );
     }
 

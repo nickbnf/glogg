@@ -55,7 +55,7 @@ void Downloader::download( const QUrl& url, QFile* outputFile )
 
     connect( currentDownload_, &QNetworkReply::readyRead, this, &Downloader::downloadReadyRead );
 
-    LOG( logINFO ) << "Downloading " << url.toEncoded();
+    LOG_INFO << "Downloading " << url.toEncoded();
 }
 
 void Downloader::downloadFinished()
@@ -65,13 +65,13 @@ void Downloader::downloadFinished()
 
     if ( currentDownload_->error() ) {
         // download failed
-        LOG( logERROR ) << "Download failed: " << currentDownload_->errorString();
+        LOG_ERROR << "Download failed: " << currentDownload_->errorString();
         lastError_ = currentDownload_->errorString();
         output_->remove();
         emit finished( false );
     }
     else {
-        LOG( logINFO ) << "Download done";
+        LOG_INFO << "Download done";
         output_->close();
         emit finished( true );
     }

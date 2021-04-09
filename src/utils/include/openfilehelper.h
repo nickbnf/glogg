@@ -59,7 +59,7 @@ inline void showPathInFileExplorer( const QString& file_path )
 {
     const QFileInfo file_info( file_path );
 
-    LOG( logINFO ) << "Show path in explorer: " << file_path;
+    LOG_INFO << "Show path in explorer: " << file_path;
 
 #if defined( Q_OS_WIN )
     const auto explorer = QString( "explorer.exe /select,%1" )
@@ -82,7 +82,7 @@ inline void showPathInFileExplorer( const QString& file_path )
 
 inline void openFileInDefaultApplication( const QString& file_path )
 {
-    LOG( logINFO ) << "Open file in default app: " << file_path;
+    LOG_INFO << "Open file in default app: " << file_path;
 
     const QFileInfo file_info( file_path );
     QDesktopServices::openUrl( QUrl::fromLocalFile( file_info.canonicalFilePath() ) );

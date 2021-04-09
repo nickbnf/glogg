@@ -83,7 +83,7 @@ PersistentInfo::PersistentInfo()
     const auto portableConfigPath
         = executablePath + QDir::separator() + ApplicationSessionFile + PortableExtension;
 
-    LOG( logINFO ) << "Portable config path " << portableConfigPath;
+    LOG_INFO << "Portable config path " << portableConfigPath;
 
     const auto usePortableConfiguration = forcePortable || QFileInfo::exists( portableConfigPath );
 
@@ -153,7 +153,7 @@ void PersistentInfo::UpdateSettings()
     }
 
     const auto oldSessionSettingsVersion = sessionSettings_->value( "version", 0 ).toUInt();
-    LOG( logINFO ) << "Session settings version" << oldSessionSettingsVersion;
+    LOG_INFO << "Session settings version" << oldSessionSettingsVersion;
 
     if ( oldSessionSettingsVersion < 1 ) {
         sessionSettings_->setValue( "Window/geometry", sessionSettings_->value( "geometry" ) );
@@ -173,7 +173,7 @@ void PersistentInfo::UpdateSettings()
             sessionSettings_->beginGroup( "OpenFiles" );
             std::vector<std::tuple<QString, uint64_t, QString>> openFiles;
             int size = sessionSettings_->beginReadArray( "openFiles" );
-            LOG( logINFO ) << "OpenFiles" << size;
+            LOG_INFO << "OpenFiles" << size;
 
             for ( int i = 0; i < size; ++i ) {
                 sessionSettings_->setArrayIndex( i );

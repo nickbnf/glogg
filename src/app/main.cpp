@@ -121,7 +121,7 @@ struct CliParameters {
     bool multi_instance = false;
     bool log_to_file = false;
     bool follow_file = false;
-    int64_t log_level = static_cast<int64_t>( logWARNING );
+    int64_t log_level = static_cast<int64_t>( plog::warning );
 
     std::vector<QString> filenames;
 
@@ -154,7 +154,7 @@ struct CliParameters {
 
         options.add_flag_function(
             "-d,--debug",
-            [this]( auto count ) { log_level = static_cast<int64_t>( logWARNING ) + count; },
+            [this]( auto count ) { log_level = static_cast<int64_t>( plog::warning ) + count; },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
         options.add_flag( "--window-width", window_width, "new window width" )
@@ -194,10 +194,10 @@ int main( int argc, char* argv[] )
     app.initLogger( static_cast<plog::Severity>( parameters.log_level ), parameters.log_to_file );
     app.initCrashHandler();
 
-    LOG( logINFO ) << "Klogg instance " << app.instanceId();
+    LOG_INFO << "Klogg instance " << app.instanceId();
 
     if ( !parameters.multi_instance && app.isSecondary() ) {
-        LOG( logINFO ) << "Found another klogg, pid " << app.primaryPid();
+        LOG_INFO << "Found another klogg, pid " << app.primaryPid();
         app.sendFilesToPrimaryInstance( parameters.filenames );
     }
     else {
@@ -216,7 +216,7 @@ int main( int argc, char* argv[] )
         else {
             mw = app.newWindow();
             mw->reloadGeometry();
-            LOG( logDEBUG ) << "MainWindow created.";
+            LOG_DEBUG << "MainWindow created.";
             mw->show();
         }
 

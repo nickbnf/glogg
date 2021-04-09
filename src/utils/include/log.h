@@ -27,15 +27,6 @@
 
 #include <chrono>
 
-#define logINFO plog::info
-#define logWARNING plog::warning
-#define logDEBUG plog::debug
-#define logERROR plog::error
-#define logDEBUG1 plog::verbose
-#define logDEBUG2 plog::verbose
-#define logDEBUG3 plog::verbose
-#define logDEBUG4 plog::verbose
-
 template <typename T, typename U> int calculateProgress( const T& value, const U& total )
 {
     return static_cast<int>( 100.f * static_cast<float>( value ) / static_cast<float>( total ) );
@@ -79,10 +70,10 @@ inline void EnableLogging( bool isEnabled, uint8_t logLevel )
         plog::get<0>()->setMaxSeverity( severity );
         plog::get<1>()->setMaxSeverity( severity );
 
-        LOG( logINFO ) << "Logging enabled at level " << plog::severityToString( severity );
+        LOG_INFO << "Logging enabled at level " << plog::severityToString( severity );
     }
     else {
-        LOG( logINFO ) << "Logging disabled";
+        LOG_INFO << "Logging disabled";
         plog::get<1>()->setMaxSeverity( plog::none );
     }
 }

@@ -44,7 +44,7 @@ void Overview::setFilteredData( const LogFilteredData* logFilteredData )
 
 void Overview::updateData( LinesCount totalNbLine )
 {
-    LOG( logDEBUG ) << "OverviewWidget::updateData " << totalNbLine;
+    LOG_DEBUG << "OverviewWidget::updateData " << totalNbLine;
 
     linesInFile_ = totalNbLine;
     dirty_ = true;
@@ -108,7 +108,7 @@ int Overview::yFromFileLine( int file_line ) const
 // Update the internal cache
 void Overview::recalculatesLines()
 {
-    LOG( logDEBUG ) << "OverviewWidget::recalculatesLines";
+    LOG_DEBUG << "OverviewWidget::recalculatesLines";
 
     if ( logFilteredData_ != nullptr ) {
         matchLines_.clear();
@@ -145,7 +145,7 @@ void Overview::recalculatesLines()
         }
     }
     else
-        LOG( logDEBUG ) << "Overview::recalculatesLines: logFilteredData_ == NULL";
+        LOG_DEBUG << "Overview::recalculatesLines: logFilteredData_ == NULL";
 
     dirty_ = false;
 }

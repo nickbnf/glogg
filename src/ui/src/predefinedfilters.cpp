@@ -42,7 +42,7 @@
 
 void PredefinedFiltersCollection::retrieveFromStorage( QSettings& settings )
 {
-    LOG( logDEBUG ) << "PredefinedFiltersCollection::retrieveFromStorage";
+    LOG_DEBUG << "PredefinedFiltersCollection::retrieveFromStorage";
 
     if ( settings.contains( "PredefinedFiltersCollection/version" ) ) {
         settings.beginGroup( "PredefinedFiltersCollection" );
@@ -60,7 +60,7 @@ void PredefinedFiltersCollection::retrieveFromStorage( QSettings& settings )
             settings.endArray();
         }
         else {
-            LOG( logERROR ) << "Unknown version of PredefinedFiltersCollection, ignoring it...";
+            LOG_ERROR << "Unknown version of PredefinedFiltersCollection, ignoring it...";
         }
         settings.endGroup();
     }
@@ -68,7 +68,7 @@ void PredefinedFiltersCollection::retrieveFromStorage( QSettings& settings )
 
 void PredefinedFiltersCollection::saveToStorage( QSettings& settings ) const
 {
-    LOG( logDEBUG ) << "PredefinedFiltersCollection::saveToStorage";
+    LOG_DEBUG << "PredefinedFiltersCollection::saveToStorage";
 
     settings.beginGroup( "PredefinedFiltersCollection" );
     settings.setValue( "version", PredefinedFiltersCollection_VERSION );

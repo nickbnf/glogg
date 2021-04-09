@@ -230,7 +230,7 @@ void OverviewWidget::mouseMoveEvent( QMouseEvent* mouseEvent )
 void OverviewWidget::handleMousePress( int position )
 {
     const auto line = overview_->fileLineFromY( position );
-    LOG( logDEBUG ) << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
+    LOG_DEBUG << "OverviewWidget::handleMousePress y=" << position << " line=" << line;
     emit lineClicked( line );
 }
 
@@ -256,7 +256,7 @@ void OverviewWidget::removeHighlight()
 void OverviewWidget::timerEvent( QTimerEvent* event )
 {
     if ( event->timerId() == highlightTimer_.timerId() ) {
-        LOG( logDEBUG ) << "OverviewWidget::timerEvent";
+        LOG_DEBUG << "OverviewWidget::timerEvent";
         if ( highlightedTTL_ > 0 ) {
             --highlightedTTL_;
             update();

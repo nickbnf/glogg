@@ -40,7 +40,7 @@ SCENARIO( "Main window tests", "[ui]" )
     std::unique_ptr<SafeQSignalSpy> activateSpy;
     std::unique_ptr<SafeQSignalSpy> exitSpy;
     QTimer::singleShot( 0, [&] {
-        LOG( logINFO ) << "Initialize main window";
+        LOG_INFO << "Initialize main window";
         mainWindow.reset( new MainWindow( windowSession ) );
         exitSpy.reset( new SafeQSignalSpy( mainWindow.get(), SIGNAL( exitRequested() ) ) );
         activateSpy.reset( new SafeQSignalSpy( mainWindow.get(), SIGNAL( windowActivated() ) ) );
@@ -90,7 +90,7 @@ SCENARIO( "Main window tests", "[ui]" )
         WHEN( "Exit hotkey pressed" )
         {
             runInUiThread( [&mainWindow] {
-                LOG( logINFO ) << "ExitFromMainMenu";
+                LOG_INFO << "ExitFromMainMenu";
                 QTest::keyPress( mainWindow.get(), Qt::Key_Q, Qt::ControlModifier );
             } );
 
@@ -103,7 +103,7 @@ SCENARIO( "Main window tests", "[ui]" )
         WHEN( "Load file" )
         {
             runInUiThread( [&mainWindow] {
-                LOG( logINFO ) << "Load file";
+                LOG_INFO << "Load file";
                 mainWindow->loadInitialFile( "klogg.conf", false );
             } );
 
@@ -121,7 +121,7 @@ SCENARIO( "Main window tests", "[ui]" )
             AND_WHEN( "Close tab hotkey pressed" )
             {
                 runInUiThread( [&mainWindow] {
-                    LOG( logINFO ) << "Close tab";
+                    LOG_INFO << "Close tab";
                     QTest::keyPress( mainWindow.get(), Qt::Key_W, Qt::ControlModifier );
                 } );
 

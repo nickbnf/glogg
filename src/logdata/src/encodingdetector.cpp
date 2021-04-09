@@ -88,20 +88,20 @@ QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
     QTextCodec* uchardetCodec = nullptr;
     if ( rc == 0 ) {
         auto uchardetGuess = ud.get_charset();
-        LOG( logDEBUG ) << "Uchardet encoding guess " << uchardetGuess;
+        LOG_DEBUG << "Uchardet encoding guess " << uchardetGuess;
         uchardetCodec = QTextCodec::codecForName( uchardetGuess );
         if ( uchardetCodec ) {
-            LOG( logDEBUG ) << "Uchardet codec selected " << uchardetCodec->name().constData();
+            LOG_DEBUG << "Uchardet codec selected " << uchardetCodec->name().constData();
         }
         else {
-            LOG( logDEBUG ) << "Uchardet codec not found for guess " << uchardetGuess;
+            LOG_DEBUG << "Uchardet codec not found for guess " << uchardetGuess;
         }
     }
 
     auto encodingGuess = uchardetCodec ? QTextCodec::codecForUtfText( block, uchardetCodec )
                                        : QTextCodec::codecForUtfText( block );
 
-    LOG( logDEBUG ) << "Final encoding guess " << encodingGuess->name().constData();
+    LOG_DEBUG << "Final encoding guess " << encodingGuess->name().constData();
 
     return encodingGuess;
 }

@@ -133,7 +133,7 @@ inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPo
 
     for ( const auto& chunk : chunks_ ) {
         // Draw each chunk
-        // LOG(logDEBUG) << "Chunk: " << chunk.start() << " " << chunk.length();
+        // LOG_DEBUG << "Chunk: " << chunk.start() << " " << chunk.length();
         QString cutline = line.mid( chunk.start(), chunk.length() );
         const int chunk_width = cutline.length() * fontWidth;
         if ( xPos == initialXPos ) {
@@ -160,7 +160,7 @@ inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPo
 
 void DigitsBuffer::reset()
 {
-    LOG( logDEBUG ) << "DigitsBuffer::reset()";
+    LOG_DEBUG << "DigitsBuffer::reset()";
 
     timer_.stop();
     digits_.clear();
@@ -168,7 +168,7 @@ void DigitsBuffer::reset()
 
 void DigitsBuffer::add( char character )
 {
-    LOG( logDEBUG ) << "DigitsBuffer::add()";
+    LOG_DEBUG << "DigitsBuffer::add()";
 
     digits_.append( QChar( character ) );
     timer_.start( timeout_, this );
@@ -495,7 +495,7 @@ void AbstractLogView::moveSelectionDown()
 
 void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 {
-    LOG( logDEBUG4 ) << "keyPressEvent received";
+    LOG_DEBUG << "keyPressEvent received";
 
     const auto controlModifier = keyEvent->modifiers().testFlag( Qt::ControlModifier );
     const auto shiftModifier = keyEvent->modifiers().testFlag( Qt::ShiftModifier );
@@ -641,7 +641,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     else {
         // Only pass bare keys to the superclass this is so that
         // shortcuts such as Ctrl+Alt+Arrow are handled by the parent.
-        LOG( logDEBUG ) << std::hex << keyEvent->modifiers();
+        LOG_DEBUG << std::hex << keyEvent->modifiers();
         if ( keyEvent->modifiers() == Qt::NoModifier
              || keyEvent->modifiers() == Qt::KeypadModifier ) {
             QAbstractScrollArea::keyPressEvent( keyEvent );
@@ -653,7 +653,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
 {
     emit activity();
 
-    // LOG(logDEBUG) << "wheelEvent";
+    // LOG_DEBUG << "wheelEvent";
 
     // This is to handle the case where follow mode is on, but the user
     // has moved using the scroll bar. We take them back to the bottom.
@@ -678,11 +678,11 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
             y_delta = pixel_delta.y();
         }
 
-        // LOG(logDEBUG) << "Elastic " << y_delta;
+        // LOG_DEBUG << "Elastic " << y_delta;
         followElasticHook_.move( -y_delta );
     }
 
-    // LOG(logDEBUG) << "Length = " << followElasticHook_.length();
+    // LOG_DEBUG << "Length = " << followElasticHook_.length();
     if ( followElasticHook_.length() == 0 && !followElasticHook_.isHooked() ) {
         QAbstractScrollArea::wheelEvent( wheelEvent );
     }
@@ -693,14 +693,14 @@ void AbstractLogView::resizeEvent( QResizeEvent* )
     if ( logData == nullptr )
         return;
 
-    LOG( logDEBUG1 ) << "resizeEvent received";
+    LOG_DEBUG << "resizeEvent received";
 
     updateDisplaySize();
 }
 
 bool AbstractLogView::event( QEvent* e )
 {
-    LOG( logDEBUG4 ) << "Event! Type: " << e->type();
+    LOG_DEBUG << "Event! Type: " << e->type();
 
     // Make sure we ignore the gesture events as
     // they seem to be accepted by default.
@@ -709,7 +709,7 @@ bool AbstractLogView::event( QEvent* e )
         if ( gesture_event ) {
             const auto gestures = gesture_event->gestures();
             for ( QGesture* gesture : gestures ) {
-                LOG( logDEBUG4 ) << "Gesture: " << gesture->gestureType();
+                LOG_DEBUG << "Gesture: " << gesture->gestureType();
                 gesture_event->ignore( gesture );
             }
 
@@ -723,7 +723,7 @@ bool AbstractLogView::event( QEvent* e )
 
 void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
-    LOG( logDEBUG ) << "scrollContentsBy received " << dy << "position "
+    LOG_DEBUG << "scrollContentsBy received " << dy << "position "
                     << verticalScrollBar()->value();
 
     const auto last_top_line = ( logData->getNbLine() - getNbVisibleLines() );
@@ -731,7 +731,7 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
         = static_cast<LinesCount::UnderlyingType>( verticalScrollBar()->value() );
     if ( ( last_top_line.get() > 0 ) && scrollPosition > last_top_line.get() ) {
         // The user is going further than the last line, we need to lock the last line at the bottom
-        LOG( logDEBUG ) << "scrollContentsBy beyond!";
+        LOG_DEBUG << "scrollContentsBy beyond!";
         firstLine = LineNumber( scrollPosition );
         lastLineAligned = true;
     }
@@ -761,7 +761,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     if ( ( invalidRect.isEmpty() ) || ( logData == nullptr ) )
         return;
 
-    LOG( logDEBUG4 ) << "paintEvent received, firstLine=" << firstLine
+    LOG_DEBUG << "paintEvent received, firstLine=" << firstLine
                      << " lastLineAligned=" << lastLineAligned
                      << " rect: " << invalidRect.topLeft().x() << ", " << invalidRect.topLeft().y()
                      << ", " << invalidRect.bottomRight().x() << ", "
@@ -770,7 +770,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 #ifdef GLOGG_PERF_MEASURE_FPS
     static uint32_t maxline = logData->getNbLine();
     if ( !perfCounter_.addEvent() && logData->getNbLine() > maxline ) {
-        LOG( logWARNING ) << "Redraw per second: " << perfCounter_.readAndReset()
+        LOG_WARNING << "Redraw per second: " << perfCounter_.readAndReset()
                           << " lines: " << logData->getNbLine();
         perfCounter_.addEvent();
         maxline = logData->getNbLine();
@@ -795,7 +795,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         textAreaCache_.first_line_ = firstLine;
         textAreaCache_.first_column_ = firstCol;
 
-        LOG( logDEBUG1 ) << "End of writing "
+        LOG_DEBUG << "End of writing "
                          << std::chrono::duration_cast<std::chrono::microseconds>(
                                 std::chrono::system_clock::now() - start )
                                 .count();
@@ -814,7 +814,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
                   : 0 );
 
     if ( pullToFollowHeight && ( pullToFollowCache_.nb_columns_ != getNbVisibleCols() ) ) {
-        LOG( logDEBUG1 ) << "Drawing pull to follow bar";
+        LOG_DEBUG << "Drawing pull to follow bar";
         pullToFollowCache_.pixmap_
             = drawPullToFollowBar( viewport()->width(), viewport()->devicePixelRatio() );
         pullToFollowCache_.nb_columns_ = getNbVisibleCols();
@@ -852,7 +852,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         devicePainter.drawPixmap( 0, drawingPullToFollowTopPosition, pullToFollowCache_.pixmap_ );
     }
 
-    LOG( logDEBUG1 ) << "End of repaint "
+    LOG_DEBUG << "End of repaint "
                      << std::chrono::duration_cast<std::chrono::microseconds>(
                             std::chrono::system_clock::now() - start )
                             .count();
@@ -914,7 +914,7 @@ void AbstractLogView::searchUsingFunction(
 void AbstractLogView::setQuickFindResult( bool hasMatch, Portion portion )
 {
     if ( portion.isValid() ) {
-        LOG( logDEBUG ) << "search " << portion.line();
+        LOG_DEBUG << "search " << portion.line();
         displayLine( portion.line() );
         selection_.selectPortion( portion );
         emit updateLineNumber( portion.line() );
@@ -990,7 +990,7 @@ void AbstractLogView::refreshOverview()
 // Reset the QuickFind when the pattern is changed.
 void AbstractLogView::handlePatternUpdated()
 {
-    LOG( logDEBUG ) << "AbstractLogView::handlePatternUpdated()";
+    LOG_DEBUG << "AbstractLogView::handlePatternUpdated()";
 
     quickFind_->resetLimits();
     update();
@@ -1000,11 +1000,11 @@ void AbstractLogView::handlePatternUpdated()
 void AbstractLogView::addToSearch()
 {
     if ( selection_.isPortion() ) {
-        LOG( logDEBUG ) << "AbstractLogView::addToSearch()";
+        LOG_DEBUG << "AbstractLogView::addToSearch()";
         emit addToSearch( selection_.getSelectedText( logData ) );
     }
     else {
-        LOG( logERROR ) << "AbstractLogView::addToSearch called for a wrong type of selection";
+        LOG_ERROR << "AbstractLogView::addToSearch called for a wrong type of selection";
     }
 }
 
@@ -1055,7 +1055,7 @@ void AbstractLogView::saveToFile()
     QSaveFile saveFile{ filename };
     saveFile.open( QIODevice::WriteOnly | QIODevice::Truncate );
     if ( !saveFile.isOpen() ) {
-        LOG( logERROR ) << "Failed to open file to save";
+        LOG_ERROR << "Failed to open file to save";
         return;
     }
 
@@ -1135,7 +1135,7 @@ void AbstractLogView::saveToFile()
                 const auto written = saveFile.write( encodedLine );
 
                 if ( written != encodedLine.size() ) {
-                    LOG( logERROR ) << "Saving file write failed";
+                    LOG_ERROR << "Saving file write failed";
                     interruptRequest.set();
                     return tbb::flow::continue_msg{};
                 }
@@ -1184,7 +1184,7 @@ void AbstractLogView::setSearchEnd()
 
 void AbstractLogView::updateData()
 {
-    LOG( logDEBUG ) << "AbstractLogView::updateData";
+    LOG_DEBUG << "AbstractLogView::updateData";
 
     const auto lastLineNumber = LineNumber( logData->getNbLine().get() );
 
@@ -1237,10 +1237,10 @@ void AbstractLogView::updateDisplaySize()
     if ( followMode_ )
         jumpToBottom();
 
-    LOG( logDEBUG ) << "viewport.width()=" << viewport()->width();
-    LOG( logDEBUG ) << "viewport.height()=" << viewport()->height();
-    LOG( logDEBUG ) << "width()=" << width();
-    LOG( logDEBUG ) << "height()=" << height();
+    LOG_DEBUG << "viewport.width()=" << viewport()->width();
+    LOG_DEBUG << "viewport.height()=" << viewport()->height();
+    LOG_DEBUG << "width()=" << width();
+    LOG_DEBUG << "height()=" << height();
 
     if ( overviewWidget_ )
         overviewWidget_->setGeometry( viewport()->width() + 2, 1, OVERVIEW_WIDTH - 1,
@@ -1360,7 +1360,7 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
     if ( column < 0 )
         column = 0;
 
-    LOG( logDEBUG4 ) << "AbstractLogView::convertCoordToFilePos col=" << column << " line=" << line;
+    LOG_DEBUG << "AbstractLogView::convertCoordToFilePos col=" << column << " line=" << line;
     QPoint point( column, static_cast<int>( line.get() ) );
 
     return point;
@@ -1391,7 +1391,7 @@ void AbstractLogView::displayLine( LineNumber line )
 // Move the selection up and down by the passed number of lines
 void AbstractLogView::moveSelection( int delta )
 {
-    LOG( logDEBUG ) << "AbstractLogView::moveSelection delta=" << delta;
+    LOG_DEBUG << "AbstractLogView::moveSelection delta=" << delta;
 
     auto selection = selection_.getLines();
     LineNumber new_line;
@@ -1602,7 +1602,7 @@ void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
         // Mouse moved in the margin, send event up
         // (possibly to highlight the overview)
         if ( line != lastHoveredLine_ ) {
-            LOG( logDEBUG ) << "Mouse moved in margin line: " << line;
+            LOG_DEBUG << "Mouse moved in margin line: " << line;
             emit mouseHoveredOverLine( *line );
             lastHoveredLine_ = line;
         }
@@ -1629,13 +1629,13 @@ void AbstractLogView::updateScrollBars()
 
 void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 {
-    // LOG( logDEBUG ) << "devicePixelRatio: " << viewport()->devicePixelRatio();
-    // LOG( logDEBUG ) << "viewport size: " << viewport()->size().width();
-    // LOG( logDEBUG ) << "pixmap size: " << textPixmap.width();
+    // LOG_DEBUG << "devicePixelRatio: " << viewport()->devicePixelRatio();
+    // LOG_DEBUG << "viewport size: " << viewport()->size().width();
+    // LOG_DEBUG << "pixmap size: " << textPixmap.width();
     // Repaint the viewport
     QPainter painter( paint_device );
-    // LOG( logDEBUG ) << "font: " << viewport()->font().family().toStdString();
-    // LOG( logDEBUG ) << "font painter: " << painter.font().family().toStdString();
+    // LOG_DEBUG << "font: " << viewport()->font().family().toStdString();
+    // LOG_DEBUG << "font painter: " << painter.font().family().toStdString();
 
     painter.setFont( this->font() );
     painter.setRenderHints( QPainter::Antialiasing | QPainter::TextAntialiasing );
@@ -1670,9 +1670,9 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 
     const int bottomOfTextPx = static_cast<int>( nbLines.get() ) * fontHeight;
 
-    LOG( logDEBUG1 ) << "drawing lines from " << firstLine << " (" << nbLines << " lines)";
-    LOG( logDEBUG1 ) << "bottomOfTextPx: " << bottomOfTextPx;
-    LOG( logDEBUG1 ) << "Height: " << paintDeviceHeight;
+    LOG_DEBUG << "drawing lines from " << firstLine << " (" << nbLines << " lines)";
+    LOG_DEBUG << "bottomOfTextPx: " << bottomOfTextPx;
+    LOG_DEBUG << "Height: " << paintDeviceHeight;
 
     // First draw the bullet left margin
     painter.setPen( palette.color( QPalette::Text ) );

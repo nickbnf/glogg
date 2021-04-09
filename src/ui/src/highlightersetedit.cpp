@@ -137,7 +137,7 @@ void HighlighterSetEdit::setName( const QString& name )
 
 void HighlighterSetEdit::addHighlighter()
 {
-    LOG( logDEBUG ) << "addHighlighter()";
+    LOG_DEBUG << "addHighlighter()";
 
     highlighterSet_.highlighterList_.append( Highlighter( DEFAULT_PATTERN, DEFAULT_IGNORE_CASE,
                                                           DEFAULT_ONLY_MATCH, DEFAULT_FORE_COLOUR,
@@ -154,7 +154,7 @@ void HighlighterSetEdit::addHighlighter()
 void HighlighterSetEdit::removeHighlighter()
 {
     int index = highlighterListWidget->currentRow();
-    LOG( logDEBUG ) << "removeHighlighter() index " << index;
+    LOG_DEBUG << "removeHighlighter() index " << index;
 
     if ( index >= 0 ) {
         setCurrentRow( -1 );
@@ -181,7 +181,7 @@ void HighlighterSetEdit::removeHighlighter()
 void HighlighterSetEdit::moveHighlighterUp()
 {
     int index = highlighterListWidget->currentRow();
-    LOG( logDEBUG ) << "moveHighlighterUp() index " << index;
+    LOG_DEBUG << "moveHighlighterUp() index " << index;
 
     if ( index > 0 ) {
         highlighterSet_.highlighterList_.move( index, index - 1 );
@@ -200,7 +200,7 @@ void HighlighterSetEdit::moveHighlighterUp()
 void HighlighterSetEdit::moveHighlighterDown()
 {
     int index = highlighterListWidget->currentRow();
-    LOG( logDEBUG ) << "moveHighlighterDown() index " << index;
+    LOG_DEBUG << "moveHighlighterDown() index " << index;
 
     if ( ( index >= 0 ) && ( index < ( highlighterListWidget->count() - 1 ) ) ) {
         highlighterSet_.highlighterList_.move( index, index + 1 );
@@ -229,7 +229,7 @@ void HighlighterSetEdit::updatePropertyFields()
     else
         selectedRow_ = -1;
 
-    LOG( logDEBUG ) << "updatePropertyFields(), row = " << selectedRow_;
+    LOG_DEBUG << "updatePropertyFields(), row = " << selectedRow_;
 
     if ( selectedRow_ >= 0 ) {
         const Highlighter& currentHighlighter = highlighterSet_.highlighterList_.at( selectedRow_ );
@@ -251,7 +251,7 @@ void HighlighterSetEdit::updatePropertyFields()
 
 void HighlighterSetEdit::updateHighlighterProperties()
 {
-    LOG( logDEBUG ) << "updateHighlighterProperties()";
+    LOG_DEBUG << "updateHighlighterProperties()";
 
     // If a row is selected
     if ( selectedRow_ >= 0 ) {

@@ -312,7 +312,7 @@ void CrawlerWidget::doSetSavedSearches( SavedSearches* saved_searches )
 
 void CrawlerWidget::doSetViewContext( const QString& view_context )
 {
-    LOG( logDEBUG ) << "CrawlerWidget::doSetViewContext: " << view_context.toLocal8Bit().data();
+    LOG_DEBUG << "CrawlerWidget::doSetViewContext: " << view_context.toLocal8Bit().data();
 
     const auto context = CrawlerWidgetContext{ view_context };
 
@@ -398,7 +398,7 @@ void CrawlerWidget::showSearchContextMenu()
 void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress,
                                         LineNumber initialPosition )
 {
-    LOG( logDEBUG ) << "updateFilteredView received.";
+    LOG_DEBUG << "updateFilteredView received.";
 
     searchInfoLine->show();
 
@@ -430,7 +430,7 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress,
     const auto timeSinceLastUpdate = currentUpdateTime - lastUpdateTime;
     if ( progress > 0 && progress < 100
          && timeSinceLastUpdate < std::chrono::milliseconds( 250 ) ) {
-        LOG( logDEBUG ) << "updateFilteredView skipped";
+        LOG_DEBUG << "updateFilteredView skipped";
         return;
     }
     lastUpdateTime = currentUpdateTime;
@@ -458,7 +458,7 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress,
     // only for full searches to avoid disconnecting follow mode!
     if ( ( progress == 100 ) && ( initialPosition == 0_lnum ) && ( !isFollowEnabled() ) ) {
         const auto currenLineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
-        LOG( logDEBUG ) << "updateFilteredView: restoring selection: "
+        LOG_DEBUG << "updateFilteredView: restoring selection: "
                         << " absolute line number (0based) " << currentLineNumber_ << " index "
                         << currenLineIndex;
         filteredView->selectAndDisplayLine( currenLineIndex );
@@ -538,7 +538,7 @@ void CrawlerWidget::applyConfiguration()
     const auto& config = Configuration::get();
     QFont font = config.mainFont();
 
-    LOG( logDEBUG ) << "CrawlerWidget::applyConfiguration";
+    LOG_DEBUG << "CrawlerWidget::applyConfiguration";
 
     // Whatever font we use, we should NOT use kerning
     font.setKerning( false );
@@ -585,7 +585,7 @@ void CrawlerWidget::applyConfiguration()
 
 void CrawlerWidget::enteringQuickFind()
 {
-    LOG( logDEBUG ) << "CrawlerWidget::enteringQuickFind";
+    LOG_DEBUG << "CrawlerWidget::enteringQuickFind";
 
     // Remember who had the focus (only if it is one of our views)
     QWidget* focus_widget = QApplication::focusWidget();
@@ -683,21 +683,21 @@ AbstractLogView* CrawlerWidget::activeView() const
         return view;
     }
     else {
-        LOG( logWARNING ) << "No active view, defaulting to logMainView";
+        LOG_WARNING << "No active view, defaulting to logMainView";
         return logMainView;
     }
 }
 
 void CrawlerWidget::searchForward()
 {
-    LOG( logDEBUG ) << "CrawlerWidget::searchForward";
+    LOG_DEBUG << "CrawlerWidget::searchForward";
 
     activeView()->searchForward();
 }
 
 void CrawlerWidget::searchBackward()
 {
-    LOG( logDEBUG ) << "CrawlerWidget::searchBackward";
+    LOG_DEBUG << "CrawlerWidget::searchBackward";
 
     activeView()->searchBackward();
 }
@@ -1228,10 +1228,10 @@ void CrawlerWidget::changeTopViewSize( int32_t delta )
 {
     int min, max;
     getRange( 1, &min, &max );
-    LOG( logDEBUG ) << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 ) << " " << min << " "
+    LOG_DEBUG << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 ) << " " << min << " "
                     << max;
     moveSplitter( closestLegalPosition( sizes().at( 0 ) + ( delta * 10 ), 1 ), 1 );
-    LOG( logDEBUG ) << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 );
+    LOG_DEBUG << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 );
 }
 
 //
@@ -1311,10 +1311,10 @@ void CrawlerWidgetContext::loadFromString( const QString& string )
     QRegularExpressionMatch match = regex.match( string );
     if ( match.hasMatch() ) {
         sizes_ = { match.captured( 1 ).toInt(), match.captured( 2 ).toInt() };
-        LOG( logDEBUG ) << "sizes_: " << sizes_[ 0 ] << " " << sizes_[ 1 ];
+        LOG_DEBUG << "sizes_: " << sizes_[ 0 ] << " " << sizes_[ 1 ];
     }
     else {
-        LOG( logWARNING ) << "Unrecognised view size: " << string.toLocal8Bit().data();
+        LOG_WARNING << "Unrecognised view size: " << string.toLocal8Bit().data();
 
         // Default values;
         sizes_ = { 400, 100 };
@@ -1326,10 +1326,10 @@ void CrawlerWidgetContext::loadFromString( const QString& string )
         ignore_case_ = ( match.captured( 1 ).toInt() == 1 );
         auto_refresh_ = ( match.captured( 2 ).toInt() == 1 );
 
-        LOG( logDEBUG ) << "ignore_case_: " << ignore_case_ << " auto_refresh_: " << auto_refresh_;
+        LOG_DEBUG << "ignore_case_: " << ignore_case_ << " auto_refresh_: " << auto_refresh_;
     }
     else {
-        LOG( logWARNING ) << "Unrecognised case/refresh: " << string.toLocal8Bit().data();
+        LOG_WARNING << "Unrecognised case/refresh: " << string.toLocal8Bit().data();
         ignore_case_ = false;
         auto_refresh_ = false;
     }
@@ -1339,10 +1339,10 @@ void CrawlerWidgetContext::loadFromString( const QString& string )
     if ( match.hasMatch() ) {
         follow_file_ = ( match.captured( 2 ).toInt() == 1 );
 
-        LOG( logDEBUG ) << "follow_file_: " << follow_file_;
+        LOG_DEBUG << "follow_file_: " << follow_file_;
     }
     else {
-        LOG( logWARNING ) << "Unrecognised follow file " << string.toLocal8Bit().data();
+        LOG_WARNING << "Unrecognised follow file " << string.toLocal8Bit().data();
         follow_file_ = false;
     }
 

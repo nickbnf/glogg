@@ -240,8 +240,9 @@ bool checkCrashpadReports( const QString& databasePath )
 CrashHandler::CrashHandler()
 {
     const auto dumpPath = sentryDatabasePath();
+    const auto hasDumpDir = QDir{ dumpPath }.mkpath( "." );
 
-    const auto needWaitForUpload = checkCrashpadReports( dumpPath );
+    const auto needWaitForUpload = hasDumpDir ? checkCrashpadReports( dumpPath ) : false;
 
     sentry_options_t* sentryOptions = sentry_options_new();
 
@@ -294,7 +295,7 @@ CrashHandler::CrashHandler()
         progressDialog.setLabelText( QString( "Uploading crash reports" ) );
         progressDialog.setRange( 0, 0 );
 
-        QTimer::singleShot(30*1000, &progressDialog, &QProgressDialog::cancel);
+        QTimer::singleShot( 30 * 1000, &progressDialog, &QProgressDialog::cancel );
         progressDialog.exec();
     }
 }

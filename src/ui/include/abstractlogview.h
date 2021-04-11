@@ -316,6 +316,8 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     void saveToFile();
     void setSearchStart();
     void setSearchEnd();
+    void setSelectionStart();
+    void setSelectionEnd();
     void setQuickFindResult( bool hasMatch, Portion selection );
     void setHighlighterSet( QAction* action );
 
@@ -382,6 +384,8 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     LineNumber searchStart_;
     LineNumber searchEnd_;
 
+    OptionalLineNumber selectionStart_;
+
     // Text handling
     int charWidth_;
     int charHeight_;
@@ -397,6 +401,8 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     QAction* setSearchStartAction_;
     QAction* setSearchEndAction_;
     QAction* clearSearchLimitAction_;
+    QAction* setSelectionStartAction_;
+    QAction* setSelectionEndAction_;
     QAction* saveDefaultSplitterSizesAction_;
     QMenu* highlightersMenu_;
 

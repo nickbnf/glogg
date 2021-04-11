@@ -50,7 +50,7 @@
 #else
 
 #define ABSL_VARIANT_TEST_EXPECT_FAIL(expr, exception_t, text) \
-  EXPECT_DEATH(expr, text)
+  EXPECT_DEATH_IF_SUPPORTED(expr, text)
 
 #endif  // ABSL_HAVE_EXCEPTIONS
 
@@ -679,7 +679,7 @@ TEST(VariantTest, TestSelfAssignment) {
   object.operator=(object);
   EXPECT_EQ(0, counter);
 
-  // A std::string long enough that it's likely to defeat any inline representation
+  // A string long enough that it's likely to defeat any inline representation
   // optimization.
   const std::string long_str(128, 'a');
 
@@ -2311,7 +2311,8 @@ TEST(VariantTest, TestRvalueConversion) {
   ASSERT_TRUE(absl::holds_alternative<int32_t>(variant2));
   EXPECT_EQ(42, absl::get<int32_t>(variant2));
 
-  variant2 = ConvertVariantTo<variant<int32_t, uint32_t>>(variant<uint32_t>(42));
+  variant2 =
+      ConvertVariantTo<variant<int32_t, uint32_t>>(variant<uint32_t>(42));
   ASSERT_TRUE(absl::holds_alternative<uint32_t>(variant2));
   EXPECT_EQ(42, absl::get<uint32_t>(variant2));
 #endif  // !ABSL_USES_STD_VARIANT
@@ -2453,7 +2454,8 @@ TEST(VariantTest, TestRvalueConversionViaConvertVariantTo) {
       ConvertVariantTo<variant<int32_t, uint32_t>>(variant<int32_t>(42)));
   EXPECT_THAT(absl::get_if<int32_t>(&variant2), Pointee(42));
 
-  variant2 = ConvertVariantTo<variant<int32_t, uint32_t>>(variant<uint32_t>(42));
+  variant2 =
+      ConvertVariantTo<variant<int32_t, uint32_t>>(variant<uint32_t>(42));
   EXPECT_THAT(absl::get_if<uint32_t>(&variant2), Pointee(42));
 #endif
 

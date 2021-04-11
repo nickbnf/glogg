@@ -219,7 +219,7 @@ using void_t = typename type_traits_internal::VoidTImpl<Ts...>::type;
 // This metafunction is designed to be a drop-in replacement for the C++17
 // `std::conjunction` metafunction.
 template <typename... Ts>
-struct conjunction;
+struct conjunction : std::true_type {};
 
 template <typename T, typename... Ts>
 struct conjunction<T, Ts...>
@@ -227,9 +227,6 @@ struct conjunction<T, Ts...>
 
 template <typename T>
 struct conjunction<T> : T {};
-
-template <>
-struct conjunction<> : std::true_type {};
 
 // disjunction
 //
@@ -241,7 +238,7 @@ struct conjunction<> : std::true_type {};
 // This metafunction is designed to be a drop-in replacement for the C++17
 // `std::disjunction` metafunction.
 template <typename... Ts>
-struct disjunction;
+struct disjunction : std::false_type {};
 
 template <typename T, typename... Ts>
 struct disjunction<T, Ts...> :
@@ -249,9 +246,6 @@ struct disjunction<T, Ts...> :
 
 template <typename T>
 struct disjunction<T> : T {};
-
-template <>
-struct disjunction<> : std::false_type {};
 
 // negation
 //
@@ -616,8 +610,22 @@ using common_type_t = typename std::common_type<T...>::type;
 template <typename T>
 using underlying_type_t = typename std::underlying_type<T>::type;
 
-template <typename T>
-using result_of_t = typename std::result_of<T>::type;
+
+namespace type_traits_internal {
+
+#if __cplusplus >= 201703L
+// std::result_of is deprecated (C++17) or removed (C++20)
+template<typename> struct result_of;
+template<typename F, typename... Args>
+struct result_of<F(Args...)> : std::invoke_result<F, Args...> {};
+#else
+template<typename F> using result_of = std::result_of<F>;
+#endif
+
+}  // namespace type_traits_internal
+
+template<typename F>
+using result_of_t = typename type_traits_internal::result_of<F>::type;
 
 namespace type_traits_internal {
 // In MSVC we can't probe std::hash or stdext::hash because it triggers a

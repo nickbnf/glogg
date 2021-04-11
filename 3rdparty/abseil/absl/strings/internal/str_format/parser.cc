@@ -1,3 +1,17 @@
+// Copyright 2020 The Abseil Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "absl/strings/internal/str_format/parser.h"
 
 #include <assert.h>
@@ -17,7 +31,7 @@ namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace str_format_internal {
 
-using CC = ConversionChar;
+using CC = FormatConversionCharInternal;
 using LM = LengthMod;
 
 ABSL_CONST_INIT const ConvTag kTags[256] = {
@@ -29,9 +43,9 @@ ABSL_CONST_INIT const ConvTag kTags[256] = {
     {},    {},    {},    {},    {},    {},    {},    {},     // 28-2f
     {},    {},    {},    {},    {},    {},    {},    {},     // 30-37
     {},    {},    {},    {},    {},    {},    {},    {},     // 38-3f
-    {},    CC::A, {},    CC::C, {},    CC::E, CC::F, CC::G,  // @ABCDEFG
+    {},    CC::A, {},    {},    {},    CC::E, CC::F, CC::G,  // @ABCDEFG
     {},    {},    {},    {},    LM::L, {},    {},    {},     // HIJKLMNO
-    {},    {},    {},    CC::S, {},    {},    {},    {},     // PQRSTUVW
+    {},    {},    {},    {},    {},    {},    {},    {},     // PQRSTUVW
     CC::X, {},    {},    {},    {},    {},    {},    {},     // XYZ[\]^_
     {},    CC::a, {},    CC::c, CC::d, CC::e, CC::f, CC::g,  // `abcdefg
     LM::h, CC::i, LM::j, {},    LM::l, {},    CC::n, CC::o,  // hijklmno
@@ -296,15 +310,17 @@ struct ParsedFormatBase::ParsedFormatConsumer {
   char* data_pos;
 };
 
-ParsedFormatBase::ParsedFormatBase(string_view format, bool allow_ignored,
-                                   std::initializer_list<Conv> convs)
+ParsedFormatBase::ParsedFormatBase(
+    string_view format, bool allow_ignored,
+    std::initializer_list<FormatConversionCharSet> convs)
     : data_(format.empty() ? nullptr : new char[format.size()]) {
   has_error_ = !ParseFormatString(format, ParsedFormatConsumer(this)) ||
                !MatchesConversions(allow_ignored, convs);
 }
 
 bool ParsedFormatBase::MatchesConversions(
-    bool allow_ignored, std::initializer_list<Conv> convs) const {
+    bool allow_ignored,
+    std::initializer_list<FormatConversionCharSet> convs) const {
   std::unordered_set<int> used;
   auto add_if_valid_conv = [&](int pos, char c) {
       if (static_cast<size_t>(pos) > convs.size() ||

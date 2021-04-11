@@ -90,7 +90,7 @@ struct FlagsUsageConfig {
   // program output.
   flags_internal::FlagKindFilter contains_helppackage_flags;
 
-  // Generates std::string containing program version. This is the std::string reported
+  // Generates string containing program version. This is the string reported
   // when user specifies --version in a command line.
   std::function<std::string()> version_string;
 
@@ -127,7 +127,8 @@ extern "C" {
 
 // Additional report of fatal usage error message before we std::exit. Error is
 // fatal if is_fatal argument to ReportUsageError is true.
-void AbslInternalReportFatalUsageError(absl::string_view);
+void ABSL_INTERNAL_C_SYMBOL(AbslInternalReportFatalUsageError)(
+    absl::string_view);
 
 }  // extern "C"
 

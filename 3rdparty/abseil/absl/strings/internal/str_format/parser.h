@@ -1,3 +1,17 @@
+// Copyright 2020 The Abseil Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #ifndef ABSL_STRINGS_INTERNAL_STR_FORMAT_PARSER_H_
 #define ABSL_STRINGS_INTERNAL_STR_FORMAT_PARSER_H_
 
@@ -67,7 +81,7 @@ struct UnboundConversion {
 
   Flags flags;
   LengthMod length_mod = LengthMod::none;
-  ConversionChar conv = FormatConversionChar::kNone;
+  FormatConversionChar conv = FormatConversionCharInternal::kNone;
 };
 
 // Consume conversion spec prefix (not including '%') of [p, end) if valid.
@@ -83,7 +97,7 @@ const char* ConsumeUnboundConversion(const char* p, const char* end,
 // conversions.
 class ConvTag {
  public:
-  constexpr ConvTag(ConversionChar conversion_char)  // NOLINT
+  constexpr ConvTag(FormatConversionChar conversion_char)  // NOLINT
       : tag_(static_cast<int8_t>(conversion_char)) {}
   // We invert the length modifiers to make them negative so that we can easily
   // test for them.
@@ -94,9 +108,9 @@ class ConvTag {
 
   bool is_conv() const { return tag_ >= 0; }
   bool is_length() const { return tag_ < 0 && tag_ != -128; }
-  ConversionChar as_conv() const {
+  FormatConversionChar as_conv() const {
     assert(is_conv());
-    return static_cast<ConversionChar>(tag_);
+    return static_cast<FormatConversionChar>(tag_);
   }
   LengthMod as_length() const {
     assert(is_length());
@@ -143,7 +157,7 @@ bool ParseFormatString(string_view src, Consumer consumer) {
     auto tag = GetTagForChar(percent[1]);
     if (tag.is_conv()) {
       if (ABSL_PREDICT_FALSE(next_arg < 0)) {
-        // This indicates an error in the format std::string.
+        // This indicates an error in the format string.
         // The only way to get `next_arg < 0` here is to have a positional
         // argument first which sets next_arg to -1 and then a non-positional
         // argument.
@@ -186,8 +200,9 @@ constexpr bool EnsureConstexpr(string_view s) {
 
 class ParsedFormatBase {
  public:
-  explicit ParsedFormatBase(string_view format, bool allow_ignored,
-                            std::initializer_list<Conv> convs);
+  explicit ParsedFormatBase(
+      string_view format, bool allow_ignored,
+      std::initializer_list<FormatConversionCharSet> convs);
 
   ParsedFormatBase(const ParsedFormatBase& other) { *this = other; }
 
@@ -234,8 +249,9 @@ class ParsedFormatBase {
  private:
   // Returns whether the conversions match and if !allow_ignored it verifies
   // that all conversions are used by the format.
-  bool MatchesConversions(bool allow_ignored,
-                          std::initializer_list<Conv> convs) const;
+  bool MatchesConversions(
+      bool allow_ignored,
+      std::initializer_list<FormatConversionCharSet> convs) const;
 
   struct ParsedFormatConsumer;
 
@@ -280,14 +296,14 @@ class ParsedFormatBase {
 // This is the only API that allows the user to pass a runtime specified format
 // string. These factory functions will return NULL if the format does not match
 // the conversions requested by the user.
-template <str_format_internal::Conv... C>
+template <FormatConversionCharSet... C>
 class ExtendedParsedFormat : public str_format_internal::ParsedFormatBase {
  public:
   explicit ExtendedParsedFormat(string_view format)
 #ifdef ABSL_INTERNAL_ENABLE_FORMAT_CHECKER
       __attribute__((
           enable_if(str_format_internal::EnsureConstexpr(format),
-                    "Format std::string is not constexpr."),
+                    "Format string is not constexpr."),
           enable_if(str_format_internal::ValidFormatImpl<C...>(format),
                     "Format specified does not match the template arguments.")))
 #endif  // ABSL_INTERNAL_ENABLE_FORMAT_CHECKER

@@ -16,17 +16,28 @@
 
 set -euox pipefail
 
-if [ -z ${ABSEIL_ROOT:-} ]; then
+if [[ -z ${ABSEIL_ROOT:-} ]]; then
   ABSEIL_ROOT="$(realpath $(dirname ${0})/..)"
 fi
 
-time docker run \
-    --volume="${ABSEIL_ROOT}:/abseil-cpp:ro" \
-    --workdir=/abseil-cpp \
+if [[ -z ${LINK_TYPE:-} ]]; then
+  LINK_TYPE="STATIC DYNAMIC"
+fi
+
+source "${ABSEIL_ROOT}/ci/cmake_common.sh"
+
+source "${ABSEIL_ROOT}/ci/linux_docker_containers.sh"
+readonly DOCKER_CONTAINER=${LINUX_GCC_LATEST_CONTAINER}
+
+for link_type in ${LINK_TYPE}; do
+  time docker run \
+    --mount type=bind,source="${ABSEIL_ROOT}",target=/abseil-cpp-ro,readonly \
     --tmpfs=/buildfs:exec \
+    --tmpfs=/abseil-cpp:exec \
+    --workdir=/abseil-cpp \
     --cap-add=SYS_PTRACE \
+    -e "LINK_TYPE=${link_type}" \
     --rm \
-    -e CFLAGS="-Werror" \
-    -e CXXFLAGS="-Werror" \
-    gcr.io/google.com/absl-177019/linux_gcc-latest:20200106 \
-    /bin/bash CMake/install_test_project/test.sh $@
+    ${DOCKER_CONTAINER} \
+    /bin/bash -c "cp -r /abseil-cpp-ro/* . && CMake/install_test_project/test.sh"
+done

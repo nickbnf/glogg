@@ -24,7 +24,7 @@ load(
 
 package(default_visibility = ["//visibility:public"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 cc_library(
     name = "time",
@@ -70,6 +70,7 @@ cc_library(
     ],
     deps = [
         ":time",
+        "//absl/base:config",
         "//absl/base:raw_logging_internal",
         "//absl/time/internal/cctz:time_zone",
         "@com_google_googletest//:gtest",
@@ -118,6 +119,7 @@ cc_test(
         ":time",
         "//absl/base",
         "//absl/base:core_headers",
+        "//absl/flags:flag",
         "//absl/hash",
         "@com_github_google_benchmark//:benchmark_main",
     ],

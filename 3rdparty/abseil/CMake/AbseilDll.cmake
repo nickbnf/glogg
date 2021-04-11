@@ -1,4 +1,5 @@
 include(CMakeParseArguments)
+include(GNUInstallDirs)
 
 set(ABSL_INTERNAL_DLL_FILES
   "algorithm/algorithm.h"
@@ -8,17 +9,17 @@ set(ABSL_INTERNAL_DLL_FILES
   "base/casts.h"
   "base/config.h"
   "base/const_init.h"
-  "base/dynamic_annotations.cc"
   "base/dynamic_annotations.h"
   "base/internal/atomic_hook.h"
-  "base/internal/bits.h"
   "base/internal/cycleclock.cc"
   "base/internal/cycleclock.h"
   "base/internal/direct_mmap.h"
+  "base/internal/dynamic_annotations.h"
   "base/internal/endian.h"
   "base/internal/errno_saver.h"
   "base/internal/exponential_biased.cc"
   "base/internal/exponential_biased.h"
+  "base/internal/fast_type_id.h"
   "base/internal/hide_ptr.h"
   "base/internal/identity.h"
   "base/internal/invoke.h"
@@ -35,6 +36,8 @@ set(ABSL_INTERNAL_DLL_FILES
   "base/internal/scheduling_mode.h"
   "base/internal/scoped_set_env.cc"
   "base/internal/scoped_set_env.h"
+  "base/internal/strerror.h"
+  "base/internal/strerror.cc"
   "base/internal/spinlock.cc"
   "base/internal/spinlock.h"
   "base/internal/spinlock_wait.cc"
@@ -58,6 +61,8 @@ set(ABSL_INTERNAL_DLL_FILES
   "base/policy_checks.h"
   "base/port.h"
   "base/thread_annotations.h"
+  "cleanup/cleanup.h"
+  "cleanup/internal/cleanup.h"
   "container/btree_map.h"
   "container/btree_set.h"
   "container/fixed_array.h"
@@ -119,27 +124,30 @@ set(ABSL_INTERNAL_DLL_FILES
   "hash/internal/hash.h"
   "hash/internal/hash.cc"
   "hash/internal/spy_hash_state.h"
+  "hash/internal/wyhash.h"
+  "hash/internal/wyhash.cc"
   "memory/memory.h"
   "meta/type_traits.h"
+  "numeric/bits.h"
   "numeric/int128.cc"
   "numeric/int128.h"
+  "numeric/internal/bits.h"
+  "numeric/internal/representation.h"
   "random/bernoulli_distribution.h"
   "random/beta_distribution.h"
   "random/bit_gen_ref.h"
   "random/discrete_distribution.cc"
   "random/discrete_distribution.h"
-  "random/distribution_format_traits.h"
   "random/distributions.h"
   "random/exponential_distribution.h"
   "random/gaussian_distribution.cc"
   "random/gaussian_distribution.h"
-  "random/internal/distributions.h"
   "random/internal/distribution_caller.h"
-  "random/internal/fast_uniform_bits.h"
   "random/internal/fastmath.h"
-  "random/internal/gaussian_distribution_gentables.cc"
+  "random/internal/fast_uniform_bits.h"
   "random/internal/generate_real.h"
   "random/internal/iostream_state_saver.h"
+  "random/internal/mock_helpers.h"
   "random/internal/nonsecure_base.h"
   "random/internal/pcg_engine.h"
   "random/internal/platform.h"
@@ -152,6 +160,7 @@ set(ABSL_INTERNAL_DLL_FILES
   "random/internal/randen_engine.h"
   "random/internal/randen_hwaes.cc"
   "random/internal/randen_hwaes.h"
+  "random/internal/randen_round_keys.cc"
   "random/internal/randen_slow.cc"
   "random/internal/randen_slow.h"
   "random/internal/randen_traits.h"
@@ -172,8 +181,12 @@ set(ABSL_INTERNAL_DLL_FILES
   "random/uniform_int_distribution.h"
   "random/uniform_real_distribution.h"
   "random/zipf_distribution.h"
+  "status/internal/status_internal.h"
+  "status/internal/statusor_internal.h"
   "status/status.h"
   "status/status.cc"
+  "status/statusor.h"
+  "status/statusor.cc"
   "status/status_payload_printer.h"
   "status/status_payload_printer.cc"
   "strings/ascii.cc"
@@ -184,12 +197,18 @@ set(ABSL_INTERNAL_DLL_FILES
   "strings/cord.h"
   "strings/escaping.cc"
   "strings/escaping.h"
+  "strings/internal/cord_internal.cc"
   "strings/internal/cord_internal.h"
+  "strings/internal/cord_rep_flat.h"
+  "strings/internal/cord_rep_ring.cc"
+  "strings/internal/cord_rep_ring.h"
+  "strings/internal/cord_rep_ring_reader.h"
   "strings/internal/charconv_bigint.cc"
   "strings/internal/charconv_bigint.h"
   "strings/internal/charconv_parse.cc"
   "strings/internal/charconv_parse.h"
   "strings/internal/stl_type_traits.h"
+  "strings/internal/string_constant.h"
   "strings/match.cc"
   "strings/match.h"
   "strings/numbers.cc"
@@ -244,6 +263,7 @@ set(ABSL_INTERNAL_DLL_FILES
   "synchronization/notification.h"
   "synchronization/internal/create_thread_identity.cc"
   "synchronization/internal/create_thread_identity.h"
+  "synchronization/internal/futex.h"
   "synchronization/internal/graphcycles.cc"
   "synchronization/internal/graphcycles.h"
   "synchronization/internal/kernel_timeout.h"
@@ -292,6 +312,8 @@ set(ABSL_INTERNAL_DLL_FILES
   "types/internal/conformance_aliases.h"
   "types/internal/conformance_archetype.h"
   "types/internal/conformance_profile.h"
+  "types/internal/parentheses.h"
+  "types/internal/transform_args.h"
   "types/internal/variant.h"
   "types/optional.h"
   "types/internal/optional.h"
@@ -479,7 +501,7 @@ function(absl_make_dll)
     abseil_dll
     PUBLIC
       "$<BUILD_INTERFACE:${ABSL_COMMON_INCLUDE_DIRS}>"
-      $<INSTALL_INTERFACE:${ABSL_INSTALL_INCLUDEDIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 
   target_compile_options(
@@ -497,8 +519,8 @@ function(absl_make_dll)
       ${ABSL_CC_LIB_DEFINES}
   )
   install(TARGETS abseil_dll EXPORT ${PROJECT_NAME}Targets
-        RUNTIME DESTINATION ${ABSL_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${ABSL_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${ABSL_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 endfunction()

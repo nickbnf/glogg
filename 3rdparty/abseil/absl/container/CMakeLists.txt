@@ -14,15 +14,6 @@
 # limitations under the License.
 #
 
-# This is deprecated and will be removed in the future.  It also doesn't do
-# anything anyways.  Prefer to use the library associated with the API you are
-# using.
-absl_cc_library(
-  NAME
-    container
-  PUBLIC
-)
-
 absl_cc_library(
   NAME
     btree
@@ -40,6 +31,7 @@ absl_cc_library(
     absl::compare
     absl::compressed_tuple
     absl::container_memory
+    absl::cord
     absl::core_headers
     absl::layout
     absl::memory
@@ -60,6 +52,7 @@ absl_cc_library(
     ${ABSL_DEFAULT_LINKOPTS}
   DEPS
     absl::btree
+    absl::cord
     absl::flat_hash_set
     absl::strings
     absl::time
@@ -129,6 +122,7 @@ absl_cc_library(
   DEPS
     absl::compressed_tuple
     absl::algorithm
+    absl::config
     absl::core_headers
     absl::dynamic_annotations
     absl::throw_delegate
@@ -145,6 +139,8 @@ absl_cc_test(
     ${ABSL_TEST_COPTS}
   DEPS
     absl::fixed_array
+    absl::counting_allocator
+    absl::config
     absl::exception_testing
     absl::hash_testing
     absl::memory
@@ -219,6 +215,7 @@ absl_cc_test(
     absl::counting_allocator
     absl::inlined_vector
     absl::test_instance_tracker
+    absl::config
     absl::core_headers
     absl::exception_testing
     absl::hash_testing
@@ -299,6 +296,7 @@ absl_cc_test(
     absl::unordered_map_members_test
     absl::unordered_map_modifiers_test
     absl::any
+    absl::raw_logging_internal
     gmock_main
 )
 
@@ -335,6 +333,7 @@ absl_cc_test(
     absl::unordered_set_members_test
     absl::unordered_set_modifiers_test
     absl::memory
+    absl::raw_logging_internal
     absl::strings
     gmock_main
 )
@@ -416,7 +415,9 @@ absl_cc_library(
   COPTS
     ${ABSL_DEFAULT_COPTS}
   DEPS
+    absl::config
     absl::memory
+    absl::type_traits
     absl::utility
   PUBLIC
 )
@@ -431,6 +432,7 @@ absl_cc_test(
   DEPS
     absl::container_memory
     absl::strings
+    absl::test_instance_tracker
     gmock_main
 )
 
@@ -443,6 +445,7 @@ absl_cc_library(
     ${ABSL_DEFAULT_COPTS}
   DEPS
     absl::config
+    absl::cord
     absl::hash
     absl::strings
   PUBLIC
@@ -456,8 +459,11 @@ absl_cc_test(
   COPTS
     ${ABSL_TEST_COPTS}
   DEPS
+    absl::cord
+    absl::cord_test_helpers
     absl::hash_function_defaults
     absl::hash
+    absl::random_random
     absl::strings
     gmock_main
 )
@@ -683,6 +689,7 @@ absl_cc_test(
     absl::hashtable_debug
     absl::raw_hash_set
     absl::base
+    absl::config
     absl::core_headers
     absl::raw_logging_internal
     absl::strings
@@ -711,6 +718,7 @@ absl_cc_library(
   COPTS
     ${ABSL_DEFAULT_COPTS}
   DEPS
+    absl::config
     absl::core_headers
     absl::meta
     absl::strings
@@ -728,6 +736,7 @@ absl_cc_test(
     ${ABSL_TEST_COPTS}
   DEPS
     absl::layout
+    absl::config
     absl::core_headers
     absl::raw_logging_internal
     absl::span

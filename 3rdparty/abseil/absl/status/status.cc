@@ -27,8 +27,6 @@
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 
-// The implementation was intentionally kept same as util::error::Code_Name()
-// to ease the migration.
 std::string StatusCodeToString(StatusCode code) {
   switch (code) {
     case StatusCode::kOk:
@@ -80,7 +78,7 @@ static int FindPayloadIndexByUrl(const Payloads* payloads,
                                  absl::string_view type_url) {
   if (payloads == nullptr) return -1;
 
-  for (int i = 0; i < payloads->size(); ++i) {
+  for (size_t i = 0; i < payloads->size(); ++i) {
     if ((*payloads)[i].type_url == type_url) return i;
   }
 
@@ -169,15 +167,15 @@ void Status::ForEachPayload(
     bool in_reverse =
         payloads->size() > 1 && reinterpret_cast<uintptr_t>(payloads) % 13 > 6;
 
-    for (int index = 0; index < payloads->size(); ++index) {
+    for (size_t index = 0; index < payloads->size(); ++index) {
       const auto& elem =
           (*payloads)[in_reverse ? payloads->size() - 1 - index : index];
 
 #ifdef NDEBUG
       visitor(elem.type_url, elem.payload);
 #else
-      // In debug mode invaldiate the type url to prevent users from relying on
-      // this std::string lifetime.
+      // In debug mode invalidate the type url to prevent users from relying on
+      // this string lifetime.
 
       // NOLINTNEXTLINE intentional extra conversion to force temporary.
       visitor(std::string(elem.type_url), elem.payload);
@@ -209,13 +207,12 @@ void Status::UnrefNonInlined(uintptr_t rep) {
   }
 }
 
-uintptr_t Status::NewRep(absl::StatusCode code, absl::string_view msg,
-                         std::unique_ptr<status_internal::Payloads> payloads) {
-  status_internal::StatusRep* rep = new status_internal::StatusRep;
-  rep->ref.store(1, std::memory_order_relaxed);
-  rep->code = code;
-  rep->message.assign(msg.data(), msg.size());
-  rep->payloads = std::move(payloads);
+uintptr_t Status::NewRep(
+    absl::StatusCode code, absl::string_view msg,
+    std::unique_ptr<status_internal::Payloads> payloads) {
+  status_internal::StatusRep* rep = new status_internal::StatusRep(
+      code, std::string(msg.data(), msg.size()),
+      std::move(payloads));
   return PointerToRep(rep);
 }
 
@@ -241,8 +238,9 @@ absl::StatusCode Status::code() const {
 void Status::PrepareToModify() {
   ABSL_RAW_CHECK(!ok(), "PrepareToModify shouldn't be called on OK status.");
   if (IsInlined(rep_)) {
-    rep_ = NewRep(static_cast<absl::StatusCode>(raw_code()),
-                  absl::string_view(), nullptr);
+    rep_ =
+        NewRep(static_cast<absl::StatusCode>(raw_code()), absl::string_view(),
+               nullptr);
     return;
   }
 
@@ -253,7 +251,8 @@ void Status::PrepareToModify() {
     if (rep->payloads) {
       payloads = absl::make_unique<status_internal::Payloads>(*rep->payloads);
     }
-    rep_ = NewRep(rep->code, message(), std::move(payloads));
+    rep_ = NewRep(rep->code, message(),
+                  std::move(payloads));
     UnrefNonInlined(rep_i);
   }
 }
@@ -292,20 +291,26 @@ bool Status::EqualsSlow(const absl::Status& a, const absl::Status& b) {
   return true;
 }
 
-std::string Status::ToStringSlow() const {
+std::string Status::ToStringSlow(StatusToStringMode mode) const {
   std::string text;
   absl::StrAppend(&text, absl::StatusCodeToString(code()), ": ", message());
-  status_internal::StatusPayloadPrinter printer =
-      status_internal::GetStatusPayloadPrinter();
-  this->ForEachPayload([&](absl::string_view type_url,
-                           const absl::Cord& payload) {
-    absl::optional<std::string> result;
-    if (printer) result = printer(type_url, payload);
-    absl::StrAppend(
-        &text, " [", type_url, "='",
-        result.has_value() ? *result : absl::CHexEscape(std::string(payload)),
-        "']");
-  });
+
+  const bool with_payload = (mode & StatusToStringMode::kWithPayload) ==
+                      StatusToStringMode::kWithPayload;
+
+  if (with_payload) {
+    status_internal::StatusPayloadPrinter printer =
+        status_internal::GetStatusPayloadPrinter();
+    this->ForEachPayload([&](absl::string_view type_url,
+                             const absl::Cord& payload) {
+      absl::optional<std::string> result;
+      if (printer) result = printer(type_url, payload);
+      absl::StrAppend(
+          &text, " [", type_url, "='",
+          result.has_value() ? *result : absl::CHexEscape(std::string(payload)),
+          "']");
+    });
+  }
 
   return text;
 }

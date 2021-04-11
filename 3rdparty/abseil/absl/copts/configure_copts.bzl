@@ -22,21 +22,21 @@ load(
 )
 
 ABSL_DEFAULT_COPTS = select({
-    "//absl:windows": ABSL_MSVC_FLAGS,
-    "//absl:llvm_compiler": ABSL_LLVM_FLAGS,
+    "//absl:msvc_compiler": ABSL_MSVC_FLAGS,
+    "//absl:clang-cl_compiler": ABSL_CLANG_CL_FLAGS,
+    "//absl:clang_compiler": ABSL_LLVM_FLAGS,
     "//conditions:default": ABSL_GCC_FLAGS,
 })
 
-# in absence of modules (--compiler=gcc or -c opt), cc_tests leak their copts
-# to their (included header) dependencies and fail to build outside absl
 ABSL_TEST_COPTS = ABSL_DEFAULT_COPTS + select({
-    "//absl:windows": ABSL_MSVC_TEST_FLAGS,
-    "//absl:llvm_compiler": ABSL_LLVM_TEST_FLAGS,
+    "//absl:msvc_compiler": ABSL_MSVC_TEST_FLAGS,
+    "//absl:clang-cl_compiler": ABSL_CLANG_CL_TEST_FLAGS,
+    "//absl:clang_compiler": ABSL_LLVM_TEST_FLAGS,
     "//conditions:default": ABSL_GCC_TEST_FLAGS,
 })
 
 ABSL_DEFAULT_LINKOPTS = select({
-    "//absl:windows": ABSL_MSVC_LINKOPTS,
+    "//absl:msvc_compiler": ABSL_MSVC_LINKOPTS,
     "//conditions:default": [],
 })
 
@@ -48,7 +48,7 @@ ABSL_RANDOM_RANDEN_COPTS = select({
     ":cpu_darwin": ABSL_RANDOM_HWAES_X64_FLAGS,
     ":cpu_x64_windows_msvc": ABSL_RANDOM_HWAES_MSVC_X64_FLAGS,
     ":cpu_x64_windows": ABSL_RANDOM_HWAES_MSVC_X64_FLAGS,
-    ":cpu_haswell": ABSL_RANDOM_HWAES_X64_FLAGS,
+    ":cpu_k8": ABSL_RANDOM_HWAES_X64_FLAGS,
     ":cpu_ppc": ["-mcrypto"],
 
     # Supported by default or unsupported.
@@ -65,7 +65,7 @@ def absl_random_randen_copts_init():
     # These configs have consistent flags to enable HWAES intsructions.
     cpu_configs = [
         "ppc",
-        "haswell",
+        "k8",
         "darwin_x86_64",
         "darwin",
         "x64_windows_msvc",

@@ -1,3 +1,17 @@
+// Copyright 2020 The Abseil Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "absl/strings/cord.h"
 
 #include <algorithm>
@@ -18,9 +32,11 @@
 #include "absl/base/config.h"
 #include "absl/base/internal/endian.h"
 #include "absl/base/internal/raw_logging.h"
+#include "absl/base/macros.h"
 #include "absl/container/fixed_array.h"
 #include "absl/strings/cord_test_helpers.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 typedef std::mt19937_64 RandomEngine;
@@ -70,9 +86,8 @@ static std::string RandomLowercaseString(RandomEngine* rng) {
 static std::string RandomLowercaseString(RandomEngine* rng, size_t length) {
   std::string result(length, '\0');
   std::uniform_int_distribution<int> chars('a', 'z');
-  std::generate(result.begin(), result.end(), [&]() {
-    return static_cast<char>(chars(*rng));
-  });
+  std::generate(result.begin(), result.end(),
+                [&]() { return static_cast<char>(chars(*rng)); });
   return result;
 }
 
@@ -166,6 +181,12 @@ class CordTestPeer {
       const Cord& c, absl::FunctionRef<void(absl::string_view)> callback) {
     c.ForEachChunk(callback);
   }
+
+  static bool IsTree(const Cord& c) { return c.contents_.is_tree(); }
+
+  static cord_internal::CordzInfo* GetCordzInfo(const Cord& c) {
+    return c.contents_.cordz_info();
+  }
 };
 
 ABSL_NAMESPACE_END
@@ -175,7 +196,7 @@ TEST(Cord, AllFlatSizes) {
   using absl::strings_internal::CordTestAccess;
 
   for (size_t s = 0; s < CordTestAccess::MaxFlatLength(); s++) {
-    // Make a std::string of length s.
+    // Make a string of length s.
     std::string src;
     while (src.size() < s) {
       src.push_back('a' + (src.size() % 26));
@@ -350,7 +371,7 @@ TEST(Cord, Subcord) {
     for (size_t end_pos : positions) {
       if (end_pos < pos || end_pos > a.size()) continue;
       absl::Cord sa = a.Subcord(pos, end_pos - pos);
-      EXPECT_EQ(absl::string_view(s).substr(pos, end_pos - pos),
+      ASSERT_EQ(absl::string_view(s).substr(pos, end_pos - pos),
                 std::string(sa))
           << a;
     }
@@ -362,7 +383,7 @@ TEST(Cord, Subcord) {
   for (size_t pos = 0; pos <= sh.size(); ++pos) {
     for (size_t n = 0; n <= sh.size() - pos; ++n) {
       absl::Cord sc = c.Subcord(pos, n);
-      EXPECT_EQ(sh.substr(pos, n), std::string(sc)) << c;
+      ASSERT_EQ(sh.substr(pos, n), std::string(sc)) << c;
     }
   }
 
@@ -372,7 +393,7 @@ TEST(Cord, Subcord) {
   while (sa.size() > 1) {
     sa = sa.Subcord(1, sa.size() - 2);
     ss = ss.substr(1, ss.size() - 2);
-    EXPECT_EQ(ss, std::string(sa)) << a;
+    ASSERT_EQ(ss, std::string(sa)) << a;
     if (HasFailure()) break;  // halt cascade
   }
 
@@ -395,6 +416,9 @@ TEST(Cord, Swap) {
   swap(x, y);
   ASSERT_EQ(x, absl::Cord(b));
   ASSERT_EQ(y, absl::Cord(a));
+  x.swap(y);
+  ASSERT_EQ(x, absl::Cord(a));
+  ASSERT_EQ(y, absl::Cord(b));
 }
 
 static void VerifyCopyToString(const absl::Cord& cord) {
@@ -410,7 +434,7 @@ static void VerifyCopyToString(const absl::Cord& cord) {
 
   if (cord.size() <= kInitialLength) {
     EXPECT_EQ(has_initial_contents.data(), address_before_copy)
-        << "CopyCordToString allocated new std::string storage; "
+        << "CopyCordToString allocated new string storage; "
            "has_initial_contents = \""
         << has_initial_contents << "\"";
   }
@@ -422,6 +446,50 @@ TEST(Cord, CopyToString) {
   VerifyCopyToString(
       absl::MakeFragmentedCord({"fragmented ", "cord ", "to ", "test ",
                                 "copying ", "to ", "a ", "string."}));
+}
+
+TEST(TryFlat, Empty) {
+  absl::Cord c;
+  EXPECT_EQ(c.TryFlat(), "");
+}
+
+TEST(TryFlat, Flat) {
+  absl::Cord c("hello");
+  EXPECT_EQ(c.TryFlat(), "hello");
+}
+
+TEST(TryFlat, SubstrInlined) {
+  absl::Cord c("hello");
+  c.RemovePrefix(1);
+  EXPECT_EQ(c.TryFlat(), "ello");
+}
+
+TEST(TryFlat, SubstrFlat) {
+  absl::Cord c("longer than 15 bytes");
+  c.RemovePrefix(1);
+  EXPECT_EQ(c.TryFlat(), "onger than 15 bytes");
+}
+
+TEST(TryFlat, Concat) {
+  absl::Cord c = absl::MakeFragmentedCord({"hel", "lo"});
+  EXPECT_EQ(c.TryFlat(), absl::nullopt);
+}
+
+TEST(TryFlat, External) {
+  absl::Cord c = absl::MakeCordFromExternal("hell", [](absl::string_view) {});
+  EXPECT_EQ(c.TryFlat(), "hell");
+}
+
+TEST(TryFlat, SubstrExternal) {
+  absl::Cord c = absl::MakeCordFromExternal("hell", [](absl::string_view) {});
+  c.RemovePrefix(1);
+  EXPECT_EQ(c.TryFlat(), "ell");
+}
+
+TEST(TryFlat, SubstrConcat) {
+  absl::Cord c = absl::MakeFragmentedCord({"hello", " world"});
+  c.RemovePrefix(1);
+  EXPECT_EQ(c.TryFlat(), absl::nullopt);
 }
 
 static bool IsFlat(const absl::Cord& c) {
@@ -511,24 +579,24 @@ TEST(Cord, MultipleLengths) {
   for (size_t i = 0; i < d.size(); i++) {
     std::string a = d.data(i);
 
-    { // Construct from Cord
+    {  // Construct from Cord
       absl::Cord tmp(a);
       absl::Cord x(tmp);
       EXPECT_EQ(a, std::string(x)) << "'" << a << "'";
     }
 
-    { // Construct from absl::string_view
+    {  // Construct from absl::string_view
       absl::Cord x(a);
       EXPECT_EQ(a, std::string(x)) << "'" << a << "'";
     }
 
-    { // Append cord to self
+    {  // Append cord to self
       absl::Cord self(a);
       self.Append(self);
       EXPECT_EQ(a + a, std::string(self)) << "'" << a << "' + '" << a << "'";
     }
 
-    { // Prepend cord to self
+    {  // Prepend cord to self
       absl::Cord self(a);
       self.Prepend(self);
       EXPECT_EQ(a + a, std::string(self)) << "'" << a << "' + '" << a << "'";
@@ -538,40 +606,40 @@ TEST(Cord, MultipleLengths) {
     for (size_t j = 0; j < d.size(); j++) {
       std::string b = d.data(j);
 
-      { // CopyFrom Cord
+      {  // CopyFrom Cord
         absl::Cord x(a);
         absl::Cord y(b);
         x = y;
         EXPECT_EQ(b, std::string(x)) << "'" << a << "' + '" << b << "'";
       }
 
-      { // CopyFrom absl::string_view
+      {  // CopyFrom absl::string_view
         absl::Cord x(a);
         x = b;
         EXPECT_EQ(b, std::string(x)) << "'" << a << "' + '" << b << "'";
       }
 
-      { // Cord::Append(Cord)
+      {  // Cord::Append(Cord)
         absl::Cord x(a);
         absl::Cord y(b);
         x.Append(y);
         EXPECT_EQ(a + b, std::string(x)) << "'" << a << "' + '" << b << "'";
       }
 
-      { // Cord::Append(absl::string_view)
+      {  // Cord::Append(absl::string_view)
         absl::Cord x(a);
         x.Append(b);
         EXPECT_EQ(a + b, std::string(x)) << "'" << a << "' + '" << b << "'";
       }
 
-      { // Cord::Prepend(Cord)
+      {  // Cord::Prepend(Cord)
         absl::Cord x(a);
         absl::Cord y(b);
         x.Prepend(y);
         EXPECT_EQ(b + a, std::string(x)) << "'" << b << "' + '" << a << "'";
       }
 
-      { // Cord::Prepend(absl::string_view)
+      {  // Cord::Prepend(absl::string_view)
         absl::Cord x(a);
         x.Prepend(b);
         EXPECT_EQ(b + a, std::string(x)) << "'" << b << "' + '" << a << "'";
@@ -813,7 +881,7 @@ TEST(Cord, CompareAfterAssign) {
 }
 
 // Test CompareTo() and ComparePrefix() against string and substring
-// comparison methods from std::basic_string.
+// comparison methods from basic_string.
 static void TestCompare(const absl::Cord& c, const absl::Cord& d,
                         RandomEngine* rng) {
   typedef std::basic_string<uint8_t> ustring;
@@ -869,7 +937,7 @@ void CompareOperators() {
 
   EXPECT_TRUE(a == a);
   // For pointer type (i.e. `const char*`), operator== compares the address
-  // instead of the std::string, so `a == const char*("a")` isn't necessarily true.
+  // instead of the string, so `a == const char*("a")` isn't necessarily true.
   EXPECT_TRUE(std::is_pointer<T1>::value || a == T1("a"));
   EXPECT_TRUE(std::is_pointer<T2>::value || a == T2("a"));
   EXPECT_FALSE(a == b);
@@ -1032,6 +1100,19 @@ TEST(ConstructFromExternal, MoveOnlyReleaser) {
   EXPECT_TRUE(invoked);
 }
 
+TEST(ConstructFromExternal, NoArgLambda) {
+  bool invoked = false;
+  (void)absl::MakeCordFromExternal("dummy", [&invoked]() { invoked = true; });
+  EXPECT_TRUE(invoked);
+}
+
+TEST(ConstructFromExternal, StringViewArgLambda) {
+  bool invoked = false;
+  (void)absl::MakeCordFromExternal(
+      "dummy", [&invoked](absl::string_view) { invoked = true; });
+  EXPECT_TRUE(invoked);
+}
+
 TEST(ConstructFromExternal, NonTrivialReleaserDestructor) {
   struct Releaser {
     explicit Releaser(bool* destroyed) : destroyed(destroyed) {}
@@ -1076,7 +1157,7 @@ TEST(ConstructFromExternal, ReferenceQualifierOverloads) {
 }
 
 TEST(ExternalMemory, BasicUsage) {
-  static const char* strings[] = { "", "hello", "there" };
+  static const char* strings[] = {"", "hello", "there"};
   for (const char* str : strings) {
     absl::Cord dst("(prefix)");
     AddExternalMemory(str, &dst);
@@ -1523,4 +1604,112 @@ TEST(Cord, SmallBufferAssignFromOwnData) {
           << "pos = " << pos << "; count = " << count;
     }
   }
+}
+
+TEST(Cord, Format) {
+  absl::Cord c;
+  absl::Format(&c, "There were %04d little %s.", 3, "pigs");
+  EXPECT_EQ(c, "There were 0003 little pigs.");
+  absl::Format(&c, "And %-3llx bad wolf!", 1);
+  EXPECT_EQ(c, "There were 0003 little pigs.And 1   bad wolf!");
+}
+
+TEST(CordDeathTest, Hardening) {
+  absl::Cord cord("hello");
+  // These statement should abort the program in all builds modes.
+  EXPECT_DEATH_IF_SUPPORTED(cord.RemovePrefix(6), "");
+  EXPECT_DEATH_IF_SUPPORTED(cord.RemoveSuffix(6), "");
+
+  bool test_hardening = false;
+  ABSL_HARDENING_ASSERT([&]() {
+    // This only runs when ABSL_HARDENING_ASSERT is active.
+    test_hardening = true;
+    return true;
+  }());
+  if (!test_hardening) return;
+
+  EXPECT_DEATH_IF_SUPPORTED(cord[5], "");
+  EXPECT_DEATH_IF_SUPPORTED(*cord.chunk_end(), "");
+  EXPECT_DEATH_IF_SUPPORTED(static_cast<void>(cord.chunk_end()->empty()), "");
+  EXPECT_DEATH_IF_SUPPORTED(++cord.chunk_end(), "");
+}
+
+class AfterExitCordTester {
+ public:
+  bool Set(absl::Cord* cord, absl::string_view expected) {
+    cord_ = cord;
+    expected_ = expected;
+    return true;
+  }
+
+  ~AfterExitCordTester() {
+    EXPECT_EQ(*cord_, expected_);
+  }
+ private:
+  absl::Cord* cord_;
+  absl::string_view expected_;
+};
+
+template <typename Str>
+void TestConstinitConstructor(Str) {
+  const auto expected = Str::value;
+  // Defined before `cord` to be destroyed after it.
+  static AfterExitCordTester exit_tester;  // NOLINT
+  ABSL_CONST_INIT static absl::Cord cord(Str{});  // NOLINT
+  static bool init_exit_tester = exit_tester.Set(&cord, expected);
+  (void)init_exit_tester;
+
+  EXPECT_EQ(cord, expected);
+  // Copy the object and test the copy, and the original.
+  {
+    absl::Cord copy = cord;
+    EXPECT_EQ(copy, expected);
+  }
+  // The original still works
+  EXPECT_EQ(cord, expected);
+
+  // Try making adding more structure to the tree.
+  {
+    absl::Cord copy = cord;
+    std::string expected_copy(expected);
+    for (int i = 0; i < 10; ++i) {
+      copy.Append(cord);
+      absl::StrAppend(&expected_copy, expected);
+      EXPECT_EQ(copy, expected_copy);
+    }
+  }
+
+  // Make sure we are using the right branch during constant evaluation.
+  EXPECT_EQ(absl::CordTestPeer::IsTree(cord), cord.size() >= 16);
+
+  for (int i = 0; i < 10; ++i) {
+    // Make a few more Cords from the same global rep.
+    // This tests what happens when the refcount for it gets below 1.
+    EXPECT_EQ(expected, absl::Cord(Str{}));
+  }
+}
+
+constexpr int SimpleStrlen(const char* p) {
+  return *p ? 1 + SimpleStrlen(p + 1) : 0;
+}
+
+struct ShortView {
+  constexpr absl::string_view operator()() const {
+    return absl::string_view("SSO string", SimpleStrlen("SSO string"));
+  }
+};
+
+struct LongView {
+  constexpr absl::string_view operator()() const {
+    return absl::string_view("String that does not fit SSO.",
+                             SimpleStrlen("String that does not fit SSO."));
+  }
+};
+
+
+TEST(Cord, ConstinitConstructor) {
+  TestConstinitConstructor(
+      absl::strings_internal::MakeStringConstant(ShortView{}));
+  TestConstinitConstructor(
+      absl::strings_internal::MakeStringConstant(LongView{}));
 }

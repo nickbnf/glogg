@@ -20,28 +20,29 @@
 
 set -euox pipefail
 
-if [ -z ${ABSEIL_ROOT:-} ]; then
+if [[ -z ${ABSEIL_ROOT:-} ]]; then
   ABSEIL_ROOT="$(realpath $(dirname ${0})/..)"
 fi
 
-if [ -z ${STD:-} ]; then
-  STD="c++11 c++14 c++17"
+if [[ -z ${STD:-} ]]; then
+  STD="c++11 c++14 c++17 c++20"
 fi
 
-if [ -z ${COMPILATION_MODE:-} ]; then
+if [[ -z ${COMPILATION_MODE:-} ]]; then
   COMPILATION_MODE="fastbuild opt"
 fi
 
-if [ -z ${EXCEPTIONS_MODE:-} ]; then
+if [[ -z ${EXCEPTIONS_MODE:-} ]]; then
   EXCEPTIONS_MODE="-fno-exceptions -fexceptions"
 fi
 
-readonly DOCKER_CONTAINER="gcr.io/google.com/absl-177019/linux_clang-latest:20200102"
+source "${ABSEIL_ROOT}/ci/linux_docker_containers.sh"
+readonly DOCKER_CONTAINER=${LINUX_CLANG_LATEST_CONTAINER}
 
 # USE_BAZEL_CACHE=1 only works on Kokoro.
 # Without access to the credentials this won't work.
-if [ ${USE_BAZEL_CACHE:-0} -ne 0 ]; then
-  DOCKER_EXTRA_ARGS="--volume=${KOKORO_KEYSTORE_DIR}:/keystore:ro ${DOCKER_EXTRA_ARGS:-}"
+if [[ ${USE_BAZEL_CACHE:-0} -ne 0 ]]; then
+  DOCKER_EXTRA_ARGS="--mount type=bind,source=${KOKORO_KEYSTORE_DIR},target=/keystore,readonly ${DOCKER_EXTRA_ARGS:-}"
   # Bazel doesn't track changes to tools outside of the workspace
   # (e.g. /usr/bin/gcc), so by appending the docker container to the
   # remote_http_cache url, we make changes to the container part of
@@ -50,18 +51,25 @@ if [ ${USE_BAZEL_CACHE:-0} -ne 0 ]; then
   BAZEL_EXTRA_ARGS="--remote_http_cache=https://storage.googleapis.com/absl-bazel-remote-cache/${container_key} --google_credentials=/keystore/73103_absl-bazel-remote-cache ${BAZEL_EXTRA_ARGS:-}"
 fi
 
+# Avoid depending on external sites like GitHub by checking --distdir for
+# external dependencies first.
+# https://docs.bazel.build/versions/master/guide.html#distdir
+if [[ ${KOKORO_GFILE_DIR:-} ]] && [[ -d "${KOKORO_GFILE_DIR}/distdir" ]]; then
+  DOCKER_EXTRA_ARGS="--mount type=bind,source=${KOKORO_GFILE_DIR}/distdir,target=/distdir,readonly ${DOCKER_EXTRA_ARGS:-}"
+  BAZEL_EXTRA_ARGS="--distdir=/distdir ${BAZEL_EXTRA_ARGS:-}"
+fi
+
 for std in ${STD}; do
   for compilation_mode in ${COMPILATION_MODE}; do
     for exceptions_mode in ${EXCEPTIONS_MODE}; do
       echo "--------------------------------------------------------------------"
       time docker run \
-        --volume="${ABSEIL_ROOT}:/abseil-cpp-ro:ro" \
+        --mount type=bind,source="${ABSEIL_ROOT}",target=/abseil-cpp-ro,readonly \
         --tmpfs=/abseil-cpp \
         --workdir=/abseil-cpp \
         --cap-add=SYS_PTRACE \
         --rm \
         -e CC="/opt/llvm/clang/bin/clang" \
-        -e BAZEL_COMPILER="llvm" \
         -e BAZEL_CXXOPTS="-std=${std}:-nostdinc++" \
         -e BAZEL_LINKOPTS="-L/opt/llvm/libcxx/lib:-lc++:-lc++abi:-lm:-Wl,-rpath=/opt/llvm/libcxx/lib" \
         -e CPLUS_INCLUDE_PATH="/opt/llvm/libcxx/include/c++/v1" \

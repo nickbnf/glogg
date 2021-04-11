@@ -29,7 +29,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
-#if SWISSTABLE_HAVE_SSE2
+#if ABSL_INTERNAL_RAW_HASH_SET_HAVE_SSE2
 constexpr int kProbeLength = 16;
 #else
 constexpr int kProbeLength = 8;
@@ -38,6 +38,7 @@ constexpr int kProbeLength = 8;
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace container_internal {
+#if defined(ABSL_INTERNAL_HASHTABLEZ_SAMPLE)
 class HashtablezInfoHandlePeer {
  public:
   static bool IsSampled(const HashtablezInfoHandle& h) {
@@ -46,6 +47,13 @@ class HashtablezInfoHandlePeer {
 
   static HashtablezInfo* GetInfo(HashtablezInfoHandle* h) { return h->info_; }
 };
+#else
+class HashtablezInfoHandlePeer {
+ public:
+  static bool IsSampled(const HashtablezInfoHandle&) { return false; }
+  static HashtablezInfo* GetInfo(HashtablezInfoHandle*) { return nullptr; }
+};
+#endif  // defined(ABSL_INTERNAL_HASHTABLEZ_SAMPLE)
 
 namespace {
 using ::absl::synchronization_internal::ThreadPool;
@@ -76,10 +84,12 @@ TEST(HashtablezInfoTest, PrepareForSampling) {
   EXPECT_EQ(info.capacity.load(), 0);
   EXPECT_EQ(info.size.load(), 0);
   EXPECT_EQ(info.num_erases.load(), 0);
+  EXPECT_EQ(info.num_rehashes.load(), 0);
   EXPECT_EQ(info.max_probe_length.load(), 0);
   EXPECT_EQ(info.total_probe_length.load(), 0);
   EXPECT_EQ(info.hashes_bitwise_or.load(), 0);
   EXPECT_EQ(info.hashes_bitwise_and.load(), ~size_t{});
+  EXPECT_EQ(info.hashes_bitwise_xor.load(), 0);
   EXPECT_GE(info.create_time, test_start);
 
   info.capacity.store(1, std::memory_order_relaxed);
@@ -89,16 +99,19 @@ TEST(HashtablezInfoTest, PrepareForSampling) {
   info.total_probe_length.store(1, std::memory_order_relaxed);
   info.hashes_bitwise_or.store(1, std::memory_order_relaxed);
   info.hashes_bitwise_and.store(1, std::memory_order_relaxed);
+  info.hashes_bitwise_xor.store(1, std::memory_order_relaxed);
   info.create_time = test_start - absl::Hours(20);
 
   info.PrepareForSampling();
   EXPECT_EQ(info.capacity.load(), 0);
   EXPECT_EQ(info.size.load(), 0);
   EXPECT_EQ(info.num_erases.load(), 0);
+  EXPECT_EQ(info.num_rehashes.load(), 0);
   EXPECT_EQ(info.max_probe_length.load(), 0);
   EXPECT_EQ(info.total_probe_length.load(), 0);
   EXPECT_EQ(info.hashes_bitwise_or.load(), 0);
   EXPECT_EQ(info.hashes_bitwise_and.load(), ~size_t{});
+  EXPECT_EQ(info.hashes_bitwise_xor.load(), 0);
   EXPECT_GE(info.create_time, test_start);
 }
 
@@ -123,14 +136,17 @@ TEST(HashtablezInfoTest, RecordInsert) {
   EXPECT_EQ(info.max_probe_length.load(), 6);
   EXPECT_EQ(info.hashes_bitwise_and.load(), 0x0000FF00);
   EXPECT_EQ(info.hashes_bitwise_or.load(), 0x0000FF00);
+  EXPECT_EQ(info.hashes_bitwise_xor.load(), 0x0000FF00);
   RecordInsertSlow(&info, 0x000FF000, 4 * kProbeLength);
   EXPECT_EQ(info.max_probe_length.load(), 6);
   EXPECT_EQ(info.hashes_bitwise_and.load(), 0x0000F000);
   EXPECT_EQ(info.hashes_bitwise_or.load(), 0x000FFF00);
+  EXPECT_EQ(info.hashes_bitwise_xor.load(), 0x000F0F00);
   RecordInsertSlow(&info, 0x00FF0000, 12 * kProbeLength);
   EXPECT_EQ(info.max_probe_length.load(), 12);
   EXPECT_EQ(info.hashes_bitwise_and.load(), 0x00000000);
   EXPECT_EQ(info.hashes_bitwise_or.load(), 0x00FFFF00);
+  EXPECT_EQ(info.hashes_bitwise_xor.load(), 0x00F00F00);
 }
 
 TEST(HashtablezInfoTest, RecordErase) {
@@ -167,9 +183,10 @@ TEST(HashtablezInfoTest, RecordRehash) {
   EXPECT_EQ(info.size.load(), 2);
   EXPECT_EQ(info.total_probe_length.load(), 3);
   EXPECT_EQ(info.num_erases.load(), 0);
+  EXPECT_EQ(info.num_rehashes.load(), 1);
 }
 
-#if defined(ABSL_HASHTABLEZ_SAMPLE)
+#if defined(ABSL_INTERNAL_HASHTABLEZ_SAMPLE)
 TEST(HashtablezSamplerTest, SmallSampleParameter) {
   SetHashtablezEnabled(true);
   SetHashtablezSampleParameter(100);
@@ -213,7 +230,6 @@ TEST(HashtablezSamplerTest, Sample) {
   }
   EXPECT_NEAR(sample_rate, 0.01, 0.005);
 }
-#endif
 
 TEST(HashtablezSamplerTest, Handle) {
   auto& sampler = HashtablezSampler::Global();
@@ -243,6 +259,8 @@ TEST(HashtablezSamplerTest, Handle) {
   });
   EXPECT_FALSE(found);
 }
+#endif
+
 
 TEST(HashtablezSamplerTest, Registration) {
   HashtablezSampler sampler;

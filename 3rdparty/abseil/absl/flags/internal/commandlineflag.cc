@@ -1,5 +1,5 @@
 //
-// Copyright 2019 The Abseil Authors.
+// Copyright 2020 The Abseil Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,47 +15,11 @@
 
 #include "absl/flags/internal/commandlineflag.h"
 
-#include "absl/flags/usage_config.h"
-
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 namespace flags_internal {
 
-// The help message indicating that the commandline flag has been
-// 'stripped'. It will not show up when doing "-help" and its
-// variants. The flag is stripped if ABSL_FLAGS_STRIP_HELP is set to 1
-// before including absl/flags/flag.h
-
-// This is used by this file, and also in commandlineflags_reporting.cc
-const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
-
-absl::string_view CommandLineFlag::Typename() const {
-  // We do not store/report type in Abseil Flags, so that user do not rely on in
-  // at runtime
-  if (IsAbseilFlag() || IsRetired()) return "";
-
-#define HANDLE_V1_BUILTIN_TYPE(t) \
-  if (IsOfType<t>()) {            \
-    return #t;                    \
-  }
-
-  HANDLE_V1_BUILTIN_TYPE(bool);
-  HANDLE_V1_BUILTIN_TYPE(int32_t);
-  HANDLE_V1_BUILTIN_TYPE(int64_t);
-  HANDLE_V1_BUILTIN_TYPE(uint64_t);
-  HANDLE_V1_BUILTIN_TYPE(double);
-#undef HANDLE_V1_BUILTIN_TYPE
-
-  if (IsOfType<std::string>()) {
-    return "string";
-  }
-
-  return "";
-}
-
-std::string CommandLineFlag::Filename() const {
-  return flags_internal::GetUsageConfig().normalize_filename(filename_);
-}
+FlagStateInterface::~FlagStateInterface() {}
 
 }  // namespace flags_internal
 ABSL_NAMESPACE_END

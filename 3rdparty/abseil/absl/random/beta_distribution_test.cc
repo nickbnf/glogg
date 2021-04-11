@@ -21,14 +21,17 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/base/internal/raw_logging.h"
+#include "absl/numeric/internal/representation.h"
 #include "absl/random/internal/chi_square.h"
 #include "absl/random/internal/distribution_test_util.h"
+#include "absl/random/internal/pcg_engine.h"
 #include "absl/random/internal/sequence_urbg.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
@@ -41,7 +44,15 @@ namespace {
 template <typename IntType>
 class BetaDistributionInterfaceTest : public ::testing::Test {};
 
-using RealTypes = ::testing::Types<float, double, long double>;
+// double-double arithmetic is not supported well by either GCC or Clang; see
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99048,
+// https://bugs.llvm.org/show_bug.cgi?id=49131, and
+// https://bugs.llvm.org/show_bug.cgi?id=49132. Don't bother running these tests
+// with double doubles until compiler support is better.
+using RealTypes =
+    std::conditional<absl::numeric_internal::IsDoubleDouble(),
+                     ::testing::Types<float, double>,
+                     ::testing::Types<float, double, long double>>::type;
 TYPED_TEST_CASE(BetaDistributionInterfaceTest, RealTypes);
 
 TYPED_TEST(BetaDistributionInterfaceTest, SerializeTest) {
@@ -52,9 +63,6 @@ TYPED_TEST(BetaDistributionInterfaceTest, SerializeTest) {
   const TypeParam kLargeA =
       std::exp(std::log((std::numeric_limits<TypeParam>::max)()) -
                std::log(std::log((std::numeric_limits<TypeParam>::max)())));
-  const TypeParam kLargeAPPC = std::exp(
-      std::log((std::numeric_limits<TypeParam>::max)()) -
-      std::log(std::log((std::numeric_limits<TypeParam>::max)())) - 10.0f);
   using param_type = typename absl::beta_distribution<TypeParam>::param_type;
 
   constexpr int kCount = 1000;
@@ -75,9 +83,6 @@ TYPED_TEST(BetaDistributionInterfaceTest, SerializeTest) {
       kLargeA,                                //
       std::nextafter(kLargeA, TypeParam(0)),  //
       std::nextafter(kLargeA, std::numeric_limits<TypeParam>::max()),
-      kLargeAPPC,  //
-      std::nextafter(kLargeAPPC, TypeParam(0)),
-      std::nextafter(kLargeAPPC, std::numeric_limits<TypeParam>::max()),
       // Boundary cases.
       std::numeric_limits<TypeParam>::max(),
       std::numeric_limits<TypeParam>::epsilon(),
@@ -124,28 +129,6 @@ TYPED_TEST(BetaDistributionInterfaceTest, SerializeTest) {
 
       ss >> after;
 
-#if defined(__powerpc64__) || defined(__PPC64__) || defined(__powerpc__) || \
-    defined(__ppc__) || defined(__PPC__)
-      if (std::is_same<TypeParam, long double>::value) {
-        // Roundtripping floating point values requires sufficient precision
-        // to reconstruct the exact value. It turns out that long double
-        // has some errors doing this on ppc.
-        if (alpha <= std::numeric_limits<double>::max() &&
-            alpha >= std::numeric_limits<double>::lowest()) {
-          EXPECT_EQ(static_cast<double>(before.alpha()),
-                    static_cast<double>(after.alpha()))
-              << ss.str();
-        }
-        if (beta <= std::numeric_limits<double>::max() &&
-            beta >= std::numeric_limits<double>::lowest()) {
-          EXPECT_EQ(static_cast<double>(before.beta()),
-                    static_cast<double>(after.beta()))
-              << ss.str();
-        }
-        continue;
-      }
-#endif
-
       EXPECT_EQ(before.alpha(), after.alpha());
       EXPECT_EQ(before.beta(), after.beta());
       EXPECT_EQ(before, after)           //
@@ -159,8 +142,12 @@ TYPED_TEST(BetaDistributionInterfaceTest, SerializeTest) {
 }
 
 TYPED_TEST(BetaDistributionInterfaceTest, DegenerateCases) {
+  // We use a fixed bit generator for distribution accuracy tests.  This allows
+  // these tests to be deterministic, while still testing the qualify of the
+  // implementation.
+  absl::random_internal::pcg64_2018_engine rng(0x2B7E151628AED2A6);
+
   // Extreme cases when the params are abnormal.
-  absl::InsecureBitGen gen;
   constexpr int kCount = 1000;
   const TypeParam kSmallValues[] = {
       std::numeric_limits<TypeParam>::min(),
@@ -186,7 +173,7 @@ TYPED_TEST(BetaDistributionInterfaceTest, DegenerateCases) {
         int ones = 0;
         absl::beta_distribution<TypeParam> d(alpha, beta);
         for (int i = 0; i < kCount; ++i) {
-          TypeParam x = d(gen);
+          TypeParam x = d(rng);
           if (x == 0.0) {
             zeros++;
           } else if (x == 1.0) {
@@ -212,7 +199,7 @@ TYPED_TEST(BetaDistributionInterfaceTest, DegenerateCases) {
       for (TypeParam beta : kLargeValues) {
         absl::beta_distribution<TypeParam> d(alpha, beta);
         for (int i = 0; i < kCount; ++i) {
-          EXPECT_EQ(d(gen), 0.0);
+          EXPECT_EQ(d(rng), 0.0);
         }
       }
     }
@@ -227,7 +214,7 @@ TYPED_TEST(BetaDistributionInterfaceTest, DegenerateCases) {
       for (TypeParam beta : kSmallValues) {
         absl::beta_distribution<TypeParam> d(alpha, beta);
         for (int i = 0; i < kCount; ++i) {
-          EXPECT_EQ(d(gen), 1.0);
+          EXPECT_EQ(d(rng), 1.0);
         }
       }
     }
@@ -237,7 +224,7 @@ TYPED_TEST(BetaDistributionInterfaceTest, DegenerateCases) {
     absl::beta_distribution<TypeParam> d(std::numeric_limits<TypeParam>::max(),
                                          std::numeric_limits<TypeParam>::max());
     for (int i = 0; i < kCount; ++i) {
-      EXPECT_EQ(d(gen), 0.5);
+      EXPECT_EQ(d(rng), 0.5);
     }
   }
   {
@@ -246,7 +233,7 @@ TYPED_TEST(BetaDistributionInterfaceTest, DegenerateCases) {
         std::numeric_limits<TypeParam>::max(),
         std::numeric_limits<TypeParam>::max() * 0.9999);
     for (int i = 0; i < kCount; ++i) {
-      TypeParam x = d(gen);
+      TypeParam x = d(rng);
       EXPECT_NE(x, 0.5f);
       EXPECT_FLOAT_EQ(x, 0.500025f);
     }

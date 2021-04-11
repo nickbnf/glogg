@@ -143,7 +143,7 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
 
     if ( !block.isEmpty() ) {
         hash_.size += block.size();
-        
+
         const auto& config = Configuration::get();
         if ( !config.fastModificationDetection() ) {
             hashBuilder_.addData( block.data(), static_cast<size_t>( block.size() ) );
@@ -444,14 +444,14 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
             QtConcurrent::run(
                 &localThreadPool, [this, &file, &ioDuration, gw = std::ref( gateway )] {
-                    QByteArray readBuffer( IndexingBlockSize, Qt::Uninitialized );
-                    BlockData blockData;
                     while ( !file.atEnd() ) {
 
                         if ( interruptRequest_ ) {
                             break;
                         }
+                        QByteArray readBuffer( IndexingBlockSize, Qt::Uninitialized );
 
+                        BlockData blockData;
                         blockData.first = file.pos();
                         clock::time_point ioT1 = clock::now();
                         const auto readBytes = file.read( readBuffer.data(), readBuffer.size() );
@@ -497,9 +497,9 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 return tbb::flow::continue_msg{};
             }
 
-            guessEncoding( block, state );
-
             IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
+
+            guessEncoding( block, state );
 
             if ( !block.isEmpty() ) {
                 const auto line_positions = parseDataBlock( block_beginning, block, state );

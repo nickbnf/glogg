@@ -24,7 +24,7 @@
 #include <absl/synchronization/mutex.h>
 
 using Lock = absl::Mutex;
-using ScopedLock = absl::MutexLock;
+using ScopedLock = absl::WriterMutexLock;
 using ScopedReaderLock = absl::ReaderMutexLock;
 
 using RecursiveLock = std::recursive_mutex;

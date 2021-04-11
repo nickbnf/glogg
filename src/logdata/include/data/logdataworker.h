@@ -62,14 +62,10 @@ struct IndexedHash {
 
     qint64 headerSize = 0;
     quint64 headerDigest = 0;
-    std::vector<QByteArray> headerBlocks;
 
     qint64 tailSize = 0;
     qint64 tailOffset = 0;
     quint64 tailDigest = 0;
-    std::deque<std::pair<qint64, QByteArray>> tailBlocks;
-
-    QByteArray hash;
 };
 
 template <typename Data, typename LockGuard>
@@ -137,6 +133,19 @@ class IndexingDataAccessor {
                  const FastLinePositionArray& linePosition, QTextCodec* encoding )
     {
         data_->addAll( block, length, linePosition, encoding );
+    }
+
+    void setHeaderHash( quint64 digest, qint64 size )
+    {
+        data_->hash_.headerSize = size;
+        data_->hash_.headerDigest = digest;
+    }
+
+    void setTailHash( quint64 digest, qint64 offset, qint64 size )
+    {
+        data_->hash_.tailSize = size;
+        data_->hash_.tailOffset = offset;
+        data_->hash_.tailDigest = digest;
     }
 
     // Completely clear the indexing data.

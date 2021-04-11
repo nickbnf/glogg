@@ -142,41 +142,13 @@ void IndexingData::addAll( const QByteArray& block, LineLength length,
     linePosition_.append_list( linePosition );
 
     if ( !block.isEmpty() ) {
-        hashBuilder_.addData( block.data(), static_cast<size_t>( block.size() ) );
-        hash_.fullDigest = hashBuilder_.digest();
-        hash_.hash = hashBuilder_.hash();
-
-        if ( hash_.headerSize < IndexingBlockSize ) {
-            hash_.headerBlocks.push_back( block );
-
-            FileDigest headerDigest;
-            for ( const auto& headerBlock : hash_.headerBlocks ) {
-                headerDigest.addData( headerBlock );
-            }
-            hash_.headerDigest = headerDigest.digest();
-            hash_.headerSize += block.size();
-        }
-
-        hash_.tailBlocks.emplace_back( hash_.size, block );
-        const auto tailSize = std::accumulate( hash_.tailBlocks.begin(), hash_.tailBlocks.end(),
-                                               0ll, []( const auto& acc, const auto& tailBlock ) {
-                                                   return acc + tailBlock.second.size();
-                                               } );
-
-        if ( tailSize > 2 * IndexingBlockSize ) {
-            hash_.tailBlocks.pop_front();
-        }
-
-        FileDigest tailDigest;
-        hash_.tailSize = 0;
-        for ( const auto& tailBlock : hash_.tailBlocks ) {
-            tailDigest.addData( tailBlock.second );
-            hash_.tailSize += tailBlock.second.size();
-        }
-        hash_.tailOffset = hash_.tailBlocks.front().first;
-        hash_.tailDigest = tailDigest.digest();
-
         hash_.size += block.size();
+        
+        const auto& config = Configuration::get();
+        if ( !config.fastModificationDetection() ) {
+            hashBuilder_.addData( block.data(), static_cast<size_t>( block.size() ) );
+            hash_.fullDigest = hashBuilder_.digest();
+        }
     }
 
     encodingGuess_ = encoding;
@@ -412,8 +384,8 @@ void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& stat
         }
 
         state.encodingParams = EncodingParameters( state.fileTextCodec );
-        LOG_INFO << "Encoding " << state.fileTextCodec->name().toStdString()
-                       << ", Char width " << state.encodingParams.lineFeedWidth;
+        LOG_INFO << "Encoding " << state.fileTextCodec->name().toStdString() << ", Char width "
+                 << state.encodingParams.lineFeedWidth;
     }
 }
 
@@ -495,7 +467,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                         ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 );
 
                         LOG_DEBUG << "Sending block " << blockData.first << " size "
-                                        << blockData.second.size();
+                                  << blockData.second.size();
 
                         while ( !gw.get().try_put( blockData ) ) {
                             QThread::msleep( 1 );
@@ -581,19 +553,40 @@ void IndexOperation::doIndex( LineOffset initialPosition )
         scopedAccessor.addAll( {}, 0_length, line_position, state.encodingGuess );
     }
 
+    const auto endFilePos = file.pos();
+    file.reset();
+    QByteArray hashBuffer( IndexingBlockSize, Qt::Uninitialized );
+    const auto headerHashSize = file.read( hashBuffer.data(), hashBuffer.size() );
+    FileDigest fastHashDigest;
+    fastHashDigest.addData( hashBuffer.data(), static_cast<size_t>( headerHashSize ) );
+
+    scopedAccessor.setHeaderHash( fastHashDigest.digest(), headerHashSize );
+
+    if ( endFilePos <= hashBuffer.size() ) {
+        scopedAccessor.setTailHash( fastHashDigest.digest(), 0, headerHashSize );
+    }
+    else {
+        const auto tailHashOffset = endFilePos - hashBuffer.size();
+        file.seek( tailHashOffset );
+        const auto tailHashSize = file.read( hashBuffer.data(), hashBuffer.size() );
+        fastHashDigest.reset();
+        fastHashDigest.addData( hashBuffer.data(), static_cast<size_t>( tailHashSize ) );
+        scopedAccessor.setTailHash( fastHashDigest.digest(), tailHashOffset, tailHashSize );
+    }
+
     const auto indexingEndTime = high_resolution_clock::now();
     const auto duration = duration_cast<milliseconds>( indexingEndTime - indexingStartTime );
 
     LOG_INFO << "Indexing done, took " << duration << ", io " << ioDuration;
     LOG_INFO << "Index size "
-                   << readableSize( static_cast<uint64_t>( scopedAccessor.allocatedSize() ) );
+             << readableSize( static_cast<uint64_t>( scopedAccessor.allocatedSize() ) );
     LOG_INFO << "Indexed lines " << scopedAccessor.getNbLines();
     LOG_INFO << "Max line " << scopedAccessor.getMaxLength();
     LOG_INFO << "Indexing perf "
-                   << ( 1000.f * static_cast<float>( state.file_size )
-                        / static_cast<float>( duration.count() ) )
-                          / ( 1024 * 1024 )
-                   << " MiB/s";
+             << ( 1000.f * static_cast<float>( state.file_size )
+                  / static_cast<float>( duration.count() ) )
+                    / ( 1024 * 1024 )
+             << " MiB/s";
 
     if ( interruptRequest_ ) {
         scopedAccessor.clear();
@@ -622,8 +615,8 @@ OperationResult FullIndexOperation::run()
     doIndex( 0_offset );
 
     LOG_DEBUG << "FullIndexOperation: ... finished counting."
-                       "interrupt = "
-                    << static_cast<bool>( interruptRequest_ );
+                 "interrupt = "
+              << static_cast<bool>( interruptRequest_ );
 
     const auto result = interruptRequest_ ? false : true;
     emit indexingFinished( result );
@@ -637,8 +630,7 @@ OperationResult PartialIndexOperation::run()
     const auto initial_position
         = LineOffset( IndexingData::ConstAccessor{ &indexing_data_ }.getIndexedSize() );
 
-    LOG_DEBUG << "PartialIndexOperation: Starting the count at " << initial_position
-                    << " ...";
+    LOG_DEBUG << "PartialIndexOperation: Starting the count at " << initial_position << " ...";
 
     emit indexingProgressed( 0 );
 
@@ -700,12 +692,12 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
 
             return fileDigest.digest();
         };
-        if ( config.fastModificationDetection() && indexedHash.size > 2 * IndexingBlockSize ) {
+        if ( config.fastModificationDetection() ) {
             const auto headerDigest = getDigest( indexedHash.headerSize );
 
             LOG_INFO << "indexed header xxhash " << indexedHash.headerDigest;
             LOG_INFO << "current header xxhash " << headerDigest << ", size "
-                           << indexedHash.headerSize;
+                     << indexedHash.headerSize;
 
             isFileModified = headerDigest != indexedHash.headerDigest;
 
@@ -715,7 +707,7 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
 
                 LOG_INFO << "indexed tail xxhash " << indexedHash.tailDigest;
                 LOG_INFO << "current tail xxhash " << tailDigest << ", size "
-                               << indexedHash.tailSize;
+                         << indexedHash.tailSize;
 
                 isFileModified = tailDigest != indexedHash.tailDigest;
             }

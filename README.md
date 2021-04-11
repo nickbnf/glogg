@@ -16,7 +16,6 @@ page for how to use Klogg.
 ### Current stable release
 
 [ ![Github](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.12)
-[ ![Bintray](https://img.shields.io/bintray/v/variar/generic/klogg?style=flat)](https://bintray.com/variar/generic/klogg/_latestVersion)
 [ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg?style=flat)](https://chocolatey.org/packages/klogg)
 [ ![homebrew cask](https://img.shields.io/homebrew/cask/v/klogg?style=flat)](https://formulae.brew.sh/cask/klogg)
 
@@ -80,10 +79,9 @@ This project uses [Calendar Versioning](https://calver.org/). For a list of avai
 
 ### Current stable release builds
 
-Current release is 20.12. Binaries for all platforms can be downloaded from GitHub releases or Bintray.
+Current release is 20.12. Binaries for all platforms can be downloaded from GitHub releases.
 
 [ ![Release](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.12)
-[ ![Bintray](https://img.shields.io/bintray/v/variar/generic/klogg?style=flat)](https://bintray.com/variar/generic/klogg/_latestVersion)
 
 Windows installer is also available from Chocolatey:
 
@@ -95,17 +93,24 @@ Package for Mac can be installed from Homebrew
 
 Linux packages are also available from DEB and RPM repositories. 
 
-For DEB add Bintray GPG key and repository, then install from apt:
+For DEB add klogg artifactory repository, then install from apt:
 ```
-wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=bintray | sudo apt-key add -
-echo deb https://dl.bintray.com/variar/deb stable utils | sudo tee -a /etc/apt/sources.list
+echo deb [trusted=yes] https://favpackage.jfrog.io/artifactory/klogg_deb stable utils | sudo tee -a /etc/apt/sources.list
 sudo apt-get update
 sudo apt-get install klogg
 ```
 
-For RPM:
+For RPM create klogg repo file in `/etc/yum.repos.d/klogg-rpm.repo` with this content:
 ```
-curl https://bintray.com/variar/rpm/rpm | sudo tee /etc/yum.repos.d/bintray-variar-rpm.repo
+[Klogg]
+name=Klogg
+baseurl=https://favpackage.jfrog.io/artifactory/klogg_rpm/
+enabled=1
+gpgcheck=0
+```
+
+Then install using yum
+```
 sudo yum update
 sudo yum install klogg
 ```

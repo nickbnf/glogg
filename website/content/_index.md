@@ -54,8 +54,9 @@ _klogg_ improves and brings more
 Latest stable version:
 
 [ ![GitHub Release](https://img.shields.io/github/v/release/variar/klogg?label=GitHub%20Release&style=for-the-badge)](https://github.com/variar/klogg/releases/latest)
-[ ![Bintray](https://img.shields.io/badge/dynamic/json.svg?label=Bintray&query=name&style=for-the-badge&url=https%3A%2F%2Fapi.bintray.com%2Fpackages%2Fvariar%2Fgeneric%2Fklogg%2Fversions%2F_latest)](https://bintray.com/variar/generic/klogg/_latestVersion)
 [ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg?style=for-the-badge)](https://chocolatey.org/packages/klogg)
+[ ![Homebrew](https://img.shields.io/homebrew/cask/v/klogg?style=for-the-badge)](https://formulae.brew.sh/cask/klogg)
+
 
 Latest development builds can be downloaded from releases on Github: 
 

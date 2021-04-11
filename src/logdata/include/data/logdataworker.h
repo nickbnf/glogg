@@ -41,9 +41,7 @@
 
 #include <QCryptographicHash>
 #include <QFuture>
-#include <QMutex>
 #include <QObject>
-#include <QSemaphore>
 #include <QTextCodec>
 
 #include <absl/types/variant.h>

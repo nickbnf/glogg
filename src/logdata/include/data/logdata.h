@@ -44,7 +44,6 @@
 #include <QObject>
 #include <QString>
 #include <QFile>
-#include <QMutex>
 #include <QDateTime>
 #include <QTextCodec>
 

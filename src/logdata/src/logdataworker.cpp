@@ -363,14 +363,14 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
     return line_positions;
 }
 
-void IndexOperation::guessEncoding( const QByteArray& block, IndexingState& state ) const
+void IndexOperation::guessEncoding( const QByteArray& block,
+                                    IndexingData::MutateAccessor& scopedAccessor,
+                                    IndexingState& state ) const
 {
     if ( !state.encodingGuess ) {
         state.encodingGuess = EncodingDetector::getInstance().detectEncoding( block );
         LOG_INFO << "Encoding guess " << state.encodingGuess->name().toStdString();
     }
-
-    IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
 
     if ( !state.fileTextCodec ) {
         state.fileTextCodec = scopedAccessor.getForcedEncoding();
@@ -499,7 +499,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
             IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
 
-            guessEncoding( block, state );
+            guessEncoding( block, scopedAccessor, state );
 
             if ( !block.isEmpty() ) {
                 const auto line_positions = parseDataBlock( block_beginning, block, state );

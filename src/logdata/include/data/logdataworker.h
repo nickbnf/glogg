@@ -266,7 +266,7 @@ class IndexOperation : public QObject {
     FastLinePositionArray parseDataBlock( LineOffset::UnderlyingType blockBegining,
                                           const QByteArray& block, IndexingState& state ) const;
 
-    void guessEncoding( const QByteArray& block, IndexingState& state ) const;
+    void guessEncoding( const QByteArray& block, IndexingData::MutateAccessor& scopedAccessor, IndexingState& state ) const;
 };
 
 class FullIndexOperation : public IndexOperation {

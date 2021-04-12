@@ -1,4 +1,5 @@
 add_subdirectory(cli11) #1.9.0
+set(ABSL_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(abseil) #20210324.0
 mark_as_advanced(FORCE ABSL_RUN_TESTS)
 mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)

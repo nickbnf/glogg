@@ -1,0 +1,137 @@
+# Copyright (c) 2020-2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+add_library(klogg_tbb
+    allocator.cpp
+    arena.cpp
+    arena_slot.cpp
+    concurrent_bounded_queue.cpp
+    dynamic_link.cpp
+    exception.cpp
+    governor.cpp
+    global_control.cpp
+    itt_notify.cpp
+    main.cpp
+    market.cpp
+    misc.cpp
+    misc_ex.cpp
+    observer_proxy.cpp
+    parallel_pipeline.cpp
+    private_server.cpp
+    profiling.cpp
+    rml_tbb.cpp
+    rtm_mutex.cpp
+    rtm_rw_mutex.cpp
+    semaphore.cpp
+    small_object_pool.cpp
+    task.cpp
+    task_dispatcher.cpp
+    task_group_context.cpp
+    version.cpp
+    queuing_rw_mutex.cpp)
+
+add_library(TBB::tbb ALIAS klogg_tbb)
+
+#if (WIN32)
+#    set_target_properties(klogg_tbb PROPERTIES OUTPUT_NAME "klogg_tbb")
+#endif()
+
+# TODO: Add statistics.cpp
+
+target_compile_definitions(klogg_tbb
+                           PUBLIC
+                           $<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
+                           PRIVATE
+                           __TBB_BUILD)
+
+if (NOT ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(armv7-a|aarch64|mips|arm64)" OR
+         "${CMAKE_OSX_ARCHITECTURES}" MATCHES "arm64" OR
+         WINDOWS_STORE OR
+         TBB_WINDOWS_DRIVER))
+    target_compile_definitions(klogg_tbb PRIVATE __TBB_USE_ITT_NOTIFY)
+endif()
+
+target_include_directories(klogg_tbb
+    SYSTEM PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>)
+#    $<INSTALL_INTERFACE:include>)
+
+target_compile_options(klogg_tbb
+    PRIVATE
+    ${TBB_CXX_STD_FLAG} # TODO: consider making it PUBLIC.
+    ${TBB_MMD_FLAG}
+    ${TBB_DSE_FLAG}
+    ${TBB_WARNING_LEVEL}
+    ${TBB_WARNING_SUPPRESS}
+    ${TBB_LIB_COMPILE_FLAGS}
+    ${TBB_COMMON_COMPILE_FLAGS}
+)
+
+# Avoid use of target_link_libraries here as it changes /DEF option to \DEF on Windows.
+set_target_properties(klogg_tbb PROPERTIES
+    DEFINE_SYMBOL ""
+#    VERSION ${TBB_BINARY_VERSION}.${TBB_BINARY_MINOR_VERSION}
+#    SOVERSION ${TBB_BINARY_VERSION}
+    LINK_FLAGS ${TBB_LINK_DEF_FILE_FLAG}${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def
+    LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/def/${TBB_DEF_FILE_PREFIX}-tbb.def
+)
+
+# Prefer using target_link_options instead of target_link_libraries to specify link options because
+# target_link_libraries may incorrectly handle some options (on Windows, for example).
+if (COMMAND target_link_options)
+    target_link_options(klogg_tbb
+        PRIVATE
+        ${TBB_LIB_LINK_FLAGS}
+        ${TBB_COMMON_LINK_FLAGS}
+    )
+else()
+    target_link_libraries(klogg_tbb
+        PRIVATE
+        ${TBB_LIB_LINK_FLAGS}
+        ${TBB_COMMON_LINK_FLAGS}
+    )
+endif()
+
+target_link_libraries(klogg_tbb
+    PRIVATE
+    Threads::Threads
+    ${TBB_LIB_LINK_LIBS}
+    ${TBB_COMMON_LINK_LIBS}
+)
+
+tbb_install_target(klogg_tbb)
+
+if (WIN32)
+    # Create a copy of target linker file (tbb<ver>[_debug].lib) with legacy name (tbb[_debug].lib)
+    # to support previous user experience for linkage.
+    install(FILES
+            $<TARGET_LINKER_FILE:klogg_tbb>
+            DESTINATION lib
+            CONFIGURATIONS RelWithDebInfo Release MinSizeRel
+            RENAME tbb.lib
+            COMPONENT devel
+    )
+
+    install(FILES
+            $<TARGET_LINKER_FILE:klogg_tbb>
+            DESTINATION lib
+            CONFIGURATIONS Debug
+            RENAME tbb_debug.lib
+            COMPONENT devel
+    )
+endif()
+
+if (COMMAND tbb_gen_vars)
+    tbb_gen_vars(klogg_tbb)
+endif()

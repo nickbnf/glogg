@@ -217,6 +217,8 @@ if(UNIX)
             /usr/share/icons/hicolor/scalable
             /usr/share/icons/hicolor/scalable/apps
         )
+        set(CPACK_RPM_PACKAGE_PROVIDES "libklogg_tbbmalloc.so()(64bit),libklogg_tbbmalloc_proxy.so()(64bit)")
+        
 
     endif()
     INCLUDE(CPack)

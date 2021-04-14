@@ -38,7 +38,7 @@ target_link_libraries(logdata PUBLIC
         Qt5::Core
         Qt5::Concurrent
         immer
-        tbb_static
+        klogg_tbb
         named_type
         absl::optional
         absl::variant

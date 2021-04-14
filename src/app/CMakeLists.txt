@@ -41,11 +41,9 @@ endif()
 
 set(MAIN_LIBS ui cli11 singleapp)
 if (NOT APPLE)
-    if (TBB_BUILD_TBBMALLOC)
-        LIST(APPEND MAIN_LIBS klogg_tbbmalloc_proxy)
-        target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
-        target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
-    endif()
+    LIST(APPEND MAIN_LIBS klogg_tbbmalloc_proxy)
+    target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
+    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
 endif()
 
 target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
@@ -80,7 +78,7 @@ endif()
 
 install(TARGETS
     klogg
-    DESTINATION bin
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
     BUNDLE DESTINATION .
 )
 
@@ -88,8 +86,8 @@ if(KLOGG_USE_SENTRY)
     target_compile_definitions(klogg PUBLIC -DKLOGG_USE_SENTRY)
     target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_SENTRY)
 
-    target_sources(klogg PUBLIC crashhandler.cpp)
-    target_sources(klogg_portable PUBLIC crashhandler.cpp)
+    target_sources(klogg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/crashhandler.cpp)
+    target_sources(klogg_portable PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/crashhandler.cpp)
 
     target_link_libraries(klogg PUBLIC sentry crashpad_client)
     target_link_libraries(klogg_portable PUBLIC sentry crashpad_client)
@@ -167,7 +165,7 @@ if(KLOGG_USE_SENTRY)
         install(PROGRAMS
             $<TARGET_FILE_DIR:klogg>/klogg_minidump_dump
             $<TARGET_FILE_DIR:klogg>/klogg_crashpad_handler
-            DESTINATION bin
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
     endif()
 endif(KLOGG_USE_SENTRY)

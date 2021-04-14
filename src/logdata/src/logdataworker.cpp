@@ -535,7 +535,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     tbb::flow::make_edge( blockReaderAsync, blockPrefetcher );
     tbb::flow::make_edge( blockPrefetcher, blockQueue );
     tbb::flow::make_edge( blockQueue, blockParser );
-    tbb::flow::make_edge( blockParser, blockPrefetcher.decrement );
+    tbb::flow::make_edge( blockParser, blockPrefetcher.decrementer() );
 
     file.seek( state.pos );
     blockReaderAsync.try_put( tbb::flow::continue_msg{} );

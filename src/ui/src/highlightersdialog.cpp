@@ -41,6 +41,7 @@
 
 #include <utility>
 
+#include "dispatch_to.h"
 #include "highlightersdialog.h"
 #include "highlighterset.h"
 #include "iconloader.h"
@@ -101,7 +102,7 @@ HighlightersDialog::HighlightersDialog( QWidget* parent )
         setCurrentRow( 0 );
     }
 
-    QTimer::singleShot( 0, [this] {
+    dispatchToMainThread( [ this ] {
         IconLoader iconLoader( this );
 
         addHighlighterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );
@@ -168,7 +169,7 @@ void HighlightersDialog::removeHighlighterSet()
 
     if ( index >= 0 ) {
         setCurrentRow( -1 );
-        QTimer::singleShot( 0, [this, index] {
+        dispatchToMainThread( [ this, index ] {
             {
                 const auto& set = highlighterSetCollection_.highlighters_.at( index );
                 if ( set.id() == highlighterSetCollection_.currentSetId() ) {
@@ -200,7 +201,7 @@ void HighlightersDialog::moveHighlighterSetUp()
     if ( index > 0 ) {
         highlighterSetCollection_.highlighters_.move( index, index - 1 );
 
-        QTimer::singleShot( 0, [this, index] {
+        dispatchToMainThread( [ this, index ] {
             QListWidgetItem* item = highlighterListWidget->takeItem( index );
             highlighterListWidget->insertItem( index - 1, item );
 
@@ -217,7 +218,7 @@ void HighlightersDialog::moveHighlighterSetDown()
     if ( ( index >= 0 ) && ( index < ( highlighterListWidget->count() - 1 ) ) ) {
         highlighterSetCollection_.highlighters_.move( index, index + 1 );
 
-        QTimer::singleShot( 0, [this, index] {
+        dispatchToMainThread( [ this, index ] {
             QListWidgetItem* item = highlighterListWidget->takeItem( index );
             highlighterListWidget->insertItem( index + 1, item );
 
@@ -256,7 +257,7 @@ void HighlightersDialog::resolveDialog( QAbstractButton* button )
 void HighlightersDialog::setCurrentRow( int row )
 {
     // ugly hack for mac
-    QTimer::singleShot( 0, [this, row]() { highlighterListWidget->setCurrentRow( row ); } );
+    dispatchToMainThread( [ this, row ]() { highlighterListWidget->setCurrentRow( row ); } );
 }
 
 void HighlightersDialog::updateGroupTitle( const HighlighterSet& set )

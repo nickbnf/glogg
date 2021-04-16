@@ -41,33 +41,33 @@
 
 #include <memory>
 
+#include <QDateTime>
+#include <QFile>
 #include <QObject>
 #include <QString>
-#include <QFile>
-#include <QDateTime>
 #include <QTextCodec>
 
 #include "abstractlogdata.h"
-#include "logdataworker.h"
+#include "fileholder.h"
 #include "filewatcher.h"
 #include "loadingstatus.h"
-#include "fileholder.h"
+#include "logdataoperation.h"
+#include "logdataworker.h"
 
 class LogFilteredData;
 
 // Thrown when trying to attach an already attached LogData
-class CantReattachErr {};
+class CantReattachErr {
+};
 
 // Represents a complete set of data to be displayed (ie. a log file content)
 // This class is thread-safe.
 class LogData : public AbstractLogData {
-  Q_OBJECT
+    Q_OBJECT
 
   public:
     // Creates an empty LogData
     LogData();
-    // Destroy an object
-    ~LogData() override;
 
     // Attaches the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately
@@ -87,7 +87,7 @@ class LogData : public AbstractLogData {
     // Null if the file is not on disk.
     QDateTime getLastModifiedDate() const;
     // Throw away all the file data and reload/reindex.
-    void reload(QTextCodec* forcedEncoding = nullptr);
+    void reload( QTextCodec* forcedEncoding = nullptr );
 
     // Get the auto-detected encoding for the indexed text.
     QTextCodec* getDetectedEncoding() const;
@@ -104,71 +104,13 @@ class LogData : public AbstractLogData {
 
   private slots:
     // Consider reloading the file when it changes on disk updated
-    void fileChangedOnDisk(const QString &filename);
+    void fileChangedOnDisk( const QString& filename );
     // Called when the worker thread signals the current operation ended
     void indexingFinished( LoadingStatus status );
     // Called when the worker thread signals the current operation ended
     void checkFileChangesFinished( MonitoredFileStatus status );
 
   private:
-    // This class models an indexing operation.
-    // It exists to permit LogData to delay the operation if another
-    // one is ongoing (operations are asynchronous)
-    class LogDataOperation {
-      public:
-        LogDataOperation() = default;
-        explicit LogDataOperation( const QString& fileName ) : filename_( fileName ) {}
-
-        // Permit each child to have its destructor
-        virtual ~LogDataOperation() = default;
-
-        void start( LogDataWorker& workerThread ) const
-        { doStart( workerThread ); }
-        const QString& getFilename() const { return filename_; }
-
-      protected:
-        virtual void doStart( LogDataWorker& workerThread ) const = 0;
-        QString filename_;
-    };
-
-    // Attaching a new file (change name + full index)
-    class AttachOperation : public LogDataOperation {
-      public:
-        explicit AttachOperation( const QString& fileName )
-            : LogDataOperation( fileName ) {}
-
-      protected:
-        void doStart( LogDataWorker& workerThread ) const override;
-    };
-
-    // Reindexing the current file
-    class FullIndexOperation : public LogDataOperation {
-      public:
-        explicit FullIndexOperation( QTextCodec* forcedEncoding = nullptr )
-             : forcedEncoding_( forcedEncoding )
-        {}
-
-      protected:
-        void doStart( LogDataWorker& workerThread ) const override;
-
-      private:
-        QTextCodec* forcedEncoding_;
-    };
-
-    // Indexing part of the current file (from fileSize)
-    class PartialIndexOperation : public LogDataOperation {
-      protected:
-        void doStart( LogDataWorker& workerThread ) const override;
-    };
-
-	// Attaching a new file (change name + full index)
-    class CheckFileChangesOperation : public LogDataOperation {
-      protected:
-        void doStart( LogDataWorker& workerThread ) const override;
-    };
-
-    MonitoredFileStatus fileChangedOnDisk_;
-
     // Implementation of virtual functions
     QString doGetLineString( LineNumber line ) const override;
     QString doGetExpandedLineString( LineNumber line ) const override;
@@ -176,47 +118,36 @@ class LogData : public AbstractLogData {
     std::vector<QString> doGetExpandedLines( LineNumber first, LinesCount number ) const override;
     LinesCount doGetNbLine() const override;
     LineLength doGetMaxLength() const override;
-    LineLength doGetLineLength(LineNumber line ) const override;
+    LineLength doGetLineLength( LineNumber line ) const override;
     void doSetDisplayEncoding( const char* encoding ) override;
     QTextCodec* doGetDisplayEncoding() const override;
     void doAttachReader() const override;
     void doDetachReader() const override;
 
-    void enqueueOperation( std::shared_ptr<const LogDataOperation> newOperation );
-    void startOperation();
     void reOpenFile() const;
 
-    std::vector<QString> getLinesFromFile(LineNumber first, LinesCount number, QString(*processLine)(QString&&) ) const;
+    std::vector<QString> getLinesFromFile( LineNumber first, LinesCount number,
+                                           QString ( *processLine )( QString&& ) ) const;
 
+private:
     mutable std::unique_ptr<FileHolder> attached_file_;
 
+    // Indexing data, read by us, written by the worker thread
+    std::shared_ptr<IndexingData> indexing_data_;
+
+    OperationQueue operationQueue_;
+
     QString indexingFileName_;
-    //mutable std::unique_ptr<QFile> attached_file_;
-    //mutable FileId attached_file_id_;
+    // mutable std::unique_ptr<QFile> attached_file_;
+    // mutable FileId attached_file_id_;
 
     bool keepFileClosed_;
 
-    // Indexing data, read by us, written by the worker thread
-    IndexingData indexing_data_;
-
     QDateTime lastModifiedDate_;
-    std::shared_ptr<const LogDataOperation> currentOperation_;
-    std::shared_ptr<const LogDataOperation> nextOperation_;
 
     // Codec to decode text
     TextCodecHolder codec_;
-
-    // Offset to apply to the newline character
-    int before_cr_offset_ = 0;
-    int after_cr_offset_  = 0;
-
-    // To protect the file:
-    //mutable QMutex fileMutex_;
-    // (are mutable to allow 'const' function to touch it,
-    // while remaining const)
-    // When acquiring both, data should be help before locking file.
-
-    LogDataWorker workerThread_;
+    MonitoredFileStatus fileChangedOnDisk_;
 };
 
 #endif

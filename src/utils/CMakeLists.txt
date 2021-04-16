@@ -10,6 +10,7 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/configuration.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/log.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/uuid.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/dispatch_to.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/perfcounter.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/persistable.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/persistentinfo.h

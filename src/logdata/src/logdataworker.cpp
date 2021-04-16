@@ -52,42 +52,7 @@
 
 #include <tbb/flow_graph.h>
 
-namespace {
-
 constexpr int IndexingBlockSize = 1 * 1024 * 1024;
-
-template <class... Fs>
-struct overload;
-
-template <class F0, class... Frest>
-struct overload<F0, Frest...> : F0, overload<Frest...> {
-    overload( F0 f0, Frest... rest )
-        : F0( f0 )
-        , overload<Frest...>( rest... )
-    {
-    }
-
-    using F0::operator();
-    using overload<Frest...>::operator();
-};
-
-template <class F0>
-struct overload<F0> : F0 {
-    explicit overload( F0 f0 )
-        : F0( f0 )
-    {
-    }
-
-    using F0::operator();
-};
-
-template <class... Fs>
-auto make_visitor( Fs... fs )
-{
-    return overload<Fs...>( fs... );
-}
-
-} // namespace
 
 qint64 IndexingData::getIndexedSize() const
 {
@@ -169,7 +134,7 @@ size_t IndexingData::allocatedSize() const
     return linePosition_.allocatedSize();
 }
 
-LogDataWorker::LogDataWorker( IndexingData& indexing_data )
+LogDataWorker::LogDataWorker( const std::shared_ptr<IndexingData>& indexing_data )
     : indexing_data_( indexing_data )
 {
 }
@@ -239,10 +204,10 @@ OperationResult LogDataWorker::connectSignalsAndRun( IndexOperation* operationRe
              &LogDataWorker::indexingProgressed );
 
     connect( operationRequested, &IndexOperation::indexingFinished, this,
-             &LogDataWorker::onIndexingFinished, Qt::QueuedConnection );
+             &LogDataWorker::onIndexingFinished );
 
     connect( operationRequested, &IndexOperation::fileCheckFinished, this,
-             &LogDataWorker::onCheckFileFinished, Qt::QueuedConnection );
+             &LogDataWorker::onCheckFileFinished );
 
     auto result = operationRequested->run();
 
@@ -398,7 +363,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
         // If the file cannot be open, we do as if it was empty
         LOG_WARNING << "Cannot open file " << fileName_.toStdString();
 
-        IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
+        IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
 
         scopedAccessor.clear();
         scopedAccessor.setEncodingGuess( QTextCodec::codecForLocale() );
@@ -412,7 +377,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     state.file_size = file.size();
 
     {
-        IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
+        IndexingData::ConstAccessor scopedAccessor{ indexing_data_.get() };
 
         state.fileTextCodec = scopedAccessor.getForcedEncoding();
         if ( !state.fileTextCodec ) {
@@ -501,7 +466,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                 return tbb::flow::continue_msg{};
             }
 
-            IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
+            IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
 
             guessEncoding( block, scopedAccessor, state );
 
@@ -542,7 +507,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     indexingGraph.wait_for_all();
     localThreadPool.waitForDone();
 
-    IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
+    IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
 
     LOG_DEBUG << "Indexed up to " << state.pos;
 
@@ -611,7 +576,7 @@ OperationResult FullIndexOperation::run()
     emit indexingProgressed( 0 );
 
     {
-        IndexingData::MutateAccessor scopedAccessor{ &indexing_data_ };
+        IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
         scopedAccessor.clear();
         scopedAccessor.forceEncoding( forcedEncoding_ );
     }
@@ -632,7 +597,7 @@ OperationResult PartialIndexOperation::run()
     LOG_DEBUG << "PartialIndexOperation::run(), file " << fileName_.toStdString();
 
     const auto initial_position
-        = LineOffset( IndexingData::ConstAccessor{ &indexing_data_ }.getIndexedSize() );
+        = LineOffset( IndexingData::ConstAccessor{ indexing_data_.get() }.getIndexedSize() );
 
     LOG_DEBUG << "PartialIndexOperation: Starting the count at " << initial_position << " ...";
 
@@ -658,7 +623,7 @@ OperationResult CheckFileChangesOperation::run()
 MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
 {
     QFileInfo info( fileName_ );
-    const auto indexedHash = IndexingData::ConstAccessor{ &indexing_data_ }.getHash();
+    const auto indexedHash = IndexingData::ConstAccessor{ indexing_data_.get() }.getHash();
     const auto realFileSize = info.size();
 
     if ( realFileSize == 0 || realFileSize < indexedHash.size ) {

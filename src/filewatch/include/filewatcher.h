@@ -74,8 +74,10 @@ class FileWatcher : public QObject {
     // Sent when the file on disk has changed in any way.
     void fileChanged( const QString& );
 
-  private slots:
+  public slots:
     void fileChangedOnDisk( const QString& );
+
+  private slots:
     void checkWatches();
     void notifyFileChangedOnDisk();
 

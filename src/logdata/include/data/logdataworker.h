@@ -236,7 +236,7 @@ using OperationResult = absl::variant<bool, MonitoredFileStatus>;
 class IndexOperation : public QObject {
     Q_OBJECT
   public:
-    IndexOperation( const QString& fileName, IndexingData& indexingData,
+    IndexOperation( const QString& fileName, const std::shared_ptr<IndexingData>& indexingData,
                     AtomicFlag& interruptRequest )
         : fileName_( fileName )
         , indexing_data_( indexingData )
@@ -259,7 +259,7 @@ class IndexOperation : public QObject {
     void doIndex( LineOffset initialPosition );
 
     QString fileName_;
-    IndexingData& indexing_data_;
+    std::shared_ptr<IndexingData> indexing_data_;
     AtomicFlag& interruptRequest_;
 
   private:
@@ -272,7 +272,7 @@ class IndexOperation : public QObject {
 class FullIndexOperation : public IndexOperation {
     Q_OBJECT
   public:
-    FullIndexOperation( const QString& fileName, IndexingData& indexingData,
+    FullIndexOperation( const QString& fileName, const std::shared_ptr<IndexingData>& indexingData,
                         AtomicFlag& interruptRequest, QTextCodec* forcedEncoding = nullptr )
         : IndexOperation( fileName, indexingData, interruptRequest )
         , forcedEncoding_( forcedEncoding )
@@ -287,7 +287,7 @@ class FullIndexOperation : public IndexOperation {
 class PartialIndexOperation : public IndexOperation {
     Q_OBJECT
   public:
-    PartialIndexOperation( const QString& fileName, IndexingData& indexingData,
+    PartialIndexOperation( const QString& fileName, const std::shared_ptr<IndexingData>& indexingData,
                            AtomicFlag& interruptRequest )
         : IndexOperation( fileName, indexingData, interruptRequest )
     {
@@ -299,7 +299,7 @@ class PartialIndexOperation : public IndexOperation {
 class CheckFileChangesOperation : public IndexOperation {
     Q_OBJECT
   public:
-    CheckFileChangesOperation( const QString& fileName, IndexingData& indexingData,
+    CheckFileChangesOperation( const QString& fileName, const std::shared_ptr<IndexingData>& indexingData,
                                AtomicFlag& interruptRequest )
         : IndexOperation( fileName, indexingData, interruptRequest )
     {
@@ -317,7 +317,7 @@ class LogDataWorker : public QObject {
   public:
     // Pass a pointer to the IndexingData (initially empty)
     // This object will change it when indexing (IndexingData must be thread safe!)
-    explicit LogDataWorker( IndexingData& indexing_data );
+    explicit LogDataWorker( const std::shared_ptr<IndexingData>& indexing_data );
     ~LogDataWorker() override;
 
     // Attaches to a file on disk. Attaching to a non existant file
@@ -363,7 +363,7 @@ class LogDataWorker : public QObject {
     QString fileName_;
 
     // Pointer to the owner's indexing data (we modify it)
-    IndexingData& indexing_data_;
+    std::shared_ptr<IndexingData> indexing_data_;
 };
 
 #endif

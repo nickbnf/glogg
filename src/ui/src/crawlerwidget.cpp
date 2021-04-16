@@ -66,6 +66,7 @@
 #include "quickfindpattern.h"
 #include "quickfindwidget.h"
 #include "savedsearches.h"
+#include "dispatch_to.h"
 
 // Palette for error signaling (yellow background)
 const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
@@ -239,7 +240,7 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 void CrawlerWidget::changeEvent( QEvent* event )
 {
     if ( event->type() == QEvent::StyleChange ) {
-        QTimer::singleShot( 0, [ this ] {
+        dispatchToMainThread( [ this ] {
             loadIcons();
             searchInfoLineDefaultPalette = searchInfoLine->palette();
         } );
@@ -459,8 +460,8 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress,
     if ( ( progress == 100 ) && ( initialPosition == 0_lnum ) && ( !isFollowEnabled() ) ) {
         const auto currenLineIndex = logFilteredData_->getLineIndexNumber( currentLineNumber_ );
         LOG_DEBUG << "updateFilteredView: restoring selection: "
-                        << " absolute line number (0based) " << currentLineNumber_ << " index "
-                        << currenLineIndex;
+                  << " absolute line number (0based) " << currentLineNumber_ << " index "
+                  << currenLineIndex;
         filteredView->selectAndDisplayLine( currenLineIndex );
         filteredView->setSearchLimits( searchStartLine_, searchEndLine_ );
     }
@@ -933,7 +934,7 @@ void CrawlerWidget::setup()
     searchLineLayout->addWidget( stopButton );
     searchLineLayout->addWidget( searchRefreshButton );
     searchLineLayout->addWidget( searchInfoLine );
-    
+
     // Construct the bottom window
     auto* bottomMainLayout = new QVBoxLayout;
     bottomMainLayout->addLayout( searchLineLayout );
@@ -1228,8 +1229,7 @@ void CrawlerWidget::changeTopViewSize( int32_t delta )
 {
     int min, max;
     getRange( 1, &min, &max );
-    LOG_DEBUG << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 ) << " " << min << " "
-                    << max;
+    LOG_DEBUG << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 ) << " " << min << " " << max;
     moveSplitter( closestLegalPosition( sizes().at( 0 ) + ( delta * 10 ), 1 ), 1 );
     LOG_DEBUG << "CrawlerWidget::changeTopViewSize " << sizes().at( 0 );
 }

@@ -49,6 +49,7 @@
 #include "log.h"
 #include "quickfindpattern.h"
 #include "selection.h"
+#include "dispatch_to.h"
 
 #include "quickfind.h"
 
@@ -430,6 +431,5 @@ void QuickFind::resetLimits()
 
 void QuickFind::sendNotification( QFNotification notification )
 {
-    QMetaObject::invokeMethod( this, "notify", Qt::QueuedConnection,
-                               Q_ARG( const QFNotification&, notification ) );
+    dispatchToMainThread( [ this, notification ]() { notify( notification ); } );
 }

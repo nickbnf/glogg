@@ -44,6 +44,7 @@
 #include "highlighterset.h"
 #include "highlightersetedit.h"
 
+#include "dispatch_to.h"
 #include "iconloader.h"
 #include "log.h"
 
@@ -91,7 +92,7 @@ HighlighterSetEdit::HighlighterSetEdit( QWidget* parent )
     connect( highlighterEdit_, &HighlighterEdit::changed, this,
              &HighlighterSetEdit::updateHighlighterProperties );
 
-    QTimer::singleShot( 0, [this] {
+    dispatchToMainThread( [ this ] {
         IconLoader iconLoader( this );
 
         addHighlighterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );
@@ -160,7 +161,7 @@ void HighlighterSetEdit::removeHighlighter()
         setCurrentRow( -1 );
         highlighterSet_.highlighterList_.removeAt( index );
 
-        QTimer::singleShot( 0, [this, index] {
+        dispatchToMainThread( [ this, index ] {
             delete highlighterListWidget->takeItem( index );
 
             int count = highlighterListWidget->count();
@@ -186,7 +187,7 @@ void HighlighterSetEdit::moveHighlighterUp()
     if ( index > 0 ) {
         highlighterSet_.highlighterList_.move( index, index - 1 );
 
-        QTimer::singleShot( 0, [this, index] {
+        dispatchToMainThread( [ this, index ] {
             QListWidgetItem* item = highlighterListWidget->takeItem( index );
             highlighterListWidget->insertItem( index - 1, item );
 
@@ -205,7 +206,7 @@ void HighlighterSetEdit::moveHighlighterDown()
     if ( ( index >= 0 ) && ( index < ( highlighterListWidget->count() - 1 ) ) ) {
         highlighterSet_.highlighterList_.move( index, index + 1 );
 
-        QTimer::singleShot( 0, [this, index] {
+        dispatchToMainThread( [ this, index ] {
             QListWidgetItem* item = highlighterListWidget->takeItem( index );
             highlighterListWidget->insertItem( index + 1, item );
 
@@ -219,7 +220,7 @@ void HighlighterSetEdit::moveHighlighterDown()
 void HighlighterSetEdit::setCurrentRow( int row )
 {
     // ugly hack for mac
-    QTimer::singleShot( 0, [this, row]() { highlighterListWidget->setCurrentRow( row ); } );
+    dispatchToMainThread( [ this, row ]() { highlighterListWidget->setCurrentRow( row ); } );
 }
 
 void HighlighterSetEdit::updatePropertyFields()

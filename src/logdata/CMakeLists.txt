@@ -6,6 +6,7 @@ add_library(logdata STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/linepositionarray.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/loadingstatus.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logdata.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logdataoperation.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logdataworker.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddata.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddataworker.h
@@ -20,6 +21,7 @@ add_library(logdata STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/compressedlinestorage.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/encodingdetector.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logdata.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/logdataoperation.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logdataworker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logfiltereddata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logfiltereddataworker.cpp

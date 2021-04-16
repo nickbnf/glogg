@@ -20,18 +20,19 @@
 #ifndef KLOGG_SYNCHRONIZATION_H
 #define KLOGG_SYNCHRONIZATION_H
 
-#include <mutex>
 #include <absl/synchronization/mutex.h>
+#include <mutex>
 
 using Lock = absl::Mutex;
 using ScopedLock = absl::WriterMutexLock;
 using ScopedReaderLock = absl::ReaderMutexLock;
 
 using RecursiveLock = std::recursive_mutex;
-struct ScopedRecursiveLock : std::lock_guard<RecursiveLock>
-{
-    ScopedRecursiveLock(RecursiveLock* lock) : lock_guard(*lock)
-    {}
+struct ScopedRecursiveLock : std::lock_guard<RecursiveLock> {
+    ScopedRecursiveLock( RecursiveLock* lock )
+        : lock_guard( *lock )
+    {
+    }
 };
 
 #endif

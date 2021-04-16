@@ -52,56 +52,28 @@
 
 #include "configuration.h"
 
-// Implementation of the 'start' functions for each operation
-
-void LogData::AttachOperation::doStart( LogDataWorker& workerThread ) const
-{
-    LOG_INFO << "Attaching " << filename_.toStdString();
-    workerThread.attachFile( filename_ );
-    workerThread.indexAll();
-}
-
-void LogData::FullIndexOperation::doStart( LogDataWorker& workerThread ) const
-{
-    LOG_INFO << "Reindexing (full)";
-    workerThread.indexAll( forcedEncoding_ );
-}
-
-void LogData::PartialIndexOperation::doStart( LogDataWorker& workerThread ) const
-{
-    LOG_INFO << "Reindexing (partial)";
-    workerThread.indexAdditionalLines();
-}
-
-void LogData::CheckFileChangesOperation::doStart( LogDataWorker& workerThread ) const
-{
-    LOG_INFO << "Checking file changes";
-    workerThread.checkFileChanges();
-}
-
 // Constructs an empty log file.
 // It must be displayed without error.
 LogData::LogData()
     : AbstractLogData()
-    , indexing_data_()
+    , indexing_data_( std::make_shared<IndexingData>() )
+    , operationQueue_( [this] { attached_file_->attachReader(); } )
     , codec_( QTextCodec::codecForName( "ISO-8859-1" ) )
-    , workerThread_( indexing_data_ )
 {
-    // Start with an "empty" log
-    attached_file_ = nullptr;
-    currentOperation_ = nullptr;
-    nextOperation_ = nullptr;
-
     // Initialise the file watcher
     connect( &FileWatcher::getFileWatcher(), &FileWatcher::fileChanged, this,
              &LogData::fileChangedOnDisk, Qt::QueuedConnection );
 
+    auto worker = std::make_unique<LogDataWorker>( indexing_data_ );
+
     // Forward the update signal
-    connect( &workerThread_, &LogDataWorker::indexingProgressed, this,
-             &LogData::loadingProgressed );
-    connect( &workerThread_, &LogDataWorker::indexingFinished, this, &LogData::indexingFinished );
-    connect( &workerThread_, &LogDataWorker::checkFileChangesFinished, this,
-             &LogData::checkFileChangesFinished );
+    connect( worker.get(), &LogDataWorker::indexingProgressed, this, &LogData::loadingProgressed );
+    connect( worker.get(), &LogDataWorker::indexingFinished, this, &LogData::indexingFinished,
+             Qt::QueuedConnection );
+    connect( worker.get(), &LogDataWorker::checkFileChangesFinished, this,
+             &LogData::checkFileChangesFinished, Qt::QueuedConnection );
+
+    operationQueue_.setWorker( std::move( worker ) );
 
     const auto& config = Configuration::get();
     keepFileClosed_ = config.keepFileClosed();
@@ -110,8 +82,6 @@ LogData::LogData()
         LOG_INFO << "Keep file closed option is set";
     }
 }
-
-LogData::~LogData() {}
 
 //
 // Public functions
@@ -130,18 +100,17 @@ void LogData::attachFile( const QString& fileName )
     attached_file_.reset( new FileHolder( keepFileClosed_ ) );
     attached_file_->open( indexingFileName_ );
 
-    std::shared_ptr<const LogDataOperation> operation( new AttachOperation( fileName ) );
-    enqueueOperation( std::move( operation ) );
+    operationQueue_.enqueueOperation( AttachOperation( fileName ) );
 }
 
 void LogData::interruptLoading()
 {
-    workerThread_.interrupt();
+    operationQueue_.interrupt();
 }
 
 qint64 LogData::getFileSize() const
 {
-    return IndexingData::ConstAccessor{ &indexing_data_ }.getIndexedSize();
+    return IndexingData::ConstAccessor{ indexing_data_.get() }.getIndexedSize();
 }
 
 QDateTime LogData::getLastModifiedDate() const
@@ -157,51 +126,13 @@ std::unique_ptr<LogFilteredData> LogData::getNewFilteredData() const
 
 void LogData::reload( QTextCodec* forcedEncoding )
 {
-    workerThread_.interrupt();
+    operationQueue_.interrupt();
 
     // Re-open the file, useful in case the file has been moved
     attached_file_->reOpenFile();
 
-    enqueueOperation( std::make_shared<FullIndexOperation>( forcedEncoding ) );
+    operationQueue_.enqueueOperation( FullReindexOperation( forcedEncoding ) );
 }
-
-//
-// Private functions
-//
-
-// Add an operation to the queue and perform it immediately if
-// there is none ongoing.
-void LogData::enqueueOperation( std::shared_ptr<const LogDataOperation> new_operation )
-{
-    if ( currentOperation_ == nullptr ) {
-        // We do it immediately
-        currentOperation_ = new_operation;
-        startOperation();
-    }
-    else {
-        // An operation is in progress...
-        // ... we schedule the attach op for later
-        nextOperation_ = new_operation;
-    }
-}
-
-// Performs the current operation asynchronously, a indexingFinished
-// signal will be received when it's finished.
-void LogData::startOperation()
-{
-    attached_file_->attachReader();
-
-    if ( currentOperation_ ) {
-        LOG_DEBUG << "startOperation found something to do.";
-
-        // Let the operation do its stuff
-        currentOperation_->start( workerThread_ );
-    }
-}
-
-//
-// Slots
-//
 
 void LogData::fileChangedOnDisk( const QString& filename )
 {
@@ -211,7 +142,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
     const auto currentFileId = FileId::getFileId( indexingFileName_ );
     const auto attachedFileId = attached_file_->getFileId();
 
-    const auto indexedHash = IndexingData::ConstAccessor{ &indexing_data_ }.getHash();
+    const auto indexedHash = IndexingData::ConstAccessor{ indexing_data_.get() }.getHash();
 
     LOG_INFO << "current indexed fileSize=" << indexedHash.size;
     LOG_INFO << "current indexed hash=" << indexedHash.fullDigest;
@@ -239,22 +170,21 @@ void LogData::fileChangedOnDisk( const QString& filename )
     if ( isFileIdChanged || ( info.size() != attached_file_->size() )
          || ( !attached_file_->isOpen() ) ) {
 
-        LOG_INFO
-            << "Inconsistent size, or file index, the file might have changed, re-opening";
+        LOG_INFO << "Inconsistent size, or file index, the file might have changed, re-opening";
 
         attached_file_->reOpenFile();
     }
 
-    enqueueOperation( std::make_shared<CheckFileChangesOperation>() );
+    operationQueue_.enqueueOperation( CheckDataChangesOperation{} );
 }
 
 void LogData::indexingFinished( LoadingStatus status )
 {
     attached_file_->detachReader();
 
-    LOG_DEBUG << "indexingFinished for: " << indexingFileName_
-                    << ( status == LoadingStatus::Successful ) << ", found "
-                    << IndexingData::ConstAccessor{ &indexing_data_ }.getNbLines() << " lines.";
+    LOG_INFO << "indexingFinished for: " << indexingFileName_
+             << ( status == LoadingStatus::Successful ) << ", found "
+             << IndexingData::ConstAccessor{ indexing_data_.get() }.getNbLines() << " lines.";
 
     if ( status == LoadingStatus::Successful ) {
         FileWatcher::getFileWatcher().addFile( indexingFileName_ );
@@ -271,17 +201,7 @@ void LogData::indexingFinished( LoadingStatus status )
     LOG_DEBUG << "Sending indexingFinished.";
     emit loadingFinished( status );
 
-    // So now the operation is done, let's see if there is something
-    // else to do, in which case, do it!
-    assert( currentOperation_ );
-
-    currentOperation_ = std::move( nextOperation_ );
-    nextOperation_.reset();
-
-    if ( currentOperation_ ) {
-        LOG_DEBUG << "indexingFinished is performing the next operation";
-        startOperation();
-    }
+    operationQueue_.finishOperationAndStartNext();
 }
 
 void LogData::checkFileChangesFinished( MonitoredFileStatus status )
@@ -290,16 +210,15 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
 
     LOG_INFO << "File " << indexingFileName_ << " status " << static_cast<int>( status );
 
-    std::function<std::shared_ptr<LogDataOperation>()> newOperation;
     if ( fileChangedOnDisk_ != MonitoredFileStatus::Truncated ) {
         switch ( status ) {
         case MonitoredFileStatus::Truncated:
             fileChangedOnDisk_ = MonitoredFileStatus::Truncated;
-            newOperation = std::make_shared<FullIndexOperation>;
+            operationQueue_.enqueueOperation( FullReindexOperation{} );
             break;
         case MonitoredFileStatus::DataAdded:
             fileChangedOnDisk_ = MonitoredFileStatus::DataAdded;
-            newOperation = std::make_shared<PartialIndexOperation>;
+            operationQueue_.enqueueOperation( PartialReindexOperation{} );
             break;
         case MonitoredFileStatus::Unchanged:
             fileChangedOnDisk_ = MonitoredFileStatus::Unchanged;
@@ -307,22 +226,15 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
         }
     }
     else {
-        newOperation = std::make_shared<FullIndexOperation>;
+        operationQueue_.enqueueOperation( FullReindexOperation{} );
     }
 
-    if ( newOperation ) {
+    if ( status != MonitoredFileStatus::Unchanged
+         || fileChangedOnDisk_ == MonitoredFileStatus::Truncated ) {
         emit fileChanged( fileChangedOnDisk_ );
-
-        enqueueOperation( newOperation() );
     }
 
-    currentOperation_ = std::move( nextOperation_ );
-    nextOperation_.reset();
-
-    if ( currentOperation_ ) {
-        LOG_DEBUG << "checkFileChangesFinished is performing the next operation";
-        startOperation();
-    }
+    operationQueue_.finishOperationAndStartNext();
 }
 
 //
@@ -330,17 +242,17 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
 //
 LinesCount LogData::doGetNbLine() const
 {
-    return IndexingData::ConstAccessor{ &indexing_data_ }.getNbLines();
+    return IndexingData::ConstAccessor{ indexing_data_.get() }.getNbLines();
 }
 
 LineLength LogData::doGetMaxLength() const
 {
-    return IndexingData::ConstAccessor{ &indexing_data_ }.getMaxLength();
+    return IndexingData::ConstAccessor{ indexing_data_.get() }.getMaxLength();
 }
 
 LineLength LogData::doGetLineLength( LineNumber line ) const
 {
-    if ( line >= IndexingData::ConstAccessor{ &indexing_data_ }.getNbLines() ) {
+    if ( line >= IndexingData::ConstAccessor{ indexing_data_.get() }.getNbLines() ) {
         return 0_length; /* exception? */
     }
 
@@ -355,7 +267,7 @@ void LogData::doSetDisplayEncoding( const char* encoding )
     auto useGuessedCodec = false;
 
     {
-        IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
+        IndexingData::ConstAccessor scopedAccessor{ indexing_data_.get() };
 
         const QTextCodec* currentIndexCodec = scopedAccessor.getForcedEncoding();
         if ( !currentIndexCodec ) {
@@ -431,7 +343,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
         endOfLines.reserve( number.get() );
 
         {
-            IndexingData::ConstAccessor scopedAccessor{ &indexing_data_ };
+            IndexingData::ConstAccessor scopedAccessor{ indexing_data_.get() };
 
             if ( last_line >= scopedAccessor.getNbLines() ) {
                 LOG_WARNING << "LogData::getLines Lines out of bound asked for";
@@ -458,8 +370,8 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
             const auto bytesRead = locker.getFile()->read( buffer.data(), bytesToRead );
 
             if ( bytesRead != bytesToRead ) {
-                LOG_WARNING << "LogData::getLines failed to read " << bytesToRead
-                                  << " bytes, got " << bytesRead;
+                LOG_WARNING << "LogData::getLines failed to read " << bytesToRead << " bytes, got "
+                            << bytesRead;
             }
         }
 
@@ -507,7 +419,7 @@ std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCoun
 
 QTextCodec* LogData::getDetectedEncoding() const
 {
-    return IndexingData::ConstAccessor{ &indexing_data_ }.getEncodingGuess();
+    return IndexingData::ConstAccessor{ indexing_data_.get() }.getEncodingGuess();
 }
 
 void LogData::doAttachReader() const

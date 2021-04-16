@@ -46,6 +46,7 @@
 #include "iconloader.h"
 #include "log.h"
 #include "predefinedfilters.h"
+#include "dispatch_to.h"
 
 PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent )
     : QDialog( parent )
@@ -67,7 +68,7 @@ PredefinedFiltersDialog::PredefinedFiltersDialog( QWidget* parent )
     connect( buttonBox, &QDialogButtonBox::clicked, this,
              &PredefinedFiltersDialog::resolveStandardButton );
 
-    QTimer::singleShot( 0, [ this ] {
+    dispatchToMainThread( [ this ] {
         IconLoader iconLoader( this );
 
         addFilterButton->setIcon( iconLoader.load( "icons8-plus-16" ) );

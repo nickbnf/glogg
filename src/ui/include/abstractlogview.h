@@ -384,6 +384,7 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     LineNumber searchStart_;
     LineNumber searchEnd_;
 
+    OptionalLineNumber contextMenuLine_;
     OptionalLineNumber selectionStart_;
 
     // Text handling

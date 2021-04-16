@@ -122,7 +122,7 @@ void OperationQueue::tryStartOperation()
                          beforeOperationStart_();
                          operation.start( worker_.get() );
                      },
-                     [this]( absl::monostate ) { LOG_INFO << "no operation to start"; } ),
+                     []( absl::monostate ) { LOG_INFO << "no operation to start"; } ),
                  executingOperation_ );
 }
 

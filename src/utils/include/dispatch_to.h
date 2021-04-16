@@ -17,13 +17,14 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef KLOGG_DISPATCH_TO
 
-#include <QApplication>
 #include <QAbstractEventDispatcher>
+#include <QApplication>
 #include <QMetaObject>
 #include <QThread>
+
+#include "log.h"
 
 // by
 // https://github.com/KubaO/stackoverflown/blob/master/questions/metacall-21646467/main.cpp
@@ -49,29 +50,30 @@ struct FEvent : public QEvent {
 
     FEvent( Fun&& fun )
         : QEvent( QEvent::None )
-        , fun( std::move( fun ) )
+        , fun_( std::move( fun ) )
     {
     }
     FEvent( const Fun& fun )
         : QEvent( QEvent::None )
-        , fun( fun )
+        , fun_( fun )
     {
     }
     ~FEvent()
     {
-        fun();
+        fun_();
     }
 
   private:
-    Fun fun;
+    Fun fun_;
 };
 } // namespace detail
 
 template <typename F>
 static void dispatchToObject( F&& fun, QObject* obj = qApp )
 {
-    if ( qobject_cast<QThread*>( obj ) )
-        qWarning() << "posting a call to a thread object - consider using postToThread";
+    if ( qobject_cast<QThread*>( obj ) ) {
+        LOG_WARNING << "posting a call to a thread object - consider using postToThread";
+    }
     QCoreApplication::postEvent( obj, new detail::FEvent<F>( std::forward<F>( fun ) ) );
 }
 

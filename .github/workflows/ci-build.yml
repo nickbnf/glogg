@@ -184,7 +184,7 @@ jobs:
           
       - name: "Mac notarize"
         if: ${{ github.event_name != 'pull_request' }} 
-        uses: devbotsxyz/xcode-notarize@v1
+        uses: variar/xcode-notarize@v1.0.3
         with:
           product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
           primary-bundle-id: "dev.filimonov.klogg"

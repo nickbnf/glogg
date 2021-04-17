@@ -7,8 +7,8 @@ These instructions will get you a copy of the project up and running on your loc
 ## Dependencies
 
 * cmake 3.12 or later to generate build files
-* C++ compiler with C++14 support (gcc 5, clang 3.4, msvc 2017)
-* Qt libraries 5.9 or later:
+* C++ compiler with C++14 support (at least gcc 5, clang 3.4, msvc 2017)
+* Qt libraries 5.9 or later (CI builds use Qt 5.9.5/Qt 5.15.2):
     - QtCore
     - QtGui
     - QtWidgets
@@ -16,8 +16,10 @@ These instructions will get you a copy of the project up and running on your loc
     - QtNetwork
     - QtXml
     - QtTest
-* curl on Mac\Linux to build sentry (or switch to none in cmake options)
-* nsis to build windows installer (optional)
+* Boost (1.58 or later, header-only part)
+* Ragel (6.8 or later; precompiled binary is provided for Windows; has to be installed from package managers on Linux or Homebrew on Mac)
+* nsis to build installer for Windows (optional)
+* Precompiled OpenSSl library to enable https support on Windows (optional)
 
 All other dependencies are provided in 3rdparty directory.
 
@@ -36,7 +38,7 @@ Here is how to build klogg on Ubuntu 18.04.
 
 Install dependencies:
 ```
-sudo apt-get install build-essential cmake qtbase5-dev libcurl4-openssl-dev
+sudo apt-get install build-essential cmake qtbase5-dev libboost-all-dev ragel
 ```
 
 Configure and build klogg:
@@ -63,6 +65,10 @@ Make sure to select version matching Visual Studio installation. 64-bit librarie
 
 Install CMake from [Kitware](https://cmake.org/download/).
 Use version 3.14 or later for Visual Studio 2019 support.
+
+Download the Boost source code from http://www.boost.org/users/download/.
+Extract to some folder. Directory structure should be something like `C:\Boost\boost_1_63_0`.
+Then add `BOOST_ROOT` environment variable pointing to main directory of Boost sources so CMake is able to fine it.
 
 Prepare build environment for CMake. Open command prompt window and depending on version of Visual Studio run either
 ```
@@ -95,6 +101,9 @@ CMake should generate `klogg.sln` file in `<path_to_project_root>\build_root` di
 
 Binaries are placed into `build_root/output`.
 
+For https network urls support download precompiled openssl library https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1l-dev.zip.
+Put libcrypto-1_1 and libssl-1_1 for desired architecture near klogg binaries.
+
 ### Building on Mac OS
 
 Klogg requires macOS High Sierra (10.13) or higher.
@@ -108,7 +117,7 @@ Homebrew installer should also install xcode command line tools.
 
 Download and install build dependencies:
 ```
-brew install cmake ninja qt
+brew install cmake ninja qt boost ragel
 ```
 
 Usually path to qt installation looks like `/usr/local/Cellar/qt/5.14.0/lib/cmake/Qt5`

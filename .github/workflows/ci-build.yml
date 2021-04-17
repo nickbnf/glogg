@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  Linux:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     strategy:
       fail-fast: false
@@ -38,6 +38,75 @@ jobs:
             cxx: g++-8
             arch: x64
 
+    runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
+    steps:
+      - uses: actions/checkout@v2
+
+#Install build deps
+      - uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ../Qt
+          key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.qt_version }}-QtCache
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: ${{ matrix.config.qt_version }}
+          arch: ${{ matrix.config.qt_arch }}
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+      - name: Install gcc-8
+        run: |
+          sudo apt-get update
+          sudo apt-get install g++-8 libboost-all-dev ragel -y
+
+#Build and test
+      - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/build-and-test
+
+#Package
+      - name: Linux package 
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          cpack --verbose -G "RPM;DEB"
+          cp ./output/klogg.sym ./packages/klogg.sym
+      
+      - name: Check deb package
+        run: |
+          docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:bionic /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
+      
+      - name: Check rpm package
+        run: |
+          docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
+      
+      - name: Linux AppImage 
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          DESTDIR=$(readlink -f appdir) ninja install
+          mv appdir/usr/lib/x86_64-linux-gnu/*  appdir/usr/lib
+          rm -rf appdir/usr/lib/x86_64-linux-gnu/
+          wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/7/linuxdeployqt-7-x86_64.AppImage"
+          chmod a+x linuxdeployqt-7-x86_64.AppImage
+          VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -qmake=$Qt5_Dir/bin/qmake -bundle-non-qt-libs
+          VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -appimage
+          cp ./klogg-$KLOGG_VERSION-x86_64.AppImage ./packages/klogg-$KLOGG_VERSION-x86_64.AppImage
+
+# Final upload of all packages
+      - uses: actions/upload-artifact@v2
+        with:
+          name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*' 
+
+  Mac:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
           - os: macos
             os_version: latest
             qt_version: 5.15.2
@@ -46,6 +115,106 @@ jobs:
             cxx: clang++
             arch: x64
 
+    runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
+    steps:
+      - uses: actions/checkout@v2
+
+#Install build deps
+      - uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ../Qt
+          key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.qt_version }}-QtCache
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: ${{ matrix.config.qt_version }}
+          arch: ${{ matrix.config.qt_arch }}
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+      - name: Set brew env
+        run: |
+          echo "HOMEBREW_NO_ANALYTICS=1" >> $GITHUB_ENV
+          echo "HOMEBREW_NO_AUTO_UPDATE=1" >> $GITHUB_ENV
+          echo "HOMEBREW_NO_INSTALL_CLEANUP=1" >> $GITHUB_ENV
+
+      - name: Brew deps
+        run: |
+          brew install ragel
+          brew install boost
+      
+#Build and test
+      - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/build-and-test
+
+#Package
+      - name: Mac prepare codesign
+        if: ${{ github.event_name != 'pull_request' }} 
+        uses: apple-actions/import-codesign-certs@v1
+        with: 
+          p12-file-base64: ${{ secrets.CODESIGN_BASE64 }}
+          p12-password: ${{ secrets.CODESIGN_PASSWORD }}
+
+      - name: Mac deploy Qt
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          macdeployqt ./output/klogg.app -always-overwrite -verbose=2
+          $KLOGG_WORKSPACE/3rdparty/macdeployqtfix/macdeployqtfix.py ./output/klogg.app/Contents/MacOS/klogg $Qt5_Dir
+      
+      - name: Mac codesign binaries
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          codesign -v -f -o runtime --deep --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./output/klogg.app;
+      
+      - name: Mac pack dmg
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          cpack --verbose -G "DragNDrop"
+
+      - name: Mac codesign dmg
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          codesign -v -f -o runtime --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./packages/*
+          
+      - name: "Mac notarize"
+        if: ${{ github.event_name != 'pull_request' }} 
+        uses: devbotsxyz/xcode-notarize@v1
+        with:
+          product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+          primary-bundle-id: "dev.filimonov.klogg"
+          appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
+          appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+
+      - name: "Mac staple"
+        if: ${{ github.event_name != 'pull_request' }} 
+        uses: devbotsxyz/xcode-staple@v1
+        with:
+          product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
+
+      - name: Mac symbols
+        run: |
+          cd $KLOGG_BUILD_ROOT
+          cp -a ./output/klogg.dSym ./packages/
+          cp -a ./output/klogg.app ./packages/
+
+# Final upload of all packages
+      - uses: actions/upload-artifact@v2
+        with:
+          name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*' 
+
+  Windows:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
           - os: windows
             os_version: latest
             qt_version: 5.15.2
@@ -65,271 +234,126 @@ jobs:
             qt_arch: win32_msvc2019
 
     runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
-    
     steps:
-    - uses: actions/checkout@v2
-    - uses: seanmiddleditch/gha-setup-ninja@master
+      - uses: actions/checkout@v2
 
-    - name: Set workspace environment
-      shell: sh
-      run: |
-        echo "KLOGG_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV 
-        echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
-        echo "KLOGG_VERSION=21.04.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV 
-        echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
+#Install build deps
+      - uses: seanmiddleditch/gha-setup-ninja@master
 
-# Install build dependencies
-    - name: Install gcc-8
-      if: ${{ matrix.config.os == 'ubuntu' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install g++-8 libboost-all-dev ragel -y
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ../Qt
+          key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.qt_version }}-QtCache
 
-    - name: Cache openssl
-      id: cache-openssl
-      if: ${{ matrix.config.os == 'windows' }}
-      uses: actions/cache@v2
-      with:
-        path: ${{ github.workspace }}\openssl-1.1
-        key: OpensslCache-1-1-1l
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: ${{ matrix.config.qt_version }}
+          arch: ${{ matrix.config.qt_arch }}
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
-    - name: Download openssl
-      if: ${{ matrix.config.os == 'windows' && steps.cache-openssl.outputs.cache-hit != 'true' }} 
-      run: |
-        Invoke-WebRequest -Uri "https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1l-dev.zip" -OutFile openssl.zip
-        7z x openssl.zip 
+      - name: Cache openssl
+        id: cache-openssl
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}\openssl-1.1
+          key: OpensslCache-1-1-1l
 
-    - name: Set openssl paths
-      if: ${{ matrix.config.os == 'windows'}} 
-      shell: sh
-      run: |
-        echo "SSL_DIR=${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin" >> $GITHUB_ENV
-        echo "SSL_ARCH=${{ matrix.config.ssl_arch }}" >> $GITHUB_ENV 
+      - name: Download openssl
+        if: ${{ steps.cache-openssl.outputs.cache-hit != 'true' }} 
+        run: |
+          Invoke-WebRequest -Uri "https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1l-dev.zip" -OutFile openssl.zip
+          7z x openssl.zip 
 
-    - name: install conan
-      if: ${{ matrix.config.os == 'windows'}} 
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade conan
-      shell: bash
+      - name: Set openssl paths
+        shell: sh
+        run: |
+          echo "SSL_DIR=${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin" >> $GITHUB_ENV
+          echo "SSL_ARCH=${{ matrix.config.ssl_arch }}" >> $GITHUB_ENV 
 
-    - name: setup conan profile
-      if: ${{ matrix.config.os == 'windows'}} 
-      run: |
-        conan profile new default --detect
-        conan profile show default
-      shell: bash
+      - name: install conan
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade conan
 
-    - name: install boost
-      if: ${{ matrix.config.os == 'windows'}} 
-      run: |
-        ${boostroot} = "${env:GITHUB_WORKSPACE}\boost_install"
-        conan install boost/1.72.0@ -o boost:header_only=True -g deploy --install-folder ${boostroot}
-        echo "BOOST_ROOT=${boostroot}\boost" >> ${env:GITHUB_ENV}
-    
-    - name: Set brew env
-      if: ${{ matrix.config.os == 'macos'}} 
-      run: |
-        echo "HOMEBREW_NO_ANALYTICS=1" >> $GITHUB_ENV
-        echo "HOMEBREW_NO_AUTO_UPDATE=1" >> $GITHUB_ENV
-        echo "HOMEBREW_NO_INSTALL_CLEANUP=1" >> $GITHUB_ENV
+      - name: setup conan profile
+        shell: bash
+        run: |
+          conan profile new default --detect
+          conan profile show default
 
-    - name: Brew deps
-      if: ${{ matrix.config.os == 'macos'}} 
-      run: |
-        brew install ragel
-        brew install boost
-        
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v1
-      with:
-        path: ../Qt
-        key: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.qt_version }}-QtCache
+      - name: install boost
+        run: |
+          ${boostroot} = "${env:GITHUB_WORKSPACE}\boost_install"
+          conan install boost/1.72.0@ -o boost:header_only=True -g deploy --install-folder ${boostroot}
+          echo "BOOST_ROOT=${boostroot}\boost" >> ${env:GITHUB_ENV}
 
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v2
-      with:
-        version: ${{ matrix.config.qt_version }}
-        arch: ${{ matrix.config.qt_arch }}
-        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+#Build and test
+      - name: Prepare dev cmd
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.config.arch }}
 
-# Configure and build binaries
-    - name: Prepare dev cmd
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.config.arch }}
+      - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/build-and-test
 
-    - name: Prepare compiler env
-      shell: sh
-      run: |
-        echo "CC=${{ matrix.config.cc }}" >> $GITHUB_ENV
-        echo "CXX=${{ matrix.config.cxx }}" >> $GITHUB_ENV
+#Package
+      - name: Win codesign executables
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: apptim/code-sign-action@v8
+        with:
+          certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
+          password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
+          certificatesha1: '${{ secrets.MS_CODESIGN_HASH }}'
+          folder: '${{ env.KLOGG_BUILD_ROOT }}\output'
+          recursive: true
 
-    - name: configure
-      shell: sh
-      run: |
-        mkdir $KLOGG_BUILD_ROOT
-        cd $KLOGG_BUILD_ROOT
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr $KLOGG_WORKSPACE
+      - name: Win portable
+        shell: cmd
+        run: |
+          packaging\windows\prepare_release.cmd
 
-    - name: build
-      shell: sh
-      run: |
-        cmake --build $KLOGG_BUILD_ROOT -t ci_build
+      - name: Win installer
+        uses: joncloud/makensis-action@v3.3
+        with:
+          script-file: klogg.nsi
+          arguments: "-DVERSION=%KLOGG_VERSION% -DPLATFORM=%KLOGG_ARCH%"
 
-    - name: test
-      shell: sh
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        ctest --verbose
+      - name: Win package
+        shell: cmd
+        run: |
+          md %KLOGG_BUILD_ROOT%\packages
+          xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip %KLOGG_BUILD_ROOT%\packages\ /y
+          xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip %KLOGG_BUILD_ROOT%\packages\ /y
+          xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe %KLOGG_BUILD_ROOT%\packages\ /y
 
-# Linux packaging
-    - name: Linux package 
-      if: ${{ matrix.config.os == 'ubuntu' }}
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        cpack --verbose -G "RPM;DEB"
-        cp ./output/klogg.sym ./packages/klogg.sym
-    
-    - name: Check deb package
-      if: ${{ matrix.config.os == 'ubuntu' }}
-      run: |
-        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:bionic /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
-    
-    - name: Check rpm package
-      if: ${{ matrix.config.os == 'ubuntu' }}
-      run: |
-        docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
-    
-    - name: Linux AppImage 
-      if: ${{ matrix.config.os == 'ubuntu' }} 
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        DESTDIR=$(readlink -f appdir) ninja install
-        mv appdir/usr/lib/x86_64-linux-gnu/*  appdir/usr/lib
-        rm -rf appdir/usr/lib/x86_64-linux-gnu/
-        wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/7/linuxdeployqt-7-x86_64.AppImage"
-        chmod a+x linuxdeployqt-7-x86_64.AppImage
-        VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -qmake=$Qt5_Dir/bin/qmake -bundle-non-qt-libs
-        VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -appimage
-        cp ./klogg-$KLOGG_VERSION-x86_64.AppImage ./packages/klogg-$KLOGG_VERSION-x86_64.AppImage
-
-# Mac packaging
-    - name: Mac prepare codesign
-      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }} 
-      uses: apple-actions/import-codesign-certs@v1
-      with: 
-        p12-file-base64: ${{ secrets.CODESIGN_BASE64 }}
-        p12-password: ${{ secrets.CODESIGN_PASSWORD }}
-
-    - name: Mac deploy Qt
-      if: ${{ matrix.config.os == 'macos' }} 
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        macdeployqt ./output/klogg.app -always-overwrite -verbose=2
-        $KLOGG_WORKSPACE/3rdparty/macdeployqtfix/macdeployqtfix.py ./output/klogg.app/Contents/MacOS/klogg $Qt5_Dir
-    
-    - name: Mac codesign binaries
-      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }}
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        codesign -v -f -o runtime --deep --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./output/klogg.app;
-    
-    - name: Mac pack dmg
-      if: ${{ matrix.config.os == 'macos' }} 
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        cpack --verbose -G "DragNDrop"
-
-    - name: Mac codesign dmg
-      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }}
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        codesign -v -f -o runtime --timestamp -s "Developer ID Application: Anton Filimonov (GAW773U324)" ./packages/*
-        
-    - name: "Mac notarize"
-      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }} 
-      uses: devbotsxyz/xcode-notarize@v1
-      with:
-        product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
-        primary-bundle-id: "dev.filimonov.klogg"
-        appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
-        appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
-
-    - name: "Mac staple"
-      if: ${{ matrix.config.os == 'macos' && github.event_name != 'pull_request' }} 
-      uses: devbotsxyz/xcode-staple@v1
-      with:
-        product-path: "${{ env.KLOGG_BUILD_ROOT }}/packages/klogg-${{ env.KLOGG_VERSION }}-OSX.dmg"
-
-    - name: Mac symbols
-      if: ${{ matrix.config.os == 'macos' }} 
-      run: |
-        cd $KLOGG_BUILD_ROOT
-        cp -a ./output/klogg.dSym ./packages/
-        cp -a ./output/klogg.app ./packages/
-
-# Win packaging
-    - name: Win codesign executables
-      if: ${{ matrix.config.os == 'windows' && github.event_name != 'pull_request' }}
-      uses: apptim/code-sign-action@v8
-      with:
-        certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
-        password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
-        certificatesha1: '${{ secrets.MS_CODESIGN_HASH }}'
-        folder: '${{ env.KLOGG_BUILD_ROOT }}\output'
-        recursive: true
-
-    - name: Win portable
-      if: ${{ matrix.config.os == 'windows' }} 
-      shell: cmd
-      run: |
-        packaging\windows\prepare_release.cmd
-
-    - name: Win installer
-      if: ${{ matrix.config.os == 'windows' }} 
-      uses: joncloud/makensis-action@v3.3
-      with:
-        script-file: klogg.nsi
-        arguments: "-DVERSION=%KLOGG_VERSION% -DPLATFORM=%KLOGG_ARCH%"
-
-    - name: Win package
-      if: ${{ matrix.config.os == 'windows' }} 
-      shell: cmd
-      run: |
-        md %KLOGG_BUILD_ROOT%\packages
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-portable.zip %KLOGG_BUILD_ROOT%\packages\ /y
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-pdb.zip %KLOGG_BUILD_ROOT%\packages\ /y
-        xcopy klogg-%KLOGG_VERSION%-%KLOGG_ARCH%-setup.exe %KLOGG_BUILD_ROOT%\packages\ /y
-
-    - name: Win codesign installer
-      if: ${{ matrix.config.os == 'windows' && github.event_name != 'pull_request' }}
-      uses: apptim/code-sign-action@v8
-      with:
-        certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
-        password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
-        certificatesha1: '${{ secrets.MS_CODESIGN_HASH }}'
-        folder: '${{ env.KLOGG_BUILD_ROOT }}\packages'
-        recursive: true
-
+      - name: Win codesign installer
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: apptim/code-sign-action@v8
+        with:
+          certificate: '${{ secrets.MS_CODESIGN_BASE64 }}'
+          password: '${{ secrets.MS_CODESIGN_PASSWORD }}'
+          certificatesha1: '${{ secrets.MS_CODESIGN_HASH }}'
+          folder: '${{ env.KLOGG_BUILD_ROOT }}\packages'
+          recursive: true 
+      
 # Final upload of all packages
-    - uses: actions/upload-artifact@v2
-      with:
-        name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
-        path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*'      
 
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    needs: build 
+    needs: [Linux, Mac, Windows] 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set workspace environment
-      shell: sh
-      run: |
-        echo "KLOGG_VERSION=21.04.0.$((${{ github.run_number }} + 717))" >> $GITHUB_ENV
+    - uses: ./.github/actions/klogg-version
 
     - uses: actions/download-artifact@v2
 

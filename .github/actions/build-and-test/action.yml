@@ -1,0 +1,32 @@
+name: "Build and test one configuration"
+description: "Generate the build files, build the code and run the tests"
+runs:
+  using: "composite"
+  steps:
+
+    - name: Prepare compiler env
+      shell: sh
+      run: |
+        echo "CC=${{ matrix.config.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.config.cxx }}" >> $GITHUB_ENV
+        echo "KLOGG_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV 
+        echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
+        echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
+
+    - name: configure
+      shell: sh
+      run: |
+        mkdir $KLOGG_BUILD_ROOT
+        cd $KLOGG_BUILD_ROOT
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr $KLOGG_WORKSPACE
+
+    - name: build
+      shell: sh
+      run: |
+        cmake --build $KLOGG_BUILD_ROOT -t ci_build
+
+    - name: test
+      shell: sh
+      run: |
+        cd $KLOGG_BUILD_ROOT
+        ctest --verbose

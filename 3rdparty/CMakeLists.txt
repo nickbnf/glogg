@@ -38,6 +38,10 @@ add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 
+set(FAT_RUNTIME OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(hyperscan) #5.4.0
+mark_as_advanced(FORCE FAT_RUNTIME)
+
 if(KLOGG_USE_SENTRY)
     set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)
     set(SENTRY_TRANSPORT "none" CACHE INTERNAL "" FORCE)

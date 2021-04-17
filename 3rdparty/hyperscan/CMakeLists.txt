@@ -561,6 +561,13 @@ set_source_files_properties(
 
 ragelmaker(src/parser/control_verbs.rl)
 
+set(hs_include_dirs 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
 SET(hs_HEADERS
     src/hs.h
     src/hs_common.h
@@ -1179,6 +1186,7 @@ if (NOT FAT_RUNTIME)
 
     if (BUILD_STATIC_LIBS)
         add_library(hs_exec OBJECT ${hs_exec_SRCS})
+        target_include_directories(hs_exec SYSTEM PUBLIC ${hs_include_dirs})
 
         add_library(hs_runtime STATIC src/hs_version.c src/hs_valid_platform.c $<TARGET_OBJECTS:hs_exec>)
         set_target_properties(hs_runtime PROPERTIES LINKER_LANGUAGE C)
@@ -1214,6 +1222,8 @@ else (FAT_RUNTIME)
 
     if (BUILD_STATIC_LIBS)
        add_library(hs_exec_core2 OBJECT ${hs_exec_SRCS})
+       target_include_directories(hs_exec_core2 SYSTEM PUBLIC ${hs_include_dirs})
+
        list(APPEND RUNTIME_LIBS $<TARGET_OBJECTS:hs_exec_core2>)
        set_target_properties(hs_exec_core2 PROPERTIES
            COMPILE_FLAGS "-march=core2"
@@ -1221,6 +1231,8 @@ else (FAT_RUNTIME)
            )
 
        add_library(hs_exec_corei7 OBJECT ${hs_exec_SRCS})
+       target_include_directories(hs_exec_corei7 SYSTEM PUBLIC ${hs_include_dirs})
+
        list(APPEND RUNTIME_LIBS $<TARGET_OBJECTS:hs_exec_corei7>)
        set_target_properties(hs_exec_corei7 PROPERTIES
            COMPILE_FLAGS "-march=corei7"
@@ -1228,6 +1240,8 @@ else (FAT_RUNTIME)
            )
 
        add_library(hs_exec_avx2 OBJECT ${hs_exec_SRCS} ${hs_exec_avx2_SRCS})
+       target_include_directories(hs_exec_avx2 SYSTEM PUBLIC ${hs_include_dirs})
+
        list(APPEND RUNTIME_LIBS $<TARGET_OBJECTS:hs_exec_avx2>)
        set_target_properties(hs_exec_avx2 PROPERTIES
            COMPILE_FLAGS "-march=core-avx2"
@@ -1235,6 +1249,8 @@ else (FAT_RUNTIME)
            )
        if (BUILD_AVX512)
            add_library(hs_exec_avx512 OBJECT ${hs_exec_SRCS} ${hs_exec_avx2_SRCS})
+           target_include_directories(hs_exec_avx512 SYSTEM PUBLIC ${hs_include_dirs})
+
            list(APPEND RUNTIME_LIBS $<TARGET_OBJECTS:hs_exec_avx512>)
            set_target_properties(hs_exec_avx512 PROPERTIES
                COMPILE_FLAGS "${SKYLAKE_FLAG}"
@@ -1243,6 +1259,8 @@ else (FAT_RUNTIME)
        endif (BUILD_AVX512)
        if (BUILD_AVX512VBMI)
            add_library(hs_exec_avx512vbmi OBJECT ${hs_exec_SRCS} ${hs_exec_avx2_SRCS})
+           target_include_directories(hs_exec_avx512vbmi SYSTEM PUBLIC ${hs_include_dirs})
+
            list(APPEND RUNTIME_LIBS $<TARGET_OBJECTS:hs_exec_avx512vbmi>)
            set_target_properties(hs_exec_avx512vbmi PROPERTIES
                COMPILE_FLAGS "${ICELAKE_FLAG}"
@@ -1254,6 +1272,7 @@ else (FAT_RUNTIME)
            ${hs_exec_common_SRCS}
            src/dispatcher.c
            )
+        target_include_directories(hs_exec_common SYSTEM PUBLIC ${hs_include_dirs})
 
        # hs_version.c is added explicitly to avoid some build systems that refuse to
        # create a lib without any src (I'm looking at you Xcode)
@@ -1414,15 +1433,7 @@ if(NOT WIN32 AND BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-set(hs_include_dirs 
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
 target_include_directories(hs_runtime SYSTEM PUBLIC ${hs_include_dirs})
-target_include_directories(hs_exec SYSTEM PUBLIC ${hs_include_dirs})
 target_include_directories(hs_compile SYSTEM PUBLIC ${hs_include_dirs})
 target_include_directories(hs SYSTEM PUBLIC ${hs_include_dirs})
 

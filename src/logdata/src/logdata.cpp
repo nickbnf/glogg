@@ -57,7 +57,7 @@
 LogData::LogData()
     : AbstractLogData()
     , indexing_data_( std::make_shared<IndexingData>() )
-    , operationQueue_( [this] { attached_file_->attachReader(); } )
+    , operationQueue_( [ this ] { attached_file_->attachReader(); } )
     , codec_( QTextCodec::codecForName( "ISO-8859-1" ) )
 {
     // Initialise the file watcher
@@ -322,89 +322,126 @@ std::vector<QString> LogData::doGetExpandedLines( LineNumber first_line, LinesCo
                              []( QString&& lineData ) { return untabify( lineData ); } );
 }
 
-std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCount number,
-                                                QString ( *processLine )( QString&& ) ) const
+LogData::RawLines LogData::getLinesRaw( LineNumber first_line, LinesCount number ) const
 {
     const auto last_line = first_line + number - 1_lcount;
 
-    LOG_DEBUG << "LogData::getLines first_line:" << first_line << " nb:" << number;
+    std::vector<char> buffer;
+    std::vector<qint64> endOfLines;
+    endOfLines.reserve( number.get() );
+
+    {
+        IndexingData::ConstAccessor scopedAccessor{ indexing_data_.get() };
+
+        if ( last_line >= scopedAccessor.getNbLines() ) {
+            LOG_WARNING << "LogData::getLines Lines out of bound asked for";
+            return {}; /* exception? */
+        }
+
+        ScopedFileHolder<FileHolder> locker( attached_file_.get() );
+
+        const auto first_byte = ( first_line.get() == 0 )
+                                    ? 0
+                                    : scopedAccessor.getPosForLine( first_line - 1_lcount ).get();
+        const auto last_byte = scopedAccessor.getPosForLine( last_line ).get();
+
+        for ( LineNumber line = first_line; ( line <= last_line ); ++line ) {
+            endOfLines.emplace_back( scopedAccessor.getPosForLine( line ).get() - first_byte );
+        }
+
+        const auto bytesToRead = last_byte - first_byte;
+        LOG_DEBUG << "LogData::getLines will try to read:" << bytesToRead << " bytes";
+        buffer.resize( static_cast<std::size_t>( bytesToRead ) );
+
+        locker.getFile()->seek( first_byte );
+        const auto bytesRead = locker.getFile()->read( buffer.data(), bytesToRead );
+
+        if ( bytesRead != bytesToRead ) {
+            LOG_WARNING << "LogData::getLines failed to read " << bytesToRead << " bytes, got "
+                        << bytesRead;
+        }
+    }
+
+    LOG_DEBUG << "LogData::getLines done reading lines:" << buffer.size();
+
+    return std::make_tuple( first_line, number, std::move( buffer ), std::move( endOfLines ) );
+}
+
+std::vector<QString> LogData::decodeLines( const RawLines& rawLines ) const
+{
+
+    LineNumber first_line = std::get<0>(rawLines);
+    LinesCount number = std::get<1>(rawLines);
+    const std::vector<char>& buffer = std::get<2>(rawLines);
+    const std::vector<qint64>& endOfLines = std::get<3>(rawLines);
+
+    //std::tie( first_line, number, buffer, endOfLines ) = rawLines;
 
     if ( number.get() == 0 ) {
         return std::vector<QString>();
     }
 
+    std::vector<QString> decodedLines;
+    decodedLines.reserve( number.get() );
+
+    const auto last_line = first_line + number - 1_lcount;
+
+    qint64 lineStart = 0;
+    size_t currentLine = 0;
+    auto decoder = codec_.makeDecoder();
+    const auto lineFeedWidth = decoder.second.lineFeedWidth;
+
+    for ( LineNumber line = first_line; ( line <= last_line ); ++line, ++currentLine ) {
+        const auto lineEnd = endOfLines[ currentLine ];
+
+        const auto length = lineEnd - lineStart - lineFeedWidth;
+
+        LOG_DEBUG << "LogData::getLines line " << line << ", length " << length;
+
+        if ( length >= std::numeric_limits<LineLength::UnderlyingType>::max() / 2 ) {
+            decodedLines.emplace_back( "KLOGG WARNING: this line is too long" );
+            break;
+        }
+
+        if ( lineStart + length > static_cast<qint64>( buffer.size() ) ) {
+            decodedLines.emplace_back( "KLOGG WARNING: file read failed" );
+            LOG_WARNING << "LogData::getLines not enough data in buffer";
+            break;
+        }
+
+        decodedLines.push_back(
+            decoder.first->toUnicode( buffer.data() + lineStart, static_cast<int>( length ) ) );
+
+        lineStart = lineEnd;
+    }
+
+    while ( decodedLines.size() < number.get() ) {
+        decodedLines.emplace_back( "KLOGG WARNING: failed to read some lines before this one" );
+    }
+
+    return decodedLines;
+}
+
+std::vector<QString> LogData::getLinesFromFile( LineNumber first_line, LinesCount number,
+                                                QString ( *processLine )( QString&& ) ) const
+{
+    LOG_DEBUG << "LogData::getLines first_line:" << first_line << " nb:" << number;
+
+    if ( number.get() == 0 ) {
+        return std::vector<QString>();
+    }
     std::vector<QString> processedLines;
-    processedLines.reserve( number.get() );
-
     try {
-        std::vector<char> buffer;
 
-        std::vector<qint64> endOfLines;
-        endOfLines.reserve( number.get() );
+        const auto rawLines = getLinesRaw( first_line, number );
+        auto decodedLines = decodeLines( rawLines );
 
-        {
-            IndexingData::ConstAccessor scopedAccessor{ indexing_data_.get() };
+        processedLines.reserve( decodedLines.size() );
 
-            if ( last_line >= scopedAccessor.getNbLines() ) {
-                LOG_WARNING << "LogData::getLines Lines out of bound asked for";
-                return std::vector<QString>(); /* exception? */
-            }
-
-            ScopedFileHolder<FileHolder> locker( attached_file_.get() );
-
-            const auto first_byte
-                = ( first_line.get() == 0 )
-                      ? 0
-                      : scopedAccessor.getPosForLine( first_line - 1_lcount ).get();
-            const auto last_byte = scopedAccessor.getPosForLine( last_line ).get();
-
-            for ( LineNumber line = first_line; ( line <= last_line ); ++line ) {
-                endOfLines.emplace_back( scopedAccessor.getPosForLine( line ).get() - first_byte );
-            }
-
-            const auto bytesToRead = last_byte - first_byte;
-            LOG_DEBUG << "LogData::getLines will try to read:" << bytesToRead << " bytes";
-            buffer.resize( static_cast<std::size_t>( bytesToRead ) );
-
-            locker.getFile()->seek( first_byte );
-            const auto bytesRead = locker.getFile()->read( buffer.data(), bytesToRead );
-
-            if ( bytesRead != bytesToRead ) {
-                LOG_WARNING << "LogData::getLines failed to read " << bytesToRead << " bytes, got "
-                            << bytesRead;
-            }
+        for ( auto&& line : decodedLines ) {
+            processedLines.push_back( processLine( std::move( line ) ) );
         }
 
-        LOG_DEBUG << "LogData::getLines done reading lines:" << buffer.size();
-
-        qint64 lineStart = 0;
-        size_t currentLine = 0;
-        auto decoder = codec_.makeDecoder();
-        const auto lineFeedWidth = decoder.second.lineFeedWidth;
-
-        for ( LineNumber line = first_line; ( line <= last_line ); ++line, ++currentLine ) {
-            const auto lineEnd = endOfLines[ currentLine ];
-
-            const auto length = lineEnd - lineStart - lineFeedWidth;
-
-            LOG_DEBUG << "LogData::getLines line " << line << ", length " << length;
-
-            if ( length >= std::numeric_limits<LineLength::UnderlyingType>::max() / 2 ) {
-                processedLines.emplace_back( "KLOGG WARNING: this line is too long" );
-                break;
-            }
-
-            if ( lineStart + length > static_cast<qint64>( buffer.size() ) ) {
-                processedLines.emplace_back( "KLOGG WARNING: file read failed" );
-                LOG_WARNING << "LogData::getLines not enough data in buffer";
-                break;
-            }
-
-            processedLines.push_back( processLine( decoder.first->toUnicode(
-                buffer.data() + lineStart, static_cast<int>( length ) ) ) );
-
-            lineStart = lineEnd;
-        }
     } catch ( const std::bad_alloc& e ) {
         LOG_DEBUG << "LogData::getLines not enough memory " << e.what();
         processedLines.emplace_back( "KLOGG WARNING: not enough memory" );

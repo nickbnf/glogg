@@ -92,6 +92,10 @@ class LogData : public AbstractLogData {
     // Get the auto-detected encoding for the indexed text.
     QTextCodec* getDetectedEncoding() const;
 
+    using RawLines = std::tuple<LineNumber, LinesCount, std::vector<char>, std::vector<qint64>>;
+    RawLines getLinesRaw(LineNumber first, LinesCount number) const;
+    std::vector<QString> decodeLines(const RawLines& rawLines) const;
+
   signals:
     // Sent during the 'attach' process to signal progress
     // percent being the percentage of completion.

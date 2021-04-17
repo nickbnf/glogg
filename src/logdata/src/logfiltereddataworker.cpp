@@ -70,7 +70,7 @@ struct PartialSearchResults {
 
 struct SearchBlockData {
     SearchBlockData() = default;
-    SearchBlockData( LineNumber start, std::vector<QString> blockLines )
+    SearchBlockData( LineNumber start, LogData::RawLines blockLines )
         : chunkStart( start )
         , lines( std::move( blockLines ) )
     {
@@ -83,7 +83,7 @@ struct SearchBlockData {
     SearchBlockData& operator=( SearchBlockData&& ) = default;
 
     LineNumber chunkStart;
-    std::vector<QString> lines;
+    LogData::RawLines lines;
 };
 
 PartialSearchResults filterLines( const QRegularExpression& regex,
@@ -322,7 +322,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         }
 
         return qMax( 1, config.searchThreadPoolSize() == 0
-                            ? QThread::idealThreadCount() - 1
+                            ? QThread::idealThreadCount()
                             : static_cast<int>( config.searchThreadPoolSize() ) );
     }() );
 
@@ -365,10 +365,10 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
             const auto linesInChunk
                 = LinesCount( qMin( nbLinesInChunk.get(), ( endLine - chunkStart ).get() ) );
-            auto lines = sourceLogData_.getLines( chunkStart, linesInChunk );
+            auto lines = sourceLogData_.getLinesRaw( chunkStart, linesInChunk );
 
-            LOG_DEBUG << "Sending chunk starting at " << chunkStart << ", " << lines.size()
-                      << " lines read.";
+            /*LOG_DEBUG << "Sending chunk starting at " << chunkStart << ", " << lines.second.size()
+                      << " lines read.";*/
 
             auto blockData = BlockDataType{ chunkStart, std::move( lines ) };
 
@@ -376,9 +376,9 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             const auto chunkReadTime
                 = duration_cast<microseconds>( lineSourceEndTime - lineSourceStartTime );
 
-            LOG_DEBUG << "Sent chunk starting at " << chunkStart << ", " << blockData->lines.size()
+            /*LOG_DEBUG << "Sent chunk starting at " << chunkStart << ", " << blockData->lines.second.size()
                       << " lines read in " << static_cast<float>( chunkReadTime.count() ) / 1000.f
-                      << " ms";
+                      << " ms";*/
 
             chunkStart = chunkStart + nbLinesInChunk;
 
@@ -400,12 +400,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         regexMatchers.emplace_back(
             QRegularExpression{ regexp_.pattern(), regexp_.patternOptions() }, microseconds{ 0 },
             RegexMatcher(
-                searchGraph, 1, [ &regexMatchers, index ]( const BlockDataType& blockData ) {
+                searchGraph, 1, [ this, &regexMatchers, index ]( const BlockDataType& blockData ) {
                     QRegularExpression& regex = std::get<0>( regexMatchers.at( index ) );
                     const auto matchStartTime = high_resolution_clock::now();
 
                     auto results = PartialResultType(
-                        filterLines( regex, blockData->lines, blockData->chunkStart ) );
+                        filterLines( regex, sourceLogData_.decodeLines(blockData->lines), blockData->chunkStart ) );
 
                     const auto matchEndTime = high_resolution_clock::now();
 
@@ -490,9 +490,10 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     searchGraph.wait_for_all();
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    const auto duration = static_cast<float>( duration_cast<microseconds>( t2 - t1 ).count() );
+    const auto duration
+        = static_cast<float>( duration_cast<microseconds>( t2 - t1 ).count() ) / 1000.f;
 
-    LOG_INFO << "Searching done, overall duration " << duration / 1000.f << " ms";
+    LOG_INFO << "Searching done, overall duration " << duration << " ms";
     LOG_INFO << "Line reading took " << static_cast<float>( fileReadingDuration.count() ) / 1000.f
              << " ms";
     LOG_INFO << "Results combining took "
@@ -503,11 +504,16 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                  << static_cast<float>( std::get<1>( regexMatcher ).count() ) / 1000.f << " ms";
     }
 
+    const auto totalFileSize = sourceLogData_.getFileSize();
+
     LOG_INFO << "Searching perf "
              << static_cast<uint32_t>( std::floor(
-                    1000 * 1000.f * static_cast<float>( ( endLine - initialLine ).get() )
-                    / duration ) )
+                    1000.f * static_cast<float>( ( endLine - initialLine ).get() ) / duration ) )
              << " lines/s";
+    LOG_INFO << "Searching io perf "
+             << ( 1000.f * static_cast<float>( totalFileSize ) / static_cast<float>( duration ) )
+                    / ( 1024 * 1024 )
+             << " MiB/s";
 
     emit searchProgressed( nbMatches, 100, initialLine );
     emit searchFinished();

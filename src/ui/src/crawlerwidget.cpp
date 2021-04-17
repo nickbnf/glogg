@@ -58,15 +58,17 @@
 #include <QStandardItemModel>
 #include <QStringListModel>
 
+#include "data/hsregularexpression.h"
+
 #include "crawlerwidget.h"
 
 #include "configuration.h"
+#include "dispatch_to.h"
 #include "infoline.h"
 #include "overview.h"
 #include "quickfindpattern.h"
 #include "quickfindwidget.h"
 #include "savedsearches.h"
-#include "dispatch_to.h"
 
 // Palette for error signaling (yellow background)
 const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
@@ -240,7 +242,7 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 void CrawlerWidget::changeEvent( QEvent* event )
 {
     if ( event->type() == QEvent::StyleChange ) {
-        dispatchToMainThread( [ this ] {
+        dispatchToMainThread( [this] {
             loadIcons();
             searchInfoLineDefaultPalette = searchInfoLine->palette();
         } );
@@ -522,7 +524,7 @@ void CrawlerWidget::markLinesFromFiltered( const std::vector<LineNumber>& lines 
     std::vector<LineNumber> linesInMain;
     linesInMain.reserve( lines.size() );
     std::transform( lines.begin(), lines.end(), std::back_inserter( linesInMain ),
-                    [ this ]( const auto& filteredLine ) {
+                    [this]( const auto& filteredLine ) {
                         if ( filteredLine < logData_->getNbLine() ) {
                             return logFilteredData_->getMatchingLineNumber( filteredLine );
                         }
@@ -980,9 +982,9 @@ void CrawlerWidget::setup()
     connect( visibilityBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this,
              &CrawlerWidget::changeFilteredViewVisibility );
 
-    connect( logMainView, &LogMainView::newSelection, [ this ]( auto ) { logMainView->update(); } );
+    connect( logMainView, &LogMainView::newSelection, [this]( auto ) { logMainView->update(); } );
     connect( filteredView, &FilteredView::newSelection,
-             [ this ]( auto ) { filteredView->update(); } );
+             [this]( auto ) { filteredView->update(); } );
 
     connect( filteredView, &FilteredView::newSelection, this, &CrawlerWidget::jumpToMatchingLine );
 
@@ -1023,7 +1025,7 @@ void CrawlerWidget::setup()
     connect( filteredView, &FilteredView::clearSearchLimits, this,
              &CrawlerWidget::clearSearchLimits );
 
-    auto saveSplitterSizes = [ this, &config ]() { config.setSplitterSizes( this->sizes() ); };
+    auto saveSplitterSizes = [this, &config]() { config.setSplitterSizes( this->sizes() ); };
 
     connect( logMainView, &LogMainView::saveDefaultSplitterSizes, saveSplitterSizes );
     connect( filteredView, &FilteredView::saveDefaultSplitterSizes, saveSplitterSizes );
@@ -1110,8 +1112,9 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 
         // Constructs the regexp
         QRegularExpression regexp( pattern, patternOptions );
+        HsRegularExpression hsExpression( regexp );
 
-        if ( regexp.isValid() ) {
+        if ( hsExpression.isValid() ) {
             // Activate the stop button
             stopButton->setEnabled( true );
             stopButton->show();
@@ -1130,13 +1133,13 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 
             // Inform the user
             QString errorMessage = tr( "Error in expression" );
-            const int offset = regexp.patternErrorOffset();
-            if ( offset != -1 ) {
-                errorMessage += " at position ";
-                errorMessage += QString::number( offset );
-            }
+            // const int offset = regexp.patternErrorOffset();
+            // if ( offset != -1 ) {
+            //     errorMessage += " at position ";
+            //     errorMessage += QString::number( offset );
+            // }
             errorMessage += ": ";
-            errorMessage += regexp.errorString();
+            errorMessage += hsExpression.errorString();
             searchInfoLine->setPalette( errorPalette );
             searchInfoLine->setText( errorMessage );
             searchInfoLine->show();
@@ -1204,7 +1207,7 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 // Determine the right encoding and set the views.
 void CrawlerWidget::updateEncoding()
 {
-    const QTextCodec* textCodec = [ this ]() {
+    const QTextCodec* textCodec = [this]() {
         QTextCodec* codec = nullptr;
         if ( !encodingMib_ ) {
             codec = logData_->getDetectedEncoding();

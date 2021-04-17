@@ -14,6 +14,7 @@ add_library(logdata STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/linetypes.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/fileholder.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/filedigest.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/hsregularexpression.h
 
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/abstractlogdata.cpp
@@ -28,6 +29,7 @@ add_library(logdata STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/marks.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/fileholder.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/filedigest.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/hsregularexpression.cpp
 
         src/filedigest.cpp)
 
@@ -46,7 +48,8 @@ target_link_libraries(logdata PUBLIC
         absl::variant
         utils
         filewatch
-        uchardet)
+        uchardet
+        hs)
 
 target_link_libraries(logdata PRIVATE xxHash::xxhash)
 

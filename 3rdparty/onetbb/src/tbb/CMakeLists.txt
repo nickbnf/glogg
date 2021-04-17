@@ -110,7 +110,7 @@ target_link_libraries(klogg_tbb
     ${TBB_COMMON_LINK_LIBS}
 )
 
-tbb_install_target(klogg_tbb)
+#tbb_install_target(klogg_tbb)
 
 if (WIN32)
     # Create a copy of target linker file (tbb<ver>[_debug].lib) with legacy name (tbb[_debug].lib)

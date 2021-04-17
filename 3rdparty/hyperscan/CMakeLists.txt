@@ -504,9 +504,9 @@ if (NOT WIN32)
         endif()
     endforeach()
 
-    configure_file(libhs.pc.in libhs.pc @ONLY) # only replace @ quoted vars
-    install(FILES ${CMAKE_BINARY_DIR}/libhs.pc
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+    #configure_file(libhs.pc.in libhs.pc @ONLY) # only replace @ quoted vars
+    #install(FILES ${CMAKE_BINARY_DIR}/libhs.pc
+    #    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 endif()
 
 # only set these after all tests are done
@@ -567,7 +567,7 @@ SET(hs_HEADERS
     src/hs_compile.h
     src/hs_runtime.h
 )
-install(FILES ${hs_HEADERS} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hs")
+#install(FILES ${hs_HEADERS} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hs")
 
 set (hs_exec_common_SRCS
     src/alloc.c
@@ -1329,7 +1329,7 @@ else (FAT_RUNTIME)
 endif (NOT FAT_RUNTIME)
 
 if (NOT BUILD_SHARED_LIBS)
-    install(TARGETS hs_runtime DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    #install(TARGETS hs_runtime DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 if (BUILD_STATIC_AND_SHARED OR BUILD_SHARED_LIBS)
@@ -1361,7 +1361,7 @@ if (BUILD_STATIC_LIBS)
 endif ()
 
 if (NOT BUILD_SHARED_LIBS)
-    install(TARGETS hs DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    #install(TARGETS hs DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 if (BUILD_STATIC_AND_SHARED OR BUILD_SHARED_LIBS)

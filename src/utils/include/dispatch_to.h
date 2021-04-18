@@ -32,7 +32,7 @@
 template <typename F>
 static void dispatchToObject( F&& fun, QObject* obj = qApp )
 {
-    QMetaObject::invokeMethod( obj, std::forward<F>( fun ) );
+    QMetaObject::invokeMethod( obj, std::forward<F>( fun ),  Qt::QueuedConnection );
 }
 
 template <typename F>
@@ -40,7 +40,7 @@ static void dispatchToThread( F&& fun, QThread* thread = qApp->thread() )
 {
     auto* obj = QAbstractEventDispatcher::instance( thread );
     Q_ASSERT( obj );
-    QMetaObject::invokeMethod( obj, std::forward<F>( fun ) );
+    QMetaObject::invokeMethod( obj, std::forward<F>( fun ), Qt::QueuedConnection );
 }
 #else
 namespace detail {

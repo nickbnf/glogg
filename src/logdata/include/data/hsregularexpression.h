@@ -23,10 +23,27 @@
 #include <QRegularExpression>
 #include <QString>
 
+#ifdef KLOGG_HAS_HS
 #include <hs.h>
+#endif
 
-#include "log.h"
+class DefaultRegularExpressionMatcher {
+  public:
+    explicit DefaultRegularExpressionMatcher( const QRegularExpression& regexp )
+        : regexp_( regexp.pattern(), regexp.patternOptions() )
+    {
+    }
 
+    bool hasMatch( const QString& data ) const
+    {
+        return regexp_.match( data ).hasMatch();
+    }
+
+  private:
+    QRegularExpression regexp_;
+};
+
+#ifdef KLOGG_HAS_HS
 class HsMatcher {
   public:
     HsMatcher() = default;
@@ -40,9 +57,6 @@ class HsMatcher {
     HsMatcher& operator=( HsMatcher&& other );
 
     bool hasMatch( const QString& data ) const;
-
-    static int matchCallback( unsigned int id, unsigned long long from, unsigned long long to,
-                              unsigned int flags, void* context );
 
   private:
     const hs_database_t* database_;
@@ -71,5 +85,41 @@ class HsRegularExpression {
 
     QString errorMessage_;
 };
+#else
+class HsMatcher : public DefaultRegularExpressionMatcher {
+  public:
+    explicit HsMatcher( const QRegularExpression& regexp )
+        : DefaultRegularExpressionMatcher( regexp )
+    {
+    }
+};
+
+class HsRegularExpression {
+  public:
+    explicit HsRegularExpression( const QRegularExpression& regexp )
+        : regexp_( regexp )
+    {
+    }
+
+    bool isValid() const
+    {
+        return regexp_.isValid();
+    }
+
+    QString errorString() const
+    {
+        return regexp_.errorString();
+    }
+
+    HsMatcher createMatcher() const
+    {
+        return HsMatcher( regexp_ );
+    }
+
+  private:
+    QRegularExpression regexp_;
+};
+
+#endif
 
 #endif

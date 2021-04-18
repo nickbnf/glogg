@@ -38,7 +38,9 @@ add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 
+if(KLOGG_USE_HYPERSCAN)
 add_subdirectory(hyperscan) #5.4.0
+endif(KLOGG_USE_HYPERSCAN)
 
 if(KLOGG_USE_SENTRY)
     set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)

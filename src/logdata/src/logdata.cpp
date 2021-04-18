@@ -357,7 +357,7 @@ LogData::RawLines LogData::getLinesRaw( LineNumber first_line, LinesCount number
         const auto bytesRead = locker.getFile()->read( buffer.data(), bytesToRead );
 
         if ( bytesRead != bytesToRead ) {
-            LOG_WARNING << "LogData::getLines failed to read " << bytesToRead << " bytes, got "
+            LOG_DEBUG << "LogData::getLines failed to read " << bytesToRead << " bytes, got "
                         << bytesRead;
         }
     }

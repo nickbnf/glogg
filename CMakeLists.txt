@@ -16,6 +16,8 @@ set(PROJECT_DESCRIPTION "${PROJECT_NAME} log viewer")
 option(BUILD_TESTS "Build tests" ON)
 option(USE_LTO "Use link time optimization" ON)
 option(KLOGG_USE_SENTRY "Use Sentry" ON)
+option(KLOGG_USE_HYPERSCAN "Use Hyperscan" ON)
+
 
 set(BUILD_VERSION $ENV{KLOGG_VERSION} CACHE STRING "build version")
 set(BUILD_NUMBER "" CACHE STRING "build number")

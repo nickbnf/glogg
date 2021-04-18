@@ -40,11 +40,12 @@
 
 #include "log.h"
 
+#include "hsregularexpression.h"
 #include "logdata.h"
 #include "logfiltereddataworker.h"
-#include "hsregularexpression.h"
 
 #include "configuration.h"
+#include "overload_visitor.h"
 
 #include <immer/box.hpp>
 #include <tbb/flow_graph.h>
@@ -52,8 +53,6 @@
 #include <chrono>
 #include <cmath>
 #include <utility>
-
-#include <hs.h>
 
 namespace {
 struct PartialSearchResults {
@@ -89,7 +88,9 @@ struct SearchBlockData {
     LogData::RawLines lines;
 };
 
-PartialSearchResults filterLines( const HsMatcher& matcher, const std::vector<QString>& lines,
+using MatcherVariant = absl::variant<DefaultRegularExpressionMatcher, HsMatcher>;
+
+PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vector<QString>& lines,
                                   LineNumber chunkStart )
 {
     LOG_DEBUG << "Filter lines at " << chunkStart;
@@ -98,7 +99,11 @@ PartialSearchResults filterLines( const HsMatcher& matcher, const std::vector<QS
     results.processedLines = LinesCount( static_cast<LinesCount::UnderlyingType>( lines.size() ) );
     for ( size_t i = 0; i < lines.size(); ++i ) {
         const auto& l = lines.at( i );
-        if ( matcher.hasMatch( l ) ) {
+
+        const auto hasMatch
+            = absl::visit( [&l]( const auto& m ) { return m.hasMatch( l ); }, matcher );
+
+        if ( hasMatch ) {
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( l ) );
             results.matchingLines
                 = std::move( results.matchingLines )
@@ -397,18 +402,24 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     auto lineBlocksQueue = tbb::flow::buffer_node<BlockDataType>( searchGraph );
 
-    HsRegularExpression hsRegularExpression {regexp_};
+    HsRegularExpression hsRegularExpression{ regexp_ };
+    const auto useHsMatcher = config.regexpEngine() == RegexpEngine::Hyperscan;
 
-    using RegexMatcher
+    LOG_INFO << "Regexp engine " << static_cast<int>( config.regexpEngine() );
+
+    using RegexMatcherNode
         = tbb::flow::function_node<BlockDataType, PartialResultType, tbb::flow::rejecting>;
 
-    std::vector<std::tuple<HsMatcher, microseconds, RegexMatcher>> regexMatchers;
+    using MatcherContext = std::tuple<MatcherVariant, microseconds, RegexMatcherNode>;
+    std::vector<MatcherContext> regexMatchers;
     for ( auto index = 0u; index < matchingThreadsCount; ++index ) {
         regexMatchers.emplace_back(
-            hsRegularExpression.createMatcher(), microseconds{ 0 },
-            RegexMatcher(
+            useHsMatcher ? MatcherVariant{ hsRegularExpression.createMatcher() }
+                         : MatcherVariant{ DefaultRegularExpressionMatcher( regexp_ ) },
+            microseconds{ 0 },
+            RegexMatcherNode(
                 searchGraph, 1, [this, &regexMatchers, index]( const BlockDataType& blockData ) {
-                    HsMatcher& matcher = std::get<0>( regexMatchers.at( index ) );
+                    const auto& matcher = std::get<0>( regexMatchers.at( index ) );
                     const auto matchStartTime = high_resolution_clock::now();
 
                     auto results = PartialResultType(

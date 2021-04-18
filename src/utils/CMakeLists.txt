@@ -21,6 +21,7 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/readablesize.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/synchronization.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/memory_info.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/overload_visitor.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/styles.h)
 
 set_target_properties(utils PROPERTIES AUTOMOC ON)
@@ -38,6 +39,10 @@ target_link_libraries(utils PUBLIC
         klogg_karchive
         whereami
         plog)
+
+if(KLOGG_USE_HYPERSCAN)
+    target_compile_definitions(utils PUBLIC KLOGG_HAS_HS)
+endif()
 
 add_dependencies(utils generate_version)
 

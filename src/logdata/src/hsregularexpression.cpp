@@ -17,7 +17,24 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef KLOGG_HAS_HS
 #include "hsregularexpression.h"
+
+#include "log.h"
+
+namespace {
+int matchCallback( unsigned int id, unsigned long long from, unsigned long long to,
+                   unsigned int flags, void* context )
+{
+    Q_UNUSED( id );
+    Q_UNUSED( from );
+    Q_UNUSED( to );
+    Q_UNUSED( flags );
+    Q_UNUSED( context );
+
+    return 1;
+}
+} // namespace
 
 HsMatcher::HsMatcher( const hs_database_t* db, hs_scratch_t* scratch )
     : database_{ db }
@@ -56,21 +73,9 @@ bool HsMatcher::hasMatch( const QString& data ) const
     const auto utf8Data = data.toUtf8();
     const auto result
         = hs_scan( database_, utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ), 0,
-                   scratch_, &HsMatcher::matchCallback, nullptr );
+                   scratch_, matchCallback, nullptr );
 
     return result == HS_SCAN_TERMINATED;
-}
-
-int HsMatcher::matchCallback( unsigned int id, unsigned long long from,
-                                     unsigned long long to, unsigned int flags, void* context )
-{
-    Q_UNUSED( id );
-    Q_UNUSED( from );
-    Q_UNUSED( to );
-    Q_UNUSED( flags );
-    Q_UNUSED( context );
-
-    return 1;
 }
 
 HsRegularExpression::HsRegularExpression( const QRegularExpression& pattern )
@@ -79,14 +84,12 @@ HsRegularExpression::HsRegularExpression( const QRegularExpression& pattern )
     hs_compile_error_t* error = nullptr;
 
     unsigned flags = HS_FLAG_UTF8 | HS_FLAG_UCP | HS_FLAG_ALLOWEMPTY | HS_FLAG_SINGLEMATCH;
-    if (pattern.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption )) {
+    if ( pattern.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) ) {
         flags |= HS_FLAG_CASELESS;
     }
 
-    const auto compileResult
-        = hs_compile( pattern.pattern().toUtf8().data(),
-                      flags,
-                      HS_MODE_BLOCK, nullptr, &db, &error );
+    const auto compileResult = hs_compile( pattern.pattern().toUtf8().data(), flags, HS_MODE_BLOCK,
+                                           nullptr, &db, &error );
 
     if ( compileResult != HS_SUCCESS ) {
         LOG_ERROR << "Failed to compile pattern " << error->message;
@@ -160,3 +163,4 @@ HsMatcher HsRegularExpression::createMatcher() const
 
     return HsMatcher{ database_, matcherScratch };
 }
+#endif

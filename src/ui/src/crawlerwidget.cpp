@@ -71,7 +71,7 @@
 #include "savedsearches.h"
 
 // Palette for error signaling (yellow background)
-const QPalette CrawlerWidget::errorPalette( QColor( "yellow" ) );
+const QPalette CrawlerWidget::errorPalette( Qt::darkYellow );
 
 // Implementation of the view context for the CrawlerWidget
 class CrawlerWidgetContext : public ViewContextInterface {
@@ -244,7 +244,7 @@ void CrawlerWidget::changeEvent( QEvent* event )
     if ( event->type() == QEvent::StyleChange ) {
         dispatchToMainThread( [this] {
             loadIcons();
-            searchInfoLineDefaultPalette = searchInfoLine->palette();
+            searchInfoLineDefaultPalette = this->palette();
         } );
     }
 
@@ -868,7 +868,7 @@ void CrawlerWidget::setup()
     auto searchInfoLineSizePolicy = searchInfoLine->sizePolicy();
     searchInfoLineSizePolicy.setRetainSizeWhenHidden( false );
     searchInfoLine->setSizePolicy( searchInfoLineSizePolicy );
-    searchInfoLineDefaultPalette = searchInfoLine->palette();
+    searchInfoLineDefaultPalette = this->palette();
     searchInfoLine->setContentsMargins( 2, 2, 2, 2 );
 
     matchCaseButton = new QToolButton();

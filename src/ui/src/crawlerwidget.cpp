@@ -1112,11 +1112,19 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
 
         // Constructs the regexp
         QRegularExpression regexp( pattern, patternOptions );
-        HsRegularExpression hsExpression( regexp );
+
+        auto isValidExpression = regexp.isValid();
+        QString errorString = regexp.errorString();
 
         const auto useHsMatcher = Configuration::get().regexpEngine() == RegexpEngine::Hyperscan;
 
-        if ( ( useHsMatcher && hsExpression.isValid() ) || ( !useHsMatcher && regexp.isValid() ) ) {
+        if ( useHsMatcher ) {
+            HsRegularExpression hsExpression( regexp );
+            isValidExpression = hsExpression.isValid();
+            errorString = hsExpression.errorString();
+        }
+
+        if ( isValidExpression ) {
             // Activate the stop button
             stopButton->setEnabled( true );
             stopButton->show();
@@ -1141,7 +1149,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             //     errorMessage += QString::number( offset );
             // }
             errorMessage += ": ";
-            errorMessage += useHsMatcher ? hsExpression.errorString() : regexp.errorString();
+            errorMessage += errorString;
             searchInfoLine->setPalette( errorPalette );
             searchInfoLine->setText( errorMessage );
             searchInfoLine->show();

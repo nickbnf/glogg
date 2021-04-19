@@ -1,7 +1,7 @@
 ---
 title: "Automatic crash reporting"
 date: 2020-09-30T01:46+03:00
-anchor: "v20_9_crash reporting"
+anchor: "v20_9_crash_reporting"
 weight: 35
 ---
 

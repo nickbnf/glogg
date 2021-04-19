@@ -25,6 +25,7 @@
 
 #ifdef KLOGG_HAS_HS
 #include <hs.h>
+#include <memory>
 #endif
 
 class DefaultRegularExpressionMatcher {
@@ -44,35 +45,55 @@ class DefaultRegularExpressionMatcher {
 };
 
 #ifdef KLOGG_HAS_HS
+
+template <typename T, int ( *Func )( T* )>
+struct HsDeleteHelper {
+    void operator()( T* t )
+    {
+        Func( t );
+    }
+};
+
+template <typename T, int ( *Deleter )( T* ), typename CreateFunc, typename... Args>
+std::unique_ptr<T, HsDeleteHelper<T, Deleter>> wrapHsPointer( CreateFunc createFunc,
+                                                              Args&&... args )
+{
+    return { createFunc( std::forward<Args>( args )... ), {} };
+}
+
+using HsScratchDeleter = HsDeleteHelper<hs_scratch_t, hs_free_scratch>;
+using HsScratch = std::unique_ptr<hs_scratch_t, HsScratchDeleter>;
+
+using HsDatabaseDeleter = HsDeleteHelper<hs_database_t, hs_free_database>;
+using HsDatabase = std::shared_ptr<hs_database_t>;
+
 class HsMatcher {
   public:
     HsMatcher() = default;
-    HsMatcher( const hs_database_t* db, hs_scratch_t* scratch );
-    ~HsMatcher();
+    HsMatcher( HsDatabase database, HsScratch scratch );
 
     HsMatcher( const HsMatcher& ) = delete;
     HsMatcher& operator=( const HsMatcher& ) = delete;
 
-    HsMatcher( HsMatcher&& other );
-    HsMatcher& operator=( HsMatcher&& other );
+    HsMatcher( HsMatcher&& other ) = default;
+    HsMatcher& operator=( HsMatcher&& other ) = default;
 
     bool hasMatch( const QString& data ) const;
 
   private:
-    const hs_database_t* database_;
-    hs_scratch_t* scratch_ = nullptr;
+    HsDatabase database_;
+    HsScratch scratch_;
 };
 
 class HsRegularExpression {
   public:
     explicit HsRegularExpression( const QRegularExpression& pattern );
-    ~HsRegularExpression();
 
     HsRegularExpression( const HsRegularExpression& ) = delete;
     HsRegularExpression& operator=( const HsRegularExpression& ) = delete;
 
-    HsRegularExpression( HsRegularExpression&& other );
-    HsRegularExpression& operator=( HsRegularExpression&& other );
+    HsRegularExpression( HsRegularExpression&& other ) = default;
+    HsRegularExpression& operator=( HsRegularExpression&& other ) = default;
 
     bool isValid() const;
     QString errorString() const;
@@ -80,8 +101,8 @@ class HsRegularExpression {
     HsMatcher createMatcher() const;
 
   private:
-    hs_database_t* database_ = nullptr;
-    hs_scratch_t* scratch_ = nullptr;
+    HsDatabase database_;
+    HsScratch scratch_;
 
     QString errorMessage_;
 };

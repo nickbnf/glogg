@@ -34,107 +34,70 @@ int matchCallback( unsigned int id, unsigned long long from, unsigned long long 
 
     return 1;
 }
+
 } // namespace
 
-HsMatcher::HsMatcher( const hs_database_t* db, hs_scratch_t* scratch )
-    : database_{ db }
-    , scratch_{ scratch }
+HsMatcher::HsMatcher( HsDatabase db, HsScratch scratch )
+    : database_{ std::move( db ) }
+    , scratch_{ std::move( scratch ) }
 {
-}
-
-HsMatcher::~HsMatcher()
-{
-    if ( scratch_ ) {
-        hs_free_scratch( scratch_ );
-    }
-}
-
-HsMatcher::HsMatcher( HsMatcher&& other )
-{
-    *this = std::move( other );
-}
-
-HsMatcher& HsMatcher::operator=( HsMatcher&& other )
-{
-    if ( this != &other ) {
-        database_ = other.database_;
-        scratch_ = std::exchange( other.scratch_, nullptr );
-    }
-
-    return *this;
 }
 
 bool HsMatcher::hasMatch( const QString& data ) const
 {
-    if ( !scratch_ ) {
+    if ( !scratch_ || !database_ ) {
         return false;
     }
 
     const auto utf8Data = data.toUtf8();
     const auto result
-        = hs_scan( database_, utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ), 0,
-                   scratch_, matchCallback, nullptr );
+        = hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ),
+                   0, scratch_.get(), matchCallback, nullptr );
 
     return result == HS_SCAN_TERMINATED;
 }
 
 HsRegularExpression::HsRegularExpression( const QRegularExpression& pattern )
 {
-    hs_database_t* db = nullptr;
-    hs_compile_error_t* error = nullptr;
+    database_ = HsDatabase{ wrapHsPointer<hs_database_t, hs_free_database>(
+        []( const QRegularExpression& regexp, QString& errorMessage ) -> hs_database_t* {
+            hs_database_t* db = nullptr;
+            hs_compile_error_t* error = nullptr;
 
-    unsigned flags = HS_FLAG_UTF8 | HS_FLAG_UCP | HS_FLAG_ALLOWEMPTY | HS_FLAG_SINGLEMATCH;
-    if ( pattern.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) ) {
-        flags |= HS_FLAG_CASELESS;
-    }
+            unsigned flags = HS_FLAG_UTF8 | HS_FLAG_UCP | HS_FLAG_ALLOWEMPTY | HS_FLAG_SINGLEMATCH;
+            if ( regexp.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) ) {
+                flags |= HS_FLAG_CASELESS;
+            }
 
-    const auto compileResult = hs_compile( pattern.pattern().toUtf8().data(), flags, HS_MODE_BLOCK,
-                                           nullptr, &db, &error );
+            const auto compileResult = hs_compile( regexp.pattern().toUtf8().data(), flags,
+                                                   HS_MODE_BLOCK, nullptr, &db, &error );
 
-    if ( compileResult != HS_SUCCESS ) {
-        LOG_ERROR << "Failed to compile pattern " << error->message;
-        errorMessage_ = error->message;
-        hs_free_compile_error( error );
-    }
+            if ( compileResult != HS_SUCCESS ) {
+                LOG_ERROR << "Failed to compile pattern " << error->message;
+                errorMessage = error->message;
+                hs_free_compile_error( error );
+                return nullptr;
+            }
 
-    hs_scratch_t* scratch = nullptr;
-    if ( db ) {
-        const auto scratchResult = hs_alloc_scratch( db, &scratch );
-        if ( scratchResult != HS_SUCCESS ) {
-            LOG_ERROR << "Failed to allocate scratch";
-            hs_free_database( db );
-        }
-    }
+            return db;
+        },
+        pattern, errorMessage_ ) };
 
-    if ( db && scratch ) {
-        database_ = db;
-        scratch_ = scratch;
-    }
-}
-
-HsRegularExpression::~HsRegularExpression()
-{
     if ( database_ ) {
-        hs_free_database( database_ );
-    }
-    if ( scratch_ ) {
-        hs_free_scratch( scratch_ );
-    }
-}
+        scratch_ = wrapHsPointer<hs_scratch_t, hs_free_scratch>(
+            []( hs_database_t* db ) -> hs_scratch_t* {
+                hs_scratch_t* scratch = nullptr;
 
-HsRegularExpression::HsRegularExpression( HsRegularExpression&& other )
-{
-    *this = std::move( other );
-}
+                const auto scratchResult = hs_alloc_scratch( db, &scratch );
+                if ( scratchResult != HS_SUCCESS ) {
+                    LOG_ERROR << "Failed to allocate scratch";
+                    return nullptr;
+                }
 
-HsRegularExpression& HsRegularExpression::operator=( HsRegularExpression&& other )
-{
-    if ( this != &other ) {
-        database_ = std::exchange( other.database_, nullptr );
-        scratch_ = std::exchange( other.scratch_, nullptr );
+                return scratch;
+            },
+            database_.get() );
     }
-
-    return *this;
 }
 
 bool HsRegularExpression::isValid() const
@@ -153,14 +116,20 @@ HsMatcher HsRegularExpression::createMatcher() const
         return {};
     }
 
-    hs_scratch_t* matcherScratch = nullptr;
+    auto matcherScratch = wrapHsPointer<hs_scratch_t, hs_free_scratch>(
+        []( hs_scratch_t* prototype ) -> hs_scratch_t* {
+            hs_scratch_t* scratch = nullptr;
 
-    const auto err = hs_clone_scratch( scratch_, &matcherScratch );
-    if ( err != HS_SUCCESS ) {
-        LOG_ERROR << "hs_clone_scratch failed";
-        matcherScratch = nullptr;
-    }
+            const auto err = hs_clone_scratch( prototype, &scratch );
+            if ( err != HS_SUCCESS ) {
+                LOG_ERROR << "hs_clone_scratch failed";
+                return nullptr;
+            }
 
-    return HsMatcher{ database_, matcherScratch };
+            return scratch;
+        },
+        scratch_.get() );
+
+    return HsMatcher{ database_, std::move( matcherScratch ) };
 }
 #endif

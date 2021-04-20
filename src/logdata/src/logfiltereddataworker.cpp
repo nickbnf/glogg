@@ -97,18 +97,16 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vect
     PartialSearchResults results;
     results.chunkStart = chunkStart;
     results.processedLines = LinesCount( static_cast<LinesCount::UnderlyingType>( lines.size() ) );
-    for ( size_t i = 0; i < lines.size(); ++i ) {
-        const auto& l = lines.at( i );
+    for ( auto offset = 0_lcount; offset < results.processedLines; ++offset ) {
+        const auto& line = lines[ offset.get() ];
 
         const auto hasMatch
-            = absl::visit( [&l]( const auto& m ) { return m.hasMatch( l ); }, matcher );
+            = absl::visit( [&line]( const auto& m ) { return m.hasMatch( line ); }, matcher );
 
         if ( hasMatch ) {
-            results.maxLength = qMax( results.maxLength, getUntabifiedLength( l ) );
-            results.matchingLines
-                = std::move( results.matchingLines )
-                      .push_back( chunkStart
-                                  + LinesCount( static_cast<LinesCount::UnderlyingType>( i ) ) );
+            results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );
+            const auto lineNumber = chunkStart + offset;
+            results.matchingLines = std::move( results.matchingLines ).push_back( lineNumber );
         }
     }
     return results;

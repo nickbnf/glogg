@@ -364,35 +364,28 @@ LogData::RawLines LogData::getLinesRaw( LineNumber first_line, LinesCount number
 
     LOG_DEBUG << "LogData::getLines done reading lines:" << buffer.size();
 
-    return std::make_tuple( first_line, number, std::move( buffer ), std::move( endOfLines ) );
+    return { first_line, number, std::move( buffer ), std::move( endOfLines ) };
 }
 
 std::vector<QString> LogData::decodeLines( const RawLines& rawLines ) const
 {
 
-    LineNumber first_line = std::get<0>(rawLines);
-    LinesCount number = std::get<1>(rawLines);
-    const std::vector<char>& buffer = std::get<2>(rawLines);
-    const std::vector<qint64>& endOfLines = std::get<3>(rawLines);
-
-    //std::tie( first_line, number, buffer, endOfLines ) = rawLines;
-
-    if ( number.get() == 0 ) {
+    if ( rawLines.numberOfLines.get() == 0 ) {
         return std::vector<QString>();
     }
 
     std::vector<QString> decodedLines;
-    decodedLines.reserve( number.get() );
+    decodedLines.reserve( rawLines.numberOfLines.get() );
 
-    const auto last_line = first_line + number - 1_lcount;
+    const auto lastLine = rawLines.startLine + rawLines.numberOfLines - 1_lcount;
 
     qint64 lineStart = 0;
     size_t currentLine = 0;
     auto decoder = codec_.makeDecoder();
     const auto lineFeedWidth = decoder.second.lineFeedWidth;
 
-    for ( LineNumber line = first_line; ( line <= last_line ); ++line, ++currentLine ) {
-        const auto lineEnd = endOfLines[ currentLine ];
+    for ( LineNumber line = rawLines.startLine; ( line <= lastLine ); ++line, ++currentLine ) {
+        const auto lineEnd = rawLines.endOfLines[ currentLine ];
 
         const auto length = lineEnd - lineStart - lineFeedWidth;
 
@@ -403,19 +396,19 @@ std::vector<QString> LogData::decodeLines( const RawLines& rawLines ) const
             break;
         }
 
-        if ( lineStart + length > static_cast<qint64>( buffer.size() ) ) {
+        if ( lineStart + length > static_cast<qint64>( rawLines.buffer.size() ) ) {
             decodedLines.emplace_back( "KLOGG WARNING: file read failed" );
             LOG_WARNING << "LogData::getLines not enough data in buffer";
             break;
         }
 
         decodedLines.push_back(
-            decoder.first->toUnicode( buffer.data() + lineStart, static_cast<int>( length ) ) );
+            decoder.first->toUnicode( rawLines.buffer.data() + lineStart, static_cast<int>( length ) ) );
 
         lineStart = lineEnd;
     }
 
-    while ( decodedLines.size() < number.get() ) {
+    while ( decodedLines.size() < rawLines.numberOfLines.get() ) {
         decodedLines.emplace_back( "KLOGG WARNING: failed to read some lines before this one" );
     }
 

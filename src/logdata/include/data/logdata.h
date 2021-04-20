@@ -92,7 +92,14 @@ class LogData : public AbstractLogData {
     // Get the auto-detected encoding for the indexed text.
     QTextCodec* getDetectedEncoding() const;
 
-    using RawLines = std::tuple<LineNumber, LinesCount, std::vector<char>, std::vector<qint64>>;
+    struct RawLines
+    {
+      LineNumber startLine;
+      LinesCount numberOfLines;
+      std::vector<char> buffer;
+      std::vector<qint64> endOfLines;
+    };
+
     RawLines getLinesRaw(LineNumber first, LinesCount number) const;
     std::vector<QString> decodeLines(const RawLines& rawLines) const;
 

@@ -5,11 +5,11 @@ type: docs
 
 ## Faster log explorer
 
-_klogg_ is a multi-platform GUI application to search through all kinds of text log files using regular expressions. It is fork of [glogg project](https://glogg.bonnefon.org/) created by [Nicolas Bonnefon](https://github.com/nickbnf).
+_klogg_ is an open source multi-platform GUI application to search through all kinds of text log files using regular expressions. It has started as fork of [glogg project](https://glogg.bonnefon.org/) created by [Nicolas Bonnefon](https://github.com/nickbnf), and has evolved into a separate project with a lot of new features and improvements.
 
 _klogg_ is designed to:
 
- - be fast
+ - be very fast
  - handle huge log files
  - provide a clear view of the matches even in heavily cluttered files.
 
@@ -33,19 +33,19 @@ Here is what _klogg_ looks like:
  - Displays a context view of where in the log the lines of interest are
  - Is fast and reads the file directly from disk, without loading it into memory
  - Watches for file changes on disk and reloads it (kind of like tail)
- - Is open source, released under the GPL
 
 <--->
 
 _klogg_ improves and brings more
 
- - Builds initial file index significantly faster
- - Uses multiple CPU cores to do regular expression matching
- - Detects log file encoding using uchardet library (support utf8, utf16, cp1251 and more)
+ - Is optimized for modern CPUs with multiple cores and SIMD instructions
+ - Has portable version (no need to install)
+ - Understands a lot of text encodings and detects many of them automatically
  - Allows to perform search in a portion of huge log file
- - Keeps in-memory cache of search results per search pattern
- - Allows to paste some text from clipboard for further analysis
- - Has portable version for Windows (no need to install)
+ - Supports multiple sets of text highlight rules with more sophisticated match options
+ - Provides many small features to make life easier (tab renaming, favorite files list, archive extraction,
+ scratchpad etc.)
+ 
 
 {{< /columns >}}
 

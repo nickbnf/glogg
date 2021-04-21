@@ -19,13 +19,15 @@ Thanks to all people who help develop _klogg_
  - Alexander Hirsch
  - Alexei Colin
  - Andre Soares
- - CharleyPeng1
+ - Charley Peng
  - Dan Berindei
  - David Frey
  - Dmitry Afanasiev
  - Gustav Andersson
  - Jeff Jensen
  - Jonathan Wakely
+ - Marcin Twardak
+ - neurocod
  - Paolo Cancedda
  - Patrick Tsai
  - Robin Luiten

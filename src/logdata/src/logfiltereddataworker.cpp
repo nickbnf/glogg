@@ -250,7 +250,7 @@ void LogFilteredDataWorker::connectSignalsAndRun( SearchOperation* operationRequ
     operationRequested->disconnect( this );
 }
 
-void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber startLine,
+void LogFilteredDataWorker::search( const RegularExpressionPattern& regExp, LineNumber startLine,
                                     LineNumber endLine )
 {
     ScopedLock locker( &mutex_ ); // to protect operationRequested_
@@ -267,7 +267,7 @@ void LogFilteredDataWorker::search( const QRegularExpression& regExp, LineNumber
     } );
 }
 
-void LogFilteredDataWorker::updateSearch( const QRegularExpression& regExp, LineNumber startLine,
+void LogFilteredDataWorker::updateSearch( const RegularExpressionPattern& regExp, LineNumber startLine,
                                           LineNumber endLine, LineNumber position )
 {
     ScopedLock locker( &mutex_ ); // to protect operationRequested_
@@ -301,7 +301,7 @@ SearchResults LogFilteredDataWorker::getSearchResults() const
 //
 
 SearchOperation::SearchOperation( const LogData& sourceLogData, AtomicFlag& interruptRequested,
-                                  const QRegularExpression& regExp, LineNumber startLine,
+                                  const RegularExpressionPattern& regExp, LineNumber startLine,
                                   LineNumber endLine )
 
     : interruptRequested_( interruptRequested )
@@ -399,7 +399,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         = tbb::flow::limiter_node<BlockDataType>( searchGraph, matchingThreadsCount * 3 );
 
     auto lineBlocksQueue = tbb::flow::buffer_node<BlockDataType>( searchGraph );
-
+    
     HsRegularExpression hsRegularExpression{ regexp_ };
     const auto useHsMatcher = config.regexpEngine() == RegexpEngine::Hyperscan;
 

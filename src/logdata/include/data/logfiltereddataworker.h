@@ -40,7 +40,6 @@
 #define LOGFILTEREDDATAWORKERTHREAD_H
 
 #include <QObject>
-#include <QRegularExpression>
 
 #include <QFuture>
 
@@ -49,6 +48,7 @@
 #include "atomicflag.h"
 #include "linetypes.h"
 #include "synchronization.h"
+#include "hsregularexpression.h"
 
 class LogData;
 
@@ -131,7 +131,7 @@ class SearchOperation : public QObject {
     Q_OBJECT
   public:
     SearchOperation( const LogData& sourceLogData, AtomicFlag& interruptRequested,
-                     const QRegularExpression& regExp, LineNumber startLine, LineNumber endLine );
+                     const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine );
 
     // Run the search operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
@@ -147,7 +147,7 @@ class SearchOperation : public QObject {
     void doSearch( SearchData& result, LineNumber initialLine );
 
     AtomicFlag& interruptRequested_;
-    const QRegularExpression regexp_;
+    const RegularExpressionPattern regexp_;
     const LogData& sourceLogData_;
     LineNumber startLine_;
     LineNumber endLine_;
@@ -157,7 +157,7 @@ class FullSearchOperation : public SearchOperation {
     Q_OBJECT
   public:
     FullSearchOperation( const LogData& sourceLogData, AtomicFlag& interruptRequested,
-                         const QRegularExpression& regExp, LineNumber startLine,
+                         const RegularExpressionPattern& regExp, LineNumber startLine,
                          LineNumber endLine )
         : SearchOperation( sourceLogData, interruptRequested, regExp, startLine, endLine )
     {
@@ -171,7 +171,7 @@ class UpdateSearchOperation : public SearchOperation {
     Q_OBJECT
   public:
     UpdateSearchOperation( const LogData& sourceLogData, AtomicFlag& interruptRequested,
-                           const QRegularExpression& regExp, LineNumber startLine,
+                           const RegularExpressionPattern& regExp, LineNumber startLine,
                            LineNumber endLine, LineNumber position )
         : SearchOperation( sourceLogData, interruptRequested, regExp, startLine, endLine )
         , initialPosition_( position )
@@ -192,10 +192,10 @@ class LogFilteredDataWorker : public QObject {
     ~LogFilteredDataWorker() override;
 
     // Start the search with the passed regexp
-    void search( const QRegularExpression& regExp, LineNumber startLine, LineNumber endLine );
+    void search( const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine );
     // Continue the previous search starting at the passed position
     // in the source file (line number)
-    void updateSearch( const QRegularExpression& regExp, LineNumber startLine, LineNumber endLine,
+    void updateSearch( const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine,
                        LineNumber position );
 
     // Interrupts the search if one is in progress

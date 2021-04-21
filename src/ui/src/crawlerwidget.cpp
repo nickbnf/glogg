@@ -1117,9 +1117,9 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         QString errorString = regexp.errorString();
 
         const auto useHsMatcher = Configuration::get().regexpEngine() == RegexpEngine::Hyperscan;
-
+        const auto regexpPattern = RegularExpressionPattern( regexp );
         if ( useHsMatcher ) {
-            HsRegularExpression hsExpression( regexp );
+            HsRegularExpression hsExpression{ regexpPattern };
             isValidExpression = hsExpression.isValid();
             errorString = hsExpression.errorString();
         }
@@ -1130,7 +1130,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             stopButton->show();
             searchButton->hide();
             // Start a new asynchronous search
-            logFilteredData_->runSearch( regexp, searchStartLine_, searchEndLine_ );
+            logFilteredData_->runSearch( regexpPattern, searchStartLine_,
+                                         searchEndLine_ );
             // Accept auto-refresh of the search
             searchState_.startSearch();
             searchInfoLine->hide();

@@ -40,15 +40,16 @@
 #define LOGFILTEREDDATA_H
 
 #include <memory>
+#include <unordered_map>
 
-#include <QObject>
 #include <QByteArray>
 #include <QList>
+#include <QObject>
 #include <QStringList>
-#include <QRegularExpression>
 
 #include "abstractlogdata.h"
 #include "logfiltereddataworker.h"
+#include "hsregularexpression.h"
 #include "marks.h"
 
 class LogData;
@@ -61,7 +62,7 @@ class QTimer;
 // Constructing such objet does not start the search.
 // This object should be constructed by a LogData.
 class LogFilteredData : public AbstractLogData {
-  Q_OBJECT
+    Q_OBJECT
 
   public:
     // Constructor used by LogData
@@ -70,13 +71,14 @@ class LogFilteredData : public AbstractLogData {
     // Starts the async search, sending newDataAvailable() when new data found.
     // If a search is already in progress this function will block until
     // it is done, so the application should call interruptSearch() first.
-    void runSearch(const QRegularExpression &regExp, LineNumber startLine, LineNumber endLine);
+    void runSearch( const RegularExpressionPattern& regExp, LineNumber startLine,
+                    LineNumber endLine );
     // Shortcut for runSearch on all file
-    void runSearch(const QRegularExpression &regExp);
+    void runSearch( const RegularExpressionPattern& regExp );
 
     // Add to the existing search, starting at the line when the search was
     // last stopped. Used when the file on disk has been added too.
-    void updateSearch(LineNumber startLine, LineNumber endLine);
+    void updateSearch( LineNumber startLine, LineNumber endLine );
     // Interrupt the running search if one is in progress.
     // Nothing is done if no search is in progress.
     void interruptSearch();
@@ -125,11 +127,10 @@ class LogFilteredData : public AbstractLogData {
 
     // Changes what the AbstractLogData returns via its getXLines/getNbLines
     // API.
-    enum class VisibilityFlags
-    {
-        None    = static_cast<LineType::Int>( LineTypeFlags::Plain ), //this is for internal use
+    enum class VisibilityFlags {
+        None = static_cast<LineType::Int>( LineTypeFlags::Plain ), // this is for internal use
         Matches = static_cast<LineType::Int>( LineTypeFlags::Match ),
-        Marks   = static_cast<LineType::Int>( LineTypeFlags::Mark  ),
+        Marks = static_cast<LineType::Int>( LineTypeFlags::Mark ),
     };
     Q_ENUM( VisibilityFlags );
     Q_DECLARE_FLAGS( Visibility, VisibilityFlags )
@@ -151,7 +152,8 @@ class LogFilteredData : public AbstractLogData {
     QString doGetExpandedLineString( LineNumber line ) const override;
     std::vector<QString> doGetLines( LineNumber first, LinesCount number ) const override;
     std::vector<QString> doGetExpandedLines( LineNumber first, LinesCount number ) const override;
-    std::vector<QString> doGetLines(LineNumber first, LinesCount number, const std::function<QString(LineNumber)>& lineGetter) const;
+    std::vector<QString> doGetLines( LineNumber first, LinesCount number,
+                                     const std::function<QString( LineNumber )>& lineGetter ) const;
     LinesCount doGetNbLine() const override;
     LineLength doGetMaxLength() const override;
     LineLength doGetLineLength( LineNumber line ) const override;
@@ -175,7 +177,7 @@ class LogFilteredData : public AbstractLogData {
 
     const LogData* sourceLogData_;
 
-    QRegularExpression currentRegExp_;
+    RegularExpressionPattern currentRegExp_;
     LineLength maxLength_;
     LineLength maxLengthMarks_;
     // Number of lines of the LogData that has been searched for:
@@ -191,24 +193,43 @@ class LogFilteredData : public AbstractLogData {
     LogFilteredDataWorker workerThread_;
     Marks marks_;
 
-    struct CachedSearchResult
-    {
+    struct CachedSearchResult {
         SearchResultArray matching_lines;
         LineLength maxLength;
     };
 
-    using SearchCacheKey = QPair<QRegularExpression, QPair<uint32_t, uint32_t>>;
+    using SearchCacheKey = std::tuple<RegularExpressionPattern, uint32_t, uint32_t>;
 
-    inline SearchCacheKey makeCacheKey( const QRegularExpression& regExp,
-                                        LineNumber startLine, LineNumber endLine ) {
-      return qMakePair( regExp, qMakePair( startLine.get(), endLine.get() ) );
+    struct SearchCacheKeyHash : public std::unary_function<SearchCacheKey, std::size_t> {
+        template <class T>
+        void hash_combine( std::size_t& seed, const T& v ) const
+        {
+            seed ^= std::hash<T>()( v ) + 0x9e3779b9 + ( seed << 6 ) + ( seed >> 2 );
+        }
+        std::size_t operator()( const SearchCacheKey& k ) const
+        {
+            size_t seed = qHash( std::get<0>( k ).pattern );
+
+            hash_combine( seed, std::get<0>( k ).isCaseSensitive );
+            hash_combine( seed, std::get<0>( k ).isExclude );
+            hash_combine( seed, std::get<1>( k ) );
+            hash_combine( seed, std::get<2>( k ) );
+            return seed;
+        }
+    };
+
+    SearchCacheKey makeCacheKey( const RegularExpressionPattern& regExp, LineNumber startLine,
+                                 LineNumber endLine )
+    {
+        return std::make_tuple( regExp, startLine.get(), endLine.get() );
     }
 
-    QHash<SearchCacheKey, CachedSearchResult> searchResultsCache_;
+    std::unordered_map<SearchCacheKey, CachedSearchResult, SearchCacheKeyHash> searchResultsCache_;
     SearchCacheKey currentSearchKey_;
 
-    inline LineNumber getExpectedSearchEnd( const SearchCacheKey& cacheKey ) const {
-        return LineNumber(cacheKey.second.second);
+    inline LineNumber getExpectedSearchEnd( const SearchCacheKey& cacheKey ) const
+    {
+        return LineNumber( std::get<2>( cacheKey ) );
     }
 
     // Utility functions
@@ -217,13 +238,15 @@ class LogFilteredData : public AbstractLogData {
 
     void regenerateFilteredItemsCache() const;
     // start_index can be passed in as an optimization when finding the item.
-    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was inserted.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was
+    // inserted.
     void insertIntoFilteredItemsCache( size_t start_index, FilteredItem&& item );
     void insertIntoFilteredItemsCache( FilteredItem&& item );
     // Insert new matches into matching_lines_ and filteredItemsCache_
     void insertNewMatches( const SearchResultArray& new_matches );
     // remove_index can be passed in as an optimization when finding the item.
-    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was removed.
+    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was
+    // removed.
     void removeFromFilteredItemsCache( size_t remove_index, FilteredItem&& item );
     void removeFromFilteredItemsCache( FilteredItem&& item );
     void removeAllFromFilteredItemsCache( LineType type );
@@ -244,17 +267,24 @@ class LogFilteredData::FilteredItem {
     FilteredItem();
     FilteredItem( LineNumber lineNumber, LineType type )
         : lineNumber_{ lineNumber }
-        , type_ { type }
-    {}
+        , type_{ type }
+    {
+    }
 
     LineNumber lineNumber() const
-    { return lineNumber_; }
+    {
+        return lineNumber_;
+    }
 
     LineType type() const
-    { return type_; }
+    {
+        return type_;
+    }
 
     void add( LineType type )
-    { type_ |= type; }
+    {
+        type_ |= type;
+    }
 
     // Returns the new type flags.
     LineType remove( LineType type )
@@ -263,11 +293,15 @@ class LogFilteredData::FilteredItem {
         return type_;
     }
 
-    bool operator <( const LogFilteredData::FilteredItem& other ) const
-    { return lineNumber_ < other.lineNumber_; }
+    bool operator<( const LogFilteredData::FilteredItem& other ) const
+    {
+        return lineNumber_ < other.lineNumber_;
+    }
 
-    bool operator <( const LineNumber& lineNumber ) const
-    { return lineNumber_ < lineNumber; }
+    bool operator<( const LineNumber& lineNumber ) const
+    {
+        return lineNumber_ < lineNumber;
+    }
 
   private:
     LineNumber lineNumber_;

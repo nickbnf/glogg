@@ -28,20 +28,62 @@
 #include <memory>
 #endif
 
+struct RegularExpressionPattern {
+    QString pattern;
+    bool isCaseSensitive = true;
+    bool isExclude = false;
+
+    RegularExpressionPattern() = default;
+
+    explicit RegularExpressionPattern( const QRegularExpression& regexp )
+        : pattern( regexp.pattern() )
+        , isCaseSensitive(
+              !regexp.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) )
+    {
+    }
+
+    explicit operator QRegularExpression() const
+    {
+        auto patternOptions = QRegularExpression::UseUnicodePropertiesOption
+                              | QRegularExpression::DontCaptureOption;
+
+        if ( !isCaseSensitive ) {
+            patternOptions |= QRegularExpression::CaseInsensitiveOption;
+        }
+
+        return QRegularExpression( pattern, patternOptions );
+    }
+
+    bool operator==( const RegularExpressionPattern& other ) const
+    {
+        return std::tie( pattern, isCaseSensitive, isExclude )
+               == std::tie( other.pattern, other.isCaseSensitive, other.isExclude );
+    }
+};
+
 class DefaultRegularExpressionMatcher {
   public:
-    explicit DefaultRegularExpressionMatcher( const QRegularExpression& regexp )
+    explicit DefaultRegularExpressionMatcher( const RegularExpressionPattern& regexp )
+        : regexp_( static_cast<QRegularExpression>( regexp ) )
+        , isExclude_( regexp.isExclude )
+    {
+    }
+
+    DefaultRegularExpressionMatcher( const QRegularExpression& regexp, bool isExclude )
         : regexp_( regexp.pattern(), regexp.patternOptions() )
+        , isExclude_( isExclude )
     {
     }
 
     bool hasMatch( const QString& data ) const
     {
-        return regexp_.match( data ).hasMatch();
+        const auto isMatching = regexp_.match( data ).hasMatch();
+        return ( !isExclude_ && isMatching ) || ( isExclude_ && !isMatching );
     }
 
   private:
     QRegularExpression regexp_;
+    bool isExclude_ = false;
 };
 
 #ifdef KLOGG_HAS_HS
@@ -70,7 +112,7 @@ using HsDatabase = std::shared_ptr<hs_database_t>;
 class HsMatcher {
   public:
     HsMatcher() = default;
-    HsMatcher( HsDatabase database, HsScratch scratch );
+    HsMatcher( HsDatabase database, HsScratch scratch, int requiredMatches );
 
     HsMatcher( const HsMatcher& ) = delete;
     HsMatcher& operator=( const HsMatcher& ) = delete;
@@ -83,11 +125,13 @@ class HsMatcher {
   private:
     HsDatabase database_;
     HsScratch scratch_;
+    int requiredMatches_ = 1;
 };
 
 class HsRegularExpression {
   public:
-    explicit HsRegularExpression( const QRegularExpression& pattern );
+    explicit HsRegularExpression( const RegularExpressionPattern& includePattern );
+    explicit HsRegularExpression( const std::vector<RegularExpressionPattern>& patterns );
 
     HsRegularExpression( const HsRegularExpression& ) = delete;
     HsRegularExpression& operator=( const HsRegularExpression& ) = delete;
@@ -103,6 +147,7 @@ class HsRegularExpression {
   private:
     HsDatabase database_;
     HsScratch scratch_;
+    int requiredMatches_ = 1;
 
     QString errorMessage_;
 };
@@ -117,8 +162,8 @@ class HsMatcher : public DefaultRegularExpressionMatcher {
 
 class HsRegularExpression {
   public:
-    explicit HsRegularExpression( const QRegularExpression& regexp )
-        : regexp_( regexp )
+    explicit HsRegularExpression( const RegularExpressionPattern& regexp )
+        : regexp_( static_cast<QRegularExression>( regexp ) )
     {
     }
 

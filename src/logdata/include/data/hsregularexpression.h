@@ -35,6 +35,11 @@ struct RegularExpressionPattern {
 
     RegularExpressionPattern() = default;
 
+    explicit RegularExpressionPattern( const QString& expression )
+        : pattern( expression )
+    {
+    }
+
     explicit RegularExpressionPattern( const QRegularExpression& regexp )
         : pattern( regexp.pattern() )
         , isCaseSensitive(

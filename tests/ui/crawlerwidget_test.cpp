@@ -43,7 +43,7 @@ bool generateDataFiles( QTemporaryFile& file )
         for ( int i = 0; i < SL_NB_LINES; i++ ) {
             snprintf( newLine, 89,
                       "LOGDATA \t is a part of glogg, we are going to test it thoroughly, this is "
-                      "line %06d\n",
+                      "line %06d",
                       i );
             file.write( newLine, qstrlen( newLine ) );
 #ifdef Q_OS_WIN
@@ -63,7 +63,8 @@ bool generateDataFiles( QTemporaryFile& file )
 struct CrawlerWidgetPrivate {
 };
 
-template <> struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
+template <>
+struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
     std::unique_ptr<CrawlerWidget> crawler;
 
     LinesCount getLogNbLines()
@@ -141,12 +142,12 @@ SCENARIO( "Crawler widget search", "[ui]" )
         session.open( file.fileName(), []() { return new CrawlerWidget(); } ) ) );
 
     int loadWaitCycle = 0;
-    while ( crawlerVisitor.getLogNbLines().get() != 2 * SL_NB_LINES && loadWaitCycle++ < 50 )
+    while ( crawlerVisitor.getLogNbLines().get() != SL_NB_LINES && loadWaitCycle++ < 50 )
         QTest::qWait( 100 );
 
     crawlerVisitor.render();
 
-    REQUIRE( crawlerVisitor.getLogNbLines().get() == 2 * SL_NB_LINES );
+    REQUIRE( crawlerVisitor.getLogNbLines().get() == SL_NB_LINES );
 
     GIVEN( "loaded log data" )
     {
@@ -155,19 +156,19 @@ SCENARIO( "Crawler widget search", "[ui]" )
             REQUIRE( crawlerVisitor.getLogFilteredNbLines().get() == 0 );
         }
 
-        WHEN( "search for .*" )
+        WHEN( "search for lines" )
         {
-            crawlerVisitor.setSearchPattern( ".*" );
+            crawlerVisitor.setSearchPattern( "this is line" );
             crawlerVisitor.runSearch();
 
             loadWaitCycle = 0;
-            while ( crawlerVisitor.getLogFilteredNbLines().get() != 2 * SL_NB_LINES
+            while ( crawlerVisitor.getLogFilteredNbLines().get() != SL_NB_LINES
                     && loadWaitCycle++ < 50 )
                 QTest::qWait( 100 );
 
             THEN( "all lines are matched" )
             {
-                REQUIRE( crawlerVisitor.getLogFilteredNbLines().get() == 2 * SL_NB_LINES );
+                REQUIRE( crawlerVisitor.getLogFilteredNbLines().get() == SL_NB_LINES );
             }
 
             AND_WHEN( "copy all from main view" )
@@ -176,7 +177,7 @@ SCENARIO( "Crawler widget search", "[ui]" )
                 auto text = crawlerVisitor.mainViewSelectedText();
                 THEN( "text has same number of lines" )
                 {
-                    REQUIRE( text.split( QChar::LineFeed ).size() == 2 * SL_NB_LINES );
+                    REQUIRE( text.split( QChar::LineFeed ).size() == SL_NB_LINES );
                 }
             }
 
@@ -186,7 +187,7 @@ SCENARIO( "Crawler widget search", "[ui]" )
                 auto text = crawlerVisitor.filteredViewSelectedText();
                 THEN( "text has same number of lines" )
                 {
-                    REQUIRE( text.split( QChar::LineFeed ).size() == 2 * SL_NB_LINES );
+                    REQUIRE( text.split( QChar::LineFeed ).size() == SL_NB_LINES );
                 }
             }
         }

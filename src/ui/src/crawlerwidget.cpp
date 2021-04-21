@@ -80,12 +80,13 @@ class CrawlerWidgetContext : public ViewContextInterface {
     explicit CrawlerWidgetContext( const QString& string );
     // Construct from the value passsed
     CrawlerWidgetContext( QList<int> sizes, bool ignore_case, bool auto_refresh, bool follow_file,
-                          bool use_regexp, QList<LineNumber> markedLines )
+                          bool use_regexp, bool inverse_regexp, QList<LineNumber> markedLines )
         : sizes_( sizes )
         , ignore_case_( ignore_case )
         , auto_refresh_( auto_refresh )
         , follow_file_( follow_file )
         , use_regexp_( use_regexp )
+        , inverse_regexp_( inverse_regexp )
     {
         std::transform( markedLines.begin(), markedLines.end(), std::back_inserter( marks_ ),
                         []( const auto& m ) { return m.get(); } );
@@ -116,6 +117,10 @@ class CrawlerWidgetContext : public ViewContextInterface {
     {
         return use_regexp_;
     }
+    bool inverseRegexp() const
+    {
+        return inverse_regexp_;
+    }
 
     QList<LineNumber::UnderlyingType> marks() const
     {
@@ -133,6 +138,7 @@ class CrawlerWidgetContext : public ViewContextInterface {
     bool auto_refresh_;
     bool follow_file_;
     bool use_regexp_;
+    bool inverse_regexp_;
 
     QList<LineNumber::UnderlyingType> marks_;
 };
@@ -322,6 +328,7 @@ void CrawlerWidget::doSetViewContext( const QString& view_context )
     setSizes( context.sizes() );
     matchCaseButton->setChecked( !context.ignoreCase() );
     useRegexpButton->setChecked( context.useRegexp() );
+    inverseButton->setChecked( context.inverseRegexp() );
 
     searchRefreshButton->setChecked( context.autoRefresh() );
     // Manually call the handler as it is not called when changing the state programmatically
@@ -339,7 +346,7 @@ std::shared_ptr<const ViewContextInterface> CrawlerWidget::doGetViewContext() co
 {
     auto context = std::make_shared<const CrawlerWidgetContext>(
         sizes(), ( !matchCaseButton->isChecked() ), searchRefreshButton->isChecked(),
-        logMainView->isFollowEnabled(), useRegexpButton->isChecked(),
+        logMainView->isFollowEnabled(), useRegexpButton->isChecked(), inverseButton->isChecked(),
         logFilteredData_->getMarks() );
 
     return static_cast<std::shared_ptr<const ViewContextInterface>>( context );
@@ -883,6 +890,12 @@ void CrawlerWidget::setup()
     useRegexpButton->setFocusPolicy( Qt::NoFocus );
     useRegexpButton->setContentsMargins( 2, 2, 2, 2 );
 
+    inverseButton = new QToolButton();
+    inverseButton->setToolTip( "Inverse match" );
+    inverseButton->setCheckable( true );
+    inverseButton->setFocusPolicy( Qt::NoFocus );
+    inverseButton->setContentsMargins( 2, 2, 2, 2 );
+
     searchRefreshButton = new QToolButton();
     searchRefreshButton->setToolTip( "Auto-refresh" );
     searchRefreshButton->setCheckable( true );
@@ -930,6 +943,7 @@ void CrawlerWidget::setup()
     searchLineLayout->addWidget( visibilityBox );
     searchLineLayout->addWidget( matchCaseButton );
     searchLineLayout->addWidget( useRegexpButton );
+    searchLineLayout->addWidget( inverseButton );
     searchLineLayout->addWidget( predefinedFilters );
     searchLineLayout->addWidget( searchLineEdit );
     searchLineLayout->addWidget( searchButton );
@@ -1062,6 +1076,7 @@ void CrawlerWidget::loadIcons()
 {
     searchRefreshButton->setIcon( iconLoader_.load( "icons8-search-refresh" ) );
     useRegexpButton->setIcon( iconLoader_.load( "regex" ) );
+    inverseButton->setIcon( iconLoader_.load( "icons8-not-equal" ) );
     searchButton->setIcon( iconLoader_.load( "icons8-search" ) );
     matchCaseButton->setIcon( iconLoader_.load( "icons8-font-size" ) );
     stopButton->setIcon( iconLoader_.load( "icons8-delete" ) );
@@ -1117,7 +1132,8 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
         QString errorString = regexp.errorString();
 
         const auto useHsMatcher = Configuration::get().regexpEngine() == RegexpEngine::Hyperscan;
-        const auto regexpPattern = RegularExpressionPattern( regexp );
+        auto regexpPattern = RegularExpressionPattern( regexp );
+        regexpPattern.isExclude = inverseButton->isChecked();
         if ( useHsMatcher ) {
             HsRegularExpression hsExpression{ regexpPattern };
             isValidExpression = hsExpression.isValid();
@@ -1130,8 +1146,7 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             stopButton->show();
             searchButton->hide();
             // Start a new asynchronous search
-            logFilteredData_->runSearch( regexpPattern, searchStartLine_,
-                                         searchEndLine_ );
+            logFilteredData_->runSearch( regexpPattern, searchStartLine_, searchEndLine_ );
             // Accept auto-refresh of the search
             searchState_.startSearch();
             searchInfoLine->hide();
@@ -1384,6 +1399,13 @@ void CrawlerWidgetContext::loadFromJson( const QString& json )
         use_regexp_ = Configuration::get().mainRegexpType() == SearchRegexpType::ExtendedRegexp;
     }
 
+    if ( properties.contains( "IR" ) ) {
+        inverse_regexp_ = properties.value( "IR" ).toBool();
+    }
+    else {
+        inverse_regexp_ = false;
+    }
+
     if ( properties.contains( "M" ) ) {
         const auto marks = properties.value( "M" ).toList();
         for ( const auto& m : marks ) {
@@ -1409,6 +1431,7 @@ QString CrawlerWidgetContext::toString() const
     properies[ "AR" ] = auto_refresh_;
     properies[ "FF" ] = follow_file_;
     properies[ "RE" ] = use_regexp_;
+    properies[ "IR" ] = inverse_regexp_;
     properies[ "M" ] = toVariantList( marks_ );
 
     return QJsonDocument::fromVariant( properies ).toJson( QJsonDocument::Compact );

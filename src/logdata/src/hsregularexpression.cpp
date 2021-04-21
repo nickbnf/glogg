@@ -63,10 +63,11 @@ bool HsMatcher::hasMatch( const QString& data ) const
     int matchResult = 0;
 
     const auto utf8Data = data.toUtf8();
-    hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ), 0,
-             scratch_.get(), matchCallback, static_cast<void*>( &matchResult ) );
+    const auto scanResult
+        = hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ),
+                   0, scratch_.get(), matchCallback, static_cast<void*>( &matchResult ) );
 
-    return matchResult == requiredMatches_;
+    return scanResult != HS_SCAN_TERMINATED && matchResult == requiredMatches_;
 }
 
 HsRegularExpression::HsRegularExpression( const RegularExpressionPattern& pattern )
@@ -85,13 +86,12 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
             hs_database_t* db = nullptr;
             hs_compile_error_t* error = nullptr;
 
-            const unsigned commonFlags = HS_FLAG_UTF8 | HS_FLAG_UCP | HS_FLAG_SINGLEMATCH;
-
             std::vector<unsigned> flags;
             flags.reserve( expressions.size() );
             std::transform( expressions.begin(), expressions.end(), std::back_inserter( flags ),
-                            [commonFlags]( const auto& expression ) {
-                                auto expressionFlags = commonFlags;
+                            []( const auto& expression ) {
+                                auto expressionFlags
+                                    = HS_FLAG_UTF8 | HS_FLAG_UCP | HS_FLAG_SINGLEMATCH;
                                 if ( !expression.isCaseSensitive ) {
                                     expressionFlags |= HS_FLAG_CASELESS;
                                 }
@@ -114,7 +114,7 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
             expressionIds.resize( expressions.size() );
             for ( auto index = 0u; index < expressions.size(); ++index ) {
                 expressionIds[ index ]
-                    = index + expressions[ index ].isExclude ? ExcludeMatchIdStart : 0;
+                    = index + ( expressions[ index ].isExclude ? ExcludeMatchIdStart : 0 );
             }
 
             const auto compileResult = hs_compile_multi(

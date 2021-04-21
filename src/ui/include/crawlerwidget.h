@@ -310,6 +310,7 @@ class CrawlerWidget : public QSplitter,
     InfoLine* searchInfoLine;
     QToolButton* matchCaseButton;
     QToolButton* useRegexpButton;
+    QToolButton* inverseButton;
     QToolButton* searchRefreshButton;
     OverviewWidget* overviewWidget_;
     PredefinedFiltersComboBox* predefinedFilters;

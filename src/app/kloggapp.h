@@ -100,16 +100,16 @@ class KloggApp : public SingleApplication {
         }
     }
 
-    void sendFilesToPrimaryInstance( const std::vector<QString>& filenames )
+    void sendFilesToPrimaryInstance( std::vector<QString> filenames )
     {
 #ifdef Q_OS_WIN
         ::AllowSetForegroundWindow( static_cast<DWORD>( primaryPid() ) );
 #endif
 
-        QTimer::singleShot( 100, [ &filenames, this ] {
+        QTimer::singleShot( 100, [ files = std::move(filenames), this ] {
             QStringList filesToOpen;
 
-            for ( const auto& filename : filenames ) {
+            for ( const auto& filename : files ) {
                 filesToOpen.append( filename );
             }
 

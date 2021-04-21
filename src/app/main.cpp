@@ -158,7 +158,7 @@ struct CliParameters {
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
         options.add_flag( "--window-width", window_width, "new window width" )
-            ->needs(options.add_flag( "--window-height", window_height, "new window width" ));
+            ->needs(options.add_flag( "--window-height", window_height, "new window height" ));
 
         std::vector<std::string> raw_filenames;
         options.add_option( "files", raw_filenames, "files to open" );

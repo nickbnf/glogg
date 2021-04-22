@@ -463,8 +463,8 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
-add_subdirectory(util)
-add_subdirectory(doc/dev-reference)
+#add_subdirectory(util)
+#add_subdirectory(doc/dev-reference)
 
 if (NOT WIN32)
 # PCRE check, we have a fixed requirement for PCRE to use Chimera
@@ -478,17 +478,17 @@ if (NOT CORRECT_PCRE_VERSION)
 endif()
 
 # we need static libs for Chimera - too much deep magic for shared libs
-if (CORRECT_PCRE_VERSION AND PCRE_BUILD_SOURCE AND BUILD_STATIC_LIBS)
-    set(BUILD_CHIMERA TRUE)
-endif()
-
-add_subdirectory(unit)
-if (EXISTS ${CMAKE_SOURCE_DIR}/tools/CMakeLists.txt)
-    add_subdirectory(tools)
-endif()
-if (EXISTS ${CMAKE_SOURCE_DIR}/chimera/CMakeLists.txt AND BUILD_CHIMERA)
-    add_subdirectory(chimera)
-endif()
+#if (CORRECT_PCRE_VERSION AND PCRE_BUILD_SOURCE AND BUILD_STATIC_LIBS)
+#    set(BUILD_CHIMERA TRUE)
+#endif()
+#
+#add_subdirectory(unit)
+#if (EXISTS ${CMAKE_SOURCE_DIR}/tools/CMakeLists.txt)
+#    add_subdirectory(tools)
+#endif()
+#if (EXISTS ${CMAKE_SOURCE_DIR}/chimera/CMakeLists.txt AND BUILD_CHIMERA)
+#    add_subdirectory(chimera)
+#endif()
 endif()
 
 # do substitutions
@@ -530,17 +530,17 @@ if (NOT CORRECT_PCRE_VERSION)
 endif()
 
 # we need static libs for Chimera - too much deep magic for shared libs
-if (CORRECT_PCRE_VERSION AND PCRE_BUILD_SOURCE AND BUILD_STATIC_LIBS)
-    set(BUILD_CHIMERA TRUE)
-endif()
-
-add_subdirectory(unit)
-if (EXISTS ${CMAKE_SOURCE_DIR}/tools/CMakeLists.txt)
-    add_subdirectory(tools)
-endif()
-if (EXISTS ${CMAKE_SOURCE_DIR}/chimera/CMakeLists.txt AND BUILD_CHIMERA)
-    add_subdirectory(chimera)
-endif()
+#if (CORRECT_PCRE_VERSION AND PCRE_BUILD_SOURCE AND BUILD_STATIC_LIBS)
+#    set(BUILD_CHIMERA TRUE)
+#endif()
+#
+#add_subdirectory(unit)
+#if (EXISTS ${CMAKE_SOURCE_DIR}/tools/CMakeLists.txt)
+#    add_subdirectory(tools)
+#endif()
+#if (EXISTS ${CMAKE_SOURCE_DIR}/chimera/CMakeLists.txt AND BUILD_CHIMERA)
+#    add_subdirectory(chimera)
+#endif()
 endif()
 
 if(NOT WIN32)

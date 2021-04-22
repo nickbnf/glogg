@@ -567,7 +567,6 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
         case Qt::Key_L:
             horizontalScrollBar()->triggerAction( QScrollBar::SliderSingleStepAdd );
             break;
-        case Qt::Key_0:
         case Qt::Key_AsciiCircum:
             jumpToStartOfLine();
             break;
@@ -642,6 +641,9 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                      || ( !digitsBuffer_.isEmpty() && character == '0' ) ) {
                     // Adds the digit to the timed buffer
                     digitsBuffer_.add( character );
+                }
+                else if ( digitsBuffer_.isEmpty() && character == '0' ) {
+                    jumpToStartOfLine();
                 }
             }
             else {

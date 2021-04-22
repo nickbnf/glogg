@@ -366,7 +366,7 @@ void FileWatcher::fileChangedOnDisk( const QString& fileName )
     }
 
     if ( !notificationTimer_->isActive() ) {
-        QTimer::singleShot( 500, this, &FileWatcher::notifyFileChangedOnDisk );
+        notificationTimer_->singleShot( 500, this, &FileWatcher::notifyFileChangedOnDisk );
     }
 }
 

@@ -281,10 +281,9 @@ void AbstractLogView::changeEvent( QEvent* changeEvent )
 void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 {
     const auto& config = Configuration::get();
+    auto line = convertCoordToLine( mouseEvent->y() );
 
     if ( mouseEvent->button() == Qt::LeftButton ) {
-        const auto line = convertCoordToLine( mouseEvent->y() );
-
         if ( line.has_value() && mouseEvent->modifiers() & Qt::ShiftModifier ) {
             selection_.selectRangeFromPrevious( *line );
             emit updateLineNumber( *line );
@@ -316,12 +315,20 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         textAreaCache_.invalid_ = true;
     }
     else if ( mouseEvent->button() == Qt::RightButton ) {
-        contextMenuLine_ = convertCoordToLine( mouseEvent->y() );
-        if ( contextMenuLine_.has_value() && contextMenuLine_ >= logData->getNbLine() ) {
-            contextMenuLine_ = {};
+        if ( line.has_value() && line >= logData->getNbLine() ) {
+            line = {};
         }
 
-        if ( contextMenuLine_.has_value() ) {
+        if ( line.has_value() && !selection_.isLineSelected( *line ) ) {
+            selection_.selectLine( *line );
+            emit updateLineNumber( *line );
+            textAreaCache_.invalid_ = true;
+            emit newSelection( *line );
+        }
+
+        if ( selection_.isSingleLine() ) {
+            copyAction_->setText( "&Copy this line" );
+
             setSearchStartAction_->setEnabled( true );
             setSearchEndAction_->setEnabled( true );
 
@@ -329,20 +336,14 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             setSelectionEndAction_->setEnabled( !!selectionStart_ );
         }
         else {
+            copyAction_->setText( "&Copy" );
+            copyAction_->setStatusTip( tr( "Copy the selection" ) );
+
             setSearchStartAction_->setEnabled( false );
             setSearchEndAction_->setEnabled( false );
 
             setSelectionStartAction_->setEnabled( false );
             setSelectionEndAction_->setEnabled( false );
-        }
-
-        // Prepare the popup depending on selection type
-        if ( selection_.isSingleLine() || contextMenuLine_.has_value() ) {
-            copyAction_->setText( "&Copy this line" );
-        }
-        else {
-            copyAction_->setText( "&Copy" );
-            copyAction_->setStatusTip( tr( "Copy the selection" ) );
         }
 
         if ( selection_.isPortion() ) {
@@ -1178,34 +1179,28 @@ void AbstractLogView::updateSearchLimits()
 
 void AbstractLogView::setSearchStart()
 {
+    const auto selectedLine = selection_.selectedLine();
     searchStart_
-        = contextMenuLine_.has_value() ? displayLineNumber( *contextMenuLine_ ) - 1_lcount : 0_lnum;
+        = selectedLine.has_value() ? displayLineNumber( *selectedLine ) - 1_lcount : 0_lnum;
     updateSearchLimits();
 }
 
 void AbstractLogView::setSearchEnd()
 {
-    searchEnd_ = contextMenuLine_.has_value() ? displayLineNumber( *contextMenuLine_ )
-                                              : LineNumber( logData->getNbLine().get() );
+    const auto selectedLine = selection_.selectedLine();
+    searchEnd_ = selectedLine.has_value() ? displayLineNumber( *selectedLine )
+                                          : LineNumber( logData->getNbLine().get() );
     updateSearchLimits();
 }
 
 void AbstractLogView::setSelectionStart()
 {
-    selectionStart_ = contextMenuLine_;
-    if ( selectionStart_.has_value() ) {
-        selection_.selectLine( *selectionStart_ );
-        emit updateLineNumber( *selectionStart_ );
-        emit newSelection( *selectionStart_ );
-
-        textAreaCache_.invalid_ = true;
-        update();
-    }
+    selectionStart_ = selection_.selectedLine();
 }
 
 void AbstractLogView::setSelectionEnd()
 {
-    const auto selectionEnd = contextMenuLine_;
+    const auto selectionEnd = selection_.selectedLine();
 
     if ( selectionStart_ && selectionEnd ) {
         selection_.selectRange( *selectionStart_, *selectionEnd );

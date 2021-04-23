@@ -62,6 +62,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(StandardProjectSettings)
 include(ucm)
 include(prepare_version)
+include(GNUInstallDirs)
 
 if(MSVC)
     IF (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")	
@@ -175,17 +176,12 @@ if(UNIX)
         )
 
         install(FILES
-            ${COPYING_FILE} ${NOTICE_FILE}
-            DESTINATION share/doc/klogg)
-
-        install(FILES
-                ${README_FILE}
-                DESTINATION share/doc/klogg)
-
-        install(FILES
+            ${COPYING_FILE} 
+            ${NOTICE_FILE}
+            ${README_FILE}
             ${DOCUMENTATION_HTML}
             ${DOCUMENTATION_FILE}
-            DESTINATION share/doc/klogg)
+            DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
         install(FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/packaging/linux/klogg.desktop

@@ -39,6 +39,7 @@ add_subdirectory(maddy)
 add_subdirectory(whereami)
 
 if(KLOGG_USE_HYPERSCAN)
+set(BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(hyperscan) #5.4.0
 endif(KLOGG_USE_HYPERSCAN)
 

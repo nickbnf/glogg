@@ -34,7 +34,7 @@ set_target_properties(klogg PROPERTIES AUTOMOC ON)
 set_target_properties(klogg_portable PROPERTIES AUTORCC ON)
 set_target_properties(klogg_portable PROPERTIES AUTOMOC ON)
 
-if (${USE_LTO})
+if (${KLOGG_USE_LTO})
 set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 set_property(TARGET klogg_portable PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()

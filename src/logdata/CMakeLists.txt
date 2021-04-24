@@ -59,6 +59,6 @@ endif()
 
 
 
-if (${USE_LTO})
+if (${KLOGG_USE_LTO})
 set_property(TARGET logdata PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()

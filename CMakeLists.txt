@@ -13,11 +13,10 @@ set(COPYRIGHT "Copyright (c) ${PRODUCT_CURRENT_YEAR} Nicolas Bonnefon, Anton Fil
 set(IDENTIFIER "com.github.variar.klogg")
 set(PROJECT_DESCRIPTION "${PROJECT_NAME} log viewer")
 
-option(BUILD_TESTS "Build tests" ON)
-option(USE_LTO "Use link time optimization" ON)
+option(KLOGG_BUILD_TESTS "Build tests" ON)
+option(KLOGG_USE_LTO "Use link time optimization" ON)
 option(KLOGG_USE_SENTRY "Use Sentry" ON)
 option(KLOGG_USE_HYPERSCAN "Use Hyperscan" ON)
-
 
 set(BUILD_VERSION $ENV{KLOGG_VERSION} CACHE STRING "build version")
 set(BUILD_NUMBER "" CACHE STRING "build number")
@@ -130,7 +129,7 @@ add_test(
     COMMAND klogg -platform offscreen -v
 )
 
-if (${BUILD_TESTS})
+if (${KLOGG_BUILD_TESTS})
     add_subdirectory(tests)
 endif()
 

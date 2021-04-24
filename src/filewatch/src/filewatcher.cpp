@@ -20,9 +20,9 @@
 #include "filewatcher.h"
 
 #include "configuration.h"
+#include "dispatch_to.h"
 #include "log.h"
 #include "synchronization.h"
-#include "dispatch_to.h"
 
 #include <efsw/efsw.hpp>
 #include <vector>
@@ -225,10 +225,8 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         };
 
         for ( const auto& changedFile : collectChangedFiles() ) {
-            dispatchToMainThread([watcher = parent_, changedFile]()
-            {
-                watcher->fileChangedOnDisk(changedFile);
-            });
+            dispatchToMainThread(
+                [watcher = parent_, changedFile]() { watcher->fileChangedOnDisk( changedFile ); } );
         }
     }
 
@@ -242,12 +240,8 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         LOG_DEBUG << "Notification from esfw for " << dir;
 
         // post to other thread to avoid deadlock between internal esfw lock and our mutex_
-        auto signalSource = new QObject;
-        QObject::connect( signalSource, &QObject::destroyed, parent_,
-                          [=]( QObject* ) { notifyOnFileAction( dir, filename, oldFilename ); },
-                          Qt::QueuedConnection );
-        signalSource->moveToThread( parent_->thread() );
-        signalSource->deleteLater();
+        dispatchToThread( [=]() { notifyOnFileAction( dir, filename, oldFilename ); },
+                          parent_->thread() );
     }
 
     void notifyOnFileAction( const std::string& dir, const std::string& filename,
@@ -261,15 +255,14 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         const auto directory = qtDir.toStdString();
 
         LOG_DEBUG << "fileChangedOnDisk " << directory << " " << filename << ", old name "
-                        << oldFilename;
+                  << oldFilename;
 
         const auto fullChangedFilename = findChangedFilename( directory, filename, oldFilename );
 
         if ( !fullChangedFilename.isEmpty() ) {
-            dispatchToMainThread([watcher = parent_, fullChangedFilename]()
-            {
-                watcher->fileChangedOnDisk(fullChangedFilename);
-            });
+            dispatchToMainThread( [watcher = parent_, fullChangedFilename]() {
+                watcher->fileChangedOnDisk( fullChangedFilename );
+            } );
         }
     }
 
@@ -297,8 +290,8 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
                                } );
 
             if ( isFileWatched ) {
-                LOG_DEBUG << "fileChangedOnDisk - will notify for " << filename
-                                << ", old name " << oldFilename;
+                LOG_DEBUG << "fileChangedOnDisk - will notify for " << filename << ", old name "
+                          << oldFilename;
 
                 return QDir::cleanPath( QString::fromStdString( directory ) + QDir::separator()
                                         + QString::fromStdString( changedFilename ) );

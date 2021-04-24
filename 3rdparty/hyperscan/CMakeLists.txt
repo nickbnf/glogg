@@ -1,10 +1,13 @@
-cmake_minimum_required (VERSION 2.8.11)
-project (hyperscan C CXX)
+cmake_minimum_required (VERSION 3.12)
 
 set (HS_MAJOR_VERSION 5)
 set (HS_MINOR_VERSION 4)
 set (HS_PATCH_VERSION 0)
 set (HS_VERSION ${HS_MAJOR_VERSION}.${HS_MINOR_VERSION}.${HS_PATCH_VERSION})
+
+project (hyperscan 
+        VERSION ${HS_VERSION} 
+        LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CheckCCompilerFlag)

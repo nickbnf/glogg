@@ -10,6 +10,7 @@ mark_as_advanced(FORCE ABSL_RUN_TESTS)
 mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
 mark_as_advanced(FORCE ABSL_USE_GOOGLETEST_HEAD)
 
+set(EFSW_INSTALL OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(efsw) #2bfda30 on 14 Dec 2020
 set(BUILD_TEST_APP OFF CACHE INTERNAL "" FORCE)
 mark_as_advanced(FORCE VERBOSE)

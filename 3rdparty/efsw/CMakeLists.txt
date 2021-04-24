@@ -9,6 +9,7 @@ find_package(Threads REQUIRED)
 option (VERBOSE "Build efsw with verbose mode.")
 option (BUILD_SHARED_LIBS "Build efsw as a shared library" ON)
 option (BUILD_TEST_APP "Build the test app")
+option (EFSW_INSTALL "Add efsw install targets" ON)
 
 add_library(efsw)
 
@@ -131,21 +132,23 @@ configure_package_config_file(
 
 export(TARGETS efsw NAMESPACE efsw:: FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/${CMAKE_PROJECT_NAME}Targets.cmake)
 
-install(TARGETS efsw EXPORT efswExport
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if (EFSW_INSTALL)
+  install(TARGETS efsw EXPORT efswExport
+  	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 
-install (
-	FILES
-		include/efsw/efsw.h include/efsw/efsw.hpp
-		src/efsw/base.hpp src/efsw/System.hpp src/efsw/FileSystem.hpp
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/efsw
-)
-
-install(EXPORT efswExport NAMESPACE efsw:: DESTINATION "${packageDestDir}" FILE ${CMAKE_PROJECT_NAME}Targets.cmake)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/efswConfig.cmake DESTINATION "${packageDestDir}")
+  install (
+  	FILES
+  		include/efsw/efsw.h include/efsw/efsw.hpp
+  		src/efsw/base.hpp src/efsw/System.hpp src/efsw/FileSystem.hpp
+  	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/efsw
+  )
+  
+  install(EXPORT efswExport NAMESPACE efsw:: DESTINATION "${packageDestDir}" FILE ${CMAKE_PROJECT_NAME}Targets.cmake)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/efswConfig.cmake DESTINATION "${packageDestDir}")
+endif()
 
 if (BUILD_TEST_APP)
 	add_executable(efsw-test src/test/efsw-test.cpp)

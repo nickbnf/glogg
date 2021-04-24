@@ -4,7 +4,7 @@ namespace efsw {
 
 WatcherInotify::WatcherInotify() :
 	Watcher(),
-	Parent( nullptr )
+	Parent( NULL )
 {
 }
 
@@ -19,7 +19,7 @@ bool WatcherInotify::inParentTree( WatcherInotify * parent )
 {
 	WatcherInotify * tNext = Parent;
 
-	while ( nullptr != tNext )
+	while ( NULL != tNext )
 	{
 		if ( tNext == parent )
 		{

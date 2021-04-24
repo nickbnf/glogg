@@ -26,13 +26,15 @@ class FileSystem
 
 		static std::string pathRemoveFileName( std::string filepath );
 
-		static void realPath( std::string curdir, std::string& path );
-
 		static std::string getLinkRealPath( std::string dir, std::string& curPath );
 
 		static std::string precomposeFileName(const std::string& name);
 
 		static bool isRemoteFS( const std::string& directory );
+
+		static bool changeWorkingDirectory( const std::string & path );
+
+		static std::string getCurrentWorkingDirectory();
 };
 
 }

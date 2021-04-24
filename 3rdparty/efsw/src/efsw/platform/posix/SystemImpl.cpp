@@ -42,7 +42,7 @@ void System::sleep( const unsigned long& ms )
 
 	// get the current time
 	timeval tv;
-	gettimeofday(&tv, nullptr);
+	gettimeofday(&tv, NULL);
 
 	// construct the time limit (current time + time to wait)
 	timespec ti;
@@ -52,9 +52,9 @@ void System::sleep( const unsigned long& ms )
 
 	// create a mutex and thread condition
 	pthread_mutex_t mutex;
-	pthread_mutex_init(&mutex, nullptr);
+	pthread_mutex_init(&mutex, 0);
 	pthread_cond_t condition;
-	pthread_cond_init(&condition, nullptr);
+	pthread_cond_init(&condition, 0);
 
 	// wait...
 	pthread_mutex_lock(&mutex);

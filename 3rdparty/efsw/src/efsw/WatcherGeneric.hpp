@@ -16,9 +16,9 @@ class WatcherGeneric : public Watcher
 
 		WatcherGeneric( WatchID id, const std::string& directory, FileWatchListener * fwl, FileWatcherImpl * fw, bool recursive );
 
-		~WatcherGeneric() override;
+		~WatcherGeneric();
 
-		void watch() override;
+		void watch();
 
 		void watchDir( std::string dir );
 

@@ -52,7 +52,7 @@ FileWatcher::FileWatcher( bool useGenericFileWatcher ) :
 {
 	if ( useGenericFileWatcher )
 	{
-        efDEBUG( "Using backend: Generic\n" );
+		efDEBUG( "Using backend: Generic\n" );
 
 		mImpl = new FileWatcherGeneric( this );
 	}

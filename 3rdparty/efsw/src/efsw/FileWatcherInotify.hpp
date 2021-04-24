@@ -21,26 +21,26 @@ class FileWatcherInotify : public FileWatcherImpl
 
 		FileWatcherInotify( FileWatcher * parent );
 
-		~FileWatcherInotify() override;
+		virtual ~FileWatcherInotify();
 
 		/// Add a directory watch
 		/// On error returns WatchID with Error type.
-		WatchID addWatch(const std::string& directory, FileWatchListener* watcher, bool recursive) override;
+		WatchID addWatch(const std::string& directory, FileWatchListener* watcher, bool recursive);
 
 		/// Remove a directory watch. This is a brute force lazy search O(nlogn).
-		void removeWatch(const std::string& directory) override;
+		void removeWatch(const std::string& directory);
 
 		/// Remove a directory watch. This is a map lookup O(logn).
-		void removeWatch(WatchID watchid) override;
+		void removeWatch(WatchID watchid);
 
 		/// Updates the watcher. Must be called often.
-		void watch() override;
+		void watch();
 
 		/// Handles the action
-		void handleAction(Watcher * watch, const std::string& filename, unsigned long action, std::string oldFilename = "") override;
+		void handleAction(Watcher * watch, const std::string& filename, unsigned long action, std::string oldFilename = "");
 
 		/// @return Returns a list of the directories that are being watched
-		std::list<std::string> directories() override;
+		std::list<std::string> directories();
 	protected:
 		/// Map of WatchID to WatchStruct pointers
 		WatchMap mWatches;
@@ -55,9 +55,9 @@ class FileWatcherInotify : public FileWatcherImpl
 
 		Mutex mWatchesLock;
 
-		WatchID addWatch(const std::string& directory, FileWatchListener* watcher, bool recursive, WatcherInotify * parent = nullptr );
+		WatchID addWatch(const std::string& directory, FileWatchListener* watcher, bool recursive, WatcherInotify * parent = NULL );
 
-		bool pathInWatches( const std::string& path ) override;
+		bool pathInWatches( const std::string& path );
 	private:
 		void run();
 

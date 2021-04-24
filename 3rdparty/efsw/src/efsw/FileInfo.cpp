@@ -180,17 +180,17 @@ bool FileInfo::operator==( const FileInfo& Other ) const
 	);
 }
 
-bool FileInfo::isDirectory()
+bool FileInfo::isDirectory() const
 {
 	return 0 != S_ISDIR(Permissions);
 }
 
-bool FileInfo::isRegularFile()
+bool FileInfo::isRegularFile() const
 {
 	return 0 != S_ISREG(Permissions);
 }
 
-bool FileInfo::isReadable()
+bool FileInfo::isReadable() const
 {
 #if EFSW_PLATFORM != EFSW_PLATFORM_WIN32
 	static bool isRoot = getuid() == 0;
@@ -200,7 +200,7 @@ bool FileInfo::isReadable()
 #endif
 }
 
-bool FileInfo::isLink()
+bool FileInfo::isLink() const
 {
 #if EFSW_PLATFORM != EFSW_PLATFORM_WIN32
 	return S_ISLNK(Permissions);
@@ -214,9 +214,9 @@ std::string FileInfo::linksTo()
 #if EFSW_PLATFORM != EFSW_PLATFORM_WIN32
 	if ( isLink() )
 	{
-		char * ch = realpath( Filepath.c_str(), nullptr);
+		char * ch = realpath( Filepath.c_str(), NULL);
 
-		if ( nullptr != ch )
+		if ( NULL != ch )
 		{
 			std::string tstr( ch );
 
@@ -252,6 +252,18 @@ bool FileInfo::exists()
 	}
 
 	return 0 == res;
+}
+
+FileInfo& FileInfo::operator=( const FileInfo& Other )
+{
+	this->Filepath			= Other.Filepath;
+	this->Size				= Other.Size;
+	this->ModificationTime	= Other.ModificationTime;
+	this->GroupId			= Other.GroupId;
+	this->OwnerId			= Other.OwnerId;
+	this->Permissions		= Other.Permissions;
+	this->Inode				= Other.Inode;
+	return *this;
 }
 
 bool FileInfo::sameInode( const FileInfo& Other ) const

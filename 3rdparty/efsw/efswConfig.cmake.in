@@ -1,0 +1,7 @@
+# - Config file for the @CMAKE_PROJECT_NAME@ package
+
+@PACKAGE_INIT@
+
+@DEPENDENCIES_SECTION@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@CMAKE_PROJECT_NAME@Targets.cmake")

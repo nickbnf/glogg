@@ -27,15 +27,17 @@ class FileInfo
 
 		bool operator!=( const FileInfo& Other ) const;
 
-		bool isDirectory();
+		FileInfo& operator=( const FileInfo& Other );
 
-		bool isRegularFile();
+		bool isDirectory() const;
 
-		bool isReadable();
+		bool isRegularFile() const;
+
+		bool isReadable() const;
 
 		bool sameInode( const FileInfo& Other ) const;
 
-		bool isLink();
+		bool isLink() const;
 
 		std::string linksTo();
 

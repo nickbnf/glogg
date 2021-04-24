@@ -11,7 +11,7 @@ class WatcherInotify : public Watcher
 	public:
 		WatcherInotify();
 		
-		WatcherInotify( WatchID id, std::string directory, FileWatchListener * listener, bool recursive, WatcherInotify * parent = nullptr );
+		WatcherInotify( WatchID id, std::string directory, FileWatchListener * listener, bool recursive, WatcherInotify * parent = NULL );
 
 		bool inParentTree( WatcherInotify * parent );
 

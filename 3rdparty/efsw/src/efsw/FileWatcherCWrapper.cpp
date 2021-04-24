@@ -12,15 +12,14 @@ public:
 	efsw_pfn_fileaction_callback mFn;
 	void* mParam;
 public:
-	Watcher_CAPI(efsw_watcher watcher, efsw_pfn_fileaction_callback fn, void* param)
-	{
-		mWatcher = watcher;
-		mFn = fn;
-		mParam = param;
-	}
+	Watcher_CAPI(efsw_watcher watcher, efsw_pfn_fileaction_callback fn, void* param) :
+		mWatcher( watcher ),
+		mFn( fn ),
+		mParam( param )
+	{}
 
 	void handleFileAction(efsw::WatchID watchid, const std::string& dir, const std::string& filename,
-		efsw::Action action, std::string oldFilename = "") override
+		efsw::Action action, std::string oldFilename = "")
 	{
 		mFn(mWatcher, watchid, dir.c_str(), filename.c_str(), (enum efsw_action)action,
 			oldFilename.c_str(), mParam );
@@ -34,7 +33,7 @@ static std::vector<Watcher_CAPI*> g_callbacks;
 
 Watcher_CAPI* find_callback(efsw_watcher watcher, efsw_pfn_fileaction_callback fn)
 {
-	for (std::vector<Watcher_CAPI*>::iterator i = g_callbacks.begin(); i != g_callbacks.end(); i++ )
+	for (std::vector<Watcher_CAPI*>::iterator i = g_callbacks.begin(); i != g_callbacks.end(); ++i )
 	{
 		Watcher_CAPI* callback = *i;
 
@@ -42,7 +41,7 @@ Watcher_CAPI* find_callback(efsw_watcher watcher, efsw_pfn_fileaction_callback f
 			return *i;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
 Watcher_CAPI* remove_callback(efsw_watcher watcher)
@@ -55,10 +54,10 @@ Watcher_CAPI* remove_callback(efsw_watcher watcher)
 		if (callback->mWatcher == watcher)
 			i = g_callbacks.erase(i);
 		else
-			i++;
+			++i;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
 
@@ -86,7 +85,7 @@ efsw_watchid efsw_addwatch(efsw_watcher watcher, const char* directory,
 {
 	Watcher_CAPI* callback = find_callback(watcher, callback_fn);
 
-	if (callback == nullptr)   {
+	if (callback == NULL)   {
 		callback = new Watcher_CAPI(watcher, callback_fn, param);
 		g_callbacks.push_back(callback);
 	}

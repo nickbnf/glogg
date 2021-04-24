@@ -8,6 +8,7 @@
 #include <efsw/WatcherWin32.hpp>
 #include <set>
 #include <map>
+#include <vector>
 
 namespace efsw
 {
@@ -43,24 +44,18 @@ class FileWatcherWin32 : public FileWatcherImpl
 		/// @return Returns a list of the directories that are being watched
 		std::list<std::string> directories();
 	protected:
+		HANDLE mIOCP;
 		Watches mWatches;
-		Watches mWatchesRemoved;
-		Watches mWatchesNew;
 
 		/// The last watchid
 		WatchID mLastWatchID;
-
 		Thread * mThread;
-
 		Mutex mWatchesLock;
 
 		bool pathInWatches( const std::string& path );
 
 		/// Remove all directory watches.
 		void removeAllWatches();
-
-		/// Remove needed directory watches.
-		void removeWatches();
 
 		void removeWatch(WatcherStructWin32* watch);
 	private:

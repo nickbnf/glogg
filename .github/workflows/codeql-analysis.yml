@@ -47,9 +47,6 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
-    - name: Install curl
-      run: sudo apt-get install libcurl4-openssl-dev
-
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
       with:
@@ -67,7 +64,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DKLOGG_USE_SENTRY=OFF -DKLOGG_USE_HYPERSCAN=OFF..
 
     - name: build
       run: |

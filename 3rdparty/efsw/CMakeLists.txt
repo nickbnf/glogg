@@ -69,15 +69,15 @@ endif()
 
 if (APPLE)
 	target_sources(efsw PRIVATE
-		src/efsw/FileWatcherFSEvents.cpp
+		#src/efsw/FileWatcherFSEvents.cpp
 		src/efsw/FileWatcherKqueue.cpp
-		src/efsw/WatcherFSEvents.cpp
+		#src/efsw/WatcherFSEvents.cpp
 		src/efsw/WatcherKqueue.cpp
 	)
 
-	if (NOT CMAKE_SYSTEM_VERSION GREATER 9)
-		target_compile_definitions(efsw PRIVATE EFSW_FSEVENTS_NOT_SUPPORTED)
-	endif()
+	#if (NOT CMAKE_SYSTEM_VERSION GREATER 9)
+	target_compile_definitions(efsw PUBLIC EFSW_FSEVENTS_NOT_SUPPORTED)
+	#endif()
 elseif (WIN32)
 	target_sources(efsw PRIVATE
 		src/efsw/FileWatcherWin32.cpp

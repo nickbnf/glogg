@@ -87,14 +87,17 @@ Current release is 20.12. Binaries for all platforms can be downloaded from GitH
 
 [ ![Release](https://img.shields.io/github/v/release/variar/klogg?style=flat)](https://github.com/variar/klogg/releases/tag/v20.12)
 
+#### Windows
 Windows installer is also available from Chocolatey:
 
 [ ![Chocolatey](https://img.shields.io/chocolatey/v/klogg?style=flat)](https://chocolatey.org/packages/klogg)
 
+#### Mac OS
 Package for Mac can be installed from Homebrew
 
 [ ![homebrew cask](https://img.shields.io/homebrew/cask/v/klogg?style=flat)](https://formulae.brew.sh/cask/klogg)
 
+#### Linux
 Linux packages are also available from DEB and RPM repositories. 
 
 For DEB add klogg artifactory repository, then install from apt:
@@ -118,6 +121,8 @@ Then install using yum
 sudo yum update
 sudo yum install klogg
 ```
+
+Gentoo users may grab ebuild from [packaging/linux/gentoo](https://github.com/variar/klogg/tree/master/packaging/linux/gentoo).
 
 ### Tesing builds
 

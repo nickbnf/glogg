@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>anton.filimonov@gmail.com</email>
+		<name>Anton Filimonov</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">variar/klogg</remote-id>
+	</upstream>
+    <use>
+        <flag name="sentry">
+            Enable crash reporting using sentry.io.
+        </flag>
+        <flag name="lto">
+            Build with link time optimization (LTO).
+        </flag>
+    </use>
+</pkgmetadata>

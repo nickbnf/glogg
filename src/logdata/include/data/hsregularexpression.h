@@ -159,8 +159,8 @@ class HsRegularExpression {
 #else
 class HsMatcher : public DefaultRegularExpressionMatcher {
   public:
-    explicit HsMatcher( const QRegularExpression& regexp )
-        : DefaultRegularExpressionMatcher( regexp )
+    explicit HsMatcher( const QRegularExpression& regexp, bool isExclude )
+        : DefaultRegularExpressionMatcher( regexp, isExclude )
     {
     }
 };
@@ -168,7 +168,8 @@ class HsMatcher : public DefaultRegularExpressionMatcher {
 class HsRegularExpression {
   public:
     explicit HsRegularExpression( const RegularExpressionPattern& regexp )
-        : regexp_( static_cast<QRegularExression>( regexp ) )
+        : regexp_( static_cast<QRegularExpression>( regexp ) )
+        , isExclude_( regexp.isExclude )
     {
     }
 
@@ -184,11 +185,12 @@ class HsRegularExpression {
 
     HsMatcher createMatcher() const
     {
-        return HsMatcher( regexp_ );
+        return HsMatcher( regexp_, isExclude_ );
     }
 
   private:
     QRegularExpression regexp_;
+    bool isExclude_ = false;
 };
 
 #endif

@@ -36,6 +36,7 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QMessageBox>
 #include <QtGui>
 
 #include "log.h"
@@ -64,14 +65,14 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     connect( buttonBox, &QDialogButtonBox::clicked, this, &OptionsDialog::onButtonBoxClicked );
     connect( fontFamilyBox, &QComboBox::currentTextChanged, this, &OptionsDialog::updateFontSize );
     connect( incrementalCheckBox, &QCheckBox::toggled,
-             [this]( auto ) { this->setupIncremental(); } );
-    connect( pollingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupPolling(); } );
+             [ this ]( auto ) { this->setupIncremental(); } );
+    connect( pollingCheckBox, &QCheckBox::toggled, [ this ]( auto ) { this->setupPolling(); } );
     connect( searchResultsCacheCheckBox, &QCheckBox::toggled,
-             [this]( auto ) { this->setupSearchResultsCache(); } );
-    connect( loggingCheckBox, &QCheckBox::toggled, [this]( auto ) { this->setupLogging(); } );
+             [ this ]( auto ) { this->setupSearchResultsCache(); } );
+    connect( loggingCheckBox, &QCheckBox::toggled, [ this ]( auto ) { this->setupLogging(); } );
 
     connect( extractArchivesCheckBox, &QCheckBox::toggled,
-             [this]( auto ) { this->setupArchives(); } );
+             [ this ]( auto ) { this->setupArchives(); } );
 
     updateDialogFromConfig();
 
@@ -378,6 +379,11 @@ void OptionsDialog::updateConfigFromDialog()
     config.setVersionCheckingEnabled( checkForNewVersionCheckBox->isChecked() );
 
     config.setVerifySslPeers( verifySslCheckBox->isChecked() );
+
+    if ( config.style() != styleComboBox->currentText() ) {
+        QMessageBox::warning( this, "klogg",
+                              QString( "Klogg needs to be restarted to apply style changes. " ) );
+    }
 
     config.setStyle( styleComboBox->currentText() );
 

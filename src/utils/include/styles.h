@@ -26,8 +26,10 @@ constexpr QLatin1String DarkStyleKey = QLatin1String( "Dark", 4 );
 constexpr QLatin1String VistaKey = QLatin1String( "WindowsVista", 12 );
 constexpr QLatin1String FusionKey = QLatin1String( "Fusion", 6 );
 constexpr QLatin1String WindowsKey = QLatin1String( "Windows", 7 );
-constexpr QLatin1String Gtk2Key = QLatin1String( "Gtk2", 4 );
 constexpr QLatin1String MacintoshKey = QLatin1String( "macintosh", 9 );
+
+constexpr QLatin1String Gtk2Key = QLatin1String( "Gtk2", 4 );
+constexpr QLatin1String Bb10Key = QLatin1String( "bb10", 4 );
 
 inline QStringList availableStyles()
 {
@@ -40,29 +42,27 @@ inline QStringList availableStyles()
     styles << QStyleFactory::keys();
 #endif
 
-    auto gtk2Style = std::find_if( styles.begin(), styles.end(), []( const auto& style ) {
-        return style.compare( Gtk2Key, Qt::CaseInsensitive ) == 0;
+    auto removedStyles = std::remove_if( styles.begin(), styles.end(), []( const QString& style ) {
+        return style.startsWith( Gtk2Key, Qt::CaseInsensitive )
+               || style.startsWith( Bb10Key, Qt::CaseInsensitive );
     } );
 
-    if ( gtk2Style != styles.end() ) {
-        styles.erase( gtk2Style );
-    }
+    styles.erase( removedStyles, styles.end() );
 
     styles << DarkStyleKey;
 
-    std::sort(styles.begin(), styles.end(), [](const auto& lhs, const auto& rhs)
-    {
-        return lhs.compare(rhs,  Qt::CaseInsensitive) < 0;
-    });
+    std::sort( styles.begin(), styles.end(), []( const auto& lhs, const auto& rhs ) {
+        return lhs.compare( rhs, Qt::CaseInsensitive ) < 0;
+    } );
 
     return styles;
 }
 
 inline QString defaultPlatformStyle()
 {
-#if defined(Q_OS_WIN)
+#if defined( Q_OS_WIN )
     return VistaKey;
-#elif defined(Q_OS_MACOS)
+#elif defined( Q_OS_MACOS )
     return MacintoshKey;
 #else
     return FusionKey;

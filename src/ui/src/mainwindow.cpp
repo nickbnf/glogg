@@ -213,8 +213,7 @@ MainWindow::MainWindow( WindowSession session )
     setCentralWidget( central_widget );
 
     updateTitleBar( "" );
-
-    applyStyle();
+    loadIcons();
 }
 
 void MainWindow::reloadGeometry()
@@ -584,24 +583,6 @@ void MainWindow::createToolBars()
     showInfoLabels( false );
 }
 
-void MainWindow::applyStyle()
-{
-    const auto& config = Configuration::get();
-    auto style = config.style();
-    LOG_INFO << "Setting style to " << style;
-    if ( style == DarkStyleKey ) {
-        QFile styleFile( ":qdarkstyle/style.qss" );
-        styleFile.open( QFile::ReadOnly | QFile::Text );
-        QTextStream styleSream( &styleFile );
-        QApplication::setStyle( availableStyles().front() );
-        qApp->setStyleSheet( styleSream.readAll() );
-    }
-    else {
-        QApplication::setStyle( style );
-        qApp->setStyleSheet( "" );
-    }
-}
-
 void MainWindow::createTrayIcon()
 {
     trayIcon_ = new QSystemTrayIcon( this );
@@ -917,8 +898,6 @@ void MainWindow::options()
 
         newWindowAction->setVisible( config.allowMultipleWindows() );
         followAction->setEnabled( config.anyFileWatchEnabled() );
-
-        applyStyle();
     } );
     dialog.exec();
 

@@ -185,7 +185,6 @@ class MainWindow : public QMainWindow {
     void createMenus();
     void createToolBars();
     void createTrayIcon();
-    void applyStyle();
     void readSettings();
     void writeSettings();
     bool loadFile( const QString& fileName, bool followFile = false );

@@ -58,9 +58,11 @@
 #include "persistentinfo.h"
 #include "recentfiles.h"
 #include "savedsearches.h"
+#include "styles.h"
 #include "versionchecker.h"
 
 #include <QFileInfo>
+#include <QStyleFactory>
 #include <QtCore/QJsonDocument>
 
 #ifdef KLOGG_PORTABLE
@@ -154,11 +156,11 @@ struct CliParameters {
 
         options.add_flag_function(
             "-d,--debug",
-            [this]( auto count ) { log_level = static_cast<int64_t>( plog::warning ) + count; },
+            [ this ]( auto count ) { log_level = static_cast<int64_t>( plog::warning ) + count; },
             "output more debug (include multiple times for more verbosity e.g. -dddd)" );
 
         options.add_flag( "--window-width", window_width, "new window width" )
-            ->needs(options.add_flag( "--window-height", window_height, "new window height" ));
+            ->needs( options.add_flag( "--window-height", window_height, "new window height" ) );
 
         std::vector<std::string> raw_filenames;
         options.add_option( "files", raw_filenames, "files to open" );
@@ -174,6 +176,50 @@ struct CliParameters {
         }
     }
 };
+
+void applyStyle()
+{
+    const auto& config = Configuration::get();
+    auto style = config.style();
+    LOG_INFO << "Setting style to " << style;
+    if ( style == DarkStyleKey ) {
+
+        // based on https://gist.github.com/QuantumCD/6245215
+
+        QColor darkGray( 53, 53, 53 );
+        QColor gray( 128, 128, 128 );
+        QColor black( 40, 40, 40 );
+        QColor white( 240, 240, 240 );
+        QColor blue( 42, 130, 218 );
+
+        QPalette darkPalette;
+        darkPalette.setColor( QPalette::Window, darkGray );
+        darkPalette.setColor( QPalette::WindowText, white );
+        darkPalette.setColor( QPalette::Base, black );
+        darkPalette.setColor( QPalette::AlternateBase, darkGray );
+        darkPalette.setColor( QPalette::ToolTipBase, blue );
+        darkPalette.setColor( QPalette::ToolTipText, white );
+        darkPalette.setColor( QPalette::Text, white );
+        darkPalette.setColor( QPalette::Button, darkGray );
+        darkPalette.setColor( QPalette::ButtonText, white );
+        darkPalette.setColor( QPalette::Link, blue );
+        darkPalette.setColor( QPalette::Highlight, blue );
+        darkPalette.setColor( QPalette::HighlightedText, black.darker() );
+
+        darkPalette.setColor( QPalette::Active, QPalette::Button, gray.darker() );
+        darkPalette.setColor( QPalette::Disabled, QPalette::ButtonText, gray );
+        darkPalette.setColor( QPalette::Disabled, QPalette::WindowText, gray );
+        darkPalette.setColor( QPalette::Disabled, QPalette::Text, gray );
+        darkPalette.setColor( QPalette::Disabled, QPalette::Light, darkGray );
+
+        qApp->setStyle( QStyleFactory::create( "Fusion" ) );
+        qApp->setPalette( darkPalette );
+    }
+    else {
+        QApplication::setStyle( style );
+        qApp->setStyleSheet( "" );
+    }
+}
 
 int main( int argc, char* argv[] )
 {
@@ -206,6 +252,8 @@ int main( int argc, char* argv[] )
         // Load the existing session if needed
         const auto& config = Configuration::get();
         plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
+
+        applyStyle();
 
         MainWindow* mw = nullptr;
         if ( parameters.load_session

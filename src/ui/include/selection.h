@@ -27,23 +27,44 @@
 
 class AbstractLogData;
 
-class Portion
-{
+class Portion {
   public:
-    Portion() : line_{}, startColumn_{ -1 }, endColumn_{ -1 }
-    {}
+    Portion()
+        : line_{}
+        , startColumn_{ -1 }
+        , endColumn_{ -1 }
+    {
+    }
 
     Portion( LineNumber line, int start_column, int end_column )
         : line_{ line }
         , startColumn_{ start_column }
         , endColumn_{ end_column }
-    {}
+    {
+    }
 
-    LineNumber line() const { return *line_; }
-    int startColumn() const { return startColumn_; }
-    int endColumn() const { return endColumn_; }
+    LineNumber line() const
+    {
+        return *line_;
+    }
+    int startColumn() const
+    {
+        return startColumn_;
+    }
+    int endColumn() const
+    {
+        return endColumn_;
+    }
 
-    bool isValid() const { return !!line_; }
+    bool isValid() const
+    {
+        return !!line_;
+    }
+
+    int length() const
+    {
+        return endColumn_ - startColumn_ + 1;
+    }
 
   private:
     OptionalLineNumber line_;
@@ -52,14 +73,17 @@ class Portion
 };
 
 // Represents a selection in an AbstractLogView
-class Selection
-{
+class Selection {
   public:
     // Construct an empty selection
     Selection();
 
     // Clear the selection
-    void clear() { selectedPartial_.line = {}; selectedLine_ = {}; }
+    void clear()
+    {
+        selectedPartial_.line = {};
+        selectedLine_ = {};
+    }
 
     // Select one line
     void selectLine( LineNumber line )
@@ -71,37 +95,54 @@ class Selection
     // Select a portion of line (both start and end included)
     void selectPortion( LineNumber line, int start_column, int end_column );
     void selectPortion( const Portion& selection )
-      { selectPortion( selection.line(), selection.startColumn(),
-              selection.endColumn() ); }
+    {
+        selectPortion( selection.line(), selection.startColumn(), selection.endColumn() );
+    }
     // Select a range of lines (both start and end included)
-    void selectRange(LineNumber start_line, LineNumber end_line );
+    void selectRange( LineNumber start_line, LineNumber end_line );
 
     // Select a range from the previously selected line or beginning
     // of range (shift+click behaviour)
-    void selectRangeFromPrevious(LineNumber line );
+    void selectRangeFromPrevious( LineNumber line );
 
     // Crop selection so that in fit in the range ending with the line passed.
-    void crop(LineNumber last_line );
+    void crop( LineNumber last_line );
 
     // Returns whether the selection is empty
     bool isEmpty() const
-    { return ( !selectedPartial_.line ) && ( !selectedLine_ ); }
+    {
+        return ( !selectedPartial_.line ) && ( !selectedLine_ );
+    }
 
     // Returns whether the selection is a single line
-    bool isSingleLine() const { return !!selectedLine_; }
+    bool isSingleLine() const
+    {
+        return !!selectedLine_;
+    }
 
     // Returns whether the selection is a portion of line
-    bool isPortion() const { return !!selectedPartial_.line; }
+    bool isPortion() const
+    {
+        return !!selectedPartial_.line;
+    }
+
+    // Returns whether the selection is a portion of line
+    bool isPortion( LineNumber line ) const
+    {
+        return !!selectedPartial_.line && *selectedPartial_.line == line;
+    }
 
     // Returns whether a portion is selected or not on the passed line.
     // If so, returns the portion position.
-    bool getPortionForLine( LineNumber line,
-            int* start_column, int* end_column ) const;
+    Portion getPortionForLine( LineNumber line ) const;
     // Get a list of selected line(s), in order.
     std::vector<LineNumber> getLines() const;
 
     // Returns wether the line passed is selected (entirely).
     bool isLineSelected( LineNumber line ) const;
+    
+    // Returns wether the line passed is selected in certain range.
+    bool isPortionSelected( LineNumber line, int startColumn, int endColumn ) const;
 
     // Returns the line selected or -1 if not a single line selection
     OptionalLineNumber selectedLine() const;
@@ -128,7 +169,7 @@ class Selection
     };
     struct SelectedRange {
         // The limits of the range, sorted
-        OptionalLineNumber  startLine;
+        OptionalLineNumber startLine;
         LineNumber endLine;
         // The line selected first, used for shift+click
         LineNumber firstLine;

@@ -89,17 +89,14 @@ void Selection::crop( LineNumber last_line )
         selectedRange_.startLine = last_line;
 }
 
-bool Selection::getPortionForLine( LineNumber line, int* start_column, int* end_column ) const
+Portion Selection::getPortionForLine( LineNumber line ) const
 {
     if ( selectedPartial_.line.has_value() && *selectedPartial_.line == line ) {
-        *start_column = selectedPartial_.startColumn;
-        *end_column = selectedPartial_.endColumn;
+        return Portion( *selectedPartial_.line, selectedPartial_.startColumn,
+                        selectedPartial_.endColumn );
+    }
 
-        return true;
-    }
-    else {
-        return false;
-    }
+    return {};
 }
 
 bool Selection::isLineSelected( LineNumber line ) const
@@ -110,6 +107,20 @@ bool Selection::isLineSelected( LineNumber line ) const
         return ( ( line >= *selectedRange_.startLine ) && ( line <= selectedRange_.endLine ) );
     else
         return false;
+}
+
+bool Selection::isPortionSelected( LineNumber line, int startColumn, int endColumn ) const
+{
+    if ( isLineSelected( line ) ) {
+        return true;
+    }
+
+    const auto portion = getPortionForLine( line );
+    if ( !portion.isValid() ) {
+        return false;
+    }
+
+    return startColumn >= portion.startColumn() && endColumn <= portion.endColumn();
 }
 
 OptionalLineNumber Selection::selectedLine() const

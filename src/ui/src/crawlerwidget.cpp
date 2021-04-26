@@ -248,7 +248,7 @@ void CrawlerWidget::keyPressEvent( QKeyEvent* keyEvent )
 void CrawlerWidget::changeEvent( QEvent* event )
 {
     if ( event->type() == QEvent::StyleChange ) {
-        dispatchToMainThread( [this] {
+        dispatchToMainThread( [ this ] {
             loadIcons();
             searchInfoLineDefaultPalette = this->palette();
         } );
@@ -531,7 +531,7 @@ void CrawlerWidget::markLinesFromFiltered( const std::vector<LineNumber>& lines 
     std::vector<LineNumber> linesInMain;
     linesInMain.reserve( lines.size() );
     std::transform( lines.begin(), lines.end(), std::back_inserter( linesInMain ),
-                    [this]( const auto& filteredLine ) {
+                    [ this ]( const auto& filteredLine ) {
                         if ( filteredLine < logData_->getNbLine() ) {
                             return logFilteredData_->getMatchingLineNumber( filteredLine );
                         }
@@ -748,38 +748,25 @@ void CrawlerWidget::addToSearch( const QString& string )
 {
     QString text = searchLineEdit->currentText();
 
-    if ( text.isEmpty() )
-        text = string;
-    else {
-        // Escape the regexp chars from the string before adding it.
-        text += ( '|' + QRegularExpression::escape( string ) );
+    if ( !text.isEmpty() && useRegexpButton->isChecked() ) {
+        text.append( '|' );
     }
 
-    searchLineEdit->setEditText( text );
+    text.append( useRegexpButton->isChecked() ? QRegularExpression::escape( string ) : string );
 
-    // Set the focus to lineEdit so that the user can press 'Return' immediately
-    searchLineEdit->lineEdit()->setFocus();
+    setSearchPattern( text );
 }
 
 void CrawlerWidget::replaceSearch( const QString& string )
 {
-    QString text = searchLineEdit->currentText();
+    const auto newPattern
+        = useRegexpButton->isChecked() ? QRegularExpression::escape( string ) : string;
+    setSearchPattern( newPattern );
+}
 
-    if ( text.isEmpty() )
-        text = string;
-    else {
-        const auto& config = Configuration::get();
-
-        if ( config.mainRegexpType() == SearchRegexpType::ExtendedRegexp ) {
-            // Escape the regexp chars from the string before setting
-            text = QRegularExpression::escape( string );
-        } else {
-            text = string;
-        }
-    }
-
-    searchLineEdit->setEditText( text );
-
+void CrawlerWidget::setSearchPattern( const QString& searchPattern )
+{
+    searchLineEdit->setEditText( searchPattern );
     // Set the focus to lineEdit so that the user can press 'Return' immediately
     searchLineEdit->lineEdit()->setFocus();
 }
@@ -1019,9 +1006,9 @@ void CrawlerWidget::setup()
     connect( visibilityBox, QOverload<int>::of( &QComboBox::currentIndexChanged ), this,
              &CrawlerWidget::changeFilteredViewVisibility );
 
-    connect( logMainView, &LogMainView::newSelection, [this]( auto ) { logMainView->update(); } );
+    connect( logMainView, &LogMainView::newSelection, [ this ]( auto ) { logMainView->update(); } );
     connect( filteredView, &FilteredView::newSelection,
-             [this]( auto ) { filteredView->update(); } );
+             [ this ]( auto ) { filteredView->update(); } );
 
     connect( filteredView, &FilteredView::newSelection, this, &CrawlerWidget::jumpToMatchingLine );
 
@@ -1067,7 +1054,7 @@ void CrawlerWidget::setup()
     connect( filteredView, &FilteredView::clearSearchLimits, this,
              &CrawlerWidget::clearSearchLimits );
 
-    auto saveSplitterSizes = [this, &config]() { config.setSplitterSizes( this->sizes() ); };
+    auto saveSplitterSizes = [ this, &config ]() { config.setSplitterSizes( this->sizes() ); };
 
     connect( logMainView, &LogMainView::saveDefaultSplitterSizes, saveSplitterSizes );
     connect( filteredView, &FilteredView::saveDefaultSplitterSizes, saveSplitterSizes );
@@ -1261,7 +1248,7 @@ void CrawlerWidget::changeDataStatus( DataStatus status )
 // Determine the right encoding and set the views.
 void CrawlerWidget::updateEncoding()
 {
-    const QTextCodec* textCodec = [this]() {
+    const QTextCodec* textCodec = [ this ]() {
         QTextCodec* codec = nullptr;
         if ( !encodingMib_ ) {
             codec = logData_->getDetectedEncoding();

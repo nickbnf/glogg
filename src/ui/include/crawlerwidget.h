@@ -297,6 +297,8 @@ class CrawlerWidget : public QSplitter,
     // Reload predefined filters after changing settings
     void reloadPredefinedFilters() const;
 
+    void setSearchPattern(const QString& searchPattern);
+
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;
 

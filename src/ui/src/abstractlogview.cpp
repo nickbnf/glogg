@@ -95,6 +95,15 @@ int countDigits( quint64 n )
     return static_cast<int>( qFloor( qLn( static_cast<qreal>( n ) ) / qLn( 10 ) + 1 ) );
 }
 
+int textWidth( const QFontMetrics& fm, const QString& text )
+{
+#if ( QT_VERSION >= QT_VERSION_CHECK( 5, 11, 0 ) )
+    return fm.horizontalAdvance( text );
+#else
+    return fm.width( text );
+#endif
+}
+
 } // namespace
 
 inline void LineDrawer::addChunk( int first_col, int last_col, const QColor& fore,
@@ -122,11 +131,6 @@ inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPo
     QFontMetrics fm = painter.fontMetrics();
     const int fontHeight = fm.height();
     const int fontAscent = fm.ascent();
-#if ( QT_VERSION >= QT_VERSION_CHECK( 5, 11, 0 ) )
-    const int fontWidth = fm.horizontalAdvance( QChar( 'a' ) );
-#else
-    const int fontWidth = fm.width( QChar( 'a' ) );
-#endif
 
     int xPos = initialXPos;
     int yPos = initialYPos;
@@ -134,8 +138,8 @@ inline void LineDrawer::draw( QPainter& painter, int initialXPos, int initialYPo
     for ( const auto& chunk : chunks_ ) {
         // Draw each chunk
         // LOG_DEBUG << "Chunk: " << chunk.start() << " " << chunk.length();
-        QString cutline = line.mid( chunk.start(), chunk.length() );
-        const int chunk_width = cutline.length() * fontWidth;
+        const auto cutline = line.mid( chunk.start(), chunk.length() );
+        const int chunk_width = textWidth( fm, cutline );
         if ( xPos == initialXPos ) {
             // First chunk, we extend the left background a bit,
             // it looks prettier.
@@ -1276,11 +1280,7 @@ void AbstractLogView::updateDisplaySize()
     // Font is assumed to be mono-space (is restricted by options dialog)
     QFontMetrics fm = fontMetrics();
     charHeight_ = fm.height();
-#if ( QT_VERSION >= QT_VERSION_CHECK( 5, 11, 0 ) )
-    charWidth_ = fm.horizontalAdvance( QChar( 'a' ) );
-#else
-    charWidth_ = fm.width( QChar( 'a' ) );
-#endif
+    charWidth_ = textWidth( fm, QString( "a" ) );
 
     // Update the scroll bars
     updateScrollBars();
@@ -1402,10 +1402,18 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
     if ( line >= logData->getNbLine() )
         line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
 
-    // Determine column in screen space and convert it to file space
-    int column = firstCol + ( pos.x() - leftMarginPx_ ) / charWidth_;
+    QFontMetrics fm = fontMetrics();
+    const auto lineText = logData->getExpandedLineString( line );
 
-    const auto length = static_cast<decltype( column )>( logData->getLineLength( line ).get() );
+    auto column = 0;
+    for ( ; column < lineText.length(); ++column ) {
+        if ( textWidth( fm, lineText.mid( firstCol, column ) ) + leftMarginPx_ >= pos.x() ) {
+            break;
+        }
+    }
+    column += ( firstCol - 1 );
+
+    const auto length = lineText.length();
 
     if ( column >= length )
         column = length - 1;
@@ -1528,16 +1536,6 @@ void AbstractLogView::jumpToBottom()
     update();
 }
 
-// Returns whether the character passed is a 'word' character
-inline bool AbstractLogView::isCharWord( char c )
-{
-    if ( ( ( c >= 'A' ) && ( c <= 'Z' ) ) || ( ( c >= 'a' ) && ( c <= 'z' ) )
-         || ( ( c >= '0' ) && ( c <= '9' ) ) || ( ( c == '_' ) ) )
-        return true;
-    else
-        return false;
-}
-
 // Select the word under the given position
 void AbstractLogView::selectWordAtPosition( const QPoint& pos )
 {
@@ -1545,24 +1543,24 @@ void AbstractLogView::selectWordAtPosition( const QPoint& pos )
     const auto lineNumber = LineNumber( static_cast<LineNumber::UnderlyingType>( pos.y() ) );
     const QString line = logData->getExpandedLineString( lineNumber );
 
-    if ( !line.isEmpty() && isCharWord( line[ x ].toLatin1() ) ) {
+    if ( !line.isEmpty() && line[ x ].isLetterOrNumber() ) {
         // Search backward for the first character in the word
         int currentPos = x;
         for ( ; currentPos > 0; currentPos-- )
-            if ( !isCharWord( line[ currentPos ].toLatin1() ) )
+            if ( !line[ currentPos ].isLetterOrNumber() )
                 break;
         // Exclude the first char of the line if needed
-        if ( !isCharWord( line[ currentPos ].toLatin1() ) )
+        if ( !line[ currentPos ].isLetterOrNumber() )
             currentPos++;
         int start = currentPos;
 
         // Now search for the end
         currentPos = x;
         for ( ; currentPos < line.length() - 1; currentPos++ )
-            if ( !isCharWord( line[ currentPos ].toLatin1() ) )
+            if ( !line[ currentPos ].isLetterOrNumber() )
                 break;
         // Exclude the last char of the line if needed
-        if ( !isCharWord( line[ currentPos ].toLatin1() ) )
+        if ( !line[ currentPos ].isLetterOrNumber() )
             currentPos--;
         int end = currentPos;
 
@@ -1763,8 +1761,8 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     // Draw the line numbers area
     int lineNumberAreaStartX = 0;
     if ( lineNumbersVisible_ ) {
-        int lineNumberWidth = charWidth_ * nbDigitsInLineNumber;
-        int lineNumberAreaWidth = 2 * LINE_NUMBER_PADDING + lineNumberWidth;
+        const auto lineNumberWidth = charWidth_ * nbDigitsInLineNumber;
+        const auto lineNumberAreaWidth = 2 * LINE_NUMBER_PADDING + lineNumberWidth;
         lineNumberAreaStartX = contentStartPosX;
 
         painter.setPen( palette.color( QPalette::Text ) );

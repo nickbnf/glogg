@@ -471,7 +471,6 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     void disableFollow();
 
     // Utils functions
-    bool isCharWord( char c );
     void updateGlobalSelection();
 };
 

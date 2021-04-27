@@ -681,7 +681,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
         y_delta = pixel_delta.y();
     }
 
-    if (y_delta == 0) {
+    if ( y_delta == 0 ) {
         QAbstractScrollArea::wheelEvent( wheelEvent );
         return;
     }
@@ -1769,8 +1769,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 
         painter.setPen( palette.color( QPalette::Text ) );
         painter.fillRect( contentStartPosX - SEPARATOR_WIDTH, 0,
-                          lineNumberAreaWidth + SEPARATOR_WIDTH, paintDeviceHeight,
-                          palette.color( QPalette::Disabled, QPalette::Text ) );
+                          lineNumberAreaWidth + SEPARATOR_WIDTH, paintDeviceHeight, Qt::darkGray );
 
         painter.drawLine( contentStartPosX + lineNumberAreaWidth - SEPARATOR_WIDTH, 0,
                           contentStartPosX + lineNumberAreaWidth - SEPARATOR_WIDTH,
@@ -1978,7 +1977,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
             static const QString lineNumberFormat( "%1" );
             const QString& lineNumberStr = lineNumberFormat.arg(
                 displayLineNumber( lineNumber ).get(), nbDigitsInLineNumber );
-            painter.setPen( palette.color( QPalette::Text ) );
+            painter.setPen( Qt::white );
             painter.drawText( lineNumberAreaStartX + LINE_NUMBER_PADDING, yPos + fontAscent,
                               lineNumberStr );
         }

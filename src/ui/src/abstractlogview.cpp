@@ -320,7 +320,8 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
 
         const auto filePos = convertCoordToFilePos( mouseEvent->pos() );
 
-        if ( line.has_value() && !selection_.isPortionSelected( *line, filePos.x(), filePos.x() ) ) {
+        if ( line.has_value()
+             && !selection_.isPortionSelected( *line, filePos.x(), filePos.x() ) ) {
             selection_.selectLine( *line );
             emit updateLineNumber( *line );
             textAreaCache_.invalid_ = true;
@@ -669,6 +670,22 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
 {
     emit activity();
 
+    int y_delta = 0;
+    auto pixel_delta = wheelEvent->pixelDelta();
+
+    if ( pixel_delta.isNull() ) {
+        y_delta = static_cast<int>(
+            std::floor( static_cast<float>( wheelEvent->angleDelta().y() ) / 0.7f ) );
+    }
+    else {
+        y_delta = pixel_delta.y();
+    }
+
+    if (y_delta == 0) {
+        QAbstractScrollArea::wheelEvent( wheelEvent );
+        return;
+    }
+
     // LOG_DEBUG << "wheelEvent";
 
     // This is to handle the case where follow mode is on, but the user
@@ -682,17 +699,6 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
             followElasticHook_.hold();
         else if ( wheelEvent->phase() == Qt::ScrollEnd )
             followElasticHook_.release();
-
-        int y_delta = 0;
-        auto pixel_delta = wheelEvent->pixelDelta();
-
-        if ( pixel_delta.isNull() ) {
-            y_delta = static_cast<int>(
-                std::floor( static_cast<float>( wheelEvent->angleDelta().y() ) / 0.7f ) );
-        }
-        else {
-            y_delta = pixel_delta.y();
-        }
 
         // LOG_DEBUG << "Elastic " << y_delta;
         followElasticHook_.move( -y_delta );

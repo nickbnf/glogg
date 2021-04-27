@@ -1,18 +1,25 @@
 # Klogg
 
 [![GitHub license](https://img.shields.io/github/license/variar/klogg.svg?style=flat)](https://github.com/variar/klogg/blob/master/COPYING)
+[![C++](https://img.shields.io/github/languages/top/variar/klogg?style=flat)]()
 [![GitHub contributors](https://img.shields.io/github/contributors/variar/klogg.svg?style=flat)](https://github.com/variar/klogg/graphs/contributors/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
-[![C++](https://img.shields.io/github/languages/top/variar/klogg?style=flat)]()
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f6db6ef0be3a4a5abff94111a5291c45)](https://www.codacy.com/manual/variar/klogg?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=variar/klogg&amp;utm_campaign=Badge_Grade)
+
 
 [![Github all releases](https://img.shields.io/github/downloads/variar/klogg/total?style=flat)](https://github.com/variar/klogg/releases/)
 [ ![Github](https://img.shields.io/github/v/release/variar/klogg?style=flat&label=Stable%20release)](https://github.com/variar/klogg/releases/tag/v20.12)
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/klogg.svg)](https://repology.org/project/klogg/versions)
 
+Development status
+
+[![Next milestone](https://img.shields.io/github/milestones/progress-percent/variar/klogg/8?style=flat)](https://github.com/variar/klogg/milestone/8)
+[![Ready for testing](https://img.shields.io/github/issues-raw/variar/klogg/status:%20ready%20for%20testing?color=green&label=issues%20ready%20for%20testing&style=flat)](https://github.com/variar/klogg/issues?q=is%3Aopen+is%3Aissue+label%3A%22status%3A+ready+for+testing%22)
+[![GitHub commits](https://img.shields.io/github/commits-since/variar/klogg/v20.12.svg?style=flat)](https://github.com/variar/klogg/commits/)
 [![CI Build and Release](https://github.com/variar/klogg/actions/workflows/ci-build.yml/badge.svg)](https://github.com/variar/klogg/actions/workflows/ci-build.yml)
-[![GitHub commits](https://img.shields.io/github/commits-since/variar/klogg/v20.12.svg?style=flat)](https://github.com/variar/klogg/commit/)
+
+
 
 
 ## Overview

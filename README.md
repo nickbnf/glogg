@@ -105,7 +105,10 @@ Package for Mac can be installed from Homebrew
 [ ![homebrew cask](https://img.shields.io/homebrew/cask/v/klogg?style=flat)](https://formulae.brew.sh/cask/klogg)
 
 #### Linux
-Linux packages are also available from DEB and RPM repositories. 
+It is recommended to use klogg package from distribution-specific [repositories](https://repology.org/project/klogg/versions).
+
+Generic packages are available from klogg DEB and RPM repositories hosted at JFrog Artifactory.
+They are built to run on Ubuntu 16.04 and Centos 8 (x86-64 only).
 
 For DEB add klogg artifactory repository, then install from apt:
 ```
@@ -128,8 +131,6 @@ Then install using yum
 sudo yum update
 sudo yum install klogg
 ```
-
-Gentoo users may grab ebuild from [packaging/linux/gentoo](https://github.com/variar/klogg/tree/master/packaging/linux/gentoo).
 
 ### Tesing builds
 

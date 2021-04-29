@@ -17,6 +17,7 @@ option(KLOGG_BUILD_TESTS "Build tests" ON)
 option(KLOGG_USE_LTO "Use link time optimization" ON)
 option(KLOGG_USE_SENTRY "Use Sentry" ON)
 option(KLOGG_USE_HYPERSCAN "Use Hyperscan" ON)
+option(KLOGG_GENERIC_CPU "Build for generic CPU" OFF)
 
 set(BUILD_VERSION $ENV{KLOGG_VERSION} CACHE STRING "build version")
 set(BUILD_NUMBER "" CACHE STRING "build number")
@@ -77,6 +78,9 @@ if(MSVC)
     ENDIF (CMAKE_C_FLAGS MATCHES "/W[0-4]")
 else()
     ucm_add_flags(CXX "-fno-sized-deallocation")
+    if (KLOGG_GENERIC_CPU)
+        ucm_add_flags(C CXX "-march=core2 -mtune=generic")
+    endif()
 endif(MSVC)
 
 

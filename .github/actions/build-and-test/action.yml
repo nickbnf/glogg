@@ -18,7 +18,7 @@ runs:
       run: |
         mkdir $KLOGG_BUILD_ROOT
         cd $KLOGG_BUILD_ROOT
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr $KLOGG_WORKSPACE
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DKLOGG_GENERIC_CPU=ON -DCMAKE_INSTALL_PREFIX=/usr $KLOGG_WORKSPACE
 
     - name: build
       shell: sh

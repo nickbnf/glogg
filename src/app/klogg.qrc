@@ -21,6 +21,10 @@
     <file>images/icons8-down-arrow-16.png</file>
     <file>images/icons8-fast-forward-16.png</file>
     <file>images/icons8-not-equal-16.png</file>
+    <file>images/icons8-close-window-16.png</file>
+    <file>images/icons8-close-window-hover-16.png</file>
+    <file>images/icons8-close-window-16_inverse.png</file>
+    <file>images/icons8-close-window-hover-16_inverse.png</file>
     <file>images/newdata_icon.png</file>
     <file>images/newdata_icon@2x.png</file>
     <file>images/newfiltered_icon.png</file>
@@ -28,6 +32,7 @@
     <file>images/olddata_icon.png</file>
     <file>images/olddata_icon@2x.png</file>
     <file>images/regex.png</file>
+
     <file>fonts/DejaVuSansMono.ttf</file>
 </qresource>
 </RCC>

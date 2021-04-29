@@ -30,11 +30,13 @@
 
 #include "crawlerwidget.h"
 
+#include "configuration.h"
+#include "dispatch_to.h"
 #include "iconloader.h"
 #include "log.h"
 #include "openfilehelper.h"
+#include "styles.h"
 #include "tabnamemapping.h"
-#include "dispatch_to.h"
 
 namespace {
 constexpr QLatin1String PathKey = QLatin1String( "path", 4 );
@@ -48,27 +50,39 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
     , myTabBar_()
 {
 
-#ifdef Q_OS_WIN
-    myTabBar_.setStyleSheet( "QTabBar::tab {\
-            height: 20px; "
-                             "} "
-                             "QTabBar::close-button {\
+    QString tabStyle = "QTabBar::tab { height: 24px; }";
+    QString tabCloseButtonStyle = " QTabBar::close-button {\
               height: 6px; width: 6px;\
               subcontrol-origin: padding;\
               subcontrol-position: left;\
-             }" );
+              %1}";
+
+#ifndef Q_OS_WIN
+    tabCloseButtonStyle = tabCloseButtonStyle.arg( "" );
 #else
-    // On GTK style, it looks better with a smaller font
-    myTabBar_.setStyleSheet( "QTabBar::tab {"
-                             " height: 20px; "
-                             " font-size: 9pt; "
-                             "} "
-                             "QTabBar::close-button {\
-              height: 6px; width: 6px;\
-              subcontrol-origin: padding;\
-              subcontrol-position: left;\
-             }" );
+    QString tabCloseButtonHoverStyle = " QTabBar::close-button:hover { %1 }";
+
+    const auto& config = Configuration::get();
+    if ( config.style() == DarkStyleKey ) {
+        tabCloseButtonStyle
+            = tabCloseButtonStyle.arg( "image: url(:/images/icons8-close-window-16_inverse.png);" );
+        tabCloseButtonStyle.append( tabCloseButtonHoverStyle.arg(
+            "image: url(:/images/icons8-close-window-hover-16_inverse.png);" ) );
+    }
+    else if ( config.style() == FusionKey ) {
+        tabCloseButtonStyle
+            = tabCloseButtonStyle.arg( "image: url(:/images/icons8-close-window-16.png);" );
+        tabCloseButtonStyle.append( tabCloseButtonHoverStyle.arg(
+            "image: url(:/images/icons8-close-window-hover-16.png);" ) );
+    }
+    else {
+        tabCloseButtonStyle = tabCloseButtonStyle.arg( "" );
+    }
+
 #endif
+
+    myTabBar_.setStyleSheet( tabStyle.append( tabCloseButtonStyle ) );
+
     setTabBar( &myTabBar_ );
     myTabBar_.hide();
 
@@ -82,7 +96,6 @@ TabbedCrawlerWidget::TabbedCrawlerWidget()
 void TabbedCrawlerWidget::loadIcons()
 {
     IconLoader iconLoader{ this };
-
     olddata_icon_ = iconLoader.load( "olddata_icon" );
     for ( int tab = 0; tab < count(); ++tab ) {
         updateIcon( tab );

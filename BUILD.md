@@ -3,9 +3,11 @@
 ## Overview
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+And local builds can be faster because code can be optimized for current CPU instead of generic x86-64 which enables support for SSE4/AVX code paths.
 
 ## Dependencies
 
+To build Klogg:
 * cmake 3.12 or later to generate build files
 * C++ compiler with C++14 support (at least gcc 5, clang 3.4, msvc 2017)
 * Qt libraries 5.9 or later (CI builds use Qt 5.9.5/Qt 5.15.2):
@@ -15,11 +17,22 @@ These instructions will get you a copy of the project up and running on your loc
     - QtConcurrent
     - QtNetwork
     - QtXml
-    - QtTest
-* Boost (1.58 or later, header-only part)
-* Ragel (6.8 or later; precompiled binary is provided for Windows; has to be installed from package managers on Linux or Homebrew on Mac)
-* nsis to build installer for Windows (optional)
-* Precompiled OpenSSl library to enable https support on Windows (optional)
+
+
+To build Hyperscan regular expressions backend (default):
+
+* CPU with support for [SSSE3](https://en.wikipedia.org/wiki/SSSE3) instructions (for Hyperscan backend)
+* Boost (for Hyperscan backend, 1.58 or later, header-only part)
+* Ragel (for Hyperscan backend, 6.8 or later; precompiled binary is provided for Windows; has to be installed from package managers on Linux or Homebrew on Mac)
+
+To build installer for Windows:
+
+* nsis to build installer for Windows
+* Precompiled OpenSSl library to enable https support on Windows
+
+Building tests:
+   
+* QtTest  
 
 All other dependencies are provided in 3rdparty directory.
 
@@ -31,6 +44,13 @@ git clone https://github.com/variar/klogg
 ```
 
 ## Building
+
+### Configuration options
+
+By default Klogg is built with support for reporting crash dumps. This can be disabled via cmake option `-DKLOGG_USE_SENTRY=OFF`.
+
+Klogg uses Hyperscan regular expressions library which requires CPU with SSSE3 support, ragel and boost headers.
+Klogg can be built with only Qt reqular expressions backend by passing `-DKLOGG_USE_HYPERSCAN=OFF` to cmake.
 
 ### Building on Linux
 
@@ -141,3 +161,4 @@ cd <path_to_klogg_repository_clone>
 cd build_root
 ctest --build-config RelWithDebInfo --verbose
 ```
+

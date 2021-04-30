@@ -332,7 +332,7 @@ FileWatcher::FileWatcher()
 {
     connect( checkTimer_, &QTimer::timeout, this, &FileWatcher::checkWatches );
 
-    throttler_->setTimeout( 1000 );
+    throttler_->setTimeout( 500 );
     connect( this, &FileWatcher::notifyFileChangedOnDisk, throttler_,
              &KDToolBox::KDGenericSignalThrottler::throttle );
     connect( throttler_, &KDToolBox::KDGenericSignalThrottler::triggered, this,

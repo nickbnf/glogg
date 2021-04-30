@@ -6,4 +6,4 @@ add_library(filewatch STATIC
 set_target_properties(filewatch PROPERTIES AUTOMOC ON)
 
 target_include_directories(filewatch PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(filewatch PUBLIC efsw utils)
+target_link_libraries(filewatch PUBLIC kdtoolbox efsw utils)

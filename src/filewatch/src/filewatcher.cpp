@@ -24,7 +24,9 @@
 #include "log.h"
 #include "synchronization.h"
 
+#include <KDSignalThrottler.h>
 #include <efsw/efsw.hpp>
+
 #include <vector>
 
 #include <QDateTime>
@@ -114,9 +116,9 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         auto watchedDirectory
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                            [&directory]( const auto& wd ) { return wd.name == directory; } );
+                            [ &directory ]( const auto& wd ) { return wd.name == directory; } );
 
-        const auto tryWatchDirectory = [this]( const std::string& path ) {
+        const auto tryWatchDirectory = [ this ]( const std::string& path ) {
             auto watchId = nativeWatchEnabled_ ? watcher_.addWatch( path, this, false ) : -111;
 
             if ( watchId < 0 ) {
@@ -164,7 +166,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         auto watchedDirectory
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                            [&directory]( const auto& wd ) { return wd.name == directory; } );
+                            [ &directory ]( const auto& wd ) { return wd.name == directory; } );
 
         if ( watchedDirectory != watchedPaths_.end() ) {
 
@@ -195,7 +197,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
     void checkWatches()
     {
-        const auto collectChangedFiles = [this]() {
+        const auto collectChangedFiles = [ this ]() {
             ScopedRecursiveLock lock( &mutex_ );
 
             std::vector<QString> changedFiles;
@@ -225,8 +227,9 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         };
 
         for ( const auto& changedFile : collectChangedFiles() ) {
-            dispatchToMainThread(
-                [watcher = parent_, changedFile]() { watcher->fileChangedOnDisk( changedFile ); } );
+            dispatchToMainThread( [ watcher = parent_, changedFile ]() {
+                watcher->fileChangedOnDisk( changedFile );
+            } );
         }
     }
 
@@ -240,7 +243,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         LOG_DEBUG << "Notification from esfw for " << dir;
 
         // post to other thread to avoid deadlock between internal esfw lock and our mutex_
-        dispatchToThread( [=]() { notifyOnFileAction( dir, filename, oldFilename ); },
+        dispatchToThread( [ = ]() { notifyOnFileAction( dir, filename, oldFilename ); },
                           parent_->thread() );
     }
 
@@ -260,7 +263,7 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
         const auto fullChangedFilename = findChangedFilename( directory, filename, oldFilename );
 
         if ( !fullChangedFilename.isEmpty() ) {
-            dispatchToMainThread( [watcher = parent_, fullChangedFilename]() {
+            dispatchToMainThread( [ watcher = parent_, fullChangedFilename ]() {
                 watcher->fileChangedOnDisk( fullChangedFilename );
             } );
         }
@@ -273,14 +276,14 @@ class EfswFileWatcher final : public efsw::FileWatchListener {
 
         auto watchedDirectory
             = std::find_if( watchedPaths_.begin(), watchedPaths_.end(),
-                            [&directory]( const auto& wd ) { return wd.name == directory; } );
+                            [ &directory ]( const auto& wd ) { return wd.name == directory; } );
 
         if ( watchedDirectory != watchedPaths_.end() ) {
             std::string changedFilename;
 
             const auto isFileWatched
                 = std::any_of( watchedDirectory->files.begin(), watchedDirectory->files.end(),
-                               [&filename, &oldFilename, &changedFilename]( const auto& f ) {
+                               [ &filename, &oldFilename, &changedFilename ]( const auto& f ) {
                                    if ( f.name == filename || f.name == oldFilename ) {
                                        changedFilename = f.name;
                                        return true;
@@ -324,10 +327,16 @@ void EfswFileWatcherDeleter::operator()( EfswFileWatcher* watcher ) const
 
 FileWatcher::FileWatcher()
     : checkTimer_{ new QTimer( this ) }
-    , notificationTimer_{ new QTimer( this ) }
+    , throttler_{ new KDToolBox::KDSignalLeadingDebouncer( this ) }
     , efswWatcher_{ new EfswFileWatcher( this ) }
 {
     connect( checkTimer_, &QTimer::timeout, this, &FileWatcher::checkWatches );
+
+    throttler_->setTimeout( 1000 );
+    connect( this, &FileWatcher::notifyFileChangedOnDisk, throttler_,
+             &KDToolBox::KDGenericSignalThrottler::throttle );
+    connect( throttler_, &KDToolBox::KDGenericSignalThrottler::triggered, this,
+             &FileWatcher::sendChangesNotifications );
 }
 
 FileWatcher::~FileWatcher() = default;
@@ -358,12 +367,10 @@ void FileWatcher::fileChangedOnDisk( const QString& fileName )
         changes_.push_back( fileName );
     }
 
-    if ( !notificationTimer_->isActive() ) {
-        notificationTimer_->singleShot( 500, this, &FileWatcher::notifyFileChangedOnDisk );
-    }
+    emit notifyFileChangedOnDisk();
 }
 
-void FileWatcher::notifyFileChangedOnDisk()
+void FileWatcher::sendChangesNotifications()
 {
     for ( const auto& fileName : changes_ ) {
         emit fileChanged( fileName );

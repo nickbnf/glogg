@@ -38,6 +38,7 @@ add_subdirectory(cmliblzma)
 add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
+add_subdirectory(kdab)
 
 if(KLOGG_USE_HYPERSCAN)
 set(BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)

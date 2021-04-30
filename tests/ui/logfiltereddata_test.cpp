@@ -19,6 +19,7 @@
 
 #include <QSignalSpy>
 #include <QTemporaryFile>
+#include <QTimer>
 #include <QTest>
 
 #include "configuration.h"

@@ -40,11 +40,16 @@
 #define FILEWATCHER_H
 
 #include <QObject>
-#include <QTimer>
 
 #include <memory>
 
 class EfswFileWatcher;
+class QTimer;
+
+namespace KDToolBox {
+class KDGenericSignalThrottler;
+}
+
 struct EfswFileWatcherDeleter {
     void operator()( EfswFileWatcher* p ) const;
 };
@@ -70,16 +75,18 @@ class FileWatcher : public QObject {
 
     void updateConfiguration();
 
-  signals:
-    // Sent when the file on disk has changed in any way.
-    void fileChanged( const QString& );
-
   public slots:
     void fileChangedOnDisk( const QString& );
 
+  signals:
+    // Sent when the file on disk has changed in any way.
+    void fileChanged( const QString& );
+    void notifyFileChangedOnDisk();
+
+
   private slots:
     void checkWatches();
-    void notifyFileChangedOnDisk();
+    void sendChangesNotifications();
 
   private:
     // Create an empty object
@@ -87,7 +94,7 @@ class FileWatcher : public QObject {
     ~FileWatcher() override; // for complete EfswFileWatcher
 
     QTimer* checkTimer_;
-    QTimer* notificationTimer_;
+    KDToolBox::KDGenericSignalThrottler* throttler_;
     std::vector<QString> changes_;
 
     std::unique_ptr<EfswFileWatcher, EfswFileWatcherDeleter> efswWatcher_;

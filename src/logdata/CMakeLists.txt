@@ -54,7 +54,7 @@ target_link_libraries(logdata PRIVATE xxHash::xxhash)
 
 if(KLOGG_USE_HYPERSCAN)
 target_link_libraries(logdata PUBLIC hs)
-target_compile_definitions(utils PUBLIC KLOGG_HAS_HS)
+target_compile_definitions(logdata PUBLIC KLOGG_HAS_HS)
 endif()
 
 

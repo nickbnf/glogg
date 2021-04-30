@@ -76,6 +76,7 @@ HsRegularExpression::HsRegularExpression( const RegularExpressionPattern& patter
 }
 
 HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPattern>& patterns )
+    : pattern_( patterns.front() )
 {
     requiredMatches_ = static_cast<int>( std::count_if(
         patterns.begin(), patterns.end(), []( const auto& p ) { return !p.isExclude; } ) );
@@ -159,10 +160,10 @@ QString HsRegularExpression::errorString() const
     return errorMessage_;
 }
 
-HsMatcher HsRegularExpression::createMatcher() const
+MatcherVariant HsRegularExpression::createMatcher() const
 {
     if ( !isValid() ) {
-        return {};
+        return MatcherVariant{ DefaultRegularExpressionMatcher( pattern_ ) };
     }
 
     auto matcherScratch = wrapHsPointer<hs_scratch_t, hs_free_scratch>(
@@ -179,6 +180,6 @@ HsMatcher HsRegularExpression::createMatcher() const
         },
         scratch_.get() );
 
-    return HsMatcher{ database_, std::move( matcherScratch ), requiredMatches_ };
+    return MatcherVariant{ HsMatcher{ database_, std::move( matcherScratch ), requiredMatches_ } };
 }
 #endif

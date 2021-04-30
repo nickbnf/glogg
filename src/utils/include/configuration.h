@@ -52,11 +52,6 @@ enum class SearchRegexpType {
     FixedString,
 };
 
-enum class RegexpEngine {
-    Hyperscan,
-    QRegularExpression
-};
-
 // Configuration class containing everything in the "Settings" dialog
 class Configuration final : public Persistable<Configuration> {
   public:
@@ -227,16 +222,6 @@ class Configuration final : public Persistable<Configuration> {
     void setUseLineEndingCache( bool useLineEndingCache )
     {
         useLineEndingCache_ = useLineEndingCache;
-    }
-
-    RegexpEngine regexpEngine() const
-    {
-        return regexpEngine_;
-    }
-
-    void setRegexpEnging( RegexpEngine engine )
-    {
-        regexpEngine_ = engine;
     }
 
     // Accessors
@@ -452,9 +437,6 @@ class Configuration final : public Persistable<Configuration> {
     bool enableQtHighDpi_ = true;
 
     int scaleFactorRounding_ = 1;
-
-    RegexpEngine regexpEngine_ = RegexpEngine::Hyperscan;
-
 };
 
 #endif

@@ -1133,27 +1133,28 @@ void CrawlerWidget::replaceCurrentSearch( const QString& searchText )
             pattern = searchText;
         }
 
-        // Set the pattern case insensitive if needed
-        QRegularExpression::PatternOptions patternOptions
-            = QRegularExpression::UseUnicodePropertiesOption;
-
-        if ( !matchCaseButton->isChecked() )
-            patternOptions |= QRegularExpression::CaseInsensitiveOption;
-
         // Constructs the regexp
-        QRegularExpression regexp( pattern, patternOptions );
+        auto regexpPattern = RegularExpressionPattern( pattern, matchCaseButton->isChecked(),
+                                                       inverseButton->isChecked() );
 
-        auto isValidExpression = regexp.isValid();
-        QString errorString = regexp.errorString();
+        HsRegularExpression hsExpression{ regexpPattern };
+        auto isValidExpression = hsExpression.isValid();
+        auto errorString = hsExpression.errorString();
 
-        const auto useHsMatcher = Configuration::get().regexpEngine() == RegexpEngine::Hyperscan;
-        auto regexpPattern = RegularExpressionPattern( regexp );
-        regexpPattern.isExclude = inverseButton->isChecked();
-        if ( useHsMatcher ) {
-            HsRegularExpression hsExpression{ regexpPattern };
-            isValidExpression = hsExpression.isValid();
-            errorString = hsExpression.errorString();
+#ifdef KLOGG_HAS_HS
+        if ( !isValidExpression ) {
+            QRegularExpression::PatternOptions patternOptions
+                = QRegularExpression::UseUnicodePropertiesOption;
+
+            if ( !matchCaseButton->isChecked() ) {
+                patternOptions |= QRegularExpression::CaseInsensitiveOption;
+            }
+
+            QRegularExpression regexp( pattern, patternOptions );
+            isValidExpression = regexp.isValid();
+            errorString = regexp.errorString();
         }
+#endif
 
         if ( isValidExpression ) {
             // Activate the stop button

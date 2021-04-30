@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>617</width>
-    <height>619</height>
+    <height>711</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -468,30 +468,13 @@
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
           <item row="0" column="0">
-           <widget class="QLabel" name="regexpEngineLabel">
-            <property name="text">
-             <string>Regular expressions engine:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QCheckBox" name="parallelSearchCheckBox">
-            <property name="text">
-             <string>Use parallel search</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
            <widget class="QLabel" name="label_8">
             <property name="text">
              <string>Index file read buffer (Mib):</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="0" column="1">
            <widget class="QSpinBox" name="indexReadBufferSpinBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -501,14 +484,14 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="1" column="0">
            <widget class="QLabel" name="label_9">
             <property name="text">
              <string>Search read buffer (lines):</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="1" column="1">
            <widget class="QSpinBox" name="searchReadBufferSpinBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -524,23 +507,23 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0">
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="parallelSearchCheckBox">
+            <property name="text">
+             <string>Use parallel search</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
            <widget class="QCheckBox" name="keepFileClosedCheckBox">
             <property name="toolTip">
              <string>File will be kept closed as much as possible. Affects only files opened after check state changed</string>
             </property>
             <property name="text">
              <string>Keep file closed</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="regexpEngineComboBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
             </property>
            </widget>
           </item>

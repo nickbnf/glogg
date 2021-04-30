@@ -23,6 +23,9 @@
 #include <QRegularExpression>
 #include <QString>
 
+#include <absl/types/variant.h>
+
+
 #ifdef KLOGG_HAS_HS
 #include <hs.h>
 #include <memory>
@@ -40,10 +43,10 @@ struct RegularExpressionPattern {
     {
     }
 
-    explicit RegularExpressionPattern( const QRegularExpression& regexp )
-        : pattern( regexp.pattern() )
-        , isCaseSensitive(
-              !regexp.patternOptions().testFlag( QRegularExpression::CaseInsensitiveOption ) )
+    RegularExpressionPattern( const QString& expression, bool caseSensitive, bool exclude )
+        : pattern( expression )
+        , isCaseSensitive( caseSensitive )
+        , isExclude( exclude )
     {
     }
 
@@ -133,6 +136,8 @@ class HsMatcher {
     int requiredMatches_ = 1;
 };
 
+using MatcherVariant = absl::variant<DefaultRegularExpressionMatcher, HsMatcher>;
+
 class HsRegularExpression {
   public:
     explicit HsRegularExpression( const RegularExpressionPattern& includePattern );
@@ -147,9 +152,11 @@ class HsRegularExpression {
     bool isValid() const;
     QString errorString() const;
 
-    HsMatcher createMatcher() const;
+    MatcherVariant createMatcher() const;
 
   private:
+    RegularExpressionPattern pattern_;
+
     HsDatabase database_;
     HsScratch scratch_;
     int requiredMatches_ = 1;
@@ -157,13 +164,8 @@ class HsRegularExpression {
     QString errorMessage_;
 };
 #else
-class HsMatcher : public DefaultRegularExpressionMatcher {
-  public:
-    explicit HsMatcher( const QRegularExpression& regexp, bool isExclude )
-        : DefaultRegularExpressionMatcher( regexp, isExclude )
-    {
-    }
-};
+
+using MatcherVariant = absl::variant<DefaultRegularExpressionMatcher>;
 
 class HsRegularExpression {
   public:
@@ -183,9 +185,9 @@ class HsRegularExpression {
         return regexp_.errorString();
     }
 
-    HsMatcher createMatcher() const
+    MatcherVariant createMatcher() const
     {
-        return HsMatcher( regexp_, isExclude_ );
+        return MatcherVariant{ DefaultRegularExpressionMatcher( regexp_, isExclude_ ) };
     }
 
   private:

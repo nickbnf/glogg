@@ -61,7 +61,7 @@ void SessionInfo::retrieveFromStorage( QSettings& settings )
                 settings.endGroup();
             }
 
-            LOG_INFO << "Reloaded window session info for " << windowId;
+            LOG_INFO << "Loaded settings for window session " << windowId;
             windows_.emplace_back( window );
         }
         settings.endArray();

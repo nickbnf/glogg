@@ -92,6 +92,7 @@
 #include "predefinedfiltersdialog.h"
 #include "readablesize.h"
 #include "recentfiles.h"
+#include "sessioninfo.h"
 #include "styles.h"
 #include "tabbedcrawlerwidget.h"
 
@@ -788,7 +789,7 @@ void MainWindow::copy()
             // Put it in the global selection as well (X11 only)
             clipboard->setText( text, QClipboard::Selection );
         }
-    } catch (const std::bad_alloc&) {
+    } catch ( const std::bad_alloc& ) {
         LOG_ERROR << "not enough memory";
     }
 }
@@ -1406,6 +1407,22 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
         loadingFileName = fileName;
 
         try {
+            const auto previousViewContext = [&fileName]() {
+                const auto& session = SessionInfo::getSynced();
+                const auto& windows = session.windows();
+                for ( const auto& windowId : qAsConst( windows ) ) {
+                    const auto openedFiles = session.openFiles( windowId );
+                    const auto existingContext = std::find_if(
+                        openedFiles.begin(), openedFiles.end(), [&fileName]( const auto& context ) {
+                            return context.fileName == fileName;
+                        } );
+                    if ( existingContext != openedFiles.end() ) {
+                        return existingContext->viewContext;
+                    }
+                }
+                return QString{};
+            }();
+
             CrawlerWidget* crawler_widget = static_cast<CrawlerWidget*>(
                 session_.open( fileName, []() { return new CrawlerWidget(); } ) );
 
@@ -1416,6 +1433,11 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
 
             // We won't show the widget until the file is fully loaded
             crawler_widget->hide();
+
+            if ( !previousViewContext.isEmpty() ) {
+                LOG_INFO << "Found existing context";
+                crawler_widget->setViewContext( previousViewContext );
+            }
 
             // We disable the tab widget to avoid having someone switch
             // tab during loading. (maybe FIXME)

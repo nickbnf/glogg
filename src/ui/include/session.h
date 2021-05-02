@@ -190,6 +190,11 @@ class WindowSession {
         return appSession_->quickFindPattern();
     }
 
+    QString windowId() const
+    {
+        return windowId_;
+    }
+
     size_t windowIndex() const
     {
         return windowIndex_;

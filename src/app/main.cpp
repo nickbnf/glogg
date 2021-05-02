@@ -255,11 +255,13 @@ int main( int argc, char* argv[] )
 
         applyStyle();
 
+        auto startNewSession = true;
         MainWindow* mw = nullptr;
         if ( parameters.load_session
              || ( parameters.filenames.empty() && !parameters.new_session
                   && config.loadLastSession() ) ) {
             mw = app.reloadSession();
+            startNewSession = false;
         }
         else {
             mw = app.newWindow();
@@ -274,6 +276,10 @@ int main( int argc, char* argv[] )
 
         for ( const auto& filename : parameters.filenames ) {
             mw->loadInitialFile( filename, parameters.follow_file );
+        }
+
+        if ( startNewSession ) {
+            app.clearInactiveSessions();
         }
 
         app.startBackgroundTasks();

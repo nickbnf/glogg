@@ -93,8 +93,8 @@ class KloggApp : public SingleApplication {
 
             // Version checker notification
             connect( &versionChecker_, &VersionChecker::newVersionFound,
-                     [ this ]( const QString& new_version, const QString& url,
-                               const QStringList& changes ) {
+                     [this]( const QString& new_version, const QString& url,
+                             const QStringList& changes ) {
                          newVersionNotification( new_version, url, changes );
                      } );
         }
@@ -106,7 +106,7 @@ class KloggApp : public SingleApplication {
         ::AllowSetForegroundWindow( static_cast<DWORD>( primaryPid() ) );
 #endif
 
-        QTimer::singleShot( 100, [ files = std::move(filenames), this ] {
+        QTimer::singleShot( 100, [files = std::move( filenames ), this] {
             QStringList filesToOpen;
 
             for ( const auto& filename : files ) {
@@ -178,6 +178,27 @@ class KloggApp : public SingleApplication {
         return mainWindows_.back().second;
     }
 
+    void clearInactiveSessions()
+    {
+        LOG_INFO << "Clear inactive sessions";
+
+        auto existingSessions = session_->windowSessions();
+        existingSessions.erase( std::remove_if( existingSessions.begin(), existingSessions.end(),
+                                                [this]( const auto& session ) {
+                                                    return std::any_of(
+                                                        mainWindows_.begin(), mainWindows_.end(),
+                                                        [&session]( const auto& window ) {
+                                                            return window.first.windowId()
+                                                                   == session.windowId();
+                                                        } );
+                                                } ),
+                                existingSessions.end() );
+
+        for ( auto& session : existingSessions ) {
+            session.close();
+        }
+    }
+
     MainWindow* newWindow()
     {
         if ( !session_ ) {
@@ -235,12 +256,12 @@ class KloggApp : public SingleApplication {
         activeWindows_.push( QPointer<MainWindow>( window ) );
 
         LOG_INFO << "Window " << &window << " created";
-        connect( window, &MainWindow::newWindow, [ = ]() { newWindow()->show(); } );
+        connect( window, &MainWindow::newWindow, [=]() { newWindow()->show(); } );
         connect( window, &MainWindow::windowActivated,
-                 [ this, window ]() { onWindowActivated( *window ); } );
+                 [this, window]() { onWindowActivated( *window ); } );
         connect( window, &MainWindow::windowClosed,
-                 [ this, window ]() { onWindowClosed( *window ); } );
-        connect( window, &MainWindow::exitRequested, [ this ] { exitApplication(); } );
+                 [this, window]() { onWindowClosed( *window ); } );
+        connect( window, &MainWindow::exitRequested, [this] { exitApplication(); } );
 
         return window;
     }
@@ -255,7 +276,7 @@ class KloggApp : public SingleApplication {
     {
         LOG_INFO << "Window " << &window << " closed";
         auto w = std::find_if( mainWindows_.begin(), mainWindows_.end(),
-                               [ &window ]( const auto& p ) { return p.second == &window; } );
+                               [&window]( const auto& p ) { return p.second == &window; } );
 
         if ( w != mainWindows_.end() ) {
             mainWindows_.erase( w );
@@ -284,12 +305,12 @@ class KloggApp : public SingleApplication {
                                    "<a href=\"%2\">%2</a>" )
                               .arg( new_version, url );
 
-        if (!changes.empty()) {
-            message.append("<p>Important changes:</p><ul>");
+        if ( !changes.empty() ) {
+            message.append( "<p>Important changes:</p><ul>" );
             for ( const auto& change : qAsConst( changes ) ) {
-                message.append(QString("<li>%1</li>").arg(change));            
+                message.append( QString( "<li>%1</li>" ).arg( change ) );
             }
-            message.append("</ul>");
+            message.append( "</ul>" );
         }
 
         QMessageBox msgBox;

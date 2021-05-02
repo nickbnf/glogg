@@ -259,6 +259,8 @@ class MainWindow : public QMainWindow {
     QAction* aboutQtAction;
     QAction* predefinedFiltersDialogAction;
     QAction* reportIssueAction;
+    QAction* joinDiscordAction;
+    QAction* joinTelegramAction;
     QAction* generateDumpAction;
     QActionGroup* encodingGroup;
     QAction* addToFavoritesAction;

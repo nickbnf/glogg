@@ -411,6 +411,20 @@ void MainWindow::createActions()
     reportIssueAction->setStatusTip( tr( "Report an issue on GitHub" ) );
     connect( reportIssueAction, &QAction::triggered, [this]( auto ) { this->reportIssue(); } );
 
+    joinDiscordAction = new QAction( tr( "Join Discord community..." ), this );
+    joinDiscordAction->setStatusTip( tr( "Join Klogg development community at Discord" ) );
+    connect( joinDiscordAction, &QAction::triggered, []( auto ) {
+        QUrl url( "https://discord.gg/DruNyQftzB" );
+        QDesktopServices::openUrl( url );
+    } );
+
+    joinTelegramAction = new QAction( tr( "Join Telegram community..." ), this );
+    joinTelegramAction->setStatusTip( tr( "Join Klogg development community at Telegram" ) );
+    connect( joinTelegramAction, &QAction::triggered, []( auto ) {
+        QUrl url( "https://t.me/joinchat/JeIBxstIfp4xZTk6" );
+        QDesktopServices::openUrl( url );
+    } );
+
     generateDumpAction = new QAction( tr( "Generate crash dump" ), this );
     generateDumpAction->setStatusTip( tr( "Generate diagnostic crash dump" ) );
     connect( generateDumpAction, &QAction::triggered, [this]( auto ) { this->generateDump(); } );
@@ -533,6 +547,9 @@ void MainWindow::createMenus()
     helpMenu->addAction( showDocumentationAction );
     helpMenu->addSeparator();
     helpMenu->addAction( reportIssueAction );
+    helpMenu->addAction( joinDiscordAction );
+    helpMenu->addAction( joinTelegramAction );
+    helpMenu->addSeparator();
     helpMenu->addAction( generateDumpAction );
     helpMenu->addSeparator();
     helpMenu->addAction( aboutQtAction );

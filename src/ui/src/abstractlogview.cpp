@@ -1641,7 +1641,7 @@ void AbstractLogView::createMenu()
 
     saveDefaultSplitterSizesAction_ = new QAction( tr( "Save splitter position" ), this );
     connect( saveDefaultSplitterSizesAction_, &QAction::triggered,
-             [ this ]( auto ) { this->saveDefaultSplitterSizes(); } );
+             [ this ]( auto ) { emit saveDefaultSplitterSizes(); } );
 
     popupMenu_ = new QMenu( this );
     highlightersMenu_ = popupMenu_->addMenu( "Highlighters" );

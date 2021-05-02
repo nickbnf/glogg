@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(klogg
-        VERSION 21.04.0
+        VERSION 21.05.0
         DESCRIPTION "klogg log viewer"
         LANGUAGES C CXX ASM)
 
@@ -80,6 +80,8 @@ else()
     ucm_add_flags(CXX "-fno-sized-deallocation")
     if (KLOGG_GENERIC_CPU)
         ucm_add_flags(C CXX "-march=core2 -mtune=generic")
+    else()
+        ucm_add_flags(C CXX "-march=native -mtune=generic")
     endif()
 endif(MSVC)
 

@@ -52,8 +52,6 @@
 
 #include "configuration.h"
 
-// Constructs an empty log file.
-// It must be displayed without error.
 LogData::LogData()
     : AbstractLogData()
     , indexing_data_( std::make_shared<IndexingData>() )
@@ -83,9 +81,10 @@ LogData::LogData()
     }
 }
 
-//
-// Public functions
-//
+LogData::~LogData() {
+    LOG_DEBUG << "Destroying log data";
+    operationQueue_.shutdown();
+}
 
 void LogData::attachFile( const QString& fileName )
 {
@@ -100,7 +99,7 @@ void LogData::attachFile( const QString& fileName )
     attached_file_.reset( new FileHolder( keepFileClosed_ ) );
     attached_file_->open( indexingFileName_ );
 
-    operationQueue_.enqueueOperation( AttachOperation( fileName ) );
+    operationQueue_.enqueueOperation<AttachOperation>( fileName );
 }
 
 void LogData::interruptLoading()
@@ -131,7 +130,7 @@ void LogData::reload( QTextCodec* forcedEncoding )
     // Re-open the file, useful in case the file has been moved
     attached_file_->reOpenFile();
 
-    operationQueue_.enqueueOperation( FullReindexOperation( forcedEncoding ) );
+    operationQueue_.enqueueOperation<FullReindexOperation>( forcedEncoding );
 }
 
 void LogData::fileChangedOnDisk( const QString& filename )
@@ -175,7 +174,7 @@ void LogData::fileChangedOnDisk( const QString& filename )
         attached_file_->reOpenFile();
     }
 
-    operationQueue_.enqueueOperation( CheckDataChangesOperation{} );
+    operationQueue_.enqueueOperation<CheckDataChangesOperation>();
 }
 
 void LogData::indexingFinished( LoadingStatus status )
@@ -214,11 +213,11 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
         switch ( status ) {
         case MonitoredFileStatus::Truncated:
             fileChangedOnDisk_ = MonitoredFileStatus::Truncated;
-            operationQueue_.enqueueOperation( FullReindexOperation{} );
+            operationQueue_.enqueueOperation<FullReindexOperation>();
             break;
         case MonitoredFileStatus::DataAdded:
             fileChangedOnDisk_ = MonitoredFileStatus::DataAdded;
-            operationQueue_.enqueueOperation( PartialReindexOperation{} );
+            operationQueue_.enqueueOperation<PartialReindexOperation>();
             break;
         case MonitoredFileStatus::Unchanged:
             fileChangedOnDisk_ = MonitoredFileStatus::Unchanged;
@@ -226,7 +225,7 @@ void LogData::checkFileChangesFinished( MonitoredFileStatus status )
         }
     }
     else {
-        operationQueue_.enqueueOperation( FullReindexOperation{} );
+        operationQueue_.enqueueOperation<FullReindexOperation>();
     }
 
     if ( status != MonitoredFileStatus::Unchanged

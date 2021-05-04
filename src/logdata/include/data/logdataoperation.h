@@ -112,31 +112,39 @@ class CheckDataChangesOperation : public LogDataOperation {
     void doStart( LogDataWorker& workerThread ) const override;
 };
 
-using OperationVariant = absl::variant<absl::monostate, AttachOperation, FullReindexOperation,
-                                       PartialReindexOperation, CheckDataChangesOperation>;
-
 class OperationQueue {
   public:
     explicit OperationQueue( std::function<void()> beforeOperationStart );
 
-    void setWorker( std::unique_ptr<LogDataWorker>&& worker);
+    void setWorker( std::unique_ptr<LogDataWorker>&& worker );
 
     void interrupt();
+    void shutdown();
 
-    void enqueueOperation( OperationVariant&& operation );
+    template <typename Op, typename... Args>
+    void enqueueOperation( Args&&... args )
+    {
+        enqueueOperation( Op{ std::forward<Args>( args )... } );
+    }
+
     void finishOperationAndStartNext();
 
   private:
-    void tryStartOperation();
+    using OperationVariant = absl::variant<absl::monostate, AttachOperation, FullReindexOperation,
+                                           PartialReindexOperation, CheckDataChangesOperation>;
+
+    void enqueueOperation( OperationVariant&& operation );
+    void tryStartOperation( OperationVariant&& operation );
 
     std::function<void()> beforeOperationStart_;
 
   private:
     mutable Lock mutex_;
-    std::unique_ptr<LogDataWorker> worker_;
-
+    
     OperationVariant executingOperation_;
     OperationVariant pendingOperation_;
+
+    std::unique_ptr<LogDataWorker> worker_;
 };
 
 #endif

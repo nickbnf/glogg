@@ -191,6 +191,12 @@ class LogFilteredDataWorker : public QObject {
     explicit LogFilteredDataWorker( const LogData& sourceLogData );
     ~LogFilteredDataWorker() override;
 
+    LogFilteredDataWorker(const LogFilteredDataWorker&) = delete;
+    LogFilteredDataWorker& operator=(const LogFilteredDataWorker&&) = delete;
+
+    LogFilteredDataWorker(LogFilteredDataWorker&&) = delete;
+    LogFilteredDataWorker& operator=(LogFilteredDataWorker&&) = delete;
+
     // Start the search with the passed regexp
     void search( const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine );
     // Continue the previous search starting at the passed position

@@ -66,8 +66,14 @@ class LogData : public AbstractLogData {
     Q_OBJECT
 
   public:
-    // Creates an empty LogData
     LogData();
+    ~LogData();
+
+    LogData(const LogData&) = delete;
+    LogData& operator=(const LogData&&) = delete;
+
+    LogData(LogData&&) = delete;
+    LogData& operator=(LogData&&) = delete;
 
     // Attaches the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately

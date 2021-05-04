@@ -39,8 +39,8 @@
 #include "logdataoperation.h"
 
 #include "log.h"
-#include "synchronization.h"
 #include "overload_visitor.h"
+#include "synchronization.h"
 
 void AttachOperation::doStart( LogDataWorker& workerThread ) const
 {
@@ -79,15 +79,36 @@ void OperationQueue::setWorker( std::unique_ptr<LogDataWorker>&& worker )
 
 void OperationQueue::interrupt()
 {
-    worker_->interrupt();
+    ScopedLock guard( &mutex_ );
+    if ( worker_ ) {
+        worker_->interrupt();
+    }
 }
 
-void OperationQueue::tryStartOperation()
+void OperationQueue::shutdown()
 {
+    ScopedLock guard( &mutex_ );
+    if ( auto worker = std::move( worker_ ) ) {
+        worker->interrupt();
+    }
+
+    LOG_INFO << "Operation queue shutdown";
+}
+
+void OperationQueue::tryStartOperation( OperationVariant&& operation )
+{
+    if ( !worker_ ) {
+        LOG_WARNING << "No worker for operation";
+        executingOperation_ = {};
+        return;
+    }
+
+    std::swap( executingOperation_, operation );
     absl::visit( make_overload_visitor(
-                     [this]( const LogDataOperation& operation ) {
+                     [this]( const LogDataOperation& logDataOperation ) {
                          beforeOperationStart_();
-                         operation.start( worker_.get() );
+                         logDataOperation.start( worker_.get() );
+                         LOG_INFO << "Started operation " << executingOperation_.index();
                      },
                      []( absl::monostate ) { LOG_INFO << "no operation to start"; } ),
                  executingOperation_ );
@@ -97,16 +118,14 @@ void OperationQueue::enqueueOperation( OperationVariant&& operation )
 {
     ScopedLock guard( &mutex_ );
 
-    LOG_INFO << "Executing operation " << executingOperation_.index() << ", next operation "
-             << operation.index();
+    LOG_INFO << "Enqueue operation " << operation.index() << ", now executing "
+             << executingOperation_.index();
 
     if ( executingOperation_.index() > 0 ) {
-
         pendingOperation_ = std::move( operation );
     }
     else {
-        executingOperation_ = std::move( operation );
-        tryStartOperation();
+        tryStartOperation( std::move( operation ) );
     }
 }
 
@@ -116,12 +135,5 @@ void OperationQueue::finishOperationAndStartNext()
     LOG_INFO << "Finished operation " << executingOperation_.index() << ", next operation "
              << pendingOperation_.index();
 
-    if ( pendingOperation_.index() > 0 ) {
-        executingOperation_ = std::move( pendingOperation_ );
-        pendingOperation_ = {};
-        tryStartOperation();
-    }
-    else {
-        executingOperation_ = {};
-    }
+    tryStartOperation( std::exchange( pendingOperation_, {} ) );
 }

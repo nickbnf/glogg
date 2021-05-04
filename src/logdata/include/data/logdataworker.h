@@ -320,6 +320,12 @@ class LogDataWorker : public QObject {
     explicit LogDataWorker( const std::shared_ptr<IndexingData>& indexing_data );
     ~LogDataWorker() override;
 
+    LogDataWorker(const LogDataWorker&) = delete;
+    LogDataWorker& operator=(const LogDataWorker&&) = delete;
+
+    LogDataWorker(LogDataWorker&&) = delete;
+    LogDataWorker& operator=(LogDataWorker&&) = delete;
+
     // Attaches to a file on disk. Attaching to a non existant file
     // will work, it will just appear as an empty file.
     void attachFile( const QString& fileName );

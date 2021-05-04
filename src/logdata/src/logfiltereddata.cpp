@@ -55,6 +55,8 @@
 #include "marks.h"
 
 #include "configuration.h"
+#include "readablesize.h"
+
 
 // mask a LineType according to Visibility
 static AbstractLogData::LineType& operator&=( AbstractLogData::LineType& type,
@@ -238,8 +240,7 @@ void LogFilteredData::toggleMark( LineNumber line, QChar mark )
         }
     }
     else {
-        LOG_ERROR
-            << "LogFilteredData::toggleMark trying to toggle a mark outside of the file.";
+        LOG_ERROR << "LogFilteredData::toggleMark trying to toggle a mark outside of the file.";
     }
 }
 
@@ -368,7 +369,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
     const auto& config = Configuration::get();
 
     LOG_DEBUG << "LogFilteredData::handleSearchProgressed matches=" << nbMatches
-                    << " progress=" << progress;
+              << " progress=" << progress;
 
     assert( nbMatches >= 0_lcount );
 
@@ -392,8 +393,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
             LOG_DEBUG << "LogFilteredData: search results cache disabled by configs";
         }
         else {
-            LOG_DEBUG << "LogFilteredData: caching results for pattern "
-                            << currentRegExp_.pattern;
+            LOG_DEBUG << "LogFilteredData: caching results for pattern " << currentRegExp_.pattern;
 
             searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
 
@@ -431,7 +431,7 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber lineNum ) const
     if ( lineNum.get() >= filteredItemsCache_.size() ) {
         if ( !filteredItemsCache_.empty() ) {
             LOG_ERROR << "Index too big in LogFilteredData: " << lineNum << " cache size "
-                            << filteredItemsCache_.size();
+                      << filteredItemsCache_.size();
         }
         return maxValue<LineNumber>();
     }
@@ -577,9 +577,9 @@ void LogFilteredData::regenerateFilteredItemsCache() const
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     const auto duration = static_cast<float>( duration_cast<microseconds>( t2 - t1 ).count() );
 
-    LOG_INFO << "Regenerating cache done, took " << duration / 1000.f << " ms";
-
-    LOG_DEBUG << "finished regenerateFilteredItemsCache, size " << filteredItemsCache_.size();
+    LOG_INFO << "Regenerating cache done, size "
+             << readableSize( filteredItemsCache_.size() * sizeof( FilteredItem ) ) << ", "
+             << duration / 1000.f << " ms";
 }
 
 void LogFilteredData::insertIntoFilteredItemsCache( size_t insert_index, FilteredItem&& item )
@@ -654,13 +654,13 @@ void LogFilteredData::removeFromFilteredItemsCache( size_t remove_index, Filtere
         end( filteredItemsCache_ ), item );
     if ( found.first == found.second ) {
         LOG_ERROR << "Attempt to remove line " << item.lineNumber()
-                        << " from filteredItemsCache_ failed, since it was not found";
+                  << " from filteredItemsCache_ failed, since it was not found";
         return;
     }
 
     if ( next( found.first ) != found.second ) {
         LOG_ERROR << "Multiple matches found for line " << item.lineNumber()
-                        << " in filteredItemsCache_";
+                  << " in filteredItemsCache_";
         // FIXME: collapse them?
     }
 

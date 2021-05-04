@@ -99,7 +99,7 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vect
         const auto& line = lines[ offset.get() ];
 
         const auto hasMatch
-            = absl::visit( [ &line ]( const auto& m ) { return m.hasMatch( line ); }, matcher );
+            = absl::visit( [&line]( const auto& m ) { return m.hasMatch( line ); }, matcher );
 
         if ( hasMatch ) {
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );
@@ -146,7 +146,7 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
     if ( !matches.empty() ) {
         lastMatchedLineNumber_ = std::max( lastMatchedLineNumber_, matches.back().lineNumber() );
 
-        const auto insertNewMatches = [ &matches ]( SearchResultArray& oldMatches ) {
+        const auto insertNewMatches = [&matches]( SearchResultArray& oldMatches ) {
             const auto insertIt
                 = std::lower_bound( begin( oldMatches ), end( oldMatches ), matches.front() );
 
@@ -258,7 +258,7 @@ void LogFilteredDataWorker::search( const RegularExpressionPattern& regExp, Line
     operationFuture_.waitForFinished();
     interruptRequested_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, regExp, startLine, endLine ] {
+    operationFuture_ = QtConcurrent::run( [this, regExp, startLine, endLine] {
         auto operationRequested = std::make_unique<FullSearchOperation>(
             sourceLogData_, interruptRequested_, regExp, startLine, endLine );
         connectSignalsAndRun( operationRequested.get() );
@@ -276,7 +276,7 @@ void LogFilteredDataWorker::updateSearch( const RegularExpressionPattern& regExp
     operationFuture_.waitForFinished();
     interruptRequested_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, regExp, startLine, endLine, position ] {
+    operationFuture_ = QtConcurrent::run( [this, regExp, startLine, endLine, position] {
         auto operationRequested = std::make_unique<UpdateSearchOperation>(
             sourceLogData_, interruptRequested_, regExp, startLine, endLine, position );
         connectSignalsAndRun( operationRequested.get() );
@@ -322,7 +322,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     const auto& config = Configuration::get();
-    const auto matchingThreadsCount = static_cast<uint32_t>( [ &config ]() {
+    const auto matchingThreadsCount = static_cast<uint32_t>( [&config]() {
         if ( !config.useParallelSearch() ) {
             return 1;
         }
@@ -352,8 +352,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
     auto chunkStart = initialLine;
     auto linesSource = tbb::flow::input_node<BlockDataType>(
         searchGraph,
-        [ this, endLine, nbLinesInChunk, &chunkStart,
-          &fileReadingDuration ]( tbb::flow_control& fc ) -> BlockDataType {
+        [this, endLine, nbLinesInChunk, &chunkStart,
+         &fileReadingDuration]( tbb::flow_control& fc ) -> BlockDataType {
             if ( interruptRequested_ ) {
                 LOG_INFO << "Block reader interrupted";
                 fc.stop();
@@ -399,19 +399,20 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     auto lineBlocksQueue = tbb::flow::buffer_node<BlockDataType>( searchGraph );
 
-    HsRegularExpression hsRegularExpression{ regexp_ };
-
     using RegexMatcherNode
         = tbb::flow::function_node<BlockDataType, PartialResultType, tbb::flow::rejecting>;
-
     using MatcherContext = std::tuple<MatcherVariant, microseconds, RegexMatcherNode>;
+
     std::vector<MatcherContext> regexMatchers;
+    HsRegularExpression hsRegularExpression{ regexp_ };
+    const auto useHyperscanEngine = config.regexpEngine() == RegexpEngine::Hyperscan;
     for ( auto index = 0u; index < matchingThreadsCount; ++index ) {
         regexMatchers.emplace_back(
-            hsRegularExpression.createMatcher(),
+            useHyperscanEngine ? hsRegularExpression.createMatcher()
+                               : MatcherVariant{ DefaultRegularExpressionMatcher( regexp_ ) },
             microseconds{ 0 },
             RegexMatcherNode(
-                searchGraph, 1, [ this, &regexMatchers, index ]( const BlockDataType& blockData ) {
+                searchGraph, 1, [this, &regexMatchers, index]( const BlockDataType& blockData ) {
                     const auto& matcher = std::get<0>( regexMatchers.at( index ) );
                     const auto matchStartTime = high_resolution_clock::now();
 
@@ -442,7 +443,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     auto matchProcessor = tbb::flow::function_node<PartialResultType, tbb::flow::continue_msg,
                                                    tbb::flow::rejecting>(
-        searchGraph, 1, [ & ]( const PartialResultType& matchResults ) {
+        searchGraph, 1, [&]( const PartialResultType& matchResults ) {
             if ( interruptRequested_ ) {
                 LOG_INFO << "Match processor interrupted";
                 return tbb::flow::continue_msg{};

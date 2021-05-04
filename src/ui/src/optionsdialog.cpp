@@ -97,6 +97,11 @@ void OptionsDialog::setupTabs()
 #ifdef Q_OS_MAC
     minimizeToTrayCheckBox->setVisible( false );
 #endif
+
+#ifndef KLOGG_HAS_HS
+    regexpEngineLabel->setVisible( false );
+    regexpEngineComboBox->setVisible( false );
+#endif
 }
 
 // Populates the 'family' ComboBox
@@ -120,6 +125,11 @@ void OptionsDialog::setupRegexp()
 
     mainSearchBox->addItems( regexpTypes );
     quickFindSearchBox->addItems( regexpTypes );
+
+    QStringList regexpEngines;
+    regexpEngines << tr( "Hyperscan" ) << tr( "Qt" );
+
+    regexpEngineComboBox->addItems( regexpEngines );
 }
 
 void OptionsDialog::setupStyles()
@@ -194,6 +204,38 @@ SearchRegexpType OptionsDialog::getRegexpTypeFromIndex( int index ) const
     return type;
 }
 
+int OptionsDialog::getRegexpEngineIndex( RegexpEngine engine ) const
+{
+    int index;
+
+    switch ( engine ) {
+    case RegexpEngine::QRegularExpression:
+        index = 1;
+        break;
+    default:
+        index = 0;
+        break;
+    }
+
+    return index;
+}
+
+RegexpEngine OptionsDialog::getRegexpEngineFromIndex( int index ) const
+{
+    RegexpEngine type;
+
+    switch ( index ) {
+    case 1:
+        type = RegexpEngine::QRegularExpression;
+        break;
+    default:
+        type = RegexpEngine::Hyperscan;
+        break;
+    }
+
+    return type;
+}
+
 // Updates the dialog box using values in global Config()
 void OptionsDialog::updateDialogFromConfig()
 {
@@ -227,6 +269,7 @@ void OptionsDialog::updateDialogFromConfig()
     // Regexp types
     mainSearchBox->setCurrentIndex( getRegexpTypeIndex( config.mainRegexpType() ) );
     quickFindSearchBox->setCurrentIndex( getRegexpTypeIndex( config.quickfindRegexpType() ) );
+    regexpEngineComboBox->setCurrentIndex( getRegexpEngineIndex( config.regexpEngine() ) );
 
     incrementalCheckBox->setChecked( config.isQuickfindIncremental() );
 
@@ -301,6 +344,7 @@ void OptionsDialog::updateConfigFromDialog()
     config.setMainRegexpType( getRegexpTypeFromIndex( mainSearchBox->currentIndex() ) );
     config.setQuickfindRegexpType( getRegexpTypeFromIndex( quickFindSearchBox->currentIndex() ) );
     config.setQuickfindIncremental( incrementalCheckBox->isChecked() );
+    config.setRegexpEnging( getRegexpEngineFromIndex( regexpEngineComboBox->currentIndex() ) );
 
     config.setNativeFileWatchEnabled( nativeFileWatchCheckBox->isChecked() );
     config.setPollingEnabled( pollingCheckBox->isChecked() );

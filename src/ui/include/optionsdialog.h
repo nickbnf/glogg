@@ -80,6 +80,9 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog {
     int getRegexpTypeIndex( SearchRegexpType syntax ) const;
     SearchRegexpType getRegexpTypeFromIndex( int index ) const;
 
+    int getRegexpEngineIndex( RegexpEngine engine ) const;
+    RegexpEngine getRegexpEngineFromIndex( int index ) const;
+
     void updateDialogFromConfig();
 };
 

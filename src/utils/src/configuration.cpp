@@ -101,7 +101,8 @@ void Configuration::retrieveFromStorage( QSettings& settings )
     quickfindRegexpType_ = static_cast<SearchRegexpType>(
         settings.value( "regexpType.quickfind", static_cast<int>( Default.quickfindRegexpType_ ) )
             .toInt() );
-
+    regexpEngine_ = static_cast<RegexpEngine>(
+        settings.value( "regexpType.engine", static_cast<int>( Default.regexpEngine_ ) ).toInt() );
     quickfindIncremental_
         = settings.value( "quickfind.incremental", Default.quickfindIncremental_ ).toBool();
 
@@ -214,6 +215,7 @@ void Configuration::saveToStorage( QSettings& settings ) const
     settings.setValue( "mainFont.antialiasing", forceFontAntialiasing_ );
     settings.setValue( "regexpType.main", static_cast<int>( mainRegexpType_ ) );
     settings.setValue( "regexpType.quickfind", static_cast<int>( quickfindRegexpType_ ) );
+    settings.setValue( "regexpType.engine", static_cast<int>( regexpEngine_ ) );
     settings.setValue( "quickfind.incremental", quickfindIncremental_ );
     settings.setValue( "filewatch.useNative", nativeFileWatchEnabled_ );
     settings.setValue( "filewatch.usePolling", pollingEnabled_ );

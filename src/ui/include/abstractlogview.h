@@ -175,6 +175,13 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
                      QWidget* parent = nullptr );
 
     ~AbstractLogView() override;
+
+    // rule of 5
+    AbstractLogView(const AbstractLogView&) = delete;
+    AbstractLogView(AbstractLogView&&) = delete;
+    AbstractLogView& operator=(const AbstractLogView&) = delete;
+    AbstractLogView& operator=(AbstractLogView&&) = delete;
+
     // Refresh the widget when the data set has changed.
     void updateData();
     // Instructs the widget to update it's content geometry,
@@ -334,32 +341,32 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     int bulletZoneWidthPx_;
 
     // Total size of all margins and decorations in pixels
-    int leftMarginPx_;
+    int leftMarginPx_ = 0;
 
     // Digits buffer (for numeric keyboard entry)
     DigitsBuffer digitsBuffer_;
 
     // Follow mode
-    bool followMode_;
+    bool followMode_ = false;
 
     // ElasticHook for follow mode
     ElasticHook followElasticHook_;
 
     // Whether to show line numbers or not
-    bool lineNumbersVisible_;
+    bool lineNumbersVisible_ = false;
 
     // Pointer to the CrawlerWidget's data set
-    const AbstractLogData* logData;
+    const AbstractLogData* logData_;
 
     // Pointer to the Overview object
-    Overview* overview_;
+    Overview* overview_ = nullptr;
 
     // Pointer to the OverviewWidget, this class doesn't own it,
     // but is responsible for displaying it (for purely aesthetic
     // reasons).
-    OverviewWidget* overviewWidget_;
+    OverviewWidget* overviewWidget_ = nullptr;
 
-    bool selectionStarted_;
+    bool selectionStarted_ = false;
     // Start of the selection (characters)
     QPoint selectionStartPos_;
     // Current end of the selection (characters)
@@ -371,7 +378,7 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     OptionalLineNumber lastHoveredLine_;
 
     // Marks (left margin click)
-    bool markingClickInitiated_;
+    bool markingClickInitiated_ = false;
     OptionalLineNumber markingClickLine_;
 
     Selection selection_;
@@ -380,9 +387,9 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     // firstLine gives the position of the view,
     // lastLineAligned == true make the bottom of the last line aligned
     // rather than the top of the top one.
-    LineNumber firstLine;
-    bool lastLineAligned;
-    int firstCol;
+    LineNumber firstLine_;
+    bool lastLineAligned_ = false;
+    int firstCol_ = 0;
 
     LineNumber searchStart_;
     LineNumber searchEnd_;
@@ -390,8 +397,8 @@ class AbstractLogView : public QAbstractScrollArea, public SearchableWidgetInter
     OptionalLineNumber selectionStart_;
 
     // Text handling
-    int charWidth_;
-    int charHeight_;
+    int charWidth_ = 1;
+    int charHeight_ = 10;
 
     // Popup menu
     QMenu* popupMenu_;

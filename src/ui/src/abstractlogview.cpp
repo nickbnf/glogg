@@ -205,43 +205,16 @@ AbstractLogView::AbstractLogView( const AbstractLogData* newLogData,
                                   const QuickFindPattern* const quickFindPattern, QWidget* parent )
     : QAbstractScrollArea( parent )
     , followElasticHook_( HOOK_THRESHOLD )
-    , lineNumbersVisible_( false )
-    , selectionStartPos_()
-    , selectionCurrentEndPos_()
-    , autoScrollTimer_()
-    , selection_()
-    , searchStart_()
+    , logData_( newLogData )
+    , searchEnd_( newLogData->getNbLine().get() )
     , quickFindPattern_( quickFindPattern )
     , quickFind_( new QuickFind( *newLogData ) )
 {
-    logData = newLogData;
-    searchEnd_ = LineNumber( logData->getNbLine().get() );
-
-    followMode_ = false;
-
-    selectionStarted_ = false;
-    markingClickInitiated_ = false;
-
-    firstLine = 0_lnum;
-    lastLineAligned = false;
-    firstCol = 0;
-
-    overview_ = nullptr;
-    overviewWidget_ = nullptr;
-
-    // Display
-    leftMarginPx_ = 0;
-
-    // Fonts (sensible default for overview widget)
-    charWidth_ = 1;
-    charHeight_ = 10;
-
     // Create the viewport QWidget
     setViewport( nullptr );
 
     // Hovering
     setMouseTracking( true );
-    lastHoveredLine_ = {};
 
     // Init the popup menu
     createMenu();
@@ -301,7 +274,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
             }
             else {
                 // Select the line, and start a selection
-                if ( *line < logData->getNbLine() ) {
+                if ( *line < logData_->getNbLine() ) {
                     selection_.selectLine( *line );
                     emit updateLineNumber( *line );
                     emit newSelection( *line );
@@ -318,7 +291,7 @@ void AbstractLogView::mousePressEvent( QMouseEvent* mouseEvent )
         textAreaCache_.invalid_ = true;
     }
     else if ( mouseEvent->button() == Qt::RightButton ) {
-        if ( line.has_value() && line >= logData->getNbLine() ) {
+        if ( line.has_value() && line >= logData_->getNbLine() ) {
             line = {};
         }
 
@@ -521,9 +494,9 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
     const auto altModifier = keyEvent->modifiers().testFlag( Qt::AltModifier );
     const auto noModifier = keyEvent->modifiers() == Qt::NoModifier;
 
-    const auto jumpToBottomLine = [ this ]() {
+    const auto jumpToBottomLine = [this]() {
         disableFollow();
-        const auto line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
+        const auto line = LineNumber( logData_->getNbLine().get() ) - 1_lcount;
         selection_.selectLine( line );
         emit updateLineNumber( line );
         emit newSelection( line );
@@ -609,7 +582,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
                 int newLine = 0;
                 if ( altModifier ) {
                     newLine = QInputDialog::getInt( this, "Jump to line", "Line", 1, 1,
-                                                    static_cast<int>( logData->getNbLine().get() ),
+                                                    static_cast<int>( logData_->getNbLine().get() ),
                                                     1, &isLineSelected );
                     newLine -= 1;
                 }
@@ -619,7 +592,7 @@ void AbstractLogView::keyPressEvent( QKeyEvent* keyEvent )
 
                 auto lineToSelect
                     = LineNumber( static_cast<LineNumber::UnderlyingType>( newLine ) );
-                if ( lineToSelect >= logData->getNbLine() ) {
+                if ( lineToSelect >= logData_->getNbLine() ) {
                     lineToSelect = lineToSelect - 1_lcount;
                 }
 
@@ -716,7 +689,7 @@ void AbstractLogView::wheelEvent( QWheelEvent* wheelEvent )
 
 void AbstractLogView::resizeEvent( QResizeEvent* )
 {
-    if ( logData == nullptr )
+    if ( logData_ == nullptr )
         return;
 
     LOG_DEBUG << "resizeEvent received";
@@ -751,26 +724,26 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 {
     LOG_DEBUG << "scrollContentsBy received " << dy << "position " << verticalScrollBar()->value();
 
-    const auto last_top_line = ( logData->getNbLine() - getNbVisibleLines() );
+    const auto last_top_line = ( logData_->getNbLine() - getNbVisibleLines() );
     const auto scrollPosition
         = static_cast<LinesCount::UnderlyingType>( verticalScrollBar()->value() );
     if ( ( last_top_line.get() > 0 ) && scrollPosition > last_top_line.get() ) {
         // The user is going further than the last line, we need to lock the last line at the bottom
         LOG_DEBUG << "scrollContentsBy beyond!";
-        firstLine = LineNumber( scrollPosition );
-        lastLineAligned = true;
+        firstLine_ = LineNumber( scrollPosition );
+        lastLineAligned_ = true;
     }
     else {
-        firstLine = LineNumber( scrollPosition );
-        lastLineAligned = false;
+        firstLine_ = LineNumber( scrollPosition );
+        lastLineAligned_ = false;
     }
 
-    firstCol = ( firstCol - dx ) > 0 ? firstCol - dx : 0;
-    const auto last_line = firstLine + getNbVisibleLines();
+    firstCol_ = ( firstCol_ - dx ) > 0 ? firstCol_ - dx : 0;
+    const auto last_line = firstLine_ + getNbVisibleLines();
 
     // Update the overview if we have one
     if ( overview_ != nullptr )
-        overview_->updateCurrentPosition( firstLine, last_line );
+        overview_->updateCurrentPosition( firstLine_, last_line );
 
     // Are we hovering over a new line?
     const QPoint mouse_pos = mapFromGlobal( QCursor::pos() );
@@ -783,30 +756,30 @@ void AbstractLogView::scrollContentsBy( int dx, int dy )
 void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
 {
     const QRect invalidRect = paintEvent->rect();
-    if ( ( invalidRect.isEmpty() ) || ( logData == nullptr ) )
+    if ( ( invalidRect.isEmpty() ) || ( logData_ == nullptr ) )
         return;
 
-    LOG_DEBUG << "paintEvent received, firstLine=" << firstLine
-              << " lastLineAligned=" << lastLineAligned << " rect: " << invalidRect.topLeft().x()
+    LOG_DEBUG << "paintEvent received, firstLine_=" << firstLine_
+              << " lastLineAligned_=" << lastLineAligned_ << " rect: " << invalidRect.topLeft().x()
               << ", " << invalidRect.topLeft().y() << ", " << invalidRect.bottomRight().x() << ", "
               << invalidRect.bottomRight().y();
 
 #ifdef GLOGG_PERF_MEASURE_FPS
-    static uint32_t maxline = logData->getNbLine();
-    if ( !perfCounter_.addEvent() && logData->getNbLine() > maxline ) {
+    static uint32_t maxline = logData_->getNbLine();
+    if ( !perfCounter_.addEvent() && logData_->getNbLine() > maxline ) {
         LOG_WARNING << "Redraw per second: " << perfCounter_.readAndReset()
-                    << " lines: " << logData->getNbLine();
+                    << " lines: " << logData_->getNbLine();
         perfCounter_.addEvent();
-        maxline = logData->getNbLine();
+        maxline = logData_->getNbLine();
     }
 #endif
 
     auto start = std::chrono::system_clock::now();
 
     // Can we use our cache?
-    auto delta_y = textAreaCache_.first_line_.get() - firstLine.get();
+    auto delta_y = textAreaCache_.first_line_.get() - firstLine_.get();
 
-    if ( textAreaCache_.invalid_ || ( textAreaCache_.first_column_ != firstCol ) ) {
+    if ( textAreaCache_.invalid_ || ( textAreaCache_.first_column_ != firstCol_ ) ) {
         // Force a full redraw
         delta_y = std::numeric_limits<decltype( delta_y )>::max();
     }
@@ -816,8 +789,8 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
         drawTextArea( &textAreaCache_.pixmap_ );
 
         textAreaCache_.invalid_ = false;
-        textAreaCache_.first_line_ = firstLine;
-        textAreaCache_.first_column_ = firstCol;
+        textAreaCache_.first_line_ = firstLine_;
+        textAreaCache_.first_column_ = firstCol_;
 
         LOG_DEBUG << "End of writing "
                   << std::chrono::duration_cast<std::chrono::microseconds>(
@@ -851,7 +824,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     // This is to cover the special case where there is less than a screenful
     // worth of data, we want to see the document from the top, rather than
     // pushing the first couple of lines above the viewport.
-    if ( followElasticHook_.isHooked() && ( logData->getNbLine() < getNbVisibleLines() ) ) {
+    if ( followElasticHook_.isHooked() && ( logData_->getNbLine() < getNbVisibleLines() ) ) {
         drawingTopOffset_ = 0;
         drawingTopPosition
             += ( whole_height - viewport()->height() ) + PULL_TO_FOLLOW_HOOKED_HEIGHT;
@@ -860,7 +833,7 @@ void AbstractLogView::paintEvent( QPaintEvent* paintEvent )
     }
     // This is the case where the user is on the 'extra' slot at the end
     // and is aligned on the last line (but no elastic shown)
-    else if ( lastLineAligned && !followElasticHook_.isHooked() ) {
+    else if ( lastLineAligned_ && !followElasticHook_.isHooked() ) {
         drawingTopOffset_ = -( whole_height - viewport()->height() );
         drawingTopPosition += drawingTopOffset_;
         drawingPullToFollowTopPosition = drawingTopPosition + whole_height;
@@ -897,7 +870,7 @@ LineNumber AbstractLogView::lineIndex( LineNumber lineNumber ) const
 
 LineNumber AbstractLogView::maxDisplayLineNumber() const
 {
-    return LineNumber( logData->getNbLine().get() );
+    return LineNumber( logData_->getNbLine().get() );
 }
 
 void AbstractLogView::setOverview( Overview* overview, OverviewWidget* overview_widget )
@@ -922,7 +895,7 @@ LineNumber AbstractLogView::getViewPosition() const
     }
     else {
         // Middle of the view
-        line = firstLine + LinesCount( getNbVisibleLines().get() / 2 );
+        line = firstLine_ + LinesCount( getNbVisibleLines().get() / 2 );
     }
 
     return line;
@@ -1025,7 +998,7 @@ void AbstractLogView::addToSearch()
 {
     if ( selection_.isPortion() ) {
         LOG_DEBUG << "AbstractLogView::addToSearch()";
-        emit addToSearch( selection_.getSelectedText( logData ) );
+        emit addToSearch( selection_.getSelectedText( logData_ ) );
     }
     else {
         LOG_ERROR << "AbstractLogView::addToSearch called for a wrong type of selection";
@@ -1037,7 +1010,7 @@ void AbstractLogView::replaceSearch()
 {
     if ( selection_.isPortion() ) {
         LOG_DEBUG << "AbstractLogView::replaceSearch()";
-        emit replaceSearch( selection_.getSelectedText( logData ) );
+        emit replaceSearch( selection_.getSelectedText( logData_ ) );
     }
     else {
         LOG_ERROR << "AbstractLogView::replaceSearch called for a wrong type of selection";
@@ -1049,7 +1022,7 @@ void AbstractLogView::findNextSelected()
 {
     // Use the selected 'word' and search forward
     if ( selection_.isPortion() ) {
-        emit changeQuickFind( selection_.getSelectedText( logData ), QuickFindMux::Forward );
+        emit changeQuickFind( selection_.getSelectedText( logData_ ), QuickFindMux::Forward );
         emit searchNext();
     }
 }
@@ -1058,7 +1031,7 @@ void AbstractLogView::findNextSelected()
 void AbstractLogView::findPreviousSelected()
 {
     if ( selection_.isPortion() ) {
-        emit changeQuickFind( selection_.getSelectedText( logData ), QuickFindMux::Backward );
+        emit changeQuickFind( selection_.getSelectedText( logData_ ), QuickFindMux::Backward );
         emit searchNext();
     }
 }
@@ -1068,7 +1041,7 @@ void AbstractLogView::copy()
 {
     try {
         auto clipboard = QApplication::clipboard();
-        auto text = selection_.getSelectedText( logData );
+        auto text = selection_.getSelectedText( logData_ );
         text.replace( QChar::Null, QChar::Space );
         clipboard->setText( text );
     } catch ( const std::bad_alloc& ) {
@@ -1091,7 +1064,7 @@ void AbstractLogView::saveToFile()
         return;
     }
 
-    const auto totalLines = logData->getNbLine();
+    const auto totalLines = logData_->getNbLine();
     QSaveFile saveFile{ filename };
     saveFile.open( QIODevice::WriteOnly | QIODevice::Truncate );
     if ( !saveFile.isOpen() ) {
@@ -1112,7 +1085,7 @@ void AbstractLogView::saveToFile()
     }
     offsets.emplace_back( lineOffset, LinesCount( totalLines.get() % chunkSize.get() ) );
 
-    QTextCodec* codec = logData->getDisplayEncoding();
+    QTextCodec* codec = logData_->getDisplayEncoding();
     if ( !codec ) {
         codec = QTextCodec::codecForName( "utf-8" );
     }
@@ -1121,17 +1094,17 @@ void AbstractLogView::saveToFile()
 
     progressDialog.setRange( 0, static_cast<int>( offsets.size() + 1 ) );
     connect( &progressDialog, &QProgressDialog::canceled,
-             [ &interruptRequest ]() { interruptRequest.set(); } );
+             [&interruptRequest]() { interruptRequest.set(); } );
 
     tbb::flow::graph saveFileGraph;
     using LinesData = std::pair<std::vector<QString>, bool>;
     auto lineReader = tbb::flow::input_node<LinesData>(
         saveFileGraph,
-        [ this, &offsets, &interruptRequest, &progressDialog, offsetIndex = 0u,
-          finalLine = false ]( tbb::flow_control& fc ) mutable -> LinesData {
+        [this, &offsets, &interruptRequest, &progressDialog, offsetIndex = 0u,
+         finalLine = false]( tbb::flow_control& fc ) mutable -> LinesData {
             if ( !interruptRequest && offsetIndex < offsets.size() ) {
                 const auto& offset = offsets.at( offsetIndex );
-                LinesData lines{ logData->getLines( offset.first, offset.second ), true };
+                LinesData lines{ logData_->getLines( offset.first, offset.second ), true };
                 for ( auto& l : lines.first ) {
 #if !defined( Q_OS_WIN )
                     l.append( QChar::CarriageReturn );
@@ -1155,8 +1128,8 @@ void AbstractLogView::saveToFile()
 
     auto lineWriter = tbb::flow::function_node<LinesData, tbb::flow::continue_msg>(
         saveFileGraph, 1,
-        [ &interruptRequest, &codec, &saveFile, &progressDialog,
-          linesCount = 0u ]( const LinesData& lines ) mutable {
+        [&interruptRequest, &codec, &saveFile, &progressDialog,
+         linesCount = 0u]( const LinesData& lines ) mutable {
             if ( !lines.second ) {
                 if ( !interruptRequest ) {
                     saveFile.commit();
@@ -1212,7 +1185,7 @@ void AbstractLogView::setSearchEnd()
 {
     const auto selectedLine = selection_.selectedLine();
     searchEnd_ = selectedLine.has_value() ? displayLineNumber( *selectedLine )
-                                          : LineNumber( logData->getNbLine().get() );
+                                          : LineNumber( logData_->getNbLine().get() );
     updateSearchLimits();
 }
 
@@ -1242,12 +1215,12 @@ void AbstractLogView::updateData()
 {
     LOG_DEBUG << "AbstractLogView::updateData";
 
-    const auto lastLineNumber = LineNumber( logData->getNbLine().get() );
+    const auto lastLineNumber = LineNumber( logData_->getNbLine().get() );
 
     // Check the top Line is within range
-    if ( firstLine >= lastLineNumber ) {
-        firstLine = 0_lnum;
-        firstCol = 0;
+    if ( firstLine_ >= lastLineNumber ) {
+        firstLine_ = 0_lnum;
+        firstCol_ = 0;
         verticalScrollBar()->setValue( 0 );
         horizontalScrollBar()->setValue( 0 );
     }
@@ -1259,7 +1232,7 @@ void AbstractLogView::updateData()
     updateScrollBars();
 
     // Calculate the index of the last line shown
-    LineNumber last_line = qMin( lastLineNumber, firstLine + getNbVisibleLines() );
+    LineNumber last_line = qMin( lastLineNumber, firstLine_ + getNbVisibleLines() );
 
     // Reset the QuickFind in case we have new stuff to search into
     quickFind_->resetLimits();
@@ -1269,7 +1242,7 @@ void AbstractLogView::updateData()
 
     // Update the overview if we have one
     if ( overview_ != nullptr )
-        overview_->updateCurrentPosition( firstLine, last_line );
+        overview_->updateCurrentPosition( firstLine_, last_line );
 
     textAreaCache_.invalid_ = true;
     update();
@@ -1278,8 +1251,8 @@ void AbstractLogView::updateData()
 void AbstractLogView::updateDisplaySize()
 {
     // Font is assumed to be mono-space (is restricted by options dialog)
-    QFontMetrics fm = fontMetrics();
-    charHeight_ = fm.height();
+    const auto fm = fontMetrics();
+    charHeight_ = std::max( fm.height(), 1 );
     charWidth_ = textWidth( fm, QString( "a" ) );
 
     // Update the scroll bars
@@ -1308,12 +1281,12 @@ void AbstractLogView::updateDisplaySize()
 
 LineNumber AbstractLogView::getTopLine() const
 {
-    return firstLine;
+    return firstLine_;
 }
 
 QString AbstractLogView::getSelection() const
 {
-    return selection_.getSelectedText( logData );
+    return selection_.getSelectedText( logData_ );
 }
 
 bool AbstractLogView::isPartialSelection() const
@@ -1323,7 +1296,7 @@ bool AbstractLogView::isPartialSelection() const
 
 void AbstractLogView::selectAll()
 {
-    selection_.selectRange( 0_lnum, LineNumber( logData->getNbLine().get() ) - 1_lcount );
+    selection_.selectRange( 0_lnum, LineNumber( logData_->getNbLine().get() ) - 1_lcount );
     textAreaCache_.invalid_ = true;
     update();
 }
@@ -1388,7 +1361,7 @@ int AbstractLogView::getNbVisibleCols() const
 OptionalLineNumber AbstractLogView::convertCoordToLine( int yPos ) const
 {
     const int line
-        = static_cast<int>( firstLine.get() ) + ( yPos - drawingTopOffset_ ) / charHeight_;
+        = static_cast<int>( firstLine_.get() ) + ( yPos - drawingTopOffset_ ) / charHeight_;
     return line >= 0
                ? OptionalLineNumber( LineNumber{ static_cast<LineNumber::UnderlyingType>( line ) } )
                : OptionalLineNumber{};
@@ -1399,19 +1372,19 @@ OptionalLineNumber AbstractLogView::convertCoordToLine( int yPos ) const
 QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 {
     auto line = convertCoordToLine( pos.y() ).value_or( LineNumber{} );
-    if ( line >= logData->getNbLine() )
-        line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
+    if ( line >= logData_->getNbLine() )
+        line = LineNumber( logData_->getNbLine().get() ) - 1_lcount;
 
     QFontMetrics fm = fontMetrics();
-    const auto lineText = logData->getExpandedLineString( line );
+    const auto lineText = logData_->getExpandedLineString( line );
 
     auto column = 0;
     for ( ; column < lineText.length(); ++column ) {
-        if ( textWidth( fm, lineText.mid( firstCol, column ) ) + leftMarginPx_ >= pos.x() ) {
+        if ( textWidth( fm, lineText.mid( firstCol_, column ) ) + leftMarginPx_ >= pos.x() ) {
             break;
         }
     }
-    column += ( firstCol - 1 );
+    column += ( firstCol_ - 1 );
 
     const auto length = lineText.length();
 
@@ -1431,7 +1404,7 @@ QPoint AbstractLogView::convertCoordToFilePos( const QPoint& pos ) const
 void AbstractLogView::displayLine( LineNumber line )
 {
     // If the line is already the screen
-    if ( ( line >= firstLine ) && ( line < ( firstLine + getNbVisibleLines() ) ) ) {
+    if ( ( line >= firstLine_ ) && ( line < ( firstLine_ + getNbVisibleLines() ) ) ) {
         // Invalidate our cache
         textAreaCache_.invalid_ = true;
 
@@ -1465,8 +1438,8 @@ void AbstractLogView::moveSelection( int delta )
                 = selection.back() + LinesCount( static_cast<LinesCount::UnderlyingType>( delta ) );
     }
 
-    if ( new_line >= logData->getNbLine() ) {
-        new_line = LineNumber( logData->getNbLine().get() ) - 1_lcount;
+    if ( new_line >= logData_->getNbLine() ) {
+        new_line = LineNumber( logData_->getNbLine().get() ) - 1_lcount;
     }
 
     // Select and display the new line
@@ -1489,8 +1462,8 @@ void AbstractLogView::jumpToEndOfLine()
 
     // Search the longest line in the selection
     const auto max_length = std::accumulate(
-        selection.cbegin(), selection.cend(), 0_length, [ this ]( auto currentMax, auto line ) {
-            return qMax( currentMax, logData->getLineLength( LineNumber( line ) ) );
+        selection.cbegin(), selection.cend(), 0_length, [this]( auto currentMax, auto line ) {
+            return qMax( currentMax, logData_->getLineLength( LineNumber( line ) ) );
         } );
     horizontalScrollBar()->setValue( max_length.get() - getNbVisibleCols() );
 }
@@ -1502,14 +1475,14 @@ void AbstractLogView::jumpToRightOfScreen()
 
     std::vector<LineNumber::UnderlyingType> visibleLinesNumbers;
     visibleLinesNumbers.resize( nbVisibleLines.get() );
-    std::iota( visibleLinesNumbers.begin(), visibleLinesNumbers.end(), firstLine.get() );
+    std::iota( visibleLinesNumbers.begin(), visibleLinesNumbers.end(), firstLine_.get() );
 
     std::vector<LineLength> lineLengths;
     lineLengths.reserve( visibleLinesNumbers.size() );
 
     std::transform(
         visibleLinesNumbers.begin(), visibleLinesNumbers.end(), std::back_inserter( lineLengths ),
-        [ this ]( const auto& line ) { return logData->getLineLength( LineNumber( line ) ); } );
+        [this]( const auto& line ) { return logData_->getLineLength( LineNumber( line ) ); } );
 
     const auto max_length = *std::max_element( lineLengths.begin(), lineLengths.end() );
     horizontalScrollBar()->setValue( max_length.get() - getNbVisibleCols() );
@@ -1527,7 +1500,7 @@ void AbstractLogView::jumpToTop()
 void AbstractLogView::jumpToBottom()
 {
     const auto new_top_line
-        = qMax( logData->getNbLine().get() - getNbVisibleLines().get() + 1, 0U );
+        = qMax( logData_->getNbLine().get() - getNbVisibleLines().get() + 1, 0U );
 
     // This will also trigger a scrollContents event
     verticalScrollBar()->setValue( static_cast<int>( new_top_line ) );
@@ -1541,7 +1514,7 @@ void AbstractLogView::selectWordAtPosition( const QPoint& pos )
 {
     const int x = pos.x();
     const auto lineNumber = LineNumber( static_cast<LineNumber::UnderlyingType>( pos.y() ) );
-    const QString line = logData->getExpandedLineString( lineNumber );
+    const QString line = logData_->getExpandedLineString( lineNumber );
 
     if ( !line.isEmpty() && line[ x ].isLetterOrNumber() ) {
         // Search backward for the first character in the word
@@ -1578,7 +1551,7 @@ void AbstractLogView::updateGlobalSelection()
 
         // Updating it only for "non-trivial" (range or portion) selections
         if ( !selection_.isSingleLine() )
-            clipboard->setText( selection_.getSelectedText( logData ), QClipboard::Selection );
+            clipboard->setText( selection_.getSelectedText( logData_ ), QClipboard::Selection );
     } catch ( const std::bad_alloc& ) {
         LOG_ERROR << "not enough memory";
     }
@@ -1589,13 +1562,13 @@ void AbstractLogView::createMenu()
 {
     copyAction_ = new QAction( tr( "&Copy" ), this );
     // No text as this action title depends on the type of selection
-    connect( copyAction_, &QAction::triggered, [ this ]( auto ) { this->copy(); } );
+    connect( copyAction_, &QAction::triggered, [this]( auto ) { this->copy(); } );
 
     markAction_ = new QAction( tr( "&Mark" ), this );
-    connect( markAction_, &QAction::triggered, [ this ]( auto ) { this->markSelected(); } );
+    connect( markAction_, &QAction::triggered, [this]( auto ) { this->markSelected(); } );
 
     saveToFileAction_ = new QAction( tr( "Save to file" ), this );
-    connect( saveToFileAction_, &QAction::triggered, [ this ]( auto ) { this->saveToFile(); } );
+    connect( saveToFileAction_, &QAction::triggered, [this]( auto ) { this->saveToFile(); } );
 
     // For '#' and '*', shortcuts doesn't seem to work but
     // at least it displays them in the menu, we manually handle those keys
@@ -1603,45 +1576,44 @@ void AbstractLogView::createMenu()
     findNextAction_ = new QAction( tr( "Find &next" ), this );
     findNextAction_->setShortcut( Qt::Key_Asterisk );
     findNextAction_->setStatusTip( tr( "Find the next occurrence" ) );
-    connect( findNextAction_, &QAction::triggered, [ this ]( auto ) { this->findNextSelected(); } );
+    connect( findNextAction_, &QAction::triggered, [this]( auto ) { this->findNextSelected(); } );
 
     findPreviousAction_ = new QAction( tr( "Find &previous" ), this );
     findPreviousAction_->setShortcut( tr( "/" ) );
     findPreviousAction_->setStatusTip( tr( "Find the previous occurrence" ) );
     connect( findPreviousAction_, &QAction::triggered,
-             [ this ]( auto ) { this->findPreviousSelected(); } );
+             [this]( auto ) { this->findPreviousSelected(); } );
 
     addToSearchAction_ = new QAction( tr( "&Add to search" ), this );
     addToSearchAction_->setStatusTip( tr( "Add the selection to the current search" ) );
-    connect( addToSearchAction_, &QAction::triggered, [ this ]( auto ) { this->addToSearch(); } );
+    connect( addToSearchAction_, &QAction::triggered, [this]( auto ) { this->addToSearch(); } );
 
     replaceSearchAction_ = new QAction( tr( "&Replace search" ), this );
     replaceSearchAction_->setStatusTip( tr( "Replace the search expression with the selection" ) );
-    connect( replaceSearchAction_, &QAction::triggered,
-             [ this ]( auto ) { this->replaceSearch(); } );
+    connect( replaceSearchAction_, &QAction::triggered, [this]( auto ) { this->replaceSearch(); } );
 
     setSearchStartAction_ = new QAction( tr( "Set search start" ), this );
     connect( setSearchStartAction_, &QAction::triggered,
-             [ this ]( auto ) { this->setSearchStart(); } );
+             [this]( auto ) { this->setSearchStart(); } );
 
     setSearchEndAction_ = new QAction( tr( "Set search end" ), this );
-    connect( setSearchEndAction_, &QAction::triggered, [ this ]( auto ) { this->setSearchEnd(); } );
+    connect( setSearchEndAction_, &QAction::triggered, [this]( auto ) { this->setSearchEnd(); } );
 
     clearSearchLimitAction_ = new QAction( tr( "Clear search limits" ), this );
     connect( clearSearchLimitAction_, &QAction::triggered,
-             [ this ]( auto ) { this->clearSearchLimits(); } );
+             [this]( auto ) { this->clearSearchLimits(); } );
 
     setSelectionStartAction_ = new QAction( tr( "Set selection start" ), this );
     connect( setSelectionStartAction_, &QAction::triggered,
-             [ this ]( auto ) { this->setSelectionStart(); } );
+             [this]( auto ) { this->setSelectionStart(); } );
 
     setSelectionEndAction_ = new QAction( tr( "Set selection end" ), this );
     connect( setSelectionEndAction_, &QAction::triggered,
-             [ this ]( auto ) { this->setSelectionEnd(); } );
+             [this]( auto ) { this->setSelectionEnd(); } );
 
     saveDefaultSplitterSizesAction_ = new QAction( tr( "Save splitter position" ), this );
     connect( saveDefaultSplitterSizesAction_, &QAction::triggered,
-             [ this ]( auto ) { emit saveDefaultSplitterSizes(); } );
+             [this]( auto ) { emit saveDefaultSplitterSizes(); } );
 
     popupMenu_ = new QMenu( this );
     highlightersMenu_ = popupMenu_->addMenu( "Highlighters" );
@@ -1669,7 +1641,7 @@ void AbstractLogView::createMenu()
 void AbstractLogView::considerMouseHovering( int x_pos, int y_pos )
 {
     const auto line = convertCoordToLine( y_pos );
-    if ( ( x_pos < leftMarginPx_ ) && ( line.has_value() ) && ( *line < logData->getNbLine() ) ) {
+    if ( ( x_pos < leftMarginPx_ ) && ( line.has_value() ) && ( *line < logData_->getNbLine() ) ) {
         // Mouse moved in the margin, send event up
         // (possibly to highlight the overview)
         if ( line != lastHoveredLine_ ) {
@@ -1690,10 +1662,10 @@ void AbstractLogView::updateScrollBars()
 {
     verticalScrollBar()->setRange(
         0,
-        qMax( 0, static_cast<int>( logData->getNbLine().get() - getNbVisibleLines().get() + 1 ) ) );
+        qMax( 0, static_cast<int>( logData_->getNbLine().get() - getNbVisibleLines().get() + 1 ) ) );
 
     const int hScrollMaxValue
-        = qMax( 0, static_cast<int>( logData->getMaxLength().get() ) - getNbVisibleCols() + 1 );
+        = qMax( 0, static_cast<int>( logData_->getMaxLength().get() ) - getNbVisibleCols() + 1 );
 
     horizontalScrollBar()->setRange( 0, hScrollMaxValue );
 }
@@ -1732,16 +1704,16 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 
     // First check the lines to be drawn are within range (might not be the case if
     // the file has just changed)
-    const auto lines_in_file = logData->getNbLine();
+    const auto lines_in_file = logData_->getNbLine();
 
-    if ( firstLine > lines_in_file )
-        firstLine = LineNumber( lines_in_file.get() ? lines_in_file.get() - 1 : 0 );
+    if ( firstLine_ > lines_in_file )
+        firstLine_ = LineNumber( lines_in_file.get() ? lines_in_file.get() - 1 : 0 );
 
-    const auto nbLines = qMin( getNbVisibleLines(), lines_in_file - LinesCount( firstLine.get() ) );
+    const auto nbLines = qMin( getNbVisibleLines(), lines_in_file - LinesCount( firstLine_.get() ) );
 
     const int bottomOfTextPx = static_cast<int>( nbLines.get() ) * fontHeight;
 
-    LOG_DEBUG << "drawing lines from " << firstLine << " (" << nbLines << " lines)";
+    LOG_DEBUG << "drawing lines from " << firstLine_ << " (" << nbLines << " lines)";
     LOG_DEBUG << "bottomOfTextPx: " << bottomOfTextPx;
     LOG_DEBUG << "Height: " << paintDeviceHeight;
 
@@ -1789,7 +1761,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     leftMarginPx_ = contentStartPosX + SEPARATOR_WIDTH;
 
     const auto searchStartIndex = lineIndex( searchStart_ );
-    const auto searchEndIndex = [ this ] {
+    const auto searchEndIndex = [this] {
         auto index = lineIndex( searchEnd_ );
         if ( searchEnd_ + 1_lcount != displayLineNumber( index ) ) {
             // in filtered view lineIndex for "past the end" returns last line
@@ -1801,12 +1773,12 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
     }();
 
     // Lines to write
-    const auto expandedLines = logData->getExpandedLines( firstLine, nbLines );
+    const auto expandedLines = logData_->getExpandedLines( firstLine_, nbLines );
 
     // Then draw each line
     for ( auto currentLine = 0_lcount; currentLine < nbLines; ++currentLine ) {
-        const auto lineNumber = firstLine + currentLine;
-        const QString logLine = logData->getLineString( lineNumber );
+        const auto lineNumber = firstLine_ + currentLine;
+        const QString logLine = logData_->getLineString( lineNumber );
 
         std::vector<HighlightedMatch> highlighterMatches;
 
@@ -1840,7 +1812,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
         std::vector<HighlightedMatch> allHighlights;
         allHighlights.reserve( highlighterMatches.size() );
         std::transform( highlighterMatches.begin(), highlighterMatches.end(),
-                        std::back_inserter( allHighlights ), [ &logLine ]( const auto& match ) {
+                        std::back_inserter( allHighlights ), [&logLine]( const auto& match ) {
                             const auto prefix = logLine.leftRef( match.startColumn() );
                             const auto expandedPrefixLength = untabify( prefix ).length();
                             auto startDelta = expandedPrefixLength - prefix.length();
@@ -1858,7 +1830,7 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
 
         // string to print, cut to fit the length and position of the view
         const QString expandedLine = expandedLines[ currentLine.get() ];
-        const QString cutLine = expandedLine.mid( firstCol, nbCols );
+        const QString cutLine = expandedLine.mid( firstCol_, nbCols );
 
         // Position in pixel of the base line of the line to print
         const int yPos = static_cast<int>( currentLine.get() ) * fontHeight;
@@ -1888,18 +1860,18 @@ void AbstractLogView::drawTextArea( QPaintDevice* paint_device )
             auto backColors = std::vector<QColor>( static_cast<size_t>( nbCols + 1 ), backColor );
 
             for ( const auto& match : allHighlights ) {
-                const auto start = match.startColumn() - firstCol;
+                const auto start = match.startColumn() - firstCol_;
                 const auto end = start + match.length();
 
                 // Ignore matches that are *completely* outside view area
                 if ( ( start < 0 && end < 0 ) || start >= nbCols )
                     continue;
 
-                const auto firstColumn = static_cast<size_t>( qMax( start, 0 ) );
+                const auto firstCol_umn = static_cast<size_t>( qMax( start, 0 ) );
                 const auto lastColumn
                     = static_cast<size_t>( qMin( start + match.length(), nbCols ) );
 
-                for ( auto column = firstColumn; column < lastColumn; ++column ) {
+                for ( auto column = firstCol_umn; column < lastColumn; ++column ) {
                     foreColors[ column ] = match.foreColor();
                     backColors[ column ] = match.backColor();
                 }

@@ -50,6 +50,7 @@
 #include <chrono>
 #include <cmath>
 
+#include <absl/strings/string_view.h>
 #include <tbb/flow_graph.h>
 
 constexpr int IndexingBlockSize = 1 * 1024 * 1024;
@@ -160,7 +161,7 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, forcedEncoding, fileName = fileName_ ] {
+    operationFuture_ = QtConcurrent::run( [this, forcedEncoding, fileName = fileName_] {
         auto operationRequested = std::make_unique<FullIndexOperation>(
             fileName, indexing_data_, interruptRequest_, forcedEncoding );
         return connectSignalsAndRun( operationRequested.get() );
@@ -175,7 +176,7 @@ void LogDataWorker::indexAdditionalLines()
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, fileName = fileName_ ] {
+    operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
         auto operationRequested = std::make_unique<PartialIndexOperation>( fileName, indexing_data_,
                                                                            interruptRequest_ );
         return connectSignalsAndRun( operationRequested.get() );
@@ -190,7 +191,7 @@ void LogDataWorker::checkFileChanges()
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, fileName = fileName_ ] {
+    operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
         auto operationRequested = std::make_unique<CheckFileChangesOperation>(
             fileName, indexing_data_, interruptRequest_ );
 
@@ -253,38 +254,35 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
 
     int pos_within_block = 0;
 
-    const auto adjustToCharWidth = [ &state ]( auto pos ) {
-        return static_cast<int>( pos ) - state.encodingParams.getBeforeCrOffset();
+    const auto charOffsetWithinBlock = [&state, block_start = block.data()]( const char* pointer ) {
+        return static_cast<int>( std::distance( block_start, pointer ) )
+               - state.encodingParams.getBeforeCrOffset();
     };
 
-    const auto expandTabs = [ & ]( const char* start_in_line, auto line_size ) {
-        auto tab_search_start = start_in_line;
-        auto next_tab = reinterpret_cast<const char*>(
-            std::memchr( tab_search_start, '\t', static_cast<size_t>( line_size ) ) );
-        while ( next_tab != nullptr ) {
-            pos_within_block = adjustToCharWidth( next_tab - block.data() );
+    const auto expandTabs
+        = [&state, &charOffsetWithinBlock, pos_within_block]( absl::string_view blockToExpand ) {
+              while ( !blockToExpand.empty() ) {
+                  const auto next_tab = blockToExpand.find( '\t' );
+                  if ( next_tab == absl::string_view::npos ) {
+                      break;
+                  }
 
-            LOG_DEBUG << "Tab at " << pos_within_block;
+                  const auto tab_pos_within_block
+                      = charOffsetWithinBlock( blockToExpand.begin() + next_tab );
 
-            state.additional_spaces
-                += TabStop
-                   - ( static_cast<int>( ( block_beginning - state.pos ) + pos_within_block
-                                         + state.additional_spaces )
-                       % TabStop )
-                   - 1;
+                  LOG_DEBUG << "Tab at " << tab_pos_within_block;
 
-            const auto tab_substring_size = static_cast<int>( next_tab - tab_search_start );
-            line_size -= tab_substring_size;
-            tab_search_start = next_tab + 1;
-            if ( line_size > 0 ) {
-                next_tab = reinterpret_cast<const char*>(
-                    std::memchr( tab_search_start, '\t', static_cast<size_t>( line_size ) ) );
-            }
-            else {
-                next_tab = nullptr;
-            }
-        }
-    };
+                  const auto current_expanded_size
+                      = tab_pos_within_block - pos_within_block + state.additional_spaces;
+
+                  state.additional_spaces += TabStop - ( current_expanded_size % TabStop ) - 1;
+                  if ( next_tab >= blockToExpand.size() ) {
+                      break;
+                  }
+
+                  blockToExpand.remove_prefix( next_tab + 1 );
+              }
+          };
 
     while ( pos_within_block != -1 ) {
         pos_within_block = qMax( static_cast<int>( state.pos - block_beginning ), 0 );
@@ -292,19 +290,19 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
         // Looking for the next \n, expanding tabs in the process
 
         const auto search_start = block.data() + pos_within_block;
-        const auto search_line_size = block.size() - pos_within_block;
+        const auto search_line_size = static_cast<size_t>( block.size() - pos_within_block );
 
         if ( search_line_size > 0 ) {
-            const auto next_line_feed = reinterpret_cast<const char*>(
-                std::memchr( search_start, '\n', static_cast<size_t>( search_line_size ) ) );
+            const auto block_view = absl::string_view( search_start, search_line_size );
+            const auto next_line_feed = block_view.find( '\n' );
 
-            if ( next_line_feed != nullptr ) {
-                expandTabs( search_start, next_line_feed - search_start );
-                pos_within_block = adjustToCharWidth( next_line_feed - block.data() );
+            if ( next_line_feed != absl::string_view::npos ) {
+                expandTabs( block_view.substr( 0, next_line_feed ) );
+                pos_within_block = charOffsetWithinBlock( search_start + next_line_feed );
                 LOG_DEBUG << "LF at " << pos_within_block;
             }
             else {
-                expandTabs( search_start, search_line_size );
+                expandTabs( block_view );
                 pos_within_block = -1;
             }
         }
@@ -404,11 +402,11 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
     auto blockReaderAsync = tbb::flow::async_node<tbb::flow::continue_msg, BlockData>(
         indexingGraph, tbb::flow::serial,
-        [ this, &localThreadPool, &file, &ioDuration ]( const auto&, auto& gateway ) {
+        [this, &localThreadPool, &file, &ioDuration]( const auto&, auto& gateway ) {
             gateway.reserve_wait();
 
             QtConcurrent::run(
-                &localThreadPool, [ this, &file, &ioDuration, gw = std::ref( gateway ) ] {
+                &localThreadPool, [this, &file, &ioDuration, gw = std::ref( gateway )] {
                     while ( !file.atEnd() ) {
 
                         if ( interruptRequest_ ) {
@@ -419,8 +417,8 @@ void IndexOperation::doIndex( LineOffset initialPosition )
                                              QByteArray{ IndexingBlockSize, Qt::Uninitialized } };
 
                         clock::time_point ioT1 = clock::now();
-                        const auto readBytes
-                            = static_cast<int>( file.read( blockData.second.data(), blockData.second.size() ) );
+                        const auto readBytes = static_cast<int>(
+                            file.read( blockData.second.data(), blockData.second.size() ) );
 
                         if ( readBytes < 0 ) {
                             LOG_ERROR << "Reading past the end of file";
@@ -456,7 +454,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     auto blockQueue = tbb::flow::queue_node<BlockData>( indexingGraph );
 
     auto blockParser = tbb::flow::function_node<BlockData, tbb::flow::continue_msg>(
-        indexingGraph, 1, [ this, &state ]( const BlockData& blockData ) {
+        indexingGraph, 1, [this, &state]( const BlockData& blockData ) {
             const auto& block_beginning = blockData.first;
             const auto& block = blockData.second;
 
@@ -643,7 +641,7 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
             return MonitoredFileStatus::Truncated;
         }
 
-        const auto getDigest = [ &file, &buffer ]( const qint64 indexedSize ) {
+        const auto getDigest = [&file, &buffer]( const qint64 indexedSize ) {
             FileDigest fileDigest;
             auto readSize = 0ll;
             auto totalSize = 0ll;

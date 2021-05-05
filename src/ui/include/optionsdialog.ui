@@ -126,7 +126,7 @@
           <item>
            <widget class="QCheckBox" name="multipleWindowsCheckBox">
             <property name="text">
-             <string>Enabe multiple windows</string>
+             <string>Enable multiple windows</string>
             </property>
            </widget>
           </item>

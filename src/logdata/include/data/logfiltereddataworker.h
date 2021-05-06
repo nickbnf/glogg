@@ -43,7 +43,7 @@
 
 #include <QFuture>
 
-#include <immer/flex_vector.hpp>
+#include <roaring.hh>
 
 #include "atomicflag.h"
 #include "linetypes.h"
@@ -79,7 +79,7 @@ class MatchingLine {
 // This is an array of matching lines.
 // It shall be implemented for random lookup speed, so
 // a fixed "in-place" array (vector) is probably fine.
-using SearchResultArray = immer::flex_vector<MatchingLine>;
+using SearchResultArray = Roaring;
 
 struct SearchResults
 {

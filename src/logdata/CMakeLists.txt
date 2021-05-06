@@ -10,7 +10,6 @@ add_library(logdata STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logdataworker.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddata.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/logfiltereddataworker.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/marks.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/linetypes.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/fileholder.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/filedigest.h
@@ -26,7 +25,6 @@ add_library(logdata STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logdataworker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logfiltereddata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/logfiltereddataworker.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/marks.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/fileholder.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/filedigest.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/hsregularexpression.cpp
@@ -41,6 +39,7 @@ target_include_directories(logdata PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/
 target_link_libraries(logdata PUBLIC
         Qt5::Core
         Qt5::Concurrent
+        roaring
         immer
         klogg_tbb
         named_type

@@ -19,8 +19,8 @@
 
 #include <QSignalSpy>
 #include <QTemporaryFile>
-#include <QTimer>
 #include <QTest>
+#include <QTimer>
 
 #include "configuration.h"
 #include "log.h"
@@ -57,7 +57,8 @@ void runSearch( LogFilteredData* filtered_data, const QString& regexp,
                 SafeQSignalSpy& searchProgressSpy )
 {
 
-    QTimer::singleShot( 50, [&]() { filtered_data->runSearch( RegularExpressionPattern( regexp ) ); } );
+    QTimer::singleShot(
+        50, [ & ]() { filtered_data->runSearch( RegularExpressionPattern( regexp ) ); } );
 
     int progress = 0;
     do {
@@ -69,37 +70,40 @@ void runSearch( LogFilteredData* filtered_data, const QString& regexp,
 
 } // namespace
 
+using LineTypeFlags = LogFilteredData::LineTypeFlags;
+using VisibilityFlags = LogFilteredData::VisibilityFlags;
+using LineType = LogFilteredData::LineType;
+
 static LogFilteredData::LineTypeFlags toFlags( LogFilteredData::LineType type )
 {
-    using LineTypeFlags = LogFilteredData::LineTypeFlags;
-    using LineType = LogFilteredData::LineType;
     return static_cast<LineTypeFlags>( static_cast<LineType::Int>( type ) );
 }
 
-SCENARIO( "filtered log data", "[logdata]" )
-{
-    static int counter = 0;
-    counter++;
-    LOG_INFO << "Test run " << counter;
-    
-    using VisibilityFlags = LogFilteredData::VisibilityFlags;
-    using LineTypeFlags = LogFilteredData::LineTypeFlags;
-
-    auto useParallelSearch = GENERATE( true, false );
-    auto& config = Configuration::get();
-    config.setUseParallelSearch( useParallelSearch );
-
-    GIVEN( "loaded log data" )
+struct LogDataLoader {
+    LogDataLoader()
     {
-        QTemporaryFile file;
+        static int counter = 0;
+        counter++;
+        LOG_INFO << "Test run " << counter;
+
         REQUIRE( generateDataFiles( file ) );
-        LogData log_data;
         SafeQSignalSpy loadEndSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
         log_data.attachFile( file.fileName() );
         REQUIRE( loadEndSpy.safeWait( 10000 ) );
+    }
 
-        auto filtered_data = log_data.getNewFilteredData();
+    QTemporaryFile file;
+    LogData log_data;
+};
+
+SCENARIO( "marks in filtered log data", "[logdata]" )
+{
+    LogDataLoader logDataLoader;
+
+    GIVEN( "loaded log data" )
+    {
+        auto filtered_data = logDataLoader.log_data.getNewFilteredData();
 
         WHEN( "Adding mark outside file" )
         {
@@ -204,11 +208,22 @@ SCENARIO( "filtered log data", "[logdata]" )
                 }
             }
         }
+    }
+}
+
+SCENARIO( "search for regex", "[logdata]" )
+{
+    LogDataLoader logDataLoader;
+
+    GIVEN( "loaded log data" )
+    {
+        auto filtered_data = logDataLoader.log_data.getNewFilteredData();
 
         WHEN( "Searched for regex" )
         {
+            const auto threadPoolSize = GENERATE( 0, 1, 2 );
 
-            const auto threadPoolSize = GENERATE( 0, 1, 2, 3 );
+            auto& config = Configuration::getSynced();
 
             config.setSearchThreadPoolSize( threadPoolSize );
             config.setUseParallelSearch( threadPoolSize > 0 );
@@ -233,31 +248,57 @@ SCENARIO( "filtered log data", "[logdata]" )
                 for ( const auto& l : lines ) {
                     REQUIRE( l.endsWith( '9' ) );
                 }
+            }
+        }
+    }
+}
 
-                AND_WHEN( "Add marks at matched line" )
+SCENARIO( "marks and matches in filtered log data", "[logdata]" )
+{
+    LogDataLoader logDataLoader;
+
+    GIVEN( "loaded log data" )
+    {
+        auto filtered_data = logDataLoader.log_data.getNewFilteredData();
+
+        WHEN( "Searched for regex" )
+        {
+            auto& config = Configuration::getSynced();
+            config.setSearchThreadPoolSize( 2 );
+            config.setUseParallelSearch( true );
+
+            auto filtered_lines = filtered_data->getNbLine();
+            REQUIRE( filtered_lines.get() == 0 );
+
+            SafeQSignalSpy searchProgressSpy{ filtered_data.get(),
+                                              &LogFilteredData::searchProgressed };
+
+            runSearch( filtered_data.get(), "this is line [0-9]{5}9", searchProgressSpy );
+            
+            AND_WHEN( "Add marks at matched line" )
+            {
+                const auto& firstMatchedLine = filtered_data->getLineString( 0_lnum );
+                REQUIRE( firstMatchedLine.right( 2 ).toStdString() == "09" );
+
+                filtered_data->addMark( 9_lnum );
+
+                THEN( "Has same number of lines" )
                 {
-                    const auto& firstMatchedLine = filtered_data->getLineString( 0_lnum );
-                    REQUIRE( firstMatchedLine.right( 2 ).toStdString() == "09" );
-
-                    filtered_data->addMark( 9_lnum );
-
-                    THEN( "Has same number of lines" )
-                    {
-                        REQUIRE( filtered_data->getNbLine() == 50_lcount );
-                    }
+                    REQUIRE( filtered_data->getNbLine() == 50_lcount );
                 }
+            }
 
-                AND_WHEN( "Add marks at not matched line" )
+            AND_WHEN( "Add marks at not matched line" )
+            {
+                filtered_data->addMark( 5_lnum );
+
+                THEN( "Has one more line" )
                 {
-                    filtered_data->addMark( 5_lnum );
-
-                    THEN( "Has one more line" )
-                    {
-                        REQUIRE( filtered_data->getNbLine() == 51_lcount );
-                    }
+                    REQUIRE( filtered_data->getNbLine() == 51_lcount );
                 }
+            }
 
-                AND_WHEN( "Has mixed marks and matches" )
+            AND_WHEN( "Has mixed marks and matches" )
                 {
                     filtered_data->addMark( 9_lnum );
                     filtered_data->addMark( 5_lnum );
@@ -396,7 +437,6 @@ SCENARIO( "filtered log data", "[logdata]" )
                         }
                     }
                 }
-            }
 
             AND_WHEN( "Ask for matching line number" )
             {

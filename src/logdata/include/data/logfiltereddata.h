@@ -48,12 +48,10 @@
 #include <QStringList>
 
 #include "abstractlogdata.h"
-#include "logfiltereddataworker.h"
 #include "hsregularexpression.h"
-#include "marks.h"
+#include "logfiltereddataworker.h"
 
 class LogData;
-class Marks;
 class QTimer;
 
 // A list of matches found in a LogData, it stores all the matching lines,
@@ -104,22 +102,16 @@ class LogFilteredData : public AbstractLogData {
 
     // Marks interface (delegated to a Marks object)
 
-    // Add a mark at the given line, optionally identified by the given char
-    // If a mark for this char already exist, the previous one is replaced.
-    void addMark( LineNumber line, QChar mark = QChar() );
-    // Get the (unique) mark identified by the passed char.
-    LineNumber getMark( QChar mark ) const;
+    // Add a mark at the given line
+    void addMark( LineNumber line );
     // Get the first mark after the line passed
     OptionalLineNumber getMarkAfter( LineNumber line ) const;
     // Get the first mark before the line passed
     OptionalLineNumber getMarkBefore( LineNumber line ) const;
-    // Delete the mark identified by the passed char.
-    void deleteMark( QChar mark );
-    // Delete the mark present on the passed line or do nothing if there is
-    // none.
+    // Delete the mark present on the passed line
     void deleteMark( LineNumber line );
     // Toggle presence of the mark on the passed line.
-    void toggleMark( LineNumber line, QChar mark = {} );
+    void toggleMark( LineNumber line );
     // Completely clear the marks list.
     void clearMarks();
     // Get all marked lines
@@ -145,8 +137,6 @@ class LogFilteredData : public AbstractLogData {
     void handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine );
 
   private:
-    class FilteredItem;
-
     // Implementation of virtual functions
     QString doGetLineString( LineNumber line ) const override;
     QString doGetExpandedLineString( LineNumber line ) const override;
@@ -174,6 +164,8 @@ class LogFilteredData : public AbstractLogData {
 
     // List of the matching line numbers
     SearchResultArray matching_lines_;
+    SearchResultArray marks_;
+    SearchResultArray marks_and_matches_;
 
     const LogData* sourceLogData_;
 
@@ -185,13 +177,7 @@ class LogFilteredData : public AbstractLogData {
 
     Visibility visibility_;
 
-    // Cache used to combine Marks and Matches
-    // when visibility_ == MarksAndMatches
-    // (QVector store actual objects instead of pointers)
-    mutable std::vector<FilteredItem> filteredItemsCache_;
-
     LogFilteredDataWorker workerThread_;
-    Marks marks_;
 
     struct CachedSearchResult {
         SearchResultArray matching_lines;
@@ -233,79 +219,12 @@ class LogFilteredData : public AbstractLogData {
     }
 
     // Utility functions
+    const SearchResultArray& currentResultArray() const;
     LineNumber findLogDataLine( LineNumber lineNum ) const;
     LineNumber findFilteredLine( LineNumber lineNum ) const;
 
-    void regenerateFilteredItemsCache() const;
-    // start_index can be passed in as an optimization when finding the item.
-    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was
-    // inserted.
-    void insertIntoFilteredItemsCache( size_t start_index, FilteredItem&& item );
-    void insertIntoFilteredItemsCache( FilteredItem&& item );
-    // Insert new matches into matching_lines_ and filteredItemsCache_
-    void insertNewMatches( const SearchResultArray& new_matches );
-    // remove_index can be passed in as an optimization when finding the item.
-    // It refers to the index of the singular arrays (Marks or SearchResultArray) where the item was
-    // removed.
-    void removeFromFilteredItemsCache( size_t remove_index, FilteredItem&& item );
-    void removeFromFilteredItemsCache( FilteredItem&& item );
-    void removeAllFromFilteredItemsCache( LineType type );
-
-    // update maxLengthMarks_ when a Mark was removed.
-    void updateMaxLengthMarks( LineNumber removed_line );
-};
-
-// A class representing a Mark or Match.
-// Conceptually it should be a base class for Mark and MatchingLine,
-// but we implement it this way for performance reason as we create plenty of
-// those everytime we refresh the cache.
-// Specifically it allows to store this in the cache by value instead
-// of pointer (less small allocations and no RTTI).
-class LogFilteredData::FilteredItem {
-  public:
-    // A default ctor seems to be necessary for QVector
-    FilteredItem();
-    FilteredItem( LineNumber lineNumber, LineType type )
-        : lineNumber_{ lineNumber }
-        , type_{ type }
-    {
-    }
-
-    LineNumber lineNumber() const
-    {
-        return lineNumber_;
-    }
-
-    LineType type() const
-    {
-        return type_;
-    }
-
-    void add( LineType type )
-    {
-        type_ |= type;
-    }
-
-    // Returns the new type flags.
-    LineType remove( LineType type )
-    {
-        type_ &= ~type;
-        return type_;
-    }
-
-    bool operator<( const LogFilteredData::FilteredItem& other ) const
-    {
-        return lineNumber_ < other.lineNumber_;
-    }
-
-    bool operator<( const LineNumber& lineNumber ) const
-    {
-        return lineNumber_ < lineNumber;
-    }
-
-  private:
-    LineNumber lineNumber_;
-    LineType type_;
+    // update maxLengthMarks_ when a Marks was changed.
+    void updateMaxLengthMarks( OptionalLineNumber added_line, OptionalLineNumber removed_line );
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( LogFilteredData::Visibility )

@@ -39,6 +39,7 @@ add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 add_subdirectory(kdab)
+add_subdirectory(roaring) #0.3.1
 
 if(KLOGG_USE_HYPERSCAN)
 set(BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)

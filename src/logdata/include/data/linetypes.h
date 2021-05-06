@@ -165,32 +165,6 @@ Q_DECLARE_METATYPE( LineLength )
 Q_DECLARE_METATYPE( LineNumber )
 Q_DECLARE_METATYPE( LinesCount )
 
-// Use a bisection method to find the given line number
-// in a sorted list.
-// The T type must be a container containing elements that
-// implement the lineNumber() member.
-// Returns true if the lineNumber is found, false if not
-// foundIndex is the index of the found number or the index
-// of the closest greater element.
-template <typename T>
-bool lookupLineNumber( const T& list, LineNumber lineNumber, uint32_t& foundIndex )
-{
-    using std::begin;
-    using std::distance;
-    using std::end;
-    auto notLess = std::lower_bound( begin( list ), end( list ), lineNumber );
-    foundIndex = static_cast<uint32_t>( distance( begin( list ), notLess ) );
-    return notLess != end( list ) && notLess->lineNumber() == lineNumber;
-}
-
-template <typename Iterator>
-LineNumber lookupLineNumber( Iterator begin, Iterator end, LineNumber lineNum )
-{
-    const auto lowerBound = std::lower_bound( begin, end, lineNum );
-    const auto it = lowerBound != end || begin == end ? lowerBound : std::prev( end );
-    return LineNumber( static_cast<LineNumber::UnderlyingType>( std::distance( begin, it ) ) );
-}
-
 // Length of a tab stop
 constexpr int TabStop = 8;
 

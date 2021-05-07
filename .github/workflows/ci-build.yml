@@ -34,8 +34,8 @@ jobs:
             os_version: 18.04
             qt_version: 5.9.5
             release_tag: linux
-            cc: gcc-9
-            cxx: g++-9
+            cc: gcc-8
+            cxx: g++-8
             arch: x64
 
     runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
@@ -62,7 +62,7 @@ jobs:
       - name: Install deps
         run: |
           sudo apt-get update
-          sudo apt-get install libboost-all-dev ragel -y
+          sudo apt-get install g++-8 libboost-all-dev ragel -y
 
 #Build and test
       - uses: ./.github/actions/klogg-version
@@ -79,9 +79,9 @@ jobs:
         run: |
           docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:bionic /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
       
-      #- name: Check rpm package
-      #  run: |
-      #    docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
+      - name: Check rpm package
+        run: |
+          docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
       
       - name: Linux AppImage 
         run: |

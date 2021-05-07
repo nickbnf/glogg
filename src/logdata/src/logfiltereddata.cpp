@@ -338,7 +338,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
     if ( progress == 100 && config.useSearchResultsCache()
          && nbLinesProcessed_.get() == getExpectedSearchEnd( currentSearchKey_ ).get() ) {
 
-        const auto maxCacheLines = static_cast<size_t>( config.searchResultsCacheLines() );
+        const auto maxCacheLines = static_cast<uint64_t>( config.searchResultsCacheLines() );
 
         if ( matching_lines_.cardinality() > maxCacheLines ) {
             LOG_DEBUG << "LogFilteredData: too many matches to place in cache";
@@ -352,7 +352,7 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
             searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
 
             auto cacheSize = std::accumulate(
-                searchResultsCache_.cbegin(), searchResultsCache_.cend(), std::size_t{},
+                searchResultsCache_.cbegin(), searchResultsCache_.cend(), std::uint64_t{},
                 []( auto val, const auto& cachedResults ) {
                     return val + cachedResults.second.matching_lines.cardinality();
                 } );
@@ -477,7 +477,7 @@ LogFilteredData::doGetLines( LineNumber first_line, LinesCount number,
 // Implementation of the virtual function.
 LinesCount LogFilteredData::doGetNbLine() const
 {
-    size_t nbLines = currentResultArray().cardinality();
+    const auto nbLines = currentResultArray().cardinality();
     return LinesCount( static_cast<LinesCount::UnderlyingType>( nbLines ) );
 }
 

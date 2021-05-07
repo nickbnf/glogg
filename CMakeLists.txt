@@ -217,7 +217,6 @@ if(UNIX)
         set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
         set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase >= 5.9.5")
         set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
-        set(CPACK_RPM_PACKAGE_URL "http://github.com/variar/klogg")
         set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION 
             /usr/share/applications
             /usr/share/icons

@@ -31,11 +31,11 @@ jobs:
       matrix:
         config:
           - os: ubuntu
-            os_version: 16.04
+            os_version: 18.04
             qt_version: 5.9.5
             release_tag: linux
-            cc: gcc-8
-            cxx: g++-8
+            cc: gcc-9
+            cxx: g++-9
             arch: x64
 
     runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
@@ -59,10 +59,10 @@ jobs:
           arch: ${{ matrix.config.qt_arch }}
           cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
-      - name: Install gcc-8
+      - name: Install deps
         run: |
           sudo apt-get update
-          sudo apt-get install g++-8 libboost-all-dev ragel -y
+          sudo apt-get install libboost-all-dev ragel -y
 
 #Build and test
       - uses: ./.github/actions/klogg-version

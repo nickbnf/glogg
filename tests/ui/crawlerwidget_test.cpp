@@ -20,6 +20,7 @@
 #include <QSignalSpy>
 #include <QTemporaryFile>
 #include <QTest>
+#include <QTimer>
 
 #include "savedsearches.h"
 #include "session.h"
@@ -110,13 +111,12 @@ struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
 
         QTest::mouseClick( crawler->searchButton, Qt::LeftButton );
 
-        int progress = 0;
-        do {
-            REQUIRE( searchProgressSpy.wait() );
-            QList<QVariant> progressArgs = searchProgressSpy.last();
-            progress = progressArgs.at( 1 ).toInt();
-            LOG_WARNING << "Progress " << progress;
-        } while ( progress < 100 );
+        QTest::qWait( 100 );
+
+        waitUiState([&]()
+        {
+            return crawler->stopButton->isHidden();
+        });
     }
 
     void render()

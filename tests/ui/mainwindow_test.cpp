@@ -57,16 +57,6 @@ SCENARIO( "Main window tests", "[ui]" )
         QTest::qWait( 100 );
     };
 
-    auto waitUiState = []( auto&& checkFunc ) {
-        for ( auto time = 0; time < 10000; time += 100 ) {
-            if ( checkFunc() ) {
-                return true;
-            }
-            QTest::qWait( 100 );
-        }
-        return false;
-    };
-
     GIVEN( "Opened main window" )
     {
         auto toolBar = mainWindow->findChild<QToolBar*>();

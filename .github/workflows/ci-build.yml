@@ -89,10 +89,10 @@ jobs:
           DESTDIR=$(readlink -f appdir) ninja install
           mv appdir/usr/lib/x86_64-linux-gnu/*  appdir/usr/lib
           rm -rf appdir/usr/lib/x86_64-linux-gnu/
-          wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/7/linuxdeployqt-7-x86_64.AppImage"
-          chmod a+x linuxdeployqt-7-x86_64.AppImage
-          VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -qmake=$Qt5_Dir/bin/qmake -bundle-non-qt-libs
-          VERSION=$KLOGG_VERSION ./linuxdeployqt-7-x86_64.AppImage appdir/usr/share/applications/*.desktop -appimage
+          wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+          chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+          VERSION=$KLOGG_VERSION ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -qmake=$Qt5_Dir/bin/qmake -bundle-non-qt-libs
+          VERSION=$KLOGG_VERSION ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -appimage
           cp ./klogg-$KLOGG_VERSION-x86_64.AppImage ./packages/klogg-$KLOGG_VERSION-x86_64.AppImage
 
 # Final upload of all packages

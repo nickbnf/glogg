@@ -113,10 +113,7 @@ struct CrawlerWidget::access_by<CrawlerWidgetPrivate> {
 
         QTest::qWait( 100 );
 
-        waitUiState([&]()
-        {
-            return crawler->stopButton->isHidden();
-        });
+        waitUiState( [ & ]() { return crawler->stopButton->isHidden(); } );
     }
 
     void render()
@@ -161,10 +158,9 @@ SCENARIO( "Crawler widget search", "[ui]" )
             crawlerVisitor.setSearchPattern( "this is line" );
             crawlerVisitor.runSearch();
 
-            loadWaitCycle = 0;
-            while ( crawlerVisitor.getLogFilteredNbLines().get() != SL_NB_LINES
-                    && loadWaitCycle++ < 50 )
-                QTest::qWait( 100 );
+            REQUIRE( waitUiState( [ &crawlerVisitor ]() {
+                return crawlerVisitor.getLogFilteredNbLines().get() == SL_NB_LINES;
+            } ) );
 
             THEN( "all lines are matched" )
             {

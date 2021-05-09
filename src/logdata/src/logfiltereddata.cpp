@@ -329,8 +329,8 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 
     const auto searchResults = workerThread_.getSearchResults();
 
-    matching_lines_ = std::move( searchResults.allMatches );
-    marks_and_matches_ = matching_lines_ | marks_;
+    matching_lines_ |= searchResults.newMatches; 
+    marks_and_matches_ |= searchResults.newMatches;
 
     maxLength_ = searchResults.maxLength;
     nbLinesProcessed_ = searchResults.processedLines;

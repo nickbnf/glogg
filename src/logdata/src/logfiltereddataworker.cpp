@@ -115,33 +115,17 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vect
 SearchResults SearchData::takeCurrentResults() const
 {
     ScopedLock locker( &dataMutex_ );
-
-    auto results
-        = SearchResults{ matches_, std::move( newMatches_ ), maxLength_, nbLinesProcessed_ };
-    newMatches_ = {};
-    return results;
-}
-
-void SearchData::setAll( LineLength length, SearchResultArray&& matches )
-{
-    ScopedLock locker( &dataMutex_ );
-
-    maxLength_ = length;
-    matches_ = matches;
-    newMatches_ = matches;
+    return SearchResults{ std::exchange( newMatches_, {} ), maxLength_, nbLinesProcessed_ };
 }
 
 void SearchData::addAll( LineLength length, const SearchResultArray& matches, LinesCount lines )
 {
-    using std::begin;
-    using std::end;
-
     ScopedLock locker( &dataMutex_ );
 
     maxLength_ = qMax( maxLength_, length );
     nbLinesProcessed_ = qMax( nbLinesProcessed_, lines );
+    nbMatches_ += LinesCount( static_cast<LinesCount::UnderlyingType>( matches.cardinality() ) );
 
-    matches_ |= matches;
     newMatches_ |= matches;
 }
 
@@ -149,13 +133,7 @@ LinesCount SearchData::getNbMatches() const
 {
     ScopedLock locker( &dataMutex_ );
 
-    return LinesCount( static_cast<LinesCount::UnderlyingType>( matches_.cardinality() ) );
-}
-
-LineNumber SearchData::getLastMatchedLineNumber() const
-{
-    ScopedLock locker( &dataMutex_ );
-    return lastMatchedLineNumber_;
+    return nbMatches_;
 }
 
 LineNumber SearchData::getLastProcessedLine() const
@@ -177,7 +155,7 @@ void SearchData::clear()
 
     maxLength_ = LineLength( 0 );
     nbLinesProcessed_ = LinesCount( 0 );
-    lastMatchedLineNumber_ = LineNumber( 0 );
+    nbMatches_ = LinesCount( 0 );
     matches_ = {};
     newMatches_ = {};
 }

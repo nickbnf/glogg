@@ -83,7 +83,6 @@ using SearchResultArray = Roaring;
 
 struct SearchResults
 {
-    SearchResultArray allMatches;
     SearchResultArray newMatches;
     LineLength maxLength;
     LinesCount processedLines;
@@ -96,10 +95,6 @@ class SearchData {
     // will clear new matches
     SearchResults takeCurrentResults() const;
 
-    // Atomically set all the search data
-    // (overwriting the existing)
-    // (the matches are always moved)
-    void setAll( LineLength length, SearchResultArray&& matches );
     // Atomically add to all the existing search data.
     void addAll( LineLength length, const SearchResultArray& matches, LinesCount nbLinesProcessed );
     // Get the number of matches
@@ -124,7 +119,7 @@ class SearchData {
     mutable SearchResultArray newMatches_;
     LineLength maxLength_{ 0 };
     LinesCount nbLinesProcessed_{ 0 };
-    LineNumber lastMatchedLineNumber_{ 0 };
+    LinesCount nbMatches_{ 0 };
 };
 
 class SearchOperation : public QObject {

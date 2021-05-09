@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  Linux:
+  Ubuntu:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     strategy:
       fail-fast: false
@@ -72,16 +72,12 @@ jobs:
       - name: Linux package 
         run: |
           cd $KLOGG_BUILD_ROOT
-          cpack --verbose -G "RPM;DEB"
-          cp ./output/klogg.sym ./packages/klogg.sym
+          cpack --verbose -G "DEB"
+          cp ./output/klogg.sym ./packages/klogg_deb.sym
       
       - name: Check deb package
         run: |
           docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local ubuntu:bionic /bin/bash -c "apt-get update && apt install --dry-run /usr/local/klogg*.deb"
-      
-      - name: Check rpm package
-        run: |
-          docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
       
       - name: Linux AppImage 
         run: |
@@ -98,8 +94,65 @@ jobs:
 # Final upload of all packages
       - uses: actions/upload-artifact@v2
         with:
-          name: packages-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          name: packages-deb-${{ matrix.config.arch }}
           path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*' 
+
+  Centos:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: ubuntu
+            os_version: 18.04
+            release_tag: linux
+            arch: x64
+
+    runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/klogg-version
+    
+      - name: Prepare env
+        run: |
+          echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
+
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+      
+      - name: Build container 
+        run: |
+          cd docker/centos8
+          docker build -t variar/klogg_centos8 .
+
+      - name: configure
+        run: |
+          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "/opt/bin/cmake -B /usr/local/build_root -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DKLOGG_GENERIC_CPU=ON -DCMAKE_INSTALL_PREFIX=/usr /usr/local"
+
+      - name: build
+        run: |
+          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cmake --build /usr/local/build_root --target ci_build"
+
+      - name: test
+        run: |
+          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cd /usr/local/build_root && ctest --verbose"
+
+      - name: rpm package 
+        run: |
+          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cd /usr/local/build_root && cpack -G RPM"
+          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cd /usr/local/build_root && cp ./output/klogg.sym ./packages/klogg_rpm.sym"
+
+      - name: Check rpm package
+        run: |
+          docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
+    
+# Final upload of all packages
+      - uses: actions/upload-artifact@v2
+        with:
+          name: packages-rpm-${{ matrix.config.arch }}
+          path: '${{ env.KLOGG_BUILD_ROOT }}/packages/*'       
 
   Mac:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
@@ -359,7 +412,7 @@ jobs:
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    needs: [Linux, Mac, Windows] 
+    needs: [Ubuntu, Centos, Mac, Windows] 
     steps:
     - uses: actions/checkout@v2
 
@@ -386,7 +439,9 @@ jobs:
         repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
         automatic_release_tag: continuous-linux
         prerelease: true
-        files: ./packages-ubuntu-x64/*
+        files: |
+          ./packages-deb-x64/*
+          ./packages-rpm-x64/*
 
     - name: Release mac
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -414,7 +469,8 @@ jobs:
     - name: Upload symbols linux
       shell: sh
       run: |
-        sentry-cli upload-dif ./packages-ubuntu-x64/klogg.sym 
+        sentry-cli upload-dif ./packages-deb-x64/klogg_deb.sym 
+        sentry-cli upload-dif ./packages-rpm-x64/klogg_rpm.sym 
 
     - name: Upload symbols mac
       shell: sh

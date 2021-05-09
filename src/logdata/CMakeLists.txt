@@ -40,7 +40,6 @@ target_link_libraries(logdata PUBLIC
         Qt5::Core
         Qt5::Concurrent
         roaring
-        immer
         klogg_tbb
         named_type
         absl::optional

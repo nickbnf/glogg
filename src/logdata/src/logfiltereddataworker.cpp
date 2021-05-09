@@ -47,7 +47,6 @@
 #include "configuration.h"
 #include "overload_visitor.h"
 
-#include <immer/box.hpp>
 #include <tbb/flow_graph.h>
 
 #include <chrono>
@@ -283,8 +282,8 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     std::chrono::microseconds fileReadingDuration{ 0 };
 
-    using BlockDataType = immer::box<SearchBlockData>;
-    using PartialResultType = immer::box<PartialSearchResults>;
+    using BlockDataType = std::shared_ptr<SearchBlockData>;
+    using PartialResultType = std::shared_ptr<PartialSearchResults>;
 
     auto chunkStart = initialLine;
     auto linesSource = tbb::flow::input_node<BlockDataType>(
@@ -313,7 +312,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
             /*LOG_DEBUG << "Sending chunk starting at " << chunkStart << ", " << lines.second.size()
                       << " lines read.";*/
 
-            auto blockData = BlockDataType{ chunkStart, std::move( lines ) };
+            auto blockData = std::make_shared<SearchBlockData>( chunkStart, std::move( lines ) );
 
             const auto lineSourceEndTime = high_resolution_clock::now();
             const auto chunkReadTime
@@ -353,7 +352,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                     const auto& matcher = std::get<0>( regexMatchers.at( index ) );
                     const auto matchStartTime = high_resolution_clock::now();
 
-                    auto results = PartialResultType(
+                    auto results = std::make_shared<PartialSearchResults>(
                         filterLines( matcher, sourceLogData_.decodeLines( blockData->lines ),
                                      blockData->chunkStart ) );
 

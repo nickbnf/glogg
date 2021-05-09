@@ -31,7 +31,6 @@ mark_as_advanced(FORCE TBB_FIND_PACKAGE)
 target_compile_definitions(klogg_tbb INTERFACE __TBB_NO_IMPLICIT_LINKAGE=1)
 
 add_subdirectory(singleapp) #3.1.5
-add_subdirectory(immer)
 add_subdirectory(cmzlib)
 add_subdirectory(cmbzip2)
 add_subdirectory(cmliblzma)

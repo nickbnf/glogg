@@ -61,8 +61,7 @@ Highlighter::Highlighter( const QString& pattern, bool ignoreCase, bool onlyMatc
     , foreColor_( foreColor )
     , backColor_( backColor )
 {
-    LOG_DEBUG << "New Highlighter, fore: " << foreColor_.name()
-                    << " back: " << backColor_.name();
+    LOG_DEBUG << "New Highlighter, fore: " << foreColor_.name() << " back: " << backColor_.name();
 }
 
 QString Highlighter::pattern() const
@@ -129,17 +128,16 @@ bool Highlighter::matchLine( const QString& line, std::vector<HighlightedMatch>&
 {
     matches.clear();
 
-    auto pattern = regexp_.pattern();
-    if ( !useRegex_ ) {
-        pattern = QRegularExpression::escape( pattern );
-    }
-    auto regexp = QRegularExpression( pattern, regexp_.patternOptions() );
+    const auto pattern
+        = useRegex_ ? regexp_.pattern() : QRegularExpression::escape( regexp_.pattern() );
 
-    QRegularExpressionMatchIterator matchIterator = regexp.globalMatch( line );
+    const auto matchingRegex = QRegularExpression( pattern, regexp_.patternOptions() );
+
+    QRegularExpressionMatchIterator matchIterator = matchingRegex.globalMatch( line );
 
     while ( matchIterator.hasNext() ) {
         QRegularExpressionMatch match = matchIterator.next();
-        if ( regexp_.captureCount() > 0 ) {
+        if ( matchingRegex.captureCount() > 0 ) {
             for ( int i = 1; i <= match.lastCapturedIndex(); ++i ) {
                 matches.emplace_back( match.capturedStart( i ), match.capturedLength( i ),
                                       foreColor_, backColor_ );
@@ -322,7 +320,7 @@ void HighlighterSetCollection::setHighlighterSets( const QList<HighlighterSet>& 
 HighlighterSet HighlighterSetCollection::currentSet() const
 {
     auto set = std::find_if( highlighters_.begin(), highlighters_.end(),
-                             [this]( const auto& s ) { return s.id() == currentSet_; } );
+                             [ this ]( const auto& s ) { return s.id() == currentSet_; } );
 
     if ( set != highlighters_.end() ) {
         return *set;
@@ -345,7 +343,7 @@ void HighlighterSetCollection::setCurrentSet( const QString& current )
 bool HighlighterSetCollection::hasSet( const QString& setId ) const
 {
     return std::any_of( highlighters_.begin(), highlighters_.end(),
-                        [setId]( const auto& s ) { return s.id() == setId; } );
+                        [ setId ]( const auto& s ) { return s.id() == setId; } );
 }
 
 void HighlighterSetCollection::saveToStorage( QSettings& settings ) const

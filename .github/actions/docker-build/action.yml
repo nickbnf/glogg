@@ -1,0 +1,20 @@
+name: "Build and test in container"
+description: "Generate the build files, build the code and run the tests"
+runs:
+  using: "composite"
+  steps:
+    - name: configure
+      shell: sh
+      run: |
+        docker run --env KLOGG_VERSION=$KLOGG_VERSION --env KLOGG_BUILD_ROOT=$KLOGG_BUILD_ROOT --env KLOGG_CMAKE_OPTS="$KLOGG_CMAKE_OPTS" -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "/opt/bin/cmake -B /usr/local/$KLOGG_BUILD_ROOT $KLOGG_CMAKE_OPTS /usr/local"
+
+    - name: build
+      shell: sh
+      run: |
+        docker run --env KLOGG_BUILD_ROOT=$KLOGG_BUILD_ROOT -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cmake --build /usr/local/$KLOGG_BUILD_ROOT --target ci_build"
+
+    - name: test
+      shell: sh
+      run: |
+        docker run --env KLOGG_BUILD_ROOT=$KLOGG_BUILD_ROOT -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cd /usr/local/$KLOGG_BUILD_ROOT && ctest --verbose"
+

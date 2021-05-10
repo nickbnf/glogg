@@ -9,16 +9,13 @@ runs:
       run: |
         echo "CC=${{ matrix.config.cc }}" >> $GITHUB_ENV
         echo "CXX=${{ matrix.config.cxx }}" >> $GITHUB_ENV
-        echo "KLOGG_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV 
-        echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
-        echo "KLOGG_ARCH=${{ matrix.config.arch }}" >> $GITHUB_ENV 
 
     - name: configure
       shell: sh
       run: |
         mkdir $KLOGG_BUILD_ROOT
         cd $KLOGG_BUILD_ROOT
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DKLOGG_GENERIC_CPU=ON -DCMAKE_INSTALL_PREFIX=/usr $KLOGG_WORKSPACE
+        cmake $KLOGG_CMAKE_OPTS $KLOGG_WORKSPACE
 
     - name: build
       shell: sh

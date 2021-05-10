@@ -66,6 +66,7 @@ jobs:
 
 #Build and test
       - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/prepare-workspace-env
       - uses: ./.github/actions/build-and-test
 
 #Package
@@ -107,16 +108,11 @@ jobs:
             os_version: 18.04
             release_tag: linux
             arch: x64
+            container: variar/klogg_centos8
 
     runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
     steps:
       - uses: actions/checkout@v2
-
-      - uses: ./.github/actions/klogg-version
-    
-      - name: Prepare env
-        run: |
-          echo "KLOGG_BUILD_ROOT=build_root" >> $GITHUB_ENV 
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         # Ignore the failure of a step and avoid terminating the job.
@@ -125,28 +121,20 @@ jobs:
       - name: Build container 
         run: |
           cd docker/centos8
-          docker build -t variar/klogg_centos8 .
+          docker build -t ${{ matrix.config.container }} .
 
-      - name: configure
-        run: |
-          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "/opt/bin/cmake -B /usr/local/build_root -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DKLOGG_GENERIC_CPU=ON -DCMAKE_INSTALL_PREFIX=/usr /usr/local"
+      - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/prepare-workspace-env
+      - uses: ./.github/actions/docker-build
 
-      - name: build
+      - name: package 
         run: |
-          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cmake --build /usr/local/build_root --target ci_build"
-
-      - name: test
-        run: |
-          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cd /usr/local/build_root && ctest --verbose"
-
-      - name: rpm package 
-        run: |
-          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cd /usr/local/build_root && cpack -G RPM"
-          docker run --env KLOGG_VERSION=$KLOGG_VERSION -v "$(pwd)":/usr/local variar/klogg_centos8 /bin/bash -c "cd /usr/local/build_root && cp ./output/klogg.sym ./packages/klogg_rpm.sym"
+          docker run -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cd /usr/local/build_root && cpack -G RPM"
+          docker run -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cd /usr/local/build_root && cp ./output/klogg.sym ./packages/klogg_rpm.sym"
 
       - name: Check rpm package
         run: |
-          docker run --rm -v "$(pwd)/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
+          docker run --rm -v "$KLOGG_WORKSPACE/$KLOGG_BUILD_ROOT/packages":/usr/local centos:8 /bin/bash -c "yum install -y --setopt tsflags=test /usr/local/klogg*.rpm"
     
 # Final upload of all packages
       - uses: actions/upload-artifact@v2
@@ -202,6 +190,7 @@ jobs:
       
 #Build and test
       - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/prepare-workspace-env
       - uses: ./.github/actions/build-and-test
 
 #Package
@@ -361,6 +350,7 @@ jobs:
           arch: ${{ matrix.config.arch }}
 
       - uses: ./.github/actions/klogg-version
+      - uses: ./.github/actions/prepare-workspace-env
       - uses: ./.github/actions/build-and-test
 
 #Package

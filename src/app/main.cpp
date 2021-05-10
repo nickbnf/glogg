@@ -85,7 +85,7 @@ void setApplicationAttributes()
     // For more info see:
     // - https://bugreports.qt.io/browse/QTBUG-40332
     // - https://bugreports.qt.io/browse/QTBUG-46015
-    qputenv( "QT_BEARER_POLL_TIMEOUT", QByteArray::number( -1 ) );
+    qputenv( "QT_BEARER_POLL_TIMEOUT", QByteArray::number( std::numeric_limits<int>::max() ) );
 
     const auto& config = Configuration::getSynced();
 

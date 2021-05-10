@@ -88,11 +88,11 @@ And on top of that klogg:
 * Has a scratchpad window for taking notes and doing basic data transformations
 * Provides lots of small features that make life easier (closing tabs, copying file paths, favorite files menu, etc.)
 
-Here is a small demo showing how much faster klogg is:
+Here is a small demo showing how much faster klogg is (searching in ~1Gb file stored on tmpfs):
 
 https://user-images.githubusercontent.com/1620716/117588567-bea39100-b12c-11eb-990a-90a667bcaeaa.mp4
 
-List of glogg issues that have been fixed/implemented in klogg (searching in ~1Gb file stored on tmpfs):
+List of glogg issues that have been fixed/implemented in klogg:
 
 * [glogg on a Mac doesn't automatically open associated files](https://github.com/nickbnf/glogg/issues/283)
 * [regex error](https://github.com/nickbnf/glogg/issues/279)

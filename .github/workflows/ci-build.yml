@@ -418,7 +418,6 @@ jobs:
       with:
         repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
         automatic_release_tag: continuous-win
-        draft: true
         prerelease: true
         files: |
           ./packages-windows-x64/*
@@ -429,7 +428,6 @@ jobs:
       with:
         repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
         automatic_release_tag: continuous-linux
-        draft: true
         prerelease: true
         files: |
           ./packages-deb-x64/*
@@ -440,7 +438,6 @@ jobs:
       with:
         repo_token: ${{ secrets.KLOGG_GITHUB_TOKEN }}
         automatic_release_tag: continuous-osx
-        draft: true
         prerelease: true
         files: ./packages-macos-x64/*
 

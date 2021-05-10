@@ -37,14 +37,13 @@
  */
 
 #include <QFile>
+#include <QMessageBox>
 #include <QtConcurrent>
 
+#include "configuration.h"
 #include "log.h"
-
 #include "logdata.h"
 #include "logdataworker.h"
-
-#include "configuration.h"
 #include "readablesize.h"
 
 #include <chrono>
@@ -161,7 +160,7 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
-    operationFuture_ = QtConcurrent::run( [this, forcedEncoding, fileName = fileName_] {
+    operationFuture_ = QtConcurrent::run( [ this, forcedEncoding, fileName = fileName_ ] {
         auto operationRequested = std::make_unique<FullIndexOperation>(
             fileName, indexing_data_, interruptRequest_, forcedEncoding );
         return connectSignalsAndRun( operationRequested.get() );
@@ -176,7 +175,7 @@ void LogDataWorker::indexAdditionalLines()
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
-    operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
+    operationFuture_ = QtConcurrent::run( [ this, fileName = fileName_ ] {
         auto operationRequested = std::make_unique<PartialIndexOperation>( fileName, indexing_data_,
                                                                            interruptRequest_ );
         return connectSignalsAndRun( operationRequested.get() );
@@ -191,7 +190,7 @@ void LogDataWorker::checkFileChanges()
     operationFuture_.waitForFinished();
     interruptRequest_.clear();
 
-    operationFuture_ = QtConcurrent::run( [this, fileName = fileName_] {
+    operationFuture_ = QtConcurrent::run( [ this, fileName = fileName_ ] {
         auto operationRequested = std::make_unique<CheckFileChangesOperation>(
             fileName, indexing_data_, interruptRequest_ );
 
@@ -254,13 +253,14 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
 
     int pos_within_block = 0;
 
-    const auto charOffsetWithinBlock = [&state, block_start = block.data()]( const char* pointer ) {
-        return static_cast<int>( std::distance( block_start, pointer ) )
-               - state.encodingParams.getBeforeCrOffset();
-    };
+    const auto charOffsetWithinBlock
+        = [ &state, block_start = block.data() ]( const char* pointer ) {
+              return static_cast<int>( std::distance( block_start, pointer ) )
+                     - state.encodingParams.getBeforeCrOffset();
+          };
 
     const auto expandTabs
-        = [&state, &charOffsetWithinBlock, pos_within_block]( absl::string_view blockToExpand ) {
+        = [ &state, &charOffsetWithinBlock, pos_within_block ]( absl::string_view blockToExpand ) {
               while ( !blockToExpand.empty() ) {
                   const auto next_tab = blockToExpand.find( '\t' );
                   if ( next_tab == absl::string_view::npos ) {
@@ -402,11 +402,11 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 
     auto blockReaderAsync = tbb::flow::async_node<tbb::flow::continue_msg, BlockData>(
         indexingGraph, tbb::flow::serial,
-        [this, &localThreadPool, &file, &ioDuration]( const auto&, auto& gateway ) {
+        [ this, &localThreadPool, &file, &ioDuration ]( const auto&, auto& gateway ) {
             gateway.reserve_wait();
 
             QtConcurrent::run(
-                &localThreadPool, [this, &file, &ioDuration, gw = std::ref( gateway )] {
+                &localThreadPool, [ this, &file, &ioDuration, gw = std::ref( gateway ) ] {
                     while ( !file.atEnd() ) {
 
                         if ( interruptRequest_ ) {
@@ -454,7 +454,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     auto blockQueue = tbb::flow::queue_node<BlockData>( indexingGraph );
 
     auto blockParser = tbb::flow::function_node<BlockData, tbb::flow::continue_msg>(
-        indexingGraph, 1, [this, &state]( const BlockData& blockData ) {
+        indexingGraph, 1, [ this, &state ]( const BlockData& blockData ) {
             const auto& block_beginning = blockData.first;
             const auto& block = blockData.second;
 
@@ -559,6 +559,15 @@ void IndexOperation::doIndex( LineOffset initialPosition )
         scopedAccessor.clear();
     }
 
+    if ( scopedAccessor.getMaxLength().get()
+         == std::numeric_limits<LineLength::UnderlyingType>::max() ) {
+
+        QMessageBox::critical( nullptr, "Klogg", "Can't index file: some lines are too long",
+                               QMessageBox::Abort );
+
+        scopedAccessor.clear();
+    }
+
     if ( !scopedAccessor.getEncodingGuess() ) {
         scopedAccessor.setEncodingGuess( QTextCodec::codecForLocale() );
     }
@@ -641,7 +650,7 @@ MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()
             return MonitoredFileStatus::Truncated;
         }
 
-        const auto getDigest = [&file, &buffer]( const qint64 indexedSize ) {
+        const auto getDigest = [ &file, &buffer ]( const qint64 indexedSize ) {
             FileDigest fileDigest;
             auto readSize = 0ll;
             auto totalSize = 0ll;

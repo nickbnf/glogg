@@ -104,13 +104,15 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: ubuntu
-            os_version: 18.04
+          - os: centos
+            os_version: 8
             release_tag: linux
+            cc: gcc-8
+            cxx: g++-8
             arch: x64
             container: variar/klogg_centos8
 
-    runs-on: ${{ matrix.config.os }}-${{ matrix.config.os_version }}
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
 

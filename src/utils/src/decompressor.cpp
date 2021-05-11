@@ -161,15 +161,90 @@ std::shared_ptr<KCompressionDevice> makeDecompressor( Archive archiveType,
     }
 }
 
+bool doExtract( std::shared_ptr<KArchive> archive, const QString& archiveFilePath,
+                const QString& destination, AtomicFlag& interrupt )
+{
+    if ( !archive->open( QIODevice::ReadOnly ) ) {
+        LOG_WARNING << "Cannot open " << archiveFilePath;
+        return false;
+    }
+
+    const KArchiveDirectory* root = archive->directory();
+
+    if ( !root ) {
+        LOG_WARNING << "Cannot open root directory" << archiveFilePath;
+        archive->close();
+        return false;
+    }
+
+    auto result = false;
+    try {
+        const auto recursive = true;
+        result = root->copyTo( destination, interrupt, recursive );
+    } catch ( const std::exception& e ) {
+        LOG_ERROR << "Exception during extract: " << e.what();
+    }
+
+    if ( interrupt ) {
+        result = false;
+        LOG_INFO << "Interrupted extract of " << archiveFilePath;
+    }
+
+    archive->close();
+    return result;
+}
+
+bool doDecompress( std::shared_ptr<KCompressionDevice> input, const QString& archiveFilePath,
+                   QFile* outputFile, AtomicFlag& interrupt )
+{
+    if ( !input->open( QIODevice::ReadOnly ) ) {
+        LOG_WARNING << "Cannot open " << archiveFilePath;
+        return false;
+    }
+
+    bool success = true;
+    try {
+        while ( !input->atEnd() ) {
+            if ( interrupt ) {
+                success = false;
+                LOG_INFO << "Interrupted decompress of " << archiveFilePath;
+                break;
+            }
+
+            QByteArray data = input->read( 4 * 1024 * 1024 );
+            if ( data.size() > 0 ) {
+                const auto writtenBytes = outputFile->write( data );
+                if ( writtenBytes < 0 ) {
+                    LOG_ERROR << "Error decompressing " << archiveFilePath;
+                    success = false;
+                    break;
+                }
+            }
+        }
+    } catch ( const std::exception& e ) {
+        LOG_ERROR << "Exception during decompress: " << e.what();
+    }
+
+    input->close();
+    outputFile->close();
+
+    return success;
+}
+
 } // namespace
 
 Decompressor::Decompressor( QObject* parent )
     : QObject( parent )
 {
-    connect( &watcher_, &QFutureWatcher<bool>::finished, [this]() {
+    connect( &watcher_, &QFutureWatcher<bool>::finished, [ this ]() {
         LOG_INFO << "Decompressor finished " << watcher_.result();
         emit finished( watcher_.result() );
     } );
+}
+
+bool Decompressor::waitForResult()
+{
+    return watcher_.result();
 }
 
 DecompressAction Decompressor::action( const QString& archiveFilePath )
@@ -190,7 +265,8 @@ DecompressAction Decompressor::action( const QString& archiveFilePath )
     }
 }
 
-bool Decompressor::decompress( const QString& archiveFilePath, QFile* outputFile )
+bool Decompressor::decompress( const QString& archiveFilePath, QFile* outputFile,
+                               AtomicFlag& interrupt )
 {
     auto decompressor = makeDecompressor( archiveType( archiveFilePath ), archiveFilePath );
     if ( !decompressor ) {
@@ -198,36 +274,17 @@ bool Decompressor::decompress( const QString& archiveFilePath, QFile* outputFile
         return false;
     }
 
-    future_ = QtConcurrent::run( [input = std::move( decompressor ), archiveFilePath, outputFile] {
-        if ( !input->open( QIODevice::ReadOnly ) ) {
-            LOG_WARNING << "Cannot open " << archiveFilePath;
-            return false;
-        }
-
-        bool success = true;
-        while ( !input->atEnd() ) {
-            QByteArray data = input->read( 1024 * 1024 );
-            if ( data.size() > 0 ) {
-                const auto writtenBytes = outputFile->write( data );
-                if ( writtenBytes < 0 ) {
-                    LOG_ERROR << "Error decompressing " << archiveFilePath;
-                    success = false;
-                    break;
-                }
-            }
-        }
-        input->close();
-        outputFile->close();
-
-        return success;
-    } );
-
+    future_ = QtConcurrent::run(
+        [ input = std::move( decompressor ), archiveFilePath, outputFile, &interrupt ] {
+            return doDecompress( input, archiveFilePath, outputFile, interrupt );
+        } );
     watcher_.setFuture( future_ );
 
     return true;
 }
 
-bool Decompressor::extract( const QString& archiveFilePath, const QString& destination )
+bool Decompressor::extract( const QString& archiveFilePath, const QString& destination,
+                            AtomicFlag& interrupt )
 {
     auto archive = makeExtractor( archiveType( archiveFilePath ), archiveFilePath );
     if ( !archive ) {
@@ -237,19 +294,10 @@ bool Decompressor::extract( const QString& archiveFilePath, const QString& desti
 
     // Open the archive
 
-    future_ = QtConcurrent::run( [ar = std::move( archive ), archiveFilePath, destination] {
-        if ( !ar->open( QIODevice::ReadOnly ) ) {
-            LOG_WARNING << "Cannot open " << archiveFilePath;
-            return false;
-        }
-
-        const KArchiveDirectory* root = ar->directory();
-        const auto recursive = true;
-        const auto result = root->copyTo( destination, recursive );
-        ar->close();
-        return result;
-    } );
-
+    future_ = QtConcurrent::run(
+        [ ar = std::move( archive ), archiveFilePath, destination, &interrupt ] {
+            return doExtract( ar, archiveFilePath, destination, interrupt );
+        } );
     watcher_.setFuture( future_ );
 
     return true;

@@ -100,7 +100,7 @@ namespace {
 
 void signalCrawlerToFollowFile( CrawlerWidget* crawler_widget )
 {
-    dispatchToMainThread( [crawler_widget]() { crawler_widget->followSet( true ); } );
+    dispatchToMainThread( [ crawler_widget ]() { crawler_widget->followSet( true ); } );
 }
 
 static constexpr auto ClipboardMaxTry = 5;
@@ -276,22 +276,22 @@ void MainWindow::createActions()
     newWindowAction = new QAction( tr( "&New window" ), this );
     newWindowAction->setShortcut( QKeySequence::New );
     newWindowAction->setStatusTip( tr( "Create new klogg window" ) );
-    connect( newWindowAction, &QAction::triggered, [=] { emit newWindow(); } );
+    connect( newWindowAction, &QAction::triggered, [ = ] { emit newWindow(); } );
     newWindowAction->setVisible( config.allowMultipleWindows() );
 
     openAction = new QAction( tr( "&Open..." ), this );
     openAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Open ) );
     openAction->setStatusTip( tr( "Open a file" ) );
-    connect( openAction, &QAction::triggered, [this]( auto ) { this->open(); } );
+    connect( openAction, &QAction::triggered, [ this ]( auto ) { this->open(); } );
 
     closeAction = new QAction( tr( "&Close" ), this );
     closeAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Close ) );
     closeAction->setStatusTip( tr( "Close document" ) );
-    connect( closeAction, &QAction::triggered, [this]( auto ) { this->closeTab(); } );
+    connect( closeAction, &QAction::triggered, [ this ]( auto ) { this->closeTab(); } );
 
     closeAllAction = new QAction( tr( "Close &All" ), this );
     closeAllAction->setStatusTip( tr( "Close all documents" ) );
-    connect( closeAllAction, &QAction::triggered, [this]( auto ) { this->closeAll(); } );
+    connect( closeAllAction, &QAction::triggered, [ this ]( auto ) { this->closeAll(); } );
 
     recentFilesGroup = new QActionGroup( this );
     connect( recentFilesGroup, &QActionGroup::triggered, this, &MainWindow::openFileFromRecent );
@@ -309,45 +309,46 @@ void MainWindow::createActions()
     copyAction = new QAction( tr( "&Copy" ), this );
     copyAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Copy ) );
     copyAction->setStatusTip( tr( "Copy the selection" ) );
-    connect( copyAction, &QAction::triggered, [this]( auto ) { this->copy(); } );
+    connect( copyAction, &QAction::triggered, [ this ]( auto ) { this->copy(); } );
 
     selectAllAction = new QAction( tr( "Select &All" ), this );
     selectAllAction->setShortcut( tr( "Ctrl+A" ) );
     selectAllAction->setStatusTip( tr( "Select all the text" ) );
-    connect( selectAllAction, &QAction::triggered, [this]( auto ) { this->selectAll(); } );
+    connect( selectAllAction, &QAction::triggered, [ this ]( auto ) { this->selectAll(); } );
 
     findAction = new QAction( tr( "&Find..." ), this );
     findAction->setShortcut( QKeySequence::Find );
     findAction->setStatusTip( tr( "Find the text" ) );
-    connect( findAction, &QAction::triggered, [this]( auto ) { this->find(); } );
+    connect( findAction, &QAction::triggered, [ this ]( auto ) { this->find(); } );
 
     clearLogAction = new QAction( tr( "Clear file..." ), this );
     clearLogAction->setStatusTip( tr( "Clear current file" ) );
     clearLogAction->setShortcuts( QKeySequence::Cut );
-    connect( clearLogAction, &QAction::triggered, [this]( auto ) { this->clearLog(); } );
+    connect( clearLogAction, &QAction::triggered, [ this ]( auto ) { this->clearLog(); } );
 
     openContainingFolderAction = new QAction( tr( "Open containing folder" ), this );
     openContainingFolderAction->setStatusTip( tr( "Open folder containing current file" ) );
     connect( openContainingFolderAction, &QAction::triggered,
-             [this]( auto ) { this->openContainingFolder(); } );
+             [ this ]( auto ) { this->openContainingFolder(); } );
 
     openInEditorAction = new QAction( tr( "Open in editor" ), this );
     openInEditorAction->setStatusTip( tr( "Open current file in default editor" ) );
-    connect( openInEditorAction, &QAction::triggered, [this]( auto ) { this->openInEditor(); } );
+    connect( openInEditorAction, &QAction::triggered, [ this ]( auto ) { this->openInEditor(); } );
 
     copyPathToClipboardAction = new QAction( tr( "Copy full path" ), this );
     copyPathToClipboardAction->setStatusTip( tr( "Copy full path for file to clipboard" ) );
     connect( copyPathToClipboardAction, &QAction::triggered,
-             [this]( auto ) { this->copyFullPath(); } );
+             [ this ]( auto ) { this->copyFullPath(); } );
 
     openClipboardAction = new QAction( tr( "Open from clipboard" ), this );
     openClipboardAction->setStatusTip( tr( "Open clipboard as log file" ) );
     openClipboardAction->setShortcuts( QKeySequence::keyBindings( QKeySequence::Paste ) );
-    connect( openClipboardAction, &QAction::triggered, [this]( auto ) { this->openClipboard(); } );
+    connect( openClipboardAction, &QAction::triggered,
+             [ this ]( auto ) { this->openClipboard(); } );
 
     openUrlAction = new QAction( tr( "Open from URL..." ), this );
     openUrlAction->setStatusTip( tr( "Open URL as log file" ) );
-    connect( openUrlAction, &QAction::triggered, [this]( auto ) { this->openUrl(); } );
+    connect( openUrlAction, &QAction::triggered, [ this ]( auto ) { this->openUrl(); } );
 
     overviewVisibleAction = new QAction( tr( "Matches &overview" ), this );
     overviewVisibleAction->setCheckable( true );
@@ -388,28 +389,28 @@ void MainWindow::createActions()
     editHighlightersAction = new QAction( tr( "Configure &highlighters..." ), this );
     editHighlightersAction->setStatusTip( tr( "Show highlighters configuration" ) );
     connect( editHighlightersAction, &QAction::triggered,
-             [this]( auto ) { this->editHighlighters(); } );
+             [ this ]( auto ) { this->editHighlighters(); } );
 
     optionsAction = new QAction( tr( "&Options..." ), this );
     optionsAction->setStatusTip( tr( "Show the Options box" ) );
-    connect( optionsAction, &QAction::triggered, [this]( auto ) { this->options(); } );
+    connect( optionsAction, &QAction::triggered, [ this ]( auto ) { this->options(); } );
 
     showDocumentationAction = new QAction( tr( "&Documentation..." ), this );
     showDocumentationAction->setStatusTip( tr( "Show documentation" ) );
     connect( showDocumentationAction, &QAction::triggered,
-             [this]( auto ) { this->documentation(); } );
+             [ this ]( auto ) { this->documentation(); } );
 
     aboutAction = new QAction( tr( "&About" ), this );
     aboutAction->setStatusTip( tr( "Show the About box" ) );
-    connect( aboutAction, &QAction::triggered, [this]( auto ) { this->about(); } );
+    connect( aboutAction, &QAction::triggered, [ this ]( auto ) { this->about(); } );
 
     aboutQtAction = new QAction( tr( "About &Qt" ), this );
     aboutQtAction->setStatusTip( tr( "Show the Qt library's About box" ) );
-    connect( aboutQtAction, &QAction::triggered, [this]( auto ) { this->aboutQt(); } );
+    connect( aboutQtAction, &QAction::triggered, [ this ]( auto ) { this->aboutQt(); } );
 
     reportIssueAction = new QAction( tr( "Report issue..." ), this );
     reportIssueAction->setStatusTip( tr( "Report an issue on GitHub" ) );
-    connect( reportIssueAction, &QAction::triggered, [this]( auto ) { this->reportIssue(); } );
+    connect( reportIssueAction, &QAction::triggered, [ this ]( auto ) { this->reportIssue(); } );
 
     joinDiscordAction = new QAction( tr( "Join Discord community..." ), this );
     joinDiscordAction->setStatusTip( tr( "Join Klogg development community at Discord" ) );
@@ -427,12 +428,12 @@ void MainWindow::createActions()
 
     generateDumpAction = new QAction( tr( "Generate crash dump" ), this );
     generateDumpAction->setStatusTip( tr( "Generate diagnostic crash dump" ) );
-    connect( generateDumpAction, &QAction::triggered, [this]( auto ) { this->generateDump(); } );
+    connect( generateDumpAction, &QAction::triggered, [ this ]( auto ) { this->generateDump(); } );
 
     showScratchPadAction = new QAction( tr( "Scratchpad" ), this );
     showScratchPadAction->setStatusTip( tr( "Show the scratchpad" ) );
     connect( showScratchPadAction, &QAction::triggered,
-             [this]( auto ) { this->showScratchPad(); } );
+             [ this ]( auto ) { this->showScratchPad(); } );
 
     encodingGroup = new QActionGroup( this );
     connect( encodingGroup, &QActionGroup::triggered, this, &MainWindow::encodingChanged );
@@ -446,26 +447,26 @@ void MainWindow::createActions()
     addToFavoritesAction = new QAction( tr( "Add to favorites" ), this );
     addToFavoritesAction->setData( true );
     connect( addToFavoritesAction, &QAction::triggered,
-             [this]( auto ) { this->addToFavorites(); } );
+             [ this ]( auto ) { this->addToFavorites(); } );
 
     addToFavoritesMenuAction = new QAction( tr( "Add to favorites" ), this );
     connect( addToFavoritesMenuAction, &QAction::triggered,
-             [this]( auto ) { this->addToFavorites(); } );
+             [ this ]( auto ) { this->addToFavorites(); } );
 
     removeFromFavoritesAction = new QAction( tr( "Remove from favorites..." ), this );
     connect( removeFromFavoritesAction, &QAction::triggered,
-             [this]( auto ) { this->removeFromFavorites(); } );
+             [ this ]( auto ) { this->removeFromFavorites(); } );
 
     selectOpenFileAction = new QAction( tr( "Switch to opened file..." ), this );
     connect( selectOpenFileAction, &QAction::triggered,
-             [this]( auto ) { this->selectOpenedFile(); } );
+             [ this ]( auto ) { this->selectOpenedFile(); } );
     selectOpenFileAction->setShortcuts( QList<QKeySequence>()
                                         << QKeySequence( Qt::SHIFT | Qt::CTRL | Qt::Key_O ) );
 
     predefinedFiltersDialogAction = new QAction( tr( "Predefined filters..." ), this );
     predefinedFiltersDialogAction->setStatusTip( tr( "Show dialog to configure filters" ) );
     connect( predefinedFiltersDialogAction, &QAction::triggered,
-             [this]( auto ) { this->editPredefinedFilters(); } );
+             [ this ]( auto ) { this->editPredefinedFilters(); } );
 }
 
 void MainWindow::loadIcons()
@@ -527,7 +528,7 @@ void MainWindow::createMenus()
 
     highlightersMenu = toolsMenu->addMenu( "Highlighters" );
     connect( highlightersMenu, &QMenu::aboutToShow,
-             [this]() { setCurrentHighlighterAction( highlightersActionGroup ); } );
+             [ this ]() { setCurrentHighlighterAction( highlightersActionGroup ); } );
 
     toolsMenu->addAction( predefinedFiltersDialogAction );
 
@@ -613,7 +614,7 @@ void MainWindow::createTrayIcon()
     trayMenu->addAction( quitAction );
 
     connect( openWindowAction, &QAction::triggered, this, &QMainWindow::show );
-    connect( quitAction, &QAction::triggered, [this] {
+    connect( quitAction, &QAction::triggered, [ this ] {
         this->isCloseFromTray_ = true;
         this->close();
     } );
@@ -623,7 +624,7 @@ void MainWindow::createTrayIcon()
     trayIcon_->setContextMenu( trayMenu );
 
     connect( trayIcon_, &QSystemTrayIcon::activated,
-             [this]( QSystemTrayIcon::ActivationReason reason ) {
+             [ this ]( QSystemTrayIcon::ActivationReason reason ) {
                  switch ( reason ) {
                  case QSystemTrayIcon::Trigger:
                      if ( !this->isVisible() ) {
@@ -685,14 +686,14 @@ void MainWindow::openRemoteFile( const QUrl& url )
     progressDialog.setLabelText( QString( "Downloading %1" ).arg( url.toString() ) );
 
     connect( &downloader, &Downloader::downloadProgress,
-             [&progressDialog]( qint64 bytesReceived, qint64 bytesTotal ) {
+             [ &progressDialog ]( qint64 bytesReceived, qint64 bytesTotal ) {
                  const auto progress = calculateProgress( bytesReceived, bytesTotal );
                  progressDialog.setRange( 0, 100 );
                  progressDialog.setValue( progress );
              } );
 
     connect( &downloader, &Downloader::finished,
-             [&progressDialog]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
+             [ &progressDialog ]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
 
     auto tempFile = new QTemporaryFile( tempDir_.filePath( url.fileName() ), this );
     if ( tempFile->open() ) {
@@ -849,7 +850,7 @@ void MainWindow::tryOpenClipboard( int tryTimes )
     auto text = clipboard->text();
 
     if ( text.isEmpty() && tryTimes > 0 ) {
-        QTimer::singleShot( 50, [tryTimes, this]() { tryOpenClipboard( tryTimes - 1 ); } );
+        QTimer::singleShot( 50, [ tryTimes, this ]() { tryOpenClipboard( tryTimes - 1 ); } );
     }
     else {
         auto tempFile = new QTemporaryFile( tempDir_.filePath( "klogg_clipboard" ), this );
@@ -887,7 +888,8 @@ void MainWindow::editHighlighters()
     HighlightersDialog dialog( this );
     signalMux_.connect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
 
-    connect( &dialog, &HighlightersDialog::optionsChanged, [this]() { updateHighlightersMenu(); } );
+    connect( &dialog, &HighlightersDialog::optionsChanged,
+             [ this ]() { updateHighlightersMenu(); } );
 
     dialog.exec();
     signalMux_.disconnect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
@@ -910,7 +912,7 @@ void MainWindow::options()
     OptionsDialog dialog( this );
     signalMux_.connect( &dialog, SIGNAL( optionsChanged() ), SLOT( applyConfiguration() ) );
 
-    connect( &dialog, &OptionsDialog::optionsChanged, [this]() {
+    connect( &dialog, &OptionsDialog::optionsChanged, [ this ]() {
         const auto& config = Configuration::get();
         plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
 
@@ -1242,7 +1244,7 @@ void MainWindow::changeEvent( QEvent* event )
 
         if ( this->windowState() & Qt::WindowMinimized ) {
             if ( Configuration::get().minimizeToTray() ) {
-                dispatchToMainThread( [this] {
+                dispatchToMainThread( [ this ] {
                     trayIcon_->show();
                     this->hide();
                 } );
@@ -1250,7 +1252,7 @@ void MainWindow::changeEvent( QEvent* event )
         }
     }
     else if ( event->type() == QEvent::StyleChange ) {
-        dispatchToMainThread( [this] {
+        dispatchToMainThread( [ this ] {
             loadIcons();
             updateOpenedFilesMenu();
             updateFavoritesMenu();
@@ -1320,10 +1322,10 @@ bool MainWindow::event( QEvent* event )
     }
     else if ( event->type() == QEvent::Show ) {
         if ( this->windowHandle() ) {
-            std::call_once( screenChangesConnect_, [this]() {
+            std::call_once( screenChangesConnect_, [ this ]() {
                 logScreenInfo( this->windowHandle()->screen() );
                 connect( this->windowHandle(), &QWindow::screenChanged,
-                         [this]( QScreen* screen ) { logScreenInfo( screen ); } );
+                         [ this ]( QScreen* screen ) { logScreenInfo( screen ); } );
             } );
         }
     }
@@ -1354,20 +1356,32 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
     const auto decompressAction = Decompressor::action( fileName );
 
     Decompressor decompressor;
+    AtomicFlag decompressInterrupt;
 
     QProgressDialog progressDialog;
     progressDialog.setLabelText( QString( "Extracting %1" ).arg( fileName ) );
     progressDialog.setRange( 0, 0 );
 
     connect( &decompressor, &Decompressor::finished,
-             [&progressDialog]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
+             [ &progressDialog ]( bool isOk ) { progressDialog.done( isOk ? 0 : 1 ); } );
+    connect( &progressDialog, &QProgressDialog::canceled,
+             [ &decompressInterrupt, &decompressor ]() {
+                 decompressInterrupt.set();
+                 decompressor.waitForResult();
+             } );
 
     if ( decompressAction == DecompressAction::Decompress ) {
 
         auto tempFile = new QTemporaryFile(
             this->tempDir_.filePath( QFileInfo( fileName ).fileName() ), this );
-        if ( tempFile->open() && decompressor.decompress( fileName, tempFile )
+
+        if ( tempFile->open() && decompressor.decompress( fileName, tempFile, decompressInterrupt )
              && !progressDialog.exec() ) {
+
+            if ( decompressInterrupt ) {
+                return false;
+            }
+
             return this->loadFile( tempFile->fileName() );
         }
         else {
@@ -1379,7 +1393,12 @@ bool MainWindow::extractAndLoadFile( const QString& fileName )
     else if ( decompressAction == DecompressAction::Extract ) {
         QTemporaryDir archiveDir{ this->tempDir_.filePath( QFileInfo( fileName ).fileName() ) };
         archiveDir.setAutoRemove( false );
-        if ( decompressor.extract( fileName, archiveDir.path() ) && !progressDialog.exec() ) {
+        if ( decompressor.extract( fileName, archiveDir.path(), decompressInterrupt )
+             && !progressDialog.exec() ) {
+
+            if ( decompressInterrupt ) {
+                return false;
+            }
 
             const auto selectedFiles = QFileDialog::getOpenFileNames(
                 this, tr( "Open file from archive" ), archiveDir.path(), tr( "All files (*)" ) );
@@ -1424,15 +1443,16 @@ bool MainWindow::loadFile( const QString& fileName, bool followFile )
         loadingFileName = fileName;
 
         try {
-            const auto previousViewContext = [&fileName]() {
+            const auto previousViewContext = [ &fileName ]() {
                 const auto& session = SessionInfo::getSynced();
                 const auto& windows = session.windows();
                 for ( const auto& windowId : qAsConst( windows ) ) {
                     const auto openedFiles = session.openFiles( windowId );
-                    const auto existingContext = std::find_if(
-                        openedFiles.begin(), openedFiles.end(), [&fileName]( const auto& context ) {
-                            return context.fileName == fileName;
-                        } );
+                    const auto existingContext
+                        = std::find_if( openedFiles.begin(), openedFiles.end(),
+                                        [ &fileName ]( const auto& context ) {
+                                            return context.fileName == fileName;
+                                        } );
                     if ( existingContext != openedFiles.end() ) {
                         return existingContext->viewContext;
                     }
@@ -1555,7 +1575,7 @@ void MainWindow::updateMenuBarFromDocument( const CrawlerWidget* crawler )
 
     auto encodingActions = encodingGroup->actions();
     auto encodingItem = std::find_if( encodingActions.begin(), encodingActions.end(),
-                                      [&encodingMib]( const auto& action ) {
+                                      [ &encodingMib ]( const auto& action ) {
                                           return ( !encodingMib && !action->data().isValid() )
                                                  || ( encodingMib && action->data().isValid()
                                                       && *encodingMib == action->data().toInt() );
@@ -1797,18 +1817,18 @@ void MainWindow::selectOpenedFile()
              &QDialog::reject );
 
     connect( filterEdit.get(), &QLineEdit::textEdited,
-             [model = filteredModel.get(), view = filesView.get()]( const QString& filter ) {
+             [ model = filteredModel.get(), view = filesView.get() ]( const QString& filter ) {
                  model->setFilterWildcard( filter );
                  model->invalidate();
                  view->selectionModel()->select( model->index( 0, 0 ),
                                                  QItemSelectionModel::SelectCurrent );
              } );
 
-    dispatchToMainThread( [edit = filterEdit.get()]() { edit->setFocus(); } );
+    dispatchToMainThread( [ edit = filterEdit.get() ]() { edit->setFocus(); } );
 
     connect( selectFileDialog.get(), &QDialog::finished,
-             [this, openedFiles, dialog = selectFileDialog.get(), model = filteredModel.get(),
-              view = filesView.get()]( auto result ) {
+             [ this, openedFiles, dialog = selectFileDialog.get(), model = filteredModel.get(),
+               view = filesView.get() ]( auto result ) {
                  dialog->deleteLater();
                  if ( result != QDialog::Accepted || !view->selectionModel()->hasSelection() ) {
                      return;

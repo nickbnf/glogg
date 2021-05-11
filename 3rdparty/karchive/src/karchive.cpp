@@ -834,7 +834,7 @@ static QFileDevice::Permissions withExecutablePerms(
     return filePerms;
 }
 
-bool KArchiveFile::copyTo(const QString &dest) const
+bool KArchiveFile::copyTo(const QString &dest, const QAtomicInt& isCanceled) const
 {
     QFile f(dest + QLatin1Char('/')  + name());
     if (f.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
@@ -851,6 +851,9 @@ bool KArchiveFile::copyTo(const QString &dest) const
         array.resize(int(qMin(chunkSize, remainingSize)));
 
         while (remainingSize > 0) {
+            if (isCanceled.loadAcquire() != 0) {
+                break;
+            }
             const qint64 currentChunkSize = qMin(chunkSize, remainingSize);
             const qint64 n = inputDev->read(array.data(), currentChunkSize);
             Q_UNUSED(n) // except in Q_ASSERT
@@ -862,7 +865,7 @@ bool KArchiveFile::copyTo(const QString &dest) const
         f.close();
 
         delete inputDev;
-        return true;
+        return isCanceled.loadAcquire() == 0;
     }
     return false;
 }
@@ -953,7 +956,7 @@ static bool sortByPosition(const KArchiveFile *file1, const KArchiveFile *file2)
     return file1->position() < file2->position();
 }
 
-bool KArchiveDirectory::copyTo(const QString &dest, bool recursiveCopy) const
+bool KArchiveDirectory::copyTo(const QString &dest, const QAtomicInt& isCanceled, bool recursiveCopy) const
 {
     QDir root;
     const QString destDir(QDir(dest).absolutePath()); // get directory path without any "." or ".."
@@ -1025,7 +1028,7 @@ bool KArchiveDirectory::copyTo(const QString &dest, bool recursiveCopy) const
          it != end; ++it) {
         const KArchiveFile *f = *it;
         qint64 pos = f->position();
-        if (!f->copyTo(fileToDir[pos])) {
+        if (!f->copyTo(fileToDir[pos], isCanceled)) {
             return false;
         }
     }

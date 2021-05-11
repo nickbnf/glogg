@@ -21,6 +21,8 @@
 #ifndef KARCHIVEFILE_H
 #define KARCHIVEFILE_H
 
+#include <QAtomicInt>
+
 #include <karchiveentry.h>
 
 class KArchiveFilePrivate;
@@ -103,7 +105,7 @@ public:
      * @param dest the directory to extract to
      * @return true on success, false if the file (dest + '/' + name()) couldn't be created
      */
-    bool copyTo(const QString &dest) const;
+    bool copyTo(const QString &dest, const QAtomicInt& isCanceled) const;
 
 protected:
     void virtual_hook(int id, void *data) override;

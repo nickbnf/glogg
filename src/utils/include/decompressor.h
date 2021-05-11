@@ -23,18 +23,21 @@
 #include <QFuture>
 #include <QFutureWatcher>
 
+#include "atomicflag.h"
 
-enum class DecompressAction {None, Extract, Decompress};
+enum class DecompressAction { None, Extract, Decompress };
 class Decompressor : public QObject {
     Q_OBJECT
   public:
     explicit Decompressor( QObject* parent = nullptr );
 
-    bool decompress( const QString& path, QFile* outputFile );
-    bool extract( const QString& archiveFilePath, const QString& destination );
+    bool decompress( const QString& path, QFile* outputFile, AtomicFlag& interrupt );
+    bool extract( const QString& archiveFilePath, const QString& destination,
+                  AtomicFlag& interrupt );
 
+    bool waitForResult();
 
-    static DecompressAction action(const QString& archiveFilePath );
+    static DecompressAction action( const QString& archiveFilePath );
 
   signals:
     void finished( bool );

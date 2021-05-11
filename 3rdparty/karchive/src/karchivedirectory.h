@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <QAtomicInt>
 #include <QDate>
 #include <QString>
 #include <QStringList>
@@ -122,7 +123,7 @@ public:
      * @param recursive if set to true, subdirectories are extracted as well
      * @return true on success, false if the directory (dest + '/' + name()) couldn't be created
      */
-    bool copyTo(const QString &dest, bool recursive = true) const;
+    bool copyTo(const QString &dest, const QAtomicInt& isCanceled, bool recursive = true) const;
 
 protected:
     void virtual_hook(int id, void *data) override;

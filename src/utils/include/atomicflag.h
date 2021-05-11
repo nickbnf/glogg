@@ -69,6 +69,11 @@ class AtomicFlag {
         return !flag_.loadAcquire();
     }
 
+    operator const QAtomicInt&() const
+    {
+        return flag_;
+    }
+
   private:
     QAtomicInt flag_;
 };

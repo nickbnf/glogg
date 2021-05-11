@@ -556,11 +556,7 @@ void CrawlerWidget::applyConfiguration()
 
     // Necessary on systems doing subpixel positionning (e.g. Ubuntu 12.04)
     if ( config.forceFontAntialiasing() ) {
-        font.setStyleStrategy( static_cast<QFont::StyleStrategy>( QFont::ForceIntegerMetrics
-                                                                  | QFont::PreferAntialias ) );
-    }
-    else {
-        font.setStyleStrategy( QFont::ForceIntegerMetrics );
+        font.setStyleStrategy( QFont::PreferAntialias );
     }
 
     logMainView->setFont( font );

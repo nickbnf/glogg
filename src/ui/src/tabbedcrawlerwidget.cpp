@@ -150,7 +150,7 @@ void TabbedCrawlerWidget::mouseReleaseEvent( QMouseEvent* event )
 {
     LOG_DEBUG << "TabbedCrawlerWidget::mouseReleaseEvent";
 
-    if ( event->button() == Qt::MidButton ) {
+    if ( event->button() == Qt::MiddleButton ) {
         int tab = this->myTabBar_.tabAt( event->pos() );
         if ( -1 != tab ) {
             emit tabCloseRequested( tab );

@@ -63,7 +63,7 @@ void InfoLine::displayGauge( int completion )
     // Create a gradient for the progress bar
     QLinearGradient linearGrad( changeoverX - 1, 0, changeoverX + 1, 0 );
     linearGrad.setColorAt( 0, origPalette_->color( QPalette::Highlight ) );
-    linearGrad.setColorAt( 1, origPalette_->color( QPalette::Background ) );
+    linearGrad.setColorAt( 1, origPalette_->color( QPalette::Window ) );
 
     // Apply the gradient to the current palette (background)
     QPalette newPalette = *origPalette_;

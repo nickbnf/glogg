@@ -3,13 +3,14 @@
 ## Overview
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-And local builds can be faster because code can be optimized for current CPU instead of generic x86-64 which enables support for SSE4/AVX code paths.
+Local builds can be faster because code can be optimized for current CPU instead of generic x86-64. Support for SSE4/AVX code paths
+will be enabled if available on build machine.
 
 ## Dependencies
 
 To build Klogg:
 * cmake 3.12 or later to generate build files
-* C++ compiler with C++14 support (at least gcc 5, clang 3.4, msvc 2017)
+* C++ compiler with C++17 support (at least gcc 7, clang 4, msvc 2017)
 * Qt libraries 5.9 or later (CI builds use Qt 5.9.5/Qt 5.15.2):
     - QtCore
     - QtGui
@@ -47,7 +48,7 @@ git clone https://github.com/variar/klogg
 
 ### Configuration options
 
-By default Klogg is built with support for reporting crash dumps. This can be disabled via cmake option `-DKLOGG_USE_SENTRY=OFF`.
+By default Klogg is built without support for reporting crash dumps. This can be enabled via cmake option `-DKLOGG_USE_SENTRY=ON`.
 
 Klogg uses Hyperscan regular expressions library which requires CPU with SSSE3 support, ragel and boost headers.
 Klogg can be built with only Qt reqular expressions backend by passing `-DKLOGG_USE_HYPERSCAN=OFF` to cmake.

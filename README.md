@@ -92,43 +92,8 @@ Here is a small demo showing how much faster klogg is (searching in ~1Gb file st
 
 https://user-images.githubusercontent.com/1620716/117588567-bea39100-b12c-11eb-990a-90a667bcaeaa.mp4
 
-List of glogg issues that have been fixed/implemented in klogg:
+List of glogg issues that have been fixed/implemented in klogg can be found [here](https://github.com/variar/klogg/discussions/302).
 
-* [glogg on a Mac doesn't automatically open associated files](https://github.com/nickbnf/glogg/issues/283)
-* [regex error](https://github.com/nickbnf/glogg/issues/279)
-* [Feature Request: Dark mode](https://github.com/nickbnf/glogg/issues/274)
-* [Incremental search is killing performance](https://github.com/nickbnf/glogg/issues/263)
-* [Fix Filter Dialog: Color information get lost](https://github.com/nickbnf/glogg/issues/262)
-* [Duplicate search results](https://github.com/nickbnf/glogg/issues/247)
-* [Feature Request: Loadable filter-files](https://github.com/nickbnf/glogg/issues/234)
-* [Feature request - multi-threaded indexing and search](https://github.com/nickbnf/glogg/issues/227)
-* [Feature Request: Add proper color picker](https://github.com/nickbnf/glogg/issues/204)
-* [Gets confused when the log is turned over](https://github.com/nickbnf/glogg/issues/203)
-* [Crashed on search in log files with 5 million lines](https://github.com/nickbnf/glogg/issues/200)
-* [Feature Request: Allow glogg to stay in tray when minimized](https://github.com/nickbnf/glogg/issues/199)
-* [Minor bug: Consolas Font sizes not working](https://github.com/nickbnf/glogg/issues/185)
-* [Feature Request: keyboard shortcut for mark line](https://github.com/nickbnf/glogg/issues/179)
-* [X on the right of search does not work](https://github.com/nickbnf/glogg/issues/173)
-* [feature Request - Save my marked items](https://github.com/nickbnf/glogg/issues/168)
-* [After checking "Ignore case", current filter's settings are applied to next filter selected](https://github.com/nickbnf/glogg/issues/160)
-* [Keyboard command "jump to the line number" does not work](https://github.com/nickbnf/glogg/issues/157)
-* [Searching while index is being built causes results to be missed](https://github.com/nickbnf/glogg/issues/150)
-* [feature request - favorites](https://github.com/nickbnf/glogg/issues/147)
-* [Feature request: Limit searches to section of file](https://github.com/nickbnf/glogg/issues/141)
-* [File not followed](https://github.com/nickbnf/glogg/issues/135)
-* [Feature Request: Support reading gzipped files](https://github.com/nickbnf/glogg/issues/122)
-* [follow file 'f' short cut doesn't work](https://github.com/nickbnf/glogg/issues/118)
-* [Glogg displaying old log file contents even after file deletion](https://github.com/nickbnf/glogg/issues/112)
-* [I wish to add clear log menu option](https://github.com/nickbnf/glogg/issues/111)
-* [Windows: Handling git better, not keep files open](https://github.com/nickbnf/glogg/issues/109)
-* [allow for glogg (and settings) to be used from usb](https://github.com/nickbnf/glogg/issues/101)
-* [Max length of search strings](https://github.com/nickbnf/glogg/issues/98)
-* [Deadlock: Indexing lines...(99%)](https://github.com/nickbnf/glogg/issues/86)
-* [Support presets for search expressions](https://github.com/nickbnf/glogg/issues/73)
-* [Rename "Filters" to "Highlighters"](https://github.com/nickbnf/glogg/issues/71)
-* [Maintain approx position in filtered window when changing filter regexp](https://github.com/nickbnf/glogg/issues/61)
-* [Feature Request:: Read glogg.ini from EXE Path if present for Portable Mode](https://github.com/nickbnf/glogg/issues/50)
-* [Generate a "Portable App" version for Windows in addition to the installer](https://github.com/nickbnf/glogg/issues/19)
 
 **[Back to top](#table-of-contents)**
 

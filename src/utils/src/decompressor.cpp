@@ -17,6 +17,8 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <memory>
+
 #include <QFileInfo>
 #include <QMimeDatabase>
 #include <QtConcurrent>

@@ -1440,6 +1440,9 @@ target_include_directories(hs_runtime SYSTEM PUBLIC ${hs_include_dirs})
 target_include_directories(hs_compile SYSTEM PUBLIC ${hs_include_dirs})
 target_include_directories(hs SYSTEM PUBLIC ${hs_include_dirs})
 
+target_compile_options(hs_runtime PRIVATE "-fpermissive")
+target_compile_options(hs_compile PRIVATE "-fpermissive")
+target_compile_options(hs PRIVATE "-fpermissive")
 
 
 

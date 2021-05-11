@@ -268,7 +268,7 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
                   }
 
                   const auto tab_pos_within_block
-                      = charOffsetWithinBlock( blockToExpand.begin() + next_tab );
+                      = charOffsetWithinBlock( blockToExpand.data() + next_tab );
 
                   LOG_DEBUG << "Tab at " << tab_pos_within_block;
 

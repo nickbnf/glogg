@@ -186,7 +186,7 @@ class LogFilteredData : public AbstractLogData {
 
     using SearchCacheKey = std::tuple<RegularExpressionPattern, uint32_t, uint32_t>;
 
-    struct SearchCacheKeyHash : public std::unary_function<SearchCacheKey, std::size_t> {
+    struct SearchCacheKeyHash {
         template <class T>
         void hash_combine( std::size_t& seed, const T& v ) const
         {

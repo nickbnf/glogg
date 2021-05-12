@@ -17,7 +17,7 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef KLOGG_DISPATCH_TO
+#ifndef KLOGG_DISPATCH_TO_H
 
 #include <QAbstractEventDispatcher>
 #include <QApplication>
@@ -32,7 +32,7 @@
 template <typename F>
 static void dispatchToObject( F&& fun, QObject* obj = qApp )
 {
-    QMetaObject::invokeMethod( obj, std::forward<F>( fun ),  Qt::QueuedConnection );
+    QMetaObject::invokeMethod( obj, std::forward<F>( fun ), Qt::QueuedConnection );
 }
 
 template <typename F>

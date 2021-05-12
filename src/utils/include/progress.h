@@ -15,43 +15,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
-#ifndef KLOGG_OVERLOAD_VISITOR_H
-#define KLOGG_OVERLOAD_VISITOR_H
+#ifndef KLOGG_PROGRESS_H
+#define KLOGG_PROGRESS_H
 
-namespace {
-template <class... Fs>
-struct overload;
-
-template <class F0, class... Frest>
-struct overload<F0, Frest...> : F0, overload<Frest...> {
-    overload( F0 f0, Frest... rest )
-        : F0( f0 )
-        , overload<Frest...>( rest... )
-    {
-    }
-
-    using F0::operator();
-    using overload<Frest...>::operator();
-};
-
-template <class F0>
-struct overload<F0> : F0 {
-    explicit overload( F0 f0 )
-        : F0( f0 )
-    {
-    }
-
-    using F0::operator();
-};
-} // namespace
-
-template <class... Fs>
-auto makeOverloadVisitor( Fs... fs )
+template <typename T, typename U>
+int calculateProgress( const T& value, const U& total )
 {
-    return overload<Fs...>( fs... );
+    return static_cast<int>( 100.f * static_cast<float>( value ) / static_cast<float>( total ) );
 }
 
 #endif

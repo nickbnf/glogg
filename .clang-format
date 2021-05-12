@@ -3,7 +3,7 @@ BasedOnStyle: llvm
 AccessModifierOffset: -4
 BreakBeforeBinaryOperators: true
 ColumnLimit: 100
-Standard: Cpp11
+Standard: c++17
 IndentWidth: 4
 BreakBeforeBraces: Linux
 

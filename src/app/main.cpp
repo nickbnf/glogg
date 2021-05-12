@@ -66,9 +66,9 @@
 #include <QtCore/QJsonDocument>
 
 #ifdef KLOGG_PORTABLE
-const bool PersistentInfo::forcePortable = true;
+const bool PersistentInfo::ForcePortable = true;
 #else
-const bool PersistentInfo::forcePortable = false;
+const bool PersistentInfo::ForcePortable = false;
 #endif
 
 static void print_version();
@@ -251,7 +251,7 @@ int main( int argc, char* argv[] )
 
         // Load the existing session if needed
         const auto& config = Configuration::get();
-        plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
+        plog::enableLogging( config.enableLogging(), config.loggingLevel() );
 
         applyStyle();
 

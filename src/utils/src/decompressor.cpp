@@ -23,13 +23,12 @@
 #include <QMimeDatabase>
 #include <QtConcurrent>
 
+#include <k7zip.h>
+#include <kcompressiondevice.h>
+#include <ktar.h>
+#include <kzip.h>
+
 #include "log.h"
-
-#include "k7zip.h"
-#include "ktar.h"
-#include "kzip.h"
-
-#include "kcompressiondevice.h"
 
 #include "decompressor.h"
 

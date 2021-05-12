@@ -17,11 +17,12 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "downloader.h"
+#include <QNetworkReply>
+
 #include "configuration.h"
 #include "log.h"
 
-#include <QNetworkReply>
+#include "downloader.h"
 
 Downloader::Downloader( QObject* parent )
     : QObject( parent )

@@ -39,8 +39,6 @@
 // Implements PersistentInfo, a singleton class which store/retrieve objects
 // to persistent storage.
 
-#include "persistentinfo.h"
-
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -52,6 +50,8 @@
 #include "log.h"
 #include "uuid.h"
 
+#include "persistentinfo.h"
+
 constexpr uint8_t AppSettingsVersion = 1;
 constexpr uint8_t SessionSettingsVersion = 2;
 
@@ -60,7 +60,7 @@ constexpr const char SessionSettingsFile[] = "klogg_session";
 constexpr const char PortableExtension[] = ".conf";
 
 namespace {
-QString MakeSessionSettingsPath( const QString& appConfigPath )
+QString makeSessionSettingsPath( const QString& appConfigPath )
 {
     return QFileInfo( appConfigPath )
         .absoluteDir()
@@ -85,7 +85,7 @@ PersistentInfo::PersistentInfo()
 
     LOG_INFO << "Portable config path " << portableConfigPath;
 
-    const auto usePortableConfiguration = forcePortable || QFileInfo::exists( portableConfigPath );
+    const auto usePortableConfiguration = ForcePortable || QFileInfo::exists( portableConfigPath );
 
     if ( usePortableConfiguration ) {
         PreparePortableSettings( portableConfigPath );
@@ -99,7 +99,7 @@ PersistentInfo::PersistentInfo()
 
 void PersistentInfo::PreparePortableSettings( const QString& portableConfigPath )
 {
-    const auto sessionSettingsPath = MakeSessionSettingsPath( portableConfigPath );
+    const auto sessionSettingsPath = makeSessionSettingsPath( portableConfigPath );
 
     if ( !QFileInfo::exists( sessionSettingsPath ) && QFileInfo::exists( portableConfigPath ) ) {
         QFile::copy( portableConfigPath, sessionSettingsPath );
@@ -123,7 +123,7 @@ void PersistentInfo::PrepareOsSettings()
         = std::make_unique<QSettings>( format, QSettings::UserScope, "klogg", SessionSettingsFile );
 
 #ifndef Q_OS_MAC
-    const auto sessionSettingsPath = MakeSessionSettingsPath( appSettings_->fileName() );
+    const auto sessionSettingsPath = makeSessionSettingsPath( appSettings_->fileName() );
 
     if ( sessionSettings_->allKeys().isEmpty() ) {
         if ( QFile::exists( sessionSettingsPath ) ) {
@@ -177,10 +177,10 @@ void PersistentInfo::UpdateSettings()
 
             for ( int i = 0; i < size; ++i ) {
                 sessionSettings_->setArrayIndex( i );
-                QString file_name = sessionSettings_->value( "fileName" ).toString();
-                uint64_t top_line = sessionSettings_->value( "topLine" ).toULongLong();
-                QString view_context = sessionSettings_->value( "viewContext" ).toString();
-                openFiles.emplace_back( file_name, top_line, view_context );
+                QString fileName = sessionSettings_->value( "fileName" ).toString();
+                uint64_t topLine = sessionSettings_->value( "topLine" ).toULongLong();
+                QString viewContext = sessionSettings_->value( "viewContext" ).toString();
+                openFiles.emplace_back( fileName, topLine, viewContext );
             }
             sessionSettings_->endArray();
             sessionSettings_->endGroup(); // OpenFiles

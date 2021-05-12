@@ -44,6 +44,7 @@
 #include "log.h"
 #include "logdata.h"
 #include "logdataworker.h"
+#include "progress.h"
 #include "readablesize.h"
 
 #include <chrono>

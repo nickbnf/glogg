@@ -18,24 +18,25 @@
  */
 
 #include "version.h"
+
 #include "klogg_version.h"
 
 QLatin1String kloggVersion()
 {
-    return QLatin1String(KLOGG_VERSION);
+    return QLatin1String( KLOGG_VERSION );
 }
 
 QLatin1String kloggBuildDate()
 {
-    return QLatin1String(KLOGG_DATE);
+    return QLatin1String( KLOGG_DATE );
 }
 
 QLatin1String kloggCommit()
 {
-    return QLatin1String(KLOGG_COMMIT);
+    return QLatin1String( KLOGG_COMMIT );
 }
 
 QLatin1String kloggGitVersion()
 {
-    return QLatin1String(KLOGG_GIT_VERSION);
+    return QLatin1String( KLOGG_GIT_VERSION );
 }

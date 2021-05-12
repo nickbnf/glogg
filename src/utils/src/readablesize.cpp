@@ -36,10 +36,11 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "readablesize.h"
+#include <array>
 
 #include <QLocale>
-#include <array>
+
+#include "readablesize.h"
 
 QString readableSize( uint64_t size )
 {
@@ -54,7 +55,7 @@ QString readableSize( uint64_t size )
 
     const auto sizeStep
         = std::find_if( sizeSteps.cbegin(), sizeSteps.cend(),
-                        [&size]( const auto& step ) { return size >= std::get<0>( step ); } );
+                        [ &size ]( const auto& step ) { return size >= std::get<0>( step ); } );
 
     if ( sizeStep != sizeSteps.end() ) {
         const auto humanSize = static_cast<double>( ( size >> std::get<1>( *sizeStep ) ) ) / 1024.0;

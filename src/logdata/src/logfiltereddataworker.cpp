@@ -36,22 +36,23 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QtConcurrent>
-
-#include "log.h"
-
-#include "hsregularexpression.h"
-#include "logdata.h"
-#include "logfiltereddataworker.h"
-
-#include "configuration.h"
-#include "overload_visitor.h"
-
-#include <tbb/flow_graph.h>
-
 #include <chrono>
 #include <cmath>
 #include <utility>
+
+#include <QtConcurrent>
+
+#include <tbb/flow_graph.h>
+
+#include "configuration.h"
+#include "log.h"
+#include "overload_visitor.h"
+#include "progress.h"
+
+#include "hsregularexpression.h"
+#include "logdata.h"
+
+#include "logfiltereddataworker.h"
 
 namespace {
 struct PartialSearchResults {

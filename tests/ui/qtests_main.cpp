@@ -32,7 +32,7 @@
 #include <log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
-const bool PersistentInfo::forcePortable = true;
+const bool PersistentInfo::ForcePortable = true;
 
 class TestRunner : public QObject {
     Q_OBJECT

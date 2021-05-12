@@ -36,11 +36,12 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PERSISTENTINFO_H
-#define PERSISTENTINFO_H
+#ifndef KLOGG_PERSISTENTINFO_H
+#define KLOGG_PERSISTENTINFO_H
+
+#include <memory>
 
 #include <QSettings>
-#include <memory>
 
 // Singleton class managing the saving of persistent data to permanent storage
 // Clients must implement Persistable
@@ -56,7 +57,7 @@ class PersistentInfo {
     static QSettings& getSettings( session_settings );
 
   private:
-    static const bool forcePortable;
+    static const bool ForcePortable;
 
     explicit PersistentInfo();
     static PersistentInfo& getInstance();

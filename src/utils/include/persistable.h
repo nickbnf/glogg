@@ -17,8 +17,8 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PERSISTABLE_H
-#define PERSISTABLE_H
+#ifndef KLOGG_PERSISTABLE_H
+#define KLOGG_PERSISTABLE_H
 
 #include <type_traits>
 
@@ -30,7 +30,7 @@ class QSettings;
 template <typename T, typename SettingsType = app_settings>
 class Persistable {
 
-public:
+  public:
     static T& get()
     {
         return getPersistable( false );
@@ -45,12 +45,11 @@ public:
 
     void save() const
     {
-        auto& settings = PersistentInfo::getSettings(SettingsType{});
-        static_cast<const T&>(*this).saveToStorage( settings );
+        auto& settings = PersistentInfo::getSettings( SettingsType{} );
+        static_cast<const T&>( *this ).saveToStorage( settings );
     }
 
-private:
-
+  private:
     static T& getPersistable( bool willBeInitialized = false )
     {
         static bool persistableInitialized = false;
@@ -69,10 +68,10 @@ private:
 
     void retrieve()
     {
-        auto& settings = PersistentInfo::getSettings(SettingsType{});
-        
+        auto& settings = PersistentInfo::getSettings( SettingsType{} );
+
         settings.sync();
-        static_cast<T&>(*this).retrieveFromStorage( settings );
+        static_cast<T&>( *this ).retrieveFromStorage( settings );
     }
 };
 

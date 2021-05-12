@@ -44,7 +44,8 @@
 **
 ****************************************************************************/
 
-#pragma once
+#ifndef KLOGG_OPEN_FILE_HELPER_H
+#define KLOGG_OPEN_FILE_HELPER_H
 
 #include <QApplication>
 #include <QDir>
@@ -55,36 +56,37 @@
 
 #include "log.h"
 
-inline void showPathInFileExplorer( const QString& file_path )
+inline void showPathInFileExplorer( const QString& filePath )
 {
-    const QFileInfo file_info( file_path );
+    const QFileInfo fileInfo( filePath );
 
-    LOG_INFO << "Show path in explorer: " << file_path;
+    LOG_INFO << "Show path in explorer: " << filePath;
 
 #if defined( Q_OS_WIN )
     const auto explorer = QString( "explorer.exe /select,%1" )
-                              .arg( QDir::toNativeSeparators( file_info.canonicalFilePath() ) );
+                              .arg( QDir::toNativeSeparators( fileInfo.canonicalFilePath() ) );
     QProcess::startDetached( explorer );
 #elif defined( Q_OS_MAC )
     QStringList scriptArgs;
     scriptArgs << QLatin1String( "-e" )
                << QString::fromLatin1( "tell application \"Finder\" to reveal POSIX file \"%1\"" )
-                      .arg( file_info.canonicalFilePath() );
+                      .arg( fileInfo.canonicalFilePath() );
     QProcess::execute( QLatin1String( "/usr/bin/osascript" ), scriptArgs );
     scriptArgs.clear();
     scriptArgs << QLatin1String( "-e" )
                << QLatin1String( "tell application \"Finder\" to activate" );
     QProcess::execute( QLatin1String( "/usr/bin/osascript" ), scriptArgs );
 #else
-    QDesktopServices::openUrl( QUrl::fromLocalFile( file_info.canonicalPath() ) );
+    QDesktopServices::openUrl( QUrl::fromLocalFile( fileInfo.canonicalPath() ) );
 #endif
 }
 
-inline void openFileInDefaultApplication( const QString& file_path )
+inline void openFileInDefaultApplication( const QString& filePath )
 {
-    LOG_INFO << "Open file in default app: " << file_path;
+    LOG_INFO << "Open file in default app: " << filePath;
 
-    const QFileInfo file_info( file_path );
-    QDesktopServices::openUrl( QUrl::fromLocalFile( file_info.canonicalFilePath() ) );
+    const QFileInfo fileInfo( filePath );
+    QDesktopServices::openUrl( QUrl::fromLocalFile( fileInfo.canonicalFilePath() ) );
 }
 
+#endif

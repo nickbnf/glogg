@@ -17,15 +17,16 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "memory_info.h"
+#include <mutex>
 
 #include <QtGlobal>
 
-#include <mutex>
+#include "memory_info.h"
 
 #if defined( Q_OS_WIN )
 
 #include <windows.h>
+
 #include <psapi.h>
 
 uint64_t systemPhysicalMemory()
@@ -54,9 +55,9 @@ uint64_t usedMemory()
 #include <unistd.h>
 
 #if SHARED_TEXT_REGION_SIZE || SHARED_DATA_REGION_SIZE
-static constexpr size_t shared_size = SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE;
+static constexpr size_t SharedSize = SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE;
 #else
-static constexpr size_t shared_size = 0;
+static constexpr size_t SharedSize = 0;
 #endif
 
 uint64_t systemPhysicalMemory()
@@ -71,11 +72,11 @@ uint64_t usedMemory()
 {
     kern_return_t status;
     task_basic_info info;
-    mach_msg_type_number_t msg_type = TASK_BASIC_INFO_COUNT;
+    mach_msg_type_number_t msgType = TASK_BASIC_INFO_COUNT;
     status = task_info( mach_task_self(), TASK_BASIC_INFO, reinterpret_cast<task_info_t>( &info ),
-                        &msg_type );
+                        &msgType );
     if ( status == KERN_SUCCESS ) {
-        return info.virtual_size - shared_size;
+        return info.virtual_size - SharedSize;
     }
     else {
         return 0;
@@ -88,6 +89,8 @@ uint64_t usedMemory()
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <array>
+
 uint64_t systemPhysicalMemory()
 {
     const auto pageSize = static_cast<uint64_t>( sysconf( _SC_PAGE_SIZE ) );
@@ -98,21 +101,20 @@ uint64_t systemPhysicalMemory()
 uint64_t usedMemory()
 {
     long unsigned size = 0;
-    FILE* fst = fopen( "/proc/self/status", "r" );
-    if ( fst == NULL ) {
+    FILE* statusFile = fopen( "/proc/self/status", "r" );
+    if ( statusFile == NULL ) {
         return 0;
     }
 
-    const int BUF_SZ = 200;
-    char buf_stat[ BUF_SZ ];
+    std::array<char, 200> status;
     static constexpr auto pattern = "VmSize: %lu";
-    while ( NULL != fgets( buf_stat, BUF_SZ, fst ) ) {
-        if ( 1 == sscanf( buf_stat, pattern, &size ) ) {
+    while ( NULL != fgets( status.data(), status.size(), statusFile ) ) {
+        if ( 1 == sscanf( status.data(), pattern, &size ) ) {
             break;
         }
     }
 
-    fclose( fst );
+    fclose( statusFile );
     return size * 1024;
 }
 

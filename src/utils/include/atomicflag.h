@@ -37,8 +37,8 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ATOMICFLAG_H
-#define ATOMICFLAG_H
+#ifndef KLOGG_ATOMICFLAG_H
+#define KLOGG_ATOMICFLAG_H
 
 #include <QAtomicInt>
 

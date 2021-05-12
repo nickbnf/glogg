@@ -20,8 +20,8 @@
 #ifndef KLOGG_SYNCHRONIZATION_H
 #define KLOGG_SYNCHRONIZATION_H
 
-#include <absl/synchronization/mutex.h>
 #include <mutex>
+#include <absl/synchronization/mutex.h>
 
 using Lock = absl::Mutex;
 using ScopedLock = absl::WriterMutexLock;

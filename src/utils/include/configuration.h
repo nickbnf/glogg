@@ -37,8 +37,8 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#ifndef KLOGG_CONFIGURATION_H
+#define KLOGG_CONFIGURATION_H
 
 #include <QFont>
 #include <QSettings>
@@ -52,10 +52,7 @@ enum class SearchRegexpType {
     FixedString,
 };
 
-enum class RegexpEngine {
-    Hyperscan,
-    QRegularExpression
-};
+enum class RegexpEngine { Hyperscan, QRegularExpression };
 
 // Configuration class containing everything in the "Settings" dialog
 class Configuration final : public Persistable<Configuration> {
@@ -454,7 +451,6 @@ class Configuration final : public Persistable<Configuration> {
     int scaleFactorRounding_ = 1;
 
     RegexpEngine regexpEngine_ = RegexpEngine::Hyperscan;
-
 };
 
 #endif

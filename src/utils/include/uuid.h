@@ -24,10 +24,7 @@
 
 inline QString generateIdFromUuid()
 {
-    return QUuid::createUuid().toString()
-        .remove('{')
-        .remove('}')
-        .remove('-');
+    return QUuid::createUuid().toString().remove( '{' ).remove( '}' ).remove( '-' );
 }
 
 #endif // KLOGG_UUID_H

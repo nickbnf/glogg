@@ -17,20 +17,15 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef KLOGG_LOG_H
+#define KLOGG_LOG_H
+
+#include <chrono>
 
 #include <QLatin1String>
 
 #include <absl/types/optional.h>
 #include <plog/Log.h>
-
-#include <chrono>
-
-template <typename T, typename U> int calculateProgress( const T& value, const U& total )
-{
-    return static_cast<int>( 100.f * static_cast<float>( value ) / static_cast<float>( total ) );
-}
 
 namespace plog {
 class GloggFormatter {
@@ -63,7 +58,7 @@ class GloggFormatter {
     }
 };
 
-inline void EnableLogging( bool isEnabled, uint8_t logLevel )
+inline void enableLogging( bool isEnabled, uint8_t logLevel )
 {
     if ( isEnabled ) {
         const auto severity = static_cast<plog::Severity>( logLevel );
@@ -78,7 +73,8 @@ inline void EnableLogging( bool isEnabled, uint8_t logLevel )
     }
 }
 
-template <typename T> Record& operator<<( Record& r, const absl::optional<T>& t )
+template <typename T>
+Record& operator<<( Record& r, const absl::optional<T>& t )
 {
     return t ? r << *t : r << "<empty>";
 }
@@ -90,8 +86,8 @@ inline Record& operator<<( Record& r, const QLatin1String s )
 
 inline Record& operator<<( Record& r, const std::chrono::milliseconds& duration )
 {
-    return r << static_cast<float>(duration.count()) / 1000.f << " ms";
+    return r << static_cast<float>( duration.count() ) / 1000.f << " ms";
 }
 
 } // namespace plog
-#endif //__LOG_H__
+#endif

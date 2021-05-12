@@ -17,6 +17,9 @@
  * along with glogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef KLOGG_PERFCOUNTER_H
+#define KLOGG_PERFCOUNTER_H
+
 #include <chrono>
 
 // This class is a counter that remembers the number of events occurring within
@@ -24,7 +27,6 @@
 
 class PerfCounter {
   public:
-    PerfCounter() = default;
 
     // Count a new event, returns true if it has been counted.
     // If the function returns false, it indicates the current second is elapsed
@@ -34,9 +36,9 @@ class PerfCounter {
     {
         using namespace std::chrono;
         if ( counter_ == 0 )
-            first_event_date_ = steady_clock::now();
+            firstEventDate_ = steady_clock::now();
 
-        if ( duration_cast<microseconds>( steady_clock::now() - first_event_date_ ).count()
+        if ( duration_cast<microseconds>( steady_clock::now() - firstEventDate_ ).count()
              < 1000000 ) {
             ++counter_;
             return true;
@@ -57,5 +59,7 @@ class PerfCounter {
 
   private:
     uint32_t counter_ = 0;
-    std::chrono::steady_clock::time_point first_event_date_;
+    std::chrono::steady_clock::time_point firstEventDate_;
 };
+
+#endif

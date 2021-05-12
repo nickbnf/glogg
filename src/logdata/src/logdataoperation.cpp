@@ -104,7 +104,7 @@ void OperationQueue::tryStartOperation( OperationVariant&& operation )
     }
 
     std::swap( executingOperation_, operation );
-    absl::visit( make_overload_visitor(
+    absl::visit( makeOverloadVisitor(
                      [this]( const LogDataOperation& logDataOperation ) {
                          beforeOperationStart_();
                          logDataOperation.start( worker_.get() );

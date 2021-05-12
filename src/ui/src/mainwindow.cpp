@@ -90,6 +90,7 @@
 #include "optionsdialog.h"
 #include "predefinedfilters.h"
 #include "predefinedfiltersdialog.h"
+#include "progress.h"
 #include "readablesize.h"
 #include "recentfiles.h"
 #include "sessioninfo.h"
@@ -914,7 +915,7 @@ void MainWindow::options()
 
     connect( &dialog, &OptionsDialog::optionsChanged, [ this ]() {
         const auto& config = Configuration::get();
-        plog::EnableLogging( config.enableLogging(), config.loggingLevel() );
+        plog::enableLogging( config.enableLogging(), config.loggingLevel() );
 
         newWindowAction->setVisible( config.allowMultipleWindows() );
         followAction->setEnabled( config.anyFileWatchEnabled() );

@@ -62,7 +62,17 @@ jobs:
       - name: Install deps
         run: |
           sudo apt-get update
-          sudo apt-get install g++-8 libboost-all-dev ragel -y
+          sudo apt-get install g++-8 ragel -y
+
+      - uses: ./.github/actions/boost-env
+      - name: Restore Boost cache
+        uses: actions/cache@v2
+        id: cache-boost
+        with:
+          path: ${{env.BOOST_ROOT}}
+          key: ${{env.BOOST_URL}}
+      - uses: ./.github/actions/boost-download
+        if: steps.cache-boost.outputs.cache-hit != 'true'
 
 #Build and test
       - uses: ./.github/actions/klogg-version
@@ -124,6 +134,16 @@ jobs:
         run: |
           cd docker/centos8
           docker build -t ${{ matrix.config.container }} .
+
+      - uses: ./.github/actions/boost-env
+      - name: Restore Boost cache
+        uses: actions/cache@v2
+        id: cache-boost
+        with:
+          path: ${{env.BOOST_ROOT}}
+          key: ${{env.BOOST_URL}}
+      - uses: ./.github/actions/boost-download
+        if: steps.cache-boost.outputs.cache-hit != 'true'
 
       - uses: ./.github/actions/klogg-version
       - uses: ./.github/actions/prepare-workspace-env
@@ -188,8 +208,17 @@ jobs:
       - name: Brew deps
         run: |
           brew install ragel
-          brew install boost
       
+      - uses: ./.github/actions/boost-env
+      - name: Restore Boost cache
+        uses: actions/cache@v2
+        id: cache-boost
+        with:
+          path: ${{env.BOOST_ROOT}}
+          key: ${{env.BOOST_URL}}
+      - uses: ./.github/actions/boost-download
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+
 #Build and test
       - uses: ./.github/actions/klogg-version
       - uses: ./.github/actions/prepare-workspace-env
@@ -317,34 +346,16 @@ jobs:
           echo "SSL_DIR=${{ github.workspace }}\openssl-1.1\${{ matrix.config.arch }}\bin" >> $GITHUB_ENV
           echo "SSL_ARCH=${{ matrix.config.ssl_arch }}" >> $GITHUB_ENV 
 
-      - name: Set boost paths
-        shell: sh
-        run: |
-          echo "BOOST_ROOT=${{github.workspace}}/3rdparty/boost" >> $GITHUB_ENV
-          echo "BOOST_URL=https://sourceforge.net/projects/boost/files/boost/1.72.0/boost_1_72_0.tar.bz2/download" >> $GITHUB_ENV
-
+      - uses: ./.github/actions/boost-env
       - name: Restore Boost cache
         uses: actions/cache@v2
         id: cache-boost
         with:
           path: ${{env.BOOST_ROOT}}
-          key: boost
-
-      - name: Install Boost
+          key: ${{env.BOOST_URL}}
+      - uses: ./.github/actions/boost-download
         if: steps.cache-boost.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          if [ "$OS" == "Windows_NT" ]; then
-            # fix up paths to be forward slashes consistently
-            BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
-          fi
-          mkdir -p $BOOST_ROOT
-          curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
-          cd $BOOST_ROOT && cp -r boost_*/* .
-          rm -rf boost_*/* download.tar.bz2 download.tar
-
+     
 #Build and test
       - name: Prepare dev cmd
         uses: ilammy/msvc-dev-cmd@v1

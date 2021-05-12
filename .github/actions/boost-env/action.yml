@@ -1,0 +1,12 @@
+name: "Prepare boost env vars"
+description: "Set boost url and target location"
+runs:
+  using: "composite"
+  steps:
+    - name: Set boost env vars
+      shell: sh
+      run: |
+        echo "BOOST_ROOT=${{github.workspace}}/3rdparty/boost" >> $GITHUB_ENV
+        echo "BOOST_URL=https://sourceforge.net/projects/boost/files/boost/1.75.0/boost_1_75_0.tar.bz2/download" >> $GITHUB_ENV
+
+

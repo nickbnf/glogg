@@ -38,35 +38,36 @@
 
 #include "log.h"
 
-#include <QToolButton>
-#include <QLabel>
 #include <QCheckBox>
-#include <QLineEdit>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QToolButton>
 
 #include "configuration.h"
 #include "qfnotifications.h"
 
 #include "quickfindwidget.h"
 
-const int QuickFindWidget::NOTIFICATION_TIMEOUT = 5000;
+static constexpr int NotificationTimeout = 5000;
 
 const QString QFNotification::REACHED_EOF = "Reached end of file, no occurrence found.";
 const QString QFNotification::REACHED_BOF = "Reached beginning of file, no occurrence found.";
 const QString QFNotification::INTERRUPTED = "Search interrupted";
 
-
-QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
+QuickFindWidget::QuickFindWidget( QWidget* parent )
+    : QWidget( parent )
 {
     // ui_.setupUi( this );
     // setFocusProxy(ui_.findEdit);
     // setProperty("topBorder", true);
-    auto *layout = new QHBoxLayout( this );
+    auto* layout = new QHBoxLayout( this );
 
     layout->setContentsMargins( 6, 0, 6, 6 );
 
-    closeButton_ = setupToolButton(
-            QLatin1String(""), QLatin1String( ":/images/darkclosebutton.png" ) );
+    closeButton_
+        = setupToolButton( QLatin1String( "" ), QLatin1String( ":/images/darkclosebutton.png" ) );
+    closeButton_->setShortcut( QKeySequence::Cancel );
     layout->addWidget( closeButton_ );
 
     editQuickFind_ = new QLineEdit( this );
@@ -77,12 +78,12 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
     ignoreCaseCheck_ = new QCheckBox( "Ignore &case" );
     layout->addWidget( ignoreCaseCheck_ );
 
-    previousButton_ = setupToolButton( QLatin1String("Previous"),
-            QLatin1String( ":/images/arrowup.png" ) );
+    previousButton_
+        = setupToolButton( QLatin1String( "Previous" ), QLatin1String( ":/images/arrowup.png" ) );
     layout->addWidget( previousButton_ );
 
-    nextButton_ = setupToolButton( QLatin1String("Next"),
-            QLatin1String( ":/images/arrowdown.png" ) );
+    nextButton_
+        = setupToolButton( QLatin1String( "Next" ), QLatin1String( ":/images/arrowdown.png" ) );
     layout->addWidget( nextButton_ );
 
     notificationText_ = new QLabel( "" );
@@ -95,27 +96,21 @@ QuickFindWidget::QuickFindWidget( QWidget* parent ) : QWidget( parent )
 
     // Behaviour
     connect( closeButton_, SIGNAL( clicked() ), SLOT( closeHandler() ) );
-    connect( editQuickFind_, SIGNAL( textEdited( QString ) ),
-             this, SLOT( textChanged() ) );
-    connect( ignoreCaseCheck_, SIGNAL( stateChanged( int ) ),
-             this, SLOT( textChanged() ) );
+    connect( editQuickFind_, SIGNAL( textEdited( QString ) ), this, SLOT( textChanged() ) );
+    connect( ignoreCaseCheck_, SIGNAL( stateChanged( int ) ), this, SLOT( textChanged() ) );
     /*
     connect( editQuickFind_. SIGNAL( textChanged( QString ) ), this,
             SLOT( updateButtons() ) );
     */
 
-    connect( editQuickFind_, SIGNAL( returnPressed() ),
-             this, SLOT( returnHandler() ) );
-    connect( previousButton_, SIGNAL( clicked() ),
-            this, SLOT( doSearchBackward() ) );
-    connect( nextButton_, SIGNAL( clicked() ),
-            this, SLOT( doSearchForward() ) );
+    connect( editQuickFind_, SIGNAL( returnPressed() ), this, SLOT( returnHandler() ) );
+    connect( previousButton_, SIGNAL( clicked() ), this, SLOT( doSearchBackward() ) );
+    connect( nextButton_, SIGNAL( clicked() ), this, SLOT( doSearchForward() ) );
 
     // Notification timer:
     notificationTimer_ = new QTimer( this );
     notificationTimer_->setSingleShot( true );
-    connect( notificationTimer_, SIGNAL( timeout() ),
-            this, SLOT( notificationTimeout() ) );
+    connect( notificationTimer_, SIGNAL( timeout() ), this, SLOT( notificationTimeout() ) );
 }
 
 void QuickFindWidget::userActivate()
@@ -142,7 +137,7 @@ void QuickFindWidget::notify( const QFNotification& message )
 
     notificationText_->setText( message.message() );
     QWidget::show();
-    notificationTimer_->start( NOTIFICATION_TIMEOUT );
+    notificationTimer_->start( NotificationTimeout );
 }
 
 void QuickFindWidget::clearNotification()
@@ -213,19 +208,19 @@ void QuickFindWidget::textChanged()
 //
 // Private functions
 //
-QToolButton* QuickFindWidget::setupToolButton(
-        const QString &text, const QString &icon)
+QToolButton* QuickFindWidget::setupToolButton( const QString& text, const QString& icon )
 {
-    auto *toolButton = new QToolButton(this);
+    auto* toolButton = new QToolButton( this );
 
-    toolButton->setAutoRaise(true);
-    toolButton->setIcon(QIcon(icon));
+    toolButton->setAutoRaise( true );
+    toolButton->setIcon( QIcon( icon ) );
 
-    if(text.length()>0) {
-        toolButton->setText(text);
-        toolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    } else {
-        toolButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    if ( text.length() > 0 ) {
+        toolButton->setText( text );
+        toolButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    }
+    else {
+        toolButton->setToolButtonStyle( Qt::ToolButtonIconOnly );
     }
 
     return toolButton;

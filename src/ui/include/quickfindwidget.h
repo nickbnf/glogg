@@ -97,8 +97,6 @@ class QuickFindWidget : public QWidget
     void searchNext();
 
   private:
-    const static int NOTIFICATION_TIMEOUT;
-
     QHBoxLayout* layout_;
 
     QToolButton* closeButton_;

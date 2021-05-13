@@ -43,6 +43,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QToolButton>
+#include <qkeysequence.h>
 
 #include "configuration.h"
 #include "qfnotifications.h"
@@ -80,10 +81,12 @@ QuickFindWidget::QuickFindWidget( QWidget* parent )
 
     previousButton_
         = setupToolButton( QLatin1String( "Previous" ), QLatin1String( ":/images/arrowup.png" ) );
+    previousButton_->setShortcut( QKeySequence::FindPrevious );
     layout->addWidget( previousButton_ );
 
     nextButton_
         = setupToolButton( QLatin1String( "Next" ), QLatin1String( ":/images/arrowdown.png" ) );
+    nextButton_->setShortcut( QKeySequence::FindNext );
     layout->addWidget( nextButton_ );
 
     notificationText_ = new QLabel( "" );

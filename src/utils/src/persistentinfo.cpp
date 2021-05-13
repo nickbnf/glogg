@@ -43,7 +43,6 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QStringList>
-#include <QUuid>
 
 #include <whereami/whereami.h>
 

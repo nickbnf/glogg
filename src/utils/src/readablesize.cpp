@@ -37,6 +37,8 @@
  */
 
 #include <array>
+#include <algorithm>
+#include <tuple>
 
 #include <QLocale>
 

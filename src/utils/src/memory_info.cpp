@@ -85,8 +85,7 @@ uint64_t usedMemory()
 
 #else
 
-#include <sys/resource.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <array>

@@ -179,7 +179,11 @@ bool doExtract( std::shared_ptr<KArchive> archive, const QString& archiveFilePat
     auto result = false;
     try {
         const auto recursive = true;
+#ifdef KLOGG_KARCHIVE
         result = root->copyTo( destination, interrupt, recursive );
+#else
+        result = root->copyTo( destination, recursive );
+#endif
     } catch ( const std::exception& e ) {
         LOG_ERROR << "Exception during extract: " << e.what();
     }

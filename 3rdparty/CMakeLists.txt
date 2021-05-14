@@ -3,10 +3,6 @@ add_subdirectory(plog) #1.1.5
 add_subdirectory(named_type)
 add_subdirectory(catch) #v2.12.1
 add_subdirectory(singleapp) #3.1.5
-add_subdirectory(cmzlib)
-add_subdirectory(cmbzip2)
-add_subdirectory(cmliblzma)
-add_subdirectory(karchive)
 add_subdirectory(maddy)
 add_subdirectory(whereami)
 add_subdirectory(kdab)
@@ -101,6 +97,21 @@ else()
     set(XXHASH_BUILD_XXHSUM OFF) #optional
     add_subdirectory(xxhash/cmake_unofficial) #0.8
     target_link_libraries(xxhash_wrapper INTERFACE xxHash::xxhash)
+endif()
+
+#KARCHIVE
+find_package(KF5Archive)
+if(KF5Archive_FOUND)
+    message("Using system KArchive")
+    add_library(klogg_karchive INTERFACE)
+    target_link_libraries(klogg_karchive INTERFACE KF5::Archive)
+else()
+    message("Using bundled KArchive")
+
+    add_subdirectory(cmzlib)
+    add_subdirectory(cmbzip2)
+    add_subdirectory(cmliblzma)
+    add_subdirectory(karchive)
 endif()
 
 

@@ -21,26 +21,51 @@ if(KLOGG_USE_SENTRY)
     add_subdirectory(sentry)
 endif(KLOGG_USE_SENTRY)
 
-set(ABSL_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
-add_subdirectory(abseil) #20210324.0
-mark_as_advanced(FORCE ABSL_RUN_TESTS)
-mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
-mark_as_advanced(FORCE ABSL_USE_GOOGLETEST_HEAD)
-
 set(EFSW_INSTALL OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(efsw) #2bfda30 on 14 Dec 2020
 set(BUILD_TEST_APP OFF CACHE INTERNAL "" FORCE)
 mark_as_advanced(FORCE VERBOSE)
 
+#ABSEIL
+add_library(absl_wrapper INTERFACE)
+pkg_check_modules(ABSL_VARIANT absl_variant)
+pkg_check_modules(ABSL_OPTIONAL absl_optional)
+pkg_check_modules(ABSL_SYNC absl_synchronization)
+
+if(ABSL_VARIANT_FOUND AND ABSL_OPTIONAL_FOUND AND ABSL_SYNC_FOUND)
+    message("Using system abseil")
+
+    target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_VARIANT_INCLUDE_DIRS})
+    target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_OPTIONAL_INCLUDE_DIRS})
+    target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_SYNC_INCLUDE_DIRS})
+
+    target_link_libraries(absl_wrapper INTERFACE ${ABSL_VARIANT_LINK_LIBRARIES})
+    target_link_libraries(absl_wrapper INTERFACE ${ABSL_OPTIONAL_LINK_LIBRARIES})
+    target_link_libraries(absl_wrapper INTERFACE ${ABSL_SYNC_LINK_LIBRARIES})
+else()
+    set(ABSL_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
+    add_subdirectory(abseil) #20210324.0
+    mark_as_advanced(FORCE ABSL_RUN_TESTS)
+    mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
+    mark_as_advanced(FORCE ABSL_USE_GOOGLETEST_HEAD)
+
+    target_link_libraries(absl_wrapper INTERFACE 
+        absl::variant 
+        absl::optional 
+        absl::synchronization)
+
+endif()
+
+#TBB
 add_library(tbb_wrapper INTERFACE)
 add_library(tbbmalloc_proxy_wrapper INTERFACE)
 
 pkg_check_modules(TBB tbb>=2021)
-pkg_check_modules(TBB_MALLOC_PROXY tbbmalloc_proxy)
+pkg_check_modules(TBB_MALLOC_PROXY tbbmalloc_proxy>=2021)
 if (TBB_FOUND AND TBB_MALLOC_PROXY_FOUND)
     message("Using system tbb")
-    target_include_directories(tbb_wrapper INTERFACE ${TBB_INCLUDE_DIRS})
-    target_include_directories(tbb_malloc_proxy_wrapper INTERFACE ${TBB_MALLOC_PROXY_INCLUDE_DIRS})
+    target_include_directories(tbb_wrapper SYSTEM INTERFACE ${TBB_INCLUDE_DIRS})
+    target_include_directories(tbb_malloc_proxy_wrapper SYSTEM INTERFACE ${TBB_MALLOC_PROXY_INCLUDE_DIRS})
 
     target_link_libraries(tbb_wrapper INTERFACE ${TBB_LINK_LIBRARIES})
     target_link_libraries(tbbmalloc_proxy_wrapper INTERFACE ${TBB_MALLOC_PROXY_LINK_LIBRARIES})
@@ -64,12 +89,12 @@ else()
     target_link_libraries(tbbmalloc_proxy_wrapper INTERFACE klogg_tbbmalloc_proxy)
 endif()
 
-
+#UCHARDET
 add_library(uchardet_wrapper INTERFACE)
-pkg_check_modules(UCHARDET uchardet)
+pkg_check_modules(UCHARDET uchardet>=0.0.7)
 if(UCHARDET_FOUND)
     message("Using system uchardet")
-    target_include_directories(uchardet_wrapper INTERFACE ${UCHARDET_INCLUDE_DIRS})
+    target_include_directories(uchardet_wrapper SYSTEM INTERFACE ${UCHARDET_INCLUDE_DIRS})
     target_link_libraries(uchardet_wrapper INTERFACE ${UCHARDET_LINK_LIBRARIES})
 else()
     message("Using bundled uchardet")
@@ -77,12 +102,13 @@ else()
     target_link_libraries(uchardet_wrapper INTERFACE uchardet)
 endif()
 
+#HYPERSCAN
 if(KLOGG_USE_HYPERSCAN)
 add_library(hypersan_wrapper INTERFACE)
-pkg_check_modules(HYPESCAN libhs)
+pkg_check_modules(HYPESCAN libhs>=5.4)
 if(HYPESCAN_FOUND)
     message("Using system hyperscan")
-    target_include_directories(hypersan_wrapper INTERFACE ${HYPESCAN_INCLUDE_DIRS})
+    target_include_directories(hypersan_wrapper SYSTEM INTERFACE ${HYPESCAN_INCLUDE_DIRS})
     target_link_libraries(hypersan_wrapper INTERFACE ${HYPESCAN_LINK_LIBRARIES})
 else(NOT Hyperscan_FOUND)
     message("Using bundled hyperscan")
@@ -92,11 +118,12 @@ else(NOT Hyperscan_FOUND)
 endif()
 endif(KLOGG_USE_HYPERSCAN)
 
+#XXHASH
 add_library(xxhash_wrapper INTERFACE)
-pkg_check_modules(XXHASH libxxhash)
+pkg_check_modules(XXHASH libxxhash>=0.8)
 if(XXHASH_FOUND)
     message("Using system xxhash")
-    target_include_directories(xxhash_wrapper INTERFACE ${XXHASH_INCLUDE_DIRS})
+    target_include_directories(xxhash_wrapper SYSTEM INTERFACE ${XXHASH_INCLUDE_DIRS})
     target_link_libraries(xxhash_wrapper INTERFACE ${XXHASH_LINK_LIBRARIES})
 else()
     message("Using bundled xxhash")

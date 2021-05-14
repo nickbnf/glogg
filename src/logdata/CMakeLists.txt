@@ -42,8 +42,6 @@ target_link_libraries(logdata PUBLIC
         roaring
         tbb_wrapper
         named_type
-        absl::optional
-        absl::variant
         utils
         filewatch
         uchardet_wrapper)

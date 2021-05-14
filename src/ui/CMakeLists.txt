@@ -94,7 +94,7 @@ set_property(TARGET ui PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 target_include_directories(ui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(ui PUBLIC Qt5::Widgets Qt5::Xml logdata versioncheck absl::any)
+target_link_libraries(ui PUBLIC Qt5::Widgets Qt5::Xml logdata versioncheck)
 
 if (WIN32)
     target_link_libraries(ui PUBLIC user32)

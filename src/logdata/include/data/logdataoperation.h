@@ -39,7 +39,7 @@
 #ifndef LOGDATAOPERATION_H
 #define LOGDATAOPERATION_H
 
-#include <absl/types/variant.h>
+#include <variant>
 
 #include "logdataworker.h"
 
@@ -130,7 +130,7 @@ class OperationQueue {
     void finishOperationAndStartNext();
 
   private:
-    using OperationVariant = absl::variant<absl::monostate, AttachOperation, FullReindexOperation,
+    using OperationVariant = std::variant<std::monostate, AttachOperation, FullReindexOperation,
                                            PartialReindexOperation, CheckDataChangesOperation>;
 
     void enqueueOperation( OperationVariant&& operation );

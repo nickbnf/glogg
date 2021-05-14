@@ -244,25 +244,6 @@ under the terms of the BSD License
 > OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ===
-This product includes software developed by The Abseil Authors
-Abseil C++ library (https://github.com/abseil/abseil-cpp) licensed
-under the terms of  Apache License Version 2.0
-
-> Copyright 2020 The Abseil Authors.
->
-> Licensed under the Apache License, Version 2.0 (the "License");
-> you may not use this file except in compliance with the License.
-> You may obtain a copy of the License at
->
->      http://www.apache.org/licenses/LICENSE-2.0
->
-> Unless required by applicable law or agreed to in writing, software
-> distributed under the License is distributed on an "AS IS" BASIS,
-> WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-> See the License for the specific language governing permissions and
-> limitations under the License.
-
-===
 This product includes software developed by Jean-loup Gailly and Mark Adler
 zlib (http://www.zlib.net)  with modifications by Kitware (CMake support, name mangling) 
 and by Anton Filimonov (name mangling for static linking with KArchive)

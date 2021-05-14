@@ -41,7 +41,8 @@
 
 #include <QLabel>
 #include <QPalette>
-#include <absl/types/optional.h>
+
+#include <optional>
 
 // Information line with integrated completion gauge
 // used for the file name and the search results.
@@ -62,7 +63,7 @@ class InfoLine : public QLabel {
 
   private:
     // The original palette of the QLabel
-    absl::optional<QPalette> origPalette_;
+    std::optional<QPalette> origPalette_;
 };
 
 #endif

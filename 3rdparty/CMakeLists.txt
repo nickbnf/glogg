@@ -26,33 +26,6 @@ add_subdirectory(efsw) #2bfda30 on 14 Dec 2020
 set(BUILD_TEST_APP OFF CACHE INTERNAL "" FORCE)
 mark_as_advanced(FORCE VERBOSE)
 
-#ABSEIL
-add_library(absl_wrapper INTERFACE)
-pkg_check_modules(ABSL_VARIANT absl_variant)
-pkg_check_modules(ABSL_OPTIONAL absl_optional)
-
-if(ABSL_VARIANT_FOUND AND ABSL_OPTIONAL_FOUND)
-    message("Using system abseil")
-
-    target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_VARIANT_INCLUDE_DIRS})
-    target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_OPTIONAL_INCLUDE_DIRS})
-
-    target_link_libraries(absl_wrapper INTERFACE ${ABSL_VARIANT_LINK_LIBRARIES})
-    target_link_libraries(absl_wrapper INTERFACE ${ABSL_OPTIONAL_LINK_LIBRARIES})
-else()
-    set(ABSL_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
-    add_subdirectory(abseil) #20210324.0
-    mark_as_advanced(FORCE ABSL_RUN_TESTS)
-    mark_as_advanced(FORCE ABSL_STD_CXX_FLAG)
-    mark_as_advanced(FORCE ABSL_USE_GOOGLETEST_HEAD)
-
-    target_link_libraries(absl_wrapper INTERFACE 
-        absl::variant 
-        absl::optional 
-        absl::synchronization)
-
-endif()
-
 #TBB
 add_library(tbb_wrapper INTERFACE)
 add_library(tbbmalloc_proxy_wrapper INTERFACE)

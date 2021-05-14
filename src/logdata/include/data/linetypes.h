@@ -20,12 +20,13 @@
 #pragma once
 #include <algorithm>
 #include <limits>
+#include <optional>
+
 #include <named_type/named_type.hpp>
 
 #include <QMetaType>
 #include <QString>
 
-#include <absl/types/optional.h>
 #include <plog/Record.h>
 
 using LineOffset
@@ -65,7 +66,7 @@ constexpr StrongType maxValue()
     return StrongType( std::numeric_limits<typename StrongType::UnderlyingType>::max() );
 }
 
-using OptionalLineNumber = absl::optional<LineNumber>;
+using OptionalLineNumber = std::optional<LineNumber>;
 
 template <typename T, typename Parameter, template <typename> class... Skills>
 plog::util::nostringstream& operator<<( plog::util::nostringstream& os,

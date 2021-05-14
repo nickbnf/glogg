@@ -23,7 +23,7 @@
 #include <QRegularExpression>
 #include <QString>
 
-#include <absl/types/variant.h>
+#include <variant>
 
 
 #ifdef KLOGG_HAS_HS
@@ -136,7 +136,7 @@ class HsMatcher {
     int requiredMatches_ = 1;
 };
 
-using MatcherVariant = absl::variant<DefaultRegularExpressionMatcher, HsMatcher>;
+using MatcherVariant = std::variant<DefaultRegularExpressionMatcher, HsMatcher>;
 
 class HsRegularExpression {
   public:
@@ -165,7 +165,7 @@ class HsRegularExpression {
 };
 #else
 
-using MatcherVariant = absl::variant<DefaultRegularExpressionMatcher>;
+using MatcherVariant = std::variant<DefaultRegularExpressionMatcher>;
 
 class HsRegularExpression {
   public:

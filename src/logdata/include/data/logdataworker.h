@@ -44,7 +44,7 @@
 #include <QObject>
 #include <QTextCodec>
 
-#include <absl/types/variant.h>
+#include <variant>
 
 #include <deque>
 
@@ -231,7 +231,7 @@ struct IndexingState {
     QTextCodec* fileTextCodec{};
 };
 
-using OperationResult = absl::variant<bool, MonitoredFileStatus>;
+using OperationResult = std::variant<bool, MonitoredFileStatus>;
 
 class IndexOperation : public QObject {
     Q_OBJECT

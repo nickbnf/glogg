@@ -50,7 +50,8 @@
 #include <chrono>
 #include <cmath>
 
-#include <absl/strings/string_view.h>
+#include <string_view>
+
 #include <tbb/flow_graph.h>
 
 constexpr int IndexingBlockSize = 1 * 1024 * 1024;
@@ -261,10 +262,10 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
           };
 
     const auto expandTabs
-        = [ &state, &charOffsetWithinBlock, pos_within_block ]( absl::string_view blockToExpand ) {
+        = [ &state, &charOffsetWithinBlock, pos_within_block ]( std::string_view blockToExpand ) {
               while ( !blockToExpand.empty() ) {
                   const auto next_tab = blockToExpand.find( '\t' );
-                  if ( next_tab == absl::string_view::npos ) {
+                  if ( next_tab == std::string_view::npos ) {
                       break;
                   }
 
@@ -294,10 +295,10 @@ FastLinePositionArray IndexOperation::parseDataBlock( LineOffset::UnderlyingType
         const auto search_line_size = static_cast<size_t>( block.size() - pos_within_block );
 
         if ( search_line_size > 0 ) {
-            const auto block_view = absl::string_view( search_start, search_line_size );
+            const auto block_view = std::string_view( search_start, search_line_size );
             const auto next_line_feed = block_view.find( '\n' );
 
-            if ( next_line_feed != absl::string_view::npos ) {
+            if ( next_line_feed != std::string_view::npos ) {
                 expandTabs( block_view.substr( 0, next_line_feed ) );
                 pos_within_block = charOffsetWithinBlock( search_start + next_line_feed );
                 LOG_DEBUG << "LF at " << pos_within_block;

@@ -980,7 +980,7 @@ void MainWindow::showScratchPad()
 void MainWindow::encodingChanged( QAction* action )
 {
     const auto mibData = action->data();
-    absl::optional<int> mib;
+    std::optional<int> mib;
     if ( mibData.isValid() ) {
         mib = mibData.toInt();
     }

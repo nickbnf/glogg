@@ -104,13 +104,13 @@ void OperationQueue::tryStartOperation( OperationVariant&& operation )
     }
 
     std::swap( executingOperation_, operation );
-    absl::visit( makeOverloadVisitor(
+    std::visit( makeOverloadVisitor(
                      [this]( const LogDataOperation& logDataOperation ) {
                          beforeOperationStart_();
                          logDataOperation.start( worker_.get() );
                          LOG_INFO << "Started operation " << executingOperation_.index();
                      },
-                     []( absl::monostate ) { LOG_INFO << "no operation to start"; } ),
+                     []( std::monostate ) { LOG_INFO << "no operation to start"; } ),
                  executingOperation_ );
 }
 

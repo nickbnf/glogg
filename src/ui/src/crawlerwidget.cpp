@@ -178,7 +178,7 @@ void CrawlerWidget::selectAll()
     activeView()->selectAll();
 }
 
-absl::optional<int> CrawlerWidget::encodingMib() const
+std::optional<int> CrawlerWidget::encodingMib() const
 {
     return encodingMib_;
 }
@@ -288,7 +288,7 @@ void CrawlerWidget::reload()
     firstLoadDone_ = false;
 }
 
-void CrawlerWidget::setEncoding( absl::optional<int> mib )
+void CrawlerWidget::setEncoding( std::optional<int> mib )
 {
     encodingMib_ = std::move( mib );
     updateEncoding();

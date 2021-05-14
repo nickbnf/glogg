@@ -99,7 +99,7 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vect
         const auto& line = lines[ offset.get() ];
 
         const auto hasMatch
-            = absl::visit( [ &line ]( const auto& m ) { return m.hasMatch( line ); }, matcher );
+            = std::visit( [ &line ]( const auto& m ) { return m.hasMatch( line ); }, matcher );
 
         if ( hasMatch ) {
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );

@@ -24,7 +24,8 @@
 
 #include <QLatin1String>
 
-#include <absl/types/optional.h>
+#include <optional>
+
 #include <plog/Log.h>
 
 namespace plog {
@@ -74,7 +75,7 @@ inline void enableLogging( bool isEnabled, uint8_t logLevel )
 }
 
 template <typename T>
-Record& operator<<( Record& r, const absl::optional<T>& t )
+Record& operator<<( Record& r, const std::optional<T>& t )
 {
     return t ? r << *t : r << "<empty>";
 }

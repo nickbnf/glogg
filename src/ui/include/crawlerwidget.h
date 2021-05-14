@@ -50,7 +50,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
-#include <absl/types/optional.h>
+#include <optional>
 
 #include "data/loadingstatus.h"
 #include "data/logdata.h"
@@ -96,7 +96,7 @@ class CrawlerWidget : public QSplitter,
     // is interacting with
     void selectAll();
 
-    absl::optional<int> encodingMib() const;
+    std::optional<int> encodingMib() const;
 
     // Get the text description of the encoding effectively used,
     // suitable to display to the user.
@@ -112,7 +112,7 @@ class CrawlerWidget : public QSplitter,
     // Reload the displayed file
     void reload();
     // Set the encoding
-    void setEncoding( absl::optional<int> mib );
+    void setEncoding( std::optional<int> mib );
 
     void focusSearchEdit();
 
@@ -365,7 +365,7 @@ class CrawlerWidget : public QSplitter,
     DataStatus dataStatus_ = DataStatus::OLD_DATA;
 
     // Current encoding setting;
-    absl::optional<int> encodingMib_;
+    std::optional<int> encodingMib_;
     QString encoding_text_;
 
     IconLoader iconLoader_;

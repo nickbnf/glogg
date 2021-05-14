@@ -40,18 +40,18 @@ target_link_libraries(logdata PUBLIC
         Qt5::Core
         Qt5::Concurrent
         roaring
-        klogg_tbb
+        tbb_wrapper
         named_type
         absl::optional
         absl::variant
         utils
         filewatch
-        uchardet)
+        uchardet_wrapper)
 
-target_link_libraries(logdata PRIVATE xxHash::xxhash)
+target_link_libraries(logdata PRIVATE xxhash_wrapper)
 
 if(KLOGG_USE_HYPERSCAN)
-target_link_libraries(logdata PUBLIC hs)
+target_link_libraries(logdata PUBLIC hypersan_wrapper)
 target_compile_definitions(logdata PUBLIC KLOGG_HAS_HS)
 endif()
 

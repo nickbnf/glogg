@@ -40,7 +40,7 @@ endif()
 
 set(MAIN_LIBS ui cli11 singleapp)
 if (NOT APPLE)
-    LIST(APPEND MAIN_LIBS klogg_tbbmalloc_proxy)
+    LIST(APPEND MAIN_LIBS tbbmalloc_proxy_wrapper)
     target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
     target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
 endif()

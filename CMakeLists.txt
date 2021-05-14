@@ -71,6 +71,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(StandardProjectSettings)
 include(ucm)
 include(prepare_version)
+include(FindPkgConfig)
 include(GNUInstallDirs)
 
 if(MSVC)

@@ -37,6 +37,9 @@ Building tests:
 
 All other dependencies are provided in 3rdparty directory.
 
+Klogg will use pkgconfig to find Hyperscan, TBB, uchardet and xxhash installed on build host.
+If a library can't be found, the one bundled in 3rdparty directory will be used.
+
 ## Getting the Source
 
 This project is [hosted on GitHub](https://github.com/variar/klogg). You can clone this project directly using this command:

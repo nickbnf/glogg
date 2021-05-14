@@ -79,7 +79,7 @@ void OperationQueue::setWorker( std::unique_ptr<LogDataWorker>&& worker )
 
 void OperationQueue::interrupt()
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     if ( worker_ ) {
         worker_->interrupt();
     }
@@ -87,7 +87,7 @@ void OperationQueue::interrupt()
 
 void OperationQueue::shutdown()
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     if ( auto worker = std::move( worker_ ) ) {
         worker->interrupt();
     }
@@ -116,7 +116,7 @@ void OperationQueue::tryStartOperation( OperationVariant&& operation )
 
 void OperationQueue::enqueueOperation( OperationVariant&& operation )
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
 
     LOG_INFO << "Enqueue operation " << operation.index() << ", now executing "
              << executingOperation_.index();
@@ -131,7 +131,7 @@ void OperationQueue::enqueueOperation( OperationVariant&& operation )
 
 void OperationQueue::finishOperationAndStartNext()
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     LOG_INFO << "Finished operation " << executingOperation_.index() << ", next operation "
              << pendingOperation_.index();
 

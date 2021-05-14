@@ -76,7 +76,7 @@ class EncodingDetector {
     EncodingDetector() = default;
     ~EncodingDetector() = default;
 
-    mutable Lock mutex_;
+    mutable Mutex mutex_;
 };
 
 class TextCodecHolder {
@@ -94,7 +94,7 @@ class TextCodecHolder {
   private:
     QTextCodec* codec_;
     EncodingParameters encodingParams_;
-    mutable Lock mutex_;
+    mutable Mutex mutex_;
 };
 
 #endif // ENCODINGDETECTOR_H

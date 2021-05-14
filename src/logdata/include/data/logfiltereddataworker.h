@@ -113,7 +113,7 @@ class SearchData {
     void clear();
 
   private:
-    mutable Lock dataMutex_;
+    mutable Mutex dataMutex_;
 
     SearchResultArray matches_;
     mutable SearchResultArray newMatches_;
@@ -221,7 +221,7 @@ class LogFilteredDataWorker : public QObject {
     AtomicFlag interruptRequested_;
 
     // Mutex to protect operationRequested_ and friends
-    Lock mutex_;
+    Mutex mutex_;
     QFuture<void> operationFuture_;
 
     // Shared indexing data

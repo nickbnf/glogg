@@ -114,13 +114,13 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vect
 
 SearchResults SearchData::takeCurrentResults() const
 {
-    ScopedLock locker( &dataMutex_ );
+    ScopedLock locker( dataMutex_ );
     return SearchResults{ std::exchange( newMatches_, {} ), maxLength_, nbLinesProcessed_ };
 }
 
 void SearchData::addAll( LineLength length, const SearchResultArray& matches, LinesCount lines )
 {
-    ScopedLock locker( &dataMutex_ );
+    ScopedLock locker( dataMutex_ );
 
     maxLength_ = qMax( maxLength_, length );
     nbLinesProcessed_ = qMax( nbLinesProcessed_, lines );
@@ -131,27 +131,27 @@ void SearchData::addAll( LineLength length, const SearchResultArray& matches, Li
 
 LinesCount SearchData::getNbMatches() const
 {
-    ScopedLock locker( &dataMutex_ );
+    ScopedLock locker( dataMutex_ );
 
     return nbMatches_;
 }
 
 LineNumber SearchData::getLastProcessedLine() const
 {
-    ScopedLock locker( &dataMutex_ );
+    ScopedLock locker( dataMutex_ );
     return LineNumber{ nbLinesProcessed_.get() };
 }
 
 void SearchData::deleteMatch( LineNumber line )
 {
-    ScopedLock locker( &dataMutex_ );
+    ScopedLock locker( dataMutex_ );
 
     matches_.remove( line.get() );
 }
 
 void SearchData::clear()
 {
-    ScopedLock locker( &dataMutex_ );
+    ScopedLock locker( dataMutex_ );
 
     maxLength_ = LineLength( 0 );
     nbLinesProcessed_ = LinesCount( 0 );
@@ -170,7 +170,7 @@ LogFilteredDataWorker::LogFilteredDataWorker( const LogData& sourceLogData )
 LogFilteredDataWorker::~LogFilteredDataWorker()
 {
     interruptRequested_.set();
-    ScopedLock locker( &mutex_ );
+    ScopedLock locker( mutex_ );
     operationFuture_.waitForFinished();
 }
 
@@ -188,7 +188,7 @@ void LogFilteredDataWorker::connectSignalsAndRun( SearchOperation* operationRequ
 void LogFilteredDataWorker::search( const RegularExpressionPattern& regExp, LineNumber startLine,
                                     LineNumber endLine )
 {
-    ScopedLock locker( &mutex_ ); // to protect operationRequested_
+    ScopedLock locker( mutex_ ); // to protect operationRequested_
 
     LOG_INFO << "Search requested";
 
@@ -206,7 +206,7 @@ void LogFilteredDataWorker::updateSearch( const RegularExpressionPattern& regExp
                                           LineNumber startLine, LineNumber endLine,
                                           LineNumber position )
 {
-    ScopedLock locker( &mutex_ ); // to protect operationRequested_
+    ScopedLock locker( mutex_ ); // to protect operationRequested_
 
     LOG_INFO << "Search update requested from " << position.get();
 

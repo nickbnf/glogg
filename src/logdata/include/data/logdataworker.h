@@ -73,7 +73,7 @@ class IndexingDataAccessor {
   public:
     IndexingDataAccessor( Data data )
         : data_( data )
-        , guard_( &data->dataMutex_ )
+        , guard_( data->dataMutex_ )
     {
     }
 
@@ -167,7 +167,7 @@ class IndexingDataAccessor {
 // This class is a thread-safe set of indexing data.
 class IndexingData {
   public:
-    using ConstAccessor = IndexingDataAccessor<const IndexingData*, ScopedReaderLock>;
+    using ConstAccessor = IndexingDataAccessor<const IndexingData*, ScopedLock>;
     using MutateAccessor = IndexingDataAccessor<IndexingData*, ScopedLock>;
 
   private:
@@ -203,7 +203,7 @@ class IndexingData {
     size_t allocatedSize() const;
 
   private:
-    mutable Lock dataMutex_;
+    mutable Mutex dataMutex_;
 
     LinePositionArray linePosition_;
     LineLength maxLength_;
@@ -365,7 +365,7 @@ class LogDataWorker : public QObject {
     AtomicFlag interruptRequest_;
 
     // Mutex to protect operationRequested_ and friends
-    Lock mutex_;
+    Mutex mutex_;
     QString fileName_;
 
     // Pointer to the owner's indexing data (we modify it)

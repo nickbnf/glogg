@@ -139,7 +139,7 @@ class OperationQueue {
     std::function<void()> beforeOperationStart_;
 
   private:
-    mutable Lock mutex_;
+    mutable Mutex mutex_;
     
     OperationVariant executingOperation_;
     OperationVariant pendingOperation_;

@@ -30,18 +30,15 @@ mark_as_advanced(FORCE VERBOSE)
 add_library(absl_wrapper INTERFACE)
 pkg_check_modules(ABSL_VARIANT absl_variant)
 pkg_check_modules(ABSL_OPTIONAL absl_optional)
-pkg_check_modules(ABSL_SYNC absl_synchronization)
 
-if(ABSL_VARIANT_FOUND AND ABSL_OPTIONAL_FOUND AND ABSL_SYNC_FOUND)
+if(ABSL_VARIANT_FOUND AND ABSL_OPTIONAL_FOUND)
     message("Using system abseil")
 
     target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_VARIANT_INCLUDE_DIRS})
     target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_OPTIONAL_INCLUDE_DIRS})
-    target_include_directories(absl_wrapper SYSTEM INTERFACE ${ABSL_SYNC_INCLUDE_DIRS})
 
     target_link_libraries(absl_wrapper INTERFACE ${ABSL_VARIANT_LINK_LIBRARIES})
     target_link_libraries(absl_wrapper INTERFACE ${ABSL_OPTIONAL_LINK_LIBRARIES})
-    target_link_libraries(absl_wrapper INTERFACE ${ABSL_SYNC_LINK_LIBRARIES})
 else()
     set(ABSL_ENABLE_INSTALL OFF CACHE INTERNAL "" FORCE)
     add_subdirectory(abseil) #20210324.0

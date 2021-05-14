@@ -143,19 +143,19 @@ LogDataWorker::LogDataWorker( const std::shared_ptr<IndexingData>& indexing_data
 LogDataWorker::~LogDataWorker()
 {
     interruptRequest_.set();
-    ScopedLock locker( &mutex_ );
+    ScopedLock locker( mutex_ );
     operationFuture_.waitForFinished();
 }
 
 void LogDataWorker::attachFile( const QString& fileName )
 {
-    ScopedLock locker( &mutex_ ); // to protect fileName_
+    ScopedLock locker( mutex_ ); // to protect fileName_
     fileName_ = fileName;
 }
 
 void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
 {
-    ScopedLock locker( &mutex_ );
+    ScopedLock locker( mutex_ );
     LOG_DEBUG << "FullIndex requested";
 
     operationFuture_.waitForFinished();
@@ -170,7 +170,7 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
 
 void LogDataWorker::indexAdditionalLines()
 {
-    ScopedLock locker( &mutex_ );
+    ScopedLock locker( mutex_ );
     LOG_DEBUG << "AddLines requested";
 
     operationFuture_.waitForFinished();
@@ -185,7 +185,7 @@ void LogDataWorker::indexAdditionalLines()
 
 void LogDataWorker::checkFileChanges()
 {
-    ScopedLock locker( &mutex_ );
+    ScopedLock locker( mutex_ );
     LOG_DEBUG << "Check file changes requested";
 
     operationFuture_.waitForFinished();

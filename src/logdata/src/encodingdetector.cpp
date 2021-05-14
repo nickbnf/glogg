@@ -76,7 +76,7 @@ EncodingParameters::EncodingParameters( const QTextCodec* codec )
 
 QTextCodec* EncodingDetector::detectEncoding( const QByteArray& block ) const
 {
-    ScopedLock lock( &mutex_ );
+    ScopedLock lock( mutex_ );
 
     UchardetHolder ud;
 
@@ -115,31 +115,31 @@ TextCodecHolder::TextCodecHolder( QTextCodec* codec )
 
 QTextCodec* TextCodecHolder::codec() const
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     return codec_;
 }
 
 EncodingParameters TextCodecHolder::encodingParameters() const
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     return encodingParams_;
 }
 
 int TextCodecHolder::mibEnum() const
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     return codec_->mibEnum();
 }
 
 void TextCodecHolder::setCodec( QTextCodec* codec )
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     codec_ = codec;
     encodingParams_ = EncodingParameters{ codec_ };
 }
 
 std::pair<std::unique_ptr<QTextDecoder>, EncodingParameters> TextCodecHolder::makeDecoder() const
 {
-    ScopedLock guard( &mutex_ );
+    ScopedLock guard( mutex_ );
     return std::make_pair( std::make_unique<QTextDecoder>( codec_ ), encodingParams_ );
 }

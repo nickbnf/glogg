@@ -72,25 +72,25 @@ FileHolder::~FileHolder()
 
 FileId FileHolder::getFileId()
 {
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
     return attached_file_id_;
 }
 
 qint64 FileHolder::size()
 {
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
     return attached_file_ ? attached_file_->size() : 0;
 }
 
 bool FileHolder::isOpen()
 {
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
     return attached_file_ ? attached_file_->openMode() != QIODevice::NotOpen : false;
 }
 
 void FileHolder::open( const QString& fileName )
 {
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
     file_name_ = fileName;
 
     LOG_DEBUG << "open file " << file_name_ << " keep closed " << keep_closed_;
@@ -113,7 +113,7 @@ void FileHolder::unlock()
 
 void FileHolder::attachReader()
 {
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
 
     if ( keep_closed_ && counter_ == 0 ) {
         LOG_DEBUG << "fist reader opened for " << file_name_;
@@ -127,7 +127,7 @@ void FileHolder::attachReader()
 
 void FileHolder::detachReader()
 {
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
     if ( counter_ > 0 ) {
         counter_--;
     }
@@ -147,7 +147,7 @@ void FileHolder::reOpenFile()
         openFileByHandle( reopened.get() );
     }
 
-    ScopedRecursiveLock locker( &file_mutex_ );
+    ScopedRecursiveLock locker( file_mutex_ );
     attached_file_ = std::move( reopened );
     attached_file_id_ = FileId::getFileId( file_name_ );
 }

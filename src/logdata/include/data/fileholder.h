@@ -71,7 +71,7 @@ class FileHolder {
     QFile* getFile();
 
   private:
-    RecursiveLock file_mutex_;
+    RecursiveMutex file_mutex_;
 
     QString file_name_;
     std::unique_ptr<QFile> attached_file_;

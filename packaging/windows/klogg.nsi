@@ -69,8 +69,7 @@ Section "klogg" klogg
     File release\klogg.exe
     File release\klogg_crashpad_handler.exe
     File release\klogg_minidump_dump.exe
-    File release\klogg_tbbmalloc.dll
-    File release\klogg_tbbmalloc_proxy.dll
+    File release\mimalloc.dll
 
     File COPYING
     File NOTICE
@@ -127,14 +126,16 @@ Section "MSVC Runtime libraries" vcruntime
     
 !if ${PLATFORM} == "x64"
     File release\vcruntime140_1.dll
-!endif
 
-!if ${PLATFORM} == "x64"
     File release\libcrypto-1_1-x64.dll
     File release\libssl-1_1-x64.dll
+
+    File release\mimalloc-redirect.dll
 !else
     File release\libcrypto-1_1.dll
     File release\libssl-1_1.dll
+
+    File release\mimalloc-redirect32.dll
 !endif
 
 SectionEnd
@@ -196,6 +197,10 @@ Section "Uninstall"
     Delete "$INSTDIR\libssl-1_1-x64.dll"
     Delete "$INSTDIR\libcrypto-1_1.dll"
     Delete "$INSTDIR\libssl-1_1.dll"
+    Delete "$INSTDIR\mimalloc.dll"
+    Delete "$INSTDIR\mimalloc_override.dll"
+    Delete "$INSTDIR\mimalloc_redirect.dll"
+    Delete "$INSTDIR\mimalloc_redirect32.dll"
     RMDir "$INSTDIR"
 
     ; Remove settings in %appdata%

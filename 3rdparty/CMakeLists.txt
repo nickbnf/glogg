@@ -8,6 +8,18 @@ add_subdirectory(whereami)
 add_subdirectory(kdab)
 add_subdirectory(roaring) #0.3.1
 
+if(KLOGG_USE_MIMALLOC)
+set(MI_INSTALL_TOPLEVEL ON)
+if (NOT WIN32)
+    set(MI_BUILD_SHARED OFF)
+    set(MI_BUILD_STATIC OFF)
+    if (APPLE)
+        set(MI_OSX_ZONE ON)
+    endif()
+endif()
+add_subdirectory(mimalloc) #-1.7.1
+endif()
+
 if(KLOGG_USE_SENTRY)
     set(SENTRY_BACKEND "crashpad" CACHE INTERNAL "" FORCE)
     set(SENTRY_TRANSPORT "none" CACHE INTERNAL "" FORCE)
@@ -107,7 +119,6 @@ if(KF5Archive_FOUND)
     target_link_libraries(klogg_karchive INTERFACE KF5::Archive)
 else()
     message("Using bundled KArchive")
-
     add_subdirectory(cmzlib)
     add_subdirectory(cmbzip2)
     add_subdirectory(cmliblzma)

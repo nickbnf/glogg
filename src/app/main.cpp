@@ -36,21 +36,24 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef KLOGG_USE_TBB_MALLOC
-#include <tbb/tbbmalloc_proxy.h>
-#endif
-
 #include <iostream>
 #include <memory>
 
 #include <cli11/cli11.hpp>
 
+#ifdef KLOGG_USE_MIMALLOC
+#include <mimalloc.h>
+#endif
+
+#include "kloggapp.h"
+
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#ifdef KLOGG_USE_MIMALLOC
+#include <mimalloc-new-delete.h>
+#endif
 #endif // _WIN32
-
-#include "kloggapp.h"
 
 #include "configuration.h"
 #include "klogg_version.h"
@@ -223,6 +226,10 @@ void applyStyle()
 
 int main( int argc, char* argv[] )
 {
+#ifdef KLOGG_USE_MIMALLOC
+    mi_stats_reset();
+#endif
+
     setApplicationAttributes();
 
     KloggApp app( argc, argv );

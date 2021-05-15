@@ -23,6 +23,16 @@ set(MAIN_SOURCES
     ${DOCUMENTATION_RESOURCE}
     ${ICON_FILE})
 
+set(MAIN_LIBS ui cli11 singleapp)
+if(KLOGG_USE_MIMALLOC)
+if (NOT WIN32)
+    LIST(PREPEND MAIN_LIBS mimalloc-obj)
+    LIST(PREPEND MAIN_SOURCES $<TARGET_OBJECTS:mimalloc-obj>)
+else()
+    LIST(PREPEND MAIN_LIBS mimalloc)
+endif()
+endif()
+
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
 add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})
 
@@ -38,17 +48,14 @@ set_property(TARGET klogg PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 set_property(TARGET klogg_portable PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-set(MAIN_LIBS ui cli11 singleapp)
-if (NOT APPLE)
-    LIST(APPEND MAIN_LIBS tbbmalloc_proxy_wrapper)
-    target_compile_definitions(klogg PUBLIC -DKLOGG_USE_TBB_MALLOC)
-    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_TBB_MALLOC)
-endif()
-
 target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
 target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
+if(KLOGG_USE_MIMALLOC)
+    target_compile_definitions(klogg PUBLIC -DKLOGG_USE_MIMALLOC)
+    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_MIMALLOC)
+endif()
 
 if (WIN32)
 

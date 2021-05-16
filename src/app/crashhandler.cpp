@@ -320,7 +320,7 @@ CrashHandler::CrashHandler()
                  << ", current_commit " << currentCommit << ", peak_commit " << peakCommit
                  << ", page_faults " << pageFaults;
 #else
-        LOG_INFO << "Process stats, vm_used " << memory;
+        LOG_INFO << "Process stats, vm_used " << vmUsed;
 #endif
     } );
     memoryUsageTimer_->start( 10000 );

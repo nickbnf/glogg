@@ -23,8 +23,8 @@
 #include <QRegularExpression>
 #include <QString>
 
+#include <string_view>
 #include <variant>
-
 
 #ifdef KLOGG_HAS_HS
 #include <hs.h>
@@ -89,6 +89,16 @@ class DefaultRegularExpressionMatcher {
         return ( !isExclude_ && isMatching ) || ( isExclude_ && !isMatching );
     }
 
+    bool hasMatch( const std::string_view& utf8Data ) const
+    {
+
+        const auto isMatching = regexp_
+                                    .match( QString::fromUtf8(
+                                        utf8Data.data(), static_cast<int>( utf8Data.size() ) ) )
+                                    .hasMatch();
+        return ( !isExclude_ && isMatching ) || ( isExclude_ && !isMatching );
+    }
+
   private:
     QRegularExpression regexp_;
     bool isExclude_ = false;
@@ -128,7 +138,7 @@ class HsMatcher {
     HsMatcher( HsMatcher&& other ) = default;
     HsMatcher& operator=( HsMatcher&& other ) = default;
 
-    bool hasMatch( const QString& data ) const;
+    bool hasMatch( const std::string_view& utf8Data ) const;
 
   private:
     HsDatabase database_;

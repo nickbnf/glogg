@@ -138,8 +138,8 @@ void TextCodecHolder::setCodec( QTextCodec* codec )
     encodingParams_ = EncodingParameters{ codec_ };
 }
 
-std::pair<std::unique_ptr<QTextDecoder>, EncodingParameters> TextCodecHolder::makeDecoder() const
+TextDecoder TextCodecHolder::makeDecoder() const
 {
     ScopedLock guard( mutex_ );
-    return std::make_pair( std::make_unique<QTextDecoder>( codec_ ), encodingParams_ );
+    return { std::make_unique<QTextDecoder>( codec_ ), encodingParams_ };
 }

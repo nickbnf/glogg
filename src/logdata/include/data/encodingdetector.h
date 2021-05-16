@@ -79,6 +79,12 @@ class EncodingDetector {
     mutable Mutex mutex_;
 };
 
+struct TextDecoder
+{
+  std::unique_ptr<QTextDecoder> decoder;
+  EncodingParameters encodingParams;
+};
+
 class TextCodecHolder {
   public:
     explicit TextCodecHolder( QTextCodec* codec );
@@ -89,7 +95,7 @@ class TextCodecHolder {
     EncodingParameters encodingParameters() const;
     int mibEnum() const;
 
-    std::pair<std::unique_ptr<QTextDecoder>, EncodingParameters> makeDecoder() const;
+    TextDecoder makeDecoder() const;
 
   private:
     QTextCodec* codec_;

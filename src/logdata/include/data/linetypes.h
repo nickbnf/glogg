@@ -28,6 +28,7 @@
 #include <QString>
 
 #include <plog/Record.h>
+#include <string_view>
 
 using LineOffset
     = fluent::NamedType<int64_t, struct line_offset, fluent::Addable, fluent::Incrementable,
@@ -196,23 +197,17 @@ QString untabify( const LineType& line, int initialPosition = 0 )
 }
 
 template <typename LineType>
-LineLength getUntabifiedLength( const LineType& line )
+LineLength getUntabifiedLength( const LineType& utf8Line )
 {
-    long total_spaces = 0;
+    size_t totalSpaces = 0;
 
-    const auto dataLength = static_cast<size_t>( line.length() * 2 );
-    auto tab = reinterpret_cast<const char*>( std::memchr( line.unicode(), '\t', dataLength ) );
-    while ( tab != nullptr ) {
+    auto tabPosition = utf8Line.find( '\t' );
+    while ( tabPosition != std::string_view::npos ) {
+        const auto spaces = TabStop - ( ( tabPosition + totalSpaces ) % TabStop ) - 1;
+        totalSpaces += spaces;
 
-        const auto tabPosition
-            = static_cast<long>( tab - reinterpret_cast<const char*>( line.unicode() ) );
-        const auto spaces = TabStop - ( ( tabPosition + total_spaces ) % TabStop );
-        total_spaces += spaces - 1;
-
-        tab++;
-        tab = reinterpret_cast<const char*>(
-            std::memchr( tab, '\t', dataLength - static_cast<size_t>( tabPosition ) ) );
+        tabPosition = utf8Line.find( '\t', tabPosition + 1);
     }
 
-    return LineLength( line.length() + static_cast<int>( total_spaces ) );
+    return LineLength( static_cast<int>( utf8Line.size() + totalSpaces ) );
 }

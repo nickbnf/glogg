@@ -17,6 +17,7 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string_view>
 #ifdef KLOGG_HAS_HS
 #include "hsregularexpression.h"
 
@@ -54,7 +55,7 @@ HsMatcher::HsMatcher( HsDatabase db, HsScratch scratch, int requiredMatches )
 {
 }
 
-bool HsMatcher::hasMatch( const QString& data ) const
+bool HsMatcher::hasMatch( const std::string_view& utf8Data ) const
 {
     if ( !scratch_ || !database_ ) {
         return false;
@@ -62,7 +63,6 @@ bool HsMatcher::hasMatch( const QString& data ) const
 
     int matchResult = 0;
 
-    const auto utf8Data = data.toUtf8();
     const auto scanResult
         = hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ),
                    0, scratch_.get(), matchCallback, static_cast<void*>( &matchResult ) );

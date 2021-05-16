@@ -38,6 +38,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <plog/Log.h>
 #include <utility>
 
 #include <QtConcurrent>
@@ -88,13 +89,16 @@ struct SearchBlockData {
     LogData::RawLines lines;
 };
 
-PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vector<QString>& lines,
+PartialSearchResults filterLines( const MatcherVariant& matcher, const LogData::RawLines& rawLines,
                                   LineNumber chunkStart )
 {
     LOG_DEBUG << "Filter lines at " << chunkStart;
     PartialSearchResults results;
     results.chunkStart = chunkStart;
-    results.processedLines = LinesCount( static_cast<LinesCount::UnderlyingType>( lines.size() ) );
+    results.processedLines = rawLines.numberOfLines;
+
+    const auto& lines = rawLines.transformToUtf8();
+
     for ( auto offset = 0_lcount; offset < results.processedLines; ++offset ) {
         const auto& line = lines[ offset.get() ];
 
@@ -105,6 +109,9 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const std::vect
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );
             const auto lineNumber = chunkStart + offset;
             results.matchingLines.add( lineNumber.get() );
+
+            //LOG_INFO << "Match at " << lineNumber << ": " << line;          
+
         }
     }
     return results;
@@ -349,13 +356,12 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                                : MatcherVariant{ DefaultRegularExpressionMatcher( regexp_ ) },
             microseconds{ 0 },
             RegexMatcherNode(
-                searchGraph, 1, [ this, &regexMatchers, index ]( const BlockDataType& blockData ) {
+                searchGraph, 1, [ &regexMatchers, index ]( const BlockDataType& blockData ) {
                     const auto& matcher = std::get<0>( regexMatchers.at( index ) );
                     const auto matchStartTime = high_resolution_clock::now();
 
                     auto results = std::make_shared<PartialSearchResults>(
-                        filterLines( matcher, sourceLogData_.decodeLines( blockData->lines ),
-                                     blockData->chunkStart ) );
+                        filterLines( matcher, blockData->lines, blockData->chunkStart ) );
 
                     const auto matchEndTime = high_resolution_clock::now();
 

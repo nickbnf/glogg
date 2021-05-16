@@ -46,6 +46,8 @@
 #include <QObject>
 #include <QString>
 #include <QTextCodec>
+#include <qtextcodec.h>
+#include <string_view>
 
 #include "abstractlogdata.h"
 #include "fileholder.h"
@@ -102,12 +104,20 @@ class LogData : public AbstractLogData {
     {
       LineNumber startLine;
       LinesCount numberOfLines;
+
       std::vector<char> buffer;
       std::vector<qint64> endOfLines;
+
+      TextDecoder textDecoder;
+
+      std::vector<QString> decodeLines() const;
+      std::vector<std::string_view> transformToUtf8() const;
+
+      private:
+      mutable QByteArray utf8Data_;
     };
 
     RawLines getLinesRaw(LineNumber first, LinesCount number) const;
-    std::vector<QString> decodeLines(const RawLines& rawLines) const;
 
   signals:
     // Sent during the 'attach' process to signal progress

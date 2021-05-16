@@ -21,6 +21,10 @@
 
 #include "sentry.h"
 
+#ifdef KLOGG_USE_MIMALLOC
+#include <mimalloc.h>
+#endif
+
 #include "klogg_version.h"
 #include "log.h"
 #include "memory_info.h"
@@ -109,7 +113,7 @@ QDialog::DialogCode askUserConfirmation( const QString& formattedReport, const Q
     exploreButton->setText( "Open report directory" );
     exploreButton->setFlat( true );
     QObject::connect( exploreButton.get(), &QPushButton::clicked,
-                      [&reportPath] { showPathInFileExplorer( reportPath ); } );
+                      [ &reportPath ] { showPathInFileExplorer( reportPath ); } );
 
     auto privacyLayout = std::make_unique<QHBoxLayout>();
     privacyLayout->addWidget( privacyPolicy.release() );
@@ -284,9 +288,40 @@ CrashHandler::CrashHandler()
 
     memoryUsageTimer_ = std::make_unique<QTimer>();
     QObject::connect( memoryUsageTimer_.get(), &QTimer::timeout, []() {
-        const auto memory = std::to_string( usedMemory() );
-        LOG_INFO << "Used memory " << memory;
-        sentry_set_extra( "vm_used", sentry_value_new_string( memory.c_str() ) );
+        const auto vmUsed = std::to_string( usedMemory() );
+
+        sentry_set_extra( "vm_used", sentry_value_new_string( vmUsed.c_str() ) );
+
+#ifdef KLOGG_USE_MIMALLOC
+        size_t elapsedMsecs, userMsecs, systemMsecs, currentRss, peakRss, currentCommit, peakCommit,
+            pageFaults;
+        mi_process_info( &elapsedMsecs, &userMsecs, &systemMsecs, &currentRss, &peakRss,
+                         &currentCommit, &peakCommit, &pageFaults );
+        sentry_set_extra( "elapsed_msecs",
+                          sentry_value_new_string( std::to_string( elapsedMsecs ).c_str() ) );
+        sentry_set_extra( "user_msecs",
+                          sentry_value_new_string( std::to_string( userMsecs ).c_str() ) );
+        sentry_set_extra( "system_msecs",
+                          sentry_value_new_string( std::to_string( systemMsecs ).c_str() ) );
+        sentry_set_extra( "current_rss",
+                          sentry_value_new_string( std::to_string( currentRss ).c_str() ) );
+        sentry_set_extra( "peak_rss",
+                          sentry_value_new_string( std::to_string( peakRss ).c_str() ) );
+        sentry_set_extra( "current_commit",
+                          sentry_value_new_string( std::to_string( currentCommit ).c_str() ) );
+        sentry_set_extra( "peak_commit",
+                          sentry_value_new_string( std::to_string( peakCommit ).c_str() ) );
+        sentry_set_extra( "page_faults",
+                          sentry_value_new_string( std::to_string( pageFaults ).c_str() ) );
+
+        LOG_INFO << "Process stats, vm_used " << vmUsed << ", elapsed_msecs " << elapsedMsecs
+                 << ", user_msecs " << userMsecs << ", system_msecs " << systemMsecs
+                 << ", current_rss " << currentRss << ", peak_rss " << peakRss
+                 << ", current_commit " << currentCommit << ", peak_commit " << peakCommit
+                 << ", page_faults " << pageFaults;
+#else
+        LOG_INFO << "Process stats, vm_used " << memory;
+#endif
     } );
     memoryUsageTimer_->start( 10000 );
 

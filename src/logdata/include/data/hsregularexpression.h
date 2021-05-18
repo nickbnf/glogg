@@ -23,12 +23,15 @@
 #include <QRegularExpression>
 #include <QString>
 
+#include <hs_runtime.h>
 #include <string_view>
 #include <variant>
 
 #ifdef KLOGG_HAS_HS
 #include <hs.h>
-#include <memory>
+
+#include "resourcewrapper.h"
+
 #endif
 
 struct RegularExpressionPattern {
@@ -106,26 +109,8 @@ class DefaultRegularExpressionMatcher {
 
 #ifdef KLOGG_HAS_HS
 
-template <typename T, int ( *Func )( T* )>
-struct HsDeleteHelper {
-    void operator()( T* t )
-    {
-        Func( t );
-    }
-};
-
-template <typename T, int ( *Deleter )( T* ), typename CreateFunc, typename... Args>
-std::unique_ptr<T, HsDeleteHelper<T, Deleter>> wrapHsPointer( CreateFunc createFunc,
-                                                              Args&&... args )
-{
-    return { createFunc( std::forward<Args>( args )... ), {} };
-}
-
-using HsScratchDeleter = HsDeleteHelper<hs_scratch_t, hs_free_scratch>;
-using HsScratch = std::unique_ptr<hs_scratch_t, HsScratchDeleter>;
-
-using HsDatabaseDeleter = HsDeleteHelper<hs_database_t, hs_free_database>;
-using HsDatabase = std::shared_ptr<hs_database_t>;
+using HsScratch = UniqueResource<hs_scratch_t, hs_free_scratch>;
+using HsDatabase = SharedResource<hs_database_t>;
 
 class HsMatcher {
   public:

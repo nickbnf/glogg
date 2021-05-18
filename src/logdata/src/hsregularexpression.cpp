@@ -81,7 +81,7 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
     requiredMatches_ = static_cast<int>( std::count_if(
         patterns.begin(), patterns.end(), []( const auto& p ) { return !p.isExclude; } ) );
 
-    database_ = HsDatabase{ wrapHsPointer<hs_database_t, hs_free_database>(
+    database_ = HsDatabase{ makeUniqueResource<hs_database_t, hs_free_database>(
         []( const std::vector<RegularExpressionPattern>& expressions,
             QString& errorMessage ) -> hs_database_t* {
             hs_database_t* db = nullptr;
@@ -134,7 +134,7 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
         patterns, errorMessage_ ) };
 
     if ( database_ ) {
-        scratch_ = wrapHsPointer<hs_scratch_t, hs_free_scratch>(
+        scratch_ = makeUniqueResource<hs_scratch_t, hs_free_scratch>(
             []( hs_database_t* db ) -> hs_scratch_t* {
                 hs_scratch_t* scratch = nullptr;
 
@@ -166,7 +166,7 @@ MatcherVariant HsRegularExpression::createMatcher() const
         return MatcherVariant{ DefaultRegularExpressionMatcher( pattern_ ) };
     }
 
-    auto matcherScratch = wrapHsPointer<hs_scratch_t, hs_free_scratch>(
+    auto matcherScratch = makeUniqueResource<hs_scratch_t, hs_free_scratch>(
         []( hs_scratch_t* prototype ) -> hs_scratch_t* {
             hs_scratch_t* scratch = nullptr;
 

@@ -25,7 +25,7 @@ set(MAIN_SOURCES
 
 set(MAIN_LIBS ui cli11 singleapp)
 if(KLOGG_OVERRIDE_MALLOC)
-    LIST(PREPEND MAIN_LIBS klogg_tbbmalloc_proxy)
+    LIST(PREPEND MAIN_LIBS tbbmalloc_proxy_wrapper)
 endif()
 
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})

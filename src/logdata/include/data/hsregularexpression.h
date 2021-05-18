@@ -20,18 +20,16 @@
 #ifndef KLOGG_HS_REGULAR_EXPRESSION
 #define KLOGG_HS_REGULAR_EXPRESSION
 
-#include <QRegularExpression>
-#include <QString>
-
-#include <hs_runtime.h>
 #include <string_view>
 #include <variant>
+
+#include <QRegularExpression>
+#include <QString>
 
 #ifdef KLOGG_HAS_HS
 #include <hs.h>
 
 #include "resourcewrapper.h"
-
 #endif
 
 struct RegularExpressionPattern {

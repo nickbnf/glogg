@@ -141,11 +141,17 @@ LogDataWorker::LogDataWorker( const std::shared_ptr<IndexingData>& indexing_data
 {
 }
 
-LogDataWorker::~LogDataWorker()
+void LogDataWorker::waitForDone()
+{
+    operationsExecuter_.wait();
+    interruptRequest_.clear();
+}
+
+LogDataWorker::~LogDataWorker() noexcept
 {
     interruptRequest_.set();
     ScopedLock locker( mutex_ );
-    operationFuture_.waitForFinished();
+    waitForDone();
 }
 
 void LogDataWorker::attachFile( const QString& fileName )
@@ -159,10 +165,9 @@ void LogDataWorker::indexAll( QTextCodec* forcedEncoding )
     ScopedLock locker( mutex_ );
     LOG_DEBUG << "FullIndex requested";
 
-    operationFuture_.waitForFinished();
-    interruptRequest_.clear();
+    waitForDone();
 
-    operationFuture_ = QtConcurrent::run( [ this, forcedEncoding, fileName = fileName_ ] {
+    operationsExecuter_.run( [ this, forcedEncoding, fileName = fileName_ ] {
         auto operationRequested = std::make_unique<FullIndexOperation>(
             fileName, indexing_data_, interruptRequest_, forcedEncoding );
         return connectSignalsAndRun( operationRequested.get() );
@@ -174,10 +179,9 @@ void LogDataWorker::indexAdditionalLines()
     ScopedLock locker( mutex_ );
     LOG_DEBUG << "AddLines requested";
 
-    operationFuture_.waitForFinished();
-    interruptRequest_.clear();
+    waitForDone();
 
-    operationFuture_ = QtConcurrent::run( [ this, fileName = fileName_ ] {
+    operationsExecuter_.run( [ this, fileName = fileName_ ] {
         auto operationRequested = std::make_unique<PartialIndexOperation>( fileName, indexing_data_,
                                                                            interruptRequest_ );
         return connectSignalsAndRun( operationRequested.get() );
@@ -189,10 +193,9 @@ void LogDataWorker::checkFileChanges()
     ScopedLock locker( mutex_ );
     LOG_DEBUG << "Check file changes requested";
 
-    operationFuture_.waitForFinished();
-    interruptRequest_.clear();
+    waitForDone();
 
-    operationFuture_ = QtConcurrent::run( [ this, fileName = fileName_ ] {
+    operationsExecuter_.run( [ this, fileName = fileName_ ] {
         auto operationRequested = std::make_unique<CheckFileChangesOperation>(
             fileName, indexing_data_, interruptRequest_ );
 

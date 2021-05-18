@@ -39,22 +39,22 @@
 #ifndef LOGDATAWORKERTHREAD_H
 #define LOGDATAWORKERTHREAD_H
 
-#include <QCryptographicHash>
-#include <QFuture>
+#include <oneapi/tbb/task_group.h>
+#include <variant>
+
+
 #include <QObject>
 #include <QTextCodec>
 
-#include <variant>
-
-#include <deque>
-
-#include "encodingdetector.h"
-#include "linepositionarray.h"
-#include "loadingstatus.h"
+#include <tbb/task_group.h>
 
 #include "atomicflag.h"
 #include "filedigest.h"
 #include "synchronization.h"
+
+#include "encodingdetector.h"
+#include "linepositionarray.h"
+#include "loadingstatus.h"
 
 struct IndexedHash {
     qint64 size = 0;
@@ -266,7 +266,8 @@ class IndexOperation : public QObject {
     FastLinePositionArray parseDataBlock( LineOffset::UnderlyingType blockBegining,
                                           const QByteArray& block, IndexingState& state ) const;
 
-    void guessEncoding( const QByteArray& block, IndexingData::MutateAccessor& scopedAccessor, IndexingState& state ) const;
+    void guessEncoding( const QByteArray& block, IndexingData::MutateAccessor& scopedAccessor,
+                        IndexingState& state ) const;
 };
 
 class FullIndexOperation : public IndexOperation {
@@ -287,7 +288,8 @@ class FullIndexOperation : public IndexOperation {
 class PartialIndexOperation : public IndexOperation {
     Q_OBJECT
   public:
-    PartialIndexOperation( const QString& fileName, const std::shared_ptr<IndexingData>& indexingData,
+    PartialIndexOperation( const QString& fileName,
+                           const std::shared_ptr<IndexingData>& indexingData,
                            AtomicFlag& interruptRequest )
         : IndexOperation( fileName, indexingData, interruptRequest )
     {
@@ -299,7 +301,8 @@ class PartialIndexOperation : public IndexOperation {
 class CheckFileChangesOperation : public IndexOperation {
     Q_OBJECT
   public:
-    CheckFileChangesOperation( const QString& fileName, const std::shared_ptr<IndexingData>& indexingData,
+    CheckFileChangesOperation( const QString& fileName,
+                               const std::shared_ptr<IndexingData>& indexingData,
                                AtomicFlag& interruptRequest )
         : IndexOperation( fileName, indexingData, interruptRequest )
     {
@@ -318,13 +321,13 @@ class LogDataWorker : public QObject {
     // Pass a pointer to the IndexingData (initially empty)
     // This object will change it when indexing (IndexingData must be thread safe!)
     explicit LogDataWorker( const std::shared_ptr<IndexingData>& indexing_data );
-    ~LogDataWorker() override;
+    ~LogDataWorker() noexcept override;
 
-    LogDataWorker(const LogDataWorker&) = delete;
-    LogDataWorker& operator=(const LogDataWorker&&) = delete;
+    LogDataWorker( const LogDataWorker& ) = delete;
+    LogDataWorker& operator=( const LogDataWorker&& ) = delete;
 
-    LogDataWorker(LogDataWorker&&) = delete;
-    LogDataWorker& operator=(LogDataWorker&&) = delete;
+    LogDataWorker( LogDataWorker&& ) = delete;
+    LogDataWorker& operator=( LogDataWorker&& ) = delete;
 
     // Attaches to a file on disk. Attaching to a non existant file
     // will work, it will just appear as an empty file.
@@ -359,8 +362,9 @@ class LogDataWorker : public QObject {
 
   private:
     OperationResult connectSignalsAndRun( IndexOperation* operationRequested );
+    void waitForDone();
 
-    QFuture<OperationResult> operationFuture_;
+    tbb::task_group operationsExecuter_;
 
     AtomicFlag interruptRequest_;
 

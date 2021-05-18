@@ -41,14 +41,13 @@
 
 #include <QObject>
 
-#include <QFuture>
-
 #include <roaring.hh>
+#include <tbb/task_group.h>
 
 #include "atomicflag.h"
+#include "hsregularexpression.h"
 #include "linetypes.h"
 #include "synchronization.h"
-#include "hsregularexpression.h"
 
 class LogData;
 
@@ -81,8 +80,7 @@ class MatchingLine {
 // a fixed "in-place" array (vector) is probably fine.
 using SearchResultArray = Roaring;
 
-struct SearchResults
-{
+struct SearchResults {
     SearchResultArray newMatches;
     LineLength maxLength;
     LinesCount processedLines;
@@ -126,7 +124,8 @@ class SearchOperation : public QObject {
     Q_OBJECT
   public:
     SearchOperation( const LogData& sourceLogData, AtomicFlag& interruptRequested,
-                     const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine );
+                     const RegularExpressionPattern& regExp, LineNumber startLine,
+                     LineNumber endLine );
 
     // Run the search operation, returns true if it has been done
     // and false if it has been cancelled (results not copied)
@@ -159,7 +158,6 @@ class FullSearchOperation : public SearchOperation {
     }
 
     void run( SearchData& result ) override;
-
 };
 
 class UpdateSearchOperation : public SearchOperation {
@@ -184,20 +182,20 @@ class LogFilteredDataWorker : public QObject {
 
   public:
     explicit LogFilteredDataWorker( const LogData& sourceLogData );
-    ~LogFilteredDataWorker() override;
+    ~LogFilteredDataWorker() noexcept override;
 
-    LogFilteredDataWorker(const LogFilteredDataWorker&) = delete;
-    LogFilteredDataWorker& operator=(const LogFilteredDataWorker&&) = delete;
+    LogFilteredDataWorker( const LogFilteredDataWorker& ) = delete;
+    LogFilteredDataWorker& operator=( const LogFilteredDataWorker&& ) = delete;
 
-    LogFilteredDataWorker(LogFilteredDataWorker&&) = delete;
-    LogFilteredDataWorker& operator=(LogFilteredDataWorker&&) = delete;
+    LogFilteredDataWorker( LogFilteredDataWorker&& ) = delete;
+    LogFilteredDataWorker& operator=( LogFilteredDataWorker&& ) = delete;
 
     // Start the search with the passed regexp
     void search( const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine );
     // Continue the previous search starting at the passed position
     // in the source file (line number)
-    void updateSearch( const RegularExpressionPattern& regExp, LineNumber startLine, LineNumber endLine,
-                       LineNumber position );
+    void updateSearch( const RegularExpressionPattern& regExp, LineNumber startLine,
+                       LineNumber endLine, LineNumber position );
 
     // Interrupts the search if one is in progress
     void interrupt();
@@ -222,7 +220,7 @@ class LogFilteredDataWorker : public QObject {
 
     // Mutex to protect operationRequested_ and friends
     Mutex mutex_;
-    QFuture<void> operationFuture_;
+    tbb::task_group operationsExecuter_;
 
     // Shared indexing data
     SearchData searchData_;

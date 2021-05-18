@@ -41,8 +41,7 @@
 #include <plog/Log.h>
 #include <utility>
 
-#include <QtConcurrent>
-
+#include <tbb/info.h>
 #include <tbb/flow_graph.h>
 
 #include "configuration.h"
@@ -110,8 +109,7 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const LogData::
             const auto lineNumber = chunkStart + offset;
             results.matchingLines.add( lineNumber.get() );
 
-            //LOG_INFO << "Match at " << lineNumber << ": " << line;          
-
+            // LOG_INFO << "Match at " << lineNumber << ": " << line;
         }
     }
     return results;
@@ -174,11 +172,12 @@ LogFilteredDataWorker::LogFilteredDataWorker( const LogData& sourceLogData )
 {
 }
 
-LogFilteredDataWorker::~LogFilteredDataWorker()
+LogFilteredDataWorker::~LogFilteredDataWorker() noexcept
 {
     interruptRequested_.set();
     ScopedLock locker( mutex_ );
-    operationFuture_.waitForFinished();
+    operationsExecuter_.cancel();
+    operationsExecuter_.wait();
 }
 
 void LogFilteredDataWorker::connectSignalsAndRun( SearchOperation* operationRequested )
@@ -199,10 +198,11 @@ void LogFilteredDataWorker::search( const RegularExpressionPattern& regExp, Line
 
     LOG_INFO << "Search requested";
 
-    operationFuture_.waitForFinished();
+    operationsExecuter_.cancel();
+    operationsExecuter_.wait();
     interruptRequested_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, regExp, startLine, endLine ] {
+    operationsExecuter_.run( [ this, regExp, startLine, endLine ] {
         auto operationRequested = std::make_unique<FullSearchOperation>(
             sourceLogData_, interruptRequested_, regExp, startLine, endLine );
         connectSignalsAndRun( operationRequested.get() );
@@ -217,10 +217,11 @@ void LogFilteredDataWorker::updateSearch( const RegularExpressionPattern& regExp
 
     LOG_INFO << "Search update requested from " << position.get();
 
-    operationFuture_.waitForFinished();
+    operationsExecuter_.cancel();
+    operationsExecuter_.wait();
     interruptRequested_.clear();
 
-    operationFuture_ = QtConcurrent::run( [ this, regExp, startLine, endLine, position ] {
+    operationsExecuter_.run( [ this, regExp, startLine, endLine, position ] {
         auto operationRequested = std::make_unique<UpdateSearchOperation>(
             sourceLogData_, interruptRequested_, regExp, startLine, endLine, position );
         connectSignalsAndRun( operationRequested.get() );
@@ -272,7 +273,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
         }
 
         return qMax( 1, config.searchThreadPoolSize() == 0
-                            ? QThread::idealThreadCount()
+                            ? tbb::info::default_concurrency()
                             : static_cast<int>( config.searchThreadPoolSize() ) );
     }() );
 

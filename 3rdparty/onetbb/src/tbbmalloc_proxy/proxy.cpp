@@ -131,6 +131,7 @@ extern "C" void *__TBB_malloc_proxy(size_t) __attribute__ ((alias ("malloc")));
 static void *orig_msize;
 
 #elif MALLOC_ZONE_OVERLOAD_ENABLED
+extern "C" void *__TBB_malloc_proxy() {return nullptr;}
 
 #include "proxy_overload_osx.h"
 

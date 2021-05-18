@@ -17,6 +17,8 @@ option(KLOGG_BUILD_TESTS "Build tests" ON)
 option(KLOGG_USE_LTO "Use link time optimization" ON)
 option(KLOGG_USE_SENTRY "Use Sentry" OFF)
 option(KLOGG_GENERIC_CPU "Build for generic CPU" OFF)
+option(KLOGG_OVERRIDE_MALLOC "Use malloc global override" ON)
+
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(KLOGG_ARCH 32)
@@ -32,12 +34,6 @@ if(WIN32)
     endif()
 else()
     option(KLOGG_USE_HYPERSCAN "Use Hyperscan" ON)
-endif()
-
-if (APPLE)
-    option(KLOGG_USE_MIMALLOC "Use mimalloc global override" OFF)
-else()
-    option(KLOGG_USE_MIMALLOC "Use mimalloc global override" ON)
 endif()
 
 set(BUILD_VERSION $ENV{KLOGG_VERSION} CACHE STRING "build version")
@@ -241,6 +237,7 @@ if(UNIX)
             /usr/share/icons/hicolor/scalable
             /usr/share/icons/hicolor/scalable/apps
         )
+        set(CPACK_RPM_PACKAGE_PROVIDES "libklogg_tbbmalloc.so()(64bit),libklogg_tbbmalloc_proxy.so()(64bit)")
 
     endif()
     INCLUDE(CPack)

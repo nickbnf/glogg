@@ -24,13 +24,8 @@ set(MAIN_SOURCES
     ${ICON_FILE})
 
 set(MAIN_LIBS ui cli11 singleapp)
-if(KLOGG_USE_MIMALLOC)
-if (NOT WIN32)
-    LIST(PREPEND MAIN_LIBS mimalloc-obj)
-    LIST(PREPEND MAIN_SOURCES $<TARGET_OBJECTS:mimalloc-obj>)
-else()
-    LIST(PREPEND MAIN_LIBS mimalloc)
-endif()
+if(KLOGG_OVERRIDE_MALLOC)
+    LIST(PREPEND MAIN_LIBS klogg_tbbmalloc_proxy)
 endif()
 
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
@@ -52,9 +47,9 @@ target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
 target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
-if(KLOGG_USE_MIMALLOC)
-    target_compile_definitions(klogg PUBLIC -DKLOGG_USE_MIMALLOC)
-    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_MIMALLOC)
+if(KLOGG_OVERRIDE_MALLOC)
+    target_compile_definitions(klogg PUBLIC -DKLOGG_OVERRIDE_MALLOC)
+    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_OVERRIDE_MALLOC)
 endif()
 
 if (WIN32)

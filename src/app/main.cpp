@@ -41,8 +41,8 @@
 
 #include <cli11/cli11.hpp>
 
-#ifdef KLOGG_USE_MIMALLOC
-#include <mimalloc.h>
+#ifdef KLOGG_OVERRIDE_MALLOC
+#include <tbb/tbbmalloc_proxy.h>
 #endif
 
 #include "kloggapp.h"
@@ -50,9 +50,6 @@
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#ifdef KLOGG_USE_MIMALLOC
-#include <mimalloc-new-delete.h>
-#endif
 #endif // _WIN32
 
 #include "configuration.h"

@@ -71,7 +71,7 @@ class WriteFileThread : public QThread {
 
 #include "logdata_test.moc"
 
-#ifdef _WIN32
+
 void writeDataToFileBackground( QFile& file, int numberOfLines = 200,
                                 WriteFileModification flag = WriteFileModification::None )
 {
@@ -79,7 +79,7 @@ void writeDataToFileBackground( QFile& file, int numberOfLines = 200,
     thread->start();
     QObject::connect( thread, &WriteFileThread::finished, thread, &WriteFileThread::deleteLater );
 }
-#endif
+
 void writeDataToFile( QFile& file, int numberOfLines = 200,
                       WriteFileModification flag = WriteFileModification::None )
 {
@@ -155,11 +155,8 @@ TEST_CASE( "Logdata reading changing file", "[logdata]" )
     // Add some data to it
     if ( file.isOpen() ) {
         // To test the edge case when the final line is not complete
-#ifdef Q_OS_WIN
+        QTest::qWait( 100 );
         writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
-#else
-        writeDataToFile( file, 200, WriteFileModification::EndWithPartialLineBegin );
-#endif
     }
 
     // and wait for the signals

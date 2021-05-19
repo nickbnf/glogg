@@ -17,7 +17,12 @@ option(KLOGG_BUILD_TESTS "Build tests" ON)
 option(KLOGG_USE_LTO "Use link time optimization" ON)
 option(KLOGG_USE_SENTRY "Use Sentry" OFF)
 option(KLOGG_GENERIC_CPU "Build for generic CPU" OFF)
+
+if(APPLE)
+option(KLOGG_OVERRIDE_MALLOC "Use malloc global override" OFF)
+else()
 option(KLOGG_OVERRIDE_MALLOC "Use malloc global override" ON)
+endif()
 
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 4)

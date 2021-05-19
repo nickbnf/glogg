@@ -71,7 +71,7 @@ class WriteFileThread : public QThread {
 
 #include "logdata_test.moc"
 
-
+#ifdef _WIN32
 void writeDataToFileBackground( QFile& file, int numberOfLines = 200,
                                 WriteFileModification flag = WriteFileModification::None )
 {
@@ -79,7 +79,7 @@ void writeDataToFileBackground( QFile& file, int numberOfLines = 200,
     thread->start();
     QObject::connect( thread, &WriteFileThread::finished, thread, &WriteFileThread::deleteLater );
 }
-
+#endif
 void writeDataToFile( QFile& file, int numberOfLines = 200,
                       WriteFileModification flag = WriteFileModification::None )
 {
@@ -126,12 +126,9 @@ TEST_CASE( "Logdata reading changing file", "[logdata]" )
 
     QTemporaryDir tempDir;
 
-    LogData log_data;
+    LogData logData;
 
-    auto finishedSpy
-        = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
-    SafeQSignalSpy progressSpy( &log_data, SIGNAL( loadingProgressed( int ) ) );
-    SafeQSignalSpy changedSpy( &log_data, SIGNAL( fileChanged( MonitoredFileStatus ) ) );
+    SafeQSignalSpy changedSpy( &logData, SIGNAL( fileChanged( MonitoredFileStatus ) ) );
 
     // Generate a small file
     QFile file{ tempDir.path() + QDir::separator() + QLatin1String( "testlog.txt" ) };
@@ -140,42 +137,34 @@ TEST_CASE( "Logdata reading changing file", "[logdata]" )
     }
 
     // Start loading it
-    log_data.attachFile( file.fileName() );
-
-    // and wait for the signal
-    REQUIRE( finishedSpy->safeWait() );
+    logData.attachFile( file.fileName() );
+    waitUiState( [ &logData ] { return logData.getNbLine() == 200_lcount; } );
 
     // Check we have the small file
-    REQUIRE( finishedSpy->count() == 1 );
-    REQUIRE( log_data.getNbLine() == 200_lcount );
-    REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
-    REQUIRE( log_data.getFileSize() == 200 * ( SL_LINE_LENGTH + 1LL ) );
+    REQUIRE( logData.getNbLine() == 200_lcount );
+    REQUIRE( logData.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
+    REQUIRE( logData.getFileSize() == 200 * ( SL_LINE_LENGTH + 1LL ) );
 
-    auto finishedSpyCount = finishedSpy->count();
     // Add some data to it
     if ( file.isOpen() ) {
         // To test the edge case when the final line is not complete
-        QTest::qWait( 100 );
+#ifdef Q_OS_WIN
         writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
+#else
+        writeDataToFile( file, 200, WriteFileModification::EndWithPartialLineBegin );
+#endif
     }
 
-    // and wait for the signals
-    finishedSpy->wait( 10000 );
-
-    REQUIRE( finishedSpy->count() > finishedSpyCount );
+    waitUiState( [ &logData ] { return logData.getNbLine() == 401_lcount; } );
 
     // Check we have a bigger file
     REQUIRE( changedSpy.count() >= 1 );
-    REQUIRE( finishedSpy->count() == 2 );
-    REQUIRE( log_data.getNbLine() == 401_lcount );
-    REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
-    REQUIRE( log_data.getFileSize()
+    REQUIRE( logData.getNbLine() == 401_lcount );
+    REQUIRE( logData.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
+    REQUIRE( logData.getFileSize()
              == (qint64)( 400 * ( SL_LINE_LENGTH + 1LL ) + strlen( partial_line_begin ) ) );
 
     {
-        finishedSpy = std::make_unique<SafeQSignalSpy>(
-            &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
-
         // Add a couple more lines, including the end of the unfinished one.
         if ( file.isOpen() ) {
 #ifdef Q_OS_WIN
@@ -185,35 +174,28 @@ TEST_CASE( "Logdata reading changing file", "[logdata]" )
 #endif
         }
 
-        // and wait for the signals
-        REQUIRE( finishedSpy->wait( 10000 ) );
+        waitUiState( [ &logData ] { return logData.getNbLine() == 421_lcount; } );
 
         // Check we have a bigger file
         REQUIRE( changedSpy.count() >= 2 );
-        REQUIRE( finishedSpy->count() == 1 );
-        REQUIRE( log_data.getNbLine() == 421_lcount );
-        REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
-        REQUIRE( log_data.getFileSize()
+        REQUIRE( logData.getNbLine() == 421_lcount );
+        REQUIRE( logData.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
+        REQUIRE( logData.getFileSize()
                  == (qint64)( 420 * ( SL_LINE_LENGTH + 1LL ) + strlen( partial_line_begin )
                               + strlen( partial_line_end ) ) );
     }
 
     {
-        finishedSpy = std::make_unique<SafeQSignalSpy>(
-            &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
-
         // Truncate the file
         QVERIFY( file.resize( 0 ) );
 
-        // and wait for the signals
-        REQUIRE( finishedSpy->safeWait() );
+        waitUiState( [ &logData ] { return logData.getNbLine() == 0_lcount; } );
 
         // Check we have an empty file
         REQUIRE( changedSpy.count() >= 3 );
-        REQUIRE( finishedSpy->count() == 1 );
-        REQUIRE( log_data.getNbLine() == 0_lcount );
-        REQUIRE( log_data.getMaxLength().get() == 0 );
-        REQUIRE( log_data.getFileSize() == 0LL );
+        REQUIRE( logData.getNbLine() == 0_lcount );
+        REQUIRE( logData.getMaxLength().get() == 0 );
+        REQUIRE( logData.getFileSize() == 0LL );
     }
 }
 

@@ -38,7 +38,6 @@ target_include_directories(logdata PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/
 
 target_link_libraries(logdata PUBLIC
         Qt5::Core
-        Qt5::Concurrent
         roaring
         tbb_wrapper
         named_type

@@ -36,23 +36,24 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+#include <cmath>
+#include <string_view>
+#include <thread>
+
 #include <QFile>
+#include <QFileInfo>
 #include <QMessageBox>
-#include <QtConcurrent>
+
+#include <tbb/flow_graph.h>
 
 #include "configuration.h"
 #include "log.h"
 #include "logdata.h"
-#include "logdataworker.h"
 #include "progress.h"
 #include "readablesize.h"
 
-#include <chrono>
-#include <cmath>
-
-#include <string_view>
-
-#include <tbb/flow_graph.h>
+#include "logdataworker.h"
 
 constexpr int IndexingBlockSize = 1 * 1024 * 1024;
 
@@ -402,57 +403,54 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     tbb::flow::graph indexingGraph;
     using BlockData = std::pair<LineOffset::UnderlyingType, QByteArray>;
 
-    QThreadPool localThreadPool;
-    localThreadPool.setMaxThreadCount( 1 );
-
+    std::thread ioThread;
     auto blockReaderAsync = tbb::flow::async_node<tbb::flow::continue_msg, BlockData>(
         indexingGraph, tbb::flow::serial,
-        [ this, &localThreadPool, &file, &ioDuration ]( const auto&, auto& gateway ) {
+        [ this, &ioThread, &file, &ioDuration ]( const auto&, auto& gateway ) {
             gateway.reserve_wait();
 
-            QtConcurrent::run(
-                &localThreadPool, [ this, &file, &ioDuration, gw = std::ref( gateway ) ] {
-                    while ( !file.atEnd() ) {
+            ioThread = std::thread( [ this, &file, &ioDuration, gw = std::ref( gateway ) ] {
+                while ( !file.atEnd() ) {
 
-                        if ( interruptRequest_ ) {
-                            break;
-                        }
-
-                        BlockData blockData{ file.pos(),
-                                             QByteArray{ IndexingBlockSize, Qt::Uninitialized } };
-
-                        clock::time_point ioT1 = clock::now();
-                        const auto readBytes = static_cast<int>(
-                            file.read( blockData.second.data(), blockData.second.size() ) );
-
-                        if ( readBytes < 0 ) {
-                            LOG_ERROR << "Reading past the end of file";
-                            break;
-                        }
-
-                        if ( readBytes < blockData.second.size() ) {
-                            blockData.second.resize( readBytes );
-                        }
-
-                        clock::time_point ioT2 = clock::now();
-
-                        ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 );
-
-                        LOG_DEBUG << "Sending block " << blockData.first << " size "
-                                  << blockData.second.size();
-
-                        while ( !gw.get().try_put( blockData ) ) {
-                            QThread::msleep( 1 );
-                        }
+                    if ( interruptRequest_ ) {
+                        break;
                     }
 
-                    auto lastBlock = std::make_pair( -1, QByteArray{} );
-                    while ( !gw.get().try_put( lastBlock ) ) {
-                        QThread::msleep( 1 );
+                    BlockData blockData{ file.pos(),
+                                         QByteArray{ IndexingBlockSize, Qt::Uninitialized } };
+
+                    clock::time_point ioT1 = clock::now();
+                    const auto readBytes = static_cast<int>(
+                        file.read( blockData.second.data(), blockData.second.size() ) );
+
+                    if ( readBytes < 0 ) {
+                        LOG_ERROR << "Reading past the end of file";
+                        break;
                     }
 
-                    gw.get().release_wait();
-                } );
+                    if ( readBytes < blockData.second.size() ) {
+                        blockData.second.resize( readBytes );
+                    }
+
+                    clock::time_point ioT2 = clock::now();
+
+                    ioDuration += duration_cast<milliseconds>( ioT2 - ioT1 );
+
+                    LOG_DEBUG << "Sending block " << blockData.first << " size "
+                              << blockData.second.size();
+
+                    while ( !gw.get().try_put( blockData ) ) {
+                        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+                    }
+                }
+
+                auto lastBlock = std::make_pair( -1, QByteArray{} );
+                while ( !gw.get().try_put( lastBlock ) ) {
+                    std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+                }
+
+                gw.get().release_wait();
+            } );
         } );
 
     auto blockPrefetcher = tbb::flow::limiter_node<BlockData>( indexingGraph, prefetchBufferSize );
@@ -508,7 +506,7 @@ void IndexOperation::doIndex( LineOffset initialPosition )
     file.seek( state.pos );
     blockReaderAsync.try_put( tbb::flow::continue_msg{} );
     indexingGraph.wait_for_all();
-    localThreadPool.waitForDone();
+    ioThread.join();
 
     IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
 

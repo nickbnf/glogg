@@ -94,7 +94,7 @@ TEST_CASE( "Logdata decoding lines", "[logdata]" )
 {
     QTemporaryDir tempDir;
 
-    QFile file{ tempDir.path() + QDir::separator() + QLatin1String( "testlog.txt" ) };
+    QFile file{ tempDir.path() + QDir::separator() + QLatin1String( "testdecode.txt" ) };
     if ( file.open( QIODevice::ReadWrite | QIODevice::Truncate ) ) {
         writeDataToFile( file );
     }

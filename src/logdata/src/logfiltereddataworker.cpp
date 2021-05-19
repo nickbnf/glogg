@@ -96,17 +96,17 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const LogData::
     results.chunkStart = chunkStart;
     results.processedLines = rawLines.numberOfLines;
 
-    const auto& lines = rawLines.transformToUtf8();
+    const auto& lines = rawLines.buildUtf8View();
 
-    for ( auto offset = 0_lcount; offset < results.processedLines; ++offset ) {
-        const auto& line = lines[ offset.get() ];
+    for ( auto offset = 0u; offset < lines.size(); ++offset ) {
+        const auto& line = lines[ offset ];
 
         const auto hasMatch
             = std::visit( [ &line ]( const auto& m ) { return m.hasMatch( line ); }, matcher );
 
         if ( hasMatch ) {
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );
-            const auto lineNumber = chunkStart + offset;
+            const auto lineNumber = chunkStart + LinesCount{offset};
             results.matchingLines.add( lineNumber.get() );
 
             // LOG_INFO << "Match at " << lineNumber << ": " << line;

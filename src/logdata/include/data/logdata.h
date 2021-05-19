@@ -71,11 +71,11 @@ class LogData : public AbstractLogData {
     LogData();
     ~LogData();
 
-    LogData(const LogData&) = delete;
-    LogData& operator=(const LogData&&) = delete;
+    LogData( const LogData& ) = delete;
+    LogData& operator=( const LogData&& ) = delete;
 
-    LogData(LogData&&) = delete;
-    LogData& operator=(LogData&&) = delete;
+    LogData( LogData&& ) = delete;
+    LogData& operator=( LogData&& ) = delete;
 
     // Attaches the LogData to a file on disk
     // It starts the asynchronous indexing and returns (almost) immediately
@@ -100,24 +100,24 @@ class LogData : public AbstractLogData {
     // Get the auto-detected encoding for the indexed text.
     QTextCodec* getDetectedEncoding() const;
 
-    struct RawLines
-    {
-      LineNumber startLine;
-      LinesCount numberOfLines;
+    struct RawLines {
+        LineNumber startLine;
+        LinesCount numberOfLines;
 
-      std::vector<char> buffer;
-      std::vector<qint64> endOfLines;
+        std::vector<char> buffer;
+        std::vector<qint64> endOfLines;
 
-      TextDecoder textDecoder;
+        TextDecoder textDecoder;
 
-      std::vector<QString> decodeLines() const;
-      std::vector<std::string_view> transformToUtf8() const;
+      public:
+        std::vector<QString> decodeLines() const;
+        std::vector<std::string_view> buildUtf8View() const;
 
       private:
-      mutable QByteArray utf8Data_;
+        mutable QByteArray utf8Data_;
     };
 
-    RawLines getLinesRaw(LineNumber first, LinesCount number) const;
+    RawLines getLinesRaw( LineNumber first, LinesCount number ) const;
 
   signals:
     // Sent during the 'attach' process to signal progress
@@ -156,7 +156,7 @@ class LogData : public AbstractLogData {
     std::vector<QString> getLinesFromFile( LineNumber first, LinesCount number,
                                            QString ( *processLine )( QString&& ) ) const;
 
-private:
+  private:
     mutable std::unique_ptr<FileHolder> attached_file_;
 
     // Indexing data, read by us, written by the worker thread

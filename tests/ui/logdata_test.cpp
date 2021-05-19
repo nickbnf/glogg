@@ -21,82 +21,120 @@
 
 #include <iostream>
 
-#include <QTest>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
-#include <QProcess>
+#include <QTest>
 #include <QThread>
 
+#include "file_write_helper.h"
 #include "log.h"
 #include "test_utils.h"
-#include "file_write_helper.h"
 
 #include "data/logdata.h"
-
 
 static const qint64 SL_NB_LINES = 500LL;
 static const qint64 VBL_NB_LINES = 50000LL;
 
 namespace {
 
-    class WriteFileThread : public QThread
+class WriteFileThread : public QThread {
+    Q_OBJECT
+  public:
+    WriteFileThread( QFile* file, int numberOfLines = 200,
+                     WriteFileModification flag = WriteFileModification::None )
+        : file_{ file }
+        , numberOfLines_{ numberOfLines }
+        , flag_{ flag }
     {
-        Q_OBJECT
-    public:
-        WriteFileThread(QFile* file, int numberOfLines = 200, WriteFileModification flag = WriteFileModification::None)
-            : file_{ file }, numberOfLines_{numberOfLines}, flag_{flag}
-        {}
+    }
 
-    protected:
-        void run() override
-        {
-            QString writeHelper = QCoreApplication::applicationDirPath() + QDir::separator() + QLatin1String("file_write_helper");
-            QStringList arguments;
-            arguments << file_->fileName() << QString::number(numberOfLines_) << QString::number(static_cast<uint8_t>(flag_));
+  protected:
+    void run() override
+    {
+        QString writeHelper = QCoreApplication::applicationDirPath() + QDir::separator()
+                              + QLatin1String( "file_write_helper" );
+        QStringList arguments;
+        arguments << file_->fileName() << QString::number( numberOfLines_ )
+                  << QString::number( static_cast<uint8_t>( flag_ ) );
 
-            const auto result = QProcess::execute(writeHelper, arguments);
-            LOG_INFO << "Write helper result " << result;
-        }
+        const auto result = QProcess::execute( writeHelper, arguments );
+        LOG_INFO << "Write helper result " << result;
+    }
 
-    private:
-        QFile* file_;
-        int numberOfLines_;
-        WriteFileModification flag_;
-
-    };
+  private:
+    QFile* file_;
+    int numberOfLines_;
+    WriteFileModification flag_;
+};
 
 #include "logdata_test.moc"
 
 #ifdef _WIN32
-    void writeDataToFileBackground(QFile& file, int numberOfLines = 200, WriteFileModification flag = WriteFileModification::None) {
-        auto thread = new WriteFileThread(&file, numberOfLines, flag);
-        thread->start();
-        QObject::connect(thread, &WriteFileThread::finished, thread, &WriteFileThread::deleteLater);
-    }
+void writeDataToFileBackground( QFile& file, int numberOfLines = 200,
+                                WriteFileModification flag = WriteFileModification::None )
+{
+    auto thread = new WriteFileThread( &file, numberOfLines, flag );
+    thread->start();
+    QObject::connect( thread, &WriteFileThread::finished, thread, &WriteFileThread::deleteLater );
+}
 #endif
-    void writeDataToFile(QFile& file, int numberOfLines = 200, WriteFileModification flag = WriteFileModification::None) {
-        auto thread = new WriteFileThread(&file, numberOfLines, flag);
-        thread->start();
-        thread->wait();
-        thread->deleteLater();
+void writeDataToFile( QFile& file, int numberOfLines = 200,
+                      WriteFileModification flag = WriteFileModification::None )
+{
+    auto thread = new WriteFileThread( &file, numberOfLines, flag );
+    thread->start();
+    thread->wait();
+    thread->deleteLater();
+}
+} // namespace
+
+TEST_CASE( "Logdata decoding lines", "[logdata]" )
+{
+    QTemporaryDir tempDir;
+
+    QFile file{ tempDir.path() + QDir::separator() + QLatin1String( "testlog.txt" ) };
+    if ( file.open( QIODevice::ReadWrite | QIODevice::Truncate ) ) {
+        writeDataToFile( file );
     }
+
+    writeDataToFile( file, 199, WriteFileModification::EndWithPartialLineBegin );
+
+    LogData logData;
+
+    auto finishedSpy
+        = std::make_unique<SafeQSignalSpy>( &logData, SIGNAL( loadingFinished( LoadingStatus ) ) );
+
+    logData.attachFile( file.fileName() );
+
+    REQUIRE( finishedSpy->safeWait() );
+    REQUIRE( finishedSpy->count() == 1 );
+    REQUIRE( logData.getNbLine() == 400_lcount );
+
+    const auto rawLines = logData.getLinesRaw( 200_lnum, 200_lcount );
+    REQUIRE( rawLines.startLine == 200_lnum );
+    REQUIRE( rawLines.numberOfLines == 200_lcount );
+
+    const auto utf8View = rawLines.buildUtf8View();
+
+    REQUIRE( rawLines.numberOfLines.get() == utf8View.size() );
 }
 
-
-TEST_CASE("Logdata reading changing file", "[logdata]") {
+TEST_CASE( "Logdata reading changing file", "[logdata]" )
+{
 
     QTemporaryDir tempDir;
 
     LogData log_data;
 
-    auto finishedSpy = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+    auto finishedSpy
+        = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
     SafeQSignalSpy progressSpy( &log_data, SIGNAL( loadingProgressed( int ) ) );
-    SafeQSignalSpy changedSpy( &log_data,
-            SIGNAL( fileChanged( MonitoredFileStatus ) ) );
+    SafeQSignalSpy changedSpy( &log_data, SIGNAL( fileChanged( MonitoredFileStatus ) ) );
 
     // Generate a small file
-    QFile file { tempDir.path() + QDir::separator() + QLatin1String("testlog.txt") };
+    QFile file{ tempDir.path() + QDir::separator() + QLatin1String( "testlog.txt" ) };
     if ( file.open( QIODevice::ReadWrite | QIODevice::Truncate ) ) {
         writeDataToFile( file );
     }
@@ -111,7 +149,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
     REQUIRE( finishedSpy->count() == 1 );
     REQUIRE( log_data.getNbLine() == 200_lcount );
     REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
-    REQUIRE( log_data.getFileSize() == 200 * (SL_LINE_LENGTH+1LL) );
+    REQUIRE( log_data.getFileSize() == 200 * ( SL_LINE_LENGTH + 1LL ) );
 
     auto finishedSpyCount = finishedSpy->count();
     // Add some data to it
@@ -120,7 +158,7 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
 #ifdef Q_OS_WIN
         writeDataToFileBackground( file, 200, WriteFileModification::EndWithPartialLineBegin );
 #else
-        writeDataToFile(file, 200, WriteFileModification::EndWithPartialLineBegin);
+        writeDataToFile( file, 200, WriteFileModification::EndWithPartialLineBegin );
 #endif
     }
 
@@ -134,18 +172,19 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
     REQUIRE( finishedSpy->count() == 2 );
     REQUIRE( log_data.getNbLine() == 401_lcount );
     REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
-    REQUIRE( log_data.getFileSize() == (qint64) (400 * (SL_LINE_LENGTH+1LL)
-            + strlen( partial_line_begin ) ) );
+    REQUIRE( log_data.getFileSize()
+             == (qint64)( 400 * ( SL_LINE_LENGTH + 1LL ) + strlen( partial_line_begin ) ) );
 
     {
-        finishedSpy = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+        finishedSpy = std::make_unique<SafeQSignalSpy>(
+            &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
         // Add a couple more lines, including the end of the unfinished one.
         if ( file.isOpen() ) {
 #ifdef Q_OS_WIN
             writeDataToFileBackground( file, 20, WriteFileModification::StartWithPartialLineEnd );
 #else
-            writeDataToFile(file, 20, WriteFileModification::StartWithPartialLineEnd);
+            writeDataToFile( file, 20, WriteFileModification::StartWithPartialLineEnd );
 #endif
         }
 
@@ -157,12 +196,14 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
         REQUIRE( finishedSpy->count() == 1 );
         REQUIRE( log_data.getNbLine() == 421_lcount );
         REQUIRE( log_data.getMaxLength() == LineLength( SL_LINE_LENGTH ) );
-        REQUIRE( log_data.getFileSize() == (qint64) ( 420 * (SL_LINE_LENGTH+1LL)
-                + strlen( partial_line_begin ) + strlen( partial_line_end ) ) );
+        REQUIRE( log_data.getFileSize()
+                 == (qint64)( 420 * ( SL_LINE_LENGTH + 1LL ) + strlen( partial_line_begin )
+                              + strlen( partial_line_end ) ) );
     }
 
     {
-        finishedSpy = std::make_unique<SafeQSignalSpy>( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
+        finishedSpy = std::make_unique<SafeQSignalSpy>(
+            &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
         // Truncate the file
         QVERIFY( file.resize( 0 ) );
@@ -179,21 +220,24 @@ TEST_CASE("Logdata reading changing file", "[logdata]") {
     }
 }
 
-SCENARIO( "Attaching log data to files", "[logdata]" ) {
+SCENARIO( "Attaching log data to files", "[logdata]" )
+{
 
-    GIVEN( "Small and big files" ) {
+    GIVEN( "Small and big files" )
+    {
         QTemporaryFile smallFile;
         QTemporaryFile bigFile;
 
         if ( smallFile.open() ) {
-           writeDataToFile( smallFile, SL_NB_LINES );
+            writeDataToFile( smallFile, SL_NB_LINES );
         }
 
         if ( bigFile.open() ) {
             writeDataToFile( bigFile, VBL_NB_LINES );
         }
 
-        WHEN( "Interrupt loading" ) {
+        WHEN( "Interrupt loading" )
+        {
             LogData log_data;
             SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
@@ -205,12 +249,13 @@ SCENARIO( "Attaching log data to files", "[logdata]" ) {
 
             REQUIRE( endSpy.safeWait( 10000 ) );
 
-            THEN( "No file is attached" ) {
+            THEN( "No file is attached" )
+            {
                 // Check we have an empty file
                 REQUIRE( endSpy.count() == 1 );
                 QList<QVariant> arguments = endSpy.takeFirst();
-                REQUIRE( arguments.at(0).toInt() ==
-                        static_cast<int>( LoadingStatus::Interrupted ) );
+                REQUIRE( arguments.at( 0 ).toInt()
+                         == static_cast<int>( LoadingStatus::Interrupted ) );
 
                 REQUIRE( log_data.getNbLine() == 0_lcount );
                 REQUIRE( log_data.getMaxLength().get() == 0 );
@@ -218,17 +263,18 @@ SCENARIO( "Attaching log data to files", "[logdata]" ) {
             }
         }
 
-        WHEN( "Try to reattach" ) {
+        WHEN( "Try to reattach" )
+        {
             LogData log_data;
             SafeQSignalSpy endSpy( &log_data, SIGNAL( loadingFinished( LoadingStatus ) ) );
 
             log_data.attachFile( smallFile.fileName() );
             endSpy.safeWait( 10000 );
 
-            THEN( "Throws" ) {
-                CHECK_THROWS_AS( log_data.attachFile( bigFile.fileName() ), CantReattachErr);
+            THEN( "Throws" )
+            {
+                CHECK_THROWS_AS( log_data.attachFile( bigFile.fileName() ), CantReattachErr );
             }
         }
     }
 }
-

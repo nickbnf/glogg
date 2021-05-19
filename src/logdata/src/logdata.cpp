@@ -479,7 +479,7 @@ std::vector<QString> LogData::RawLines::decodeLines() const
     return decodedLines;
 }
 
-std::vector<std::string_view> LogData::RawLines::transformToUtf8() const
+std::vector<std::string_view> LogData::RawLines::buildUtf8View() const
 {
     std::vector<std::string_view> lines;
     lines.reserve( numberOfLines.get() );
@@ -493,9 +493,13 @@ std::vector<std::string_view> LogData::RawLines::transformToUtf8() const
 
         auto nextLineFeed = wholeString.find( '\n' );
         while ( nextLineFeed != std::string_view::npos ) {
-            lines.emplace_back( wholeString.data(), nextLineFeed );
+            lines.push_back( wholeString.substr( 0, nextLineFeed ) );
             wholeString.remove_prefix( nextLineFeed + 1 );
             nextLineFeed = wholeString.find( '\n' );
+        }
+
+        if ( !wholeString.empty() ) {
+            lines.push_back( wholeString );
         }
 
     } catch ( const std::exception& e ) {

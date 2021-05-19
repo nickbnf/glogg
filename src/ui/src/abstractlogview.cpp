@@ -1511,35 +1511,29 @@ void AbstractLogView::jumpToBottom()
 // Select the word under the given position
 void AbstractLogView::selectWordAtPosition( const QPoint& pos )
 {
-    const int x = pos.x();
     const auto lineNumber = LineNumber( static_cast<LineNumber::UnderlyingType>( pos.y() ) );
     const QString line = logData_->getExpandedLineString( lineNumber );
 
-    if ( !line.isEmpty() && line[ x ].isLetterOrNumber() ) {
-        // Search backward for the first character in the word
-        int currentPos = x;
-        for ( ; currentPos > 0; currentPos-- )
-            if ( !line[ currentPos ].isLetterOrNumber() )
-                break;
-        // Exclude the first char of the line if needed
-        if ( !line[ currentPos ].isLetterOrNumber() )
-            currentPos++;
-        int start = currentPos;
+    const int clickPos = pos.x();
 
-        // Now search for the end
-        currentPos = x;
-        for ( ; currentPos < line.length() - 1; currentPos++ )
-            if ( !line[ currentPos ].isLetterOrNumber() )
-                break;
-        // Exclude the last char of the line if needed
-        if ( !line[ currentPos ].isLetterOrNumber() )
-            currentPos--;
-        int end = currentPos;
+    const auto isWordSeparator = []( QChar c ) {
+        return !c.isLetterOrNumber() && c.category() != QChar::Punctuation_Connector;
+    };
 
-        selection_.selectPortion( lineNumber, start, end );
-        updateGlobalSelection();
-        update();
+    if ( line.isEmpty() || isWordSeparator( line[ clickPos ] ) ) {
+        return;
     }
+
+    const auto wordStart
+        = std::find_if( line.rbegin() + line.size() - clickPos, line.rend(), isWordSeparator );
+    const auto selectionStart = static_cast<int>( std::distance( line.begin(), wordStart.base() ) );
+
+    const auto wordEnd = std::find_if( line.begin() + clickPos, line.end(), isWordSeparator );
+    const auto selectionEnd = static_cast<int>( std::distance( line.begin(), wordEnd ) - 1 );
+
+    selection_.selectPortion( lineNumber, selectionStart, selectionEnd );
+    updateGlobalSelection();
+    update();
 }
 
 // Update the system global (middle click) selection (X11 only)

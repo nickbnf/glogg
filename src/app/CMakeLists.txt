@@ -31,7 +31,10 @@ endif()
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
 add_executable(klogg_portable ${OS_BUNDLE} ${MAIN_SOURCES})
 
-add_dependencies(ci_build klogg klogg_portable)
+add_dependencies(ci_build klogg)
+if (WIN32)
+    add_dependencies(ci_build klogg_portable)
+endif()
 
 set_target_properties(klogg PROPERTIES AUTORCC ON)
 set_target_properties(klogg PROPERTIES AUTOMOC ON)

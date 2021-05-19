@@ -13,8 +13,8 @@ runs:
       run: |
         docker run --env KLOGG_BUILD_ROOT=$KLOGG_BUILD_ROOT -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cmake --build /usr/local/$KLOGG_BUILD_ROOT --target ci_build"
 
-    #- name: test
-    #  shell: sh
-    #  run: |
-    #    docker run --env KLOGG_BUILD_ROOT=$KLOGG_BUILD_ROOT -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cd /usr/local/$KLOGG_BUILD_ROOT && ctest --verbose"
+    - name: test
+      shell: sh
+      run: |
+        docker run --env KLOGG_BUILD_ROOT=$KLOGG_BUILD_ROOT -v "$KLOGG_WORKSPACE":/usr/local ${{ matrix.config.container }} /bin/bash -c "cd /usr/local/$KLOGG_BUILD_ROOT && ctest --verbose"
 

@@ -58,14 +58,12 @@ OptionsDialog::OptionsDialog( QWidget* parent )
     setupStyles();
 
     // Validators
-    QValidator* polling_interval_validator_
+    QValidator* pollingIntervalValidator
         = new QIntValidator( POLL_INTERVAL_MIN, POLL_INTERVAL_MAX, this );
-    pollIntervalLineEdit->setValidator( polling_interval_validator_ );
+    pollIntervalLineEdit->setValidator( pollingIntervalValidator );
 
     connect( buttonBox, &QDialogButtonBox::clicked, this, &OptionsDialog::onButtonBoxClicked );
     connect( fontFamilyBox, &QComboBox::currentTextChanged, this, &OptionsDialog::updateFontSize );
-    connect( incrementalCheckBox, &QCheckBox::toggled,
-             [ this ]( auto ) { this->setupIncremental(); } );
     connect( pollingCheckBox, &QCheckBox::toggled, [ this ]( auto ) { this->setupPolling(); } );
     connect( searchResultsCacheCheckBox, &QCheckBox::toggled,
              [ this ]( auto ) { this->setupSearchResultsCache(); } );
@@ -76,7 +74,6 @@ OptionsDialog::OptionsDialog( QWidget* parent )
 
     updateDialogFromConfig();
 
-    setupIncremental();
     setupPolling();
     setupSearchResultsCache();
     setupLogging();
@@ -135,19 +132,6 @@ void OptionsDialog::setupRegexp()
 void OptionsDialog::setupStyles()
 {
     styleComboBox->addItems( availableStyles() );
-}
-
-// Enable/disable the QuickFind options depending on the state
-// of the "incremental" checkbox.
-void OptionsDialog::setupIncremental()
-{
-    if ( incrementalCheckBox->isChecked() ) {
-        quickFindSearchBox->setCurrentIndex( getRegexpTypeIndex( SearchRegexpType::FixedString ) );
-        quickFindSearchBox->setEnabled( false );
-    }
-    else {
-        quickFindSearchBox->setEnabled( true );
-    }
 }
 
 void OptionsDialog::setupPolling()
@@ -348,13 +332,13 @@ void OptionsDialog::updateConfigFromDialog()
 
     config.setNativeFileWatchEnabled( nativeFileWatchCheckBox->isChecked() );
     config.setPollingEnabled( pollingCheckBox->isChecked() );
-    auto poll_interval = pollIntervalLineEdit->text().toInt();
-    if ( poll_interval < POLL_INTERVAL_MIN )
-        poll_interval = POLL_INTERVAL_MIN;
-    else if ( poll_interval > POLL_INTERVAL_MAX )
-        poll_interval = POLL_INTERVAL_MAX;
+    auto pollInterval = pollIntervalLineEdit->text().toInt();
+    if ( pollInterval < POLL_INTERVAL_MIN )
+        pollInterval = POLL_INTERVAL_MIN;
+    else if ( pollInterval > POLL_INTERVAL_MAX )
+        pollInterval = POLL_INTERVAL_MAX;
 
-    config.setPollIntervalMs( poll_interval );
+    config.setPollIntervalMs( pollInterval );
     config.setFastModificationDetection( fastModificationDetectionCheckBox->isChecked() );
 
     config.setLoadLastSession( loadLastSessionCheckBox->isChecked() );

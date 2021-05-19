@@ -70,7 +70,6 @@ class OptionsDialog : public QDialog, public Ui::OptionsDialog {
     void setupTabs();
     void setupFontList();
     void setupRegexp();
-    void setupIncremental();
     void setupPolling();
     void setupSearchResultsCache();
     void setupLogging();

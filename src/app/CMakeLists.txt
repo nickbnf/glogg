@@ -50,7 +50,7 @@ target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
 target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
-if(KLOGG_OVERRIDE_MALLOC)
+if(${KLOGG_OVERRIDE_MALLOC})
     target_compile_definitions(klogg PUBLIC -DKLOGG_OVERRIDE_MALLOC)
     target_compile_definitions(klogg_portable PUBLIC -DKLOGG_OVERRIDE_MALLOC)
 endif()
@@ -86,7 +86,7 @@ install(TARGETS
     BUNDLE DESTINATION .
 )
 
-if(KLOGG_USE_SENTRY)
+if(${KLOGG_USE_SENTRY})
     target_compile_definitions(klogg PUBLIC -DKLOGG_USE_SENTRY)
     target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_SENTRY)
 

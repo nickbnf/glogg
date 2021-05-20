@@ -206,35 +206,37 @@ bool checkCrashpadReports( const QString& databasePath )
 #endif
 
     for ( const auto& report : pendingReports ) {
-        if ( !report.uploaded ) {
+        if ( report.uploaded ) {
+            continue;
+        }
+
 #ifdef Q_OS_WIN
-            const auto reportFile = QString::fromStdWString( report.file_path.value() );
+        const auto reportFile = QString::fromStdWString( report.file_path.value() );
 
 #else
-            const auto reportFile = QString::fromStdString( report.file_path.value() );
+        const auto reportFile = QString::fromStdString( report.file_path.value() );
 #endif
 
-            QProcess stackProcess;
-            stackProcess.start( stackwalker, QStringList() << reportFile );
-            stackProcess.waitForFinished();
+        QProcess stackProcess;
+        stackProcess.start( stackwalker, QStringList() << reportFile );
+        stackProcess.waitForFinished();
 
-            QString formattedReport = reportFile;
-            formattedReport.append( QChar::LineFeed )
-                .append( QString::fromUtf8( stackProcess.readAllStandardOutput() ) );
+        QString formattedReport = reportFile;
+        formattedReport.append( QChar::LineFeed )
+            .append( QString::fromUtf8( stackProcess.readAllStandardOutput() ) );
 
-            if ( QDialog::Accepted == askUserConfirmation( formattedReport, reportFile ) ) {
-                database->RequestUpload( report.uuid );
-                needWaitForUpload = true;
-            }
-            else {
-                database->DeleteReport( report.uuid );
-            }
+        if ( QDialog::Accepted == askUserConfirmation( formattedReport, reportFile ) ) {
+            database->RequestUpload( report.uuid );
+            needWaitForUpload = true;
+        }
+        else {
+            database->DeleteReport( report.uuid );
+        }
 
-            if ( QMessageBox::Yes
-                 == QMessageBox::question( nullptr, "Klogg", "Create issue on GitHub",
-                                           QMessageBox::Yes, QMessageBox::No ) ) {
-                reportIssue( report.uuid.ToString() );
-            }
+        if ( QMessageBox::Yes
+             == QMessageBox::question( nullptr, "Klogg", "Create issue on GitHub", QMessageBox::Yes,
+                                       QMessageBox::No ) ) {
+            reportIssue( report.uuid.ToString() );
         }
     }
     return needWaitForUpload;

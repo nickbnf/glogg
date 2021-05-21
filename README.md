@@ -1,4 +1,4 @@
-# Klogg
+![media_small](https://user-images.githubusercontent.com/1620716/119145300-2d98b800-ba52-11eb-8d87-abe72cf65dd1.png)
 
 [![GitHub license](https://img.shields.io/github/license/variar/klogg.svg?style=flat)](https://github.com/variar/klogg/blob/master/COPYING)
 [![C++](https://img.shields.io/github/languages/top/variar/klogg?style=flat)]()

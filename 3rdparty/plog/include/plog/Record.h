@@ -149,23 +149,6 @@ namespace plog
             return *this;
         }
 
-#ifdef QT_VERSION
-        Record& operator<<(const QString& data)
-        {
-#   ifdef _WIN32
-            return *this << data.toStdWString();
-#   else
-            return *this << data.toStdString();
-#   endif
-        }
-
-        Record& operator<<(const QStringRef& data)
-        {
-            QString qstr;
-            return *this << qstr.append(data);
-        }
-#endif
-
         template<typename T>
         Record& operator<<(const T& data)
         {

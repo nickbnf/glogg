@@ -23,6 +23,7 @@
 #include <chrono>
 
 #include <QLatin1String>
+#include <QtGlobal>
 
 #include <optional>
 
@@ -83,6 +84,21 @@ Record& operator<<( Record& r, const std::optional<T>& t )
 inline Record& operator<<( Record& r, const QLatin1String s )
 {
     return r << s.data();
+}
+
+inline Record& operator<<( Record& r, const QString& data )
+{
+#ifdef Q_OS_WIN
+    return r << data.toStdWString();
+#else
+    return r << data.toStdString();
+#endif
+}
+
+inline Record& operator<<( Record& r, const QStringRef& data )
+{
+    QString qstr;
+    return r << qstr.append( data );
 }
 
 inline Record& operator<<( Record& r, const std::chrono::milliseconds& duration )

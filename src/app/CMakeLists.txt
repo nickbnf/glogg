@@ -172,5 +172,5 @@ if(${KLOGG_USE_SENTRY})
             DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
     endif()
-endif(KLOGG_USE_SENTRY)
+endif(${KLOGG_USE_SENTRY})
 

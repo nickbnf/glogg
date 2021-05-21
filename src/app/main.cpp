@@ -36,10 +36,11 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 
-#include <cli11/cli11.hpp>
+#include <QCommandLineOption>
 
 #ifdef KLOGG_OVERRIDE_MALLOC
 #include <tbb/tbbmalloc_proxy.h>
@@ -130,49 +131,89 @@ struct CliParameters {
     int window_width = 0;
     int window_height = 0;
 
-    CliParameters() = default;
-
-    CliParameters( CLI::App& options, int argc, char* const* argv )
+    CliParameters( QCoreApplication& app )
     {
-        options.add_flag_function(
-            "-v,--version",
-            []( auto ) {
-                print_version();
-                exit( 0 );
-            },
-            "print version information" );
+        QCommandLineParser parser;
+        parser.setApplicationDescription( "Test helper" );
+        const auto helpOption = parser.addHelpOption();
+        const auto versionOption = parser.addVersionOption();
 
-        options.add_flag(
-            "-m,--multi", multi_instance,
+        const QCommandLineOption multiInstanceOption(
+            QStringList() << "m"
+                          << "multi",
             "allow multiple instance of klogg to run simultaneously (use together with -s)" );
-        options.add_flag( "-s,--load-session", load_session,
-                          "load the previous session (default when no file is passed)" );
-        options.add_flag( "-n,--new-session", new_session,
-                          "do not load the previous session (default when a file is passed)" );
+        parser.addOption( multiInstanceOption );
 
-        options.add_flag( "-l,--log", log_to_file, "save the log to a file" );
+        const QCommandLineOption loadSessionOption(
+            QStringList() << "s"
+                          << "load-session",
+            "load the previous session (default when no file is passed)" );
+        parser.addOption( loadSessionOption );
 
-        options.add_flag( "-f,--follow", follow_file, "follow initial opened files" );
+        const QCommandLineOption newSessionOption(
+            QStringList() << "n"
+                          << "new-session",
+            "do not load the previous session (default when a file is passed)" );
+        parser.addOption( newSessionOption );
 
-        options.add_flag_function(
-            "-d,--debug",
-            [ this ]( auto count ) { log_level = static_cast<int64_t>( plog::warning ) + count; },
-            "output more debug (include multiple times for more verbosity e.g. -dddd)" );
+        const QCommandLineOption logToFileOption( QStringList() << "l"
+                                                                << "log",
+                                                  "save the log to a file" );
+        parser.addOption( logToFileOption );
 
-        options.add_flag( "--window-width", window_width, "new window width" )
-            ->needs( options.add_flag( "--window-height", window_height, "new window height" ) );
+        const QCommandLineOption followOption( QStringList() << "f"
+                                                             << "follow",
+                                               "follow initial opened files" );
+        parser.addOption( followOption );
 
-        std::vector<std::string> raw_filenames;
-        options.add_option( "files", raw_filenames, "files to open" );
+        const QCommandLineOption debugOption(
+            QStringList() << "d"
+                          << "debug",
+            "output more debug (increase number for more verbosity)", "debug_level", "0" );
+        parser.addOption( debugOption );
 
-        options.parse( argc, argv );
+        const QCommandLineOption windowWidthOption( "window-width", "new window width" );
+        parser.addOption( windowWidthOption );
 
-        for ( const auto& file : raw_filenames ) {
-            auto decodedName = QFile::decodeName( file.c_str() );
-            if ( !decodedName.isEmpty() ) {
-                const auto fileInfo = QFileInfo( decodedName );
-                filenames.emplace_back( fileInfo.absoluteFilePath() );
-            }
+        const QCommandLineOption windowHeightOption( "window-height", "new window height" );
+        parser.addOption( windowHeightOption );
+
+        parser.process( app );
+
+        if ( parser.isSet( helpOption ) ) {
+            parser.showHelp( EXIT_SUCCESS );
+        }
+
+        if ( parser.isSet( versionOption ) ) {
+            print_version();
+            exit( EXIT_SUCCESS );
+        }
+
+        if ( parser.isSet( multiInstanceOption ) ) {
+            multi_instance = true;
+        }
+
+        if ( parser.isSet( loadSessionOption ) ) {
+            load_session = true;
+        }
+
+        if ( parser.isSet( newSessionOption ) ) {
+            new_session = true;
+        }
+
+        if ( parser.isSet( logToFileOption ) ) {
+            log_to_file = true;
+        }
+
+        if ( parser.isSet( followOption ) ) {
+            follow_file = true;
+        }
+
+        log_level = static_cast<int64_t>( plog::warning ) + parser.value( debugOption ).toInt();
+
+        for ( const auto& file : parser.positionalArguments() ) {
+            const auto fileInfo = QFileInfo( file );
+            filenames.emplace_back( fileInfo.absoluteFilePath() );
         }
     }
 };
@@ -223,23 +264,10 @@ void applyStyle()
 
 int main( int argc, char* argv[] )
 {
-#ifdef KLOGG_USE_MIMALLOC
-    mi_stats_reset();
-#endif
-
     setApplicationAttributes();
 
     KloggApp app( argc, argv );
-
-    CliParameters parameters;
-    CLI::App options{ "Klogg -- fast log explorer" };
-    try {
-        parameters = CliParameters( options, argc, argv );
-    } catch ( const CLI::ParseError& e ) {
-        return options.exit( e );
-    } catch ( const std::exception& e ) {
-        std::cerr << "Exception of unknown type: " << e.what() << std::endl;
-    }
+    CliParameters parameters( app );
 
     app.initLogger( static_cast<plog::Severity>( parameters.log_level ), parameters.log_to_file );
     app.initCrashHandler();

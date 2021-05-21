@@ -123,7 +123,6 @@ class MainWindow : public QMainWindow {
     void addToFavorites();
     void removeFromFavorites();
     void selectOpenedFile();
-    void reportIssue() const;
     void generateDump();
 
     // Change the view settings

@@ -6,6 +6,7 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/klogg_version.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/readablesize.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/memory_info.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/issuereporter.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/atomicflag.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/configuration.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/log.h
@@ -24,7 +25,8 @@ add_library(utils STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include/memory_info.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/overload_visitor.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/resourcewrapper.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/styles.h)
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/styles.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/issuereporter.h)
 
 set_target_properties(utils PROPERTIES AUTOMOC ON)
 

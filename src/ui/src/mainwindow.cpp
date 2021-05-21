@@ -84,6 +84,7 @@
 #include "favoritefiles.h"
 #include "highlightersdialog.h"
 #include "highlightersmenu.h"
+#include "issuereporter.h"
 #include "klogg_version.h"
 #include "log.h"
 #include "openfilehelper.h"
@@ -411,7 +412,8 @@ void MainWindow::createActions()
 
     reportIssueAction = new QAction( tr( "Report issue..." ), this );
     reportIssueAction->setStatusTip( tr( "Report an issue on GitHub" ) );
-    connect( reportIssueAction, &QAction::triggered, [ this ]( auto ) { this->reportIssue(); } );
+    connect( reportIssueAction, &QAction::triggered,
+             [ this ]( auto ) { IssueReporter::reportIssue( IssueTemplate::Bug ); } );
 
     joinDiscordAction = new QAction( tr( "Join Discord community..." ), this );
     joinDiscordAction->setStatusTip( tr( "Join Klogg development community at Discord" ) );
@@ -1939,40 +1941,6 @@ void MainWindow::logScreenInfo( QScreen* screen )
     LOG_INFO << "screen ratio " << screen->devicePixelRatio();
     LOG_INFO << "screen logical dpi " << screen->logicalDotsPerInch();
     LOG_INFO << "screen physical dpi " << screen->physicalDotsPerInch();
-}
-
-void MainWindow::reportIssue() const
-{
-    const QString version = kloggVersion();
-    const QString buildDate = kloggBuildDate();
-    const QString commit = kloggCommit();
-
-    const QString os = QSysInfo::prettyProductName();
-    const QString kernelType = QSysInfo::kernelType();
-    const QString kernelVersion = QSysInfo::kernelVersion();
-    const QString arch = QSysInfo::currentCpuArchitecture();
-    const QString built_for = QSysInfo::buildAbi();
-
-    const QString body = QString( "Details for the issue\n"
-                                  "--------------------\n\n"
-                                  "#### What did you do?\n\n\n"
-                                  "#### What did you expect to see?\n\n\n"
-                                  "#### What did you see instead?\n\n\n"
-                                  "Useful extra information\n"
-                                  "-------------------------\n"
-                                  "> Klogg version %1 (built on %2 from commit %3) [built for %4]\n"
-                                  "> running on %5 (%6/%7) [%8]\n"
-                                  "> and Qt %9" )
-                             .arg( version, buildDate, commit, built_for, os, kernelType,
-                                   kernelVersion, arch, qVersion() );
-
-    QUrlQuery query;
-    query.addQueryItem( "labels", "type: bug" );
-    query.addQueryItem( "body", body );
-
-    QUrl url( "https://github.com/variar/klogg/issues/new" );
-    url.setQuery( query );
-    QDesktopServices::openUrl( url );
 }
 
 void MainWindow::generateDump()

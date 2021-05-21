@@ -38,13 +38,17 @@
 
 #include <chrono>
 #include <cmath>
+#include <exception>
 #include <plog/Log.h>
+#include <stdexcept>
 #include <utility>
 
-#include <tbb/info.h>
 #include <tbb/flow_graph.h>
+#include <tbb/info.h>
 
 #include "configuration.h"
+#include "dispatch_to.h"
+#include "issuereporter.h"
 #include "log.h"
 #include "overload_visitor.h"
 #include "progress.h"
@@ -106,7 +110,7 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const LogData::
 
         if ( hasMatch ) {
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );
-            const auto lineNumber = chunkStart + LinesCount{offset};
+            const auto lineNumber = chunkStart + LinesCount{ offset };
             results.matchingLines.add( lineNumber.get() );
 
             // LOG_INFO << "Match at " << lineNumber << ": " << line;
@@ -478,24 +482,41 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 // Called in the worker thread's context
 void FullSearchOperation::run( SearchData& searchData )
 {
-    // Clear the shared data
-    searchData.clear();
-
-    doSearch( searchData, 0_lnum );
+    try {
+        // Clear the shared data
+        searchData.clear();
+        doSearch( searchData, 0_lnum );
+    } catch ( const std::exception& err ) {
+        const auto errorString = QString( "FullSearchOperation failed: %1" ).arg( err.what() );
+        LOG_ERROR << errorString;
+        dispatchToMainThread( [ errorString ]() {
+            IssueReporter::askUserAndReportIssue( IssueTemplate::Exception, errorString );
+        } );
+        searchData.clear();
+    }
 }
 
 // Called in the worker thread's context
 void UpdateSearchOperation::run( SearchData& searchData )
 {
-    auto initial_line = qMax( searchData.getLastProcessedLine(), initialPosition_ );
+    try {
+        auto initialLine = qMax( searchData.getLastProcessedLine(), initialPosition_ );
 
-    if ( initial_line.get() >= 1 ) {
-        // We need to re-search the last line because it might have
-        // been updated (if it was not LF-terminated)
-        --initial_line;
-        // In case the last line matched, we don't want it to match twice.
-        searchData.deleteMatch( initial_line );
+        if ( initialLine.get() >= 1 ) {
+            // We need to re-search the last line because it might have
+            // been updated (if it was not LF-terminated)
+            --initialLine;
+            // In case the last line matched, we don't want it to match twice.
+            searchData.deleteMatch( initialLine );
+        }
+
+        doSearch( searchData, initialLine );
+    } catch ( const std::exception& err ) {
+        const auto errorString = QString( "UpdateSearchOpertaion failed: %1" ).arg( err.what() );
+        LOG_ERROR << errorString;
+        dispatchToMainThread( [ errorString ]() {
+            IssueReporter::askUserAndReportIssue( IssueTemplate::Exception, errorString );
+        } );
+        searchData.clear();
     }
-
-    doSearch( searchData, initial_line );
 }

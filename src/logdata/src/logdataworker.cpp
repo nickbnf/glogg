@@ -38,6 +38,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <exception>
 #include <string_view>
 #include <thread>
 
@@ -48,6 +49,8 @@
 #include <tbb/flow_graph.h>
 
 #include "configuration.h"
+#include "dispatch_to.h"
+#include "issuereporter.h"
 #include "log.h"
 #include "logdata.h"
 #include "progress.h"
@@ -579,55 +582,87 @@ void IndexOperation::doIndex( LineOffset initialPosition )
 // Called in the worker thread's context
 OperationResult FullIndexOperation::run()
 {
-    LOG_DEBUG << "FullIndexOperation::run(), file " << fileName_.toStdString();
+    try {
+        LOG_INFO << "FullIndexOperation::run(), file " << fileName_.toStdString();
 
-    LOG_DEBUG << "FullIndexOperation: Starting the count...";
+        emit indexingProgressed( 0 );
 
-    emit indexingProgressed( 0 );
+        {
+            IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
+            scopedAccessor.clear();
+            scopedAccessor.forceEncoding( forcedEncoding_ );
+        }
 
-    {
+        doIndex( 0_offset );
+
+        LOG_INFO << "FullIndexOperation: ... finished, interrupt = "
+                 << static_cast<bool>( interruptRequest_ );
+
+        const auto result = interruptRequest_ ? false : true;
+        emit indexingFinished( result );
+        return result;
+    } catch ( const std::exception& err ) {
+        const auto errorString = QString( "FullIndexOperation failed: %1" ).arg( err.what() );
+        LOG_ERROR << errorString;
+        dispatchToMainThread( [ errorString ]() {
+            IssueReporter::askUserAndReportIssue( IssueTemplate::Exception, errorString );
+        } );
+
         IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
         scopedAccessor.clear();
-        scopedAccessor.forceEncoding( forcedEncoding_ );
+        return false;
     }
-
-    doIndex( 0_offset );
-
-    LOG_DEBUG << "FullIndexOperation: ... finished counting."
-                 "interrupt = "
-              << static_cast<bool>( interruptRequest_ );
-
-    const auto result = interruptRequest_ ? false : true;
-    emit indexingFinished( result );
-    return result;
 }
 
 OperationResult PartialIndexOperation::run()
 {
-    LOG_DEBUG << "PartialIndexOperation::run(), file " << fileName_.toStdString();
+    try {
+        LOG_INFO << "PartialIndexOperation::run(), file " << fileName_.toStdString();
 
-    const auto initial_position
-        = LineOffset( IndexingData::ConstAccessor{ indexing_data_.get() }.getIndexedSize() );
+        const auto initialPosition
+            = LineOffset( IndexingData::ConstAccessor{ indexing_data_.get() }.getIndexedSize() );
 
-    LOG_DEBUG << "PartialIndexOperation: Starting the count at " << initial_position << " ...";
+        LOG_INFO << "PartialIndexOperation: Starting the count at " << initialPosition << " ...";
 
-    emit indexingProgressed( 0 );
+        emit indexingProgressed( 0 );
 
-    doIndex( initial_position );
+        doIndex( initialPosition );
 
-    LOG_DEBUG << "PartialIndexOperation: ... finished counting.";
+        LOG_INFO << "PartialIndexOperation: ... finished counting.";
 
-    const auto result = interruptRequest_ ? false : true;
-    emit indexingFinished( result );
-    return result;
+        const auto result = interruptRequest_ ? false : true;
+        emit indexingFinished( result );
+        return result;
+    } catch ( const std::exception& err ) {
+        const auto errorString = QString( "PartialIndexOperation failed: %1" ).arg( err.what() );
+        LOG_ERROR << errorString;
+        dispatchToMainThread( [ errorString ]() {
+            IssueReporter::askUserAndReportIssue( IssueTemplate::Exception, errorString );
+        } );
+
+        IndexingData::MutateAccessor scopedAccessor{ indexing_data_.get() };
+        scopedAccessor.clear();
+
+        return false;
+    }
 }
 
 OperationResult CheckFileChangesOperation::run()
 {
-    LOG_INFO << "CheckFileChangesOperation::run(), file " << fileName_.toStdString();
-    const auto result = doCheckFileChanges();
-    emit fileCheckFinished( result );
-    return result;
+    try {
+        LOG_INFO << "CheckFileChangesOperation::run(), file " << fileName_.toStdString();
+        const auto result = doCheckFileChanges();
+        emit fileCheckFinished( result );
+        return result;
+    } catch ( const std::exception& err ) {
+        const auto errorString
+            = QString( "CheckFileChangesOperation failed: %1" ).arg( err.what() );
+        LOG_ERROR << errorString;
+        dispatchToMainThread( [ errorString ]() {
+            IssueReporter::askUserAndReportIssue( IssueTemplate::Exception, errorString );
+        } );
+        return MonitoredFileStatus::Truncated;
+    }
 }
 
 MonitoredFileStatus CheckFileChangesOperation::doCheckFileChanges()

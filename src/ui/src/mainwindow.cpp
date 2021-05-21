@@ -413,7 +413,7 @@ void MainWindow::createActions()
     reportIssueAction = new QAction( tr( "Report issue..." ), this );
     reportIssueAction->setStatusTip( tr( "Report an issue on GitHub" ) );
     connect( reportIssueAction, &QAction::triggered,
-             [ this ]( auto ) { IssueReporter::reportIssue( IssueTemplate::Bug ); } );
+             []( auto ) { IssueReporter::reportIssue( IssueTemplate::Bug ); } );
 
     joinDiscordAction = new QAction( tr( "Join Discord community..." ), this );
     joinDiscordAction->setStatusTip( tr( "Join Klogg development community at Discord" ) );

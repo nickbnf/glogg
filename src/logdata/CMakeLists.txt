@@ -14,6 +14,9 @@ add_library(logdata STATIC
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/fileholder.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/filedigest.h
          ${CMAKE_CURRENT_SOURCE_DIR}/include/data/hsregularexpression.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/regularexpression.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/data/regularexpressionpattern.h
+
 
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/abstractlogdata.cpp
@@ -28,6 +31,7 @@ add_library(logdata STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/fileholder.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/filedigest.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/hsregularexpression.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/regularexpression.cpp
 
         src/filedigest.cpp)
 
@@ -43,7 +47,8 @@ target_link_libraries(logdata PUBLIC
         named_type
         utils
         filewatch
-        uchardet_wrapper)
+        uchardet_wrapper
+        exprtk)
 
 target_link_libraries(logdata PRIVATE xxhash_wrapper)
 

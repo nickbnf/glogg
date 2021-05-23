@@ -17,7 +17,11 @@
  * along with klogg.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <iterator>
+#include <qregularexpression.h>
 #include <string_view>
+#include <vector>
 #ifdef KLOGG_HAS_HS
 #include "hsregularexpression.h"
 
@@ -25,7 +29,10 @@
 
 namespace {
 
-static constexpr auto ExcludeMatchIdStart = 1000;
+struct MatcherContext {
+    const std::vector<std::string>& patternIds;
+    std::vector<std::string>& matchingPatterns;
+};
 
 int matchCallback( unsigned int id, unsigned long long from, unsigned long long to,
                    unsigned int flags, void* context )
@@ -34,40 +41,51 @@ int matchCallback( unsigned int id, unsigned long long from, unsigned long long 
     Q_UNUSED( to );
     Q_UNUSED( flags );
 
-    int* matchResult = static_cast<int*>( context );
+    MatcherContext* matchResult = static_cast<MatcherContext*>( context );
 
-    if ( id >= ExcludeMatchIdStart ) {
-        *matchResult = 0;
-        return 1;
+    const auto& patternId = matchResult->patternIds[ id ];
+    const auto newMatch = std::find( matchResult->matchingPatterns.begin(),
+                                     matchResult->matchingPatterns.end(), patternId )
+                          == matchResult->matchingPatterns.end();
+
+    if ( newMatch ) {
+        matchResult->matchingPatterns.push_back( patternId );
     }
-    else {
-        ( *matchResult )++;
-        return 0;
-    }
+    return 0;
 }
 
 } // namespace
 
-HsMatcher::HsMatcher( HsDatabase db, HsScratch scratch, int requiredMatches )
+HsMatcher::HsMatcher( HsDatabase db, HsScratch scratch, const std::vector<std::string>& patternIds )
     : database_{ std::move( db ) }
     , scratch_{ std::move( scratch ) }
-    , requiredMatches_{ requiredMatches }
+    , patternIds_{ patternIds }
 {
 }
 
-bool HsMatcher::hasMatch( const std::string_view& utf8Data ) const
+std::unordered_map<std::string, bool> HsMatcher::match( const std::string_view& utf8Data ) const
 {
+    std::vector<std::string> matchingPatterns;
+
     if ( !scratch_ || !database_ ) {
-        return false;
+        return {};
     }
 
-    int matchResult = 0;
+    MatcherContext context{ patternIds_, matchingPatterns };
 
-    const auto scanResult
-        = hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ),
-                   0, scratch_.get(), matchCallback, static_cast<void*>( &matchResult ) );
+    hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ), 0,
+             scratch_.get(), matchCallback, static_cast<void*>( &context ) );
 
-    return scanResult != HS_SCAN_TERMINATED && matchResult == requiredMatches_;
+    std::unordered_map<std::string, bool> results;
+    for ( const auto& patternId : patternIds_ ) {
+        results[ patternId ] = false;
+    }
+
+    for ( const auto& match : matchingPatterns ) {
+        results[ match ] = true;
+    }
+
+    return results;
 }
 
 HsRegularExpression::HsRegularExpression( const RegularExpressionPattern& pattern )
@@ -76,10 +94,10 @@ HsRegularExpression::HsRegularExpression( const RegularExpressionPattern& patter
 }
 
 HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPattern>& patterns )
-    : pattern_( patterns.front() )
+    : patterns_( patterns )
 {
-    requiredMatches_ = static_cast<int>( std::count_if(
-        patterns.begin(), patterns.end(), []( const auto& p ) { return !p.isExclude; } ) );
+    std::transform( patterns.begin(), patterns.end(), std::back_inserter( patternIds_ ),
+                    []( const auto& p ) { return p.id(); } );
 
     database_ = HsDatabase{ makeUniqueResource<hs_database_t, hs_free_database>(
         []( const std::vector<RegularExpressionPattern>& expressions,
@@ -102,8 +120,13 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
             std::vector<QByteArray> utf8Patterns;
             utf8Patterns.reserve( expressions.size() );
             std::transform( expressions.begin(), expressions.end(),
-                            std::back_inserter( utf8Patterns ),
-                            []( const auto& expression ) { return expression.pattern.toUtf8(); } );
+                            std::back_inserter( utf8Patterns ), []( const auto& expression ) {
+                                auto p = expression.pattern;
+                                if ( expression.isPlainText ) {
+                                    p = QRegularExpression::escape( expression.pattern );
+                                }
+                                return p.toUtf8();
+                            } );
 
             std::vector<const char*> patternPointers;
             utf8Patterns.reserve( utf8Patterns.size() );
@@ -114,8 +137,7 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
             std::vector<unsigned> expressionIds;
             expressionIds.resize( expressions.size() );
             for ( auto index = 0u; index < expressions.size(); ++index ) {
-                expressionIds[ index ]
-                    = index + ( expressions[ index ].isExclude ? ExcludeMatchIdStart : 0 );
+                expressionIds[ index ] = index;
             }
 
             const auto compileResult = hs_compile_multi(
@@ -148,9 +170,25 @@ HsRegularExpression::HsRegularExpression( const std::vector<RegularExpressionPat
             },
             database_.get() );
     }
+
+    if ( !isHsValid() ) {
+        for ( const auto& pattern : patterns_ ) {
+            const auto& regex = static_cast<QRegularExpression>( pattern );
+            if ( !regex.isValid() ) {
+                isValid_ = false;
+                errorMessage_ = regex.errorString();
+                break;
+            }
+        }
+    }
 }
 
 bool HsRegularExpression::isValid() const
+{
+    return isValid_;
+}
+
+bool HsRegularExpression::isHsValid() const
 {
     return database_ != nullptr && scratch_ != nullptr;
 }
@@ -162,8 +200,8 @@ QString HsRegularExpression::errorString() const
 
 MatcherVariant HsRegularExpression::createMatcher() const
 {
-    if ( !isValid() ) {
-        return MatcherVariant{ DefaultRegularExpressionMatcher( pattern_ ) };
+    if ( !isHsValid() ) {
+        return MatcherVariant{ DefaultRegularExpressionMatcher( patterns_ ) };
     }
 
     auto matcherScratch = makeUniqueResource<hs_scratch_t, hs_free_scratch>(
@@ -180,6 +218,6 @@ MatcherVariant HsRegularExpression::createMatcher() const
         },
         scratch_.get() );
 
-    return MatcherVariant{ HsMatcher{ database_, std::move( matcherScratch ), requiredMatches_ } };
+    return MatcherVariant{ HsMatcher{ database_, std::move( matcherScratch ), patternIds_ } };
 }
 #endif

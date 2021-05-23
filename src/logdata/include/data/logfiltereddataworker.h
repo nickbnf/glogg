@@ -45,7 +45,7 @@
 #include <tbb/task_group.h>
 
 #include "atomicflag.h"
-#include "hsregularexpression.h"
+#include "regularexpression.h"
 #include "linetypes.h"
 #include "synchronization.h"
 

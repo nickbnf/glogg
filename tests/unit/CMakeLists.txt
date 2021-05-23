@@ -1,10 +1,11 @@
 # Add test cpp file
 add_executable(klogg_tests
     linepositionarray_test.cpp
+    patternmatcher_test.cpp
     tests_main.cpp
 )
 
-target_link_libraries(klogg_tests ui catch Qt5::Test)
+target_link_libraries(klogg_tests ui utils catch Qt5::Test)
 set_target_properties(klogg_tests PROPERTIES AUTOMOC ON)
 
 if (${USE_LTO})

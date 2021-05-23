@@ -19,8 +19,6 @@
 
 #include <catch.hpp>
 
-#include "config.h"
-
 #include "log.h"
 
 #include "data/linepositionarray.h"

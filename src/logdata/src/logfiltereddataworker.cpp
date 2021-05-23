@@ -53,8 +53,8 @@
 #include "overload_visitor.h"
 #include "progress.h"
 
-#include "hsregularexpression.h"
 #include "logdata.h"
+#include "regularexpression.h"
 
 #include "logfiltereddataworker.h"
 
@@ -92,7 +92,7 @@ struct SearchBlockData {
     LogData::RawLines lines;
 };
 
-PartialSearchResults filterLines( const MatcherVariant& matcher, const LogData::RawLines& rawLines,
+PartialSearchResults filterLines( const PatternMatcher& matcher, const LogData::RawLines& rawLines,
                                   LineNumber chunkStart )
 {
     LOG_DEBUG << "Filter lines at " << chunkStart;
@@ -105,8 +105,7 @@ PartialSearchResults filterLines( const MatcherVariant& matcher, const LogData::
     for ( auto offset = 0u; offset < lines.size(); ++offset ) {
         const auto& line = lines[ offset ];
 
-        const auto hasMatch
-            = std::visit( [ &line ]( const auto& m ) { return m.hasMatch( line ); }, matcher );
+        const auto hasMatch = matcher.hasMatch( line );
 
         if ( hasMatch ) {
             results.maxLength = qMax( results.maxLength, getUntabifiedLength( line ) );
@@ -350,15 +349,13 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
 
     using RegexMatcherNode
         = tbb::flow::function_node<BlockDataType, PartialResultType, tbb::flow::rejecting>;
-    using MatcherContext = std::tuple<MatcherVariant, microseconds, RegexMatcherNode>;
+    using MatcherContext = std::tuple<std::unique_ptr<PatternMatcher>, microseconds, RegexMatcherNode>;
 
     std::vector<MatcherContext> regexMatchers;
-    HsRegularExpression hsRegularExpression{ regexp_ };
-    const auto useHyperscanEngine = config.regexpEngine() == RegexpEngine::Hyperscan;
+    RegularExpression regularExpression{ regexp_ };
     for ( auto index = 0u; index < matchingThreadsCount; ++index ) {
         regexMatchers.emplace_back(
-            useHyperscanEngine ? hsRegularExpression.createMatcher()
-                               : MatcherVariant{ DefaultRegularExpressionMatcher( regexp_ ) },
+            regularExpression.createMatcher(),
             microseconds{ 0 },
             RegexMatcherNode(
                 searchGraph, 1, [ &regexMatchers, index ]( const BlockDataType& blockData ) {
@@ -366,7 +363,7 @@ void SearchOperation::doSearch( SearchData& searchData, LineNumber initialLine )
                     const auto matchStartTime = high_resolution_clock::now();
 
                     auto results = std::make_shared<PartialSearchResults>(
-                        filterLines( matcher, blockData->lines, blockData->chunkStart ) );
+                        filterLines( *matcher, blockData->lines, blockData->chunkStart ) );
 
                     const auto matchEndTime = high_resolution_clock::now();
 

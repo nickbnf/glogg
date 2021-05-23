@@ -120,7 +120,8 @@ class CrawlerWidget : public QSplitter,
     void applyConfiguration();
 
   public:
-    template <class T> struct access_by;
+    template <class T>
+    struct access_by;
 
   protected:
     // Implementation of the ViewInterface functions
@@ -199,8 +200,14 @@ class CrawlerWidget : public QSplitter,
     // Called when the checkbox for search auto-refresh is changed
     void searchRefreshChangedHandler( bool isRefreshing );
 
-     // Called when the checkbox for case sensitivity is changed
+    // Called when the checkbox for case sensitivity is changed
     void matchCaseChangedHandler( bool shouldMatchCase );
+
+    // Called when the checkbox for boolean combining is changed
+    void booleanCombiningChangedHandler( bool shouldCombine );
+
+    // Called when the checkbox for using regex is changed
+    void useRegexpChangeHandler( bool shouldUseRegex );
 
     // Called when the text on the search line is modified
     void searchTextChangeHandler( QString );
@@ -297,7 +304,9 @@ class CrawlerWidget : public QSplitter,
     // Reload predefined filters after changing settings
     void reloadPredefinedFilters() const;
 
-    void setSearchPattern(const QString& searchPattern);
+    void setSearchPattern( const QString& searchPattern );
+
+    void resetStateOnSearchPatternChanges();
 
     // Palette for error notification (yellow background)
     static const QPalette errorPalette;
@@ -316,6 +325,7 @@ class CrawlerWidget : public QSplitter,
     QToolButton* matchCaseButton;
     QToolButton* useRegexpButton;
     QToolButton* inverseButton;
+    QToolButton* booleanButton;
     QToolButton* searchRefreshButton;
     OverviewWidget* overviewWidget_;
     PredefinedFiltersComboBox* predefinedFilters;

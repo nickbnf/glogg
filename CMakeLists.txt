@@ -24,6 +24,8 @@ else()
 option(KLOGG_OVERRIDE_MALLOC "Use malloc global override" ON)
 endif()
 
+option(KLOGG_USE_MIMALLOC "Use mimalloc for malloc override" OFF)
+
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(KLOGG_ARCH 32)
@@ -242,7 +244,10 @@ if(UNIX)
             /usr/share/icons/hicolor/scalable
             /usr/share/icons/hicolor/scalable/apps
         )
-        set(CPACK_RPM_PACKAGE_PROVIDES "libklogg_tbbmalloc.so()(64bit),libklogg_tbbmalloc_proxy.so()(64bit)")
+
+        if(KLOGG_OVERRIDE_MALLOC AND NOT KLOGG_USE_MIMALLOC)
+            set(CPACK_RPM_PACKAGE_PROVIDES "libklogg_tbbmalloc.so()(64bit),libklogg_tbbmalloc_proxy.so()(64bit)")
+        endif()
 
     endif()
     INCLUDE(CPack)
@@ -261,6 +266,7 @@ add_custom_target(docs SOURCES
 
 add_custom_target(stuff SOURCES
    .clang-format
+   .clang-tidy
 )
 
 

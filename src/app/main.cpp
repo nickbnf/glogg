@@ -42,8 +42,10 @@
 
 #include <QCommandLineOption>
 
-#ifdef KLOGG_OVERRIDE_MALLOC
+#if defined(KLOGG_USE_TBBMALLOC)
 #include <tbb/tbbmalloc_proxy.h>
+#elif defined(KLOGG_USE_MIMALLOC)
+#include <mimalloc.h>
 #endif
 
 #include "kloggapp.h"

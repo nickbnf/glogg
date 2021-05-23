@@ -23,9 +23,13 @@ set(MAIN_SOURCES
     ${DOCUMENTATION_RESOURCE}
     ${ICON_FILE})
 
+if(KLOGG_USE_MIMALLOC AND NOT WIN32)
+    LIST(PREPEND MAIN_SOURCES $<TARGET_OBJECTS:mimalloc-obj>)
+endif()
+
 set(MAIN_LIBS ui cli11 singleapp)
 if(KLOGG_OVERRIDE_MALLOC)
-    LIST(PREPEND MAIN_LIBS tbbmalloc_proxy_wrapper)
+    LIST(PREPEND MAIN_LIBS klogg_malloc_proxy)
 endif()
 
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})
@@ -50,10 +54,6 @@ target_link_libraries(klogg PUBLIC ${MAIN_LIBS})
 target_link_libraries(klogg_portable PUBLIC ${MAIN_LIBS})
 
 target_compile_definitions(klogg_portable PUBLIC -DKLOGG_PORTABLE)
-if(${KLOGG_OVERRIDE_MALLOC})
-    target_compile_definitions(klogg PUBLIC -DKLOGG_OVERRIDE_MALLOC)
-    target_compile_definitions(klogg_portable PUBLIC -DKLOGG_OVERRIDE_MALLOC)
-endif()
 
 if (WIN32)
 
@@ -86,7 +86,7 @@ install(TARGETS
     BUNDLE DESTINATION .
 )
 
-if(${KLOGG_USE_SENTRY})
+if(KLOGG_USE_SENTRY)
     target_compile_definitions(klogg PUBLIC -DKLOGG_USE_SENTRY)
     target_compile_definitions(klogg_portable PUBLIC -DKLOGG_USE_SENTRY)
 
@@ -172,5 +172,5 @@ if(${KLOGG_USE_SENTRY})
             DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
     endif()
-endif(${KLOGG_USE_SENTRY})
+endif(KLOGG_USE_SENTRY)
 

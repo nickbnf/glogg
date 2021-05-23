@@ -57,6 +57,30 @@ else()
     target_link_libraries(tbbmalloc_proxy_wrapper INTERFACE klogg_tbbmalloc_proxy)
 endif()
 
+if(KLOGG_OVERRIDE_MALLOC)
+    add_library(klogg_malloc_proxy INTERFACE)
+    target_compile_definitions(klogg_malloc_proxy INTERFACE -DKLOGG_OVERRIDE_MALLOC)
+
+    if(KLOGG_USE_MIMALLOC)
+        target_compile_definitions(klogg_malloc_proxy INTERFACE -DKLOGG_USE_MIMALLOC)
+
+        if(WIN32)
+            add_subdirectory(mimalloc)
+            target_link_libraries(klogg_malloc_proxy INTERFACE mimalloc)
+        else()
+            set(MI_BUILD_SHARED OFF)
+            set(MI_BUILD_STATIC OFF)
+            set(MI_BUILD_OBJECT ON)
+            add_subdirectory(mimalloc)
+            target_link_libraries(klogg_malloc_proxy INTERFACE mimalloc-obj)
+        endif()
+        
+    else()
+        target_compile_definitions(klogg_malloc_proxy INTERFACE -DKLOGG_USE_TBBMALLOC)
+        target_link_libraries(klogg_malloc_proxy INTERFACE tbbmalloc_proxy_wrapper)
+    endif()
+endif()
+
 #UCHARDET
 add_library(uchardet_wrapper INTERFACE)
 pkg_check_modules(UCHARDET uchardet>=0.0.7)

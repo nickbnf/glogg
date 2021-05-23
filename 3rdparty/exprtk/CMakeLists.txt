@@ -1,2 +1,4 @@
 add_library(exprtk INTERFACE)
+target_link_libraries(exprtk INTERFACE robin_hood)
 target_include_directories(exprtk SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(exprtk INTERFACE -Dexprtk_disable_caseinsensitivity)

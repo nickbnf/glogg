@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iterator>
 #include <qregularexpression.h>
+#include <robin_hood.h>
 #include <string_view>
 #include <vector>
 #ifdef KLOGG_HAS_HS
@@ -31,7 +32,7 @@ namespace {
 
 struct MatcherContext {
     const std::vector<std::string>& patternIds;
-    std::vector<std::string>& matchingPatterns;
+    robin_hood::unordered_flat_set<std::string>& matchingPatterns;
 };
 
 int matchCallback( unsigned int id, unsigned long long from, unsigned long long to,
@@ -44,13 +45,8 @@ int matchCallback( unsigned int id, unsigned long long from, unsigned long long 
     MatcherContext* matchResult = static_cast<MatcherContext*>( context );
 
     const auto& patternId = matchResult->patternIds[ id ];
-    const auto newMatch = std::find( matchResult->matchingPatterns.begin(),
-                                     matchResult->matchingPatterns.end(), patternId )
-                          == matchResult->matchingPatterns.end();
+    matchResult->matchingPatterns.insert( patternId );
 
-    if ( newMatch ) {
-        matchResult->matchingPatterns.push_back( patternId );
-    }
     return 0;
 }
 
@@ -63,9 +59,9 @@ HsMatcher::HsMatcher( HsDatabase db, HsScratch scratch, const std::vector<std::s
 {
 }
 
-std::unordered_map<std::string, bool> HsMatcher::match( const std::string_view& utf8Data ) const
+robin_hood::unordered_flat_map<std::string, bool> HsMatcher::match( const std::string_view& utf8Data ) const
 {
-    std::vector<std::string> matchingPatterns;
+    robin_hood::unordered_flat_set<std::string> matchingPatterns;
 
     if ( !scratch_ || !database_ ) {
         return {};
@@ -76,7 +72,7 @@ std::unordered_map<std::string, bool> HsMatcher::match( const std::string_view& 
     hs_scan( database_.get(), utf8Data.data(), static_cast<unsigned int>( utf8Data.size() ), 0,
              scratch_.get(), matchCallback, static_cast<void*>( &context ) );
 
-    std::unordered_map<std::string, bool> results;
+    robin_hood::unordered_map<std::string, bool> results;
     for ( const auto& patternId : patternIds_ ) {
         results[ patternId ] = false;
     }

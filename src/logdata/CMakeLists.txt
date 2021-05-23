@@ -48,6 +48,7 @@ target_link_libraries(logdata PUBLIC
         utils
         filewatch
         uchardet_wrapper
+        robin_hood
         exprtk)
 
 target_link_libraries(logdata PRIVATE xxhash_wrapper)

@@ -120,7 +120,7 @@ class BooleanExpressionEvaluator {
         return errorString_;
     }
 
-    bool evaluate( const std::unordered_map<std::string, bool>& variables )
+    bool evaluate( const robin_hood::unordered_flat_map<std::string, bool>& variables )
     {
         if ( !isValid() ) {
             return false;

@@ -29,6 +29,8 @@
 #include <QString>
 #include <vector>
 
+#include <robin_hood.h>
+
 #ifdef KLOGG_HAS_HS
 #include <hs.h>
 
@@ -58,9 +60,9 @@ class DefaultRegularExpressionMatcher {
         return matchingPatterns;
     }
 
-    std::unordered_map<std::string, bool> match( const std::string_view& utf8Data ) const
+    robin_hood::unordered_flat_map<std::string, bool> match( const std::string_view& utf8Data ) const
     {
-        std::unordered_map<std::string, bool> matchingPatterns;
+        robin_hood::unordered_flat_map<std::string, bool> matchingPatterns;
         for ( const auto& regexp : regexp_ ) {
             const auto hasMatch = regexp.second
                                       .match( QString::fromUtf8(
@@ -72,7 +74,7 @@ class DefaultRegularExpressionMatcher {
     }
 
   private:
-    std::unordered_map<std::string, QRegularExpression> regexp_;
+    robin_hood::unordered_flat_map<std::string, QRegularExpression> regexp_;
 };
 
 #ifdef KLOGG_HAS_HS
@@ -91,7 +93,7 @@ class HsMatcher {
     HsMatcher( HsMatcher&& other ) = default;
     HsMatcher& operator=( HsMatcher&& other ) = default;
 
-    std::unordered_map<std::string, bool> match( const std::string_view& utf8Data ) const;
+    robin_hood::unordered_map<std::string, bool> match( const std::string_view& utf8Data ) const;
 
   private:
     HsDatabase database_;

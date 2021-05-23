@@ -49,12 +49,16 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <set>
 #include <stack>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "robin_hood.h"
 
 
 namespace exprtk
@@ -3366,7 +3370,7 @@ namespace exprtk
 
          private:
 
-            std::set<std::string,details::ilesscompare> ignore_set_;
+            std::unordered_set<std::string/*details::ilesscompare*/> ignore_set_;
          };
 
          class operator_joiner : public token_joiner
@@ -3694,7 +3698,7 @@ namespace exprtk
          {
          private:
 
-            typedef std::map<std::string,std::pair<std::string,token::token_type>,details::ilesscompare> replace_map_t;
+            typedef robin_hood::unordered_map<std::string,std::pair<std::string,token::token_type>/*,details::ilesscompare*/> replace_map_t;
 
          public:
 
@@ -16628,7 +16632,7 @@ namespace exprtk
          }
       };
 
-      inline void load_operations_map(std::multimap<std::string,details::base_operation_t,details::ilesscompare>& m)
+      inline void load_operations_map(std::multimap<std::string,details::base_operation_t/*,details::ilesscompare*/>& m)
       {
          #define register_op(Symbol,Type,Args)                                               \
          m.insert(std::make_pair(std::string(Symbol),details::base_operation_t(Type,Args))); \
@@ -17150,7 +17154,7 @@ namespace exprtk
          typedef Type type_t;
          typedef type_t* type_ptr;
          typedef std::pair<bool,type_ptr> type_pair_t;
-         typedef std::map<std::string,type_pair_t,details::ilesscompare> type_map_t;
+         typedef robin_hood::unordered_map<std::string,type_pair_t/*,details::ilesscompare*/> type_map_t;
          typedef typename type_map_t::iterator tm_itr_t;
          typedef typename type_map_t::const_iterator tm_const_itr_t;
 
@@ -17592,7 +17596,7 @@ namespace exprtk
 
             std::list<T>               local_symbol_list_;
             std::list<std::string>     local_stringvar_list_;
-            std::set<std::string>      reserved_symbol_table_;
+            std::unordered_set<std::string>      reserved_symbol_table_;
             std::vector<ifunction<T>*> free_function_list_;
          };
 
@@ -19167,16 +19171,16 @@ namespace exprtk
 
       typedef details::operator_type operator_t;
 
-      typedef std::map<operator_t, unary_functor_t  > unary_op_map_t;
-      typedef std::map<operator_t, binary_functor_t > binary_op_map_t;
-      typedef std::map<operator_t, trinary_functor_t> trinary_op_map_t;
+      typedef robin_hood::unordered_map<operator_t, unary_functor_t  > unary_op_map_t;
+      typedef robin_hood::unordered_map<operator_t, binary_functor_t > binary_op_map_t;
+      typedef robin_hood::unordered_map<operator_t, trinary_functor_t> trinary_op_map_t;
 
-      typedef std::map<std::string,std::pair<trinary_functor_t   ,operator_t> > sf3_map_t;
-      typedef std::map<std::string,std::pair<quaternary_functor_t,operator_t> > sf4_map_t;
+      typedef robin_hood::unordered_map<std::string,std::pair<trinary_functor_t   ,operator_t> > sf3_map_t;
+      typedef robin_hood::unordered_map<std::string,std::pair<quaternary_functor_t,operator_t> > sf4_map_t;
 
-      typedef std::map<binary_functor_t,operator_t> inv_binary_op_map_t;
-      typedef std::multimap<std::string,details::base_operation_t,details::ilesscompare> base_ops_map_t;
-      typedef std::set<std::string,details::ilesscompare> disabled_func_set_t;
+      typedef robin_hood::unordered_map<binary_functor_t,operator_t> inv_binary_op_map_t;
+      typedef std::multimap<std::string,details::base_operation_t/*,details::ilesscompare*/> base_ops_map_t;
+      typedef std::unordered_set<std::string/*,details::ilesscompare*/> disabled_func_set_t;
 
       typedef details::T0oT1_define<T, cref_t , cref_t > vov_t;
       typedef details::T0oT1_define<T, const_t, cref_t > cov_t;
@@ -20273,7 +20277,7 @@ namespace exprtk
       {
       private:
 
-         typedef std::set<std::string,details::ilesscompare> disabled_entity_set_t;
+         typedef std::unordered_set<std::string/*,details::ilesscompare*/> disabled_entity_set_t;
          typedef disabled_entity_set_t::iterator des_itr_t;
 
       public:
@@ -24590,7 +24594,7 @@ namespace exprtk
 
             std::vector<std::string> param_seq_list = split_param_seq(func_prototypes);
 
-            typedef std::map<std::string,std::size_t> param_seq_map_t;
+            typedef robin_hood::unordered_map<std::string,std::size_t> param_seq_map_t;
             param_seq_map_t param_seq_map;
 
             for (std::size_t i = 0; i < param_seq_list.size(); ++i)
@@ -26914,7 +26918,7 @@ namespace exprtk
 
          typedef details::expression_node<Type>* expression_node_ptr;
          typedef expression_node_ptr (*synthesize_functor_t)(expression_generator<T>&, const details::operator_type& operation, expression_node_ptr (&branch)[2]);
-         typedef std::map<std::string,synthesize_functor_t> synthesize_map_t;
+         typedef robin_hood::unordered_map<std::string,synthesize_functor_t> synthesize_map_t;
          typedef typename exprtk::parser<Type> parser_t;
          typedef const Type& vtype;
          typedef const Type  ctype;
@@ -36248,7 +36252,7 @@ namespace exprtk
       inline void load_unary_operations_map(unary_op_map_t& m)
       {
          #define register_unary_op(Op,UnaryFunctor)             \
-         m.insert(std::make_pair(Op,UnaryFunctor<T>::process)); \
+         m.emplace(Op,UnaryFunctor<T>::process); \
 
          register_unary_op(details::e_abs   , details::abs_op  )
          register_unary_op(details::e_acos  , details::acos_op )
@@ -36508,7 +36512,7 @@ namespace exprtk
          };
 
          static inline bool collection_pass(const std::string& expression_string,
-                                            std::set<std::string>& symbol_set,
+                                            std::unordered_set<std::string>& symbol_set,
                                             const bool collect_variables,
                                             const bool collect_functions,
                                             const bool vector_pass,
@@ -36566,7 +36570,7 @@ namespace exprtk
 
       collect_t::symbol_table_t null_symbol_table;
 
-      std::set<std::string> symbol_set;
+      std::unordered_set<std::string> symbol_set;
 
       const bool variable_pass = collect_t::collection_pass
                                     (expression, symbol_set, true, false, false, null_symbol_table);
@@ -36576,7 +36580,7 @@ namespace exprtk
       if (!variable_pass && !vector_pass)
          return false;
 
-      std::set<std::string>::iterator itr = symbol_set.begin();
+      std::unordered_set<std::string>::iterator itr = symbol_set.begin();
 
       while (symbol_set.end() != itr)
       {
@@ -36596,7 +36600,7 @@ namespace exprtk
    {
       typedef details::collector_helper<T> collect_t;
 
-      std::set<std::string> symbol_set;
+      std::unordered_set<std::string> symbol_set;
 
       const bool variable_pass = collect_t::collection_pass
                                     (expression, symbol_set, true, false, false, extrnl_symbol_table);
@@ -36606,7 +36610,7 @@ namespace exprtk
       if (!variable_pass && !vector_pass)
          return false;
 
-      std::set<std::string>::iterator itr = symbol_set.begin();
+      std::unordered_set<std::string>::iterator itr = symbol_set.begin();
 
       while (symbol_set.end() != itr)
       {
@@ -36627,7 +36631,7 @@ namespace exprtk
 
       collect_t::symbol_table_t null_symbol_table;
 
-      std::set<std::string> symbol_set;
+      std::unordered_set<std::string> symbol_set;
 
       const bool variable_pass = collect_t::collection_pass
                                     (expression, symbol_set, false, true, false, null_symbol_table);
@@ -36637,7 +36641,7 @@ namespace exprtk
       if (!variable_pass && !vector_pass)
          return false;
 
-      std::set<std::string>::iterator itr = symbol_set.begin();
+      std::unordered_set<std::string>::iterator itr = symbol_set.begin();
 
       while (symbol_set.end() != itr)
       {
@@ -36657,7 +36661,7 @@ namespace exprtk
    {
       typedef details::collector_helper<T> collect_t;
 
-      std::set<std::string> symbol_set;
+      std::unordered_set<std::string> symbol_set;
 
       const bool variable_pass = collect_t::collection_pass
                                     (expression, symbol_set, false, true, false, extrnl_symbol_table);
@@ -36667,7 +36671,7 @@ namespace exprtk
       if (!variable_pass && !vector_pass)
          return false;
 
-      std::set<std::string>::iterator itr = symbol_set.begin();
+      std::unordered_set<std::string>::iterator itr = symbol_set.begin();
 
       while (symbol_set.end() != itr)
       {
@@ -37550,7 +37554,7 @@ namespace exprtk
          std::deque<var_t> local_stack;
       };
 
-      typedef std::map<std::string,base_func*> funcparam_t;
+      typedef robin_hood::unordered_map<std::string,base_func*> funcparam_t;
 
       struct func_0param : public base_func
       {
@@ -37715,7 +37719,7 @@ namespace exprtk
                       const Sequence<std::string,Allocator>& var_list,
                       const bool override = false)
       {
-         const typename std::map<std::string,expression_t>::iterator itr = expr_map_.find(name);
+         const typename robin_hood::unordered_map<std::string,expression_t>::iterator itr = expr_map_.find(name);
 
          if (expr_map_.end() != itr)
          {
@@ -37962,7 +37966,7 @@ namespace exprtk
          if (arg_count > 6)
             return;
 
-         const typename std::map<std::string,expression_t>::iterator em_itr = expr_map_.find(name);
+         const typename robin_hood::unordered_map<std::string,expression_t>::iterator em_itr = expr_map_.find(name);
 
          if (expr_map_.end() != em_itr)
          {
@@ -37984,7 +37988,7 @@ namespace exprtk
 
       symbol_table_t symbol_table_;
       parser_t parser_;
-      std::map<std::string,expression_t> expr_map_;
+      robin_hood::unordered_map<std::string,expression_t> expr_map_;
       std::vector<funcparam_t> fp_map_;
       std::vector<symbol_table_t*> auxiliary_symtab_list_;
    };

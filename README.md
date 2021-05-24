@@ -80,11 +80,12 @@ Klogg has all best features of glogg:
 
 And on top of that klogg:
 
-* Is heavily optimized using multithreading and SIMD
+* Is heavily optimized using multi-threading and SIMD
+* Supports logical combinations of search patterns
 * Supports many common text encodings
 * Detects file encoding automatically using [uchardet](https://www.freedesktop.org/wiki/Software/uchardet/) library (supports utf8, utf16, cp1251 and more) 
 * Can limit search operations to some part of huge file
-* Allows to conifugure several highlighters sets and switch between them
+* Allows to configure several highlighters sets and switch between them
 * Has a scratchpad window for taking notes and doing basic data transformations
 * Provides lots of small features that make life easier (closing tabs, copying file paths, favorite files menu, etc.)
 

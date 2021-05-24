@@ -53,6 +53,20 @@ been opened:
 will only display lines with a space and the word `connection` somewhere
 after `Created a`
 
+Sometimes alternation using regular expression syntax is cumbersome.
+For such cases *klogg* can do logical search pattern combinations using
+`and`, `or`, and `not` operators. This mode can be enabled using button
+from search input panel. In this mode all patterns must be enclosed in `"`.
+Following logic operations are supported:
+
+|Operator        |Actions                                                                   |
+|----------------|--------------------------------------------------------------------------|
+|`and`           |Logical AND, True only if x and y both match input line. (eg: `"x" and "y"`)|
+|`or`            |Logical OR, True if either x or y match input line. (eg: `"x" or "y"`)      |
+|`&`             |Similar to AND but with left to right expression short circuiting optimization  |
+|`\|`             |Similar to OR but with left to right expression short circuiting optimization   |
+|`not`           |Logical NOT, Negate the logical sense of the input. Input must be enclosed in `()` (eg: `not("x")`)|
+
 *klogg* keeps history of used search patterns and provides autocomplete
 for them. This history can be cleared from search text box context menu.
 Autocomplete is case sensitive if this option is selected for matching 

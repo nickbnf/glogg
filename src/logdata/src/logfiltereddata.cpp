@@ -204,6 +204,19 @@ LogFilteredData::LineType LogFilteredData::lineTypeByLine( LineNumber lineNumber
     return line_type;
 }
 
+void LogFilteredData::iterateOverLines( const std::function<void( LineNumber )>& callback ) const
+{
+    using CallbackFn = std::function<void( LineNumber )>;
+    const auto& currentResults = currentResultArray();
+    currentResults.iterate(
+        []( uint32_t line, void* context ) -> bool {
+            auto* callbackFn = static_cast<CallbackFn*>( context );
+            callbackFn->operator()( LineNumber( line ) );
+            return true;
+        },
+        static_cast<void*>( const_cast<CallbackFn*>( &callback ) ) );
+}
+
 // Delegation to our Marks object
 
 void LogFilteredData::toggleMark( LineNumber line )
@@ -422,18 +435,17 @@ LineNumber LogFilteredData::findLogDataLine( LineNumber index ) const
 {
     const auto& currentResults = currentResultArray();
 
-    if ( index.get() >= currentResults.cardinality() ) {
+    uint32_t line = {};
+    if ( currentResults.select( index.get(), &line ) ) {
+        return LineNumber( line );
+    }
+    else {
         if ( !currentResults.isEmpty() ) {
             LOG_ERROR << "Index too big in LogFilteredData: " << index << " cache size "
                       << currentResults.cardinality();
         }
         return maxValue<LineNumber>();
     }
-
-    uint32_t line = {};
-    currentResults.select( index.get(), &line );
-
-    return LineNumber( line );
 }
 
 const SearchResultArray& LogFilteredData::currentResultArray() const

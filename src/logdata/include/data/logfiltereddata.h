@@ -39,6 +39,7 @@
 #ifndef LOGFILTEREDDATA_H
 #define LOGFILTEREDDATA_H
 
+#include <functional>
 #include <memory>
 #include <tuple>
 #include <unordered_map>
@@ -133,6 +134,7 @@ class LogFilteredData : public AbstractLogData {
     Q_DECLARE_FLAGS( Visibility, VisibilityFlags )
     void setVisibility( Visibility visibility );
 
+    void iterateOverLines( const std::function<void( LineNumber )>& callback ) const;
   signals:
     // Sent when the search has progressed, give the number of matches (so far)
     // and the percentage of completion

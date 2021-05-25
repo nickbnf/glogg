@@ -21,6 +21,7 @@
 // It provides support for drawing the match overview sidebar but
 // the actual drawing is done in AbstractLogView which uses this class.
 
+#include "data/linetypes.h"
 #include "log.h"
 
 #include "data/logfiltereddata.h"
@@ -115,13 +116,11 @@ void Overview::recalculatesLines()
         markLines_.clear();
 
         if ( linesInFile_.get() > 0 ) {
-            const auto nbLines = logFilteredData_->getNbLine();
-            for ( auto i = 0_lnum; i < nbLines; ++i ) {
-                LogFilteredData::LineType line_type = logFilteredData_->lineTypeByIndex( i );
-                const auto line = logFilteredData_->getMatchingLineNumber( i );
+            logFilteredData_->iterateOverLines( [ this ]( LineNumber line ) {
+                const auto lineType = logFilteredData_->lineTypeByLine( line );
                 const auto position
-                    = static_cast<int>( ( qint64 )( line.get() ) * height_ / linesInFile_.get() );
-                if ( line_type.testFlag( LogFilteredData::LineTypeFlags::Match ) ) {
+                    = static_cast<int>( (qint64)( line.get() ) * height_ / linesInFile_.get() );
+                if ( lineType.testFlag( LogFilteredData::LineTypeFlags::Match ) ) {
                     if ( ( !matchLines_.empty() ) && matchLines_.back().position() == position ) {
                         // If the line is already there, we increase its weight
                         matchLines_.back().load();
@@ -141,7 +140,7 @@ void Overview::recalculatesLines()
                         markLines_.emplace_back( position );
                     }
                 }
-            }
+            } );
         }
     }
     else

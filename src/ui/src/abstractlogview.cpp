@@ -1043,8 +1043,8 @@ void AbstractLogView::copy()
         auto text = selection_.getSelectedText( logData_ );
         text.replace( QChar::Null, QChar::Space );
         clipboard->setText( text );
-    } catch ( const std::bad_alloc& ) {
-        LOG_ERROR << "not enough memory";
+    } catch ( std::exception& err ) {
+        LOG_ERROR << "failed to copy data to clipboard " << err.what();
     }
 }
 
@@ -1545,8 +1545,8 @@ void AbstractLogView::updateGlobalSelection()
         // Updating it only for "non-trivial" (range or portion) selections
         if ( !selection_.isSingleLine() )
             clipboard->setText( selection_.getSelectedText( logData_ ), QClipboard::Selection );
-    } catch ( const std::bad_alloc& ) {
-        LOG_ERROR << "not enough memory";
+    } catch ( std::exception& err ) {
+        LOG_ERROR << "failed to copy data to clipboard " << err.what();
     }
 }
 

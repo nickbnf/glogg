@@ -42,6 +42,7 @@
 
 #include <QNetworkReply>
 #include <cassert>
+#include <exception>
 #include <iostream>
 
 #include <cmath>
@@ -810,8 +811,8 @@ void MainWindow::copy()
             // Put it in the global selection as well (X11 only)
             clipboard->setText( text, QClipboard::Selection );
         }
-    } catch ( const std::bad_alloc& ) {
-        LOG_ERROR << "not enough memory";
+    } catch ( std::exception& err ) {
+        LOG_ERROR << "failed to copy data to clipboard " << err.what();
     }
 }
 

@@ -40,6 +40,7 @@
 #define LOGFILTEREDDATA_H
 
 #include <memory>
+#include <tuple>
 #include <unordered_map>
 
 #include <QByteArray>
@@ -47,9 +48,13 @@
 #include <QObject>
 #include <QStringList>
 
+#include <KDSignalThrottler.h>
+
 #include "abstractlogdata.h"
 #include "hsregularexpression.h"
+#include "linetypes.h"
 #include "logfiltereddataworker.h"
+#include "synchronization.h"
 
 class LogData;
 class QTimer;
@@ -132,9 +137,11 @@ class LogFilteredData : public AbstractLogData {
     // Sent when the search has progressed, give the number of matches (so far)
     // and the percentage of completion
     void searchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine );
+    void searchProgressedThrottled();
 
   private slots:
     void handleSearchProgressed( LinesCount nbMatches, int progress, LineNumber initialLine );
+    void handleSearchProgressedThrottled();
 
   private:
     // Implementation of virtual functions
@@ -179,6 +186,12 @@ class LogFilteredData : public AbstractLogData {
 
     LogFilteredDataWorker workerThread_;
 
+    Mutex searchProgressMutex_;
+    std::tuple<LinesCount, int, LineNumber> searchProgress_;
+
+    KDToolBox::KDSignalLeadingThrottler searchProgressThrottler_;
+
+  private:
     struct CachedSearchResult {
         SearchResultArray matching_lines;
         LineLength maxLength;
@@ -196,6 +209,8 @@ class LogFilteredData : public AbstractLogData {
         {
             size_t seed = qHash( std::get<0>( k ).pattern );
 
+            hash_combine( seed, std::get<0>( k ).isPlainText );
+            hash_combine( seed, std::get<0>( k ).isBoolean );
             hash_combine( seed, std::get<0>( k ).isCaseSensitive );
             hash_combine( seed, std::get<0>( k ).isExclude );
             hash_combine( seed, std::get<1>( k ) );
@@ -204,14 +219,16 @@ class LogFilteredData : public AbstractLogData {
         }
     };
 
+    std::unordered_map<SearchCacheKey, CachedSearchResult, SearchCacheKeyHash> searchResultsCache_;
+    SearchCacheKey currentSearchKey_;
+
     SearchCacheKey makeCacheKey( const RegularExpressionPattern& regExp, LineNumber startLine,
                                  LineNumber endLine )
     {
         return std::make_tuple( regExp, startLine.get(), endLine.get() );
     }
 
-    std::unordered_map<SearchCacheKey, CachedSearchResult, SearchCacheKeyHash> searchResultsCache_;
-    SearchCacheKey currentSearchKey_;
+    void updateSearchResultsCache();
 
     inline LineNumber getExpectedSearchEnd( const SearchCacheKey& cacheKey ) const
     {

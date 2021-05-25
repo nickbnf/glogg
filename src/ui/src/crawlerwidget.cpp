@@ -448,17 +448,6 @@ void CrawlerWidget::updateFilteredView( LinesCount nbMatches, int progress,
         }
     }
 
-    static auto lastUpdateTime = std::chrono::high_resolution_clock::now();
-
-    const auto currentUpdateTime = std::chrono::high_resolution_clock::now();
-    const auto timeSinceLastUpdate = currentUpdateTime - lastUpdateTime;
-    if ( progress > 0 && progress < 100
-         && timeSinceLastUpdate < std::chrono::milliseconds( 250 ) ) {
-        LOG_DEBUG << "updateFilteredView skipped";
-        return;
-    }
-    lastUpdateTime = currentUpdateTime;
-
     // If more (or less, e.g. come back to 0) matches have been found
     if ( nbMatches != nbMatches_ ) {
         nbMatches_ = nbMatches;
@@ -989,11 +978,11 @@ void CrawlerWidget::setup()
     searchLineLayout->addWidget( useRegexpButton );
     searchLineLayout->addWidget( inverseButton );
     searchLineLayout->addWidget( booleanButton );
+    searchLineLayout->addWidget( searchRefreshButton );
     searchLineLayout->addWidget( predefinedFilters );
     searchLineLayout->addWidget( searchLineEdit );
     searchLineLayout->addWidget( searchButton );
     searchLineLayout->addWidget( stopButton );
-    searchLineLayout->addWidget( searchRefreshButton );
     searchLineLayout->addWidget( searchInfoLine );
 
     // Construct the bottom window

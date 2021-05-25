@@ -48,6 +48,7 @@ target_link_libraries(logdata PUBLIC
         utils
         filewatch
         uchardet_wrapper
+        kdtoolbox
         robin_hood
         exprtk)
 

@@ -23,7 +23,7 @@
 #include <variant>
 
 #include <exprtk.hpp>
-#include <vector>
+#include <robin_hood.h>
 
 #include "configuration.h"
 #include "log.h"

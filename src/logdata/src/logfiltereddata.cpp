@@ -42,12 +42,14 @@
 
 #include "log.h"
 
+#include <KDSignalThrottler.h>
 #include <QString>
 #include <QTimer>
 
 #include <algorithm>
 #include <cassert>
 #include <limits>
+#include <tuple>
 #include <utility>
 
 #include "logdata.h"
@@ -55,6 +57,7 @@
 
 #include "configuration.h"
 #include "readablesize.h"
+#include "synchronization.h"
 
 // Usual constructor: just copy the data, the search is started by runSearch()
 LogFilteredData::LogFilteredData( const LogData* logData )
@@ -76,6 +79,13 @@ LogFilteredData::LogFilteredData( const LogData* logData )
     // Forward the update signal
     connect( &workerThread_, &LogFilteredDataWorker::searchProgressed, this,
              &LogFilteredData::handleSearchProgressed );
+
+    searchProgressThrottler_.setTimeout( 100 );
+    connect( this, &LogFilteredData::searchProgressedThrottled, &searchProgressThrottler_,
+             &KDToolBox::KDGenericSignalThrottler::throttle );
+
+    connect( &searchProgressThrottler_, &KDToolBox::KDGenericSignalThrottler::triggered, this,
+             &LogFilteredData::handleSearchProgressedThrottled );
 }
 
 void LogFilteredData::runSearch( const RegularExpressionPattern& regExp )
@@ -314,14 +324,54 @@ void LogFilteredData::setVisibility( Visibility visi )
     visibility_ = visi;
 }
 
+void LogFilteredData::updateSearchResultsCache()
+{
+    const auto& config = Configuration::get();
+    if ( !config.useSearchResultsCache() ) {
+        return;
+    }
+
+    const auto maxCacheLines = static_cast<uint64_t>( config.searchResultsCacheLines() );
+
+    if ( matching_lines_.cardinality() > maxCacheLines ) {
+        LOG_DEBUG << "LogFilteredData: too many matches to place in cache";
+    }
+    else if ( !config.useSearchResultsCache() ) {
+        LOG_DEBUG << "LogFilteredData: search results cache disabled by configs";
+    }
+    else {
+        LOG_DEBUG << "LogFilteredData: caching results for pattern " << currentRegExp_.pattern;
+
+        searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
+
+        auto cacheSize
+            = std::accumulate( searchResultsCache_.cbegin(), searchResultsCache_.cend(),
+                               std::uint64_t{}, []( auto val, const auto& cachedResults ) {
+                                   return val + cachedResults.second.matching_lines.cardinality();
+                               } );
+
+        LOG_DEBUG << "LogFilteredData: cache size " << cacheSize;
+
+        auto cachedResult = std::begin( searchResultsCache_ );
+        while ( cachedResult != std::end( searchResultsCache_ ) && cacheSize > maxCacheLines ) {
+
+            if ( cachedResult->first == currentSearchKey_ ) {
+                ++cachedResult;
+                continue;
+            }
+
+            cacheSize -= cachedResult->second.matching_lines.cardinality();
+            cachedResult = searchResultsCache_.erase( cachedResult );
+        }
+    }
+}
+
 //
 // Slots
 //
 void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress,
                                               LineNumber initialLine )
 {
-    const auto& config = Configuration::get();
-
     LOG_DEBUG << "LogFilteredData::handleSearchProgressed matches=" << nbMatches
               << " progress=" << progress;
 
@@ -329,51 +379,23 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
 
     const auto searchResults = workerThread_.getSearchResults();
 
-    matching_lines_ |= searchResults.newMatches; 
+    matching_lines_ |= searchResults.newMatches;
     marks_and_matches_ |= searchResults.newMatches;
 
     maxLength_ = searchResults.maxLength;
     nbLinesProcessed_ = searchResults.processedLines;
 
-    if ( progress == 100 && config.useSearchResultsCache()
+    if ( progress == 100
          && nbLinesProcessed_.get() == getExpectedSearchEnd( currentSearchKey_ ).get() ) {
-
-        const auto maxCacheLines = static_cast<uint64_t>( config.searchResultsCacheLines() );
-
-        if ( matching_lines_.cardinality() > maxCacheLines ) {
-            LOG_DEBUG << "LogFilteredData: too many matches to place in cache";
-        }
-        else if ( !config.useSearchResultsCache() ) {
-            LOG_DEBUG << "LogFilteredData: search results cache disabled by configs";
-        }
-        else {
-            LOG_DEBUG << "LogFilteredData: caching results for pattern " << currentRegExp_.pattern;
-
-            searchResultsCache_[ currentSearchKey_ ] = { matching_lines_, maxLength_ };
-
-            auto cacheSize = std::accumulate(
-                searchResultsCache_.cbegin(), searchResultsCache_.cend(), std::uint64_t{},
-                []( auto val, const auto& cachedResults ) {
-                    return val + cachedResults.second.matching_lines.cardinality();
-                } );
-
-            LOG_DEBUG << "LogFilteredData: cache size " << cacheSize;
-
-            auto cachedResult = std::begin( searchResultsCache_ );
-            while ( cachedResult != std::end( searchResultsCache_ ) && cacheSize > maxCacheLines ) {
-
-                if ( cachedResult->first == currentSearchKey_ ) {
-                    ++cachedResult;
-                    continue;
-                }
-
-                cacheSize -= cachedResult->second.matching_lines.cardinality();
-                cachedResult = searchResultsCache_.erase( cachedResult );
-            }
-        }
+        updateSearchResultsCache();
     }
 
-    emit searchProgressed( nbMatches, progress, initialLine );
+    {
+        ScopedLock lock( searchProgressMutex_ );
+        searchProgress_ = std::make_tuple( nbMatches, progress, initialLine );
+    }
+
+    emit searchProgressedThrottled();
 
     if ( progress == 100 ) {
         detachReader();
@@ -382,6 +404,18 @@ void LogFilteredData::handleSearchProgressed( LinesCount nbMatches, int progress
                  << ", marks size " << readableSize( marks_.getSizeInBytes( false ) )
                  << ", union size " << readableSize( marks_and_matches_.getSizeInBytes( false ) );
     }
+}
+
+void LogFilteredData::handleSearchProgressedThrottled()
+{
+    LinesCount nbMatches;
+    int progress;
+    LineNumber initialLine;
+    {
+        ScopedLock lock( searchProgressMutex_ );
+        std::tie( nbMatches, progress, initialLine ) = searchProgress_;
+    }
+    emit searchProgressed( nbMatches, progress, initialLine );
 }
 
 LineNumber LogFilteredData::findLogDataLine( LineNumber index ) const

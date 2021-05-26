@@ -94,8 +94,6 @@ jobs:
         run: |
           cd $KLOGG_BUILD_ROOT
           DESTDIR=$(readlink -f appdir) ninja install
-          mv appdir/usr/lib/x86_64-linux-gnu/*  appdir/usr/lib
-          rm -rf appdir/usr/lib/x86_64-linux-gnu/
           wget -c -q "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
           chmod a+x linuxdeployqt-continuous-x86_64.AppImage
           VERSION=$KLOGG_VERSION ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -qmake=$Qt5_Dir/bin/qmake -bundle-non-qt-libs

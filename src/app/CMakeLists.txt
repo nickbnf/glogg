@@ -23,13 +23,14 @@ set(MAIN_SOURCES
     ${DOCUMENTATION_RESOURCE}
     ${ICON_FILE})
 
-if(KLOGG_USE_MIMALLOC AND NOT WIN32)
-    LIST(PREPEND MAIN_SOURCES $<TARGET_OBJECTS:mimalloc-obj>)
-endif()
+
 
 set(MAIN_LIBS ui cli11 singleapp)
 if(KLOGG_OVERRIDE_MALLOC)
     LIST(PREPEND MAIN_LIBS klogg_malloc_proxy)
+    if(KLOGG_USE_MIMALLOC AND NOT WIN32)
+        LIST(PREPEND MAIN_SOURCES $<TARGET_OBJECTS:mimalloc-obj>)
+    endif()
 endif()
 
 add_executable(klogg ${OS_BUNDLE} ${MAIN_SOURCES})

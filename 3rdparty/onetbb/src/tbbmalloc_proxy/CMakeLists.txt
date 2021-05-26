@@ -82,4 +82,4 @@ target_link_libraries(klogg_tbbmalloc_proxy
     ${TBB_COMMON_LINK_LIBS}
 )
 
-tbb_install_target(klogg_tbbmalloc_proxy)
+#tbb_install_target(klogg_tbbmalloc_proxy)

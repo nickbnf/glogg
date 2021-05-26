@@ -90,5 +90,5 @@ target_link_libraries(klogg_tbbmalloc
     ${TBB_COMMON_LINK_LIBS}
 )
 
-tbb_install_target(klogg_tbbmalloc)
+#tbb_install_target(klogg_tbbmalloc)
 

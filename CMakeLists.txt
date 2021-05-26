@@ -218,6 +218,15 @@ if(UNIX)
             DESTINATION share/applications
         )
 
+        if(KLOGG_OVERRIDE_MALLOC AND NOT KLOGG_USE_MIMALLOC)
+            install(TARGETS klogg_tbbmalloc
+                    LIBRARY
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR})
+            install(TARGETS klogg_tbbmalloc_proxy
+                    LIBRARY
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        endif()
+
         set(CPACK_GENERATOR DEB)
 
         #deb

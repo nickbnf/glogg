@@ -266,6 +266,10 @@ void applyStyle()
 
 int main( int argc, char* argv[] )
 {
+#ifdef KLOGG_USE_MIMALLOC
+    mi_stats_reset();
+#endif
+
     setApplicationAttributes();
 
     KloggApp app( argc, argv );
